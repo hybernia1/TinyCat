@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 if (PHP_SAPI !== 'cli') { require \TinyCat\Support\Paths::basePath('index.php'); exit; }
 if (!defined('TINYCAT')) { define('TINYCAT', true); }
-require_once \TinyCat\Support\Paths::basePath('App/bootstrap.php');
+\TinyCat\Core\Runtime\Application::start();
 
 $taskDefinitions = \TinyCat\Core\Tasks\Tasks::definitions();
 $availableTasks = array_keys($taskDefinitions);

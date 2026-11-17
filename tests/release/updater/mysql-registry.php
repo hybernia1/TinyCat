@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 use \TinyCat\Core\Updates\MigrationRegistry;
 
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $config = (array) \TinyCat\Core\Settings\Store::config('database', []);
 

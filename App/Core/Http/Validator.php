@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Http;
 
-use InvalidArgumentException;
+use LogicException;
 use \TinyCat\Support\Values;
 
 if (!defined('TINYCAT')) {
@@ -13,6 +13,41 @@ if (!defined('TINYCAT')) {
 
 final class Validator
 {
+
+    /** Public data constraints derived from the same owner rules used by validation.
+     * @param array<string, array<mixed>|string> $rules
+     * @return array<string, array<string, mixed>> */
+    public static function constraints(array $rules): array
+    {
+        $fields = [];
+        foreach ($rules as $field => $definition) {
+            $normalized = self::normalizeRules($definition); $types = [];
+            foreach ($normalized as $rule) {
+                [$name] = self::parseRule($rule);
+                $type = match ($name) {
+                    'string', 'email', 'url', 'date', 'max_bytes' => 'string',
+                    'int', 'integer' => 'integer', 'float', 'number', 'numeric' => 'number',
+                    'bool', 'boolean', 'accepted' => 'boolean', 'array' => 'array', default => null,
+                };
+                if ($type !== null) { $types[$type] = true; }
+            }
+            if (count($types) !== 1) { throw new LogicException('Constraint metadata requires one explicit field type.'); }
+            $type = (string) array_key_first($types);
+            $constraints = ['type' => $type, 'required' => self::hasAnyRule($normalized, ['required']), 'nullable' => self::hasAnyRule($normalized, ['nullable'])];
+            foreach ($normalized as $rule) {
+                [$name, $params] = self::parseRule($rule);
+                if ($name === 'in') { $constraints['values'] = isset($constraints['values']) ? array_values(array_intersect($constraints['values'], $params)) : $params; }
+                elseif ($name === 'max_bytes') { $constraints['max_bytes'] = min($constraints['max_bytes'] ?? PHP_INT_MAX, (int) $params[0]); }
+                elseif (in_array($name, ['min', 'max', 'between'], true)) {
+                    $suffix = in_array($type, ['integer', 'number'], true) ? '' : ($type === 'array' ? '_items' : '_length');
+                    if ($name !== 'max') { $constraints['min' . $suffix] = max($constraints['min' . $suffix] ?? -INF, 0 + $params[0]); }
+                    if ($name !== 'min') { $constraints['max' . $suffix] = min($constraints['max' . $suffix] ?? INF, 0 + $params[$name === 'between' ? 1 : 0]); }
+                }
+            }
+            $fields[$field] = $constraints;
+        }
+        return $fields;
+    }
 
     /**
      * @param array<mixed> $data
@@ -93,10 +128,28 @@ final class Validator
     {
         $rules = is_string($rules) ? explode('|', $rules) : $rules;
 
-        return array_values(array_filter(array_map(
-            static fn (mixed $rule): string => trim((string) $rule),
-            $rules
-        ), static fn (string $rule): bool => $rule !== ''));
+        $normalized = [];
+        foreach ($rules as $rule) {
+            if (!is_string($rule)) { throw new LogicException('Validation rules must be strings.'); }
+            $rule = trim($rule);
+            if ($rule === '') { continue; }
+            [$name, $params] = self::parseRule($rule);
+            $count = match ($name) {
+                'required', 'nullable', 'accepted', 'array', 'bool', 'boolean', 'date', 'email', 'float', 'number', 'numeric', 'int', 'integer', 'string', 'url' => 0,
+                'min', 'max', 'max_bytes' => 1,
+                'between' => 2,
+                'in' => count($params) > 0 ? count($params) : -1,
+                default => throw new LogicException('Unknown validation rule: ' . $name),
+            };
+            if (count($params) !== $count) { throw new LogicException('Invalid validation rule parameters: ' . $name); }
+            if (in_array($name, ['min', 'max', 'between', 'max_bytes'], true)) {
+                foreach ($params as $param) { if (!is_numeric($param) || !is_finite((float) $param)) { throw new LogicException('Validation bounds must be finite numbers.'); } }
+                if ($name === 'max_bytes' && ((float) $params[0] < 0 || (float) $params[0] > PHP_INT_MAX || floor((float) $params[0]) !== (float) $params[0])) { throw new LogicException('Byte bounds must be nonnegative integers.'); }
+                if ($name === 'between' && (float) $params[0] > (float) $params[1]) { throw new LogicException('Validation bounds must be ordered.'); }
+            }
+            $normalized[] = $rule;
+        }
+        return $normalized;
     }
 
     /**
@@ -123,16 +176,17 @@ final class Validator
             'bool', 'boolean' => is_bool($value) || in_array($value, [0, 1, '0', '1', 'true', 'false', 'on', 'off', 'yes', 'no'], true),
             'date' => is_string($value) && strtotime($value) !== false,
             'email' => is_string($value) && filter_var($value, FILTER_VALIDATE_EMAIL) !== false,
-            'float', 'number', 'numeric' => is_numeric($value),
-            'in' => in_array((string) $value, array_map('strval', $params), true),
-            'int', 'integer' => filter_var($value, FILTER_VALIDATE_INT) !== false,
+            'float', 'number', 'numeric' => is_numeric($value) && is_finite((float) $value),
+            'in' => is_scalar($value) && in_array((string) $value, array_map('strval', $params), true),
+            'int', 'integer' => (is_int($value) || is_string($value)) && filter_var($value, FILTER_VALIDATE_INT) !== false,
             'max' => self::valueSize($value, $numericRule) <= (float) ($params[0] ?? 0),
+            'max_bytes' => is_string($value) && strlen($value) <= (int) $params[0],
             'min' => self::valueSize($value, $numericRule) >= (float) ($params[0] ?? 0),
             'between' => self::valueSize($value, $numericRule) >= (float) ($params[0] ?? 0)
                 && self::valueSize($value, $numericRule) <= (float) ($params[1] ?? INF),
             'string' => is_string($value),
             'url' => is_string($value) && filter_var($value, FILTER_VALIDATE_URL) !== false,
-            default => throw new InvalidArgumentException('Unknown validation rule: ' . $rule),
+            default => throw new LogicException('Unknown validation rule: ' . $rule),
         };
     }
 
@@ -181,6 +235,7 @@ final class Validator
     {
         $custom = is_array($messages[$field] ?? null) ? ($messages[$field][$rule] ?? null) : null;
         $custom ??= $messages[$field . '.' . $rule] ?? $messages[$rule] ?? null;
+        if ($custom !== null && !is_string($custom)) { throw new LogicException('Validation messages must be strings.'); }
         if (!$structured) { return (string) ($custom ?? 'validation.' . $field . '.' . $rule); }
         $params = ['field' => $field, 'rule' => $rule];
         $message = $custom !== null ? (string) $custom : \TinyCat\Support\Localization::t($rule === 'required' ? 'common.validation_required' : 'common.validation_invalid', $params);

@@ -54,7 +54,8 @@
       "common.close"
     ],
     "uses": [
-      "publishing.editor"
+      "publishing.editor",
+      "ui.form-constraints"
     ]
   },
   {
@@ -62,7 +63,8 @@
       "/articles"
     ],
     "uses": [
-      "publishing.discussion"
+      "publishing.discussion",
+      "ui.form-constraints"
     ],
     "entries": [],
     "components": [],
@@ -96,6 +98,9 @@
       "common.stay",
       "common.cancel",
       "common.close"
+    ],
+    "uses": [
+      "ui.form-constraints"
     ]
   }
 ]

@@ -7,7 +7,6 @@ use TinyCat\Support\Components;
 
 use TinyCat\Support\View;
 use TinyCat\Core\Identity\Login;
-use TinyCat\Social\Profiles\Profiles;
 
 /** Presentation components: prepare inputs, then render their private partial. */
 final class Views
@@ -91,20 +90,6 @@ final class Views
             'submit_label' => (string) ($data['submit_label'] ?? ''),
             'submit_icon' => (string) ($data['submit_icon'] ?? 'save'),
         ]);
-    }
-
-    /** @param array<mixed> $data */
-    public static function composer(array $data = []): string
-    {
-        $editor = $data['editor'] ?? null;
-        $user = $data['user'] ?? null;
-        $user = is_array($user ?? null) ? $user : [];
-        $editor = is_array($editor ?? null) ? $editor : [];
-        $prepared = [];
-        $prepared['status_api_url'] = Posts::status_api_url('create');
-        $prepared['author_profile_edit_modal_url'] = Profiles::author_profile_edit_modal_url((int) ($user['id'] ?? 0), 'email');
-        $prepared['author_profile_edit_modal_id'] = Profiles::author_profile_edit_modal_id((int) ($user['id'] ?? 0));
-        return View::part('Social/status/composer', array_replace($data, compact('editor', 'user', 'prepared')));
     }
 
     /** @param array<mixed> $data */

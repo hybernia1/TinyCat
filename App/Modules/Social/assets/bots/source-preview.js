@@ -30,7 +30,7 @@ import "../../../../../assets/ui/form-requests.js";
       if (!dialog.isConnected || !form.isConnected) { return; }
       if (signature(form) !== initial) { content.textContent = U.text("bots.preview_changed"); return; }
       var resource = result.data, name = form.querySelector('[name="name"]');
-      if (name && !name.value && resource.title) { name.value = resource.title.slice(0, 120); }
+      if (name && !name.value && resource.title) { name.value = resource.title; }
       var approvedSignature = signature(form);
       content.replaceChildren(T.components.render("bots/source-preview", resource));
       content.querySelectorAll("[data-bot-preview-source]").forEach(function (button) {
@@ -47,7 +47,7 @@ import "../../../../../assets/ui/form-requests.js";
         var confirm = U.button("bots.preview_confirm", { "class": "btn btn-primary" });
         confirm.addEventListener("click", function () {
           T.dialog.close(dialog);
-          if (signature(form) !== approvedSignature || !form.reportValidity()) { return; }
+          if (signature(form) !== approvedSignature || !T.forms.validate(form)) { return; }
           binding.approved = approvedSignature;
           form.requestSubmit();
         });
@@ -62,10 +62,10 @@ import "../../../../../assets/ui/form-requests.js";
     var binding = { busy: false, approved: null };
     bindings.set(form, binding);
     if (button) { button.addEventListener("click", function () { preview(form); }); }
-    form.addEventListener("submit", function (event) {
-      if (binding.approved === signature(form)) { binding.approved = null; return; }
-      event.preventDefault(); event.stopImmediatePropagation(); preview(form);
-    }, true);
+    T.forms.setSubmitGuard(form, function () {
+      if (binding.approved === signature(form)) { binding.approved = null; return true; }
+      preview(form); return false;
+    });
   }
   T.lifecycle.register("bot-source-preview", {
     hydrate: function (root) {
@@ -76,7 +76,7 @@ import "../../../../../assets/ui/form-requests.js";
 
     },
     dispose: function (root) {
-      root.querySelectorAll("form").forEach(function (form) { if (bindings.has(form)) { T.forms.cancel(form); } });
+      root.querySelectorAll("form").forEach(function (form) { if (bindings.has(form)) { T.forms.cancel(form); T.forms.setSubmitGuard(form, null); bindings.delete(form); } });
     }
   });
 }());

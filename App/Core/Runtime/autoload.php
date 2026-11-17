@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 if (!defined('TINYCAT')) { http_response_code(403); exit('Forbidden'); }
+if (version_compare(PHP_VERSION, '8.4.0', '<')) { http_response_code(500); exit('TinyCat requires PHP 8.4 or newer.'); }
 // A running updater can still have the previous App/autoload.php cached.
 $appRoot = dirname(__DIR__, 2);
 spl_autoload_register(static function (string $class) use ($appRoot): void {

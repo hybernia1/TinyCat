@@ -92,7 +92,7 @@ foreach ([
     }
 }
 
-$bootstrap = var_export($root . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'bootstrap.php', true);
+$bootstrap = var_export($root . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'autoload.php', true);
 $adminScript = <<<'PHP'
 define('TINYCAT', true);
 $uri = (string) getenv('TINYCAT_SMOKE_URI');
@@ -109,6 +109,7 @@ $_SERVER['SERVER_PORT'] = '80';
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $_SERVER['SCRIPT_NAME'] = '/index.php';
 require __BOOTSTRAP__;
+\TinyCat\Core\Runtime\Application::start();
 try {
     if (!TinyCat\Database\Schema::app_db_ready()) {
         echo 'SKIP no database';

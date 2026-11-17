@@ -38,7 +38,7 @@ K tomu není nutný nový framework, microservices ani obnovení systému plugin
 ## 2. Co už funguje a má zůstat
 
 - [App/modules.php](../../App/modules.php) obsahuje explicitní seznam modulů.
-  [bootstrap](../../App/bootstrap.php#L23) skládá jejich registrace místo jednoho
+  [bootstrap](../../App/Core/Runtime/Application.php) skládá jejich registrace místo jednoho
   seznamu všech aplikačních rout v transportní vrstvě.
 - Moduly vlastní `Api`, `Pages` a většinu prezentačních zdrojů. Sdílený transport
   `Http/Api`, JSON envelope, validace a CSRF jsou vhodné stavební kameny.

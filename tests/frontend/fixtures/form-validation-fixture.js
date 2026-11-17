@@ -4,6 +4,59 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
+  if (mode === 'social-forms') {
+    const follow=T.dom.element('form',{method:'post',action:'/api/users/2/followers/me','data-follow-form':'','data-author-id':'2'});
+    follow.append(T.ui.hidden('action','follow'),T.ui.button('public.follow',{type:'submit'})); document.body.append(follow);
+    const react=T.dom.element('form',{method:'post',action:'/api/statuses/7/likes/me','data-status-form':'','data-status-id':'7'});
+    const like=T.ui.button('common.save',{type:'submit','data-status-like-button':'','aria-pressed':'false'});
+    react.append(T.ui.hidden('action','react'),like); document.body.append(react);
+    const calls=[]; let release;
+    window.fetch=async(url,options)=>{
+      const method=options.body.get('_method'), isFollow=new URL(url).pathname.includes('/followers/');
+      calls.push(method);
+      if(calls.length===1) await new Promise(resolve=>{release=resolve;});
+      const data=isFollow?{author_id:2,following:method==='PUT',followers_count:method==='PUT'?1:0}:{action:'react',status:{id:7,liked:method==='PUT',likes_count:method==='PUT'?1:0}};
+      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data,meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
+    };
+    T.lifecycle.start(); follow.querySelector('button').click(); await wait(()=>!!release,'Social forms reach the shared transport');
+    follow.requestSubmit(); await pause(); check(calls.length===1,'A pending follow cannot send a second mutation'); release();
+    await wait(()=>follow.elements.namedItem('action').value==='unfollow'&&!follow.dataset.apiBusy,'Following updates the domain state and releases the shared lock');
+    follow.querySelector('button').click(); await wait(()=>calls.length===2&&!follow.dataset.apiBusy,'Unfollowing uses the current state after the first result');
+    like.click(); await wait(()=>like.getAttribute('aria-pressed')==='true'&&!react.dataset.apiBusy,'The shared lifecycle applies a status reaction');
+    like.click(); await wait(()=>calls.length===4&&!react.dataset.apiBusy,'A second status reaction uses the updated state');
+    T.forms.setSubmitGuard(react,()=>false); like.click(); await pause(); check(calls.length===4&&!react.dataset.apiBusy,'A declined domain submit guard preserves state without a network mutation'); T.forms.setSubmitGuard(react,null);
+    check(calls.join(',')==='PUT,DELETE,PUT,DELETE','Follow and status mutations use one transport with explicit desired-state methods');
+    check(!follow.querySelector('button').disabled&&!like.disabled&&!follow.hasAttribute('aria-busy'),'Shared loading restores both Social forms');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
+  if (mode === 'constraints') {
+    const c = window.inputConstraints, form = T.ui.form('/api/constraint-fixture', 'POST');
+    form.append(T.ui.field('Title', 'title', '', 'input', {'data-max-length':c.title.max_length,required:c.title.required}));
+    form.append(T.components.render('publishing/editor',{name:'body',value:'',max_bytes:c.body.max_bytes,required:c.body.required}));
+    form.append(T.ui.field('Interval','interval',String(c.interval.min),'input',{type:'number',min:c.interval.min,max:c.interval.max,required:c.interval.required}));
+    form.append(T.components.render('publishing/editor',{name:'comment',value:'\u{1F600}\u{1F600}',max_characters:c.comment.max_length,required:true}));
+    const submit = T.ui.button('common.save',{type:'submit'}); form.append(submit);
+    const dialog = T.ui.adminDialog('constraint-fixture','common.edit',form,false); document.body.append(dialog);
+    let calls=0; window.fetch=async()=>{ calls++; return new Response(JSON.stringify({ok:true,status:201,code:'ok',params:{},message:null,data:{},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}}); };
+    T.lifecycle.start(); T.status.controllers.editor.hydrate(document); T.dialog.open(dialog);
+    const title=form.elements.namedItem('title'), body=form.elements.namedItem('body'), editor=form.querySelector('[data-status-editor-input]');
+    const input=(field,value)=>{ if(field.isContentEditable) field.textContent=value; else field.value=value; field.dispatchEvent(new Event('input',{bubbles:true})); };
+    const comment=form.elements.namedItem('comment'), commentEditor=comment.closest('[data-status-editor]').querySelector('[data-status-editor-input]');
+    input(commentEditor,'\u{1F600}\u{1F600}\u{1F600}');
+    check(comment.value==='\u{1F600}\u{1F600}\u{1F600}'&&!comment.hasAttribute('maxlength'),'Character budgets preserve an overflowing Unicode draft without a UTF-16 cap');
+    check(!T.forms.validate(form),'The shared validator rejects an extra Unicode character in the rich editor');
+    input(commentEditor,'\u{1F600}\u{1F600}');
+    input(title,'😀😀'); input(editor,'ěěě');
+    check(!title.hasAttribute('maxlength') && !body.hasAttribute('maxlength'), 'Unicode and byte constraints do not impose a conflicting UTF-16 maxlength');
+    check(T.forms.validate(form) && body.value==='ěěě', 'Server-derived character and byte boundaries accept the exact Unicode limits');
+    input(editor,'ěěěě'); submit.click(); await pause();
+    check(calls===0 && body.value==='ěěěě' && editor.getAttribute('aria-invalid')==='true','Byte overflow blocks submission through the shared field proxy without truncating the draft');
+    input(editor,'ěěě'); input(title,'😀😀😀'); check(!T.forms.validate(form),'Unicode length rejects one extra code point'); await pause();
+    input(title,'😀😀'); input(form.elements.namedItem('interval'),String(c.interval.min-1)); check(!T.forms.validate(form),'Server-derived numeric lower bounds use native validation'); await pause();
+    input(form.elements.namedItem('interval'),String(c.interval.max)); submit.click(); await wait(()=>calls===1,'A corrected boundary submission sends exactly one request');
+    check(!form.querySelector('[aria-invalid="true"]'),'Correcting constraints clears their shared validation feedback');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
   if (mode === 'creation') {
     const defaults = T.dom.element('form');
     const text = T.dom.element('input', { name: 'name' }), checkbox = T.dom.element('input', { name: 'enabled', type: 'checkbox' });

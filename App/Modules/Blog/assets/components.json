@@ -654,9 +654,11 @@
             "value": {
               "get": "item.title"
             },
-            "required": true,
-            "maxlength": {
-              "get": "limits.title"
+            "required": {
+              "get": "constraints.title.required"
+            },
+            "data-max-length": {
+              "get": "constraints.title.max_length"
             }
           }
         }
@@ -671,9 +673,13 @@
           "placeholder": {
             "t": "blog.body"
           },
-          "max_length": 60000,
-          "required": true,
-          "rows": 16
+          "required": {
+            "get": "constraints.body.required"
+          },
+          "rows": 16,
+          "max_bytes": {
+            "get": "constraints.body.max_bytes"
+          }
         }
       },
       {
@@ -694,7 +700,15 @@
         },
         "children": [
           {
-            "t": "blog.invalid"
+            "t": "blog.invalid",
+            "values": {
+              "title_max": {
+                "get": "constraints.title.max_length"
+              },
+              "body_max": {
+                "get": "constraints.body.max_bytes"
+              }
+            }
           }
         ]
       },
@@ -709,7 +723,7 @@
           },
           "choices": {
             "options": {
-              "get": "statuses"
+              "get": "constraints.status.values"
             },
             "cases": {
               "published": {
@@ -752,8 +766,12 @@
             "value": {
               "get": "item.name"
             },
-            "required": true,
-            "maxlength": 120
+            "required": {
+              "get": "constraints.name.required"
+            },
+            "data-max-length": {
+              "get": "constraints.name.max_length"
+            }
           }
         }
       },
@@ -772,13 +790,17 @@
             "value": {
               "get": "item.feed_url"
             },
-            "required": true,
-            "maxlength": 2048,
+            "required": {
+              "get": "constraints.feed_url.required"
+            },
             "type": "url",
             "readonly": {
               "not": {
                 "get": "permissions.change_feed_url"
               }
+            },
+            "data-max-bytes": {
+              "get": "constraints.feed_url.max_bytes"
             }
           }
         }
@@ -805,7 +827,9 @@
             "attrs": {
               "class": "select",
               "name": "author_id",
-              "required": true
+              "required": {
+                "get": "constraints.author_id.required"
+              }
             },
             "children": [
               {
@@ -859,9 +883,15 @@
               "get": "item.interval_minutes"
             },
             "type": "number",
-            "min": 5,
-            "max": 43200,
-            "required": true
+            "min": {
+              "get": "constraints.interval_minutes.min"
+            },
+            "max": {
+              "get": "constraints.interval_minutes.max"
+            },
+            "required": {
+              "get": "constraints.interval_minutes.required"
+            }
           }
         }
       },
@@ -876,7 +906,7 @@
           },
           "choices": {
             "options": {
-              "get": "statuses"
+              "get": "constraints.publication_status.values"
             },
             "cases": {
               "hidden": {

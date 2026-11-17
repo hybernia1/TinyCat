@@ -72,6 +72,25 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.0.10
+
+Requires a completed **6.0.8 or newer** installation and PHP 8.4. Sites on 6.0.9
+can update directly through **Admin > Updates**. There are no new database
+migrations; existing journal records, data, configuration, uploads and module
+activation are preserved.
+
+The release makes core API, validation and form lifecycle contracts authoritative.
+Social forms use the shared AJAX lifecycle, source previews use its submit guard,
+and public HTTP/AJAX navigation derives from one route declaration. Editor limits
+distinguish Unicode characters from UTF-8 bytes. Overlong Blog comments now return
+a field error without changing the saved comment or truncating the draft.
+
+HTTP and CLI start explicitly through the runtime. The deletion plan removes six
+additional retired paths, including the bootstrap wrapper and unused presentation
+partials. The public autoload facade remains for private rescue launchers created
+by published versions. Signed update, cached-code recovery and standard rollback
+preserve those launchers and restore removed files when rolling back.
+
 ## Upgrading to 6.0.9
 
 Requires a completed **6.0.8 or newer** installation and PHP 8.4. Older supported

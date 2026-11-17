@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale('en');
+if (($argv[1] ?? '') === '--page-routes') { \TinyCat\Social\Presentation\PublicPages::register(); echo json_encode(\TinyCat\Http\Router::pageDefinitions('tinycat.social'), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
 if (($argv[1] ?? '') === '--settings') { echo json_encode(\TinyCat\Core\Settings\Resource::editor(), JSON_THROW_ON_ERROR); exit(0); }
+if (($argv[1] ?? '') === '--constraints') { echo json_encode(\TinyCat\Http\Validator::constraints(['title' => 'required|string|max:2', 'body' => 'required|string|max_bytes:6', 'interval' => 'required|integer|between:5,10', 'comment' => 'required|string|max:2']), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--translation-fixtures') {
     $cases = [];
     foreach ([...array_keys(\TinyCat\Support\Languages::language_packages()), 'cs-CZ', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'uk-UA'] as $locale) {

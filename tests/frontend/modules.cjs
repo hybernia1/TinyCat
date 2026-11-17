@@ -8,6 +8,11 @@ const root = path.resolve(__dirname, "../..");
 let checks = 0;
 function check(condition, message) { checks++; assert.ok(condition, message); }
 class Node {
+  reportValidity() { return true; }
+  matches(selector) {
+    const match = /^(\w+)?(?:\[([\w-]+)(?:="([^"]*)")?\])?$/.exec(selector);
+    return !!match && (!match[1] || this.tag === match[1]) && (!match[2] || this.getAttribute(match[2]) !== null && (match[3] === undefined || this.getAttribute(match[2]) === match[3]));
+  }
   constructor(tag, text = "") {
     this.style = { setProperty() {}, removeProperty() {} };
     this.tag = tag; this.attributes = {}; this.children = []; this.value = ""; this._text = text;
@@ -655,26 +660,29 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.api = { request: async (url, options) => { sent = { url, options }; return { ok: true, data: { action: "react" }, meta: {} }; }, errors: canonicalFieldErrors };
   const bootAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--bootstrap"], { encoding: "utf8" }));
   for (const asset of bootAssets) vm.runInContext(asset.source, context);
-  T.status.controllers.actions.initStatusForms();
+  T.lifecycle.start();
+  async function submitStatus(event) { for (const callback of handlers.submit) { await callback(event); } }
   const statusForm = new Node("form");
   statusForm.setAttribute("action", "/api/statuses/10/likes/me"); statusForm.setAttribute("method", "POST");
   statusForm.fields = [{ name: "action", value: "react", disabled: false }, { name: "body", value: "Retained draft", disabled: false }];
   statusForm.querySelectorAll = selector => selector === "button, input, select, textarea" ? statusForm.fields : [];
-  statusForm.closest = selector => selector === "form[data-status-form]" ? statusForm : null;
+  statusForm.setAttribute("data-status-form", "");
+  statusForm.closest = selector => selector === "form[data-status-form]" || selector === "form[data-ajax-form]" ? statusForm : null;
   statusForm.elements = { namedItem: name => statusForm.fields.find(field => field.name === name) || null };
   statusForm.fields.forEach(field => { field.dataset = {}; });
-  await handlers.submit[0]({ target: statusForm, preventDefault() {}, submitter: { name: "submit_action", value: "publish" } });
+  T.status.controllers.actions.prepareForms({querySelectorAll:()=>[statusForm]});
+  await submitStatus({ target: statusForm, preventDefault() {}, submitter: { name: "submit_action", value: "publish" } });
   check(sent.options.body.get("body") === "Retained draft" && sent.options.body.get("submit_action") === "publish", "Actual status submit captures fields and the submitter before controls become disabled.");
-  check(statusForm.fields.every(field => !field.disabled) && !statusForm.dataset.statusBusy, "Actual status submit restores controls after the JSON result.");
+  check(statusForm.fields.every(field => !field.disabled) && !statusForm.dataset.apiBusy, "Actual status submit restores controls after the JSON result.");
   let notify = 0;
   T.toasts.show = () => { notify++; };
   T.api.request = async () => { throw new Error("Offline"); };
-  await handlers.submit[0]({ target: statusForm, preventDefault() {} });
+  await submitStatus({ target: statusForm, preventDefault() {} });
   check(notify === 1 && statusForm.fields[1].value === "Retained draft" && statusForm.fields.every(field => !field.disabled), "Transport failures retain the actual editor draft and restore its controls.");
   let finish, submitted = 0;
   T.api.request = () => { submitted++; return new Promise(resolve => { finish = resolve; }); };
-  const pending = handlers.submit[0]({ target: statusForm, preventDefault() {} });
-  await handlers.submit[0]({ target: statusForm, preventDefault() {} });
+  const pending = submitStatus({ target: statusForm, preventDefault() {} });
+  await submitStatus({ target: statusForm, preventDefault() {} });
   check(submitted === 1, "Actual status forms block a second submit while pending.");
   finish({ ok: true, data: { action: "react" }, meta: {} }); await pending;
   const invalidBody = new Node("textarea"), fieldContainer = new Node("label");
@@ -683,7 +691,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   let focused = false; invalidBody.focus = () => { focused = true; };
   statusForm.fields[1] = invalidBody;
   T.api.request = async () => { const error = new Error("Validation failed."); error.data = { error: { details: { errors: { body: ["Too long."] } } } }; throw error; };
-  await handlers.submit[0]({ target: statusForm, preventDefault() {} });
+  await submitStatus({ target: statusForm, preventDefault() {} });
   check(invalidBody.getAttribute("aria-invalid") === "true" && fieldContainer.textContent === "Too long." && focused, "Canonical validation errors reach the actual editor field and move focus to it.");
   context.File = File;
   let emptyFileClock = 100;

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require __DIR__ . '/../../../App/bootstrap.php';
+require __DIR__ . '/../../../App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 use TinyCat\Social\Posts\Mentions;
 use TinyCat\Social\Posts\Tags;

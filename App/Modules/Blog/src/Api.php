@@ -21,7 +21,7 @@ final class Api
             return Articles::resource($article);
         });
         $save = static function (\TinyCat\Http\Request $request, array $params) use ($api): array {
-            $request->validated(['title' => 'required|string|max:200', 'body' => 'required|string', 'status' => 'string|in:published,hidden']);
+            \TinyCat\Http\Validator::validated(Articles::rules(), Articles::prepareInput($request->payload()));
             try {
                 $id = Articles::save($request->payload(), $api->actor() ?? [], (int) ($params['id'] ?? 0), Images::uploaded());
                 return Articles::resource(Articles::find($id, false) ?? throw new \LogicException('Saved article missing.'));

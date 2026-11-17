@@ -970,14 +970,60 @@
         "enabled": true,
         "last_error": "",
         "last_imported_at": "",
-        "next_run_at": ""
+        "next_run_at": "",
+        "publication_interval_minutes": 30
       },
       "bots": [
         {
           "id": 3,
           "username": "Bot"
         }
-      ]
+      ],
+      "constraints": {
+        "bot_user_id": {
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "min": 1
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "nullable": false,
+          "max_bytes": 120
+        },
+        "feed_url": {
+          "type": "string",
+          "required": true,
+          "nullable": false,
+          "max_bytes": 2048
+        },
+        "interval_minutes": {
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "min": 5,
+          "max": 43200
+        },
+        "publication_interval_minutes": {
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "min": 5,
+          "max": 43200
+        },
+        "post_template": {
+          "type": "string",
+          "required": true,
+          "nullable": false,
+          "max_bytes": 2000
+        },
+        "enabled": {
+          "type": "boolean",
+          "required": false,
+          "nullable": false
+        }
+      }
     }
   },
   {

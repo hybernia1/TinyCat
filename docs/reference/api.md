@@ -133,6 +133,40 @@ browser renderers consume the same component definitions.
 CAPTCHA failures include `error.details.captcha` with `enabled`, `provider`,
 `site_key`, `context` and `refresh`. No secret key is exposed.
 
+## Shared input validation
+
+Editor resources for Blog articles and feed sources expose `data.constraints`,
+derived by `Validator::constraints()` from the owner's server rules. Field data
+contains `type`, `required`, `nullable`, optional `values`, numeric `min`/`max`,
+Unicode `min_length`/`max_length`, array `min_items`/`max_items`, and `max_bytes`.
+Article bodies use UTF-8 bytes; titles and source names use Unicode characters.
+These are data constraints, not component definitions or authorization decisions.
+Social source management resources also expose `constraints`; source names and
+publication templates retain their existing byte limits. Blog discussion and
+comment editor resources publish their owner character constraints. An overlong
+Blog comment returns a field validation error and preserves the stored comment.
+Creation and editing use identical rules. Existing article `limits` and editor
+`statuses` remain available, derived from those rules.
+
+Owners prepare payloads before `Validator::validated($rules, $prepared)` and reuse
+the same rules for persistence and imports. `max_bytes` reports a stable
+`validation_max_bytes` field issue. Shared forms enforce Unicode and byte bounds
+without truncating drafts; server validation remains authoritative.
+
+`Request::validated()` applies the core validator and returns only declared,
+present fields, without coercing their values. Body values have the same
+precedence over query values as `Request::input()`. Form integer strings remain
+strings; `integer` rejects booleans, floats and composite values. Numeric rules
+reject non-finite values, and enum rules reject composite values without PHP
+diagnostics. Declare the expected type together with an enum rule.
+
+Invalid input uses HTTP 422 and the existing `validation_error` envelope. The
+core sets each issue's `params.field` from its actual field map and enforces
+stable issue codes, independent of translation keys. A malformed validation
+definition is an implementation error with HTTP 500, even if the optional input
+field is absent. The module still owns object authorization, database constraints
+and domain rules, and reports field rejections through the same core transport.
+
 ## Installation and scheduled execution
 
 All HTTP operations enter the front controller and module-owned routes. The shared

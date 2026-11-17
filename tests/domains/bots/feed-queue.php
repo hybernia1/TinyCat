@@ -7,7 +7,7 @@ if (!is_file($root . '/config.php') || !in_array('mysql', PDO::getAvailableDrive
     echo "SKIP per-feed publication queue: local MySQL configuration unavailable.\n";
     exit(0);
 }
-require $root . '/App/bootstrap.php';
+require $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $config = require $root . '/config.php';
 $db = $config['database'];

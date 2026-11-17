@@ -38,11 +38,12 @@ final class FeedAdministration
     /** @return array<string, mixed> */
     public static function editor(int $id = 0): array
     {
-        $item = $id > 0 ? FeedSources::find($id) : ['id' => 0, 'author_id' => 0, 'name' => '', 'feed_url' => '', 'interval_minutes' => 60, 'publication_status' => 'hidden', 'enabled' => true, 'import_images' => false];
+        $item = $id > 0 ? FeedSources::find($id) : ['id' => 0] + FeedSources::prepareInput([]);
         if ($item === null) { \TinyCat\Http\Response::error('Source not found.', 404, 'article_source_not_found'); }
         $authors = Connection::all("SELECT id, username FROM users WHERE role = 'admin' AND status = 'active' ORDER BY username, id");
         if ($id === 0) { $item['author_id'] = (int) ($authors[0]['id'] ?? 0); }
-        return ['item' => $id > 0 ? self::resource($item) : $item, 'authors' => $authors, 'statuses' => ['hidden', 'published'], 'permissions' => ['save' => true, 'delete' => $id > 0, 'change_feed_url' => $id === 0]];
+        $constraints = FeedSources::constraints();
+        return ['item' => $id > 0 ? self::resource($item) : $item, 'authors' => $authors, 'constraints' => $constraints, 'statuses' => $constraints['publication_status']['values'], 'permissions' => ['save' => true, 'delete' => $id > 0, 'change_feed_url' => $id === 0]];
     }
 
     public static function page(): void
@@ -60,8 +61,9 @@ final class FeedAdministration
         $api->get('/api/article-sources/creation', static fn (): array => self::editor(), 'admin');
         $api->get('/api/article-sources/{id:[1-9][0-9]*}/management', static fn (\TinyCat\Http\Request $request, array $params): array => self::editor((int) $params['id']), 'admin');
         $save = static function (\TinyCat\Http\Request $request, array $params): array {
+            \TinyCat\Http\Validator::validated(FeedSources::rules(), FeedSources::prepareInput($request->payload()));
             try { $id = FeedSources::save($request->payload(), (int) ($params['id'] ?? 0)); }
-            catch (\InvalidArgumentException) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('blog.feeds.invalid'), 422, 'article_source_invalid'); }
+            catch (\InvalidArgumentException) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('blog.feeds.invalid', FeedSources::messageParams()), 422, 'article_source_invalid', [], FeedSources::messageParams()); }
             catch (\DomainException) { \TinyCat\Http\Response::error('Source not found.', 404, 'article_source_not_found'); }
             return ['item' => self::resource(FeedSources::find($id) ?? throw new \LogicException('Saved source missing.'))];
         };
@@ -73,7 +75,7 @@ final class FeedAdministration
         }, 'admin');
         $api->post('/api/article-sources/preview', static function (\TinyCat\Http\Request $request): array {
             try { return FeedSources::preview($request->payload()); }
-            catch (\InvalidArgumentException|\RuntimeException) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('blog.feeds.invalid'), 422, 'article_feed_invalid'); }
+            catch (\InvalidArgumentException|\RuntimeException) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('blog.feeds.invalid', FeedSources::messageParams()), 422, 'article_feed_invalid', [], FeedSources::messageParams()); }
         }, 'admin');
         $api->post('/api/article-sources/{id:[1-9][0-9]*}/run', static function (\TinyCat\Http\Request $request, array $params) use ($api): \TinyCat\Http\Result {
             $execution = \TinyCat\Http\Session::withoutLock(static fn (): array => \TinyCat\Core\Tasks\Execution::run('article_feeds', ['source_id' => (int) $params['id']], 'admin', (int) ($api->actor()['id'] ?? 0)));

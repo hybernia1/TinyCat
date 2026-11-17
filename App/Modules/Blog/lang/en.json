@@ -12,7 +12,7 @@
     "empty": "No articles yet.",
     "older": "Older articles",
     "not_found": "Article not found.",
-    "invalid": "Enter a title (up to 200 characters) and text (up to 60,000 UTF-8 bytes).",
+    "invalid": "Enter a title (up to {title_max} characters) and text (up to {body_max} UTF-8 bytes).",
     "articles": "Articles",
     "scheduled": "Scheduled",
     "feeds": {
@@ -27,7 +27,7 @@
       "run": "Run import",
       "preview": "Import preview",
       "preview_empty": "No usable items.",
-      "invalid": "Check the name, public feed URL, active administrator and interval of 5 to 43,200 minutes. A saved source URL cannot be changed."
+      "invalid": "Check the name, public feed URL, active administrator and interval of {interval_min} to {interval_max} minutes. A saved source URL cannot be changed."
     },
     "settings": {
       "images_enabled": "Allow post images",

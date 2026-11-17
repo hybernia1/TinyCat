@@ -448,13 +448,16 @@
         "ui/select"
       ],
       "inputs": [
+        "constraints.body.max_bytes",
+        "constraints.body.required",
+        "constraints.status.values",
+        "constraints.title.max_length",
+        "constraints.title.required",
         "image",
         "images_enabled",
         "item.body",
         "item.status",
-        "item.title",
-        "limits.title",
-        "statuses"
+        "item.title"
       ]
     },
     {
@@ -468,6 +471,15 @@
         "author.id",
         "author.username",
         "authors",
+        "constraints.author_id.required",
+        "constraints.feed_url.max_bytes",
+        "constraints.feed_url.required",
+        "constraints.interval_minutes.max",
+        "constraints.interval_minutes.min",
+        "constraints.interval_minutes.required",
+        "constraints.name.max_length",
+        "constraints.name.required",
+        "constraints.publication_status.values",
         "item.author_id",
         "item.enabled",
         "item.feed_url",
@@ -475,8 +487,7 @@
         "item.interval_minutes",
         "item.name",
         "item.publication_status",
-        "permissions.change_feed_url",
-        "statuses"
+        "permissions.change_feed_url"
       ]
     },
     {
@@ -798,6 +809,19 @@
         "bot.id",
         "bot.username",
         "bots",
+        "constraints.bot_user_id.required",
+        "constraints.feed_url.max_bytes",
+        "constraints.feed_url.required",
+        "constraints.interval_minutes.max",
+        "constraints.interval_minutes.min",
+        "constraints.interval_minutes.required",
+        "constraints.name.max_bytes",
+        "constraints.name.required",
+        "constraints.post_template.max_bytes",
+        "constraints.post_template.required",
+        "constraints.publication_interval_minutes.max",
+        "constraints.publication_interval_minutes.min",
+        "constraints.publication_interval_minutes.required",
         "source.bot_user_id",
         "source.feed_url",
         "source.interval_minutes",
@@ -1341,6 +1365,7 @@
         "post",
         "profile_edit_id",
         "profile_edit_url",
+        "routes",
         "rss_url",
         "search",
         "sidebar",
@@ -1896,6 +1921,8 @@
       "dependencies": [],
       "inputs": [
         "comment",
+        "max_bytes",
+        "max_characters",
         "max_length",
         "name",
         "placeholder",
@@ -1952,6 +1979,7 @@
       ],
       "inputs": [
         "api_base",
+        "constraints.comment.max_length",
         "content_id",
         "mention",
         "parent_id",
@@ -1972,6 +2000,7 @@
       ],
       "inputs": [
         "api_base",
+        "constraints",
         "context",
         "item",
         "item.author",
@@ -2023,6 +2052,7 @@
       "inputs": [
         "capabilities.comment",
         "capabilities.react",
+        "constraints",
         "item",
         "items",
         "liked",
@@ -10904,7 +10934,7 @@
       "methods": [
         {
           "name": "current",
-          "line": 101
+          "line": 95
         }
       ]
     },
@@ -11087,23 +11117,39 @@
       ]
     },
     {
+      "source": "assets/ui/form-constraints.js",
+      "methods": []
+    },
+    {
       "source": "assets/ui/form-requests.js",
       "methods": [
         {
-          "name": "request",
+          "name": "validate",
           "line": 37
         },
         {
+          "name": "setSubmitGuard",
+          "line": 41
+        },
+        {
+          "name": "canSubmit",
+          "line": 42
+        },
+        {
+          "name": "request",
+          "line": 44
+        },
+        {
           "name": "cancel",
-          "line": 65
+          "line": 72
         },
         {
           "name": "dispose",
-          "line": 66
+          "line": 73
         },
         {
           "name": "bind",
-          "line": 67
+          "line": 74
         }
       ]
     },
@@ -11215,10 +11261,8 @@
     "App/Modules/Social/templates/parts/bots/modals/account-filter.php",
     "App/Modules/Social/templates/parts/bots/modals/source-filter.php",
     "App/Modules/Social/templates/parts/site/sidebar-slot.php",
-    "App/Modules/Social/templates/parts/status/composer.php",
     "App/Modules/Social/templates/parts/status/feed.php",
-    "App/Modules/Social/templates/parts/status/home-feed.php",
-    "App/Modules/Social/templates/parts/users/follow-button.php"
+    "App/Modules/Social/templates/parts/status/home-feed.php"
   ],
   "php_templates": [
     "App/Core/Health/templates/page.php",
@@ -11254,10 +11298,8 @@
     "App/Modules/Social/templates/parts/bots/modals/account-filter.php",
     "App/Modules/Social/templates/parts/bots/modals/source-filter.php",
     "App/Modules/Social/templates/parts/site/sidebar-slot.php",
-    "App/Modules/Social/templates/parts/status/composer.php",
     "App/Modules/Social/templates/parts/status/feed.php",
     "App/Modules/Social/templates/parts/status/home-feed.php",
-    "App/Modules/Social/templates/parts/users/follow-button.php",
     "App/Modules/Social/templates/site/privacy-section.php",
     "App/Modules/Social/templates/site/public.php",
     "App/Modules/Social/templates/status/embed.php"
@@ -11323,7 +11365,6 @@
         "commentItem",
         "commentsThread",
         "composerBody",
-        "composer",
         "homeFeed"
       ]
     },
@@ -11341,7 +11382,6 @@
         "adminList",
         "authContent",
         "authForm",
-        "followButton",
         "followingProfile",
         "avatar"
       ]
@@ -13596,6 +13636,21 @@
         "assets/ui/form-requests.js"
       ],
       "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "assets/ui/form-constraints.js",
+      "imports": [
+        "assets/core/dom.js",
+        "assets/core/lifecycle.js",
+        "assets/ui/form-state.js"
+      ],
+      "entries": [
+        {
+          "manifest": "assets/ui/module.json",
+          "routes": []
+        }
+      ],
       "standalone": false
     },
     {

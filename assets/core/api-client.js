@@ -78,13 +78,7 @@ import "./urls.js";
     return result;
   }
 
-  function unwrapResult(data) {
-    if (data && typeof data === "object" && Object.prototype.hasOwnProperty.call(data, "ok") && Object.prototype.hasOwnProperty.call(data, "data")) {
-      return data.data;
-    }
-
-    return data;
-  }
+  function unwrapResult(data) { return data.data; }
   function resultErrorDetails(data) {
     return data && data.error && data.error.details && typeof data.error.details === "object"
       ? data.error.details

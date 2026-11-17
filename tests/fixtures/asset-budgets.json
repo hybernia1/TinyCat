@@ -40,7 +40,7 @@
     "stylesheets": 1
   },
   "/admin/updates": {
-    "raw_js": 204800,
+    "raw_js": 205056,
     "gzip_js": 48128,
     "raw_css": 47104,
     "gzip_css": 10240,

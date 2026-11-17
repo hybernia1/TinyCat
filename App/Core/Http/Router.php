@@ -19,6 +19,8 @@ final class Router
     /** @var array<string, true> */
     private static array $routeKeys = [];
     private static bool $debug = false;
+    /** @var list<array{group: string, path: string, resource: callable, query: list<string>}> */
+    private static array $pages = [];
 
     /** Validate one provider before exposing its routes; preserve legacy aliases.
      * @param callable(): void $register */
@@ -26,6 +28,7 @@ final class Router
     {
         $before = self::$routes;
         $beforeKeys = self::$routeKeys;
+        $beforePages = self::$pages;
         try {
             $register();
             $seen = $beforeKeys;
@@ -38,7 +41,50 @@ final class Router
                     $seen[$key] = true;
                 }
             }
-        } catch (Throwable $error) { self::$routes = $before; self::$routeKeys = $beforeKeys; throw $error; }
+        } catch (Throwable $error) { self::$routes = $before; self::$routeKeys = $beforeKeys; self::$pages = $beforePages; throw $error; }
+    }
+
+    /** Register one public page for native HTTP and optional client navigation.
+     * @param callable(): (array<string, mixed>|null) $resource
+     * @param list<string> $query */
+    public static function page(string $group, string $path, callable $handler, callable $resource, array $query = []): void
+    {
+        foreach ($query as $key) { if (preg_match('/^[a-z][a-z0-9_]*$/D', $key) !== 1) { throw new InvalidArgumentException('Invalid page query key.'); } }
+        self::route(['GET', 'HEAD'], $path, $handler);
+        self::$pages[] = compact('group', 'path', 'resource', 'query');
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function pageResource(string $group, string $path): ?array
+    {
+        if ($path === '/') { $path = \TinyCat\Core\Runtime\EntryPages::homepage()->path ?? '/'; }
+        foreach (self::$pages as $page) {
+            if ($page['group'] !== $group) { continue; }
+            $params = self::routeMatch($page['path'], $path);
+            if ($params !== null) { return call_user_func_array($page['resource'], $params); }
+        }
+        return null;
+    }
+
+    /** Data only: the same route patterns and query allowlists used by the owner.
+     * @return list<array{pattern: string, query: list<string>}> */
+    public static function pageDefinitions(string $group): array
+    {
+        $definitions = []; $home = \TinyCat\Core\Runtime\EntryPages::homepage()?->path;
+        foreach (self::$pages as $page) {
+            if ($page['group'] !== $group) { continue; }
+            $pattern = self::pattern($page['path']);
+            $definitions[] = ['pattern' => $pattern, 'query' => $page['query']];
+            if ($page['path'] === $home && $home !== '/') { $definitions[] = ['pattern' => '^/$', 'query' => $page['query']]; }
+        }
+        return $definitions;
+    }
+
+    public static function pattern(string $path): string
+    {
+        $pattern = substr(self::routeRegex($path), 1, -2);
+        $pattern = (string) preg_replace('/\(\?P<[^>]+>/', '(?:', $pattern);
+        return str_replace(['\\-', '\\#'], ['-', '#'], $pattern);
     }
 
     /**

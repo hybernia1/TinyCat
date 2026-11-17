@@ -8,8 +8,10 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   const target = { dataset: {}, querySelector: () => side, setAttribute() {}, removeAttribute() {}, replaceChildren() {} };
   const tagNodes = [], metaNodes = [];
   const head = { querySelector: selector => { const match = /^meta\[(property|name)="([^"]+)"\]$/.exec(selector); return match ? metaNodes.find(node => node[match[1]] === match[2]) || null : null; }, querySelectorAll: selector => selector === 'meta[property="article:tag"]' ? tagNodes.slice() : [], appendChild(node) { metaNodes.push(node); if (node.property === "article:tag") { tagNodes.push(node); } } };
+  const routes = JSON.parse(require('node:child_process').execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(__dirname,'../presentation/fixtures/component-parity.php'),'--page-routes'], {encoding:'utf8'}));
+  const publicPage = {dataset:{publicRoutes:JSON.stringify(routes)}};
   const document = { head, body: { dataset: { currentUserId: "0", applicationVersion: "4.5.0" } }, documentElement: { lang: "cs" },
-    querySelector(selector) { if (selector === "[data-global-search-input]") { return input; } return selector === "#main-content > .container" ? target : {}; },
+    querySelector(selector) { if (selector === "[data-public-page]") { return publicPage; } if (selector === "[data-global-search-input]") { return input; } return selector === "#main-content > .container" ? target : {}; },
     querySelectorAll: selector => selector === "[data-global-search-results]" ? [results] : [], getElementById: () => ({ focus() {} }),
     createElement: () => ({ setAttribute(key, value) { this[key] = value; }, remove() { const metaIndex = metaNodes.indexOf(this); if (metaIndex >= 0) { metaNodes.splice(metaIndex, 1); } const index = tagNodes.indexOf(this); if (index >= 0) { tagNodes.splice(index, 1); } } }), addEventListener: (name, fn) => { handlers[name] = fn; } };
   const data = { version: "4.5.0", locale: "cs", viewer: null, kind: "search", url: "/search?q=quartz&type=users", search: { query: "quartz" }, document: { title: "Search quartz", url: "http://tinycat.test/search?q=quartz&type=users" }, sidebar_url: "/api/site/sidebar" };

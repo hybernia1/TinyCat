@@ -27,7 +27,6 @@ final class Registration implements \TinyCat\Core\Modules\StorageModule, \TinyCa
         ]);
     }
 
-
     /** @return list<string> */
     public static function tables(): array
     {
@@ -40,18 +39,10 @@ final class Registration implements \TinyCat\Core\Modules\StorageModule, \TinyCa
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed', static fn (string $id) => Embed::page((int) $id), contentType: 'text/plain');
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed-code', static fn (string $id) => Embed::page((int) $id, true), contentType: 'text/plain');
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/rss', static fn () => \TinyCat\Http\Document::notFound('Feed not found.'), contentType: 'text/plain');
-        \TinyCat\Http\Router::route('GET', '/status/{status_id:[0-9]+}', static function (string $status_id): void {
-            Pages::detail(max(0, (int) $status_id));
-        });
 
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/tag/{tag}/feed', static fn (string $tag) => Syndication::respond('tag', $tag), contentType: 'text/plain');
 
-        \TinyCat\Http\Router::route('GET', '/tag/{tag}', static function (string $tag): void {
-            Pages::tag($tag);
-        });
-
         foreach ([
-            ['GET', '/social', static function (): void { Pages::home(); }],
             ['GET', '/status', static function (?int $statusId = null): void { Pages::detail($statusId); }],
             ['GET', '/tag', static function (?string $tag = null): void { Pages::tag($tag); }],
         ] as [$methods, $path, $handler]) {

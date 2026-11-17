@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $expect = static function (bool $condition, string $message): void {
     if (!$condition) {

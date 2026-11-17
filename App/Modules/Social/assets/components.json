@@ -1685,7 +1685,9 @@
                     "attrs": {
                       "class": "select",
                       "name": "bot_user_id",
-                      "required": true
+                      "required": {
+                        "get": "constraints.bot_user_id.required"
+                      }
                     },
                     "children": [
                       {
@@ -1751,8 +1753,12 @@
                     "value": {
                       "get": "source.name"
                     },
-                    "required": true,
-                    "maxlength": "120"
+                    "required": {
+                      "get": "constraints.name.required"
+                    },
+                    "data-max-bytes": {
+                      "get": "constraints.name.max_bytes"
+                    }
                   }
                 }
               }
@@ -1776,8 +1782,12 @@
                 "value": {
                   "get": "source.feed_url"
                 },
-                "required": true,
-                "maxlength": "2048"
+                "required": {
+                  "get": "constraints.feed_url.required"
+                },
+                "data-max-bytes": {
+                  "get": "constraints.feed_url.max_bytes"
+                }
               }
             }
           }
@@ -1800,12 +1810,7 @@
                 "values": {}
               },
               "value": {
-                "or": [
-                  {
-                    "get": "source.interval_minutes"
-                  },
-                  60
-                ]
+                "get": "source.interval_minutes"
               },
               "textarea": false,
               "attributes": {
@@ -1813,16 +1818,17 @@
                 "name": "interval_minutes",
                 "type": "number",
                 "value": {
-                  "or": [
-                    {
-                      "get": "source.interval_minutes"
-                    },
-                    60
-                  ]
+                  "get": "source.interval_minutes"
                 },
-                "required": true,
-                "min": "5",
-                "max": "43200"
+                "required": {
+                  "get": "constraints.interval_minutes.required"
+                },
+                "min": {
+                  "get": "constraints.interval_minutes.min"
+                },
+                "max": {
+                  "get": "constraints.interval_minutes.max"
+                }
               }
             }
           },
@@ -1834,12 +1840,7 @@
                 "values": {}
               },
               "value": {
-                "or": [
-                  {
-                    "get": "source.publication_interval_minutes"
-                  },
-                  30
-                ]
+                "get": "source.publication_interval_minutes"
               },
               "textarea": false,
               "attributes": {
@@ -1847,16 +1848,17 @@
                 "name": "publication_interval_minutes",
                 "type": "number",
                 "value": {
-                  "or": [
-                    {
-                      "get": "source.publication_interval_minutes"
-                    },
-                    30
-                  ]
+                  "get": "source.publication_interval_minutes"
                 },
-                "required": true,
-                "min": "5",
-                "max": "43200"
+                "required": {
+                  "get": "constraints.publication_interval_minutes.required"
+                },
+                "min": {
+                  "get": "constraints.publication_interval_minutes.min"
+                },
+                "max": {
+                  "get": "constraints.publication_interval_minutes.max"
+                }
               }
             }
           }
@@ -1879,20 +1881,19 @@
                 "values": {}
               },
               "value": {
-                "or": [
-                  {
-                    "get": "source.post_template"
-                  },
-                  "{{title}}\n\n{{description}}\n\n{{url}}\n\n#{categories}"
-                ]
+                "get": "source.post_template"
               },
               "textarea": true,
               "attributes": {
                 "class": "textarea",
                 "name": "post_template",
-                "required": true,
-                "maxlength": "2000",
-                "rows": "8"
+                "required": {
+                  "get": "constraints.post_template.required"
+                },
+                "rows": "8",
+                "data-max-bytes": {
+                  "get": "constraints.post_template.max_bytes"
+                }
               }
             }
           },
@@ -7276,6 +7277,11 @@
       },
       "data-public-page": {
         "get": "kind"
+      },
+      "data-public-routes": {
+        "json": {
+          "get": "routes"
+        }
       }
     },
     "children": [

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $path = (string) ($argv[1] ?? '/');
 $locale = (string) ($argv[2] ?? 'en');

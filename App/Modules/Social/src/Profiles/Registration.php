@@ -21,7 +21,6 @@ final class Registration implements \TinyCat\Core\Modules\ProvidesContributions,
     {
         Api::register($api);
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/author/{author_id:[0-9]+}/feed', static fn (string $author_id) => Integration::feed((int) $author_id), contentType: 'text/plain');
-        \TinyCat\Http\Router::route('GET', '/author/{author_id:[0-9]+}', static function (string $author_id): void { Pages::author(max(0, (int) $author_id)); });
         \TinyCat\Http\Router::route('GET', '/author', static function (?int $requestedId = null): void { Pages::author($requestedId); });
     }
 }

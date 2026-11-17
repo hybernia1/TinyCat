@@ -32,7 +32,7 @@ foreach (['Connection', 'Router', 'Authentication', 'Posts', 'Comments', 'Inbox'
 if (!defined('TINYCAT')) {
     define('TINYCAT', true);
 }
-require_once $root . '/App/bootstrap.php';
+require_once $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $assert(
     \TinyCat\Support\Text::positive_int_ids([3, '2', 3, 0, -1, 'invalid', 2]) === [3, 2],

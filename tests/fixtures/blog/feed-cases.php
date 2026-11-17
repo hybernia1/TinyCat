@@ -7,6 +7,32 @@ use TinyCat\Core\Feeds\FeedParser;
 
 require_once dirname(__DIR__, 2) . '/support/http-client-double.php';
 
+$constraintActor = ['id' => 1, 'role' => 'admin', 'status' => 'active'];
+$boundaryTitle = str_repeat("\u{1F600}", \TinyCat\Blog\Articles::TITLE_MAX_LENGTH);
+$boundaryBody = str_repeat("\u{11B}", intdiv(\TinyCat\Blog\Articles::BODY_MAX_BYTES, 2));
+$boundaryId = \TinyCat\Blog\Articles::save(['title' => $boundaryTitle, 'body' => $boundaryBody], $constraintActor);
+$boundaryArticle = \TinyCat\Blog\Articles::find($boundaryId, false);
+$assert($boundaryArticle['title'] === $boundaryTitle && $boundaryArticle['body'] === $boundaryBody, 'Owner rules persist exact Unicode character and UTF-8 byte boundaries');
+foreach ([['title' => $boundaryTitle . 'x', 'body' => 'Body'], ['title' => 'Title', 'body' => $boundaryBody . 'x'], ['title' => 'Title', 'body' => 'Body', 'status' => 'scheduled']] as $invalidArticle) {
+    $rejected = false;
+    try { \TinyCat\Blog\Articles::save($invalidArticle, $constraintActor); } catch (\InvalidArgumentException) { $rejected = true; }
+    $assert($rejected, 'Direct article writes enforce the same owner bounds and publication enum');
+}
+$preparedBoundary = FeedSources::pipeline()->preview([], ['guid' => 'boundary', 'title' => $boundaryTitle, 'content' => $boundaryBody]);
+$preparedOverflow = FeedSources::pipeline()->preview([], ['guid' => 'overflow', 'title' => 'Title', 'content' => $boundaryBody . 'x']);
+$assert($preparedBoundary->rejection === null && $preparedOverflow->rejection['code'] === 'article_invalid', 'Feed preparation enforces the same article byte boundary before publication');
+\TinyCat\Blog\Articles::delete($boundaryId, $constraintActor);
+foreach ([FeedSources::INTERVAL_MIN, FeedSources::INTERVAL_MAX] as $interval) {
+    $boundarySource = FeedSources::save(['name' => str_repeat("\u{11B}", FeedSources::NAME_MAX_LENGTH), 'feed_url' => 'https://93.184.216.34/boundary-' . $interval, 'author_id' => 1, 'interval_minutes' => $interval]);
+    $assert((int) FeedSources::find($boundarySource)['interval_minutes'] === $interval, 'Source rules accept exact owner interval and Unicode name bounds');
+    $pdo->exec('DELETE FROM blog_sources WHERE id = ' . $boundarySource);
+}
+foreach ([['interval_minutes' => FeedSources::INTERVAL_MIN - 1], ['interval_minutes' => FeedSources::INTERVAL_MAX + 1], ['interval_minutes' => 5.5], ['author_id' => true], ['name' => str_repeat("\u{11B}", FeedSources::NAME_MAX_LENGTH + 1)], ['publication_status' => 'scheduled']] as $index => $invalidSource) {
+    $rejected = false;
+    try { FeedSources::save($invalidSource + ['name' => 'Boundary', 'feed_url' => 'https://93.184.216.34/rejected-' . $index, 'author_id' => 1]); } catch (\InvalidArgumentException) { $rejected = true; }
+    $assert($rejected, 'Direct source writes reject invalid bounds, types and publication values');
+}
+
 $feedInput = ['name' => 'Fixture feed', 'feed_url' => 'https://93.184.216.34/articles.xml', 'author_id' => 1, 'interval_minutes' => 60];
 $sourceId = FeedSources::save($feedInput);
 $feedSource = FeedSources::runtime(FeedSources::find($sourceId));

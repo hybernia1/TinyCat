@@ -132,9 +132,22 @@
       "validation_min": "common.validation_invalid",
       "validation_between": "common.validation_invalid",
       "validation_string": "common.validation_invalid",
-      "validation_url": "common.validation_invalid"
+      "validation_url": "common.validation_invalid",
+      "validation_max_bytes": "common.validation_invalid"
     },
     "styles": []
+  },
+  {
+    "id": "ui.form-constraints",
+    "routes": [],
+    "entries": [
+      "assets/ui/form-constraints.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "common.validation_invalid"
+    ]
   },
   {
     "routes": [

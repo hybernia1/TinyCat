@@ -12,7 +12,7 @@ use \TinyCat\Core\Security\Csrf;
 use \TinyCat\Http\Session;
 
 define('TINYCAT', true);
-require_once __DIR__ . '/../../App/bootstrap.php';
+require_once __DIR__ . '/../../App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;
@@ -75,6 +75,57 @@ $assert($queryOnly->method() === 'POST', 'A query parameter cannot override the 
 $validated = (new Request(postData: ['name' => 'Alice', 'unexpected' => 'discard']))->validated(['name' => 'required|string|max:32']);
 $assert($validated === ['name' => 'Alice'], 'Request validation only returns explicitly allowed fields.');
 $assert(isset(\TinyCat\Http\Validator::validate(['name' => []], ['name' => 'required|string'])['name']), 'Shared validation rejects invalid types without a domain dependency.');
+set_error_handler(static function (int $severity, string $message): never { throw new ErrorException($message, 0, $severity); });
+try {
+    foreach ([[['published'], 'in:published,hidden'], [new stdClass(), 'in:published,hidden'], [true, 'integer'], [1.0, 'integer'], [INF, 'numeric'], ['1e999', 'numeric']] as [$value, $rule]) {
+        $errors = \TinyCat\Http\Validator::validate(['value' => $value], ['value' => $rule], structured: true);
+        $assert(isset($errors['value']) && is_string($errors['value'][0]['code']), 'Invalid input types produce structured field errors without PHP diagnostics: ' . $rule);
+    }
+    foreach ([[false, 'required|boolean'], [0, 'required|integer'], ['42', 'integer|min:1|max:100'], [[1, 2], 'array|max:2'], [null, 'nullable|string']] as [$value, $rule]) {
+        $assert(\TinyCat\Http\Validator::validate(['value' => $value], ['value' => $rule]) === [], 'Validation preserves supported JSON/form values: ' . $rule);
+    }
+    foreach (['unknown_rule', 'max:nope', 'between:9,1', 'required:extra', 'in:', ['string', []]] as $rules) {
+        $throws(static fn () => \TinyCat\Http\Validator::validate([], ['absent' => $rules]), LogicException::class);
+    }
+    $throws(static fn () => \TinyCat\Http\Validator::validate(['value' => ''], ['value' => 'required'], ['required' => []], true), LogicException::class);
+} finally { restore_error_handler(); }
+$assert((new Request(postData: ['id' => '42']))->validated(['id' => 'required|integer']) === ['id' => '42'], 'Validation checks types without silently coercing form input.');
+$definition = ['title' => 'required|string|max:2', 'body' => 'required|string|max_bytes:6', 'interval' => 'integer|between:5,10', 'state' => 'string|in:hidden,published', 'items' => 'array|max:2'];
+$constraints = \TinyCat\Http\Validator::constraints($definition);
+$assert($constraints['title']['max_length'] === 2 && $constraints['body']['max_bytes'] === 6 && !isset($constraints['body']['max_length']), 'Constraints preserve character and byte dimensions independently.');
+$assert($constraints['interval']['min'] === 5 && $constraints['interval']['max'] === 10 && $constraints['state']['values'] === ['hidden', 'published'] && $constraints['items']['max_items'] === 2, 'Numeric bounds, enums and collection sizes derive from the validation definition.');
+$assert(\TinyCat\Http\Validator::validate(['title' => '😀😀', 'body' => 'ěěě'], $definition) === [], 'Unicode characters and UTF-8 bytes use the declared units at the exact boundary.');
+$errors = \TinyCat\Http\Validator::validate(['body' => 'ěěěě'], ['body' => $definition['body']], structured: true);
+$assert($errors['body'][0]['code'] === 'validation_max_bytes', 'A multibyte overflow uses the common field issue contract.');
+$throws(static fn () => \TinyCat\Http\Validator::constraints(['field' => 'required']), LogicException::class);
+$throws(static fn () => \TinyCat\Http\Validator::constraints(['field' => 'string|integer']), LogicException::class);
+$combined = \TinyCat\Http\Validator::constraints(['text' => 'string|min:3|min:1|max:8|max:10|max_bytes:12|max_bytes:20|in:one,two|in:two,three', 'number' => 'integer|between:5,20|between:1,10']);
+$assert($combined['text']['min_length'] === 3 && $combined['text']['max_length'] === 8 && $combined['text']['max_bytes'] === 12 && $combined['text']['values'] === ['two'] && $combined['number']['min'] === 5 && $combined['number']['max'] === 10, 'Combined constraints retain the strongest bounds and intersect allowed values.');
+$throws(static fn () => \TinyCat\Http\Validator::validate([], ['field' => 'max_bytes:1.5']), LogicException::class);
+$normalizeIssues = new ReflectionMethod(\TinyCat\Http\Response::class, 'issues');
+$issues = $normalizeIssues->invoke(null, ['title' => ['domain' => \TinyCat\Http\Response::issue('title_invalid', 'Invalid title.', ['field' => 'other', 'max' => 200])]]);
+$assert(array_is_list($issues['title']), 'Field issues always serialize as a JSON list, regardless of contributor array keys.');
+$assert($issues['title'][0]['params'] === ['field' => 'title', 'max' => 200], 'The core owns the actual validation field even if a contributor supplies a conflicting parameter.');
+$throws(static fn () => \TinyCat\Http\Response::issue('translation.key', 'Invalid.'), LogicException::class);
+$throws(static fn () => $normalizeIssues->invoke(null, ['title' => [['code' => 'title_invalid', 'message' => []]]]), LogicException::class);
+$throws(static fn () => $normalizeIssues->invoke(null, ['title' => (object) ['message' => 'Invalid.']]), LogicException::class);
+$pageReads = 0;
+Router::registerModule(static function () use (&$pageReads): void {
+    Router::page('fixture.pages', '/fixture-page/{id:[1-9][0-9]*}', static fn (string $id): string => $id, static function (string $id) use (&$pageReads): array { $pageReads++; return ['id' => (int) $id]; }, ['q']);
+});
+$assert($pageReads === 0, 'Page registration never evaluates its resource callback.');
+$assert(Router::pageResource('fixture.pages', '/fixture-page/12') === ['id' => 12] && $pageReads === 1, 'Page resources resolve through the registered HTTP route parameters.');
+$assert(Router::pageResource('other.owner', '/fixture-page/12') === null && Router::pageResource('fixture.pages', '/fixture-page/0') === null, 'Page resources respect ownership and the canonical path constraint.');
+$definitions = Router::pageDefinitions('fixture.pages');
+$assert($definitions === [['pattern' => '^/fixture-page/(?:[1-9][0-9]*)$', 'query' => ['q']]], 'Client metadata is derived from the HTTP route and its query allowlist.');
+$throws(static function (): void { Router::registerModule(static function (): void { foreach ([1, 2] as $_) { Router::page('fixture.rejected', '/duplicate-page', static fn (): string => '', static fn (): array => []); } }); }, InvalidArgumentException::class);
+$assert(Router::pageDefinitions('fixture.rejected') === [], 'A rejected provider rolls back page metadata with its HTTP routes.');
+$sourceInput = \TinyCat\Social\Automation\Administration::prepareSourceInput(['bot_user_id' => 3, 'name' => str_repeat("\u{11B}", 60), 'feed_url' => 'https://example.test/feed', 'post_template' => str_repeat("\u{11B}", 1000)]);
+$sourceRules = \TinyCat\Social\Automation\Administration::sourceRules();
+$assert(\TinyCat\Http\Validator::validate($sourceInput, $sourceRules) === [], 'Social source rules accept exact UTF-8 byte limits and supply the declared interval defaults.');
+foreach (['name' => str_repeat("\u{11B}", 61), 'post_template' => str_repeat("\u{11B}", 1001), 'interval_minutes' => 4, 'publication_interval_minutes' => 43201] as $field => $value) {
+    $assert(isset(\TinyCat\Http\Validator::validate(array_replace($sourceInput, [$field => $value]), $sourceRules)[$field]), 'Social source rules reject overflow using their shared field definition: ' . $field);
+}
 $throws(static fn () => Router::route('ANY', '/unbounded', static fn (): null => null), InvalidArgumentException::class);
 
 Session::start();

@@ -46,8 +46,9 @@ final class Administration
     /** @return array<string, mixed> */
     public static function editor(int $id = 0): array
     {
-        $article = $id > 0 ? Articles::find($id, false) : ['id' => 0, 'title' => '', 'body' => '', 'status' => 'published'];
+        $article = $id > 0 ? Articles::find($id, false) : ['id' => 0, 'title' => '', 'body' => '', 'status' => Articles::DEFAULT_STATUS];
         if ($article === null) { \TinyCat\Http\Response::error('Article not found.', 404, 'article_not_found'); }
-        return ['item' => $article, 'image' => ['url' => Images::url($article)], 'images_enabled' => Images::enabled(), 'permissions' => ['save' => true, 'delete' => $id > 0], 'limits' => ['title' => 200, 'body_bytes' => 60000], 'statuses' => ['published', 'hidden']];
+        $constraints = Articles::constraints();
+        return ['item' => $article, 'image' => ['url' => Images::url($article)], 'images_enabled' => Images::enabled(), 'permissions' => ['save' => true, 'delete' => $id > 0], 'constraints' => $constraints, 'limits' => ['title' => $constraints['title']['max_length'], 'body_bytes' => $constraints['body']['max_bytes']], 'statuses' => $constraints['status']['values']];
     }
 }

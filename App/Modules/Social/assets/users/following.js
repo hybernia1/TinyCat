@@ -34,7 +34,7 @@ import "../../../../../assets/ui/toasts.js";
     try {
       data = await TinyCat.api.request(url, { method: "GET" });
       if (!grid.isConnected || !button.isConnected) return;
-      payload = data && data.data ? data.data : data;
+      payload = data.data;
       payload = Object.assign({}, payload, TinyCat.ui.pagination(data));
       if (payload.items.length) grid.appendChild(TinyCat.users.profiles(payload.items));
 
@@ -58,12 +58,6 @@ import "../../../../../assets/ui/toasts.js";
     var authorId = payload.author_id ? String(payload.author_id) : (form ? form.dataset.authorId : "");
     TinyCat.users.follow(form, payload);
 
-    if (data && data.message) {
-      TinyCat.toasts.show(data.message, data.type || "success");
-    } else if (payload.message) {
-      TinyCat.toasts.show(payload.message, payload.type || "success");
-    }
-
     if (authorId) {
       qsa("[data-author-stat='followers']" + dataSelector("data-author-id", authorId)).forEach(function (node) {
         node.textContent = String(payload.followers_count || 0);
@@ -73,52 +67,18 @@ import "../../../../../assets/ui/toasts.js";
       });
     }
   }
-  function initFollowForms () {
-    if (TinyCat.__followFormEventsBound === true) {
-      return;
-    }
-
-    TinyCat.__followFormEventsBound = true;
-
-    document.addEventListener("submit", async function (event) {
-      var form = event.target.closest && event.target.closest("form[data-follow-form]");
-      var method;
-      var url;
-      var body;
-      var data;
-
-      if (!form) {
-        return;
-      }
-
-      event.preventDefault();
-
-      if (form.dataset.followBusy === "true") {
-        return;
-      }
-
-      method = (form.getAttribute("method") || "POST").toUpperCase();
-      url = form.getAttribute("action") || window.location.href;
-      body = new FormData(form);
-      method = body.get("action") === "unfollow" ? "DELETE" : "PUT";
-
-      try {
-        form.dataset.followBusy = "true";
-        data = await TinyCat.forms.request(form, url, {
-          method: method,
-          body: method === "GET" ? null : body
-        });
-        updateFollowResult(form, data);
-      } catch (error) {
-        if (error.name === "AbortError") { return; }
-        TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
-      } finally {
-        delete form.dataset.followBusy;
-      }
+  function prepareForms(root) {
+    qsa("form[data-follow-form]", root).forEach(function (form) {
+      form.dataset.ajaxForm = "";
+      form.dataset.apiMethod = form.elements.namedItem("action").value === "unfollow" ? "DELETE" : "PUT";
     });
+  }
+  TinyCat.socialUsers.hydrate = prepareForms;
+  TinyCat.socialUsers.result = function (source, response) {
+    if (!source.matches("form[data-follow-form]")) { return false; }
+    updateFollowResult(source, response); prepareForms(document); return [];
   };
   TinyCat.users.following = { init: function () {
-    initFollowForms();
     document.addEventListener("click", function (event) {
       var trigger = event.target.closest && event.target.closest("[data-following-more], [data-following-load]");
       if (trigger) { event.preventDefault(); loadFollowingMore(trigger); }

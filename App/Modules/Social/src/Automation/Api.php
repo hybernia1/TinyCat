@@ -49,13 +49,13 @@ final class Api
         $api->get('/bots/sources', static fn (): Result => Result::from(Actions::adminBotSources()), 'admin');
         $api->get('/bots/sources/management', static function (): array {
             $data = Administration::sourceFormData(null);
-            return ['item' => $data['source'] + ['post_template' => Importer::defaultSourceTemplate(), 'enabled' => true], 'bots' => $data['bots']];
+            return ['item' => $data['source'] + ['post_template' => Importer::defaultSourceTemplate(), 'enabled' => true], 'bots' => $data['bots'], 'constraints' => $data['constraints']];
         }, 'admin');
         $api->get('/bots/sources/{id:[0-9]+}/management', static function (Request $request, array $params): array {
             $source = Importer::findSource((int) $params['id']);
             if ($source === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.not_found'), 404, 'bot_source_not_found'); }
             $data = Administration::sourceFormData($source);
-            return ['item' => Importer::sourceResource($source), 'bots' => $data['bots']];
+            return ['item' => Importer::sourceResource($source), 'bots' => $data['bots'], 'constraints' => $data['constraints']];
         }, 'admin');
         $api->post('/bots/sources/previews', static fn (): array => SourcePreview::payload(), 'admin');
         $api->post('/bots/sources', static fn (): Result => Result::from(Actions::adminBotSourceCreate()), 'admin');

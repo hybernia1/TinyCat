@@ -91,6 +91,13 @@ Run `php tools/preflight.php`. Frontend tests exercise source and compiled bundl
 
 `php tools/assets/asset-report.php` reports release payload sizes for each scope, using the largest locale and the sum of separately gzipped minified JavaScript responses. Icons are reported separately by the browser and are outside the JS/CSS budgets. `--check` rejects unreachable JS/CSS sources, changed scopes and exceeded limits from `tests/fixtures/asset-budgets.json`. Limits allow approximately 15% growth rounded up to KiB; changing them requires reviewing the size report. This detects unreachable files, not unused branches or selectors, which require behavior-aware review.
 
+The shared Unicode/byte constraint implementation is exported as
+`ui.form-constraints`; editors opt in through their asset manifests. The generic
+form transport retains only its validation hook. The initial 6.0.10 constraint-stage
+platform report measured `/admin/updates` at 205,023 raw JS bytes, requiring a
+256-byte adjustment of that scope's raw budget to 205,056. All other JS/CSS,
+compressed-size and request-count budgets remain unchanged.
+
 ## Kompozice stránek a testovací data
 
 Modulový `Pages` handler připraví data před vykreslením. `Site/Layout` skládá

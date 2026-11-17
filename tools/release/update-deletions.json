@@ -1989,5 +1989,13 @@
     "App/Modules/Social/migrations/users/install-schema.mysql.php",
     "App/Modules/Social/src/Content/LegacyData.php",
     "App/Modules/Social/src/Profiles/install-schema.mysql.php"
+  ],
+  "6.0.10": [
+    "App/AssetOptimizer.php",
+    "App/Support/Cache.php",
+    "App/distribution-target.json",
+    "App/Modules/Social/templates/parts/status/composer.php",
+    "App/Modules/Social/templates/parts/users/follow-button.php",
+    "App/bootstrap.php"
   ]
 }

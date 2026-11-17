@@ -42,6 +42,8 @@ if ($mode === '--styles') {
 }
 $roots = $mode === '--core' ? ['assets/ui/component-builders.js', 'assets/ui/dialogs.js'] : ($mode === '--validation' ? ['assets/ui/ajax-bindings.js', 'App/Modules/Social/assets/status/form-actions.js', 'App/Modules/Social/assets/moderation/controller.js', 'App/Core/Settings/assets/index.js', 'App/Modules/Social/assets/users/index.js', 'App/Modules/Social/assets/bots/index.js', 'App/Core/Updates/assets/index.js'] : []);
 if ($mode === '--validation') {
+    $roots[] = 'App/Modules/Social/assets/users/public.js';
+    $roots[] = 'assets/ui/form-constraints.js';
     $roots[] = 'App/Core/Identity/assets/admin.js';
     foreach (\TinyCat\Support\ClientAssets::entries('/admin') as $entry) { if (str_ends_with($entry, '/settings-presentation.js')) { $roots[] = $entry; } }
 }

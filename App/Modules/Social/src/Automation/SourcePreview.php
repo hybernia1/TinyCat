@@ -19,7 +19,9 @@ final class SourcePreview
         $url = trim((string) $request->input('feed_url', ''));
         $body = (string) $request->input('document', '');
         $template = (string) $request->input('post_template', Importer::defaultSourceTemplate());
-        if (strlen($body) > 2097152 || strlen($template) > 2000 || strlen($url) > 2048
+        $rules = array_intersect_key(Administration::sourceRules(), array_flip(['feed_url', 'post_template']));
+        $rules = array_map(static fn (string $rule): string => str_replace('required|', '', $rule), $rules);
+        if (\TinyCat\Http\Validator::validate(['feed_url' => $url, 'post_template' => $template], $rules) !== [] || strlen($body) > 2097152
             || ($url !== '' && !\TinyCat\Http\Client::isSafeUrl($url)) || ($body === '' && $url === '')) { self::invalid(); }
         try {
             $document = Session::withoutLock(static fn (): array => $body !== '' ? \TinyCat\Core\Feeds\FeedParser::document($body, $url) : \TinyCat\Core\Feeds\FeedParser::inspect($url));

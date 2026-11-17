@@ -15,6 +15,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 
 ## Kontrakty
 
+- [Autorita core pro API, UI a validace](contracts/core-application-contract.md).
 - [Notifikace, registrace typů a vlastnictví předmětů](contracts/notifications.md).
 - [Modaly](contracts/modal-contract.md) a [popovery](contracts/popover-contract.md).
 - [UI komponenty a styly](contracts/ui-conventions.md).

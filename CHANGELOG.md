@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.0.10 - 2026-11-17
+
+- Remove the redundant bootstrap wrapper and start HTTP/CLI explicitly through the runtime. Keep autoloading independent of startup and preserve the public autoload facade used by published private rescue launchers, including update and rollback.
+- Route Social status and follow forms through the shared AJAX lifecycle, including validation, mutation locks, submitters and field errors. Use a core submit guard for source previews and accept only the canonical API envelope.
+- Register Social public HTTP routes, AJAX resources and client navigation patterns from one owner declaration. Share source byte constraints and Blog comment character constraints across server and UI, and retire unused composer/follow partials through the deletion plan.
+- Derive Blog article and feed-source editor constraints from their server rules through the core validator. Share Unicode and UTF-8 byte validation across API, persistence, imports and forms, preserving drafts on overflow and deriving translated help from owner limits.
+- Define the authoritative core contract for API, UI and validation. Reject malformed validation definitions as server errors, handle invalid input types without PHP diagnostics, and enforce stable field issue codes and field ownership.
+- Remove the retired asset optimizer, old cache bridge and transitional distribution target on the next supported update; keep these legacy files out of release artifacts.
+
 ## 6.0.9 - 2026-11-17
 
 - Require completed 6.0.8 installations and switch built-in distributions to archival format 4. Preserve all 24 original migration IDs, sequences and checksums without rewriting database journal rows.

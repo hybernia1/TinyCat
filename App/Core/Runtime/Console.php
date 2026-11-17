@@ -27,7 +27,7 @@ final class Console
             }
             if ($command === 'rescue') {
                 $file = $root . '/storage/updates/console.php';
-                $bootstrap = "<?php\ndeclare(strict_types=1);\nif (PHP_SAPI !== 'cli') { http_response_code(403); exit; }\ndefine('TINYCAT', true);\nrequire " . var_export($root . '/App/autoload.php', true) . ";\nexit(\\TinyCat\\Core\\Runtime\\Console::run(\$argv));\n";
+                $bootstrap = "<?php\ndeclare(strict_types=1);\nif (PHP_SAPI !== 'cli') { http_response_code(403); exit; }\ndefine('TINYCAT', true);\nrequire " . var_export($root . '/App/Core/Runtime/autoload.php', true) . ";\nexit(\\TinyCat\\Core\\Runtime\\Console::run(\$argv));\n";
                 if (!\TinyCat\Support\Storage::write($file, $bootstrap)) { throw new \RuntimeException('Cannot prepare the private rescue launcher.'); }
                 $result = ['launcher' => 'storage/updates/console.php'];
             }

@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-118 definic komponent, 393 CSS tříd, 127 CSS importů, 97 JS souborů, 23 UI služeb, 15 PHP partialů.
+118 definic komponent, 393 CSS tříd, 127 CSS importů, 98 JS souborů, 24 UI služeb, 13 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -142,7 +142,8 @@ Jde o syntaktický seznam; nezahrnuje všechny exporty a nerozhoduje o veřejnos
 - [assets/ui/dialogs.js](../../assets/ui/dialogs.js): `create`
 - [assets/ui/document-navigation.js](../../assets/ui/document-navigation.js):
 - [assets/ui/filters.js](../../assets/ui/filters.js): `defaults`, `get`, `capture`, `restore`, `remove`, `init`
-- [assets/ui/form-requests.js](../../assets/ui/form-requests.js): `request`, `cancel`, `dispose`, `bind`
+- [assets/ui/form-constraints.js](../../assets/ui/form-constraints.js):
+- [assets/ui/form-requests.js](../../assets/ui/form-requests.js): `validate`, `setSubmitGuard`, `canSubmit`, `request`, `cancel`, `dispose`, `bind`
 - [assets/ui/form-state.js](../../assets/ui/form-state.js):
 - [assets/ui/global-search.js](../../assets/ui/global-search.js):
 - [assets/ui/image-placeholders.js](../../assets/ui/image-placeholders.js):
@@ -246,6 +247,7 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [assets/ui/dialogs.js](../../assets/ui/dialogs.js) | [assets/ui/dialog-history.js](../../assets/ui/dialog-history.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/icons.js](../../assets/core/icons.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/form-state.js](../../assets/ui/form-state.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | přes importy / společný runtime |
 | [assets/ui/document-navigation.js](../../assets/ui/document-navigation.js) | [assets/core/dom.js](../../assets/core/dom.js) | přes importy / společný runtime |
 | [assets/ui/filters.js](../../assets/ui/filters.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/ui/popovers.js](../../assets/ui/popovers.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | přes importy / společný runtime |
+| [assets/ui/form-constraints.js](../../assets/ui/form-constraints.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/form-state.js](../../assets/ui/form-state.js) | přes importy / společný runtime |
 | [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js) | přes importy / společný runtime |
 | [assets/ui/form-state.js](../../assets/ui/form-state.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/navigation.js](../../assets/core/navigation.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/tabs.js](../../assets/ui/tabs.js) | přes importy / společný runtime |
 | [assets/ui/global-search.js](../../assets/ui/global-search.js) | [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/navigation.js](../../assets/core/navigation.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/popovers.js](../../assets/ui/popovers.js) | přes importy / společný runtime |
@@ -273,10 +275,8 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Modules/Social/templates/parts/bots/modals/account-filter.php](../../App/Modules/Social/templates/parts/bots/modals/account-filter.php)
 - [App/Modules/Social/templates/parts/bots/modals/source-filter.php](../../App/Modules/Social/templates/parts/bots/modals/source-filter.php)
 - [App/Modules/Social/templates/parts/site/sidebar-slot.php](../../App/Modules/Social/templates/parts/site/sidebar-slot.php)
-- [App/Modules/Social/templates/parts/status/composer.php](../../App/Modules/Social/templates/parts/status/composer.php)
 - [App/Modules/Social/templates/parts/status/feed.php](../../App/Modules/Social/templates/parts/status/feed.php)
 - [App/Modules/Social/templates/parts/status/home-feed.php](../../App/Modules/Social/templates/parts/status/home-feed.php)
-- [App/Modules/Social/templates/parts/users/follow-button.php](../../App/Modules/Social/templates/parts/users/follow-button.php)
 
 ## PHP renderery
 
@@ -285,9 +285,9 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `tc_admin_options`, `tc_admin_datetime`, `tc_admin_datetime_iso`, `admin_user_statuses`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_per_page_view_data`, `admin_pagination_view_data`
 - [App/Modules/Social/src/Automation/Views.php](../../App/Modules/Social/src/Automation/Views.php): `accountFilter`, `accounts`, `sources`
 - [App/Modules/Social/src/Moderation/Views.php](../../App/Modules/Social/src/Moderation/Views.php): `reports`
-- [App/Modules/Social/src/Posts/Views.php](../../App/Modules/Social/src/Posts/Views.php): `feedMore`, `card`, `actions`, `commentForm`, `commentItem`, `commentsThread`, `composerBody`, `composer`, `homeFeed`
+- [App/Modules/Social/src/Posts/Views.php](../../App/Modules/Social/src/Posts/Views.php): `feedMore`, `card`, `actions`, `commentForm`, `commentItem`, `commentsThread`, `composerBody`, `homeFeed`
 - [App/Modules/Social/src/Presentation/Views.php](../../App/Modules/Social/src/Presentation/Views.php): `dashboard`, `sidebar`
-- [App/Modules/Social/src/Profiles/Views.php](../../App/Modules/Social/src/Profiles/Views.php): `adminFormFields`, `adminList`, `authContent`, `authForm`, `followButton`, `followingProfile`, `avatar`
+- [App/Modules/Social/src/Profiles/Views.php](../../App/Modules/Social/src/Profiles/Views.php): `adminFormFields`, `adminList`, `authContent`, `authForm`, `followingProfile`, `avatar`
 
 ## Všechny PHP šablony
 
@@ -324,10 +324,8 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Modules/Social/templates/parts/bots/modals/account-filter.php](../../App/Modules/Social/templates/parts/bots/modals/account-filter.php)
 - [App/Modules/Social/templates/parts/bots/modals/source-filter.php](../../App/Modules/Social/templates/parts/bots/modals/source-filter.php)
 - [App/Modules/Social/templates/parts/site/sidebar-slot.php](../../App/Modules/Social/templates/parts/site/sidebar-slot.php)
-- [App/Modules/Social/templates/parts/status/composer.php](../../App/Modules/Social/templates/parts/status/composer.php)
 - [App/Modules/Social/templates/parts/status/feed.php](../../App/Modules/Social/templates/parts/status/feed.php)
 - [App/Modules/Social/templates/parts/status/home-feed.php](../../App/Modules/Social/templates/parts/status/home-feed.php)
-- [App/Modules/Social/templates/parts/users/follow-button.php](../../App/Modules/Social/templates/parts/users/follow-button.php)
 - [App/Modules/Social/templates/site/privacy-section.php](../../App/Modules/Social/templates/site/privacy-section.php)
 - [App/Modules/Social/templates/site/public.php](../../App/Modules/Social/templates/site/public.php)
 - [App/Modules/Social/templates/status/embed.php](../../App/Modules/Social/templates/status/embed.php)

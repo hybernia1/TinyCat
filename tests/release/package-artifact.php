@@ -7,7 +7,7 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require_once $root . '/App/bootstrap.php';
+require_once $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/package-artifact-' . bin2hex(random_bytes(6));
 $output = $temporaryRoot . '/dist-a';
@@ -265,6 +265,9 @@ try {
         if (str_starts_with($name, 'Extensions/') || in_array($name, ['App/Extension.php', 'Public/admin/extensions.php', 'docs/extensions.md'], true)) {
             $failures[] = 'Retired extension support in artifact: ' . $name;
         }
+    }
+    foreach (['App/AssetOptimizer.php', 'App/Support/Cache.php', 'App/distribution-target.json', 'App/bootstrap.php'] as $retired) {
+        if (in_array($retired, $names, true)) { $failures[] = 'Retired updater bridge or asset optimizer in artifact: ' . $retired; }
     }
 
     foreach (['App/Core/Http/Api.php', 'App/Core/Http/Request.php', 'App/Core/Http/Response.php', 'App/Core/Http/Validator.php', 'App/Core/Database/Connection.php', 'App/Core/Support/Config.php', 'App/Core/Modules/Module.php', 'App/modules.php', 'assets/core/api-client.js', 'assets/core/dom.js', 'assets/ui/form-requests.js', 'assets/ui/dialogs.js'] as $required) {

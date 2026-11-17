@@ -372,7 +372,10 @@
       "bot_feed_preview": "bots.preview_invalid",
       "record_activated": "common.activated",
       "record_deactivated": "common.deactivated"
-    }
+    },
+    "uses": [
+      "ui.form-constraints"
+    ]
   },
   {
     "routes": [

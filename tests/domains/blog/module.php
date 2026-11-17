@@ -179,6 +179,11 @@ try {
     }
     [$status, $resource] = $request('/api/article-sources/creation', actor: 'admin');
     $assert($status === 200 && $resource['data']['item']['publication_status'] === 'hidden' && count($resource['data']['authors']) === 1, 'Source creation loads canonical current author choices on demand');
+    $assert($resource['data']['constraints'] === \TinyCat\Blog\FeedSources::constraints(), 'Source creation publishes the same rules enforced by direct writes');
+    foreach ([\TinyCat\Blog\FeedSources::INTERVAL_MIN - 1, \TinyCat\Blog\FeedSources::INTERVAL_MAX + 1] as $interval) {
+        [$status, $invalidSource] = $request('/api/article-sources', 'POST', ['name' => 'Invalid interval', 'feed_url' => 'https://93.184.216.34/invalid-' . $interval, 'author_id' => 1, 'interval_minutes' => $interval], 'admin');
+        $assert($status === 422 && isset($invalidSource['error']['details']['errors']['interval_minutes']), 'Source API returns field errors for both owner interval bounds');
+    }
     foreach (['', 'member'] as $actor) {
         [$status] = $request('/api/modules/packages/creation', actor: $actor);
         $assert(in_array($status, [401, 403], true), 'Module package editor requires an administrator');
@@ -287,6 +292,9 @@ try {
     [$status, $data] = $request('/api/articles/' . $id . '/comments', 'POST', ['comment' => 'Shared article comment'], 'admin');
     $commentId = (int) ($data['data']['comment_id'] ?? 0);
     $assert($status === 201 && $commentId > 0 && $data['data']['target']['kind'] === 'article', 'Blog-only HTTP creates a real shared comment');
+    $assert($data['data']['constraints'] === \TinyCat\Blog\Discussion::constraints(), 'Article discussion resources publish their owner constraints.');
+    [$status, $overflow] = $request('/api/articles/' . $id . '/comments/' . $commentId, 'PATCH', ['comment' => str_repeat("\u{1F600}", \TinyCat\Blog\Discussion::COMMENT_MAX_LENGTH + 1)], 'admin');
+    $assert($status === 422 && $overflow['error']['details']['errors']['comment'][0]['code'] === 'validation_max' && (string) $pdo->query('SELECT body FROM blog_comments WHERE id = ' . $commentId)->fetchColumn() === 'Shared article comment', 'Comment overflow returns a field issue and preserves the saved comment.');
     [$status, $data] = $request('/api/articles/' . $id . '/comments', 'POST', ['comment' => 'Reply', 'parent_id' => $commentId], 'member');
     $replyId = (int) ($data['data']['comment_id'] ?? 0);
     $assert($status === 201 && $data['data']['items'][0]['replies'][0]['id'] === $replyId, 'Replies preserve their publication and parent');
@@ -322,6 +330,9 @@ try {
     $assert($status === 200 && !str_contains($html, 'data-article-open') && !str_contains($html, '<textarea'), 'The article list contains no hidden editor trigger or eager fields');
     [$status, $data] = $request('/api/articles/' . $httpId . '/management', actor: 'admin');
     $assert($status === 200 && $data['data']['item']['title'] === 'HTTP edit', 'Admin editor loads the current article through an authorized resource');
+    $assert($data['data']['constraints'] === Articles::constraints() && $data['data']['limits']['body_bytes'] === $data['data']['constraints']['body']['max_bytes'], 'Article management publishes owner rules as data and derives existing limits');
+    [$status, $creationResource] = $request('/api/articles/creation', actor: 'admin');
+    $assert($status === 200 && $creationResource['data']['constraints'] === $data['data']['constraints'], 'Article creation and editing share identical constraints');
     foreach (['/api/articles/management', '/api/articles/creation', '/api/articles/' . $httpId . '/management'] as $path) {
         [$status] = $request($path); $assert($status === 401, 'Article management resource requires administrator identity: ' . $path);
         [$status] = $request($path, actor: 'member'); $assert($status === 403, 'Regular account cannot access article management: ' . $path);
@@ -333,6 +344,8 @@ try {
     $assert($status === 200 && str_contains($html, 'HTTP edit') && str_contains($html, 'noindex'), 'Private archive keeps hidden articles accessible to the editor');
     [$status, $data] = $request('/api/articles/' . $httpId, 'PUT', ['title' => '', 'body' => 'Preserved draft'], 'admin');
     $assert($status === 422 && isset($data['error']['details']['errors']['title']), 'Invalid editor mutation returns field-level validation');
+    [$status, $data] = $request('/api/articles/' . $httpId, 'PUT', ['title' => 'Overflow', 'body' => str_repeat("\u{11B}", intdiv(Articles::BODY_MAX_BYTES, 2)) . 'x'], 'admin');
+    $assert($status === 422 && $data['error']['details']['errors']['body'][0]['code'] === 'validation_max_bytes' && Articles::find($httpId, false)['title'] === 'HTTP edit', 'UTF-8 overflow returns a stable field issue without modifying the article');
     [$status] = $request('/api/articles/' . $httpId, 'DELETE', [], 'admin'); $assert($status === 200, 'Admin deletes through the API');
     $rawUrl = 'https://example.test/reference?original=1#part';
     $link = TinyCat\Core\Text\LinkParser::fromRaw($rawUrl);

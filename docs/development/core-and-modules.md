@@ -4,6 +4,9 @@ Core je povinný framework. Funkční modul přidává konkrétní použití apl
 a lze jej vypnout. Social a Blog mohou běžet samostatně, společně, nebo být
 oba neaktivní. Administrace a správa modulů zůstávají součástí core.
 
+Společné veřejné vstupy a jejich vynucení určuje
+[kontrakt core pro API, UI a validace](../contracts/core-application-contract.md).
+
 Začínáš nový modul? Použij [vstupní manuál s příklady](module-authoring.md).
 
 Výsledek přestavby, kompatibilitu a měřené ověření zachycuje
@@ -12,7 +15,6 @@ Výsledek přestavby, kompatibilitu a měřené ověření zachycuje
 ```text
 App/
   autoload.php
-  bootstrap.php
   Console.php
   modules.php                    # Výchozí výběr Socialu
   available-modules.php          # Social a Blog
@@ -72,6 +74,16 @@ Jejich pomocné registrace volá výhradně `Social/Module.php`.
 
 ## Načtení a vlastnictví
 
+HTTP vstup načítá přímo `Core/Runtime/autoload.php`, explicitně volá
+`Application::start()` a předává požadavek `HttpKernel::respond()`. Samostatná
+bootstrapová obálka není potřeba. Stejný loader používají produkční CLI vstupy;
+kontrola minimální verze PHP probíhá před autoloadováním tříd.
+
+`App/autoload.php` je stabilní veřejná fasáda pro externí skripty a již vydané
+privátní rescue launchery. Pouze jednou načte stejný core loader, nezahajuje
+aplikaci, SQL ani session. Nástroj, který potřebuje celý runtime, po načtení
+loaderu explicitně volá `Application::start()`.
+
 `Core/Runtime/Framework` nejprve načte čistá metadata povinných služeb
 z `Core/services.json`. `Core/Modules/Loader` k nim přidá explicitně vybrané
 funkční manifesty, ověří namespace a závislosti a vytvoří společný katalog.
@@ -86,8 +98,8 @@ return [
 
 Prázdný výběr znamená celý framework bez funkčních modulů. Služby core
 se neuvádějí do tohoto seznamu ani do `storage/deployment.json`. Stabilní
-interní capability ID, například `tinycat.publishing`, umožňuje modulům
-deklarovat požadovaný kontrakt; nejde o vypínatelný modul.
+interní capability ID označují povinné služby frameworku. Historické migrační
+streamy jako `tinycat.publishing` nejsou capability ani aktivovatelné moduly.
 
 `Core/Modules/Resources` poskytuje stejný katalog bootstrapu, překladům,
 komponentám, assetům i buildu. Soukromé zdroje patří svému vlastníkovi.
@@ -120,17 +132,21 @@ definic; vypnutí jednoho modulu neodstraní účet ani data druhého.
 
 ## Migrace a kompatibilita
 
-Podepsaný descriptor formátu 3 odděluje `selection` od povinného `framework`
+Podepsaný descriptor odděluje `selection` od povinného `framework`
 bez Publishingu. `schemaOwners` přiřazuje historické streamy aktuálním vlastníkům.
-Social vlastní Users, Moderation, Bots, Publishing verze 4 a Status verze 2;
+Social vlastní Users, Moderation, Bots, Publishing verze 4 a Status verze 3;
 Blog vlastní verzi 4. Historické ID není aktivační jednotka. Publikované migrační
-bajty a checksumy se nemění. Explicitní podepsané `fresh` a `legacy` operace
-umožňují čistou instalaci bez starého společného DDL a doložený převod dat.
+bajty a checksumy se nemění. Vestavěná historie je od 6.0.9 archivní prefix
+formátu 4 s původními ID, pořadím, checksumy a explicitním `file: null`.
+Každý vlastník má samostatnou podepsanou `fresh` baseline bez řetězení starých
+datových převodů. Původní journalové záznamy se nepřepisují.
 Aktualizační cesta a retirement historie jsou v [datovém kontraktu](domain-storage.md).
 
-Současné zdroje přijímají pouze descriptor formátu 3 z dokončené 6.0.6
-nebo novější instalace. Starší aktivační ID převádí nezměněný podepsaný release
-6.0.6; současný core nemá seznam částí Socialu ani převodní adaptér. Povinné
+Současné zdroje podporují descriptor formátu 3 i 4 a vyžadují dokončenou 6.0.8
+nebo novější instalaci. Archivovaný prefix vyžaduje také odpovídající dokončené
+schéma vlastníka. Starší aktivační ID převádí nezměněný podepsaný release
+6.0.6, archivní čtení přidává neměnná 6.0.8; současný core nemá seznam částí
+Socialu ani převodní adaptér. Povinné
 technické schopnosti deklaruje `Core/Runtime/Framework::CAPABILITIES`.
 Nainstalovaný vypnutý vlastník zůstane vypnutý a zachová vlastnictví dat.
 Neznámý nainstalovaný modul nelze přechodem zahodit ani přejmenovat.

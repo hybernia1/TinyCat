@@ -260,10 +260,15 @@ PHP);
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
     $packagePath = $artifactRoot . '/tinycat-' . $candidateVersion . '.zip';
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
+    $legacyRescue = $installRoot . '/storage/updates/console.php';
+    $createRescue = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true) . "; exit(\\TinyCat\\Core\\Runtime\\Console::run(['console.php', 'rescue']));";
+    [$rescueExit, $rescueOutput] = $run($createRescue);
+    $assert($rescueExit === 0 && is_file($legacyRescue), 'The published baseline creates its original private rescue launcher: ' . implode(' ', $rescueOutput));
+    $legacyRescueHash = hash_file('sha256', $legacyRescue);
     $runnerTemplate = <<<'PHP'
 define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
-require $root . '/App/bootstrap.php';
+require $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 $invoke = static function (string $method, mixed ...$arguments): mixed {
     return (new ReflectionMethod(TinyCat\Core\Updates\Manager::class, $method))->invoke(null, ...$arguments);
 };
@@ -311,12 +316,15 @@ PHP;
     $assert((string) file_get_contents($installRoot . '/uploads/rehearsal-sentinel.txt') === 'uploads-preserved', 'Uploads survive update.');
     $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Configuration survives update byte-for-byte.');
     $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Retired extension files remain private and untouched.');
-    $bootNew = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($candidateVersion, true) . ") exit(2);";
+    $bootNew = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); if (TinyCat\\Support\\Version::CURRENT !== " . var_export($candidateVersion, true) . ") exit(2);";
     [$newBootExit, $newBootOutput] = $run($bootNew);
     $assert($newBootExit === 0, 'Updated candidate runtime boots: ' . implode(' ', $newBootOutput));
-    $retiredProbe = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (class_exists('TinyCat\\\\Extension\\\\Loader') || !class_exists('TinyCat\\\\Social\\\\Automation\\\\Importer')) exit(2);";
+    $assert(!is_file($installRoot . '/App/bootstrap.php'), 'The candidate retires the redundant bootstrap wrapper.');
+    [$rescueExit, $rescueOutput] = $run('$argv = ["console.php", "help"]; require ' . var_export($legacyRescue, true) . ';');
+    $assert($rescueExit === 0 && hash_file('sha256', $legacyRescue) === $legacyRescueHash, 'An unchanged private rescue launcher from the published baseline still runs after update: ' . implode(' ', $rescueOutput));
+    $retiredProbe = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); if (class_exists('TinyCat\\\\Extension\\\\Loader') || !class_exists('TinyCat\\\\Social\\\\Automation\\\\Importer')) exit(2);";
     [$retiredExit, $retiredOutput] = $run($retiredProbe);
     $assert($retiredExit === 0, 'Updated runtime provides Bots without an extension loader: ' . implode(' ', $retiredOutput));
 
@@ -329,7 +337,7 @@ PHP;
     $repeatRunner = <<<'PHP'
 define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
-require $root . '/App/bootstrap.php';
+require $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 $invoke = static function (string $method, mixed ...$arguments): mixed {
     return (new ReflectionMethod(TinyCat\Core\Updates\Manager::class, $method))->invoke(null, ...$arguments);
 };
@@ -365,13 +373,13 @@ PHP;
     $assert($inventory($installRoot) === $updatedInventory, 'Repeated signed update leaves the candidate inventory unchanged.');
     $assert(is_array($repeatMetadata) && ($repeatMetadata['files'] ?? null) === [], 'Repeated signed update does not back up unchanged files.');
 
-    $interruptRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; (new ReflectionMethod(TinyCat\\Core\\Updates\\Manager::class, 'enableMaintenance'))->invoke(null, "
+    $interruptRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); (new ReflectionMethod(TinyCat\\Core\\Updates\\Manager::class, 'enableMaintenance'))->invoke(null, "
         . var_export($candidateVersion, true) . "); exit(23);";
     [$interruptExit] = $run($interruptRunner);
     $assert($interruptExit === 23, 'Synthetic update interruption occurs after maintenance is persisted.');
-    $recoverRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (!TinyCat\\Core\\Updates\\Manager::maintenanceActive()) exit(2); TinyCat\\Core\\Updates\\Manager::disableMaintenance();";
+    $recoverRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); if (!TinyCat\\Core\\Updates\\Manager::maintenanceActive()) exit(2); TinyCat\\Core\\Updates\\Manager::disableMaintenance();";
     [$recoverExit, $recoverOutput] = $run($recoverRunner);
     $assert($recoverExit === 0, 'Interrupted update is detected and maintenance can be recovered: ' . implode(' ', $recoverOutput));
 
@@ -411,15 +419,17 @@ PHP;
     $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Rollback leaves configuration unchanged.');
     $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Rollback leaves legacy extension files unchanged.');
     $oldVersionConstant = 'TinyCat\\Support\\Version::CURRENT';
-    $bootOld = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (" . $oldVersionConstant . " !== " . var_export($baselineVersion, true) . ") exit(2);";
+    $bootOld = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); if (" . $oldVersionConstant . " !== " . var_export($baselineVersion, true) . ") exit(2);";
     [$oldBootExit, $oldBootOutput] = $run($bootOld);
     $assert($oldBootExit === 0, 'Restored baseline runtime boots: ' . implode(' ', $oldBootOutput));
 
     $extractZip($packagePath, $freshRoot);
     file_put_contents($freshRoot . '/config.php', $configSource($publicKey), LOCK_EX);
-    $freshBoot = "define('TINYCAT', true); require " . var_export($freshRoot . '/App/bootstrap.php', true)
-        . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($candidateVersion, true) . ") exit(2);";
+    [$rescueExit, $rescueOutput] = $run('$argv = ["console.php", "help"]; require ' . var_export($legacyRescue, true) . ';');
+    $assert($rescueExit === 0 && hash_file('sha256', $legacyRescue) === $legacyRescueHash, 'The original private rescue launcher also survives exact rollback.');
+    $freshBoot = "define('TINYCAT', true); require " . var_export($freshRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); if (TinyCat\\Support\\Version::CURRENT !== " . var_export($candidateVersion, true) . ") exit(2);";
     [$freshExit, $freshOutput] = $run($freshBoot);
     $assert($freshExit === 0, 'Fresh candidate artifact boots: ' . implode(' ', $freshOutput));
     if (is_file($root . '/config.php') && in_array('mysql', PDO::getAvailableDrivers(), true)) {

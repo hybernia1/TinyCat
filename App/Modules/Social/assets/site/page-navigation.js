@@ -8,9 +8,12 @@ import "../../../../../assets/ui/dialogs.js";
   var T = window.TinyCat, pending = null, currentIndex = 0, rollback = false, sidebar = null, scrollSaveTimer = null;
   function supported(url) {
     if (url.origin !== window.location.origin || url.hash || !document.querySelector("[data-public-page]")) { return false; }
-    var parts = T.urls.split(url.pathname), path = parts.path, home = path === "/" || path === "/social";
-    if (parts.locale !== T.urls.prefix() || !(home || path === "/search" || /^\/(?:tag\/[^/]+|author\/[1-9][0-9]*|status\/[1-9][0-9]*)$/.test(path))) { return false; }
-    return Array.from(url.searchParams.keys()).every(function (key) { return path === "/search" ? key === "q" || key === "type" || key === "media" : key === "feed" || key === "compact" || ((home || path.startsWith("/tag/") || path.startsWith("/author/")) && key === "media"); });
+    var parts = T.urls.split(url.pathname), root = document.querySelector("[data-public-page]");
+    if (parts.locale !== T.urls.prefix()) { return false; }
+    var routes = JSON.parse(root.dataset.publicRoutes || "[]");
+    return routes.some(function (route) {
+      return new RegExp(route.pattern, "u").test(parts.path) && Array.from(url.searchParams.keys()).every(function (key) { return route.query.includes(key); });
+    });
   }
   function saveScroll() {
     window.clearTimeout(scrollSaveTimer);

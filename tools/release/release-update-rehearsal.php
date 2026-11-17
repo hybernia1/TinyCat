@@ -235,7 +235,7 @@ if (class_exists(TinyCat\Core\Modules\Distribution::class)) {
     $plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', require __ROOT__ . '/App/modules.php');
     file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
 }
-require __ROOT__ . '/App/bootstrap.php';
+require __ROOT__ . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 TinyCat\Core\Installation\Installer::create_tables();
 TinyCat\Core\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
 TinyCat\Core\Installation\Installer::default_settings(['locale' => 'en']);
@@ -296,14 +296,14 @@ PHP;
         'storage' => hash_file('sha256', $installRoot . '/storage/release-sentinel.txt'),
         'uploads' => hash_file('sha256', $installRoot . '/uploads/avatars/release-sentinel.txt'),
     ];
-    $probeRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($baselineVersion, true) . ") exit(2);";
+    $probeRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); if (TinyCat\\Support\\Version::CURRENT !== " . var_export($baselineVersion, true) . ") exit(2);";
     [$probeExit, $probeOutput] = $run($probeRunner);
     $assert($probeExit === 0, 'Supported baseline boots before update: ' . implode(' ', $probeOutput));
 
     $updateRunner = <<<'PHP'
 define('TINYCAT', true);
-require __ROOT__ . '/App/bootstrap.php';
+require __ROOT__ . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 $result = TinyCat\Core\Updates\Manager::installLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
 $backup = __ROOT__ . '/' . $result['backup'];
 $metadata = json_decode((string) file_get_contents($backup . '/backup.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -320,7 +320,7 @@ PHP;
         $network['https://api.github.com/repos/hybernia1/TinyCat/releases/latest'] = $releaseSource;
         $updateRunner = '$GLOBALS[\'signedUpdateFixtures\'] = ' . var_export($network, true) . '; require ' . var_export($root . '/tests/fixtures/releases/github-transport.php', true) . ";\n" . <<<'PHP'
 define('TINYCAT', true);
-require __ROOT__ . '/App/bootstrap.php';
+require __ROOT__ . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 if (__CACHED_AUTOLOAD__ && (!function_exists('opcache_is_script_cached') || !opcache_is_script_cached((string) realpath(__ROOT__ . '/App/autoload.php')))) {
     throw new RuntimeException('The cached-autoload scenario requires active OPcache and a cached baseline autoloader.');
 }
@@ -380,8 +380,8 @@ PHP;
         $assert(hash_file('sha256', $path) === $hash, ucfirst($label) . ' survives update byte-for-byte.');
     }
 
-    $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($version, true) . " || !class_exists('TinyCat\\\\Social\\\\Automation\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
+    $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); if (TinyCat\\Support\\Version::CURRENT !== " . var_export($version, true) . " || !class_exists('TinyCat\\\\Social\\\\Automation\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
     $newBootRunner .= "; if (!TinyCat\\Database\\Schema::app_db_ready() || (TinyCat\\Core\\Modules\\Distribution::read(" . var_export($installRoot, true) . ")[\"format\"] ?? null) !== " . (int) $manifest['distribution']['format'] . ") exit(3);";
     $newBootRunner .= "; if (TinyCat\\Support\\Languages::language_packages() === []) exit(4);";
     $newBootRunner = str_replace('; if (TinyCat', '; echo json_encode(["status" => TinyCat\\Database\\Schema::app_db_status(), "activation" => TinyCat\\Core\\Modules\\Deployment::read(' . var_export($installRoot, true) . '), "states" => TinyCat\\Database\\Connection::all("SELECT * FROM module_installations")]); if (TinyCat', $newBootRunner);
@@ -395,15 +395,15 @@ PHP;
     $needsDatabaseRestore = (bool) ($update['pending_migrations'] ?? false);
     $assert(!$needsDatabaseRestore || is_file($backup . '/database.sql'), 'Schema-changing updates include a MySQL snapshot.');
 
-    $rollbackRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; TinyCat\\Core\\Updates\\Manager::rollback(" . var_export(basename($backup), true) . ");";
+    $rollbackRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); TinyCat\\Core\\Updates\\Manager::rollback(" . var_export(basename($backup), true) . ");";
     [$rollbackExit, $rollbackOutput] = $run($rollbackRunner);
     $assert($rollbackExit === 0, 'Standard updater restores its recorded database and file snapshot: ' . implode(' ', $rollbackOutput));
     $restoredInventory = $inventory($installRoot);
     $assert($restoredInventory === $beforeInventory, 'Rollback restores the exact managed baseline tree.');
     $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback restores the exact pre-update database content and schema.');
-    $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; (new ReflectionMethod(TinyCat\\Core\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
+    $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/autoload.php', true)
+        . "; \TinyCat\Core\Runtime\Application::start(); (new ReflectionMethod(TinyCat\\Core\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
     [$clearCacheExit, $clearCacheOutput] = $run($clearOldCache);
     $assert($clearCacheExit === 0, 'Rollback invalidates settings cached by the updated runtime: ' . implode(' ', $clearCacheOutput));
     [$oldBootExit, $oldBootOutput] = $run($probeRunner);

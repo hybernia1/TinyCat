@@ -14,7 +14,7 @@ module.exports = function setup() {
     dom: { find: selector => document.querySelector(selector), all: () => [], emit: (_, name, detail) => { emitted.push({ name, detail }); } },
     lifecycle: { register: (name, service) => { services[name] = service; }, hydrate: root => hydrated.push(root), dispose: root => Object.values(services).forEach(service => { if (service.dispose) service.dispose(root); }) },
     ui: { pagination: response => response.meta.pagination, filterPanel() {} }, filters: { get: () => null, capture: () => null, restore() {} },
-    forms: { clearErrors() {}, applyErrors() {}, focusInvalid() {}, loading() {}, reset: source => saved.push(source), markClean() {}, dirty: () => [], confirmDiscard: async () => true },
+    forms: { canSubmit: () => true, validate: () => true, clearErrors() {}, applyErrors() {}, focusInvalid() {}, loading() {}, reset: source => saved.push(source), markClean() {}, dirty: () => [], confirmDiscard: async () => true },
     actions: {}, dialog: {}, i18n: { label: key => key },
     api: { unwrap: response => response.data, errors: () => null, details: () => ({}), request: (url, options) => new Promise((resolve, reject) => { pending.push({ url, options, resolve, reject }); }) },
     botDetail: { result: () => false, hydrate() {}, dispose() {} },

@@ -9,6 +9,21 @@ Audity a otevřené plány nejsou referencí aktuálního API.
 
 ## Co poskytuje core a co vlastní modul
 
+Společné chování a veřejné vstupy určuje [kontrakt core pro API, UI a validace](../contracts/core-application-contract.md).
+
+Limity a povolené hodnoty pole deklaruj jednou v pravidlech vlastníka. Pro metadata
+editoru použij `Validator::constraints($rules)` a pro server stejná pravidla;
+výchozí hodnoty a přípravu vstupu vlastní modul. Připravený vstup validuj také
+při ukládání mimo HTTP. Komponenty čerpají z `constraints`, nikoli z další kopie
+čísel. Znakové limity mapuj na `data-max-length`/`data-min-length`, UTF-8 bajty
+na `data-max-bytes`; společné formuláře zajišťují kontrolu a zachování konceptu.
+Editor v asset manifestu deklaruje `uses: ["ui.form-constraints"]`.
+
+Formulář připoj ke společnému AJAX submitu; vlastní callback aktualizuje doménové
+výsledky. Potvrzení náhledu nebo jinou podmínku připoj přes
+`TinyCat.forms.setSubmitGuard(form, callback)`, nikoli dalším submit listenerem.
+Veřejnou stránku s AJAX resource registruj přes `Router::page()` a klientovi
+předej `Router::pageDefinitions()`; neduplikuj seznam cest v PHP a JavaScriptu.
 Core je povinný framework. Modul vlastní konkrétní funkci od registrace přes
 data a pravidla až po UI. Vypnutí odstraní runtime příspěvky, zachová data.
 

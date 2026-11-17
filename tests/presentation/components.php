@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once __DIR__ . '/../../App/bootstrap.php';
+require_once __DIR__ . '/../../App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 use TinyCat\Social\Profiles\Views as UsersViews;
 use TinyCat\Social\Posts\Views as StatusViews;
@@ -104,15 +104,16 @@ $assert(!str_contains((string) file_get_contents(__DIR__ . '/../../App/Core/Ui/A
 $botStat = \TinyCat\Support\Components::render('bots/stat', ['stat' => ['key' => 'posts', 'value' => 0]]);
 $assert(str_contains($botStat, 'class="card min-w-0"') && str_contains($botStat, '#file') && str_contains($botStat, 'data-bot-stat="posts">0</strong>'), 'Bot counters use the dashboard stat card, include their icon, and preserve zero values and live-update hooks.');
 $source = ['id' => 7, 'bot_user_id' => 3, 'username' => 'Bot', 'name' => 'Source', 'enabled' => true, 'feed_url' => 'https://example.test/feed'];
-$sourceFields = \TinyCat\Support\Components::render('bots/source-fields', ['source' => $source, 'bots' => []]);
-$typedFields = \TinyCat\Support\Components::render('bots/source-fields', ['source' => $source]);
+$sourceModel = ['source' => \TinyCat\Social\Automation\Administration::prepareSourceInput($source), 'constraints' => \TinyCat\Social\Automation\Administration::sourceConstraints(), 'bots' => []];
+$sourceFields = \TinyCat\Support\Components::render('bots/source-fields', $sourceModel);
+$typedFields = \TinyCat\Support\Components::render('bots/source-fields', array_diff_key($sourceModel, ['bots' => true]));
 $assert(!str_contains($typedFields, 'source_type') && str_contains($typedFields, '{{image}}'), 'Unified source forms retain the optional image marker without a type selector.');
 $previewMarkup = \TinyCat\Support\Components::render('bots/source-preview', ['format' => 'json_feed_1_1', 'title' => '<script>bad</script>', 'items' => [['title' => 'Sample', 'body' => '<img onerror=bad>', 'image_url' => '', 'has_image' => false, 'rejection' => null]], 'sources' => []]);
 $assert(str_contains($previewMarkup, '&lt;script&gt;') && str_contains($previewMarkup, '&lt;img onerror=bad&gt;') && !str_contains($previewMarkup, '<script>'), 'Preview renders untrusted feed content as plain text, never executable markup.');
 $discoveryMarkup = \TinyCat\Support\Components::render('bots/source-preview', ['format' => 'discovery', 'title' => '', 'items' => [], 'sources' => [['name' => 'One', 'feed_url' => 'https://example.test/one'], ['name' => 'Two', 'feed_url' => 'https://example.test/two']]]);
 $assert(str_contains($discoveryMarkup, 'data-bot-preview-source="0"') && str_contains($discoveryMarkup, 'data-bot-preview-source="1"'), 'Discovery buttons preserve distinct candidate indexes across shared renderers.');
-$assert(preg_match('/name="publication_interval_minutes"[^>]*value="30"/', $sourceFields) === 1, 'Legacy source forms display the default 30-minute publication spacing.');
-$configuredFields = \TinyCat\Support\Components::render('bots/source-fields', ['source' => $source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45], 'bots' => []]);
+$assert(preg_match('/name="publication_interval_minutes"[^>]*value="30"/', $sourceFields) === 1, 'Source forms display the publication default supplied by their owner.');
+$configuredFields = \TinyCat\Support\Components::render('bots/source-fields', array_replace($sourceModel, ['source' => \TinyCat\Social\Automation\Administration::prepareSourceInput($source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45])]));
 $assert(preg_match('/name="publication_interval_minutes"[^>]*value="45"/', $configuredFields) === 1 && preg_match('/name="interval_minutes"[^>]*value="60"/', $configuredFields) === 1, 'Source forms display separate polling and publication intervals.');
 $sources = BotsViews::sources(['bots' => [['id' => 3, 'username' => 'Bot']], 'sources' => [$source]]);
 $assert($hasAction($sources, '/api/bots/sources/7/runs') && $hasAction($sources, '/api/bots/sources/7'), 'Source run and edit/delete actions address the same source.');

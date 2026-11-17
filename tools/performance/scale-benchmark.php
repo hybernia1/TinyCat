@@ -72,7 +72,7 @@ try {
     );
 
     define('TINYCAT', true);
-    require_once $root . '/App/bootstrap.php';
+    require_once $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     \TinyCat\Core\Installation\Installer::create_tables();
 

@@ -12,7 +12,7 @@
     "empty": "Aucun article pour le moment.",
     "older": "Articles précédents",
     "not_found": "Article introuvable.",
-    "invalid": "Saisissez un titre (200 caractères maximum) et un texte (60 000 octets UTF-8 maximum).",
+    "invalid": "Saisissez un titre ({title_max} caractères maximum) et un texte ({body_max} octets UTF-8 maximum).",
     "articles": "Articles",
     "scheduled": "Planifié",
     "feeds": {
@@ -27,7 +27,7 @@
       "run": "Lancer l’importation",
       "preview": "Aperçu de l’importation",
       "preview_empty": "Aucun élément utilisable.",
-      "invalid": "Vérifiez le nom, l’URL publique du flux, l’administrateur actif et l’intervalle de 5 à 43 200 minutes. L’URL d’une source enregistrée ne peut pas être modifiée."
+      "invalid": "Vérifiez le nom, l’URL publique du flux, l’administrateur actif et l’intervalle de {interval_min} à {interval_max} minutes. L’URL d’une source enregistrée ne peut pas être modifiée."
     },
     "settings": {
       "images_enabled": "Autoriser la publication d'images",

@@ -101,6 +101,7 @@ final class Response
      */
     public static function issue(string $code, string $message, array $params = []): array
     {
+        self::assertCode($code);
         return ['code' => $code, 'params' => $params, 'message' => $message];
     }
 
@@ -110,12 +111,15 @@ final class Response
     private static function issues(array $errors): array
     {
         foreach ($errors as $field => &$issues) {
-            $issues = array_map(static function (mixed $issue) use ($field): array {
+            if (!is_array($issues) && !is_string($issues)) { throw new \LogicException('Validation fields must contain issue lists.'); }
+            $issues = array_values(array_map(static function (mixed $issue) use ($field): array {
                 if (is_array($issue) && isset($issue['code'], $issue['message'])) {
-                    return ['code' => (string) $issue['code'], 'params' => (array) ($issue['params'] ?? []) + ['field' => (string) $field], 'message' => (string) $issue['message']];
+                    if (!is_string($issue['code']) || !is_string($issue['message']) || (isset($issue['params']) && !is_array($issue['params']))) { throw new \LogicException('Validation issues must contain a code, message and parameter map.'); }
+                    return self::issue($issue['code'], $issue['message'], array_replace($issue['params'] ?? [], ['field' => (string) $field]));
                 }
+                if (!is_string($issue)) { throw new \LogicException('Invalid validation issue.'); }
                 return ['code' => 'invalid_value', 'params' => ['field' => (string) $field], 'message' => (string) $issue];
-            }, (array) $issues);
+            }, (array) $issues));
         }
         unset($issues);
         return $errors;
@@ -160,7 +164,7 @@ final class Response
         string $code = 'ok',
         array $params = []
     ): array {
-        if (!preg_match('/^[a-z][a-z0-9_]*$/D', $code)) { throw new \LogicException('API outcome codes must be stable identifiers.'); }
+        self::assertCode($code);
         $payload = [
             'ok' => $ok,
             'status' => $status,
@@ -180,6 +184,11 @@ final class Response
         }
 
         return $payload;
+    }
+
+    private static function assertCode(string $code): void
+    {
+        if (preg_match('/^[a-z][a-z0-9_]*$/D', $code) !== 1) { throw new \LogicException('API outcome codes must be stable identifiers.'); }
     }
 
     private static function assertData(mixed $data): void

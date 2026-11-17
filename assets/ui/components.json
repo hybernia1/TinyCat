@@ -3081,11 +3081,26 @@
             ]
           },
           "maxlength": {
-            "or": [
+            "if": [
               {
-                "get": "max_length"
+                "or": [
+                  {
+                    "get": "max_bytes"
+                  },
+                  {
+                    "get": "max_characters"
+                  }
+                ]
               },
-              "2000"
+              null,
+              {
+                "or": [
+                  {
+                    "get": "max_length"
+                  },
+                  "2000"
+                ]
+              }
             ]
           },
           "required": {
@@ -3139,6 +3154,12 @@
               },
               null
             ]
+          },
+          "data-max-bytes": {
+            "get": "max_bytes"
+          },
+          "data-max-length": {
+            "get": "max_characters"
           }
         },
         "children": [
@@ -3544,7 +3565,10 @@
               "suggest_url": {
                 "get": "suggest_url"
               },
-              "max_length": 2000
+              "max_length": 2000,
+              "max_characters": {
+                "get": "constraints.comment.max_length"
+              }
             }
           },
           {
@@ -3937,6 +3961,9 @@
                   },
                   "suggest_url": {
                     "get": "suggest_url"
+                  },
+                  "constraints": {
+                    "get": "constraints"
                   }
                 }
               }
@@ -3998,6 +4025,9 @@
                       },
                       "reply_mentions": {
                         "get": "reply_mentions"
+                      },
+                      "constraints": {
+                        "get": "constraints"
                       }
                     }
                   }
@@ -4295,6 +4325,11 @@
       },
       "data-discussion-api": {
         "get": "target.api_url"
+      },
+      "data-discussion-constraints": {
+        "json": {
+          "get": "constraints"
+        }
       }
     },
     "children": [
@@ -4369,6 +4404,9 @@
                   },
                   "reply_mentions": {
                     "get": "reply_mentions"
+                  },
+                  "constraints": {
+                    "get": "constraints"
                   }
                 }
               }
@@ -4387,6 +4425,9 @@
           },
           "api_base": {
             "get": "target.api_url"
+          },
+          "constraints": {
+            "get": "constraints"
           }
         },
         "when": {

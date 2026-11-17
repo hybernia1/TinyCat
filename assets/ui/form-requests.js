@@ -5,6 +5,7 @@ import "../core/api-client.js";
   var TinyCat = window.TinyCat = window.TinyCat || {};
   var qsa = TinyCat.dom.all;
   var bindings = new WeakMap();
+  var submitGuards = new WeakMap();
   var requests = new WeakMap();
 
   function controls(element) {
@@ -33,6 +34,12 @@ import "../core/api-client.js";
   }
 
   TinyCat.forms = {
+    validate: function (form) {
+      if (TinyCat.forms.syncConstraints) { TinyCat.forms.syncConstraints(form); }
+      return form.reportValidity();
+    },
+    setSubmitGuard: function (form, guard) { submitGuards.set(form, guard); },
+    canSubmit: function (form) { var guard = submitGuards.get(form); return !guard || guard(); },
     loading: setLoading,
     request: function (form, url, options) {
       if (requests.has(form)) { return requests.get(form).promise; }
@@ -63,7 +70,7 @@ import "../core/api-client.js";
       return entry.promise;
     },
     cancel: function (form) { if (requests.has(form)) { var entry = requests.get(form); entry.controller.abort(); entry.finish(); } },
-    dispose: function (form) { if (bindings.has(form)) { bindings.get(form)(); } else { TinyCat.forms.cancel(form); } },
+    dispose: function (form) { submitGuards.delete(form); if (bindings.has(form)) { bindings.get(form)(); } else { TinyCat.forms.cancel(form); } },
     bind: function (form, options) {
       if (bindings.has(form)) { bindings.get(form)(); }
       var pending = false;
@@ -71,11 +78,12 @@ import "../core/api-client.js";
       var settings = options || {};
       var listener = async function (event) {
         event.preventDefault();
-        if (pending || !form.reportValidity()) {
+        if (pending || !TinyCat.forms.validate(form)) {
           return;
         }
         pending = true;
         try {
+          if (!await TinyCat.forms.canSubmit(form) || disposed) { return; }
           var method = String(settings.method || form.method || "POST").toUpperCase();
           var body = new FormData(form);
           var url = new URL(settings.url || form.action, window.location.href);
