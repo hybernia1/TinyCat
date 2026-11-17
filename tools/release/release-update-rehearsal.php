@@ -268,8 +268,12 @@ PHP;
         static fn (string $id): bool => !in_array($id, $appliedBefore, true)
     ));
     $modulePending = false;
+    $beforeDeployment = json_decode((string) file_get_contents($installRoot . '/storage/deployment.json'), true, 512, JSON_THROW_ON_ERROR);
+    $installedOwners = $beforeDeployment['installed'];
     $schemaStates = array_column($database->query('SELECT module_id, version FROM module_installations')->fetchAll(PDO::FETCH_ASSOC), 'version', 'module_id');
     foreach (($manifest['distribution']['schemas'] ?? []) as $id => $schema) {
+        $owner = $manifest['distribution']['schemaOwners'][$id];
+        if (!in_array($owner, $manifest['distribution']['framework'], true) && !in_array($owner, $installedOwners, true)) { continue; }
         if (!isset($schemaStates[$id]) || (int) $schemaStates[$id] < $schema['version']) { $modulePending = true; }
     }
     $beforeInventory = $inventory($installRoot);
@@ -338,6 +342,8 @@ PHP;
     $convertedGlobal = $database->query("SELECT migration, release_version AS version, checksum, applied_at FROM migrations WHERE kind = 'global' AND stream = 'tinycat' ORDER BY migration")->fetchAll(PDO::FETCH_ASSOC);
     $assert($convertedGlobal === $beforeGlobalHistory, 'Global migration versions, checksums and timestamps survive conversion.');
     $assert(($update['pending_migrations'] ?? null) === ($expectedPending !== [] || $modulePending), 'Pending migrations match the baseline registry.');
+    $afterDeployment = json_decode((string) file_get_contents($installRoot . '/storage/deployment.json'), true, 512, JSON_THROW_ON_ERROR);
+    $assert($afterDeployment['installed'] === $installedOwners && $afterDeployment['active'] === $beforeDeployment['active'], 'A platform package preserves installed and active owners without activating an uninstalled module.');
     $assert(($update['applied_migrations'] ?? null) === $expectedPending, 'Only migrations absent from the baseline run.');
     foreach (['users'=>'users','content'=>'social_posts','content_comments'=>'social_comments','content_likes'=>'social_post_likes','comment_likes'=>'social_comment_likes','user_followers'=>'user_followers','notifications'=>'notifications','content_tags'=>'social_post_tags','terms'=>'social_terms','content_links'=>'social_post_links'] as $old => $table) {
         $assert((int) $database->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn() === $beforeDatabase['counts'][$old], 'Update preserves representative records in ' . $table);
