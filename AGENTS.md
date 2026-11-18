@@ -75,7 +75,9 @@ nikoli PHP adaptéry propojující domény.
   nikoli modul nebo povinná doménová služba. RSS poskytuje Core/Feeds,
   oEmbed hostuje Core/Discovery pro lazy `EmbedSource` vlastníka.
 
-- Nastavení, jejich klientské popisky a `resources.emails` patří vlastníkům.
+- Nastavení, jejich popisky a `resources.emails` patří vlastníkům.
+  Prezentaci editoru core odvozuje z lazy `SettingsSection`; nepřidávej druhou
+  registraci polí a popisků v JavaScriptu ani seznam modulů do core.
   Společný renderer pošty je v core. Volitelný detail komponenty připojuj přes
   `componentExtensions`, ne povinným importem z nepovinného modulu.
 - Distribuční profily jsou data vlastněná manifestem. Core deployment, updater

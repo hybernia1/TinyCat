@@ -7,7 +7,6 @@ require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Run
 
 use TinyCat\Social\Profiles\Views as UsersViews;
 use TinyCat\Social\Posts\Views as StatusViews;
-use TinyCat\Social\Automation\Views as BotsViews;
 use TinyCat\Social\Presentation\Views as SiteViews;
 
 // No workspace database or cache is used by this rendering fixture.
@@ -63,7 +62,7 @@ $protectedRow = \TinyCat\Support\Components::render('users/admin-row', ['user' =
 $assert(!str_contains($protectedRow, '/activation'), 'The protected administrator has no deactivation action.');
 $filter = \TinyCat\Support\Components::render('users/filter-form', ['roles' => array_keys($roles), 'statuses' => array_keys($statuses), 'filters' => ['role' => 'user', 'status' => 'ban'], 'pagination' => ['per_page' => 25]]);
 $assert(str_contains($filter, 'value="user" selected') && str_contains($filter, 'value="ban" selected'), 'Shared administrative filters preserve both selected options.');
-$list = \TinyCat\Core\Identity\Views::adminList(['users' => [$admin, $member], 'roles' => $roles, 'statuses' => $statuses]);
+$list = \TinyCat\Support\Components::render('users/list', \TinyCat\Core\Identity\Resource::listing(['items' => array_map(\TinyCat\Core\Identity\Resource::legacyUser(...), [$admin, $member]), 'roles' => $roles, 'statuses' => $statuses], []));
 $assert(!preg_match('/<form[^>]*action="\/api\/users\/1(?:\?|"|&)[^>]*data-confirm=/', $list), 'The protected administrator has no deletion action.');
 $assert($hasAction($list, '/api/users/2') && str_contains($list, 'name="_method" value="DELETE"'), 'Other account deletion addresses its own resource.');
 
@@ -76,12 +75,12 @@ $summary = \TinyCat\Support\Components::render('ui/list-summary', ['target' => '
 $assert(!str_contains($summary, 'data-list-result-count') && str_contains($summary, '&lt;needle&gt;') && str_contains($summary, 'data-list-summary-filters="#users-list"'), 'Shared list summaries render escaped search and scoped filter badges without a record-count prefix.');
 $emptySummary = \TinyCat\Support\Components::render('ui/list-summary', ['target' => '#users-list', 'pagination' => ['total' => 0]]);
 $assert(strip_tags($emptySummary) === '', 'An unfiltered list has no summary text or zero-result sentence.');
-$accountFilters = BotsViews::accountFilter(['filters' => ['q' => 'Bot <unsafe>', 'status' => 'ban'], 'per_page' => 25]);
-$assert(str_contains($accountFilters, 'data-filter-content') && str_contains($accountFilters, 'action="/api/bots/accounts') && str_contains($accountFilters, 'name="status"') && str_contains($accountFilters, 'value="ban" selected'), 'The actual bot-account filter renders its trusted filter fields without throwing during page composition.');
-$assert(str_contains($accountFilters, 'Bot &lt;unsafe&gt;') && str_contains($accountFilters, 'data-ajax-target="#bot-accounts-list"') && !str_contains($accountFilters, 'role="dialog"') && !str_contains($accountFilters, 'type="submit"'), 'Bot-account dropdown filters preserve escaped search state and automatic submission without a modal.');
-$sourceFilters = \TinyCat\Support\View::part('Social/bots/modals/source-filter', ['bots' => [['id' => 3, 'username' => 'Bot <unsafe>']], 'filter_bot_id' => 3, 'filters' => ['q' => 'Feed', 'per_page' => 25]]);
-$assert(str_contains($sourceFilters, 'data-filter-content') && str_contains($sourceFilters, 'action="/api/bots/sources"') && str_contains($sourceFilters, 'value="3" selected'), 'The actual source filter renders its trusted filter fields without throwing during page composition.');
-$assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source dropdown filters preserve their scoped controls and automatic submission without a modal.');
+$accountFilters = \TinyCat\Support\Components::render('bots/account-filter-form', ['filters' => ['q' => 'Bot <unsafe>', 'status' => 'ban'], 'pagination' => ['per_page' => 25], 'statuses' => ['active', 'waiting', 'ban']]);
+$assert(str_contains($accountFilters, 'action="/api/bots/accounts') && str_contains($accountFilters, 'name="status"') && str_contains($accountFilters, 'value="ban" selected'), 'Account filters share their canonical owner component and selected status.');
+$assert(str_contains($accountFilters, 'Bot &lt;unsafe&gt;') && str_contains($accountFilters, 'data-ajax-target="#bot-accounts-list"') && !str_contains($accountFilters, 'role="dialog"') && !str_contains($accountFilters, 'type="submit"'), 'Account filters preserve escaped search state and automatic submission.');
+$sourceFilters = \TinyCat\Support\Components::render('bots/source-filter-form', ['bots' => [['id' => 3, 'username' => 'Bot <unsafe>']], 'filters' => ['bot' => '3', 'q' => 'Feed'], 'pagination' => ['per_page' => 25]]);
+$assert(str_contains($sourceFilters, 'action="/api/bots/sources"') && str_contains($sourceFilters, 'value="3" selected'), 'Source filters share their canonical owner component and selected bot.');
+$assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source filters preserve their scoped controls and automatic submission.');
 
 $settingsSections = \TinyCat\Core\Settings\Administration::tc_admin_settings_view_sections();
 $iconSprite = (string) file_get_contents(__DIR__ . '/../../assets/icons.svg');
@@ -115,9 +114,9 @@ $assert(str_contains($discoveryMarkup, 'data-bot-preview-source="0"') && str_con
 $assert(preg_match('/name="publication_interval_minutes"[^>]*value="30"/', $sourceFields) === 1, 'Source forms display the publication default supplied by their owner.');
 $configuredFields = \TinyCat\Support\Components::render('bots/source-fields', array_replace($sourceModel, ['source' => \TinyCat\Social\Automation\Administration::prepareSourceInput($source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45])]));
 $assert(preg_match('/name="publication_interval_minutes"[^>]*value="45"/', $configuredFields) === 1 && preg_match('/name="interval_minutes"[^>]*value="60"/', $configuredFields) === 1, 'Source forms display separate polling and publication intervals.');
-$sources = BotsViews::sources(['bots' => [['id' => 3, 'username' => 'Bot']], 'sources' => [$source]]);
+$sources = \TinyCat\Support\Components::render('bots/sources', ['bots' => [['id' => 3, 'username' => 'Bot']], 'items' => [\TinyCat\Social\Automation\Importer::sourceResource($source)]]);
 $assert($hasAction($sources, '/api/bots/sources/7/runs') && $hasAction($sources, '/api/bots/sources/7'), 'Source run and edit/delete actions address the same source.');
-$accounts = BotsViews::accounts(['accounts' => [['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01']]]);
+$accounts = \TinyCat\Support\Components::render('bots/accounts', ['items' => [\TinyCat\Social\Automation\Administration::accountResource(['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01'])]]);
 $assert(str_contains($accounts, '/api/bots/accounts'), 'Bot accounts retain canonical API actions.');
 $item = ['id' => 7, 'likes_count' => 2, 'comments_count' => 1];
 $actions = StatusViews::actions(['item' => $item, 'user' => $member]);

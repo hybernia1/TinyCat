@@ -5,7 +5,7 @@ $botPostsDb = new PDO('sqlite:' . $databasePath);
 foreach (['/admin/bots/accounts' => 'bot-accounts-filter-modal', '/admin/bots/list' => 'bots-filter-modal'] as $pagePath => $filterId) {
     $filterPage = file_get_contents('http://' . $address . $pagePath, false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
     $pageHeaders = http_get_last_response_headers() ?? [];
-    $assert(preg_match('/\s200\s/', (string) ($pageHeaders[0] ?? '')) === 1 && is_string($filterPage) && str_contains($filterPage, 'id="' . $filterId . '"') && str_contains($filterPage, 'data-filter-content'), 'Bot administration pages render their dropdown filter form successfully: ' . $pagePath);
+    $assert(preg_match('/\s200\s/', (string) ($pageHeaders[0] ?? '')) === 1 && is_string($filterPage) && str_contains($filterPage, 'data-filter-panel="' . $filterId . '"') && str_contains($filterPage, 'data-admin-state') && !str_contains($filterPage, 'data-filter-content'), 'Bot pages declare their filter state without prebuilding filter forms: ' . $pagePath);
 }
 $seedBotPost = $botPostsDb->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, 3, ?, ?)');
 foreach (range(1, 31) as $number) {

@@ -5,7 +5,7 @@ import "../../../../assets/ui/component-builders.js";
 
 (function () {
   "use strict";
-  var T = window.TinyCat;
+  var T = window.TinyCat, definition = T.adminDefinitions["core.scheduler-runs"];
   var timer = null, pending = null;
   function editing(target) {
     return document.hidden || document.querySelector('.modal[data-open="true"]') ||
@@ -13,7 +13,7 @@ import "../../../../assets/ui/component-builders.js";
       target.querySelector('[aria-busy="true"]');
   }
   async function poll() {
-    var target = document.querySelector("#scheduler-list");
+    var target = document.querySelector(definition.target);
     if (!target || pending || editing(target)) { return; }
     var view = target.firstElementChild, generation = target.dataset.apiGeneration;
     var url = T.scheduler.listUrl();
@@ -37,13 +37,13 @@ import "../../../../assets/ui/component-builders.js";
         if (["q", "task", "status", "page", "per_page", "sort", "direction"].includes(name)) { query.append(name, value); }
       });
       var search = query.toString();
-      return "/api/scheduler/tasks" + (search ? "?" + search : "");
+      return definition.endpoint + (search ? "?" + search : "");
     },
     init: function () {
       document.addEventListener("visibilitychange", function () { if (!document.hidden) { poll(); } });
     },
     dispose: function (root) {
-      var target = document.querySelector("#scheduler-list");
+      var target = document.querySelector(definition.target);
       if (target && (root === target || root.contains(target))) {
         window.clearInterval(timer); timer = null;
         if (pending) { pending.abort(); pending = null; }
@@ -54,28 +54,17 @@ import "../../../../assets/ui/component-builders.js";
       return T.ui.dialog(id, "cron.run_details", T.components.render("scheduler/run-detail", response.data));
     },
     list: function (target, response) {
-      var data = Object.assign({}, response.data, { pagination: T.ui.pagination(response) });
-      var view = T.components.render("scheduler/list", Object.assign({}, data, { state: data }));
-      T.content.replaceChildren(target, view);
-      view.dataset.schedulerReady = "true";
-      T.scheduler.filters(data);
-    },
-    filters: function (data) {
-      var form = T.components.render("scheduler/filter-form", data);
-      T.ui.filterPanel("scheduler-filter-modal", form);
+      return T.lists.result(definition.target, { dataset: { apiMethod: "GET", ajaxAction: definition.endpoint }, getAttribute: function () { return null; } }, response, target);
     },
     hydrate: function (root) {
       Array.from((root || document).querySelectorAll("[data-scheduler-view]")).forEach(function (view) {
         if (timer === null) { timer = window.setInterval(poll, 5000); }
-        if (view.dataset.schedulerReady === "true") { return; }
-        view.dataset.schedulerReady = "true";
-        T.scheduler.filters(JSON.parse(view.dataset.schedulerState));
       });
     },
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.dataset.url || source.getAttribute("href") || "/", window.location.href);
-      if (url.pathname === "/api/scheduler/tasks" || /^\/api\/scheduler\/tasks\/[a-z][a-z0-9_.-]{0,39}\/runs$/.test(url.pathname)) {
-        var root = target || document.querySelector("#scheduler-list");
+      if (url.pathname === definition.endpoint || /^\/api\/scheduler\/tasks\/[a-z][a-z0-9_.-]{0,39}\/runs$/.test(url.pathname)) {
+        var root = target || document.querySelector(definition.target);
         if (root) { T.scheduler.list(root, response); return [root]; }
         return [];
       }

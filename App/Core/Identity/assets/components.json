@@ -583,10 +583,21 @@
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-users-view": "",
-      "data-users-state": {
+      "data-admin-list": "core.users",
+      "data-admin-state": {
         "json": {
-          "get": "state"
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "roles": {
+            "get": "roles"
+          },
+          "statuses": {
+            "get": "statuses"
+          }
         }
       }
     },
@@ -594,16 +605,28 @@
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": "/api/users",
-          "target": "#users-list",
-          "history": "/admin/users",
+          "url": {
+            "admin_ref": "core.users",
+            "field": "endpoint"
+          },
+          "target": {
+            "admin_ref": "core.users",
+            "field": "target"
+          },
+          "history": {
+            "admin_ref": "core.users",
+            "field": "path"
+          },
           "filters": {
             "get": "filters"
           },
           "pagination": {
             "get": "pagination"
           },
-          "filter_modal": "users-filter-modal"
+          "filter_modal": {
+            "admin_ref": "core.users",
+            "field": "filterId"
+          }
         }
       },
       {
@@ -766,7 +789,10 @@
           "navigation": {
             "get": "navigation"
           },
-          "target": "#users-list"
+          "target": {
+            "admin_ref": "core.users",
+            "field": "target"
+          }
         }
       }
     ]
@@ -1371,11 +1397,20 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": "/api/users",
+      "action": {
+        "admin_ref": "core.users",
+        "field": "endpoint"
+      },
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": "#users-list",
-      "data-history": "/admin/users"
+      "data-ajax-target": {
+        "admin_ref": "core.users",
+        "field": "target"
+      },
+      "data-history": {
+        "admin_ref": "core.users",
+        "field": "path"
+      }
     },
     "children": [
       {

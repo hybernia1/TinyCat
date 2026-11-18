@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-118 definic komponent, 393 CSS tříd, 127 CSS importů, 99 JS souborů, 24 UI služeb, 13 PHP partialů.
+121 definic komponent, 393 CSS tříd, 127 CSS importů, 92 JS souborů, 24 UI služeb, 10 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -87,6 +87,9 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `site/dashboard` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/admin-list, ui/stat-card |
 | `site/dashboard-comments` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/empty-state |
 | `status/comment-menu` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/menu |
+| `bots/account-creation-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field |
+| `bots/account-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
+| `bots/source-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `ui/field` | [assets/ui/components.json](../../assets/ui/components.json) | — |
 | `ui/select` | [assets/ui/components.json](../../assets/ui/components.json) | — |
 | `ui/pagination` | [assets/ui/components.json](../../assets/ui/components.json) | ui/pagination-step |
@@ -132,6 +135,7 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 ## UI služby a metody zapsané jako `name: function`
 
 Jde o syntaktický seznam; nezahrnuje všechny exporty a nerozhoduje o veřejnosti metody.
+- [assets/ui/admin-resources.js](../../assets/ui/admin-resources.js): `url`, `apply`, `modal`, `result`, `hydrate`
 - [assets/ui/ajax-bindings.js](../../assets/ui/ajax-bindings.js): `current`
 - [assets/ui/analytics.js](../../assets/ui/analytics.js):
 - [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js): `appendAvatar`
@@ -152,7 +156,6 @@ Jde o syntaktický seznam; nezahrnuje všechny exporty a nerozhoduje o veřejnos
 - [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js): `register`, `isRead`, `result`, `url`
 - [assets/ui/popovers.js](../../assets/ui/popovers.js): `restoringFocus`, `capture`, `restore`, `init`, `dispose`
 - [assets/ui/public.js](../../assets/ui/public.js):
-- [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js):
 - [assets/ui/tabs.js](../../assets/ui/tabs.js):
 - [assets/ui/toasts.js](../../assets/ui/toasts.js):
 - [assets/ui/tooltips.js](../../assets/ui/tooltips.js): `dispose`, `init`
@@ -169,31 +172,24 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-state.js](../../assets/ui/form-state.js) | přes importy / společný runtime |
 | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js), [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Identity/assets/avatar-editor.js](../../App/Core/Identity/assets/avatar-editor.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js), [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | admin, public |
 | [App/Core/Identity/assets/public.js](../../App/Core/Identity/assets/public.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | public |
-| [App/Core/Identity/assets/settings-presentation.js](../../App/Core/Identity/assets/settings-presentation.js) | [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js) | admin |
 | [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js) | [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
 | [App/Core/Installation/assets/index.js](../../App/Core/Installation/assets/index.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | /install |
-| [App/Core/Mail/assets/settings-presentation.js](../../App/Core/Mail/assets/settings-presentation.js) | [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js) | admin |
 | [App/Core/Notifications/assets/controller.js](../../App/Core/Notifications/assets/controller.js) | [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/toasts.js](../../assets/ui/toasts.js), [assets/ui/popovers.js](../../assets/ui/popovers.js) | přes importy / společný runtime |
 | [App/Core/Notifications/assets/index.js](../../App/Core/Notifications/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Notifications/assets/controller.js](../../App/Core/Notifications/assets/controller.js) | public |
 | [App/Core/Security/assets/captcha.js](../../App/Core/Security/assets/captcha.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
 | [App/Core/Security/assets/index.js](../../App/Core/Security/assets/index.js) | [App/Core/Security/assets/captcha.js](../../App/Core/Security/assets/captcha.js) | public |
-| [App/Core/Security/assets/settings-presentation.js](../../App/Core/Security/assets/settings-presentation.js) | [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js) | admin |
-| [App/Core/Settings/assets/controller.js](../../App/Core/Settings/assets/controller.js) | [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Settings/assets/field-presentation.js](../../App/Core/Settings/assets/field-presentation.js) | přes importy / společný runtime |
-| [App/Core/Settings/assets/field-presentation.js](../../App/Core/Settings/assets/field-presentation.js) | [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js) | přes importy / společný runtime |
+| [App/Core/Settings/assets/controller.js](../../App/Core/Settings/assets/controller.js) | [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/core/modules.js](../../assets/core/modules.js) | přes importy / společný runtime |
 | [App/Core/Settings/assets/index.js](../../App/Core/Settings/assets/index.js) | [App/Core/Settings/assets/controller.js](../../App/Core/Settings/assets/controller.js) | admin |
 | [App/Core/Tasks/assets/controller.js](../../App/Core/Tasks/assets/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | přes importy / společný runtime |
 | [App/Core/Tasks/assets/index.js](../../App/Core/Tasks/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Tasks/assets/controller.js](../../App/Core/Tasks/assets/controller.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | /admin/cron, /admin/site-health |
 | [App/Core/Updates/assets/index.js](../../App/Core/Updates/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | /admin/updates |
-| [App/Modules/Blog/assets/index.js](../../App/Modules/Blog/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | /admin/articles |
 | [App/Modules/Blog/assets/sources.js](../../App/Modules/Blog/assets/sources.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | /admin/article-sources |
 | [App/Modules/Social/assets/bots/controller.js](../../App/Modules/Social/assets/bots/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-state.js](../../assets/ui/form-state.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js), [App/Modules/Social/assets/bots/source-preview.js](../../App/Modules/Social/assets/bots/source-preview.js), [App/Modules/Social/assets/bots/workspace.js](../../App/Modules/Social/assets/bots/workspace.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/bots/index.js](../../App/Modules/Social/assets/bots/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Modules/Social/assets/bots/controller.js](../../App/Modules/Social/assets/bots/controller.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | /admin/bots |
 | [App/Modules/Social/assets/bots/source-preview.js](../../App/Modules/Social/assets/bots/source-preview.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/bots/workspace.js](../../App/Modules/Social/assets/bots/workspace.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/tabs.js](../../assets/ui/tabs.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/content/settings-presentation.js](../../App/Modules/Social/assets/content/settings-presentation.js) | [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js) | admin |
 | [App/Modules/Social/assets/moderation/controller.js](../../App/Modules/Social/assets/moderation/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/core/dom.js](../../assets/core/dom.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/moderation/index.js](../../App/Modules/Social/assets/moderation/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Modules/Social/assets/moderation/controller.js](../../App/Modules/Social/assets/moderation/controller.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | /admin/moderation |
-| [App/Modules/Social/assets/moderation/settings-presentation.js](../../App/Modules/Social/assets/moderation/settings-presentation.js) | [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js) | admin |
 | [App/Modules/Social/assets/site/index.js](../../App/Modules/Social/assets/site/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/analytics.js](../../assets/ui/analytics.js), [App/Modules/Social/assets/site/sidebar-data.js](../../App/Modules/Social/assets/site/sidebar-data.js), [App/Modules/Social/assets/site/sticky-sidebars.js](../../App/Modules/Social/assets/site/sticky-sidebars.js), [App/Modules/Social/assets/site/views.js](../../App/Modules/Social/assets/site/views.js), [App/Modules/Social/assets/site/page-navigation.js](../../App/Modules/Social/assets/site/page-navigation.js), [assets/ui/language-suggestion.js](../../assets/ui/language-suggestion.js) | public |
 | [App/Modules/Social/assets/site/page-navigation.js](../../App/Modules/Social/assets/site/page-navigation.js) | [assets/ui/document-navigation.js](../../assets/ui/document-navigation.js), [assets/core/page-navigation.js](../../assets/core/page-navigation.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/site/sidebar-data.js](../../App/Modules/Social/assets/site/sidebar-data.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [App/Modules/Social/assets/site/views.js](../../App/Modules/Social/assets/site/views.js) | přes importy / společný runtime |
@@ -225,9 +221,10 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [assets/core/urls.js](../../assets/core/urls.js) |  | přes importy / společný runtime |
 | [assets/embed-frame.js](../../assets/embed-frame.js) |  | standalone |
 | [assets/embed.js](../../assets/embed.js) |  | standalone |
-| [assets/modules/admin/index.js](../../assets/modules/admin/index.js) | [assets/modules/admin/navigation.js](../../assets/modules/admin/navigation.js) | admin |
+| [assets/modules/admin/index.js](../../assets/modules/admin/index.js) | [assets/modules/admin/navigation.js](../../assets/modules/admin/navigation.js), [assets/ui/admin-resources.js](../../assets/ui/admin-resources.js) | admin |
 | [assets/modules/admin/module-packages.js](../../assets/modules/admin/module-packages.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | /admin/modules |
 | [assets/modules/admin/navigation.js](../../assets/modules/admin/navigation.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
+| [assets/ui/admin-resources.js](../../assets/ui/admin-resources.js) | [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/modules.js](../../assets/core/modules.js) | přes importy / společný runtime |
 | [assets/ui/ajax-bindings.js](../../assets/ui/ajax-bindings.js) | [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/modules.js](../../assets/core/modules.js), [assets/core/navigation.js](../../assets/core/navigation.js), [assets/ui/confirm-actions.js](../../assets/ui/confirm-actions.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-state.js](../../assets/ui/form-state.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | admin, public |
 | [assets/ui/analytics.js](../../assets/ui/analytics.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
 | [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js) | [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | přes importy / společný runtime |
@@ -258,7 +255,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | [assets/core/navigation.js](../../assets/core/navigation.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
 | [assets/ui/popovers.js](../../assets/ui/popovers.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
 | [assets/ui/public.js](../../assets/ui/public.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/analytics.js](../../assets/ui/analytics.js), [assets/ui/language-suggestion.js](../../assets/ui/language-suggestion.js), [assets/ui/global-search.js](../../assets/ui/global-search.js) | public |
-| [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js) |  | přes importy / společný runtime |
 | [assets/ui/tabs.js](../../assets/ui/tabs.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
 | [assets/ui/toasts.js](../../assets/ui/toasts.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/icons.js](../../assets/core/icons.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
 | [assets/ui/tooltips.js](../../assets/ui/tooltips.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
@@ -269,23 +265,18 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Core/Installation/templates/parts/install/steps.php](../../App/Core/Installation/templates/parts/install/steps.php)
 - [App/Core/Notifications/templates/parts/menu.php](../../App/Core/Notifications/templates/parts/menu.php)
 - [App/Core/Notifications/templates/parts/page.php](../../App/Core/Notifications/templates/parts/page.php)
-- [App/Core/Support/templates/parts/filter.php](../../App/Core/Support/templates/parts/filter.php)
 - [App/Core/Ui/templates/parts/consent.php](../../App/Core/Ui/templates/parts/consent.php)
 - [App/Core/Ui/templates/parts/flashes.php](../../App/Core/Ui/templates/parts/flashes.php)
 - [App/Core/Ui/templates/parts/public-header.php](../../App/Core/Ui/templates/parts/public-header.php)
-- [App/Modules/Social/templates/parts/bots/modals/account-filter.php](../../App/Modules/Social/templates/parts/bots/modals/account-filter.php)
-- [App/Modules/Social/templates/parts/bots/modals/source-filter.php](../../App/Modules/Social/templates/parts/bots/modals/source-filter.php)
 - [App/Modules/Social/templates/parts/site/sidebar-slot.php](../../App/Modules/Social/templates/parts/site/sidebar-slot.php)
 - [App/Modules/Social/templates/parts/status/feed.php](../../App/Modules/Social/templates/parts/status/feed.php)
 - [App/Modules/Social/templates/parts/status/home-feed.php](../../App/Modules/Social/templates/parts/status/home-feed.php)
 
 ## PHP renderery
 
-- [App/Core/Identity/Views.php](../../App/Core/Identity/Views.php): `adminFormFields`, `adminList`, `authContent`, `authForm`, `avatar`
+- [App/Core/Identity/Views.php](../../App/Core/Identity/Views.php): `adminFormFields`, `authContent`, `authForm`, `avatar`
 - [App/Core/Notifications/Views.php](../../App/Core/Notifications/Views.php): `items`
 - [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `tc_admin_options`, `tc_admin_datetime`, `tc_admin_datetime_iso`, `admin_user_statuses`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_per_page_view_data`, `admin_pagination_view_data`
-- [App/Modules/Social/src/Automation/Views.php](../../App/Modules/Social/src/Automation/Views.php): `accountFilter`, `accounts`, `sources`
-- [App/Modules/Social/src/Moderation/Views.php](../../App/Modules/Social/src/Moderation/Views.php): `reports`
 - [App/Modules/Social/src/Posts/Views.php](../../App/Modules/Social/src/Posts/Views.php): `feedMore`, `card`, `actions`, `commentForm`, `commentItem`, `commentsThread`, `composerBody`, `homeFeed`
 - [App/Modules/Social/src/Presentation/Views.php](../../App/Modules/Social/src/Presentation/Views.php): `dashboard`, `sidebar`
 - [App/Modules/Social/src/Profiles/Views.php](../../App/Modules/Social/src/Profiles/Views.php): `followingProfile`
@@ -293,6 +284,7 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 ## Všechny PHP šablony
 
 - [App/Core/Health/templates/page.php](../../App/Core/Health/templates/page.php)
+- [App/Core/Identity/templates/account-home.php](../../App/Core/Identity/templates/account-home.php)
 - [App/Core/Identity/templates/login.php](../../App/Core/Identity/templates/login.php)
 - [App/Core/Identity/templates/logout.php](../../App/Core/Identity/templates/logout.php)
 - [App/Core/Identity/templates/parts/user-menu.php](../../App/Core/Identity/templates/parts/user-menu.php)
@@ -302,7 +294,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Core/Notifications/templates/page.php](../../App/Core/Notifications/templates/page.php)
 - [App/Core/Notifications/templates/parts/menu.php](../../App/Core/Notifications/templates/parts/menu.php)
 - [App/Core/Notifications/templates/parts/page.php](../../App/Core/Notifications/templates/parts/page.php)
-- [App/Core/Support/templates/parts/filter.php](../../App/Core/Support/templates/parts/filter.php)
 - [App/Core/Tasks/templates/actions.php](../../App/Core/Tasks/templates/actions.php)
 - [App/Core/Tasks/templates/administration.php](../../App/Core/Tasks/templates/administration.php)
 - [App/Core/Ui/Admin/templates/document.php](../../App/Core/Ui/Admin/templates/document.php)
@@ -322,8 +313,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Core/Updates/templates/administration.php](../../App/Core/Updates/templates/administration.php)
 - [App/Modules/Blog/templates/article.php](../../App/Modules/Blog/templates/article.php)
 - [App/Modules/Blog/templates/listing.php](../../App/Modules/Blog/templates/listing.php)
-- [App/Modules/Social/templates/parts/bots/modals/account-filter.php](../../App/Modules/Social/templates/parts/bots/modals/account-filter.php)
-- [App/Modules/Social/templates/parts/bots/modals/source-filter.php](../../App/Modules/Social/templates/parts/bots/modals/source-filter.php)
 - [App/Modules/Social/templates/parts/site/sidebar-slot.php](../../App/Modules/Social/templates/parts/site/sidebar-slot.php)
 - [App/Modules/Social/templates/parts/status/feed.php](../../App/Modules/Social/templates/parts/status/feed.php)
 - [App/Modules/Social/templates/parts/status/home-feed.php](../../App/Modules/Social/templates/parts/status/home-feed.php)

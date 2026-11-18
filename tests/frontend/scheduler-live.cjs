@@ -10,11 +10,11 @@ const vm = require("node:vm");
   const document = { hidden: false, activeElement: { matches: () => true }, addEventListener: (name, fn) => { handlers[name] = fn; },
     querySelector: selector => selector === "#scheduler-list" ? target : selector === '.modal[data-open="true"]' && modal ? {} : null,
     querySelectorAll: () => [view] };
-  const T = { api: { request(url, options) { calls++; assert.equal(url, "/api/scheduler/tasks?task=feeds&page=2"); assert.equal(options.cache, "no-store"); return new Promise((yes, no) => { resolve = yes; reject = no; }); } },
+  const adminDefinitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [require("node:path").join(__dirname,"../presentation/fixtures/component-parity.php"),"--admin-definitions"], {encoding:"utf8"}));
+  const T = { adminDefinitions, api: { request(url, options) { calls++; assert.equal(url, "/api/scheduler/tasks?task=feeds&page=2"); assert.equal(options.cache, "no-store"); return new Promise((yes, no) => { resolve = yes; reject = no; }); } },
     ui: { pagination: response => response.meta.pagination }, lifecycle: { hydrate() {} } };
   const window = { TinyCat: T, location: { search: "?task=feeds&page=2" }, setInterval(fn, delay) { timers++; assert.equal(delay, 5000); tick = fn; return 1; }, clearInterval() { cleared = true; } };
   vm.runInNewContext(fs.readFileSync(require("node:path").join(__dirname, "../../App/Core/Tasks/assets/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, AbortController, URL, URLSearchParams });
-  T.scheduler.filters = () => {};
   T.scheduler.list = () => { renders++; };
   window.location.href = "https://tinycat.test/admin/cron/list";
   for (const task of ["article_feeds", "fixture.task_2"]) {

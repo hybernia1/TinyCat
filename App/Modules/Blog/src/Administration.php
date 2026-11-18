@@ -8,7 +8,8 @@ use TinyCat\Support\{AdminSorting, AdminViews, Dates, Pagination};
 /** Article-owned selection; the core supplies list transport and presentation primitives. */
 final class Administration
 {
-    public const SORTING = ['/api/articles/management', '/admin/articles', '#blog-articles', ['title' => 'a.title', 'author' => 'u.username', 'published_at' => 'a.published_at'], 'a.published_at DESC, a.id DESC', 'a.id'];
+    /** @return array{string, string, string, array<string, string>, string, string} */
+    public static function sorting(): array { return \TinyCat\Core\Ui\Admin\Definitions::sorting('blog.articles', ['title' => 'a.title', 'author' => 'u.username', 'published_at' => 'a.published_at'], 'a.published_at DESC, a.id DESC', 'a.id'); }
 
     /** @param array<string, mixed> $input
      * @return array<string, mixed> */
@@ -25,8 +26,8 @@ final class Administration
         if ($status === 'hidden') { $query->where('a.status = ?', 'hidden'); }
         if ($status === 'published' || $status === 'scheduled') { $query->where('a.status = ?', 'published')->where('a.published_at ' . ($status === 'scheduled' ? '>' : '<=') . ' ?', Dates::dateDb()); }
         $pagination = Pagination::paginationMeta($query->count(), max(1, (int) ($input['page'] ?? 1)), AdminViews::admin_per_page((int) ($input['per_page'] ?? 25)));
-        $filters = ['q' => $q, 'status' => $status, 'author' => $author, 'per_page' => $pagination['per_page']] + AdminSorting::state(self::SORTING, $input);
-        $ids = array_column($query->order(AdminSorting::order(self::SORTING, $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all(), 'id');
+        $filters = ['q' => $q, 'status' => $status, 'author' => $author, 'per_page' => $pagination['per_page']] + AdminSorting::state(self::sorting(), $input);
+        $ids = array_column($query->order(AdminSorting::order(self::sorting(), $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all(), 'id');
         $items = [];
         if ($ids !== []) {
             $rows = (new Query('SELECT a.id, a.author_id, a.published_at, a.status, a.title, u.username AS author, u.status AS author_status FROM blog_articles a INNER JOIN users u ON u.id = a.author_id'))->whereIn('a.id', $ids)->all();
@@ -40,7 +41,7 @@ final class Administration
                 $items[] = $row;
             }
         }
-        return compact('items', 'filters', 'authors', 'pagination') + ['sorting' => AdminSorting::headings(self::SORTING, $filters), 'navigation' => AdminViews::admin_pagination_view_data($pagination, self::SORTING[0], self::SORTING[2], $filters, historyPath: self::SORTING[1])];
+        return compact('items', 'filters', 'authors', 'pagination') + ['sorting' => AdminSorting::headings(self::sorting(), $filters), 'navigation' => AdminViews::admin_pagination_view_data($pagination, self::sorting()[0], self::sorting()[2], $filters, historyPath: self::sorting()[1])];
     }
 
     /** @return array<string, mixed> */

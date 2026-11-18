@@ -6,11 +6,13 @@ class Node {
   replaceChildren(...nodes) { this.children.forEach(node => { node.isConnected = false; }); this.children = nodes; nodes.forEach(node => { node.isConnected = this.isConnected; }); }
   querySelectorAll() { return []; } querySelector() { return null; }
 }
-module.exports = function setup() {
+module.exports = function setup(adminDefinitions = null) {
+  if (adminDefinitions === null) adminDefinitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.resolve(__dirname,"../../..","tests/presentation/fixtures/component-parity.php"),"--admin-definitions"], {encoding:"utf8"}));
   const targets = new Map(), pending = [], rendered = [], hydrated = [], emitted = [], services = {}, handlers = {}, saved = [], pushes = [];
   for (const id of ["users-list", "bots-list", "bot-accounts-list", "bot-queue-list", "scheduler-list", "moderation-reports"]) { const node = new Node(id); node.isConnected = true; targets.set(id, node); }
-  const document = { activeElement: null, querySelector: selector => targets.get(selector.slice(1)) || null, getElementById: id => targets.get(id) || null, querySelectorAll: () => [], addEventListener: (name, fn) => { handlers[name] = fn; } };
+  const document = { body: {dataset:{adminDefinitions:JSON.stringify(adminDefinitions)}}, activeElement: null, querySelector: selector => targets.get(selector.slice(1)) || null, getElementById: id => targets.get(id) || null, querySelectorAll: () => [], addEventListener: (name, fn) => { handlers[name] = fn; } };
   const T = {
+    adminDefinitions,
     dom: { find: selector => document.querySelector(selector), all: () => [], emit: (_, name, detail) => { emitted.push({ name, detail }); } },
     lifecycle: { register: (name, service) => { services[name] = service; }, hydrate: root => hydrated.push(root), dispose: root => Object.values(services).forEach(service => { if (service.dispose) service.dispose(root); }) },
     ui: { pagination: response => response.meta.pagination, filterPanel() {} }, filters: { get: () => null, capture: () => null, restore() {} },
@@ -24,11 +26,14 @@ module.exports = function setup() {
   const window = { TinyCat: T, location: new URL("https://tinycat.test/admin/users?q=old&page=2&sort=username&direction=asc"), history: { pushState: (_, __, url) => { pushes.push(url); window.location = new URL(url, window.location); } }, addEventListener() {} };
   class FormData extends Map { constructor(source) { super(source.fields || []); } }
   const context = vm.createContext({ window, document, URL, URLSearchParams, AbortController, Node, FormData });
-  const load = file => vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context, { filename: file });
+  const load = file => {
+    if (file.startsWith('App/Core/Tasks/assets/') && !adminDefinitions['core.scheduler-runs']) return;
+    return vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context, { filename: file });
+  };
   for (const file of ["assets/core/request-lifecycle.js", "assets/core/navigation.js", "assets/core/modules.js", "assets/ui/list-navigation.js", "assets/ui/content-updates.js", "assets/ui/ajax-bindings.js", "App/Core/Identity/assets/controller.js", "App/Modules/Social/assets/users/controller.js", "App/Modules/Social/assets/bots/controller.js", "App/Modules/Social/assets/moderation/controller.js", "App/Core/Tasks/assets/controller.js"]) load(file);
   T.accounts.avatarUpload = { hydrate() {} };
+  if (Object.keys(adminDefinitions).length) load('assets/ui/admin-resources.js');
   for (const source of ["App/Core/Identity/assets/index.js", "App/Core/Identity/assets/admin.js", "App/Modules/Social/assets/users/index.js", "App/Modules/Social/assets/bots/index.js", "App/Modules/Social/assets/moderation/index.js", "App/Core/Tasks/assets/index.js"]) load(source);
-  T.accounts.list = (target, response) => { rendered.push({ name: "users/list", data: response.data }); T.content.replaceChildren(target, new Node()); };
   T.ajax.init();
   function source(url, method = "GET", target = "users-list") {
     return { dataset: { ajaxTarget: "#" + target, apiMethod: method, method }, isConnected: true,

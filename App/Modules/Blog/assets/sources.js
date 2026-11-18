@@ -7,11 +7,7 @@ import "../../../../assets/ui/form-requests.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
-  function render(target, response) {
-    T.content.replaceChildren(target, T.components.render("blog/sources", Object.assign({}, response.data, { pagination: U.pagination(response) })));
-  }
   T.modules.register("blog-sources", {
-    result: function (source, response, target) { return T.lists.result("#blog-sources", source, response, target); },
     modal: function (url, response, id) {
       if (!/^\/api\/article-sources\/(?:creation|[1-9][0-9]*\/management)$/.test(url.pathname)) { return null; }
       var item = response.data.item, form = U.form("/api/article-sources" + (item.id ? "/" + item.id : ""), item.id ? "PUT" : "POST");
@@ -35,15 +31,6 @@ import "../../../../assets/ui/form-requests.js";
       var dialog = U.adminDialog(id, item.id ? "common.edit" : "blog.feeds.create", form, false);
       dialog.addEventListener("tinycat:modal-close", function () { T.forms.cancel(form); });
       return dialog;
-    },
-    hydrate: function (root) {
-      (root || document).querySelectorAll("[data-source-list-state]").forEach(function (view) {
-        if (view.dataset.sourceReady) { return; }
-        view.dataset.sourceReady = "true";
-        var state = JSON.parse(view.dataset.sourceListState);
-        U.filterPanel("blog-source-filter", T.components.render("blog/source-filter", state));
-      });
     }
   });
-  T.lists.register("/admin/article-sources", { target: "#blog-sources", api: "/api/article-sources", keepQuery: ["sort", "direction"], url: function () { return "/api/article-sources/management" + location.search; }, apply: render });
 }());

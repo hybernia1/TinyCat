@@ -41,6 +41,23 @@
         "when": {
           "get": "textarea"
         }
+      },
+      {
+        "tag": "span",
+        "when": {
+          "get": "help"
+        },
+        "attrs": {
+          "class": "help",
+          "id": {
+            "get": "help_id"
+          }
+        },
+        "children": [
+          {
+            "get": "help"
+          }
+        ]
       }
     ]
   },

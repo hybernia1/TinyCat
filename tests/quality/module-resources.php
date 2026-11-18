@@ -86,10 +86,11 @@ try {
     file_put_contents($directory . '/index.js', 'window.moduleSelectionProbe = true;');
     file_put_contents($directory . '/probe.css', '.module-selection-probe { color: red; }');
     file_put_contents($directory . '/module.json', json_encode([[
-        'routes' => ['/selection-probe'], 'entries' => [$relative . '/index.js'], 'components' => ['probe/selection'],
+        'routes' => ['/selection-probe'], 'entries' => [$relative . '/index.js'], 'components' => [],
         'styles' => [$relative . '/probe.css'], 'translations' => ['selection_probe.value'],
+        'admin' => ['fixture.probe' => ['path' => '/admin/probe', 'endpoint' => '/api/probe', 'api' => '/api/probe', 'target' => '#probe-list', 'component' => 'probe/selection', 'filter' => '', 'filterId' => '', 'title' => 'selection_probe.value', 'icon' => 'settings']],
     ]], JSON_THROW_ON_ERROR));
-    file_put_contents($directory . '/components.json', '{"probe/selection":{"tag":"span","text":"Selection probe"}}');
+    file_put_contents($directory . '/components.json', '{"probe/selection":{"tag":"span","attrs":{"data-probe":{"admin_ref":"fixture.probe","field":"target"}},"text":"Selection probe"}}');
     foreach (TranslationSources::packages() as $locale => $_) { file_put_contents($directory . '/lang/' . $locale . '.json', '{"selection_probe":{"value":"Selected"}}'); }
     file_put_contents($unselected . '/module.json', '{broken');
     file_put_contents($unselected . '/components.json', '{broken');
@@ -104,7 +105,12 @@ try {
         $compile();
         $assert(isset(ClientAssets::definitions('/selection-probe')['probe/selection']), 'Build cache restoration retains the selection identity of saved entries');
         $assert(isset(Components::templates()['probe/selection']), 'Component snapshot restoration retains the selection identity of saved templates');
+        $assert(Components::templates()['probe/selection']['attrs']['data-probe'] === '#probe-list', 'Unknown owners resolve admin wiring into the shared PHP/browser component catalog');
+        $assert(\TinyCat\Core\Ui\Admin\Definitions::get('fixture.probe')['api'] === '/api/probe', 'Metadata-only admin declarations need no runtime provider');
+        try { \TinyCat\Core\Ui\Admin\Definitions::value('fixture.probe', 'missing'); throw new RuntimeException('Unknown admin field was accepted'); }
+        catch (LogicException $error) { $assert(str_contains($error->getMessage(), 'fixture.probe.missing'), 'Unknown wiring references identify their owner and field'); }
     });
+    $assert(!isset(ClientAssets::administration()['fixture.probe']), 'Leaving the owner selection removes its admin declarations');
 
     // Seed old deployment caches: a different build selection must not reuse them.
     foreach ([
@@ -156,8 +162,14 @@ try {
         $assert(Resources::withCatalog($default, $compile) === $baseline, 'Removing a module restores every compiled output byte for byte');
         $manifestFile = $directory . '/module.json'; $manifestBytes = file_get_contents($manifestFile);
         try {
+            $probeFeatures = json_decode($manifestBytes, true, 512, JSON_THROW_ON_ERROR);
+            $duplicateFeatures = $probeFeatures;
+            $duplicateFeatures[0]['admin']['fixture.duplicate'] = $probeFeatures[0]['admin']['fixture.probe'];
+            file_put_contents($manifestFile, json_encode($duplicateFeatures, JSON_THROW_ON_ERROR));
+            try { ClientAssets::withBuildCache(static fn (): array => \TinyCat\Core\Ui\Admin\Definitions::all()); throw new RuntimeException('Duplicate admin wiring was accepted'); }
+            catch (LogicException $error) { $assert(str_contains($error->getMessage(), 'duplicate admin list'), 'Duplicate targets or page paths fail before client delivery'); }
             file_put_contents($manifestFile, json_encode([
-                ['id' => 'fixture.shared', 'routes' => [], 'components' => ['probe/selection']],
+                ['id' => 'fixture.shared', 'routes' => [], 'components' => ['probe/selection'], 'admin' => $probeFeatures[0]['admin']],
                 ['routes' => ['/selection-probe'], 'uses' => ['fixture.shared']],
             ], JSON_THROW_ON_ERROR));
             $assert(isset(ClientAssets::withBuildCache(static fn (): array => ClientAssets::definitions('/selection-probe'))['probe/selection']), 'Owners select a reusable named client feature without copying its resources');

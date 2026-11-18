@@ -17,10 +17,11 @@ final class Pages
     public static function listing(): void
     {
         Access::require_admin();
-        $title = Localization::t('cron.list_title');
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('core.scheduler-runs');
+        $title = Localization::t($definition['title']);
         $data = Administration::payload();
-        $content = '<div id="scheduler-list">' . \TinyCat\Support\Components::render('scheduler/list', $data + ['state' => $data]) . '</div>';
-        Layout::render(['title' => $title, 'current' => '/admin/cron/list'], $content);
+        $content = '<div id="' . substr($definition['target'], 1) . '">' . \TinyCat\Support\Components::render($definition['component'], $data + ['state' => $data]) . '</div>';
+        Layout::render(['title' => $title, 'current' => $definition['path']], $content);
     }
 
     public static function administration(): void

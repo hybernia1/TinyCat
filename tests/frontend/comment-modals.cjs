@@ -9,7 +9,8 @@ const {webkit} = require(modulePath);
 function read(file, ...args) {
   return JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root, file), ...args], {encoding:'utf8', maxBuffer:8e6}));
 }
-const scripts = read('tests/presentation/fixtures/asset-graph-fixture.php', '--all').map(asset => asset.source).join('\n');
+const adminDefinitions = read('tests/presentation/fixtures/component-parity.php','--admin-definitions');
+const scripts = 'window.TinyCat = {adminDefinitions:'+JSON.stringify(adminDefinitions)+'};' + read('tests/presentation/fixtures/asset-graph-fixture.php', '--all').map(asset => asset.source).join('\n');
 const templates = read('tests/presentation/fixtures/component-parity.php', '--templates');
 const constraints = read('tests/presentation/fixtures/component-parity.php', '--social-constraints');
 const labels = read('tests/presentation/fixtures/asset-graph-fixture.php', '--catalog', 'cs');

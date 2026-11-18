@@ -40,13 +40,15 @@ final class Pages
     public static function administration(): void
     {
         Access::require_admin();
-        $data = ViewData::tc_admin_users_view_data();
+        $payload = Actions::tc_admin_users_api_payload();
+        $data = Resource::listing($payload, $payload['pagination']);
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('core.users');
         $content = AdminViews::listCard(
-            Localization::t('users.list_title'), 'users', 'users-list', 'users-filter-modal',
-            new Markup(Views::adminList($data)), primary: true,
+            Localization::t($definition['title']), $definition['icon'], substr($definition['target'], 1), $definition['filterId'],
+            new Markup(\TinyCat\Support\Components::render($definition['component'], $data)), primary: true,
         );
         Integration::render([
-            'title' => Localization::t('users.meta_title'), 'current' => '/admin/users',
+            'title' => Localization::t('users.meta_title'), 'current' => $definition['path'],
             'actions' => AdminViews::modalAction('modal-users-creation', Localization::t('users.new_user'), 'user-plus', '/api/users/creation'),
         ], $content);
     }

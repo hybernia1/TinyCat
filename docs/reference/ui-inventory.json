@@ -96,13 +96,14 @@
         "items",
         "navigation",
         "pagination",
+        "roles",
         "sorting.role",
         "sorting.role.aria",
         "sorting.updated_at",
         "sorting.updated_at.aria",
         "sorting.username",
         "sorting.username.aria",
-        "state",
+        "statuses",
         "user"
       ]
     },
@@ -296,7 +297,9 @@
         "sorting.task",
         "sorting.task.aria",
         "state",
-        "task"
+        "status_choices",
+        "task",
+        "task_choices"
       ]
     },
     {
@@ -849,6 +852,7 @@
         "ui/sort-heading"
       ],
       "inputs": [
+        "bots",
         "filters",
         "items",
         "list_target",
@@ -910,7 +914,8 @@
         "sorting.updated_at",
         "sorting.updated_at.aria",
         "sorting.username",
-        "sorting.username.aria"
+        "sorting.username.aria",
+        "statuses"
       ]
     },
     {
@@ -1199,8 +1204,7 @@
         "sorting.reason",
         "sorting.reason.aria",
         "sorting.status",
-        "sorting.status.aria",
-        "state"
+        "sorting.status.aria"
       ]
     },
     {
@@ -1463,11 +1467,50 @@
       ]
     },
     {
+      "name": "bots/account-creation-fields",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "dialog_id",
+        "options.username_pattern"
+      ]
+    },
+    {
+      "name": "bots/account-filter-form",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/select"
+      ],
+      "inputs": [
+        "filters.q",
+        "filters.status",
+        "pagination.per_page",
+        "statuses"
+      ]
+    },
+    {
+      "name": "bots/source-filter-form",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "bot.id",
+        "bot.username",
+        "bots",
+        "filters.bot",
+        "filters.q",
+        "pagination.per_page"
+      ]
+    },
+    {
       "name": "ui/field",
       "source": "assets/ui/components.json",
       "dependencies": [],
       "inputs": [
         "attributes",
+        "help",
+        "help_id",
         "label",
         "textarea",
         "value"
@@ -10935,6 +10978,31 @@
   ],
   "ui_services": [
     {
+      "source": "assets/ui/admin-resources.js",
+      "methods": [
+        {
+          "name": "url",
+          "line": 13
+        },
+        {
+          "name": "apply",
+          "line": 14
+        },
+        {
+          "name": "modal",
+          "line": 21
+        },
+        {
+          "name": "result",
+          "line": 37
+        },
+        {
+          "name": "hydrate",
+          "line": 46
+        }
+      ]
+    },
+    {
       "source": "assets/ui/ajax-bindings.js",
       "methods": [
         {
@@ -11229,10 +11297,6 @@
       "methods": []
     },
     {
-      "source": "assets/ui/settings-presentation.js",
-      "methods": []
-    },
-    {
       "source": "assets/ui/tabs.js",
       "methods": []
     },
@@ -11259,18 +11323,16 @@
     "App/Core/Installation/templates/parts/install/steps.php",
     "App/Core/Notifications/templates/parts/menu.php",
     "App/Core/Notifications/templates/parts/page.php",
-    "App/Core/Support/templates/parts/filter.php",
     "App/Core/Ui/templates/parts/consent.php",
     "App/Core/Ui/templates/parts/flashes.php",
     "App/Core/Ui/templates/parts/public-header.php",
-    "App/Modules/Social/templates/parts/bots/modals/account-filter.php",
-    "App/Modules/Social/templates/parts/bots/modals/source-filter.php",
     "App/Modules/Social/templates/parts/site/sidebar-slot.php",
     "App/Modules/Social/templates/parts/status/feed.php",
     "App/Modules/Social/templates/parts/status/home-feed.php"
   ],
   "php_templates": [
     "App/Core/Health/templates/page.php",
+    "App/Core/Identity/templates/account-home.php",
     "App/Core/Identity/templates/login.php",
     "App/Core/Identity/templates/logout.php",
     "App/Core/Identity/templates/parts/user-menu.php",
@@ -11280,7 +11342,6 @@
     "App/Core/Notifications/templates/page.php",
     "App/Core/Notifications/templates/parts/menu.php",
     "App/Core/Notifications/templates/parts/page.php",
-    "App/Core/Support/templates/parts/filter.php",
     "App/Core/Tasks/templates/actions.php",
     "App/Core/Tasks/templates/administration.php",
     "App/Core/Ui/Admin/templates/document.php",
@@ -11300,8 +11361,6 @@
     "App/Core/Updates/templates/administration.php",
     "App/Modules/Blog/templates/article.php",
     "App/Modules/Blog/templates/listing.php",
-    "App/Modules/Social/templates/parts/bots/modals/account-filter.php",
-    "App/Modules/Social/templates/parts/bots/modals/source-filter.php",
     "App/Modules/Social/templates/parts/site/sidebar-slot.php",
     "App/Modules/Social/templates/parts/status/feed.php",
     "App/Modules/Social/templates/parts/status/home-feed.php",
@@ -11314,7 +11373,6 @@
       "source": "App/Core/Identity/Views.php",
       "methods": [
         "adminFormFields",
-        "adminList",
         "authContent",
         "authForm",
         "avatar"
@@ -11344,20 +11402,6 @@
         "admin_list_url",
         "admin_per_page_view_data",
         "admin_pagination_view_data"
-      ]
-    },
-    {
-      "source": "App/Modules/Social/src/Automation/Views.php",
-      "methods": [
-        "accountFilter",
-        "accounts",
-        "sources"
-      ]
-    },
-    {
-      "source": "App/Modules/Social/src/Moderation/Views.php",
-      "methods": [
-        "reports"
       ]
     },
     {
@@ -12614,21 +12658,6 @@
       "standalone": false
     },
     {
-      "source": "App/Core/Identity/assets/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Core/Identity/assets/module.json",
-          "routes": [
-            "admin"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
       "source": "App/Core/Identity/assets/user-menu.js",
       "imports": [
         "assets/core/api-client.js",
@@ -12651,21 +12680,6 @@
           "manifest": "App/Core/Installation/assets/module.json",
           "routes": [
             "/install"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
-      "source": "App/Core/Mail/assets/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Core/Mail/assets/module.json",
-          "routes": [
-            "admin"
           ]
         }
       ],
@@ -12726,35 +12740,11 @@
       "standalone": false
     },
     {
-      "source": "App/Core/Security/assets/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Core/Security/assets/module.json",
-          "routes": [
-            "admin"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
       "source": "App/Core/Settings/assets/controller.js",
       "imports": [
         "assets/ui/image-uploads.js",
         "assets/ui/component-builders.js",
-        "assets/core/modules.js",
-        "App/Core/Settings/assets/field-presentation.js"
-      ],
-      "entries": [],
-      "standalone": false
-    },
-    {
-      "source": "App/Core/Settings/assets/field-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
+        "assets/core/modules.js"
       ],
       "entries": [],
       "standalone": false
@@ -12819,25 +12809,6 @@
           "manifest": "App/Core/Updates/assets/module.json",
           "routes": [
             "/admin/updates"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
-      "source": "App/Modules/Blog/assets/index.js",
-      "imports": [
-        "assets/core/modules.js",
-        "assets/core/dates.js",
-        "assets/ui/content-updates.js",
-        "assets/ui/list-navigation.js",
-        "assets/ui/component-builders.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Modules/Blog/assets/module.json",
-          "routes": [
-            "/admin/articles"
           ]
         }
       ],
@@ -12925,21 +12896,6 @@
       "standalone": false
     },
     {
-      "source": "App/Modules/Social/assets/content/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Modules/Social/assets/module.json",
-          "routes": [
-            "admin"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
       "source": "App/Modules/Social/assets/moderation/controller.js",
       "imports": [
         "assets/ui/content-updates.js",
@@ -12964,21 +12920,6 @@
           "manifest": "App/Modules/Social/assets/module.json",
           "routes": [
             "/admin/moderation"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
-      "source": "App/Modules/Social/assets/moderation/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Modules/Social/assets/module.json",
-          "routes": [
-            "admin"
           ]
         }
       ],
@@ -13338,7 +13279,8 @@
     {
       "source": "assets/modules/admin/index.js",
       "imports": [
-        "assets/modules/admin/navigation.js"
+        "assets/modules/admin/navigation.js",
+        "assets/ui/admin-resources.js"
       ],
       "entries": [
         {
@@ -13371,6 +13313,17 @@
       "imports": [
         "assets/core/dom.js",
         "assets/core/lifecycle.js"
+      ],
+      "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "assets/ui/admin-resources.js",
+      "imports": [
+        "assets/ui/component-builders.js",
+        "assets/ui/content-updates.js",
+        "assets/ui/list-navigation.js",
+        "assets/core/modules.js"
       ],
       "entries": [],
       "standalone": false
@@ -13780,12 +13733,6 @@
           ]
         }
       ],
-      "standalone": false
-    },
-    {
-      "source": "assets/ui/settings-presentation.js",
-      "imports": [],
-      "entries": [],
       "standalone": false
     },
     {

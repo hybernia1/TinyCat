@@ -55,6 +55,10 @@ final class Components
         $lookups = [];
         $resolve = static function (mixed $node) use (&$resolve, $extensions, &$lookups): mixed {
             if (!is_array($node)) { return $node; }
+            if (isset($node['admin_ref'])) {
+                if (!is_string($node['admin_ref']) || !is_string($node['field'] ?? null) || count($node) !== 2) { throw new InvalidArgumentException('Invalid admin definition reference.'); }
+                return \TinyCat\Core\Ui\Admin\Definitions::value($node['admin_ref'], $node['field']);
+            }
             if (isset($node['catalog'])) {
                 if (!is_string($node['catalog']) || !is_string($node['field'] ?? null) || (!isset($node['lookup']) && !isset($node['options']))) { throw new InvalidArgumentException('Invalid component lookup catalog.'); }
                 $id = $node['catalog'];

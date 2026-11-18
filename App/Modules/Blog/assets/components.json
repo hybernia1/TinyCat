@@ -3,7 +3,8 @@
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-article-list-state": {
+      "data-admin-list": "blog.articles",
+      "data-admin-state": {
         "json": {
           "filters": {
             "get": "filters"
@@ -21,16 +22,28 @@
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": "/api/articles/management",
-          "target": "#blog-articles",
-          "history": "/admin/articles",
+          "url": {
+            "admin_ref": "blog.articles",
+            "field": "endpoint"
+          },
+          "target": {
+            "admin_ref": "blog.articles",
+            "field": "target"
+          },
+          "history": {
+            "admin_ref": "blog.articles",
+            "field": "path"
+          },
           "filters": {
             "get": "filters"
           },
           "pagination": {
             "get": "pagination"
           },
-          "filter_modal": "blog-article-filter"
+          "filter_modal": {
+            "admin_ref": "blog.articles",
+            "field": "filterId"
+          }
         }
       },
       {
@@ -401,7 +414,10 @@
                                         ]
                                       },
                                       "method": "DELETE",
-                                      "target": "#blog-articles",
+                                      "target": {
+                                        "admin_ref": "blog.articles",
+                                        "field": "target"
+                                      },
                                       "confirm": {
                                         "t": "common.confirm_action"
                                       },
@@ -476,7 +492,10 @@
           "navigation": {
             "get": "navigation"
           },
-          "target": "#blog-articles"
+          "target": {
+            "admin_ref": "blog.articles",
+            "field": "target"
+          }
         }
       }
     ]
@@ -486,11 +505,20 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": "/api/articles/management",
+      "action": {
+        "admin_ref": "blog.articles",
+        "field": "endpoint"
+      },
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": "#blog-articles",
-      "data-history": "/admin/articles"
+      "data-ajax-target": {
+        "admin_ref": "blog.articles",
+        "field": "target"
+      },
+      "data-history": {
+        "admin_ref": "blog.articles",
+        "field": "path"
+      }
     },
     "children": [
       {
@@ -1013,7 +1041,8 @@
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-source-list-state": {
+      "data-admin-list": "blog.sources",
+      "data-admin-state": {
         "json": {
           "filters": {
             "get": "filters"
@@ -1028,16 +1057,28 @@
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": "/api/article-sources/management",
-          "target": "#blog-sources",
-          "history": "/admin/article-sources",
+          "url": {
+            "admin_ref": "blog.sources",
+            "field": "endpoint"
+          },
+          "target": {
+            "admin_ref": "blog.sources",
+            "field": "target"
+          },
+          "history": {
+            "admin_ref": "blog.sources",
+            "field": "path"
+          },
           "filters": {
             "get": "filters"
           },
           "pagination": {
             "get": "pagination"
           },
-          "filter_modal": "blog-source-filter"
+          "filter_modal": {
+            "admin_ref": "blog.sources",
+            "field": "filterId"
+          }
         }
       },
       {
@@ -1355,7 +1396,10 @@
                                         ]
                                       },
                                       "method": "POST",
-                                      "target": "#blog-sources",
+                                      "target": {
+                                        "admin_ref": "blog.sources",
+                                        "field": "target"
+                                      },
                                       "icon": "play",
                                       "label": {
                                         "concat": [
@@ -1391,7 +1435,10 @@
                                         ]
                                       },
                                       "method": "DELETE",
-                                      "target": "#blog-sources",
+                                      "target": {
+                                        "admin_ref": "blog.sources",
+                                        "field": "target"
+                                      },
                                       "confirm": {
                                         "t": "common.confirm_action"
                                       },
@@ -1466,7 +1513,10 @@
           "navigation": {
             "get": "navigation"
           },
-          "target": "#blog-sources"
+          "target": {
+            "admin_ref": "blog.sources",
+            "field": "target"
+          }
         }
       }
     ]
@@ -1476,11 +1526,20 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": "/api/article-sources/management",
+      "action": {
+        "admin_ref": "blog.sources",
+        "field": "endpoint"
+      },
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": "#blog-sources",
-      "data-history": "/admin/article-sources"
+      "data-ajax-target": {
+        "admin_ref": "blog.sources",
+        "field": "target"
+      },
+      "data-history": {
+        "admin_ref": "blog.sources",
+        "field": "path"
+      }
     },
     "children": [
       {

@@ -9,7 +9,7 @@ final class Registration
     {
         return new \TinyCat\Core\Modules\Contributions(navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.moderation.admin', static fn (): array => [
             'icon' => 'shield', 'label' => \TinyCat\Support\Localization::t('moderation.title'),
-            'children' => [['href' => '/admin/moderation/reports', 'icon' => 'flag', 'label' => \TinyCat\Support\Localization::t('moderation.reports_title')]],
+            'children' => [\TinyCat\Core\Ui\Admin\Definitions::navigation('social.moderation-reports')],
         ], 40)]);
     }
 
@@ -17,8 +17,8 @@ final class Registration
     {
         Api::register($api);
         \TinyCat\Http\Router::route('GET', '/admin/moderation', static function (): void {
-            \TinyCat\Http\Web::redirect('/admin/moderation/reports');
+            \TinyCat\Http\Web::redirect(\TinyCat\Core\Ui\Admin\Definitions::route('social.moderation-reports'));
         });
-        \TinyCat\Http\Router::route('GET', '/admin/moderation/reports', Pages::reports(...));
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('social.moderation-reports'), Pages::reports(...));
     }
 }

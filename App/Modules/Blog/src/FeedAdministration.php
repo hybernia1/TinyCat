@@ -7,7 +7,8 @@ use TinyCat\Support\{AdminSorting, AdminViews, Pagination};
 
 final class FeedAdministration
 {
-    public const SORTING = ['/api/article-sources/management', '/admin/article-sources', '#blog-sources', ['name' => 's.name', 'author' => 'u.username', 'last_checked_at' => 's.last_checked_at'], 's.id DESC', 's.id'];
+    /** @return array{string, string, string, array<string, string>, string, string} */
+    public static function sorting(): array { return \TinyCat\Core\Ui\Admin\Definitions::sorting('blog.sources', ['name' => 's.name', 'author' => 'u.username', 'last_checked_at' => 's.last_checked_at'], 's.id DESC', 's.id'); }
 
     /** @param array<string, mixed> $input
      * @return array<string, mixed> */
@@ -19,9 +20,9 @@ final class FeedAdministration
         if ($q !== '') { $like = '%' . Connection::escapeLike($q) . '%'; $query->where("(s.name LIKE ? ESCAPE '!' OR s.feed_url LIKE ? ESCAPE '!')", $like, $like); }
         if ($enabled !== '') { $query->where('s.enabled = ?', (int) $enabled); }
         $pagination = Pagination::paginationMeta($query->count(), max(1, (int) ($input['page'] ?? 1)), AdminViews::admin_per_page((int) ($input['per_page'] ?? 25)));
-        $filters = ['q' => $q, 'enabled' => $enabled, 'per_page' => $pagination['per_page']] + AdminSorting::state(self::SORTING, $input);
-        $items = array_map(self::resource(...), $query->order(AdminSorting::order(self::SORTING, $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all());
-        return compact('items', 'filters', 'pagination') + ['sorting' => AdminSorting::headings(self::SORTING, $filters), 'navigation' => AdminViews::admin_pagination_view_data($pagination, self::SORTING[0], self::SORTING[2], $filters, historyPath: self::SORTING[1])];
+        $filters = ['q' => $q, 'enabled' => $enabled, 'per_page' => $pagination['per_page']] + AdminSorting::state(self::sorting(), $input);
+        $items = array_map(self::resource(...), $query->order(AdminSorting::order(self::sorting(), $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all());
+        return compact('items', 'filters', 'pagination') + ['sorting' => AdminSorting::headings(self::sorting(), $filters), 'navigation' => AdminViews::admin_pagination_view_data($pagination, self::sorting()[0], self::sorting()[2], $filters, historyPath: self::sorting()[1])];
     }
 
     /** @param array<string, mixed> $row
@@ -51,13 +52,14 @@ final class FeedAdministration
         \TinyCat\Core\Identity\Access::require_admin();
         $title = \TinyCat\Support\Localization::t('blog.feeds.title');
         $content = \TinyCat\Support\Components::render('blog/sources', self::listing(\TinyCat\Http\Request::current()->query()));
-        $card = AdminViews::listCard($title, 'rss', 'blog-sources', 'blog-source-filter', new \TinyCat\Support\Markup($content), primary: true);
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('blog.sources');
+        $card = AdminViews::listCard($title, $definition['icon'], substr($definition['target'], 1), $definition['filterId'], new \TinyCat\Support\Markup($content), primary: true);
         Pages::render(['title' => $title, 'current' => '/admin/article-sources', 'actions' => AdminViews::modalAction('modal-article-sources-creation', \TinyCat\Support\Localization::t('blog.feeds.create'), 'plus', '/api/article-sources/creation')], $card);
     }
 
     public static function register(\TinyCat\Http\Api $api): void
     {
-        $api->get('/api/article-sources/management', static fn (\TinyCat\Http\Request $request): array => self::listing($request->query()), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('blog.sources', 'endpoint'), static fn (\TinyCat\Http\Request $request): array => self::listing($request->query()), 'admin');
         $api->get('/api/article-sources/creation', static fn (): array => self::editor(), 'admin');
         $api->get('/api/article-sources/{id:[1-9][0-9]*}/management', static fn (\TinyCat\Http\Request $request, array $params): array => self::editor((int) $params['id']), 'admin');
         $save = static function (\TinyCat\Http\Request $request, array $params): array {

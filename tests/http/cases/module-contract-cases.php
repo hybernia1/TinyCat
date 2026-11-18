@@ -11,6 +11,18 @@ foreach (['GET', 'POST'] as $retiredSettingsMethod) {
 $settingsHostPage = file_get_contents('http://' . $address . '/admin', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $assert(is_string($settingsHostPage) && str_contains($settingsHostPage, 'data-modal-open="modal-settings-editor"') && str_contains($settingsHostPage, 'data-modal-url="/api/settings/editor"') && !str_contains($settingsHostPage, 'data-settings-editor') && !str_contains($settingsHostPage, 'href="/admin/settings"'), 'Admin navigation opens the shared settings modal without a standalone page.');
 $assert(!str_contains($settingsHostPage, 'name="settings[') && !str_contains($settingsHostPage, 'id="modal-settings-editor"') && !str_contains($settingsHostPage, 'href="/admin/moderation/blocking"'), 'Settings fields and editor DOM are absent from the initial page and blocked websites have no separate navigation page.');
+preg_match('/data-settings-presentation="([^"]+)"/', $settingsHostPage, $settingsPresentationMatch);
+$settingsPresentation = json_decode(html_entity_decode($settingsPresentationMatch[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true, 512, JSON_THROW_ON_ERROR);
+$assert(isset($settingsPresentation['sections']['content_images'], $settingsPresentation['fields']['moderation.blocked_urls']), 'The admin document derives Social presentation from the registered PHP settings owners.');
+foreach ($settingsPresentation['fields'] as $fieldPresentation) {
+    $assert(array_diff(array_keys($fieldPresentation), ['label', 'help', 'placeholder', 'span']) === [], 'Settings presentation contains no values, defaults, credentials or callbacks.');
+}
+$moderationPage = file_get_contents('http://' . $address . '/admin/moderation/reports?status=open&reason=spam', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$moderationDocument = new DOMDocument();
+@$moderationDocument->loadHTML((string) $moderationPage);
+$moderationList = (new DOMXPath($moderationDocument))->query('//*[@data-admin-list="social.moderation-reports"]')->item(0);
+$moderationState = json_decode($moderationList?->getAttribute('data-admin-state') ?? '{}', true, 512, JSON_THROW_ON_ERROR);
+$assert(($moderationState['filters']['status'] ?? null) === 'open' && ($moderationState['filters']['reason'] ?? null) === 'spam' && array_keys($moderationState) === ['filters', 'pagination'], 'Initial moderation HTML preserves canonical filter state without duplicating report rows or creating a detail dialog.');
 file_get_contents('http://' . $address . '/admin/moderation/blocking', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $blockingHeaders = http_get_last_response_headers() ?? [];
 $assert(preg_match('/\s404\s/', (string) ($blockingHeaders[0] ?? '')) === 1, 'The standalone URL blocking page is retired.');

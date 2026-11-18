@@ -1,11 +1,11 @@
 import "../../../../assets/ui/image-uploads.js";
 import "../../../../assets/ui/component-builders.js";
 import "../../../../assets/core/modules.js";
-import "./field-presentation.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui, e = T.dom.element;
-  function field(spec, name) {
+  function field(spec, name, examples) {
+    examples = examples || {};
     name = name || "settings[" + spec.key + "]";
     var grouped = ["email_smtp", "email_templates", "site_image"].includes(spec.type);
     var root = e(grouped ? "div" : "label", { "class": "field min-w-0" + (spec.span ? " grid-span-full" : "") });
@@ -48,7 +48,7 @@ import "./field-presentation.js";
         var text = option.name || option.value;
         if (type === "language") { text = option.value.toUpperCase() + " - " + text; }
         if (type === "timezone") { text = "(UTC" + (option.offset === "+00:00" ? "" : option.offset) + ") " + option.value; }
-        if (T.settingsPresentation.examples[option.value]) { text = option.value + " - " + T.settingsPresentation.examples[option.value]; }
+        if (examples[option.value]) { text = option.value + " - " + examples[option.value]; }
         select.appendChild(e("option", { value: option.value, selected: String(value) === String(option.value) }, text));
       });
       root.appendChild(select);
@@ -70,15 +70,17 @@ import "./field-presentation.js";
     },
     modal: function (url, response, id) {
       if (url.pathname !== "/api/settings/editor") { return null; }
+      var presentation = JSON.parse(document.body.dataset.settingsPresentation || "{}");
       var form = U.form("/api/settings", "PATCH"), sections = e("div", { "class": "stack stack-gap-16", "data-editor-sections": "" });
       form.setAttribute("enctype", "multipart/form-data");
       (response.data.sections || []).forEach(function (section) {
-        var view = T.settingsPresentation.sections[section.key];
-        var panel = e("div", { "class": "grid sm:grid-2", "data-editor-section": section.key, "data-editor-label": U.text(view.label), "data-editor-icon": view.icon });
+        var view = (presentation.sections || {})[section.key];
+        if (!view) { throw new Error("Missing settings section presentation: " + section.key); }
+        var panel = e("div", { "class": "grid sm:grid-2", "data-editor-section": section.key, "data-editor-label": view.label, "data-editor-icon": view.icon });
         section.fields.forEach(function (spec) {
-          var display = Object.assign({}, T.settingsPresentation.fields[spec.key]);
-          ["label", "help", "placeholder"].forEach(function (key) { if (display[key]) display[key] = U.text(display[key]); });
-          panel.appendChild(field(Object.assign({}, spec, display)));
+          var display = (presentation.fields || {})[spec.key];
+          if (!display) { throw new Error("Missing settings field presentation: " + spec.key); }
+          panel.appendChild(field(Object.assign({}, spec, display), null, presentation.examples));
         });
         sections.appendChild(panel);
       });

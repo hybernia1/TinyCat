@@ -11,6 +11,7 @@ declare(strict_types=1);
 /** @var list<array<string, string>> $flashToasts */
 /** @var string $dateFormat */
 /** @var bool $dateRelative */
+/** @var string $settingsPresentation */
 use TinyCat\Support\Html;
 use TinyCat\Support\Localization;
 ?>
@@ -27,7 +28,7 @@ use TinyCat\Support\Localization;
     <?php foreach ($scripts as $url): ?><script src="<?= Html::e($url) ?>" defer></script><?php endforeach; ?>
     <?php if ($flashToasts !== []): ?><template data-tinycat-flashes><?= json_encode($flashToasts, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></template><?php endif; ?>
 </head>
-<body class="admin-shell-page" data-application-version="<?= Html::e(\TinyCat\Support\Version::CURRENT) ?>" data-current-user-id="<?= (int) ($authUser['id'] ?? 0) ?>" data-icon-sprite="<?= Html::e($iconSprite) ?>">
+<body class="admin-shell-page" data-application-version="<?= Html::e(\TinyCat\Support\Version::CURRENT) ?>" data-current-user-id="<?= (int) ($authUser['id'] ?? 0) ?>" data-icon-sprite="<?= Html::e($iconSprite) ?>"<?= $settingsPresentation !== '' ? ' data-settings-presentation="' . Html::e($settingsPresentation) . '"' : '' ?>>
     <a class="skip-link" href="#main-content"><?= Html::et('common.skip_to_content') ?></a>
     <?= $shell ?>
 </body>

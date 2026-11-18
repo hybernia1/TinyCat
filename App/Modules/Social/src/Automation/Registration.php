@@ -33,9 +33,9 @@ final class Registration
             'icon' => 'rss',
             'label' => \TinyCat\Support\Localization::t('bots.title'),
             'children' => [
-                ['href' => '/admin/bots/accounts', 'icon' => 'users', 'label' => \TinyCat\Support\Localization::t('bots.accounts_title')],
-                ['href' => '/admin/bots/list', 'icon' => 'list-unordered', 'label' => \TinyCat\Support\Localization::t('bots.sources_title')],
-                ['href' => '/admin/bots/queue', 'icon' => 'clock', 'label' => \TinyCat\Support\Localization::t('bots.queue_title')],
+                \TinyCat\Core\Ui\Admin\Definitions::navigation('social.bot-creation'),
+                \TinyCat\Core\Ui\Admin\Definitions::navigation('social.bot-sources'),
+                \TinyCat\Core\Ui\Admin\Definitions::navigation('social.bot-queue'),
             ],
         ];
     }
@@ -43,7 +43,7 @@ final class Registration
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
-        \TinyCat\Http\Router::route('GET', '/admin/bots/queue', static function (): void { Pages::queue(); });
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('social.bot-queue'), static function (): void { Pages::queue(); });
         \TinyCat\Http\Router::route('GET', '/admin/bots', static function (): void {
             $botId = max(0, (int) \TinyCat\Http\Web::get('bot', 0));
             \TinyCat\Http\Web::redirect($botId > 0
@@ -53,7 +53,7 @@ final class Registration
         \TinyCat\Http\Router::route('GET', '/admin/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
             Pages::detail(max(0, (int) $bot_id));
         });
-        \TinyCat\Http\Router::route('GET', '/admin/bots/accounts', static function (?int $openBot = null): void { Pages::accounts($openBot); });
-        \TinyCat\Http\Router::route('GET', '/admin/bots/list', static function (): void { Pages::sources(); });
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation'), static function (?int $openBot = null): void { Pages::accounts($openBot); });
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('social.bot-sources'), static function (): void { Pages::sources(); });
     }
 }

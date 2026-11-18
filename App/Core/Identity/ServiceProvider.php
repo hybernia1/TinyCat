@@ -39,9 +39,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     {
         return new \TinyCat\Core\Modules\Contributions(homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.accounts.login', '/login', static function (): void { Pages::homepage(); }, PHP_INT_MAX, static fn (): string => \TinyCat\Support\Localization::t('auth.login_title'), 'login', navigation: false)], settings: Settings::sections(), temporaryDirectories: [
             new \TinyCat\Core\Modules\TemporaryDirectory('avatars', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/avatars'), 10),
-        ], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.users.admin', static fn (): array => [
-            'href' => '/admin/users', 'icon' => 'users', 'label' => \TinyCat\Support\Localization::t('users.list_title'),
-        ], 20)], maintenance: [
+        ], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.users.admin', static fn (): array => \TinyCat\Core\Ui\Admin\Definitions::navigation('core.users'), 20)], maintenance: [
             new \TinyCat\Core\Modules\MaintenanceTask('orphan_avatar_files', static fn (int $batch): array => Avatar::cleanupOrphans($batch), 50),
             \TinyCat\Database\Retention::task('old_password_reset_tokens', 'password_reset_tokens', 'used_at IS NOT NULL OR expires_at < ?', static fn (): array => [\TinyCat\Support\Dates::dateDb()], 100),
         ]);
@@ -64,7 +62,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
             \TinyCat\Core\Identity\AvatarHttp::respond($username, static function (): void { Integration::notFound(); });
         });
 
-        \TinyCat\Http\Router::route('GET', '/admin/users', static function (): void { Pages::administration(); });
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('core.users'), static function (): void { Pages::administration(); });
         foreach ([
             ['GET', '/login', static function (): void { Pages::login(); }],
             ['GET', '/logout', static function (): void { Pages::logout(); }],

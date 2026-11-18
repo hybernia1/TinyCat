@@ -37,7 +37,7 @@ check(typeof login.T.accounts.list === "undefined" && login.T.accounts.modal, "L
 check(publicPage.T.status && publicPage.T.socialUsers && !publicPage.T.bots && !publicPage.T.moderation, "Public pages load their own feature scripts");
 check(!publicPage.definitions.includes("users/admin-fields") && !publicPage.definitions.includes("bots/sources"), "Public bundles exclude administration components");
 const users = load("/admin/users");
-check(typeof users.T.accounts.list === "function", "User administration loads its list adapter");
+check(users.T.adminDefinitions["core.users"].component === "users/list", "User administration loads its declared list");
 check(users.T.accounts && !users.T.status && !users.T.bots, "User administration boots independently");
 check(users.definitions.includes("users/admin-fields"), "User administration receives its form definitions");
 const bots = load("/admin/bots/accounts");

@@ -99,6 +99,11 @@ final class ClientAssets
         $roots = [];
         foreach (self::features($path) as $feature) {
             foreach ($feature['components'] ?? [] as $root) { $roots[] = (string) $root; }
+            foreach ($feature['admin'] ?? [] as $definition) {
+                foreach ([$definition['component'] ?? null, $definition['filter'] ?? null, $definition['editor']['fields'] ?? null] as $component) {
+                    if (is_string($component) && $component !== '') { $roots[] = $component; }
+                }
+            }
         }
         $definitions = Components::select(array_values(array_unique($roots)));
         if (self::$buildDefinitions !== null) { self::$buildDefinitions[$path] = $definitions; }
@@ -116,6 +121,11 @@ final class ClientAssets
         $keys = self::$buildKeys[$path] ?? null;
         if ($keys === null) {
             $keys = array_fill_keys(Components::labels(self::definitions($path)), true);
+            foreach (self::administration($path) as $definition) {
+                foreach ([$definition['title'] ?? null, $definition['editor']['title'] ?? null, isset($definition['editor']) ? ($definition['editor']['submit'] ?? 'common.save') : null, isset($definition['editor']['management']) ? 'common.edit' : null] as $key) {
+                    if (is_string($key)) { $keys[$key] = true; }
+                }
+            }
             foreach (self::features($path) as $feature) {
                 foreach ($feature['translations'] ?? [] as $key) { $keys[(string) $key] = true; }
                 foreach ($feature['messages'] ?? [] as $key) { $keys[(string) $key] = true; }
@@ -145,9 +155,26 @@ final class ClientAssets
         return $messages;
     }
 
+    /** @return array<string, array<string, mixed>> */
+    public static function administration(?string $path = null): array
+    {
+        self::synchronize();
+        $features = $path !== null ? self::features($path) : (self::$features['@administration'] ??= array_values(array_merge(...array_map(static fn (string $file): array => json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR), self::manifests()))));
+        $result = [];
+        foreach ($features as $feature) {
+            foreach ($feature['admin'] ?? [] as $id => $definition) {
+                if (!is_string($id) || isset($result[$id]) || !is_array($definition)) { throw new RuntimeException('Invalid or duplicate admin definition: ' . $id); }
+                $result[$id] = $definition;
+            }
+        }
+        return $result;
+    }
+
     public static function componentScript(string $path): string
     {
+        $administration = \TinyCat\Core\Ui\Admin\Definitions::all($path);
         return 'window.TinyCat.components.register(' . self::encode((object) self::definitions($path)) . ');'
+            . ($administration !== [] ? 'window.TinyCat.adminDefinitions=' . self::encode((object) $administration) . ';' : '')
             . 'window.TinyCat.api.registerMessages(' . self::encode((object) self::messages($path)) . ');';
     }
 

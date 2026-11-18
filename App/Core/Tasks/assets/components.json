@@ -53,6 +53,23 @@
         "json": {
           "get": "state"
         }
+      },
+      "data-admin-list": "core.scheduler-runs",
+      "data-admin-state": {
+        "json": {
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "task_choices": {
+            "get": "task_choices"
+          },
+          "status_choices": {
+            "get": "status_choices"
+          }
+        }
       }
     },
     "children": [
@@ -109,7 +126,10 @@
               {
                 "component": "ui/filter-trigger",
                 "data": {
-                  "id": "scheduler-filter-modal"
+                  "id": {
+                    "admin_ref": "core.scheduler-runs",
+                    "field": "filterId"
+                  }
                 }
               }
             ]
@@ -129,9 +149,18 @@
                   {
                     "component": "ui/list-toolbar",
                     "data": {
-                      "url": "/api/scheduler/tasks",
-                      "target": "#scheduler-list",
-                      "history": "/admin/cron/list",
+                      "url": {
+                        "admin_ref": "core.scheduler-runs",
+                        "field": "endpoint"
+                      },
+                      "target": {
+                        "admin_ref": "core.scheduler-runs",
+                        "field": "target"
+                      },
+                      "history": {
+                        "admin_ref": "core.scheduler-runs",
+                        "field": "path"
+                      },
                       "filters": {
                         "get": "filters"
                       },
@@ -559,7 +588,10 @@
                       "navigation": {
                         "get": "navigation"
                       },
-                      "target": "#scheduler-list"
+                      "target": {
+                        "admin_ref": "core.scheduler-runs",
+                        "field": "target"
+                      }
                     }
                   }
                 ]
@@ -575,11 +607,20 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": "/api/scheduler/tasks",
+      "action": {
+        "admin_ref": "core.scheduler-runs",
+        "field": "endpoint"
+      },
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": "#scheduler-list",
-      "data-history": "/admin/cron/list"
+      "data-ajax-target": {
+        "admin_ref": "core.scheduler-runs",
+        "field": "target"
+      },
+      "data-history": {
+        "admin_ref": "core.scheduler-runs",
+        "field": "path"
+      }
     },
     "children": [
       {
@@ -1438,7 +1479,10 @@
                 "get": "task.run_url"
               },
               "method": "POST",
-              "target": "#scheduler-list",
+              "target": {
+                "admin_ref": "core.scheduler-runs",
+                "field": "target"
+              },
               "label": {
                 "t": "cron.run_now"
               },

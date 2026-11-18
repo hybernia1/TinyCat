@@ -129,6 +129,7 @@ import "../../../../assets/ui/toasts.js";
   function adminForm(user, options, create) {
     var form = U.form(create ? "/api/users" : "/api/users/" + user.id, create ? "POST" : "PATCH");
     form.dataset.adminUserForm = "true";
+    form.dataset.ajaxTarget = "#users-list";
     form.dataset.modalCloseOnSuccess = "true";
     if (!create) { form.appendChild(U.hidden("scope", "administration")); }
     form.appendChild(T.components.render("users/admin-fields", { user: user, create: create, protected: Boolean(user.protected), options: Object.assign({}, options.options, options) }));

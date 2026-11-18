@@ -9,6 +9,8 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\
 if (($argv[1] ?? '') === '--page-routes') { echo json_encode(\TinyCat\Http\Router::pageDefinitions('tinycat.social'), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
 if (($argv[1] ?? '') === '--settings') { echo json_encode(\TinyCat\Core\Settings\Resource::editor(), JSON_THROW_ON_ERROR); exit(0); }
+if (($argv[1] ?? '') === '--settings-presentation') { echo json_encode(\TinyCat\Core\Settings\Sections::presentation(), JSON_THROW_ON_ERROR); exit(0); }
+if (($argv[1] ?? '') === '--admin-definitions') { echo json_encode(\TinyCat\Core\Ui\Admin\Definitions::all(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--social-constraints') { echo json_encode(\TinyCat\Social\Posts\Resource::constraints(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--constraints') { echo json_encode(\TinyCat\Http\Validator::constraints(['title' => 'required|string|max:2', 'body' => 'required|string|max_bytes:6', 'interval' => 'required|integer|between:5,10', 'comment' => 'required|string|max:2']), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--translation-fixtures') {

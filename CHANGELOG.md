@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.1.1 - 2026-11-18
+
+- Derive settings labels and layout from their owning PHP sections. Blog and Social can contribute settings independently without a second JavaScript field registry.
+- Fix saving unchanged Blog settings: empty blocked URL rules and optional UTM source/campaign values remain valid, while UTM medium retains required validation.
+- Declare administrative lists and standard editors in owner asset manifests. Share navigation, filters and list refresh across Blog articles/sources, Social bot administration/moderation, accounts and scheduler history; preserve specialized editors, polling and draft guards.
+- Remove retired presentation adapters through the signed deletion plan. Preserve module activation, owned data and the completed 6.0.10 update baseline; introduce no database migrations.
+
 ## 6.1.0 - 2026-11-18
 
 - Offer Login as an Identity-owned homepage, including in core-only installations. Preserve module landing destinations and valid next URLs; terminate authentication/homepage redirects with an account overview when no other destination exists.

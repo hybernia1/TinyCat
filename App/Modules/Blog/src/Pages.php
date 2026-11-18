@@ -27,9 +27,7 @@ final class Pages
     {
         \TinyCat\Core\Identity\Access::require_admin();
         $data = Administration::listing(\TinyCat\Http\Request::current()->query());
-        $content = \TinyCat\Support\Components::render('blog/articles', $data);
-        $content = \TinyCat\Support\AdminViews::listCard(Localization::t('blog.articles'), 'file-text', 'blog-articles', 'blog-article-filter', new \TinyCat\Support\Markup($content), primary: true);
-        self::render(['title' => Localization::t('blog.articles'), 'current' => '/admin/articles', 'actions' => \TinyCat\Support\AdminViews::modalAction('modal-articles-creation', Localization::t('blog.editor'), 'plus', '/api/articles/creation')], $content);
+        \TinyCat\Core\Ui\Admin\Definitions::page('blog.articles', $data);
     }
 
     public static function editor(int $id = 0): never

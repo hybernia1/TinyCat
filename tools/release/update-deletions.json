@@ -2021,5 +2021,21 @@
     "App/Modules/Social/src/Profiles/Pages.php",
     "App/Modules/Social/src/Profiles/Usernames.php",
     "App/Modules/Social/src/Profiles/ViewData.php"
+  ],
+  "6.1.1": [
+    "App/Modules/Social/assets/moderation/settings-presentation.js",
+    "App/Modules/Social/assets/content/settings-presentation.js",
+    "App/Core/Security/assets/settings-presentation.js",
+    "App/Core/Mail/assets/settings-presentation.js",
+    "App/Core/Identity/assets/settings-presentation.js",
+    "App/Core/Settings/assets/field-presentation.js",
+    "assets/ui/settings-presentation.js",
+    "App/Modules/Blog/assets/index.js",
+    "App/Modules/Social/src/Automation/Views.php",
+    "App/Modules/Social/templates/parts/bots/modals/account-filter.php",
+    "App/Modules/Social/templates/parts/bots/modals/source-filter.php",
+    "App/Core/Support/templates/parts/filter.php",
+    "App/Modules/Social/src/Moderation/Views.php",
+    "App/Core/Identity/ViewData.php"
   ]
 }

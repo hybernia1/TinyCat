@@ -61,17 +61,12 @@ function link(url, history, method = "GET") {
   pending[1](); await second; pending[0](); await first;
   assert.equal(window.location.searchParams.get("sort"), "status");
   assert.match(applied.at(-1), /sort=status/);
-  T.modules.register = function () {};
-  T.bots = { accounts() {}, sources(_target, data) { applied.push(data.url); } };
-  T.moderation = { reports(_target, items) { applied.push(items[0]); } };
-  for (const feature of ["bots", "moderation"]) {
-    vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/" + feature + "/index.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
-  }
-  T.api.request = async url => ({ data: { url, items: [url] } });
-  for (const [route, api] of [["/admin/bots/list", "/api/bots/sources"], ["/admin/moderation/reports", "/api/moderation/reports"]]) {
-    window.location = new URL("https://tinycat.test" + route + "?sort=status&direction=desc");
-    await T.navigation.restore();
-    assert.equal(applied.at(-1), api + "?sort=status&direction=desc", "History restoration retains sorting: " + route);
+  const lists = require("./fixtures/list-fixture.cjs")();
+  lists.T.api.request = async url => ({ data: { url, items: [url] }, meta: { pagination: { page: 1, per_page: 25 } } });
+  for (const [route, api] of [["/admin/bots/list", "/api/bots/sources"], ["/admin/moderation/reports", "/api/moderation/reports"], ["/admin/cron/list", "/api/scheduler/tasks"], ["/admin/users", "/api/users"]]) {
+    lists.window.location = new URL("https://tinycat.test" + route + "?sort=status&direction=desc");
+    await lists.T.navigation.restore();
+    assert.equal(lists.rendered.at(-1).data.url, api + "?sort=status&direction=desc", "History restoration retains sorting: " + route);
   }
   console.log("PASS AJAX sorting, filter and mutation persistence, history and stale responses");
 }()).catch(error => { console.error(error); process.exitCode = 1; });

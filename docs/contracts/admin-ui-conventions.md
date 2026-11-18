@@ -405,3 +405,40 @@ must remain visible as a focusable form-level alert.
 Custom editors expose their visible input with `data-validation-for="field_name"`.
 The form-state service applies and clears error state on both the submitted
 control and that proxy; UI modules do not duplicate validation or tab logic.
+
+## Declared list and editor wiring
+
+Standard administration wiring belongs to the owner's existing asset manifest,
+in an `admin` map on the feature that delivers the relevant page. IDs are unique
+across selected owners. A list declares `path`, `api` (its mutation namespace),
+`endpoint` (the list resource), `target` (an ID selector), `component`, `filter`,
+`filterId`, `title` (a translation key) and `icon`. Empty filter strings mean
+that the list has no filter. An optional `editor` declares `creation`, `fields`
+and `title`; `management` can contain one `{id}` placeholder, with update
+`method` set to `PUT` or `PATCH`. Creation submits `POST`; `submit` defaults to
+`common.save`. An editor may also be declared without a list, for an existing
+custom list surface.
+
+Core reads these declarations as metadata only. It derives component roots and
+title translations, and delivers the selected declarations with the existing
+component bundle. `admin_ref` expressions in owner components resolve to the
+same declaration during catalog preparation, before either PHP or JavaScript
+rendering. For example, `{"admin_ref":"example.records","field":"target"}`
+resolves an explicit list target; `targetId` supplies it without the leading `#`.
+The `field` may address a nested property such as `editor.creation`.
+
+The shared client connects those lists to the existing navigation, request
+lifecycle and refresh logic. Filter state stays in `data-admin-state` on an
+element marked with `data-admin-list="example.records"`; hydration creates only
+the filter popover content, never a resource editor. Standard editors render
+the owner's declared fields only after the authorized resource has loaded.
+Their history, validation, draft protection and disposal use the shared dialog
+factory. Custom previews and workspace editors remain owner implementations.
+
+PHP handlers explicitly bind their routes using `Core\Ui\Admin\Definitions`
+and perform authorization before data selection. SQL sorting expressions and
+filter semantics remain with the owner; `Definitions::sorting()` only combines
+them with the declared transport paths. Metadata never registers data handlers,
+grants permissions, chooses domain tables or changes an API response into a UI
+definition. Unselected owners contribute nothing. Duplicate IDs, list targets,
+page paths and editor resources are rejected.

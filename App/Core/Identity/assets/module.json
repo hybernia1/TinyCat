@@ -120,14 +120,25 @@
       "/admin/users"
     ],
     "components": [
-      "users/list",
-      "users/filter-form",
       "users/admin-fields"
     ],
     "entries": [],
     "styles": [],
     "translations": [],
-    "messages": {}
+    "messages": {},
+    "admin": {
+      "core.users": {
+        "path": "/admin/users",
+        "endpoint": "/api/users",
+        "api": "/api/users",
+        "target": "#users-list",
+        "component": "users/list",
+        "filter": "users/filter-form",
+        "filterId": "users-filter-modal",
+        "title": "users.list_title",
+        "icon": "users"
+      }
+    }
   },
   {
     "routes": [
@@ -139,20 +150,6 @@
     "components": [],
     "styles": [],
     "translations": []
-  },
-  {
-    "routes": [
-      "admin"
-    ],
-    "entries": [
-      "App/Core/Identity/assets/settings-presentation.js"
-    ],
-    "components": [],
-    "styles": [],
-    "translations": [
-      "settings.fields.registration_auto_approve",
-      "settings.fields.registration_enabled"
-    ]
   },
   {
     "routes": [

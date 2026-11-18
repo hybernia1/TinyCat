@@ -171,6 +171,31 @@ try {
 exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../fixtures/modules/minimal-boot.php') . ' 2>&1', $output, $exitCode);
 if ($exitCode !== 0) { throw new RuntimeException('Minimal runtime failed: ' . implode("\n", $output)); }
 echo implode("\n", $output) . "\n";
+
+// An unknown owner needs no client registration and contributes only lazily.
+$savedRegistries = \TinyCat\Core\Modules\Registrations::current();
+$settingsCalls = 0;
+$settingsEntry = new \TinyCat\Core\Modules\SettingsSection('fixture.settings', 'fixture', static function () use (&$settingsCalls): array {
+    $settingsCalls++;
+    return ['label' => 'Fixture "<section>"', 'icon' => 'settings', 'fields' => [
+        ['key' => 'fixture.secret', 'label' => 'Secret <field>', 'type' => 'password', 'default' => 'private-default', 'value' => 'private-value', 'normalize' => static fn (mixed $value): mixed => $value],
+    ]];
+});
+try {
+    \TinyCat\Core\Modules\Registrations::configure(new Registries(['fixture.owner' => new Contributions(settings: [$settingsEntry])]));
+    $assert($settingsCalls === 0, 'Settings registration never evaluates the owner callback');
+    $presentation = \TinyCat\Core\Settings\Sections::presentation();
+    $assert($presentation['sections']['fixture']['label'] === 'Fixture "<section>"' && $presentation['fields']['fixture.secret'] === ['label' => 'Secret <field>'], 'Unknown owners derive presentation without client declarations or private data');
+    $encoded = json_encode($presentation, JSON_THROW_ON_ERROR);
+    $assert(!str_contains($encoded, 'private-') && !str_contains($encoded, 'normalize'), 'Presentation excludes values, defaults and operational callbacks');
+    foreach ([['label' => 'Missing icon', 'fields' => []], ['label' => 'Section', 'icon' => 'settings', 'fields' => [['key' => 'fixture.missing', 'type' => 'text']]]] as $invalid) {
+        try { \TinyCat\Core\Settings\Sections::presentation(['fixture' => $invalid]); throw new RuntimeException('Incomplete settings presentation was accepted'); }
+        catch (LogicException $error) { $assert(str_contains($error->getMessage(), 'fixture'), 'Incomplete presentation identifies the section or field owner'); }
+    }
+    \TinyCat\Core\Modules\Registrations::configure(new Registries());
+    $emptyPresentation = \TinyCat\Core\Settings\Sections::presentation();
+    $assert($emptyPresentation['sections'] === [] && $emptyPresentation['fields'] === [], 'Removing the owner removes its settings presentation');
+} finally { \TinyCat\Core\Modules\Registrations::configure($savedRegistries); }
 $assert($exitCode === 0, 'The minimal runtime works in its own clean process');
 
 $output = [];

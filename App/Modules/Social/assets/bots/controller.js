@@ -29,7 +29,6 @@ import "./workspace.js";
   function sources(root, data) {
     var view = T.components.render("bots/sources", data);
     T.content.replaceChildren(root, view);
-    if (!data.scoped) { syncFilter("bots-filter-modal", Object.assign({}, data.filters || { bot: data.filter_bot_user_id }, data.pagination ? { per_page: data.pagination.per_page } : {})); }
   }
   function posts(root, response, source) {
     var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
@@ -52,38 +51,12 @@ import "./workspace.js";
     }).catch(function (error) { if (error.name !== "AbortError" && request.current()) { T.toasts.show(error.message, "danger"); } })
       .finally(request.finish);
   }
-  function syncFilter(id, filters) {
-    var modal = document.getElementById(id) || T.filters.get(id);
-    if (!modal) { return; }
-    modal.querySelectorAll("input, select").forEach(function (control) {
-      if (!Object.prototype.hasOwnProperty.call(filters, control.name)) { return; }
-      control.value = control.name === "bot" && !Number(filters[control.name]) ? "0" : String(filters[control.name]);
-    });
-    T.filters.defaults(modal, Object.keys(filters));
-  }
-  function accounts(root, response) {
-    var data = response.data, pagination = U.pagination(response);
-    var model = Object.assign({}, data, { pagination: pagination });
-    T.content.replaceChildren(root, T.components.render("bots/accounts", model));
-    syncFilter("bot-accounts-filter-modal", Object.assign({}, data.filters, { per_page: pagination.per_page }));
-  }
   T.bots = {
     queue: function (target, response) {
       var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
       T.content.replaceChildren(target, T.components.render("bots/queue", Object.assign({}, data, { state: data })));
     },
     modal: function (url, response, id) {
-      if (url.pathname === "/api/bots/accounts/creation") {
-        var form = U.form("/api/bots/accounts", "POST");
-        form.dataset.ajaxTarget = "#bot-accounts-list";
-        form.dataset.modalCloseOnSuccess = "true";
-        var username = U.field("common.username", "username", "", "text", { pattern: response.data.options.username_pattern, minlength: "2", maxlength: "32", required: true, autocomplete: "off", autocapitalize: "none", spellcheck: "false", "aria-describedby": id + "-username-help" });
-        username.appendChild(T.dom.element("span", { "class": "help", id: id + "-username-help" }, U.text("account.username_hint")));
-        form.appendChild(username);
-        form.appendChild(T.dom.element("p", { "class": "help m-0" }, U.text("bots.account_create_help")));
-        form.appendChild(U.button("common.create", { type: "submit", "class": "btn btn-primary" }));
-        return U.adminDialog(id, "bots.new_account", form, false);
-      }
       if (/^\/api\/bots\/accounts\/[0-9]+$/.test(url.pathname) && url.searchParams.get("panel") === "detail") { return T.botDetail.modal(url, response, id); }
       if (/^\/api\/bots\/accounts\/[0-9]+\/posts\/[0-9]+\/management$/.test(url.pathname)) {
         var editUrl = new URL("/api/statuses/" + response.data.item.id + "?panel=edit", window.location.href);
@@ -106,27 +79,13 @@ import "./workspace.js";
       var detail = T.botDetail.result(source, response, target);
       if (detail) { return detail; }
       if (target && target.id === "bot-queue-list") { T.bots.queue(target, response); return [target]; }
-      if (target && target.id === "bot-accounts-list") {
-        if (T.lists.isRead(source)) { accounts(target, response); return [target]; }
-        T.lists.refresh(target); return [];
-      }
-      if (target && target.id === "bots-list") {
-        if (T.lists.isRead(source)) { sources(target, Object.assign({}, response.data, { pagination: U.pagination(response) })); return [target]; }
-        T.lists.refresh(target); return [];
-      }
       if (target && target.id === "bot-detail-posts-list") { posts(target, response, source); return [target]; }
       return [];
-    }, sources: sources, posts: posts, accounts: accounts
+    }, sources: sources, posts: posts
   };
   T.bots.dispose = function (root) { T.botDetail.dispose(root); };
   T.bots.hydrate = function (root) {
     T.botDetail.hydrate(root);
-    Array.from((root || document).querySelectorAll("[data-bot-queue-view]")).forEach(function (view) {
-      if (view.dataset.botQueueReady === "true") { return; }
-      view.dataset.botQueueReady = "true";
-      var form = T.components.render("bots/queue-filter-form", JSON.parse(view.dataset.botQueueState));
-      U.filterPanel("bot-queue-filter-modal", form);
-    });
     Array.from((root || document).querySelectorAll("[data-bot-posts-view]")).forEach(function (view) {
       if (view.dataset.botPostsReady === "true") { return; }
       view.dataset.botPostsReady = "true";

@@ -49,10 +49,11 @@ final class Resource
         unset($item);
         $pagination = (array) ($data['pagination'] ?? []);
         $filters = (array) ($data['filters'] ?? []);
-        $navigation = AdminViews::admin_pagination_view_data($pagination, '/api/bots/accounts', '#bot-accounts-list', $filters + ['per_page' => (int) ($pagination['per_page'] ?? 10)], 'page', 2, '/admin/bots/accounts');
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('social.bot-creation');
+        $navigation = AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $filters + ['per_page' => (int) ($pagination['per_page'] ?? 10)], 'page', 2, $definition['path']);
         unset($navigation['target']);
         return array_replace($data, ['items' => $items, 'statuses' => array_keys($statuses),
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::LISTS['accounts'], $filters + ['per_page' => (int) ($pagination['per_page'] ?? 25)]),
+            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::accounts(), $filters + ['per_page' => (int) ($pagination['per_page'] ?? 25)]),
             'navigation' => $navigation]);
     }
 }

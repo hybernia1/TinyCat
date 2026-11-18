@@ -9,9 +9,10 @@ const {webkit} = require(modulePath);
 function read(file, ...args) { return JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root,file),...args], {encoding:'utf8',maxBuffer:8e6})); }
 const fixture = read('tests/presentation/fixtures/popover-sizing-fixture.php');
 const scripts = read('tests/presentation/fixtures/asset-graph-fixture.php','--all').map(asset => asset.source).join('\n');
+const adminDefinitions = read('tests/presentation/fixtures/component-parity.php','--admin-definitions');
 const templates = read('tests/presentation/fixtures/component-parity.php','--templates');
 const labels = read('tests/presentation/fixtures/asset-graph-fixture.php','--catalog','cs');
-const html = '<!doctype html><html lang="cs"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+fixture.styles+'</style></head><body><script>'+scripts+'\nTinyCat.components.register('+JSON.stringify(templates)+');TinyCat.i18n.register("cs",'+JSON.stringify(labels)+');</script></body></html>';
+const html = '<!doctype html><html lang="cs"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+fixture.styles+'</style></head><body><script>window.TinyCat = {adminDefinitions:'+JSON.stringify(adminDefinitions)+'};'+scripts+'\nTinyCat.components.register('+JSON.stringify(templates)+');TinyCat.i18n.register("cs",'+JSON.stringify(labels)+');</script></body></html>';
 const cases = [
   {name:'profile',source:'account',selector:'a:not([data-modal-open])',closed:true},
   {name:'settings',source:'account',selector:'[data-modal-open]',closed:true},

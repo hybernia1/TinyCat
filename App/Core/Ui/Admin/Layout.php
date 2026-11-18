@@ -36,6 +36,8 @@ final class Layout
         $csrf = \TinyCat\Core\Security\Csrf::token();
         $dateFormat = (string) Startup::option('datetime.datetime', 'Y-m-d H:i:s');
         $dateRelative = (bool) Startup::option('datetime.relative', false);
+        $settingsPresentation = \TinyCat\Core\Identity\Roles::isAdmin($authUser)
+            ? json_encode(\TinyCat\Core\Settings\Sections::presentation(), JSON_THROW_ON_ERROR) : '';
         $iconSprite = Assets::asset('icons.svg');
         $userMenu = $authUser !== null ? View::part('Identity/user-menu', [
             'authUser' => $authUser, 'profileUrl' => $profileUrl, 'profileNeedsEmail' => $profileNeedsEmail,
@@ -49,6 +51,6 @@ final class Layout
             if (is_string($message) && $message !== '') { $flashToasts[] = ['message' => $message, 'type' => $type]; }
         }
         $shell = View::render('shell', compact('title', 'actions', 'content', 'authUser', 'appName', 'siteLogoUrl', 'adminIdentity', 'profileUrl', 'profileNeedsEmail', 'nav', 'titleIcon', 'userMenu'), __DIR__ . '/templates');
-        echo View::render('document', compact('title', 'shell', 'authUser', 'theme', 'styles', 'scripts', 'csrf', 'iconSprite', 'flashToasts', 'dateFormat', 'dateRelative'), __DIR__ . '/templates');
+        echo View::render('document', compact('settingsPresentation', 'title', 'shell', 'authUser', 'theme', 'styles', 'scripts', 'csrf', 'iconSprite', 'flashToasts', 'dateFormat', 'dateRelative'), __DIR__ . '/templates');
     }
 }

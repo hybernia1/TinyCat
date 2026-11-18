@@ -103,12 +103,12 @@
     T.lifecycle.start();
     check(initBlocked && !document.querySelector('.modal'), 'Initialization cannot construct a hidden modal');
     const list = T.dom.element('div',{id:'users-list'}); document.body.append(list);
-    T.accounts.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}});
+    T.modules.result({dataset:{apiMethod:"GET"},getAttribute:name=>name==="href"?"/api/users":null},{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}},list);
     T.lifecycle.hydrate(list);
     check(!document.querySelector('.modal') && !Object.keys(reads).length, 'List hydration contains filters but no creation modal or resource read');
     const editor = await T.dialog.openResource('modal-users-creation','/api/users/creation');
     const username = editor.querySelector('[name="username"]'); username.value='UnsentAccount'; username.dispatchEvent(new Event('input',{bubbles:true}));
-    T.accounts.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}}); T.lifecycle.hydrate(list);
+    T.modules.result({dataset:{apiMethod:"GET"},getAttribute:name=>name==="href"?"/api/users":null},{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}},list); T.lifecycle.hydrate(list);
     check(document.getElementById('modal-users-creation') === editor && username.value === 'UnsentAccount', 'Refreshing the list preserves an open creation draft');
     const confirmation = T.dialog.confirm; T.forms.confirmWith(async () => false);
     const trigger = T.dom.element('button',{'data-modal-open':'modal-users-creation','data-modal-url':'/api/users/creation','data-modal-refresh':'true'}); document.body.append(trigger); trigger.click(); await pause();
@@ -139,7 +139,11 @@
     check(!document.querySelector('.modal'), 'All resource dialogs are removed after closing');
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
-  if (mode === 'settings') {
+  if (mode === 'settings' || mode === 'settings-blog') {
+    if (mode === 'settings-blog') {
+      window.settingsSchema = {sections: window.blogSettings.sections};
+      document.body.dataset.settingsPresentation = JSON.stringify(window.blogSettings.presentation);
+    }
     const schema = window.settingsSchema || {sections:[
       {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.footer_html',label:'Footer',type:'textarea',value:'Saved footer'}]},
       {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',value:{host:'smtp.example.test',port:587}}]}
@@ -172,6 +176,14 @@
     check(dialog.querySelectorAll('.image-preview-contain').length === 2 && dialog.querySelector('.grid-span-full'), 'Site images and full-width settings retain shared layout primitives');
     check([...dialog.querySelectorAll('.field > .label')].every(label => label.textContent.trim()), 'Every server field has a client-owned presentation label');
     check(footer.value === 'Saved footer' && form.elements.namedItem('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
+    if (mode === 'settings-blog') {
+      check(form.checkValidity(), 'Unchanged Blog defaults pass native form validation');
+      for (const key of ['blog.blocked_urls','blog.links.utm.source','blog.links.utm.campaign']) {
+        const control = form.elements.namedItem('settings['+key+']');
+        check(control.value === '' && !control.required, 'Blog optional settings retain valid empty defaults: '+key);
+      }
+      check(form.elements.namedItem('settings[blog.links.utm.medium]').required, 'Blog UTM medium retains required native validation');
+    }
     footer.value='Edited footer'; footer.dispatchEvent(new Event('input',{bubbles:true}));
     check(T.forms.dirty(dialog).length === 1, 'Settings edits use the shared draft guard');
     const confirmation = T.dialog.confirm;

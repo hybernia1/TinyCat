@@ -23,8 +23,8 @@ $filters = [];
 foreach (['bots/queue-filter-form', 'bots/post-filter-form', 'bots/run-filter-form', 'moderation/filter-form', 'scheduler/filter-form'] as $name) {
     $filters[$name] = \TinyCat\Support\Components::render($name, ['filters' => [], 'pagination' => ['per_page' => 25]]);
 }
-$filters['bots/source-filter'] = str_replace(' hidden', '', \TinyCat\Support\View::part('Social/bots/modals/source-filter', ['bots' => []]));
-$filters['bots/account-filter'] = str_replace(' hidden', '', \TinyCat\Support\View::part('Social/bots/modals/account-filter', ['prepared' => ['accounts_url' => '/api/bots/accounts', 'admin_user_statuses' => ['active' => 'Active']]]));
+$filters['bots/source-filter'] = \TinyCat\Support\Components::render('bots/source-filter-form', ['bots' => []]);
+$filters['bots/account-filter'] = \TinyCat\Support\Components::render('bots/account-filter-form', ['statuses' => ['active']]);
 $notifications = \TinyCat\Support\View::part('Notifications/menu', ['state' => [], 'notifications' => []]);
 $public = \TinyCat\Support\View::part('Ui/public-header', [
     'hasGlobalSearch' => true,

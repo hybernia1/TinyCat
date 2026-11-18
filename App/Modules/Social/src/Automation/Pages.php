@@ -19,38 +19,35 @@ final class Pages
     {
         Access::require_admin();
         $data = Queue::payload();
-        $title = Localization::t('bots.queue_title');
-        $content = AdminViews::listCard($title, 'clock', 'bot-queue-list', 'bot-queue-filter-modal', new Markup(\TinyCat\Support\Components::render('bots/queue', $data + ['state' => $data])), primary: true);
-        Layout::render(['title' => $title, 'current' => '/admin/bots/queue'], $content);
+        \TinyCat\Core\Ui\Admin\Definitions::page('social.bot-queue', $data);
     }
 
     public static function accounts(?int $openBot = null): void
     {
         Access::require_admin();
-        $data = Administration::accountsViewData();
-        $title = Localization::t('bots.accounts_title');
-        $content = AdminViews::listCard($title, 'users', 'bot-accounts-list', 'bot-accounts-filter-modal', new Markup(Views::accounts($data)), primary: true)
-            . Views::accountFilter($data);
+        $data = Administration::accountsPayload();
+        $creation = \TinyCat\Core\Ui\Admin\Definitions::get('social.bot-creation');
+        $title = Localization::t($creation['title']);
+        $content = AdminViews::listCard($title, $creation['icon'], substr($creation['target'], 1), $creation['filterId'], new Markup(\TinyCat\Support\Components::render($creation['component'], $data)), primary: true);
         if ($openBot !== null) {
             $content .= '<span hidden data-bot-detail-open="' . Html::e($openBot) . '" data-bot-detail-query="' . Html::e((string) ($_SERVER['QUERY_STRING'] ?? '')) . '"></span>';
         }
         Layout::render([
-            'title' => $title, 'current' => '/admin/bots/accounts',
-            'actions' => AdminViews::modalAction('modal-bots-accounts-creation', Localization::t('bots.new_account'), 'user-plus', '/api/bots/accounts/creation'),
+            'title' => $title, 'current' => $creation['path'],
+            'actions' => AdminViews::modalAction(\TinyCat\Core\Ui\Admin\Definitions::modalId($creation['editor']['creation']), Localization::t($creation['editor']['title']), 'user-plus', $creation['editor']['creation']),
         ], $content);
     }
 
     public static function sources(): void
     {
         Access::require_admin();
-        $data = Administration::sourcesViewData();
-        $filter = Administration::sourceFilterData() + ['filters' => $data['filters']];
-        $title = Localization::t('bots.sources_title');
-        $content = AdminViews::listCard($title, 'rss', 'bots-list', 'bots-filter-modal', new Markup(Views::sources($data)), primary: true)
-            . View::part('Social/bots/modals/source-filter', $filter);
+        $data = Administration::payload();
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('social.bot-sources');
+        $title = Localization::t($definition['title']);
+        $content = AdminViews::listCard($title, $definition['icon'], substr($definition['target'], 1), $definition['filterId'], new Markup(\TinyCat\Support\Components::render($definition['component'], $data)), primary: true);
         Layout::render([
-            'title' => $title, 'current' => '/admin/bots/list',
-            'actions' => AdminViews::modalAction('bot-source-create-modal', Localization::t('bots.new_source'), 'plus', AdminViews::admin_list_url('/api/bots/sources/management', ['bot' => $data['filter_bot_id']])),
+            'title' => $title, 'current' => $definition['path'],
+            'actions' => AdminViews::modalAction('bot-source-create-modal', Localization::t('bots.new_source'), 'plus', AdminViews::admin_list_url('/api/bots/sources/management', ['bot' => $data['filter_bot_user_id']])),
         ], $content);
     }
 

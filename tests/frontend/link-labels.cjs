@@ -8,7 +8,8 @@ if (!fs.existsSync(modulePath)) { console.log('SKIP native link labels: set TINY
 const {webkit} = require(modulePath);
 const axe = fs.readFileSync(require.resolve('axe-core/axe.min.js',{paths:[modulePath]}),'utf8');
 function read(file,...args) { return JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php',[path.join(root,file),...args],{encoding:'utf8',maxBuffer:8e6})); }
-const scripts = read('tests/presentation/fixtures/asset-graph-fixture.php','--all').map(asset=>asset.source).join('\n');
+const adminDefinitions = read('tests/presentation/fixtures/component-parity.php','--admin-definitions');
+const scripts = 'window.TinyCat = {adminDefinitions:'+JSON.stringify(adminDefinitions)+'};' + read('tests/presentation/fixtures/asset-graph-fixture.php','--all').map(asset=>asset.source).join('\n');
 const templates = read('tests/presentation/fixtures/component-parity.php','--templates');
 const styles = read('tests/presentation/fixtures/asset-graph-fixture.php','--styles');
 (async function () {

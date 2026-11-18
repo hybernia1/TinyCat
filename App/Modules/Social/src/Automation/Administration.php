@@ -324,7 +324,7 @@ final class Administration
             'has_filters' => $filters['q'] !== '' || $filters['status'] !== '',
             'per_page' => (int) $pagination['per_page'],
             'clear_api_url' => self::accountsApiUrl(['per_page' => (int) $pagination['per_page'], 'page' => 1], false),
-            'clear_history_url' => \TinyCat\Support\AdminViews::admin_list_url('/admin/bots/accounts', ['per_page' => (int) $pagination['per_page'], 'page' => 1]),
+            'clear_history_url' => \TinyCat\Support\AdminViews::admin_list_url(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation'), ['per_page' => (int) $pagination['per_page'], 'page' => 1]),
         ];
     }
 
@@ -349,7 +349,7 @@ final class Administration
             }
         }
 
-        return \TinyCat\Support\AdminViews::admin_list_url('/api/bots/accounts', $query);
+        return \TinyCat\Support\AdminViews::admin_list_url(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'endpoint'), $query);
     }
 
     /**
@@ -388,7 +388,7 @@ final class Administration
         return [
             'q' => $query,
             'status' => array_key_exists($status, \TinyCat\Support\AdminViews::admin_user_statuses()) ? $status : '',
-        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Automation\Sorting::LISTS['accounts']);
+        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Automation\Sorting::accounts());
     }
 
     /**
@@ -426,7 +426,7 @@ final class Administration
             \TinyCat\Support\AdminViews::admin_page(),
             \TinyCat\Support\AdminViews::admin_per_page()
         );
-        $items = $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Automation\Sorting::LISTS['accounts'], $filters))
+        $items = $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Automation\Sorting::accounts(), $filters))
             ->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
 
         return [
@@ -565,12 +565,13 @@ final class Administration
             $query->where("(bs.name LIKE ? ESCAPE '!' OR bs.feed_url LIKE ? ESCAPE '!' OR u.username LIKE ? ESCAPE '!')", $search, $search, $search);
         }
         $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
-        $filters = ['q' => $q, 'bot' => $filterBotId > 0 ? (string) $filterBotId : '', 'per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Automation\Sorting::LISTS['sources']);
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('social.bot-sources');
+        $filters = ['q' => $q, 'bot' => $filterBotId > 0 ? (string) $filterBotId : '', 'per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Automation\Sorting::sources());
         return [
             'bots' => self::bots(), 'filter_bot_id' => $filterBotId, 'filters' => $filters, 'pagination' => $pagination,
-            'sources' => $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Automation\Sorting::LISTS['sources']))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all(),
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::LISTS['sources'], $filters),
-            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, '/api/bots/sources', '#bots-list', $filters, historyPath: '/admin/bots/list'),
+            'sources' => $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Automation\Sorting::sources()))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all(),
+            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::sources(), $filters),
+            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $filters, historyPath: $definition['path']),
         ];
     }
 
@@ -593,17 +594,6 @@ final class Administration
             'bots' => self::bots(),
             'create' => $create,
             'action' => self::apiUrl($create ? null : (int) $source['id']),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public static function sourceFilterData(): array
-    {
-        return [
-            'bots' => self::bots(),
-            'filter_bot_id' => self::filterId(),
         ];
     }
 

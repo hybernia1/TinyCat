@@ -2186,19 +2186,46 @@
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-bot-sources-view": ""
+      "data-admin-list": {
+        "if": [
+          {
+            "get": "scoped"
+          },
+          null,
+          "social.bot-sources"
+        ]
+      },
+      "data-admin-state": {
+        "json": {
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "bots": {
+            "get": "bots"
+          }
+        }
+      }
     },
     "children": [
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": "/api/bots/sources",
+          "url": {
+            "admin_ref": "social.bot-sources",
+            "field": "endpoint"
+          },
           "target": {
             "or": [
               {
                 "get": "list_target"
               },
-              "#bots-list"
+              {
+                "admin_ref": "social.bot-sources",
+                "field": "target"
+              }
             ]
           },
           "history": {
@@ -2207,7 +2234,10 @@
                 "get": "scoped"
               },
               false,
-              "/admin/bots/list"
+              {
+                "admin_ref": "social.bot-sources",
+                "field": "path"
+              }
             ]
           },
           "filters": {
@@ -2222,7 +2252,10 @@
                 "get": "scoped"
               },
               null,
-              "bots-filter-modal"
+              {
+                "admin_ref": "social.bot-sources",
+                "field": "filterId"
+              }
             ]
           }
         },
@@ -2771,7 +2804,7 @@
                                       "get": "source.last_imported_at"
                                     }
                                   },
-                                  "â€”"
+                                  "Ă˘â‚¬â€ť"
                                 ]
                               }
                             ]
@@ -2835,7 +2868,10 @@
                                           {
                                             "get": "list_target"
                                           },
-                                          "#bots-list"
+                                          {
+                                            "admin_ref": "social.bot-sources",
+                                            "field": "target"
+                                          }
                                         ]
                                       },
                                       "method": "PATCH"
@@ -2859,7 +2895,10 @@
                                           {
                                             "get": "list_target"
                                           },
-                                          "#bots-list"
+                                          {
+                                            "admin_ref": "social.bot-sources",
+                                            "field": "target"
+                                          }
                                         ]
                                       },
                                       "label": {
@@ -2887,7 +2926,10 @@
                                           {
                                             "get": "list_target"
                                           },
-                                          "#bots-list"
+                                          {
+                                            "admin_ref": "social.bot-sources",
+                                            "field": "target"
+                                          }
                                         ]
                                       },
                                       "label": {
@@ -2930,7 +2972,10 @@
               {
                 "get": "list_target"
               },
-              "#bots-list"
+              {
+                "admin_ref": "social.bot-sources",
+                "field": "target"
+              }
             ]
           }
         },
@@ -2943,22 +2988,48 @@
   "bots/accounts": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14"
-    },
-    "children": [
-      {
-        "component": "ui/list-toolbar",
-        "data": {
-          "url": "/api/bots/accounts",
-          "target": "#bot-accounts-list",
-          "history": "/admin/bots/accounts",
+      "class": "stack stack-gap-14",
+      "data-admin-list": "social.bot-creation",
+      "data-admin-state": {
+        "json": {
           "filters": {
             "get": "filters"
           },
           "pagination": {
             "get": "pagination"
           },
-          "filter_modal": "bot-accounts-filter-modal"
+          "statuses": {
+            "get": "statuses"
+          }
+        }
+      }
+    },
+    "children": [
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": {
+            "admin_ref": "social.bot-creation",
+            "field": "endpoint"
+          },
+          "target": {
+            "admin_ref": "social.bot-creation",
+            "field": "target"
+          },
+          "history": {
+            "admin_ref": "social.bot-creation",
+            "field": "path"
+          },
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "filter_modal": {
+            "admin_ref": "social.bot-creation",
+            "field": "filterId"
+          }
         }
       },
       {
@@ -3272,7 +3343,10 @@
                                           "/activation"
                                         ]
                                       },
-                                      "target": "#bot-accounts-list"
+                                      "target": {
+                                        "admin_ref": "social.bot-creation",
+                                        "field": "target"
+                                      }
                                     }
                                   },
                                   {
@@ -3287,7 +3361,10 @@
                                         ]
                                       },
                                       "method": "DELETE",
-                                      "target": "#bot-accounts-list",
+                                      "target": {
+                                        "admin_ref": "social.bot-creation",
+                                        "field": "target"
+                                      },
                                       "confirm": {
                                         "t": "bots.account_delete_confirm",
                                         "values": {
@@ -3346,7 +3423,10 @@
           "navigation": {
             "get": "navigation"
           },
-          "target": "#bot-accounts-list"
+          "target": {
+            "admin_ref": "social.bot-creation",
+            "field": "target"
+          }
         }
       }
     ]
@@ -3597,7 +3677,7 @@
                                     {
                                       "get": "run.error"
                                     },
-                                    "â€”"
+                                    "Ă˘â‚¬â€ť"
                                   ]
                                 }
                               },
@@ -3607,7 +3687,7 @@
                                     {
                                       "get": "run.error"
                                     },
-                                    "â€”"
+                                    "Ă˘â‚¬â€ť"
                                   ]
                                 }
                               ]
@@ -4163,8 +4243,8 @@
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-bot-queue-view": "",
-      "data-bot-queue-state": {
+      "data-admin-list": "social.bot-queue",
+      "data-admin-state": {
         "json": {
           "get": "state"
         }
@@ -4174,16 +4254,28 @@
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": "/api/bots/queue",
-          "target": "#bot-queue-list",
-          "history": "/admin/bots/queue",
+          "url": {
+            "admin_ref": "social.bot-queue",
+            "field": "endpoint"
+          },
+          "target": {
+            "admin_ref": "social.bot-queue",
+            "field": "target"
+          },
+          "history": {
+            "admin_ref": "social.bot-queue",
+            "field": "path"
+          },
           "filters": {
             "get": "filters"
           },
           "pagination": {
             "get": "pagination"
           },
-          "filter_modal": "bot-queue-filter-modal"
+          "filter_modal": {
+            "admin_ref": "social.bot-queue",
+            "field": "filterId"
+          }
         }
       },
       {
@@ -4494,7 +4586,10 @@
                                         "get": "post.publish_url"
                                       },
                                       "data-ajax-form": "",
-                                      "data-ajax-target": "#bot-queue-list",
+                                      "data-ajax-target": {
+                                        "admin_ref": "social.bot-queue",
+                                        "field": "target"
+                                      },
                                       "data-confirm": {
                                         "t": "bots.publish_now_confirm"
                                       },
@@ -4582,7 +4677,10 @@
           "navigation": {
             "get": "navigation"
           },
-          "target": "#bot-queue-list"
+          "target": {
+            "admin_ref": "social.bot-queue",
+            "field": "target"
+          }
         }
       }
     ]
@@ -4592,11 +4690,20 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": "/api/bots/queue",
+      "action": {
+        "admin_ref": "social.bot-queue",
+        "field": "endpoint"
+      },
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": "#bot-queue-list",
-      "data-history": "/admin/bots/queue"
+      "data-ajax-target": {
+        "admin_ref": "social.bot-queue",
+        "field": "target"
+      },
+      "data-history": {
+        "admin_ref": "social.bot-queue",
+        "field": "path"
+      }
     },
     "children": [
       {
@@ -5510,27 +5617,44 @@
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-moderation-reports-view": "",
-      "data-moderation-reports-state": {
+      "data-admin-state": {
         "json": {
-          "get": "state"
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          }
         }
-      }
+      },
+      "data-admin-list": "social.moderation-reports"
     },
     "children": [
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": "/api/moderation/reports",
-          "target": "#moderation-reports",
-          "history": "/admin/moderation/reports",
+          "url": {
+            "admin_ref": "social.moderation-reports",
+            "field": "endpoint"
+          },
+          "target": {
+            "admin_ref": "social.moderation-reports",
+            "field": "target"
+          },
+          "history": {
+            "admin_ref": "social.moderation-reports",
+            "field": "path"
+          },
           "filters": {
             "get": "filters"
           },
           "pagination": {
             "get": "pagination"
           },
-          "filter_modal": "moderation-filter-modal"
+          "filter_modal": {
+            "admin_ref": "social.moderation-reports",
+            "field": "filterId"
+          }
         },
         "when": {
           "get": "filters"
@@ -5718,7 +5842,7 @@
                                               {
                                                 "get": "report.content_id"
                                               },
-                                              " Â· ",
+                                              " Ă‚Â· ",
                                               {
                                                 "get": "report.author_name"
                                               }
@@ -5732,7 +5856,7 @@
                                               {
                                                 "get": "report.content_id"
                                               },
-                                              " Â· ",
+                                              " Ă‚Â· ",
                                               {
                                                 "get": "report.author_name"
                                               }
@@ -5887,7 +6011,10 @@
           "navigation": {
             "get": "navigation"
           },
-          "target": "#moderation-reports"
+          "target": {
+            "admin_ref": "social.moderation-reports",
+            "field": "target"
+          }
         }
       }
     ]
@@ -5897,11 +6024,20 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": "/api/moderation/reports",
+      "action": {
+        "admin_ref": "social.moderation-reports",
+        "field": "endpoint"
+      },
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": "#moderation-reports",
-      "data-history": "/admin/moderation/reports"
+      "data-ajax-target": {
+        "admin_ref": "social.moderation-reports",
+        "field": "target"
+      },
+      "data-history": {
+        "admin_ref": "social.moderation-reports",
+        "field": "path"
+      }
     },
     "children": [
       {
@@ -6149,7 +6285,7 @@
                                               {
                                                 "get": "report.reporter_name"
                                               },
-                                              "â€”"
+                                              "Ă˘â‚¬â€ť"
                                             ]
                                           }
                                         },
@@ -6159,7 +6295,7 @@
                                               {
                                                 "get": "report.reporter_name"
                                               },
-                                              "â€”"
+                                              "Ă˘â‚¬â€ť"
                                             ]
                                           }
                                         ]
@@ -6245,7 +6381,7 @@
                                       "get": "report.created_at"
                                     }
                                   },
-                                  "â€”"
+                                  "Ă˘â‚¬â€ť"
                                 ]
                               }
                             ]
@@ -6337,7 +6473,7 @@
               {
                 "get": "report.reporter_name"
               },
-              "â€”"
+              "Ă˘â‚¬â€ť"
             ]
           }
         ]
@@ -6440,7 +6576,7 @@
                   "get": "report.created_at"
                 }
               },
-              "â€”"
+              "Ă˘â‚¬â€ť"
             ]
           }
         ]
@@ -6467,7 +6603,7 @@
               {
                 "get": "report.note"
               },
-              "â€”"
+              "Ă˘â‚¬â€ť"
             ]
           }
         ]
@@ -6494,7 +6630,7 @@
               {
                 "get": "report.reviewer_name"
               },
-              "â€”"
+              "Ă˘â‚¬â€ť"
             ]
           }
         ]
@@ -6526,7 +6662,7 @@
                   "get": "report.reviewed_at"
                 }
               },
-              "â€”"
+              "Ă˘â‚¬â€ť"
             ]
           }
         ]
@@ -9245,5 +9381,264 @@
         "social"
       ]
     }
+  },
+  "bots/account-creation-fields": [
+    {
+      "component": "ui/field",
+      "data": {
+        "label": {
+          "t": "common.username"
+        },
+        "value": "",
+        "attributes": {
+          "class": "input",
+          "name": "username",
+          "type": "text",
+          "pattern": {
+            "get": "options.username_pattern"
+          },
+          "minlength": "2",
+          "maxlength": "32",
+          "required": true,
+          "autocomplete": "off",
+          "autocapitalize": "none",
+          "spellcheck": "false",
+          "aria-describedby": {
+            "concat": [
+              {
+                "get": "dialog_id"
+              },
+              "-username-help"
+            ]
+          }
+        },
+        "help": {
+          "t": "account.username_hint"
+        },
+        "help_id": {
+          "concat": [
+            {
+              "get": "dialog_id"
+            },
+            "-username-help"
+          ]
+        }
+      }
+    },
+    {
+      "tag": "p",
+      "attrs": {
+        "class": "help m-0"
+      },
+      "children": [
+        {
+          "t": "bots.account_create_help"
+        }
+      ]
+    }
+  ],
+  "bots/account-filter-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": {
+        "admin_ref": "social.bot-creation",
+        "field": "endpoint"
+      },
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": {
+        "admin_ref": "social.bot-creation",
+        "field": "target"
+      },
+      "data-history": {
+        "admin_ref": "social.bot-creation",
+        "field": "path"
+      }
+    },
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "q",
+          "value": {
+            "get": "filters.q"
+          }
+        }
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "per_page",
+          "value": {
+            "get": "pagination.per_page"
+          }
+        }
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "page",
+          "value": "1"
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "common.status"
+          },
+          "choices": {
+            "options": {
+              "get": "statuses"
+            },
+            "cases": {
+              "active": {
+                "t": "users.statuses.active"
+              },
+              "waiting": {
+                "t": "users.statuses.waiting"
+              },
+              "ban": {
+                "t": "users.statuses.ban"
+              }
+            },
+            "all": true
+          },
+          "value": {
+            "get": "filters.status"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "status"
+          }
+        }
+      }
+    ]
+  },
+  "bots/source-filter-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": {
+        "admin_ref": "social.bot-sources",
+        "field": "endpoint"
+      },
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": {
+        "admin_ref": "social.bot-sources",
+        "field": "target"
+      },
+      "data-history": {
+        "admin_ref": "social.bot-sources",
+        "field": "path"
+      }
+    },
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "q",
+          "value": {
+            "get": "filters.q"
+          }
+        }
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "per_page",
+          "value": {
+            "get": "pagination.per_page"
+          }
+        }
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "page",
+          "value": "1"
+        }
+      },
+      {
+        "tag": "label",
+        "attrs": {
+          "class": "field"
+        },
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "label"
+            },
+            "children": [
+              {
+                "t": "bots.bot"
+              }
+            ]
+          },
+          {
+            "tag": "select",
+            "attrs": {
+              "class": "select",
+              "name": "bot"
+            },
+            "children": [
+              {
+                "tag": "option",
+                "attrs": {
+                  "value": ""
+                },
+                "children": [
+                  {
+                    "t": "common.all"
+                  }
+                ]
+              },
+              {
+                "each": {
+                  "get": "bots"
+                },
+                "as": "bot",
+                "children": {
+                  "tag": "option",
+                  "attrs": {
+                    "value": {
+                      "get": "bot.id"
+                    },
+                    "selected": {
+                      "eq": [
+                        {
+                          "string": {
+                            "get": "bot.id"
+                          }
+                        },
+                        {
+                          "get": "filters.bot"
+                        }
+                      ]
+                    }
+                  },
+                  "children": [
+                    {
+                      "get": "bot.username"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

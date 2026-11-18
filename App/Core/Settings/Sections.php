@@ -4,6 +4,30 @@ namespace TinyCat\Core\Settings;
 
 final class Sections
 {
+    /** Presentation only: never includes values, defaults, options or callbacks.
+     * @param array<mixed>|null $sections
+     * @return array{sections: array<mixed>, fields: array<mixed>, examples: array<string, string>}
+     */
+    public static function presentation(?array $sections = null): array
+    {
+        $result = ['sections' => [], 'fields' => [], 'examples' => []];
+        foreach ($sections ?? self::current() as $group => $section) {
+            if (!is_string($section['label'] ?? null) || !is_string($section['icon'] ?? null)) {
+                throw new \LogicException('Missing settings section presentation: ' . $group);
+            }
+            $result['sections'][$group] = array_intersect_key($section, array_flip(['label', 'icon']));
+            foreach ($section['fields'] as $field) {
+                if (!is_string($field['label'] ?? null)) { throw new \LogicException('Missing settings field label: ' . $field['key']); }
+                $result['fields'][$field['key']] = array_intersect_key($field, array_flip(['label', 'help', 'placeholder', 'span']));
+            }
+        }
+        $sample = new \DateTimeImmutable('2026-07-05 15:04:09');
+        foreach ([...array_keys(\TinyCat\Support\Dates::date_format_presets()), ...array_keys(\TinyCat\Support\Dates::time_format_presets()), ...array_keys(\TinyCat\Support\Dates::datetime_format_presets())] as $format) {
+            $result['examples'][$format] = $sample->format($format);
+        }
+        return $result;
+    }
+
     /** Fresh installation defaults are derived from the selected field owners. */
     public static function seed(string $locale): void
     {

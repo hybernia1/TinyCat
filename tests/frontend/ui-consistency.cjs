@@ -10,7 +10,8 @@ const templates = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentat
 const labels = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--catalog'], { encoding: 'utf8', maxBuffer: 8e6 }));
 const installation = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--installation'], { encoding: 'utf8', maxBuffer: 8e6 }));
 const avatarOptions = JSON.parse(fs.readFileSync(path.join(root, 'App/Core/Identity/avatar-options.json'), 'utf8'));
-const source = assets.map(asset => asset.source).join('\n') + '\nTinyCat.components.register(' + JSON.stringify(templates).replace(/</g, '\\u003c') + ');TinyCat.i18n.register(\"en\",' + JSON.stringify(labels).replace(/</g, '\\u003c') + ');window.installationFixture=' + JSON.stringify(installation).replace(/</g, '\\u003c') + ';window.avatarFixtureOptions=' + JSON.stringify(avatarOptions) + ';';
+const adminDefinitions = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/component-parity.php'), '--admin-definitions'], {encoding:'utf8'}));
+const source = 'window.TinyCat = {adminDefinitions:'+JSON.stringify(adminDefinitions)+'};' + assets.map(asset => asset.source).join('\n') + '\nTinyCat.components.register(' + JSON.stringify(templates).replace(/</g, '\\u003c') + ');TinyCat.i18n.register(\"en\",' + JSON.stringify(labels).replace(/</g, '\\u003c') + ');window.installationFixture=' + JSON.stringify(installation).replace(/</g, '\\u003c') + ';window.avatarFixtureOptions=' + JSON.stringify(avatarOptions) + ';';
 const css = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--styles'], { encoding: 'utf8', maxBuffer: 8e6 }));
 const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/ui-consistency-fixture.js'), 'utf8');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'tinycat-ui-consistency-'));

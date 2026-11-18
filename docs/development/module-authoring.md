@@ -324,7 +324,7 @@ callbacky se při registraci neprovádějí.
 | `themes`, `widgets`, `localizedRoutes` | `PageTheme`, `DashboardWidget`, `LocalizedRoute`: rozložení, dashboard a jazyky URL. |
 | `tasks`, `maintenance` | `ScheduledTask`, `MaintenanceTask`: úlohy a údržba. |
 | `componentLookups` | `ComponentLookup`: lazy prezentační metadata pro sdílené komponenty. |
-| `settings`, `configOverrides` | `SettingsSection` a provozní nastavení vlastníka. |
+| `settings`, `configOverrides` | `SettingsSection` a provozní nastavení vlastníka; prezentace editoru se odvozuje ze stejné deklarace (viz níže). |
 | `notificationTypes` | `NotificationType`: typy oznámení, hydratace a odkazy. |
 | `search`, `sitemaps`, `embeds` | `SearchSource`, `SitemapSection`, `EmbedSource`: hledání, sitemap a oEmbed. |
 | `health`, `temporaryDirectories` | `HealthProbe`, `TemporaryDirectory`: diagnostika a dočasné soubory. |
@@ -421,3 +421,28 @@ build modulu vybere jeho manifest a tranzitivní závislosti. Inventář pouze �
 JSON a nespouští PHP modulů. Stejný inventář určuje dostupnost ve správci;
 samotné nalezení modulu jej neaktivuje. Aktivace zůstává explicitní
 v `App/modules.php`, distribučním plánu a registru instalovaných balíčků.
+
+## Nastavení bez klientské registrace
+
+Pro běžné administrační seznamy a editory lze podobně využít deklaraci `admin`
+ve vlastním asset manifestu; viz [kontrakt administrace](../contracts/admin-ui-conventions.md#declared-list-and-editor-wiring).
+HTTP obsluhy, dotazy, oprávnění a zvláštní UI dál implementuje vlastník.
+
+Modul přispívá lazy `SettingsSection` přes `Contributions.settings`. Callback vrací
+sekci s přeloženým `label`, `icon` a `fields`; každé pole obsahuje `key`, `type`,
+`label` a podle potřeby `default`, omezení, `help`, `placeholder` či `span`.
+Překlad zavolej uvnitř callbacku, nikoli při registraci, aby se použilo aktuální
+locale. Sekce stejné skupiny se slučují; klíč pole má jediného vlastníka.
+
+Core Settings z těchto definic odvodí prezentační metadata pro administrační HTML
+(`data-settings-presentation`). Přenáší jen názvy sekcí, ikony, popisky, nápovědu,
+placeholdery a rozložení. Hodnoty, výchozí hodnoty, možnosti a callbacky se sem
+nekopírují. Metadata se escapují jako atribut HTML a nevytvářejí formulář ani modal.
+Neúplná prezentace vyvolá konkrétní chybu sekce nebo pole.
+
+`GET /api/settings/editor` nadále vrací autorizovaná data a omezení bez HTML,
+překladových klíčů a komponentových definic. Aktuální hodnoty se načítají až při
+otevření společným resource loaderem. Modul nepotřebuje `settings-presentation.js`
+ani opakování překladových závislostí těchto popisků v asset manifestu; katalogy
+a samotné definice dál vlastní modul. Core nezná jeho název ani klíče nastavení.
+Vypnutý nebo chybějící vlastník nepřispívá sekcí ani prezentačními metadaty.

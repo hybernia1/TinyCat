@@ -75,6 +75,32 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.1.1
+
+Requires completed **6.0.10 or newer** and PHP 8.4. Refresh inherited rescue
+launchers as documented below. No database migration is introduced; installed
+module activation, data and published migration history remain unchanged.
+
+Settings presentation now comes from the owning PHP sections. Administrative
+list wiring comes from owner asset manifests; specialized account, RSS and bot
+editors and scheduler polling keep their existing responsibilities. Empty optional
+Blog URL rules and UTM source/campaign values can be saved without a required-field
+error. The signed deletion plan retires fourteen redundant presentation files.
+
+Build the compatibility update with retained Blog sources separately from the
+production fresh installation:
+
+```sh
+php tools/release/build-update.php --version=6.1.1 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-1/update
+php tools/release/build-update.php --version=6.1.1 --assembly=platform --fresh-install --output=.work/releases/release-6-1-1/install
+```
+
+Verify the exact update artifact against published 6.0.10, 6.0.11 and 6.1.0
+platform sources with `--platform-baseline --direct-web --cached-autoload`,
+including rollback and retained installed Blog ownership. The source preflight
+and artifact checks are separate; a local dirty-worktree candidate is not a
+published release.
+
 ## Upgrading to 6.1.0
 
 Requires completed **6.0.10 or newer** and PHP 8.4. Refresh the inherited rescue

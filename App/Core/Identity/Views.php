@@ -25,14 +25,6 @@ final class Views
     }
 
     /** @param array<mixed> $data */
-    public static function adminList(array $data = []): string
-    {
-        $items = array_map(Resource::legacyUser(...), (array) ($data['users'] ?? []));
-        $model = Resource::listing(['items' => $items, 'filters' => (array) ($data['filters'] ?? []), 'roles' => (array) ($data['roles'] ?? []), 'statuses' => (array) ($data['statuses'] ?? [])], (array) ($data['pagination'] ?? []));
-        return Components::render('users/list', $model + ['state' => $model]);
-    }
-
-    /** @param array<mixed> $data */
     public static function authContent(array $data = []): string
     {
         $model = AuthResource::make((string) ($data['mode'] ?? 'login'), (string) ($data['next'] ?? ''));

@@ -21,8 +21,8 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
             new \TinyCat\Core\Modules\MaintenanceTask('blog.orphan_images', static fn (int $batch): array => ImageStorage::cleanupOrphans($batch), 31),
             new \TinyCat\Core\Modules\MaintenanceTask('blog.orphan_link_images', static fn (int $batch): array => \TinyCat\Core\Files\RemoteImageCache::cleanup($batch), 41),
         ], tasks: [FeedSources::task()], embeds: [new \TinyCat\Core\Modules\EmbedSource('blog.articles', Exports::embed(...), 20)], sitemaps: [new \TinyCat\Core\Modules\SitemapSection('articles', SitemapData::count(...), SitemapData::entries(...), 50)], search: [SearchData::source()], homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.blog.home', '/blog', static function (): void { Pages::listing(); }, 20, static fn (): string => \TinyCat\Support\Localization::t('blog.articles'))], dashboards: [new \TinyCat\Core\Modules\EntryPage('tinycat.blog.admin', '/admin/articles', static function (): void { Pages::listing(false); }, 20)], localizedRoutes: [new \TinyCat\Core\Modules\LocalizedRoute('blog.archive', '^/blog$', ['before', 'at']), new \TinyCat\Core\Modules\LocalizedRoute('blog.article', '^/articles/[1-9][0-9]*$')], navigation: [
-            new \TinyCat\Core\Modules\NavigationItem('tinycat.blog.articles', static fn (): array => ['href' => '/admin/articles', 'icon' => 'file-text', 'label' => \TinyCat\Support\Localization::t('blog.articles')], 25),
-            new \TinyCat\Core\Modules\NavigationItem('tinycat.blog.sources', static fn (): array => ['href' => '/admin/article-sources', 'icon' => 'rss', 'label' => \TinyCat\Support\Localization::t('blog.feeds.title')], 26),
+            new \TinyCat\Core\Modules\NavigationItem('tinycat.blog.articles', static fn (): array => \TinyCat\Core\Ui\Admin\Definitions::navigation('blog.articles'), 25),
+            new \TinyCat\Core\Modules\NavigationItem('tinycat.blog.sources', static fn (): array => \TinyCat\Core\Ui\Admin\Definitions::navigation('blog.sources'), 26),
         ]);
     }
 
@@ -50,10 +50,10 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
     {
         $ready = static fn (): bool => \TinyCat\Database\ModuleSchemas::ready(\TinyCat\Database\Connection::get(), ['tinycat.blog' => self::schema()]);
         Api::register($api->whenReady($ready));
-        \TinyCat\Http\Router::route('GET', '/admin/article-sources', FeedAdministration::page(...));
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('blog.sources'), FeedAdministration::page(...));
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/blog/feed', Exports::feed(...), 'application/rss+xml');
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/blog', Pages::listing(...));
-        \TinyCat\Http\Router::route('GET', '/admin/articles', static fn () => Pages::listing(false));
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('blog.articles'), static fn () => Pages::listing(false));
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/articles/{id:[1-9][0-9]*}', static fn (string $id) => Pages::detail((int) $id));
         \TinyCat\Http\Router::route('GET', '/admin/articles/new', static fn () => Pages::editor());
         \TinyCat\Http\Router::route('GET', '/admin/articles/{id:[1-9][0-9]*}', static fn (string $id) => Pages::editor((int) $id));

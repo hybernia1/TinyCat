@@ -260,6 +260,27 @@ try {
     $assert($status === 403, 'Core diagnostics mutation requires CSRF without Social');
     [$status, , $dashboard] = $request('/admin', actor: 'admin');
     $assert($status === 200 && str_contains($dashboard, 'id="dashboard-cache"') && !str_contains($dashboard, 'recent-comments'), 'Core administration hosts diagnostics without social tables');
+    preg_match('/data-settings-presentation="([^"]+)"/', $dashboard, $settingsPresentationMatch);
+    $settingsPresentation = json_decode(html_entity_decode($settingsPresentationMatch[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true, 512, JSON_THROW_ON_ERROR);
+    $assert(isset($settingsPresentation['sections']['blog'], $settingsPresentation['fields']['blog.images.enabled']) && !isset($settingsPresentation['sections']['content_images']), 'Blog-only admin derives its own settings presentation without Social client assets');
+    [$status, $editor] = $request('/api/settings/editor', actor: 'admin');
+    $unchanged = [];
+    foreach ($editor['data']['sections'] ?? [] as $section) {
+        if ($section['key'] !== 'blog') { continue; }
+        foreach ($section['fields'] as $field) { $unchanged[$field['key']] = $field['value']; }
+    }
+    $assert($status === 200 && count($unchanged) === count(TinyCat\Blog\Settings::KEYS), 'Blog settings editor supplies every owned default');
+    [$status, $saved] = $request('/api/settings', 'PATCH', ['settings' => $unchanged], 'admin');
+    $assert($status === 200 && ($saved['data']['saved'] ?? false), 'Unchanged Blog settings accept empty optional URL rules and UTM fields');
+    [$status, $editor] = $request('/api/settings/editor', actor: 'admin');
+    $roundTrip = [];
+    foreach ($editor['data']['sections'] ?? [] as $section) {
+        if ($section['key'] !== 'blog') { continue; }
+        foreach ($section['fields'] as $field) { $roundTrip[$field['key']] = $field['value']; }
+    }
+    $assert($roundTrip === $unchanged, 'Saving unchanged Blog settings preserves their canonical values');
+    [$status, $rejected] = $request('/api/settings', 'PATCH', ['settings' => ['blog.links.utm.medium' => '']], 'admin');
+    $assert($status === 422 && ($rejected['code'] ?? '') === 'settings_save_failed', 'Required Blog UTM medium still rejects an empty value');
     [$status, , $fallback] = $request('/fixture-core-maintenance');
     $assert($status === 503 && str_contains($fallback, 'noindex') && !str_contains($fallback, '/assets/build/'), 'Maintenance fallback renders without a database or external assets');
     [$status, , $fallback] = $request('/fixture-core-maintenance', 'HEAD');

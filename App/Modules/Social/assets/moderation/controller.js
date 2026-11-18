@@ -7,14 +7,10 @@ import "../../../../../assets/core/dom.js";
 (function () {
   "use strict";
   var T = window.TinyCat;
-  function reports(root, items, sorting, data) {
-    var model = Object.assign({}, data, { items: items, sorting: sorting });
-    T.content.replaceChildren(root, T.components.render("moderation/reports", Object.assign({}, model, { state: model })));
-  }
   T.moderation = {
     modal: function (url, response, id) {
       if (!/^\/api\/moderation\/reports\/\d+$/.test(url.pathname)) { return null; }
-      var U = T.ui, e = T.dom.element, data = response.data, post = data.content;
+      var U = T.ui, e = T.dom.element, data = response.data, post = data.content, definition = T.adminDefinitions["social.moderation-reports"];
       if (url.searchParams.get("panel") === "report") {
         var reportId = Number(url.pathname.split("/").pop());
         var report = data.reports.find(function (entry) { return Number(entry.id) === reportId; });
@@ -39,7 +35,7 @@ import "../../../../../assets/core/dom.js";
       if (post && data.reports.some(function (report) { return report.status === "open"; })) {
         ["remove", "dismiss"].forEach(function (decision) {
           var action = T.components.render("ui/api-action", {
-            url: url.pathname + window.location.search, method: "PATCH", target: "#moderation-reports", fields: { decision: decision },
+            url: url.pathname + window.location.search, method: "PATCH", target: definition.target, fields: { decision: decision },
             label: U.text(decision === "remove" ? "moderation.hide_content" : "moderation.dismiss_report"),
             confirm: decision === "remove" ? U.text("moderation.hide_confirm") : "",
             button_class: decision === "remove" ? "btn btn-danger" : "btn btn-primary"
@@ -51,8 +47,8 @@ import "../../../../../assets/core/dom.js";
       }
       if (post && post.status === "hidden") {
         var publish = T.components.render("ui/api-action", {
-          url: "/api/moderation/posts/" + Number(post.id) + "/publication" + window.location.search,
-          method: "POST", target: "#moderation-reports", fields: {},
+          url: definition.api + "/posts/" + Number(post.id) + "/publication" + window.location.search,
+          method: "POST", target: definition.target, fields: {},
           label: U.text("moderation.publish_content"), confirm: U.text("moderation.publish_confirm"), button_class: "btn btn-primary"
         });
         publish.setAttribute("data-modal-close-on-success", "true");
@@ -62,22 +58,6 @@ import "../../../../../assets/core/dom.js";
       if (footer) { U.editorFrame(dialog); }
       U.pinDialogTabs(dialog, tabs.content);
       return dialog;
-    },
-    hydrate: function (root) {
-      Array.from((root || document).querySelectorAll("[data-moderation-reports-view]")).forEach(function (view) {
-        if (view.dataset.moderationReportsReady === "true") { return; }
-        view.dataset.moderationReportsReady = "true";
-        var data = JSON.parse(view.dataset.moderationReportsState || "{}");
-        if (!data.filters) { return; }
-        var form = T.components.render("moderation/filter-form", data);
-        T.ui.filterPanel("moderation-filter-modal", form);
-      });
-    },
-    result: function (source, response, target) {
-      var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
-      if (!url.pathname.startsWith("/api/moderation/")) { return false; }
-      if ((url.pathname.startsWith("/api/moderation/reports") || /^\/api\/moderation\/posts\/\d+\/publication$/.test(url.pathname)) && target) { reports(target, response.data.items, response.data.sorting, Object.assign({}, response.data, { pagination: T.ui.pagination(response) })); return [target]; }
-      return [];
-    }, reports: reports
+    }
   };
 }());

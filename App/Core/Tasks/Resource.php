@@ -15,6 +15,7 @@ final class Resource
      */
     public static function listing(array $records, array $definitions, array $filters): array
     {
+        $listDefinition = \TinyCat\Core\Ui\Admin\Definitions::get('core.scheduler-runs');
         $pagination = $records['pagination'];
         $page = (int) $pagination['page'];
         unset($filters['per_page']);
@@ -23,15 +24,15 @@ final class Resource
         foreach ($definitions as $name => $definition) {
             $latest = $records['latest'][$name] ?? null;
             $items[] = ['name' => $name, 'options' => $definition['options'], 'latest' => $latest !== null ? self::run($latest) : null,
-                'run_url' => AdminViews::admin_list_url('/api/scheduler/tasks/' . $name . '/runs', $params + ['page' => $page])];
+                'run_url' => AdminViews::admin_list_url($listDefinition['endpoint'] . '/' . $name . '/runs', $params + ['page' => $page])];
         }
-        $navigation = AdminViews::admin_pagination_view_data($pagination, '/api/scheduler/tasks', '#scheduler-list', $params, 'page', 2, '/admin/cron/list');
+        $navigation = AdminViews::admin_pagination_view_data($pagination, $listDefinition['endpoint'], $listDefinition['target'], $params, 'page', 2, $listDefinition['path']);
         unset($navigation['target']);
         return [
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Core\Tasks\Sorting::LISTS['runs'], $params),
+            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Core\Tasks\Sorting::runs(), $params),
             'items' => $items, 'runs' => array_map(self::run(...), $records['runs']),
             'filters' => $filters, 'pagination' => $pagination,
-            'refresh_url' => AdminViews::admin_list_url('/api/scheduler/tasks', $params + ['page' => $page]),
+            'refresh_url' => AdminViews::admin_list_url($listDefinition['endpoint'], $params + ['page' => $page]),
             'task_choices' => array_keys($definitions), 'status_choices' => self::STATUSES,
             'navigation' => $navigation,
         ];
