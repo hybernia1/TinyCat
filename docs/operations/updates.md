@@ -75,6 +75,25 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.1.2
+
+Requires completed **6.0.10 or newer** and PHP 8.4. No database migration or
+activation change is introduced. This patch fixes the 6.1.1 Site Health client
+startup regression: scheduler run details no longer require a scheduler list
+declaration. Navigation, settings dialogs and AJAX health checks initialize normally.
+
+Build the retained-owner update and production fresh installation separately:
+
+```sh
+php tools/release/build-update.php --version=6.1.2 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-2/update
+php tools/release/build-update.php --version=6.1.2 --assembly=platform --fresh-install --output=.work/releases/release-6-1-2/install
+```
+
+Verify the exact update against published 6.0.10, 6.0.11 and 6.1.1 platform sources
+with `--platform-baseline --direct-web --cached-autoload`, including retained Blog
+ownership and rollback. Existing 6.0.10 installations still require the rescue
+launcher preparation documented below.
+
 ## Upgrading to 6.1.1
 
 Requires completed **6.0.10 or newer** and PHP 8.4. Refresh inherited rescue

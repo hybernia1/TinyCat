@@ -57,6 +57,10 @@ const schedulerPage = load("/admin/cron/list");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");
 for (const mode of [false, true, "min"]) {
+  const health = load("/admin/site-health", "cs", mode);
+  check(health.T.scheduler && health.T.settings && health.T.adminNavigation && !health.T.adminDefinitions, "Health boots shared navigation and settings with run details but without a scheduler list declaration.");
+  check(health.T.scheduler.result({dataset:{},getAttribute:name=>name==="action"?"/api/site-health/checks":null},{data:{}},null) === false, "The detail-only scheduler leaves health actions to the shared AJAX transport.");
+
   const cron = load("/admin/cron/list", "cs", mode);
   const now = Date.UTC(2026, 9, 27, 12, 0, 0);
   check(cron.T.dates.relative(new Date(now - 2 * 60000), now) === "p\u0159ed 2 minutami", "Filtered cron dates receive Czech minute translations in source and release assets");

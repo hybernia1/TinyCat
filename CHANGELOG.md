@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.1.2 - 2026-11-18
+
+- Fix administrative UI initialization on Site Health, where scheduler run details are available without a scheduler list declaration. Keep hamburger navigation, settings and run-detail dialogs working.
+- Keep health checks on the shared AJAX transport and return to the administration page instead of navigating to raw API JSON.
+- Guard scheduler list-only polling, rendering and lifecycle callbacks when no list is present; preserve full scheduler history and token actions.
+- Add source, compiled/minified bundle and native browser regressions for this detail-only administration surface. Introduce no database migrations or activation changes.
+
 ## 6.1.1 - 2026-11-18
 
 - Derive settings labels and layout from their owning PHP sections. Blog and Social can contribute settings independently without a second JavaScript field registry.

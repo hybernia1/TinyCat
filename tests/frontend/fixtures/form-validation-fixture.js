@@ -4,6 +4,37 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
+  if (mode === 'health-shell') {
+    check(!T.adminDefinitions, 'The actual health bundle has no scheduler list declaration');
+    const toggle = T.dom.element('button',{'data-admin-nav-toggle':'',type:'button'});
+    const sidebar = T.dom.element('aside',{'data-admin-sidebar':''});
+    sidebar.append(T.dom.element('a',{href:'#'},'Account')); document.body.append(toggle,sidebar);
+    window.fetch = async (url,options) => {
+      const pathname = new URL(url,location.href).pathname;
+      if (pathname === '/api/settings/editor') return new Response(JSON.stringify({ok:true,status:200,code:"ok",params:{},message:null,data:window.settingsSchema,meta:{}}),{headers:{'Content-Type':'application/json'}});
+      check(pathname === '/api/site-health/checks' && options.method === 'POST', 'Health checks use the shared POST transport');
+      sessionStorage.setItem('health-ajax','true');
+      return new Response(JSON.stringify({ok:true,status:201,code:'health_check_finished',params:{},message:null,data:{execution:{ok:true},redirect:'/admin/site-health'},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}});
+    };
+    T.lifecycle.start(); toggle.click();
+    check(document.body.classList.contains('admin-nav-open'), 'Health hamburger navigation opens');
+    toggle.click(); check(!document.body.classList.contains('admin-nav-open'), 'Health hamburger navigation closes');
+    const dialog = await T.settings.open('site');
+    check(dialog.isConnected && dialog.querySelector('form'), 'Settings modal opens from the detail-only health bundle');
+    T.dialog.close(dialog,{history:false});
+    const local = T.urls.local;
+    let canonicalRedirect = false;
+    T.urls.local = function (url,locale) {
+      if (url === '/admin/site-health') { canonicalRedirect = true; return '#health-complete'; }
+      return local(url,locale);
+    };
+    const form = document.querySelector('form[data-ajax-form]');
+    form.querySelector('button').click();
+    await wait(() => canonicalRedirect && location.hash === '#health-complete', 'Health AJAX completion follows its canonical UI redirect');
+    check(sessionStorage.getItem('health-ajax') === 'true', 'The health action never falls back to a native API page submission');
+    document.getElementById('validation-test-results').textContent = JSON.stringify({ok:true,mode,checks});
+    return;
+  }
   if (mode === 'social-forms') {
     const follow=T.dom.element('form',{method:'post',action:'/api/users/2/followers/me','data-follow-form':'','data-author-id':'2'});
     follow.append(T.ui.hidden('action','follow'),T.ui.button('public.follow',{type:'submit'})); document.body.append(follow);

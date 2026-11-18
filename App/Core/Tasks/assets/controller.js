@@ -5,7 +5,7 @@ import "../../../../assets/ui/component-builders.js";
 
 (function () {
   "use strict";
-  var T = window.TinyCat, definition = T.adminDefinitions["core.scheduler-runs"];
+  var T = window.TinyCat, definition = (T.adminDefinitions || {})["core.scheduler-runs"];
   var timer = null, pending = null;
   function editing(target) {
     return document.hidden || document.querySelector('.modal[data-open="true"]') ||
@@ -13,6 +13,7 @@ import "../../../../assets/ui/component-builders.js";
       target.querySelector('[aria-busy="true"]');
   }
   async function poll() {
+    if (!definition) { return; }
     var target = document.querySelector(definition.target);
     if (!target || pending || editing(target)) { return; }
     var view = target.firstElementChild, generation = target.dataset.apiGeneration;
@@ -32,6 +33,7 @@ import "../../../../assets/ui/component-builders.js";
   }
   T.scheduler = {
     listUrl: function () {
+      if (!definition) { return ""; }
       var query = new URLSearchParams();
       new URLSearchParams(window.location.search).forEach(function (value, name) {
         if (["q", "task", "status", "page", "per_page", "sort", "direction"].includes(name)) { query.append(name, value); }
@@ -40,9 +42,11 @@ import "../../../../assets/ui/component-builders.js";
       return definition.endpoint + (search ? "?" + search : "");
     },
     init: function () {
+      if (!definition) { return; }
       document.addEventListener("visibilitychange", function () { if (!document.hidden) { poll(); } });
     },
     dispose: function (root) {
+      if (!definition) { return; }
       var target = document.querySelector(definition.target);
       if (target && (root === target || root.contains(target))) {
         window.clearInterval(timer); timer = null;
@@ -54,16 +58,18 @@ import "../../../../assets/ui/component-builders.js";
       return T.ui.dialog(id, "cron.run_details", T.components.render("scheduler/run-detail", response.data));
     },
     list: function (target, response) {
+      if (!definition) { return false; }
       return T.lists.result(definition.target, { dataset: { apiMethod: "GET", ajaxAction: definition.endpoint }, getAttribute: function () { return null; } }, response, target);
     },
     hydrate: function (root) {
+      if (!definition) { return; }
       Array.from((root || document).querySelectorAll("[data-scheduler-view]")).forEach(function (view) {
         if (timer === null) { timer = window.setInterval(poll, 5000); }
       });
     },
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.dataset.url || source.getAttribute("href") || "/", window.location.href);
-      if (url.pathname === definition.endpoint || /^\/api\/scheduler\/tasks\/[a-z][a-z0-9_.-]{0,39}\/runs$/.test(url.pathname)) {
+      if (definition && (url.pathname === definition.endpoint || /^\/api\/scheduler\/tasks\/[a-z][a-z0-9_.-]{0,39}\/runs$/.test(url.pathname))) {
         var root = target || document.querySelector(definition.target);
         if (root) { T.scheduler.list(root, response); return [root]; }
         return [];

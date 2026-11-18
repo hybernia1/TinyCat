@@ -3,6 +3,10 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 $mode = $argv[1] ?? '--all';
+if ($mode === '--health-action') {
+    echo json_encode(\TinyCat\Support\Components::render('ui/api-action', ['url' => '/api/site-health/checks', 'method' => 'POST', 'label' => 'Run check']), JSON_THROW_ON_ERROR);
+    exit;
+}
 if ($mode === '--installation') {
     \TinyCat\Support\Localization::locale('cs');
     ob_start();
