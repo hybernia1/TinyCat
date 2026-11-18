@@ -8,7 +8,6 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
     {
         Discussion::initialize();
         \TinyCat\Core\Text\Policies::provide('tinycat.blog', 'article', new \TinyCat\Core\Text\TextPolicy(outbound: static fn (int $id, string $hash, int $comment): string => '/api/articles/' . $id . '/links/' . $hash . '?navigate=1'));
-        \TinyCat\Core\Runtime\Startup::$frameOrigins = array_values(array_unique([...\TinyCat\Core\Runtime\Startup::$frameOrigins, ...\TinyCat\Core\Links\Providers::playerOrigins()]));
     }
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions

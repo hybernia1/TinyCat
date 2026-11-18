@@ -29,6 +29,21 @@
     check(!follow.querySelector('button').disabled&&!like.disabled&&!follow.hasAttribute('aria-busy'),'Shared loading restores both Social forms');
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
+  if (mode === 'social-constraints') {
+    const constraints = window.socialConstraints, form = T.ui.form('/api/statuses', 'POST');
+    form.append(T.components.render('status/composer-body', {constraints,viewer:{id:1},value:''}));
+    const commentForm = T.components.render('status/comment-form', {constraints,content_id:7,parent_id:0,viewer:{id:1}});
+    document.body.append(form, commentForm); T.lifecycle.start(); T.publishing.controllers.editor.hydrate(document);
+    for (const [host,name] of [[form,'body'],[commentForm,'comment']]) {
+      const source=host.elements.namedItem(name), editor=source.closest('[data-status-editor]').querySelector('[data-status-editor-input]');
+      check(Number(source.dataset.maxLength)===constraints[name].max_length&&!source.hasAttribute('maxlength'),'Social '+name+' uses server-derived Unicode constraints');
+      editor.textContent='\u{1F642}'.repeat(constraints[name].max_length); editor.dispatchEvent(new Event('input',{bubbles:true}));
+      check(T.forms.validate(host),'Social '+name+' accepts the exact emoji character boundary');
+      editor.textContent+='\u{1F642}'; editor.dispatchEvent(new Event('input',{bubbles:true}));
+      check(!T.forms.validate(host)&&Array.from(source.value).length===constraints[name].max_length+1,'Social '+name+' retains its overflowing draft and rejects it through the common validator');
+    }
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
   if (mode === 'constraints') {
     const c = window.inputConstraints, form = T.ui.form('/api/constraint-fixture', 'POST');
     form.append(T.ui.field('Title', 'title', '', 'input', {'data-max-length':c.title.max_length,required:c.title.required}));
@@ -38,7 +53,7 @@
     const submit = T.ui.button('common.save',{type:'submit'}); form.append(submit);
     const dialog = T.ui.adminDialog('constraint-fixture','common.edit',form,false); document.body.append(dialog);
     let calls=0; window.fetch=async()=>{ calls++; return new Response(JSON.stringify({ok:true,status:201,code:'ok',params:{},message:null,data:{},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}}); };
-    T.lifecycle.start(); T.status.controllers.editor.hydrate(document); T.dialog.open(dialog);
+    T.lifecycle.start(); T.publishing.controllers.editor.hydrate(document); T.dialog.open(dialog);
     const title=form.elements.namedItem('title'), body=form.elements.namedItem('body'), editor=form.querySelector('[data-status-editor-input]');
     const input=(field,value)=>{ if(field.isContentEditable) field.textContent=value; else field.value=value; field.dispatchEvent(new Event('input',{bubbles:true})); };
     const comment=form.elements.namedItem('comment'), commentEditor=comment.closest('[data-status-editor]').querySelector('[data-status-editor-input]');
@@ -88,12 +103,12 @@
     T.lifecycle.start();
     check(initBlocked && !document.querySelector('.modal'), 'Initialization cannot construct a hidden modal');
     const list = T.dom.element('div',{id:'users-list'}); document.body.append(list);
-    T.users.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}});
+    T.accounts.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}});
     T.lifecycle.hydrate(list);
     check(!document.querySelector('.modal') && !Object.keys(reads).length, 'List hydration contains filters but no creation modal or resource read');
     const editor = await T.dialog.openResource('modal-users-creation','/api/users/creation');
     const username = editor.querySelector('[name="username"]'); username.value='UnsentAccount'; username.dispatchEvent(new Event('input',{bubbles:true}));
-    T.users.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}}); T.lifecycle.hydrate(list);
+    T.accounts.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}}); T.lifecycle.hydrate(list);
     check(document.getElementById('modal-users-creation') === editor && username.value === 'UnsentAccount', 'Refreshing the list preserves an open creation draft');
     const confirmation = T.dialog.confirm; T.forms.confirmWith(async () => false);
     const trigger = T.dom.element('button',{'data-modal-open':'modal-users-creation','data-modal-url':'/api/users/creation','data-modal-refresh':'true'}); document.body.append(trigger); trigger.click(); await pause();
@@ -246,7 +261,7 @@
     const errors = {[errorName]:[{code:'test_validation',message:'Specific validation message.',params:{}}]};
     return new Response(JSON.stringify({ok,status,code:ok?'created':'validation_error',params:{},message:ok?null:'Check the fields.',data:ok?{}:null,meta:{},error:ok?null:{details:{errors}}}),{status,headers:{'Content-Type':'application/json'}});
   };
-  T.lifecycle.start(); T.status.controllers.editor.hydrate(document); T.dialog.open(dialog);
+  T.lifecycle.start(); T.publishing.controllers.editor.hydrate(document); T.dialog.open(dialog);
   const access = [...dialog.querySelectorAll('[data-tab]')].find(tab => tab.dataset.tab === 'access');
   if (mode === 'scroll') {
     const spacer = document.createElement('div'); spacer.style.height='1100px'; spacer.style.flexShrink='0'; password.closest('.field').before(spacer);

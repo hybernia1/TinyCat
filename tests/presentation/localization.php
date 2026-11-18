@@ -57,4 +57,10 @@ try {
     $manifest->setValue(null, $originalManifest);
     $compiled->setValue(null, $originalCatalogs);
 }
+Localization::configure(static fn (): string => 'cs_CZ');
+Localization::locale('fr');
+$check(Localization::defaultLocale() === 'cs-cz');
+$check(Localization::locale() === 'fr');
+Localization::configure(static fn (): string => 'en');
+
 echo 'PASS localization fallback and literal interpolation (' . $checks . " checks)\n";

@@ -71,6 +71,18 @@ $assert($status === 422 && $payload['code'] === 'blocked_url' && $payload['param
 $assert($payload['error']['details']['host'] === 'example.org', 'Blocked URL responses retain their existing error details.');
 [$status, $payload] = $request('POST', '/api/statuses', ['body' => '#' . str_repeat('a', 33)], 'admin', $csrf);
 $assert($status === 422 && $payload['code'] === 'status_tag_too_long' && $payload['params'] === ['max' => '32'], 'Post creation maps shared tag rejection to the existing HTTP contract.');
+// Social uses the shared validator before coercion or persistence.
+$originalBody = $seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn();
+$originalComments = (int) $seed->query('SELECT COUNT(*) FROM social_comments WHERE content_id = 10')->fetchColumn();
+foreach ([['not text'], null, true, 42, str_repeat("\u{1F642}", 2001)] as $invalidText) {
+    foreach ([['POST', '/api/statuses', 'body'], ['PATCH', '/api/statuses/10', 'body'], ['POST', '/api/statuses/10/comments', 'comment'], ['PATCH', '/api/statuses/10/comments/10', 'comment']] as [$method, $endpoint, $field]) {
+        [$status, $invalidResource] = $request($method, $endpoint, [$field => $invalidText], 'admin', $csrf);
+        $assert($status === 422 && isset($invalidResource['error']['details']['errors'][$field]), 'Social rejects malformed or oversized ' . $field . ' through shared field validation: ' . $method);
+    }
+}
+$assert($seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn() === $originalBody && (int) $seed->query('SELECT COUNT(*) FROM social_comments WHERE content_id = 10')->fetchColumn() === $originalComments, 'Rejected social text never overwrites posts or creates comments.');
+[$status, $editorConstraints] = $request('GET', '/api/statuses/10?panel=edit', null, 'admin');
+$assert($status === 200 && $editorConstraints['data']['constraints']['body']['max_length'] === 2000 && $editorConstraints['data']['constraints']['comment']['max_length'] === 2000, 'Social editor metadata derives post and comment limits from server rules.');
 [$status, $payload] = $request('PATCH', '/api/statuses/10', ['body' => 'https://example.org/blocked'], 'admin', $csrf);
 $assert($status === 422 && $payload['code'] === 'blocked_url', 'Post edits use the same shared content validation.');
 $assert($seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn() !== 'https://example.org/blocked', 'Rejected edits do not modify stored posts.');

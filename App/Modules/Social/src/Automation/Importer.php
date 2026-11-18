@@ -60,18 +60,6 @@ final class Importer
         return $options;
     }
 
-    /**
-     * @return list<string>
-     */
-    public static function requiredTables(): array
-    {
-        return [
-            'bot_sources',
-            'bot_feed_history',
-            'bot_source_posts',
-            'bot_source_runs',
-        ];
-    }
 
     /**
      * @param array<string, mixed> $context
@@ -123,7 +111,7 @@ final class Importer
 
     public static function feedSourceHash(string $url): string
     {
-        $url = \TinyCat\Social\Content\FeedImport::normalizeFeedUrl($url);
+        $url = \TinyCat\Core\Feeds\SourceUrl::normalize($url);
         return $url !== '' ? hash('sha256', $url) : '';
     }
 

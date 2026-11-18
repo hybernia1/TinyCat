@@ -65,8 +65,8 @@ final class AuthorPages
         );
         $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
         $editor = $canPost ? StatusViewData::status_editor_view_data() : [];
-        $canEditProfile = Profiles::user_can_edit_profile($author, $authUser);
-        $canSeeMute = $authUser !== null && ($canPost || Profiles::user_is_admin($authUser));
+        $canEditProfile = \TinyCat\Core\Identity\Profile::canEdit($author, $authUser);
+        $canSeeMute = $authUser !== null && ($canPost || \TinyCat\Core\Identity\Roles::isAdmin($authUser));
         $mutedUntil = Restrictions::user_muted_until($author);
         $canFollow = $authUser !== null && (int) ($authUser['id'] ?? 0) !== $authorId;
         $isFollowing = $canFollow && Following::author_is_followed((int) ($authUser['id'] ?? 0), $authorId);

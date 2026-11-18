@@ -19,6 +19,14 @@ při ukládání mimo HTTP. Komponenty čerpají z `constraints`, nikoli z dalš
 na `data-max-bytes`; společné formuláře zajišťují kontrolu a zachování konceptu.
 Editor v asset manifestu deklaruje `uses: ["ui.form-constraints"]`.
 
+Pro přechody mezi celými stránkami použij
+`TinyCat.navigation.registerPage({ accepts, target, load, apply })`.
+Ve svém klientském vstupu importuj `assets/core/page-navigation.js`.
+`load(url, signal)` načte vlastní data přes společný API klient a vrátí i
+kanonické `url`; `apply(target, data)` vykreslí obsah. Historii, scroll,
+rušení čtení a guard konceptů řeší core. Běžné seznamy dál používají společnou
+navigaci seznamů. Podrobnosti jsou v kontraktu core uvedeném výše.
+
 Formulář připoj ke společnému AJAX submitu; vlastní callback aktualizuje doménové
 výsledky. Potvrzení náhledu nebo jinou podmínku připoj přes
 `TinyCat.forms.setSubmitGuard(form, callback)`, nikoli dalším submit listenerem.

@@ -14,6 +14,11 @@ use TinyCat\Database\Transactions;
 /** Shared preparation, validation and persistence of new posts. */
 final readonly class PostCreation
 {
+    public const BODY_MAX_LENGTH = 2000;
+
+    /** @return array<string, string> */
+    public static function rules(): array { return ['body' => 'string|max:' . self::BODY_MAX_LENGTH]; }
+
     /**
      * @param array<mixed> $tags
      * @param list<array<mixed>> $links
@@ -25,7 +30,7 @@ final readonly class PostCreation
 
     public static function fromText(string $text, string $kind = 'post'): self
     {
-        $body = \TinyCat\Support\Text::plain_text_limit(PostText::normalize(\TinyCat\Support\Text::strip_html_tags_preserving_text($text)), 2000);
+        $body = \TinyCat\Support\Text::plain_text_limit(PostText::normalize(\TinyCat\Support\Text::strip_html_tags_preserving_text($text)), self::BODY_MAX_LENGTH);
         $host = Policy::blockedHost($body);
         $rejection = $host !== ''
             ? ['code' => 'blocked_url', 'message_key' => 'moderation.messages.blocked_url', 'params' => ['host' => $host]]
@@ -35,7 +40,7 @@ final readonly class PostCreation
         $normalize = \TinyCat\Core\Text\Policies::policy($kind)->normalize;
         $body = $normalize !== null ? $normalize($body) : $body;
         $body = Tags::normalize_tags_for_storage($body);
-        $body = \TinyCat\Support\Text::plain_text_limit($body, 2000);
+        $body = \TinyCat\Support\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);
         return new self($body, Tags::status_tags_from_text($body), Links::status_links_from_text($body), null);
     }
 

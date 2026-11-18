@@ -14,15 +14,8 @@ final class Presentation
             return \TinyCat\Support\View::part('Social/site/sidebar-slot', ['sidebar_url' => $sidebarUrl]);
         }
 
-        $tags = \TinyCat\Social\Posts\Tags::public_trending_tags(8, 7, $compute);
-        $authors = \TinyCat\Social\Profiles\Repository::public_top_authors(5, 7, $compute);
-
-        return \TinyCat\Social\Presentation\Views::sidebar([
-            'active_tag' => $activeTag,
-            'tags' => $tags,
-            'authors' => $authors,
-            'sidebar_url' => $sidebarUrl,
-            'site_footer_html' => \TinyCat\Core\Ui\Site::site_footer_html(),
+        return \TinyCat\Support\Components::render('site/sidebar', Sidebar::load($compute) + [
+            'active_tag' => $activeTag, 'url' => $sidebarUrl,
         ]);
     }
 }

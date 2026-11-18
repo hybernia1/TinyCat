@@ -48,7 +48,7 @@ foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $li
             $_GET = ['sort' => $key, 'direction' => $direction];
             // Exercise every allowlisted SQL expression against its real query.
             match ($list) {
-                'users' => \TinyCat\Social\Profiles\Actions::tc_admin_users_page(),
+                'users' => \TinyCat\Core\Identity\Actions::tc_admin_users_page(),
                 'accounts' => (new ReflectionMethod(\TinyCat\Social\Automation\Administration::class, 'accountsPage'))->invoke(null),
                 'sources' => \TinyCat\Social\Automation\Importer::sources(null, AdminSorting::order(\TinyCat\Social\Automation\Sorting::LISTS['sources'])),
                 'bot_posts' => \TinyCat\Social\Automation\Administration::postsPayload(101),
@@ -60,9 +60,9 @@ foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $li
     }
 }
 $_GET = ['sort' => 'username', 'direction' => 'asc', 'per_page' => 10, 'page' => 1];
-$first = \TinyCat\Social\Profiles\Actions::tc_admin_users_page()['items'];
+$first = \TinyCat\Core\Identity\Actions::tc_admin_users_page()['items'];
 $_GET['page'] = 2;
-$second = \TinyCat\Social\Profiles\Actions::tc_admin_users_page()['items'];
+$second = \TinyCat\Core\Identity\Actions::tc_admin_users_page()['items'];
 $assert($first[0]['username'] === 'A' && $second[0]['username'] === 'K', 'Users sort before pagination');
 $_GET = ['sort' => 'task', 'direction' => 'asc'];
 $runs = \TinyCat\Core\Tasks\Repository::listing([], 2, 10);
@@ -85,7 +85,7 @@ $html = \TinyCat\Support\Components::render('ui/sort-heading', ['label' => '<Nam
 $assert(str_contains($html, '&lt;Name&gt;') && str_contains($html, 'data-ajax-target="#users-list"') && str_contains($html, 'data-history='), 'Shared heading escapes labels and provides AJAX/history state');
 $database->exec("INSERT INTO users VALUES (16, 'A', '', 'user', 'active', '2026-10-27'), (17, 'A', '', 'user', 'active', '2026-10-27')");
 $_GET = ['sort' => 'username', 'direction' => 'asc'];
-$ties = \TinyCat\Social\Profiles\Actions::tc_admin_users_page()['items'];
+$ties = \TinyCat\Core\Identity\Actions::tc_admin_users_page()['items'];
 $assert(array_column(array_slice($ties, 0, 3), 'id') === [17, 16, 15], 'Equal values have deterministic ID ordering');
 // Historical task rows remain readable after their domain owner is disabled.
 $database->exec("UPDATE scheduler_runs SET task = 'feeds', summary_json = '{\"count\":2}' WHERE id = 1");

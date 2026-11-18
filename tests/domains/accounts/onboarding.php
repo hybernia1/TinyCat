@@ -98,13 +98,11 @@ $snapshot = new TinyCat\Core\Runtime\Context(new TinyCat\Core\Runtime\Configurat
 TinyCat\Support\Dates::configure($snapshot->dateOption(...));
 $assert(TinyCat\Support\Dates::dateDb(new DateTimeImmutable('2026-11-11 12:00:00 UTC')) === '2026-11-11 12:00:00', 'Technical date policy defaults to the configuration snapshot');
 TinyCat\Support\Dates::configure($context->dateOption(...));
-foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Identity\\Login', 'TinyCat\\Social\\Profiles\\Accounts', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Mail\\Templates', 'TinyCat\\Social\\Presentation\\Presentation', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration'] as $class) {
+foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Identity\\Login', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Mail\\Templates', 'TinyCat\\Social\\Presentation\\Presentation', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration'] as $class) {
     $assert(!class_exists($class, false), 'Standalone onboarding did not load ' . $class);
 }
 $assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'sqlite_sequence' ORDER BY name"), 'name') === ['password_reset_tokens', 'users'], 'Only account and reset-token tables are needed');
 TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $userId) : void {
-$assert(TinyCat\Social\Profiles\Usernames::username_normalize(' Name ') === Usernames::normalize(' Name '), 'Legacy username normalization delegates to Accounts');
-$assert(TinyCat\Social\Profiles\Profiles::user_email_valid('name@example.test') === Email::valid('name@example.test'), 'Legacy email helpers delegate to Accounts');
 $assert(TinyCat\Core\Identity\Login::auth_password_validation_field_errors('short', 'short') === Passwords::fieldErrors('short', 'short'), 'Legacy password validation delegates to Accounts');
 TinyCat\Core\Identity\Recovery::replaceToken($userId, hash('sha256', 'compatibility'), TinyCat\Support\Dates::dateDb('+1 hour'));
 $assert(Connection::value('SELECT token_hash FROM password_reset_tokens') === hash('sha256', 'compatibility'), 'Legacy recovery writes through the canonical owner');

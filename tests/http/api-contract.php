@@ -278,6 +278,12 @@ try {
     [$status, $activatedBot] = $request('PUT', '/api/bots/accounts/' . $editableBotId . '/activation', ['enabled' => true], 'admin', $csrf);
     $assert($status === 200 && $activatedBot['data']['item']['bio'] === 'Still inactive', 'Activation preserves the bot biography.');
     $assert($activatedBot['code'] === 'record_activated' && $activatedBot['params']['entity'] === '@' . $activatedBot['data']['item']['username'] && str_contains($activatedBot['message'], $activatedBot['params']['entity']), 'Bot activation names the concrete account through the shared entity parameter.');
+    foreach (['/api/users/2/activation', '/api/bots/accounts/' . $editableBotId . '/activation'] as $activationEndpoint) {
+        foreach ([['true', 'active'], ['on', 'active'], ['yes', 'active'], ['false', 'ban'], ['off', 'ban'], ['no', 'ban'], [true, 'active']] as [$enabled, $expectedState]) {
+            [$status, $activation] = $request('PUT', $activationEndpoint, ['enabled' => $enabled], 'admin', $csrf);
+            $assert($status === 200 && $activation['data']['item']['status'] === $expectedState, 'Account activation honors every accepted boolean spelling for ' . $activationEndpoint);
+        }
+    }
 
     [$status, $sourceDefaults] = $request('GET', '/api/bots/sources/management?bot=3', null, 'admin');
     $assert($status === 200 && $sourceDefaults['data']['item']['bot_user_id'] === 3 && $sourceDefaults['data']['item']['enabled'] && $sourceDefaults['data']['item']['post_template'] !== '', 'Source creation loads defaults for the same sectioned editor as existing sources.');

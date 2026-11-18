@@ -7,7 +7,6 @@ use RuntimeException;
 /** Feed preparation independent of bot accounts, queues and scheduling. */
 final class FeedImport
 {
-    public static function normalizeFeedUrl(string $url): string { return \TinyCat\Core\Feeds\SourceUrl::normalize($url); }
 
     public static function defaultSourceTemplate(): string
     {

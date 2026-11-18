@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.13 - 2026-11-18
+
+- Consolidate Social navigation, account administration, HTTP documents and presentation on shared core mechanisms. Remove redundant adapters while preserving module-owned data and registration.
+- Enforce shared Unicode text constraints for posts and comments, preserve drafts on overflow, and normalize account activation consistently.
+- Remove eight retired Social PHP files through the signed deletion plan. Preserve published migration history and introduce no new database migrations.
+- Reduce repeated browser setup, fixture inserts and unused lifecycle package builds in preflight. Retain all behavioral scenarios; make the archived 2.0.25 report integrity check explicitly opt-in and record lifecycle phase timings.
+
 ## 6.0.12 - 2026-11-17
 
 - Discover available modules from manifests on disk without executing inactive PHP. Missing inactive modules no longer break the module manager; missing active owners and their dependents are suspended without erasing activation state or data.

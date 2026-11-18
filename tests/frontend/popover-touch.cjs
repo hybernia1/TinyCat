@@ -32,39 +32,53 @@ const cases = [
   let browser, checks = 0;
   try {
     await new Promise(resolve => server.listen(0,'127.0.0.1',resolve)); browser = await webkit.launch();
-    for (const width of [320,390,844]) for (const context of ['page','modal']) for (const test of cases) {
-      const page = await browser.newPage({viewport:{width,height:812},isMobile:true,hasTouch:true});
-      await page.goto('http://127.0.0.1:'+server.address().port+'/');
-      await page.evaluate(({fixture,test,context}) => {
-        const host = document.createElement('div');
-        host.innerHTML = context === 'page' ? '<main tabindex="-1" id="test-host"></main>' : '<div class="modal" data-open="true"><div class="modal-panel" tabindex="-1"><div class="modal-body" id="test-host"></div></div></div>';
-        document.body.append(host); const target = document.querySelector('#test-host');
-        if (test.filter) target.innerHTML = '<details data-popover><summary>Filter</summary><div class="popover-panel filter-menu-panel">'+fixture.filters[test.filter]+'</div></details>';
-        else if (test.extract) target.append(new DOMParser().parseFromString(fixture[test.source],'text/html').querySelector(test.extract));
-        else target.innerHTML = fixture[test.source];
-        window.touchClicks = 0; window.touchChanges = 0; window.touchSubmits = 0;
-        target.addEventListener('submit',event => { event.preventDefault(); touchSubmits++; });
-        target.addEventListener('change',() => touchChanges++); target.addEventListener('input',() => touchChanges++);
-        TinyCat.popovers.init();
-        if (test.search) {
-          TinyCat.api.request = async () => ({ok:true,data:{query:'alpha',users:[{type:'user',title:'Alpha',url:'/@alpha'}]}});
-          TinyCat.search.hydrate(document);
+    for (const width of [320,390,844]) {
+      const session = await browser.newContext({viewport:{width,height:812},isMobile:true,hasTouch:true});
+      try {
+        // A new document resets globals/listeners; persistent state is cleared before fixture scripts.
+        await session.addInitScript(() => {
+          if (location.protocol === 'http:' || location.protocol === 'https:') { localStorage.clear(); sessionStorage.clear(); }
+        });
+        const page = await session.newPage();
+        for (const context of ['page','modal']) for (const test of cases) {
+          await session.clearCookies();
+          await page.goto('http://127.0.0.1:'+server.address().port+'/');
+          await page.evaluate(() => {
+            if (window.touchClicks !== undefined || localStorage.length || sessionStorage.length || document.querySelector('#test-host')) {
+              throw Error('Touch scenario did not start with an isolated document.');
+            }
+          });
+          await page.evaluate(({fixture,test,context}) => {
+            const host = document.createElement('div');
+            host.innerHTML = context === 'page' ? '<main tabindex="-1" id="test-host"></main>' : '<div class="modal" data-open="true"><div class="modal-panel" tabindex="-1"><div class="modal-body" id="test-host"></div></div></div>';
+            document.body.append(host); const target = document.querySelector('#test-host');
+            if (test.filter) target.innerHTML = '<details data-popover><summary>Filter</summary><div class="popover-panel filter-menu-panel">'+fixture.filters[test.filter]+'</div></details>';
+            else if (test.extract) target.append(new DOMParser().parseFromString(fixture[test.source],'text/html').querySelector(test.extract));
+            else target.innerHTML = fixture[test.source];
+            window.touchClicks = 0; window.touchChanges = 0; window.touchSubmits = 0;
+            target.addEventListener('submit',event => { event.preventDefault(); touchSubmits++; });
+            target.addEventListener('change',() => touchChanges++); target.addEventListener('input',() => touchChanges++);
+            TinyCat.popovers.init();
+            if (test.search) {
+              TinyCat.api.request = async () => ({ok:true,data:{query:'alpha',users:[{type:'user',title:'Alpha',url:'/@alpha'}]}});
+              TinyCat.search.hydrate(document);
+            }
+          },{fixture,test,context});
+          if (test.search) { await page.locator('[data-global-search-input]').tap(); await page.locator('[data-global-search-input]').fill('alpha'); }
+          else await page.locator('#test-host summary, #test-host [data-popover-trigger]').first().tap();
+          const panel = page.locator('#test-host .popover-panel'); await panel.waitFor({state:'visible'});
+          const control = panel.locator(test.selector).first();
+          await control.evaluate(node => node.addEventListener('click',event => { touchClicks++; if (node.tagName === 'A') event.preventDefault(); }));
+          await control.tap();
+          if (test.date) await control.fill('2027-02-02');
+          if (test.select) { await control.evaluate(node => { const option=document.createElement('option'); option.value='touch-test'; option.textContent='Touch test'; node.append(option); }); await control.selectOption('touch-test'); }
+          const result = await page.evaluate(() => ({clicks:touchClicks,changes:touchChanges,submits:touchSubmits,open:document.querySelector('#test-host .popover-panel').matches(':popover-open')}));
+          const diagnostic = JSON.stringify({width,context,name:test.name,...result});
+          if (test.select || test.date) { assert.ok(result.changes >= 1 && result.open,diagnostic); checks++; }
+          else { assert.equal(result.clicks,1,diagnostic); assert.equal(result.open,!test.closed,diagnostic); checks+=2; }
+          if (test.submit) { assert.equal(result.submits,1,diagnostic); checks++; }
         }
-      },{fixture,test,context});
-      if (test.search) { await page.locator('[data-global-search-input]').tap(); await page.locator('[data-global-search-input]').fill('alpha'); }
-      else await page.locator('#test-host summary, #test-host [data-popover-trigger]').first().tap();
-      const panel = page.locator('#test-host .popover-panel'); await panel.waitFor({state:'visible'});
-      const control = panel.locator(test.selector).first();
-      await control.evaluate(node => node.addEventListener('click',event => { touchClicks++; if (node.tagName === 'A') event.preventDefault(); }));
-      await control.tap();
-      if (test.date) await control.fill('2027-02-02');
-      if (test.select) { await control.evaluate(node => { const option=document.createElement('option'); option.value='touch-test'; option.textContent='Touch test'; node.append(option); }); await control.selectOption('touch-test'); }
-      const result = await page.evaluate(() => ({clicks:touchClicks,changes:touchChanges,submits:touchSubmits,open:document.querySelector('#test-host .popover-panel').matches(':popover-open')}));
-      const diagnostic = JSON.stringify({width,context,name:test.name,...result});
-      if (test.select || test.date) { assert.ok(result.changes >= 1 && result.open,diagnostic); checks++; }
-      else { assert.equal(result.clicks,1,diagnostic); assert.equal(result.open,!test.closed,diagnostic); checks+=2; }
-      if (test.submit) { assert.equal(result.submits,1,diagnostic); checks++; }
-      await page.close();
+      } finally { await session.close(); }
     }
     console.log('PASS touch activation across all popover families in focusable pages and modals ('+cases.length+' variants; '+checks+' checks)');
   } finally { if (browser) await browser.close(); await new Promise(resolve => server.close(resolve)); }

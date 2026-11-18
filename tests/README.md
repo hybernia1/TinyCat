@@ -10,6 +10,9 @@ v `.work/tests/runs/<run-id>/report.json`, průběžné události v `events.json
 a výstupy v samostatných logách. Report obsahuje verze prostředí, otisk
 zdrojů, časy, exit kódy, přeskoky i neprovedené položky. Čas rodičovské
 skupiny zahrnuje její potomky; při součtu se nesmí započítat dvakrát.
+`phase_timings` navíc obsahuje operace uvnitř skupiny. Podepsaný lifecycle
+zaznamenává jednotlivé buildy, CLI a recovery workers bez ukládání jejich stdin
+nebo privátních argumentů. Ani tyto časy se nepřičítají k času rodičovské skupiny.
 
 `php tests/run.php --list` a `php tests/frontend/run.php --list` vypíšou ID.
 Cílený běh používá `--only=ID1,ID2`, například
@@ -17,12 +20,37 @@ Cílený běh používá `--only=ID1,ID2`, například
 `php tests/frontend/run.php --only=embed.cjs`. Zúžený běh není plný preflight.
 Stejný výpis a výběr poskytuje `php tools/preflight.php --list` a
 `php tools/preflight.php --only=preflight/phpstan-level-8`.
-Výchozí rozsah zůstává úplný a žádný test se kvůli měření nevyřazuje.
+Výchozí rozsah je úplný release průchod aktuálního runtime a podporovaných
+aktualizací. Výpis navíc označuje ruční kontrolu archivního reportu:
+`php tests/run.php --only=tests/performance/performance-baseline.php`.
+Ta ověřuje pouze zachované hodnoty ve statickém reportu 2.0.25, nikoli aktuální
+aplikaci, proto není součástí `composer test` ani preflightu. Původní ID,
+testovací soubor a historická data zůstávají dostupné. Report ji eviduje jako
+nevybranou položku (`selected: false`), nikoli provedenou kontrolu.
 
 PHP lint dávkuje stejné soubory po 16. Klientská assetová fixture sdílí
 neměnný build jen uvnitř jednoho běhu; každý scénář má vlastní VM. Update
 artefakt ověřuje determinismus proti nezávislému kombinovanému buildu,
 fresh artefakt dál používá dva buildy. [Naměřené výsledky a omezení](../docs/audits/test-optimization-and-local-cleanup-2026-11-12.md).
+
+Dotyková popover matice zachovává 21 variant ve třech šířkách a dvou površích
+(126 kombinací). Používá tři browserové kontexty podle viewportu. Každý scénář
+načte nový dokument, který resetuje JavaScript a event listenery; před fixture
+skripty se vyčistí local/session storage a před navigací cookies. Kontrola
+čistého dokumentu odhalí únik stavu. Animace, dotykové ovládání, šablony a
+všechny kombinace zůstávají součástí běhu.
+
+Lifecycle modulů sestavuje u čtyř hlavních verzí pouze využité varianty:
+první install a tři update ZIPy. Nevyrábí jejich čtyři nepoužité protějšky.
+Samostatné balíčkové testy dál ověřují determinismus a `--both`; lifecycle
+zachovává instalaci, aktivaci, chybné balíčky, cached provider, rollback i přerušení.
+MySQL fixture numerických tagů připravuje stejných 502 záznamů dvěma prepared
+statements v jedné transakci. Samotná migrace a její transakční scénáře se nemění.
+
+Tyto změny přípravy testů zatím nemají nové měření doby běhu. Dosavadní reporty
+ze 17. 11. 2026 ukazují 228 s pro lifecycle, 196 s pro frontend (z toho 90 s
+dotyková matice), 130 s update/rollback, 86 s API a 63 s izolovaný Blog.
+Jde o dva navazující běhy po opravě testu, nikoli kontrolovaný benchmark nové sady.
 
 Samostatný modul účtů ověřuje `php tests/domains/accounts/module.php`: instalaci,
 start, API, HTML a build v kopii bez Users, Status a Bots.
@@ -105,7 +133,7 @@ PHP generátory a workers pro klientské testy jsou v `tests/presentation/fixtur
 JavaScript fixture v `tests/frontend/fixtures/`, HTTP router a data v
 `tests/http/fixtures/` a zahrnované scénáře v `tests/http/cases/`.
 Společná podpora patří do `tests/support/`; sdílená data a konfigurace do
-`tests/fixtures/`. Hlavní seznam obsahuje 88 skupin a frontendový 38
+`tests/fixtures/`. Výchozí seznam obsahuje 90 skupin a frontendový 38
 scénářů. Nová skupina `tests/release/build-preparation.php` ověřuje životnost
 cache, invalidaci, oba ZIP backendy a publikaci připraveného výstupu.
 `tests/quality/module-catalog.php` ověřuje offline načtení metadat, závislosti,
@@ -117,8 +145,9 @@ výchozího buildu před a po změně sestavy.
 navigace a health; jejich vlastníky, vyřazení a minimální technický start.
 Fixture `tests/fixtures/modules/minimal-boot.php` běží v samostatném procesu
 se SQLite v paměti a bez načtení místního configu nebo sociálních domén.
-Historický performance baseline byl pouze přesunut do `tests/performance/`;
-jeho čtyři verzované reporty zůstávají beze změny ve storage.
+Historický performance baseline v `tests/performance/` je ruční kontrolou
+archivních dat. Současné query budgets nad živými testovacími dotazy ověřuje
+`tests/performance/hot-read-query-budgets.php` ve výchozím průchodu.
 
 ## Samostatné kontroly a pomocné soubory
 

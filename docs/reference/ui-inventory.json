@@ -694,6 +694,7 @@
         "publishing/comment-form"
       ],
       "inputs": [
+        "constraints",
         "content_id",
         "mention",
         "parent_id",
@@ -709,6 +710,7 @@
       "inputs": [
         "context",
         "item",
+        "item.constraints",
         "item.content_id",
         "preview",
         "show_replies",
@@ -727,6 +729,7 @@
         "comment",
         "comments",
         "context",
+        "item.constraints",
         "item.id",
         "item.login_modal_url",
         "item.login_url",
@@ -743,6 +746,7 @@
         "ui/avatar"
       ],
       "inputs": [
+        "constraints.body.max_length",
         "enabled",
         "image",
         "submit_icon",
@@ -1341,6 +1345,7 @@
         "comments",
         "compact",
         "composer",
+        "constraints",
         "csrf",
         "email_missing",
         "feed",
@@ -11378,12 +11383,7 @@
     {
       "source": "App/Modules/Social/src/Profiles/Views.php",
       "methods": [
-        "adminFormFields",
-        "adminList",
-        "authContent",
-        "authForm",
-        "followingProfile",
-        "avatar"
+        "followingProfile"
       ]
     }
   ],
@@ -13009,7 +13009,7 @@
       "source": "App/Modules/Social/assets/site/page-navigation.js",
       "imports": [
         "assets/ui/document-navigation.js",
-        "assets/core/navigation.js",
+        "assets/core/page-navigation.js",
         "assets/core/api-client.js",
         "assets/core/component-renderer.js",
         "assets/core/lifecycle.js",
@@ -13165,7 +13165,9 @@
     {
       "source": "App/Modules/Social/assets/users/controller.js",
       "imports": [
-        "App/Core/Identity/assets/controller.js"
+        "assets/core/dom.js",
+        "assets/core/component-renderer.js",
+        "assets/ui/component-builders.js"
       ],
       "entries": [],
       "standalone": false
@@ -13293,6 +13295,15 @@
         "assets/core/request-lifecycle.js",
         "assets/core/dom.js",
         "assets/core/api-client.js",
+        "assets/core/lifecycle.js"
+      ],
+      "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "assets/core/page-navigation.js",
+      "imports": [
+        "assets/core/navigation.js",
         "assets/core/lifecycle.js"
       ],
       "entries": [],

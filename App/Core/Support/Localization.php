@@ -44,13 +44,23 @@ final class Localization
             return self::$locale;
         }
 
+        self::$locale = self::configuredLocale();
+
+        return self::$locale;
+    }
+
+    /** Installation language for feeds and session-independent documents. */
+    public static function defaultLocale(): string
+    {
+        return Languages::language_code(self::configuredLocale()) ?: 'en';
+    }
+
+    private static function configuredLocale(): string
+    {
         $configured = self::$localeResolver !== null ? (self::$localeResolver)() : Config::get('i18n.locale', Config::get('install.locale', 'en'));
         $configured = is_string($configured) && $configured !== '' ? $configured : 'en';
         self::assertLocale($configured);
-
-        self::$locale = $configured;
-
-        return self::$locale;
+        return $configured;
     }
 
     /**

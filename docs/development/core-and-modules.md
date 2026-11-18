@@ -84,6 +84,40 @@ Diskuse a reakce volají přímo `Posts/InteractionPolicy`; vlastní interní re
 vlastníků nemají. Nastavení a lokalizaci URL čtou z core a blokování odkazů
 z vlastní `Content/Policy`. Textové politiky registrují přímo do `Core/Text/Policies`.
 
+Účtové akce, uživatelská jména a avatary se volají přímo přes `Core/Identity`.
+Social nemá přeposílací třídy `Profiles/Actions`, `Profiles/Usernames`,
+`Profiles/Avatar`, `Profiles/Avatars` ani `Profiles/Accounts`. `Profiles/Roles` vlastní pouze sociální
+vlastnosti rolí; přihlašování a správa účtů používají `Core/Identity/Roles`.
+Klientský Social přispívá do core navigace načtením a vykreslením stránky;
+historii, scroll a řízení souběžných přechodů vlastní společný mechanismus.
+
+`Social/Module` je jediný poskytovatel modulových kontraktů. Vnitřní
+`Registration` a `Content/ServiceProvider` jsou pomocné třídy bez vlastních
+modulových rozhraní. Jediným zdrojem inventáře tabulek jsou příslušná `Schema`;
+hlavní modul z nich skládá úplný seznam. Aktivační stav účtu mění
+`Core/Identity/Administration`, Social připojuje lazy callback pro své botí zdroje.
+Historické migrační streamy, baseline soubory a checksumy se tím nemění.
+
+Profily neposkytují účtové stránky, administrativní view data ani obálku
+administrativní navigace. Veřejné autorské stránky registruje `PublicPages`
+přímo přes `Posts/AuthorPages`. `Profiles/Resource` doplňuje k identitě sociální
+URL; `Profiles/Views` vlastní zobrazení sledovaných autorů. Sledování i jeho
+odstranění patří do `Profiles/Following`.
+
+Klientské účty používají `TinyCat.accounts`, sociální vztahy
+`TinyCat.socialUsers`. Sdílený objekt ani alias `TinyCat.users` neexistuje.
+Editor, přehrávače a překlady používají přímo `TinyCat.publishing.controllers`;
+Social k nim nekopíruje druhé ovladače. Mobilní sociální URL vlastní jeho
+samostatná navigační politika. `Presentation/Sidebar` připravuje totožná data
+pro počáteční HTML i deferred resource.
+
+Výchozí jazyk dokumentů zajišťuje `Localization::defaultLocale()` nezávisle na
+jazyku návštěvníka. Technické oEmbed URL ověřuje core; Social poskytuje data
+viditelného statusu. Strojové chyby dokumentů používají `Http/Document`, API dál
+společnou API obálku. HTTP CSP čerpá podporované přehrávače přímo z core katalogu,
+Social ani Blog neudržují globální kopii povolených originů. Inicializace Socialu
+neresetuje URL konfiguraci ani vlastnictví textových politik jiných poskytovatelů.
+
 ## Načtení a vlastnictví
 
 HTTP vstup načítá přímo `Core/Runtime/autoload.php`, explicitně volá

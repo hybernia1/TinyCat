@@ -8,40 +8,10 @@ use TinyCat\Support\Components;
 /** Presentation components: prepare inputs, then render their private partial. */
 final class Views
 {
-
-    /** @param array<mixed> $data */
-    public static function adminFormFields(array $data = []): string
-    {
-        return \TinyCat\Core\Identity\Views::adminFormFields($data);
-    }
-
-    /** @param array<mixed> $data */
-    public static function adminList(array $data = []): string
-    {
-        return \TinyCat\Core\Identity\Views::adminList($data);
-    }
-
-    /** @param array<mixed> $data */
-    public static function authContent(array $data = []): string
-    {
-        return \TinyCat\Core\Identity\Views::authContent($data);
-    }
-
-    /** @param array<mixed> $data */
-    public static function authForm(array $data = []): string
-    {
-        return \TinyCat\Core\Identity\Views::authForm($data);
-    }
-
     /** @param array<mixed> $data */
     public static function followingProfile(array $data = []): string
     {
         return Components::render('users/following-profile', ['user' => Resource::profile((array) ($data['profile'] ?? []))]);
     }
 
-    /** @param array<mixed> $data */
-    public static function avatar(array $data = []): string
-    {
-        return \TinyCat\Core\Identity\Views::avatar($data);
-    }
 }

@@ -87,8 +87,8 @@ import "../../../../../assets/ui/toasts.js";
       source.value = "";
     });
     qsa("[data-status-editor]", form).forEach(function (root) {
-      if (TinyCat.status.controllers.editor.reset) {
-        TinyCat.status.controllers.editor.reset(root);
+      if (TinyCat.publishing.controllers.editor.reset) {
+        TinyCat.publishing.controllers.editor.reset(root);
       }
     });
   }

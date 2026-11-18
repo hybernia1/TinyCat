@@ -54,7 +54,7 @@ $cases = [
     'search-links' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('https', 50),
     'search-literal' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('10%', 50),
     'notifications' => static fn () => \TinyCat\Core\Notifications\Inbox::items(2, 50),
-    'admin-users' => static fn () => \TinyCat\Social\Profiles\Actions::tc_admin_users_page(\TinyCat\Social\Profiles\Actions::tc_admin_users_filters()),
+    'admin-users' => static fn () => \TinyCat\Core\Identity\Actions::tc_admin_users_page(\TinyCat\Core\Identity\Actions::tc_admin_users_filters()),
     'admin-reports' => static fn () => \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload(),
 ];
 $report = ['mysql' => $plans->query('SELECT VERSION()')->fetchColumn(), 'root' => $root,

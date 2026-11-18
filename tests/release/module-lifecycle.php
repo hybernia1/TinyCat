@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 // Real signed products and fresh PHP workers; the developer's DB/config/storage are never targets.
 $source = dirname(__DIR__, 2);
+require_once $source . '/tests/support/execution.php';
 require_once $source . '/App/Core/Support/Version.php';
 [$major, $minor, $patch] = array_map('intval', explode('.', \TinyCat\Support\Version::MINIMUM_UPDATE));
 $versions = array_map(static fn (int $offset): string => $major . '.' . $minor . '.' . ($patch + $offset), range(0, 3));
@@ -15,11 +16,15 @@ $copy = static function (string $from, string $to) use (&$copy): void {
     foreach (scandir($from) ?: [] as $name) { if ($name !== '.' && $name !== '..' && !is_link($from . '/' . $name)) { $copy($from . '/' . $name, $to . '/' . $name); } }
 };
 $run = static function (array $command, string $directory, string $input = '', array $environment = []): array {
-    $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $directory, array_merge(getenv(), $environment));
-    if (!is_resource($process)) { throw new RuntimeException('Cannot start distribution fixture worker.'); }
-    fwrite($pipes[0], $input); fclose($pipes[0]);
-    $output = stream_get_contents($pipes[1]); $errors = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
-    return [proc_close($process), (string) $output, (string) $errors];
+    $label = basename((string) $command[1]);
+    if (in_array($label, ['Console.php', 'console.php'], true) && preg_match('/^[a-z][a-z-]*$/D', (string) ($command[2] ?? '')) === 1) { $label .= '/' . $command[2]; }
+    return \TinyCatTests\Execution::measure('worker/' . $label, static function () use ($command, $directory, $input, $environment): array {
+        $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $directory, array_merge(getenv(), $environment));
+        if (!is_resource($process)) { throw new RuntimeException('Cannot start distribution fixture worker.'); }
+        fwrite($pipes[0], $input); fclose($pipes[0]);
+        $output = stream_get_contents($pipes[1]); $errors = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
+        return [proc_close($process), (string) $output, (string) $errors];
+    });
 };
 $http = null;
 try {
@@ -58,13 +63,16 @@ try {
     file_put_contents($candidate . '/App/Modules/Blog/selection.php', '<?php return ' . var_export($selection, true) . ';');
     $pair = sodium_crypto_sign_keypair(); $secret = sodium_crypto_sign_secretkey($pair); $public = sodium_crypto_sign_publickey($pair);
     $key = $workspace . '/signing.key'; file_put_contents($key, base64_encode($secret));
-    $build = static function (string $version, string $output) use ($run, $candidate, $key, $base, $assert): void {
-        [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-update.php', '--version=' . $version, '--assembly=blog', '--active=' . implode(',', $base), '--allow-dirty', '--both', '--output=' . $output, '--key=' . $key], $candidate);
+    $build = static function (string $version, string $output, bool $fresh = false) use ($run, $candidate, $key, $base, $assert): void {
+        // Only these variants are consumed: the initial installation and three successive updates.
+        $command = [PHP_BINARY, $candidate . '/tools/release/build-update.php', '--version=' . $version, '--assembly=blog', '--active=' . implode(',', $base), '--allow-dirty', '--output=' . $output . ($fresh ? '/install' : '/update'), '--key=' . $key];
+        if ($fresh) { $command[] = '--fresh-install'; }
+        [$exit, $text, $error] = $run($command, $candidate);
         $assert($exit === 0, 'Signed Blog build: ' . $text . $error);
     };
     $initialVersionFile = $candidate . '/App/Core/Support/Version.php';
     file_put_contents($initialVersionFile, preg_replace("/CURRENT = '[^']+'/", "CURRENT = '" . $versions[0] . "'", (string) file_get_contents($initialVersionFile)));
-    $build($versions[0], $workspace . '/v1');
+    $build($versions[0], $workspace . '/v1', true);
     $installManifest = json_decode((string) file_get_contents($workspace . '/v1/install/tinycat-blog-install.json'), true, 512, JSON_THROW_ON_ERROR);
     $assert($installManifest['distribution']['product'] === 'tinycat.blog' && $installManifest['minimum_version'] === $versions[0], 'Signed identity prevents old updaters from applying module packages');
     $assert($installManifest['migrations'] === [] && !isset($installManifest['files']['App/Modules/Social/src/Posts/Registration.php']) && isset($installManifest['files']['App/Core/Settings/Store.php']) && isset($installManifest['files']['App/Modules/Notes/src/Module.php']), 'Blog package contains only available product owners, including inactive modules');

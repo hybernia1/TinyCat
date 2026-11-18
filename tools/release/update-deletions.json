@@ -2011,5 +2011,15 @@
     "App/Modules/Social/src/Content/Resource.php",
     "App/Modules/Social/src/Content/Integration.php",
     "App/Modules/Social/src/Content/InteractionPolicy.php"
+  ],
+  "6.0.13": [
+    "App/Modules/Social/src/Presentation/Navigation.php",
+    "App/Modules/Social/src/Profiles/Accounts.php",
+    "App/Modules/Social/src/Profiles/Actions.php",
+    "App/Modules/Social/src/Profiles/Avatar.php",
+    "App/Modules/Social/src/Profiles/Avatars.php",
+    "App/Modules/Social/src/Profiles/Pages.php",
+    "App/Modules/Social/src/Profiles/Usernames.php",
+    "App/Modules/Social/src/Profiles/ViewData.php"
   ]
 }

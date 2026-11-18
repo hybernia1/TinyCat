@@ -49,27 +49,27 @@ $assert(\TinyCat\Core\Security\Images::image_source_error([0 => 4096, 1 => 4097,
 $assert(\TinyCat\Core\Security\Images::image_source_error(false, 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'not_image', 'Malformed raster header was accepted.');
 
 $assert(
-    \TinyCat\Social\Profiles\Avatars::user_avatar_url(['id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
+    \TinyCat\Core\Identity\Avatars::user_avatar_url(['id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
     'A complete user avatar record did not produce its fixed avatar URL.'
 );
 $assert(
-    \TinyCat\Social\Profiles\Avatars::user_avatar_url(['author_id' => 99, 'id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
+    \TinyCat\Core\Identity\Avatars::user_avatar_url(['author_id' => 99, 'id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
     'An incomplete author avatar projection prevented the user avatar fallback.'
 );
 $assert(
-    \TinyCat\Social\Profiles\Avatars::user_avatar_url(['author_id' => 99, 'author_avatar_exists' => 1, 'author_updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/99.webp?v=2026-08-11%2012%3A00%3A00',
+    \TinyCat\Core\Identity\Avatars::user_avatar_url(['author_id' => 99, 'author_avatar_exists' => 1, 'author_updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/99.webp?v=2026-08-11%2012%3A00%3A00',
     'A complete author avatar projection did not retain its avatar URL.'
 );
 $assert(
-    \TinyCat\Social\Profiles\Profiles::user_can_edit_profile(['id' => 7], ['id' => 7, 'role' => 'member']),
+    \TinyCat\Core\Identity\Profile::canEdit(['id' => 7], ['id' => 7, 'role' => 'member']),
     'Users may no longer edit their own avatar target.'
 );
 $assert(
-    \TinyCat\Social\Profiles\Profiles::user_can_edit_profile(['id' => 7], ['id' => 1, 'role' => 'admin']),
+    \TinyCat\Core\Identity\Profile::canEdit(['id' => 7], ['id' => 1, 'role' => 'admin']),
     'Administrators may no longer edit another user avatar target.'
 );
 $assert(
-    !\TinyCat\Social\Profiles\Profiles::user_can_edit_profile(['id' => 7], ['id' => 8, 'role' => 'member']),
+    !\TinyCat\Core\Identity\Profile::canEdit(['id' => 7], ['id' => 8, 'role' => 'member']),
     'A regular user may edit another user avatar target.'
 );
 
@@ -158,12 +158,12 @@ $assert(str_contains($linkSource, "'follow_location' => 0"), 'Stream redirects a
 
 $generated = \TinyCat\Core\Identity\GeneratedAvatar::svg(42);
 $assert($generated === \TinyCat\Core\Identity\GeneratedAvatar::svg(42), 'Generated avatars are deterministic.');
-$assert(\TinyCat\Social\Profiles\Avatar::url(42, false) === '/avatar/generated/v1/42.svg', 'Users without uploads receive a versioned generated avatar.');
-$assert(\TinyCat\Social\Profiles\Avatar::url(0, false) === '', 'Anonymous placeholders never become user avatars.');
+$assert(\TinyCat\Core\Identity\Avatar::url(42, false) === '/avatar/generated/v1/42.svg', 'Users without uploads receive a versioned generated avatar.');
+$assert(\TinyCat\Core\Identity\Avatar::url(0, false) === '', 'Anonymous placeholders never become user avatars.');
 $assert(\TinyCat\Core\Identity\GeneratedAvatar::appearance('{"gender":"female","future":"ignored"}') === ['version' => 1, 'gender' => 'female', 'fur' => 'auto', 'expression' => 'auto', 'accessory' => 'auto', 'outfit' => 'auto', 'background' => 'auto'], 'Appearance has a normalized versioned shape.');
 $assert(\TinyCat\Core\Identity\GeneratedAvatar::appearance('broken') === ['version' => 1, 'gender' => 'neutral', 'fur' => 'auto', 'expression' => 'auto', 'accessory' => 'auto', 'outfit' => 'auto', 'background' => 'auto'], 'Malformed stored appearance uses neutral defaults.');
 $assert(\TinyCat\Core\Identity\GeneratedAvatar::svg(42, 'female') !== $generated && \TinyCat\Core\Identity\GeneratedAvatar::svg(42, 'male') !== $generated, 'All three gender variants have a distinct illustration.');
-$assert(\TinyCat\Social\Profiles\Avatars::user_avatar_url(['author_id' => 42, 'author_avatar_exists' => 0, 'author_avatar_appearance' => '{"gender":"female"}']) === '/avatar/generated/v1/42.svg?gender=female', 'Joined author appearance reaches the generated avatar URL.');
+$assert(\TinyCat\Core\Identity\Avatars::user_avatar_url(['author_id' => 42, 'author_avatar_exists' => 0, 'author_avatar_appearance' => '{"gender":"female"}']) === '/avatar/generated/v1/42.svg?gender=female', 'Joined author appearance reaches the generated avatar URL.');
 $customAppearance = ['gender' => 'female', 'fur' => 'lilac', 'expression' => 'smile', 'accessory' => 'glasses'];
 $customSvg = \TinyCat\Core\Identity\GeneratedAvatar::svg(42, 'neutral', $customAppearance);
 $assert(str_contains($customSvg, 'fill="#c7a3cf"') && $customSvg !== $generated, 'Creator parameters select the requested SVG layers and fur colour.');

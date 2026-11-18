@@ -19,11 +19,11 @@ $assert(!class_exists('TinyCat\\Extension\\Loader'), 'The extension loader must 
 $assert(!class_exists('TinyCat\\Extension\\Registry'), 'Extension registration must be removed.');
 $assert(!class_exists('TinyCat\\Extension\\Store'), 'The extension store must be removed.');
 $assert(!method_exists(\TinyCat\Social\Profiles\Roles::class, 'register'), 'Roles must belong to core.');
-$assert(!\TinyCat\Social\Profiles\Roles::allowsLogin('bot'), 'Bot accounts cannot log in.');
+$assert(!\TinyCat\Core\Identity\Roles::allowsLogin('bot'), 'Bot accounts cannot log in.');
 $assert(!\TinyCat\Social\Profiles\Roles::receivesNotifications('bot'), 'Bot accounts cannot receive notifications.');
-$assert(!\TinyCat\Social\Profiles\Roles::managedByCoreAdmin('bot'), 'Bot accounts use their dedicated administration.');
+$assert(!\TinyCat\Core\Identity\Roles::managedByCoreAdmin('bot'), 'Bot accounts use their dedicated administration.');
 $assert(\TinyCat\Social\Profiles\Roles::profileSchemaType('bot') === 'Organization', 'Bot profiles retain their schema type.');
-$assert(array_diff(\TinyCat\Social\Automation\Importer::requiredTables(), \TinyCat\Database\Schema::app_required_tables()) === [], 'Bot storage is required by core.');
+$assert(array_diff(\TinyCat\Social\Automation\Schema::tables(), \TinyCat\Database\Schema::app_required_tables()) === [], 'Bot storage is required by core.');
 $assert(array_keys(\TinyCat\Social\Automation\Importer::scheduledTasks()) === ['feeds'], 'Feeds are always available to the scheduler.');
 $assert(!is_file(\TinyCat\Support\Paths::publicPath('admin/extensions.php')), 'Extension administration must be removed.');
 $assert(!method_exists(\TinyCat\Core\Discovery\Sitemap::class, 'registerExtension'), 'Sitemaps cannot register extension sections.');

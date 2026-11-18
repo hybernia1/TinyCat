@@ -68,7 +68,7 @@ for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filen
 const T = window.TinyCat;
 // Minimal DOM fixture covers filter data; native popover interaction has its own browser suite.
 T.popovers.open = menu => { menu.open = true; };
-const mediaController = T.status.controllers.media;
+const mediaController = T.publishing.controllers.media;
 check(mediaController.allowedStatusVideoUrl("https://www.youtube.com/embed/abc123", "https://www.youtube.com") !== "", "Players use the origin supplied by central provider rules.");
 check(mediaController.allowedStatusVideoUrl("https://evil.example/embed/abc123", "https://www.youtube.com") === "", "A player cannot change the server-approved origin.");
 check(mediaController.allowedStatusVideoUrl("http://www.youtube.com/embed/abc123", "https://www.youtube.com") === "", "Players require HTTPS.");
@@ -264,7 +264,7 @@ const followForm = new Node("form"), followButton = new Node("button"), followAc
 followForm.appendChild(followButton);
 followForm.elements = { namedItem: () => followAction };
 [true, false, true].forEach(following => {
-  T.users.follow(followForm, { following });
+  T.socialUsers.follow(followForm, { following });
   check(followButton.querySelectorAll("svg").length === 1 && followButton.querySelector("use").getAttribute("href").endsWith(following ? "#check" : "#plus"), "Follow toggles retain exactly one icon matching the current state.");
   check(followAction.value === (following ? "unfollow" : "follow") && followButton.querySelector("span").textContent === T.ui.text(following ? "public.unfollow" : "public.follow"), "Follow label and next action stay synchronized.");
 });
@@ -311,7 +311,7 @@ check(sharedPagination.querySelector(".pagination-prev").getAttribute("aria-disa
 check(sharedPagination.querySelector(".pagination-next").getAttribute("data-ajax-target") === "#users-list", "Pagination next links retain the standard AJAX target.");
 const unsafe = '<img src=x onerror="window.pwned=true">';
 const user = { id: 2, username: unsafe, url: "/author/2", avatar_url: "", email: "test@example.test", bio: unsafe, locale: "en", theme: "system" };
-let node = T.users.profiles([user]);
+let node = T.socialUsers.profiles([user]);
 check(node.textContent.endsWith(unsafe), "Following profiles preserve literal names without inserting markup.");
 check(node.querySelectorAll("img").length === 0, "Malicious names cannot create images or event handlers.");
 node = T.status.segments([{ type: "text", text: unsafe }, { type: "mention", text: "@2", url: "/author/2" }]);
@@ -326,7 +326,7 @@ check(node.querySelector('[data-status-count="likes"]').textContent === "2", "Re
 check(node.querySelector(".public-content-meta") !== null && node.querySelector(".status-manage").querySelector("a").getAttribute("href") === post.url, "API cards retain the server card's small timestamp and permalink control.");
 check(T.ui.avatar(user).querySelector("use").getAttribute("href").endsWith("#user"), "Missing avatars use the same SVG user icon as server-rendered cards.");
 const modalPost = Object.assign({}, post, { capabilities: { edit: true, delete: true, report: false, interact: true }, image: { url: "/uploads/statuses/fixture.webp", alt: "Fixture" } });
-const detailData = { item: modalPost, viewer: user, comments: [], options: { images_enabled: true } };
+const detailData = { constraints: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--social-constraints"], {encoding:"utf8"})), item: modalPost, viewer: user, comments: [], options: { images_enabled: true } };
 const commentEditDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10?panel=comment-edit&comment_id=20"), { data: { ...detailData, comments: [{ id: 20, editable_body: unsafe, capabilities: { edit: true }, replies: [] }] } }, "comment-edit-fixture");
 check(commentEditDialog.querySelector(".status-modal-form") && commentEditDialog.querySelector("textarea").textContent === unsafe, "Comment editing renders a spaced form with literal editable text.");
 check(commentEditDialog.querySelector("textarea").getAttribute("aria-labelledby") === "comment-edit-fixture-label", "Comment editor has an explicit visible label.");
@@ -341,7 +341,7 @@ const editDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10?
 check(editDialog.querySelector(".status-compose-main") && editDialog.querySelector('[data-status-image-input]') && editDialog.querySelector('[data-status-image-remove-input]').getAttribute("value") === "0", "Status editing preserves the composer layout, image picker and explicit removal state.");
 check(editDialog.querySelector(".modal-footer").querySelector('[type="submit"]').getAttribute("form") === editDialog.querySelector("form").id && !editDialog.querySelector(".modal-body").querySelector('[type="submit"]'), "Post editors keep the image picker in the body and save in the shared footer.");
 check(editDialog.querySelector('[name="body"]').value === post.editable_body, "Opening the status editor preserves the exact editable text.");
-const profileDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?panel=account&focus=email"), { data: { user, options: { languages: { en: "English" }, password_max_length: 72 }, capabilities: { password: true } } }, "profile-layout-fixture");
+const profileDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/management?panel=account&focus=email"), { data: { user, options: { languages: { en: "English" }, password_max_length: 72 }, capabilities: { password: true } } }, "profile-layout-fixture");
 check(profileDialog.querySelector('[data-editor-sections]') && profileDialog.querySelector('[data-editor-section="account"]'), 'The account-menu target uses the shared sectioned editor instead of a separate profile modal.');
 check(profileDialog.querySelector('.modal-tabs').parent === profileDialog.querySelector('.modal-panel') && !profileDialog.querySelector('.modal-header').querySelector('.tabs') && !profileDialog.querySelector('.modal-body').querySelector('.tabs') && profileDialog.querySelector('.modal-body').querySelectorAll('form').length === 3, 'Fixed account tabs do not overlay the body or move its independent forms.');
 check(profileDialog.querySelector('[data-tab-panel="email"]').hidden === false && profileDialog.querySelector('[data-tab-panel="account"]').hidden === true, "Profile focus selects the requested tab without mixing all settings into one form.");
@@ -356,17 +356,17 @@ check(profileDialog.querySelector('[data-tab-select]').value === 'account' && pr
 check(profileDialog.querySelector('[data-tab-panel="email"]').querySelector("form").getAttribute("action") === "/api/users/me/email", "The email panel submits to its own endpoint.");
 check(profileDialog.dataset.modalKind === 'editor' && profileDialog.dataset.modalSize === 'workspace' && profileTabs.querySelectorAll('[data-tab]').length === 4 && profileTabs.querySelectorAll('[role="tab"]').every(tab => tab.querySelector('svg')), 'Frontend profile editing shares the administration frame and icon tabs.');
 check(profileDialog.querySelector('[name="username"]').getAttribute('disabled') !== null && !profileDialog.querySelector('[name="scope"]') && !profileDialog.querySelector('[name="role"]') && !profileDialog.querySelector('[name="status"]'), 'The shared appearance keeps the username immutable and does not expose administration controls.');
-const avatarTabProfile = T.users.modal(new URL('https://tinycat.test/api/users/2/management?focus=avatar'), { data: { user, options: { languages: { en: 'English' } }, capabilities: { password: false } } }, 'profile-avatar-tab-fixture');
+const avatarTabProfile = T.accounts.modal(new URL('https://tinycat.test/api/users/2/management?focus=avatar'), { data: { user, options: { languages: { en: 'English' } }, capabilities: { password: false } } }, 'profile-avatar-tab-fixture');
 check(!avatarTabProfile.querySelector('[data-tab-panel="avatar"]').hidden && avatarTabProfile.querySelector('.modal-footer').hidden && avatarTabProfile.querySelector('[data-modal-url="/api/users/2/avatar"]') && !avatarTabProfile.querySelector('[data-tab="security"]'), 'The avatar tab opens the shared avatar editor, hides unrelated saves and respects security capabilities.');
-const avatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user } }, "avatar-layout-fixture");
+const avatarDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user } }, "avatar-layout-fixture");
 check(avatarDialog.querySelector('[data-avatar-upload-input]') && avatarDialog.querySelector('[data-avatar-upload-preview]'), "The avatar dialog provides the existing upload and preview lifecycle hooks.");
 check(avatarDialog.querySelector('.avatar-upload-preview').className.split(/\s+/).includes('avatar'), "The avatar preview retains the shared avatar layout and fallback alignment.");
 check(avatarDialog.querySelector('.avatar-editor-controls') && avatarDialog.querySelector('.avatar-editor-actions'), "Avatar selection and footer actions have separate layout groups.");
 const avatarSave = avatarDialog.querySelector('[data-avatar-save]');
 check(avatarSave.getAttribute("form") === avatarDialog.querySelector('form').id && avatarSave.getAttribute("disabled") !== null, "Avatar save belongs to the upload form and starts disabled until a file is ready.");
-const existingAvatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar.webp" } } }, "avatar-existing-fixture");
+const existingAvatarDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar.webp" } } }, "avatar-existing-fixture");
 check(existingAvatarDialog.querySelector('.avatar-editor-remove') && !existingAvatarDialog.querySelector('.avatar-editor-remove').className.split(/\s+/).includes('btn-primary'), "Avatar removal is a secondary action in the common footer.");
-const generatedAvatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar/generated/v1/2.svg", avatar_custom: false }, appearance_options: JSON.parse(fs.readFileSync(path.join(root, "App/Core/Identity/avatar-options.json"), "utf8")) } }, "avatar-generated-fixture");
+const generatedAvatarDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar/generated/v1/2.svg", avatar_custom: false }, appearance_options: JSON.parse(fs.readFileSync(path.join(root, "App/Core/Identity/avatar-options.json"), "utf8")) } }, "avatar-generated-fixture");
 check(generatedAvatarDialog.querySelector('[data-avatar-upload-preview]').getAttribute('src') === '/avatar/generated/v1/2.svg' && !generatedAvatarDialog.querySelector('.avatar-editor-remove'), "Generated avatars appear in the preview and cannot be removed as custom uploads.");
 check(generatedAvatarDialog.querySelector('[data-avatar-appearance-form]') && !existingAvatarDialog.querySelector('[data-avatar-appearance-form]'), "Only generated avatars offer the appearance editor.");
 check(generatedAvatarDialog.querySelector('[data-avatar-gender]') && generatedAvatarDialog.querySelector('[name="appearance"]'), "Gender edits submit a versioned appearance JSON object.");
@@ -383,7 +383,7 @@ function bindCreatorEvents(node) {
   node.children.forEach(bindCreatorEvents);
 }
 bindCreatorEvents(creatorEditor);
-T.users.avatarUpload.hydrate(generatedAvatarDialog);
+T.accounts.avatarUpload.hydrate(generatedAvatarDialog);
 const creatorToggle = creatorEditor.querySelector('[data-avatar-creator-toggle]');
 const creatorSettings = creatorEditor.querySelector('[data-avatar-appearance-form]');
 creatorToggle.events.click();
@@ -423,7 +423,7 @@ for (const active of [true, false]) {
 const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-account-edit-fixture");
 const botTitle = botAccountDialog.querySelector('[id="bot-account-edit-fixture-title"]');
 check(botTitle.children[0].querySelector('.status-indicator-success') && botTitle.children[1].textContent === 'FixtureBot' && !botAccountDialog.querySelector('[href="/author/3"]'), "Bot dialogs put status before the nickname in the header and omit the public profile link.");
-const adminUserDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?panel=administration"), { data: { user: { ...user, status: "ban" }, administration: { roles: ["user"], statuses: ["active", "ban"] }, options: {} } }, "admin-user-title-fixture");
+const adminUserDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/management?panel=administration"), { data: { user: { ...user, status: "ban" }, administration: { roles: ["user"], statuses: ["active", "ban"] }, options: {} } }, "admin-user-title-fixture");
 const adminUserTitle = adminUserDialog.querySelector('[id="admin-user-title-fixture-title"]');
 check(adminUserTitle.children[0].querySelector('.status-indicator-danger') && adminUserTitle.children[1].textContent === user.username, "User administration shares the header status and nickname layout, including inactive accounts.");
 check(botAccountDialog.querySelector("form").dataset.apiMethod === "PATCH" && botAccountDialog.querySelector("form").dataset.ajaxTarget === "#bot-detail-account" && !botAccountDialog.querySelector("form").dataset.modalCloseOnSuccess, "The unified bot account tab saves through PATCH and stays open for the other tabs.");
@@ -441,16 +441,16 @@ node = T.notifications.items([{ id: 1, type: "follow", message: unsafe, icon: "u
 check(node.querySelector("strong").textContent === unsafe && node.querySelectorAll("img").length === 0, "Notifications render owner-provided messages and excerpts as literal text.");
 check(node.querySelector('[data-api-method="PATCH"]').getAttribute("action") === "/api/notifications/1", "Notification actions address the individual resource.");
 const response = { data: { user, options: { languages: { en: "English" }, password_max_length: 1024 }, capabilities: { password: false } }, meta: {} };
-node = T.users.modal(new URL("https://tinycat.test/api/users/2/management"), response, "profile-test");
+node = T.accounts.modal(new URL("https://tinycat.test/api/users/2/management"), response, "profile-test");
 check(node.getAttribute("role") === "dialog" && node.getAttribute("aria-labelledby") === "profile-test-title", "Profile dialogs retain accessible names.");
 check(!node.querySelector('[name="current_password"]'), "Other account profiles never show a password change form.");
 check(node.querySelector('[name="bio"]').value === unsafe, "Profile editors retain literal draft data.");
 const disposedListViews = [];
 T.lifecycle.register("list-content-test", { dispose: root => disposedListViews.push(root) });
 const target = new Node("div"), oldUsersView = new Node("section"); target.appendChild(oldUsersView);
-const oldCreateDialog = T.users.modal(new URL('/api/users/creation',window.location.href), {data:{user:{},options:{roles:['admin','user'],statuses:['active','ban'],password_max_length:1024,username_pattern:'[A-Za-z0-9]+'}}}, 'modal-users-creation');
+const oldCreateDialog = T.accounts.modal(new URL('/api/users/creation',window.location.href), {data:{user:{},options:{roles:['admin','user'],statuses:['active','ban'],password_max_length:1024,username_pattern:'[A-Za-z0-9]+'}}}, 'modal-users-creation');
 oldCreateDialog.querySelector('[name="username"]').value = 'UnsavedAccount';
-T.users.list(target, { data: { items: [{ ...user, role: "admin", status: "active", updated_at_formatted: "Today", can_delete: false }], filters: { q: "admin", role: "admin", status: "active", updated_from: "", updated_to: "" }, roles: { admin: "Admin", user: "User" }, statuses: { active: "Active" }, role_options: { "": "All", admin: "Admin", user: "User" }, status_options: { "": "All", active: "Active" }, options: { password_max_length: 1024, username_pattern: "[A-Za-z0-9]+", username_hint: "Letters" } }, meta: { pagination: { page: 1, last_page: 1, per_page: 25 } } });
+T.accounts.list(target, { data: { items: [{ ...user, role: "admin", status: "active", updated_at_formatted: "Today", can_delete: false }], filters: { q: "admin", role: "admin", status: "active", updated_from: "", updated_to: "" }, roles: { admin: "Admin", user: "User" }, statuses: { active: "Active" }, role_options: { "": "All", admin: "Admin", user: "User" }, status_options: { "": "All", active: "Active" }, options: { password_max_length: 1024, username_pattern: "[A-Za-z0-9]+", username_hint: "Letters" } }, meta: { pagination: { page: 1, last_page: 1, per_page: 25 } } });
 check(target.querySelector(".admin-filter-actions").querySelector('[data-filter-panel="users-filter-modal"]') && target.querySelector(".admin-filter-actions").querySelector('[name="per_page"]'), "AJAX user lists keep filters and page size together in the compact toolbar.");
 const filterDialog = document.getElementById("users-filter-modal");
 check(!filterDialog.querySelector('[type="submit"]') && filterDialog.querySelector('[name="role"]').getAttribute('data-submit-on-change') !== null && filterDialog.querySelector('[name="q"]').getAttribute('data-submit-on-change') === null, 'Filters apply immediately without an Apply button while hidden search state remains passive.');
@@ -482,32 +482,32 @@ check(!target.querySelector('[data-api-method="DELETE"]'), "Protected-account ca
 const existingBio = new Node("p", "Retained profile bio");
 document.querySelectorAll = selector => selector.includes("data-author-bio") ? [existingBio] : [];
 const avatarForm = new Node("form"); avatarForm.setAttribute("action", "/api/users/2/avatar"); avatarForm.setAttribute("method", "post"); avatarForm.closest = () => null;
-T.users.result(avatarForm, { data: { user: { id: 2, username: "Member", avatar_url: "" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, username: "Member", avatar_url: "" } } }, null);
 check(existingBio.textContent === "Retained profile bio", "Partial avatar resources never erase profile fields they do not contain.");
 let localeReloads = 0;
 document.body.dataset.currentUserId = "2";
 window.setTimeout = callback => callback();
 window.location.reload = () => { localeReloads++; };
-T.users.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
 await Promise.resolve();
 check(localeReloads === 1, "Changing the current user's locale reloads the document and its hashed catalog.");
-T.users.result(avatarForm, { data: { user: { id: 3, locale: "cs" } } }, null);
-T.users.result(avatarForm, { data: { user: { id: 2, locale: "en" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 3, locale: "cs" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: "en" } } }, null);
 check(localeReloads === 1, "Other accounts and unchanged locales do not reload the current catalog.");
 const localeNavigations = [];
 document.documentElement.dataset.interfacePrefix = "pl";
 document.documentElement.dataset.interfaceLocales = "cs,en,pl,fr";
 window.location.assign = url => localeNavigations.push(url);
 avatarForm.dataset.originalLocale = "cs";
-T.users.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
 await Promise.resolve();
 check(localeNavigations.length === 0 && localeReloads === 1, "Saving an unchanged profile language preserves an explicit URL language.");
-T.users.result(avatarForm, { data: { user: { id: 2, locale: "fr" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: "fr" } } }, null);
 await Promise.resolve();
 check(localeNavigations[0] === "/fr/", "Changing the profile language explicitly switches the URL and catalog together.");
 const savedLeaveGuard = T.navigation.canLeave;
 T.navigation.canLeave = () => Promise.resolve(false);
-T.users.result(avatarForm, { data: { user: { id: 2, locale: 'fr' } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: 'fr' } } }, null);
 await Promise.resolve(); await Promise.resolve();
 check(localeNavigations.length === 1, 'A locale save cannot navigate away when another draft blocks leaving.');
 T.navigation.canLeave = savedLeaveGuard;
@@ -538,7 +538,7 @@ for (const editor of [createDialog, sourceEditor, botAccountDialog]) {
 }
 const sourceCreateEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/management"), { data: { item: { enabled: true, post_template: '{{title}}', bot_user_id: 2 }, bots: [user] } }, "source-create-test");
 const reportEditor = T.status.modal(new URL('https://tinycat.test/api/moderation/report-options?id=10'), { data: { reasons: ['spam'] } }, 'report-contract-fixture');
-const authEditor = T.users.modal(new URL('https://tinycat.test/api/users/authentication'), { data: { mode: 'login', registration_enabled: true, captcha: { enabled: false }, options: {}, old: {} } }, 'auth-contract-fixture');
+const authEditor = T.accounts.modal(new URL('https://tinycat.test/api/users/authentication'), { data: { mode: 'login', registration_enabled: true, captcha: { enabled: false }, options: {}, old: {} } }, 'auth-contract-fixture');
 for (const dialog of [commentEditDialog, editDialog, profileDialog, avatarDialog, createDialog, sourceEditor, sourceCreateEditor, botAccountDialog, reportEditor, authEditor]) {
   check(dialog.dataset.modalKind === 'editor', 'Every editable surface opts into the common mobile and keyboard contract.');
   check(dialog.querySelector('.modal-footer') && !dialog.querySelector('.modal-body').querySelector('[type="submit"]'), 'Editor primary actions stay in the shared footer, outside the scrollable body.');
@@ -553,7 +553,7 @@ T.dialog.close = () => { unexpectedAccountClose = true; };
 const accountDraft = profileDialog.querySelector('[name="bio"]'); accountDraft.value = 'Draft in another tab';
 const savedEmailForm = profileDialog.querySelector('[data-editor-section="email"]');
 savedEmailForm.closest = () => profileDialog;
-T.users.result(savedEmailForm, { data: { user: { id: 2, email: 'saved@example.test' } } }, null);
+T.accounts.result(savedEmailForm, { data: { user: { id: 2, email: 'saved@example.test' } } }, null);
 check(!unexpectedAccountClose && accountDraft.value === 'Draft in another tab', 'Saving one account tab leaves the editor and other tab drafts intact.');
 check(!profileDialog.querySelector('[name="current_password"]').parent.parent.dataset.modalCloseOnSuccess, 'A password change cannot implicitly close the other account forms.');
 T.dialog.close = savedAccountClose;

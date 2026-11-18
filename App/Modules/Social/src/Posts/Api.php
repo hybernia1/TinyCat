@@ -12,7 +12,7 @@ use \TinyCat\Http\Result;
 use \TinyCat\Core\Identity\Authentication;
 
 use TinyCat\Http\Api as Registrar;
-use TinyCat\Social\Profiles\Api as Users;
+use TinyCat\Core\Identity\Api as IdentityApi;
 
 final class Api
 {
@@ -26,32 +26,33 @@ final class Api
             if ($data === null) { Response::error(\TinyCat\Support\Localization::t('public.status_not_found'), 404, 'status_not_found'); }
             return $data;
         });
-        $api->post('/statuses', static fn (): Result => self::write(static fn (): array => Actions::status_json_create(Users::actor()), 'create'));
+        $api->post('/statuses', static fn (): Result => self::write(static fn (): array => Actions::status_json_create(IdentityApi::actor()), 'create'));
         $api->get('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): array => self::detail((int) $p['id']));
-        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_update((int) $p['id'], Users::actor()), 'update'));
-        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_delete((int) $p['id'], Users::actor()), 'delete'));
+        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_update((int) $p['id'], IdentityApi::actor()), 'update'));
+        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_delete((int) $p['id'], IdentityApi::actor()), 'delete'));
         $api->get('/statuses/{id:[0-9]+}/comments', static fn (Request $r, array $p): array => ['items' => self::detail((int) $p['id'])['comments']]);
         $api->post('/statuses/{id:[0-9]+}/comments', static function (Request $r, array $p): Result {
-            return self::write(static fn (): array => Actions::status_json_comment((int) $p['id'], max(0, (int) $r->input('parent_id', 0)), Users::actor()), 'comment');
+            $r->validated(['parent_id' => 'integer|min:0']);
+            return self::write(static fn (): array => Actions::status_json_comment((int) $p['id'], max(0, (int) $r->input('parent_id', 0)), IdentityApi::actor()), 'comment');
         });
         $api->patch('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}', static function (Request $r, array $p): Result {
             self::commentTarget($p);
-            return self::write(static fn (): array => Actions::status_json_comment_update((int) $p['commentId'], Users::actor()), 'comment_update');
+            return self::write(static fn (): array => Actions::status_json_comment_update((int) $p['commentId'], IdentityApi::actor()), 'comment_update');
         });
         $api->delete('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}', static function (Request $r, array $p): Result {
             self::commentTarget($p);
-            return self::write(static fn (): array => Actions::status_json_comment_delete((int) $p['commentId'], Users::actor()), 'comment_delete');
+            return self::write(static fn (): array => Actions::status_json_comment_delete((int) $p['commentId'], IdentityApi::actor()), 'comment_delete');
         });
         $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/revisions', static function (Request $r, array $p): array {
             $comment = self::commentTarget($p);
-            if (!Comments::status_comment_can_edit($comment, Users::actor())) { Response::error(\TinyCat\Support\Localization::t('auth.forbidden'), 403, 'forbidden'); }
+            if (!Comments::status_comment_can_edit($comment, IdentityApi::actor())) { Response::error(\TinyCat\Support\Localization::t('auth.forbidden'), 403, 'forbidden'); }
             return ['items' => Comments::status_comment_history($comment)];
         }, 'user');
         foreach (['put', 'delete'] as $method) {
-            $api->$method('/statuses/{id:[0-9]+}/likes/me', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_react((int) $p['id'], Users::actor(), $r->method() === 'PUT'), 'react'));
+            $api->$method('/statuses/{id:[0-9]+}/likes/me', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_react((int) $p['id'], IdentityApi::actor(), $r->method() === 'PUT'), 'react'));
             $api->$method('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/likes/me', static function (Request $r, array $p): Result {
                 self::commentTarget($p);
-                return self::write(static fn (): array => Actions::status_json_comment_like((int) $p['commentId'], Users::actor(), $r->method() === 'PUT'), 'comment_like');
+                return self::write(static fn (): array => Actions::status_json_comment_like((int) $p['commentId'], IdentityApi::actor(), $r->method() === 'PUT'), 'comment_like');
             });
         }
 
@@ -62,7 +63,7 @@ final class Api
      * @return array{url: string, original_url: string} */
     private static function contentLink(Request $request, array $params): array
     {
-        return \TinyCat\Social\Content\Outbound::response($request, ContentLinks::resolve((int) $params['id'], $params['hash'], (int) ($params['commentId'] ?? 0)));
+        return \TinyCat\Core\Links\Outbound::response($request, ContentLinks::resolve((int) $params['id'], $params['hash'], (int) ($params['commentId'] ?? 0)));
     }
 
     private static function listing(Request $request): Result
@@ -100,7 +101,7 @@ final class Api
         if ($editing && !Posts::status_can_edit($item, $user)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden'); }
         $items = Resource::posts([$item], $user);
         $comments = Comments::status_comments($id);
-        return ['item' => $items[0], 'comments' => Resource::comments($comments, $user),
+        return ['constraints' => Resource::constraints(), 'item' => $items[0], 'comments' => Resource::comments($comments, $user),
             'viewer' => $user === null ? null : \TinyCat\Social\Profiles\Resource::profile($user),
             'options' => ['images_enabled' => \TinyCat\Social\Content\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Social\Content\Images::status_image_max_upload_bytes()]];
     }

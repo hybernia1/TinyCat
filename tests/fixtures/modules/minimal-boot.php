@@ -20,7 +20,7 @@ if (($argv[1] ?? '') === '--framework') {
 if (($argv[1] ?? '') === '--social') {
     $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json']);
     \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['dsn' => 'sqlite::memory:']]), $loader);
-    foreach ([\TinyCat\Social\Automation\Pages::class, \TinyCat\Social\Automation\RunDetails::class, \TinyCat\Social\Profiles\Pages::class, \TinyCat\Social\Profiles\SitemapData::class, \TinyCat\Social\Posts\Pages::class, \TinyCat\Social\Posts\Embed::class, \TinyCat\Social\Presentation\Pages::class, \TinyCat\Social\Presentation\Layout::class, \TinyCat\Social\Presentation\Discovery::class] as $class) {
+    foreach ([\TinyCat\Social\Automation\Pages::class, \TinyCat\Social\Automation\RunDetails::class, \TinyCat\Social\Posts\AuthorPages::class, \TinyCat\Social\Profiles\SitemapData::class, \TinyCat\Social\Posts\Pages::class, \TinyCat\Social\Posts\Embed::class, \TinyCat\Social\Presentation\Pages::class, \TinyCat\Social\Presentation\Layout::class, \TinyCat\Social\Presentation\Discovery::class] as $class) {
         if (class_exists($class, false)) { throw new RuntimeException('Social registration eagerly loaded ' . $class); }
     }
     if (session_status() !== PHP_SESSION_NONE || class_exists(\TinyCat\Database\Connection::class, false)) { throw new RuntimeException('Social registration opened runtime state.'); }

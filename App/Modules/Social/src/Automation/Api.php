@@ -25,8 +25,8 @@ final class Api
             $account = Administration::accountById((int) $p['id']);
             if ($account === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
             $data = $r->validated(['enabled' => 'required|boolean']);
-            $active = in_array($data['enabled'], [true, 1, '1'], true);
-            \TinyCat\Social\Profiles\Accounts::setActive($account, $active);
+            $active = filter_var($data['enabled'], FILTER_VALIDATE_BOOLEAN);
+            \TinyCat\Core\Identity\Administration::setActive(\TinyCat\Core\Identity\Api::actor(), $account, $active, \TinyCat\Core\Identity\Participants::current());
             return Result::from(Administration::accountsPayload((int) $p['id']) + \TinyCat\Support\AdminViews::activationNotice($active, '@' . $account['username']));
         }, 'admin');
         $api->get('/bots/accounts/{id:[0-9]+}/posts', static function (Request $request, array $params): array {

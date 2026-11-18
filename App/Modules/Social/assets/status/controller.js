@@ -18,8 +18,8 @@ import "../../../../../assets/ui/component-builders.js";
     }
     root.appendChild(U.hidden("action", action)); return root;
   }
-  function editor(name, body, placeholder) {
-    return T.components.render("publishing/editor", { name: name, comment: false, value: body || "", suggest_url: "/api/search/suggestions", max_length: 2000, placeholder: U.text(placeholder) });
+  function editor(name, body, placeholder, constraints) {
+    return T.components.render("publishing/editor", { name: name, comment: false, value: body || "", suggest_url: "/api/search/suggestions", max_characters: constraints[name].max_length, placeholder: U.text(placeholder) });
   }
   T.status = {
     segments: function (segments) {
@@ -76,7 +76,7 @@ import "../../../../../assets/ui/component-builders.js";
       if (panel === "edit") {
         if (!item.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
         var edit = form(base(item.id), "update", item.id); edit.dataset.confirmUnsaved = "true"; edit.enctype = "multipart/form-data";
-        edit.appendChild(T.components.render("status/composer-body", { viewer: data.viewer || item.author, value: item.editable_body, image: item.image, enabled: data.options.images_enabled, submit_label: U.text("common.save"), submit_icon: "save" }));
+        edit.appendChild(T.components.render("status/composer-body", { constraints: data.constraints, viewer: data.viewer || item.author, value: item.editable_body, image: item.image, enabled: data.options.images_enabled, submit_label: U.text("common.save"), submit_icon: "save" }));
         return U.formDialog(id, "account.status_edit", edit, false, { size: "wide" });
       }
       if (panel === "comment-edit") {
@@ -85,7 +85,7 @@ import "../../../../../assets/ui/component-builders.js";
         if (!selected || !selected.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
         var commentEdit = form(base(item.id) + "/comments/" + selected.id, "comment_update", item.id); commentEdit.dataset.confirmUnsaved = "true"; commentEdit.classList.add("status-modal-form");
         var commentLabel = e("div", { "class": "label", id: id + "-label" }, U.text("account.status_comment_placeholder"));
-        var commentEditor = editor("comment", selected.editable_body, "account.status_comment_placeholder");
+        var commentEditor = editor("comment", selected.editable_body, "account.status_comment_placeholder", data.constraints);
         commentEditor.querySelector("textarea").setAttribute("aria-labelledby", id + "-label");
         commentEditor.querySelector("textarea").required = true;
         commentEdit.append(commentLabel, commentEditor);
@@ -124,6 +124,5 @@ import "../../../../../assets/ui/component-builders.js";
     if (url.pathname !== "/api/statuses" || !target || !target.matches(".home-feed-section")) { return false; }
     T.status.feed(target, response); return [target];
   };
-  var media;
-  T.status.controllers = { get editor() { return T.publishing.controllers.editor; }, get media() { return media || (media = Object.assign({}, T.publishing.controllers.media)); }, get translation() { return T.publishing.controllers.translation; } };
+  T.status.controllers = {};
 }());

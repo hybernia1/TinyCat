@@ -193,5 +193,4 @@ import "../../../../assets/ui/toasts.js";
       return true;
     }
   };
-  T.users = T.accounts; // Compatibility for existing product integrations.
 }());

@@ -55,8 +55,8 @@ import "./tabs.js";
     try { if (tab) T.tabs.activate(tab, false); } finally { applying = false; }
   }
   async function restore(value, origin) {
-    origin = origin === undefined ? Number(owner.state.publicIndex || 0) + position : origin;
-    var distance = origin - (Number(state().publicIndex || 0) + value.stack.length);
+    origin = origin === undefined ? Number(owner.state.pageIndex || 0) + position : origin;
+    var distance = origin - (Number(state().pageIndex || 0) + value.stack.length);
     var serial = ++revision, destination = value.stack.length, common = 0;
     T.dialog.cancelPending();
     var basePage = new URL(owner.base, window.location.href);
@@ -138,7 +138,7 @@ import "./tabs.js";
         return (async function () {
           if (!(await T.navigation.canLeave())) {
             settling = true;
-            window.history.go(Number(owner.state.publicIndex || 0) + position - Number((event && event.state || {}).publicIndex || 0));
+            window.history.go(Number(owner.state.pageIndex || 0) + position - Number((event && event.state || {}).pageIndex || 0));
             return true;
           }
           ++revision; T.dialog.cancelPending();
@@ -148,7 +148,7 @@ import "./tabs.js";
         }());
       }
       if (!frames.length && position === 0 && !settling && !value.stack.length) { owner = null; return false; }
-      var origin = Number(owner && owner.state.publicIndex || 0) + position;
+      var origin = Number(owner && owner.state.pageIndex || 0) + position;
       if (!owner || value.session !== owner.session) {
         var previous = Object.assign({}, event && event.state || state()); delete previous.tinycatModal;
         owner = { session: value.session, base: value.base, state: previous };

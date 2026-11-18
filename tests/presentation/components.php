@@ -47,12 +47,12 @@ set_error_handler(static function (int $severity, string $message, string $file,
 });
 $roles = ['admin' => 'Admin', 'user' => 'User'];
 $statuses = ['active' => 'Active', 'ban' => 'Banned'];
-$locked = UsersViews::adminFormFields(['user' => $admin, 'roles' => $roles, 'statuses' => $statuses]);
+$locked = \TinyCat\Core\Identity\Views::adminFormFields(['user' => $admin, 'roles' => $roles, 'statuses' => $statuses]);
 $assert(str_contains($accountMenu, 'data-modal-open="account-editor-modal-2"') && str_contains($accountMenu, 'data-modal-url="/api/users/2/management?panel=account&amp;focus="') && !str_contains($accountMenu, 'profile-edit-modal-'), 'The account menu targets the unified account editor.');
 $assert(str_contains($locked, 'name="role_locked" disabled') && !str_contains($locked, 'name="status_locked"'), 'The oldest administrator retains a locked role without a status selector.');
 $assert(str_contains($locked, 'name="role" value="admin"') && !str_contains($locked, 'name="status"'), 'Editing preserves the protected role without submitting a cached account status.');
 $assert(str_contains($locked, 'Admin &lt;unsafe&gt;') && !str_contains($locked, 'Admin <unsafe>'), 'Administrative account names remain escaped.');
-$editable = UsersViews::adminFormFields(['user' => $member, 'roles' => $roles, 'statuses' => $statuses]);
+$editable = \TinyCat\Core\Identity\Views::adminFormFields(['user' => $member, 'roles' => $roles, 'statuses' => $statuses]);
 $assert(!str_contains($editable, 'name="role_locked"'), 'An ordinary account retains editable role controls.');
 $assert(!str_contains($editable, 'name="status"'), 'Account editing leaves activation to the row action.');
 $inactiveRow = \TinyCat\Support\Components::render('users/admin-row', ['user' => $member + ['protected' => false]]);
@@ -63,7 +63,7 @@ $protectedRow = \TinyCat\Support\Components::render('users/admin-row', ['user' =
 $assert(!str_contains($protectedRow, '/activation'), 'The protected administrator has no deactivation action.');
 $filter = \TinyCat\Support\Components::render('users/filter-form', ['roles' => array_keys($roles), 'statuses' => array_keys($statuses), 'filters' => ['role' => 'user', 'status' => 'ban'], 'pagination' => ['per_page' => 25]]);
 $assert(str_contains($filter, 'value="user" selected') && str_contains($filter, 'value="ban" selected'), 'Shared administrative filters preserve both selected options.');
-$list = UsersViews::adminList(['users' => [$admin, $member], 'roles' => $roles, 'statuses' => $statuses]);
+$list = \TinyCat\Core\Identity\Views::adminList(['users' => [$admin, $member], 'roles' => $roles, 'statuses' => $statuses]);
 $assert(!preg_match('/<form[^>]*action="\/api\/users\/1(?:\?|"|&)[^>]*data-confirm=/', $list), 'The protected administrator has no deletion action.');
 $assert($hasAction($list, '/api/users/2') && str_contains($list, 'name="_method" value="DELETE"'), 'Other account deletion addresses its own resource.');
 
@@ -95,7 +95,7 @@ $assert(str_contains($sidebar, 'href="/author/1"') && str_contains($sidebar, 'hr
 $assert(str_contains($sidebar, 'href="/tag/tinycat"'), 'Sidebar topics use their prepared destination.');
 $following = UsersViews::followingProfile(['profile' => $member]);
 $assert(str_contains($following, 'Member') && str_contains($following, 'href="/author/2"'), 'Following cards preserve the profile and its destination.');
-$avatar = UsersViews::avatar(['user' => ['id' => 99, 'author_id' => 2, 'author_name' => 'Member', 'avatar_exists' => 0]]);
+$avatar = \TinyCat\Core\Identity\Views::avatar(['user' => ['id' => 99, 'author_id' => 2, 'author_name' => 'Member', 'avatar_exists' => 0]]);
 $assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar, '#user'), 'Post avatars belong to the author and render the shared fallback icon.');
 
 $settingsSchema = \TinyCat\Core\Settings\Resource::editor();

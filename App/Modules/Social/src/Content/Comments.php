@@ -3,14 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Content;
 
-
 final class Comments
 {
-    /**
-     * @param array<mixed> $rows
-     * @return array<mixed>
-     */
-    public static function status_comment_rows_to_tree(array $rows): array { return \TinyCat\Core\Ui\ThreadTree::fromRows($rows); }
 
     public static function status_comments_query(string $kind = 'post'): \TinyCat\Database\Query
     {
@@ -50,12 +44,12 @@ final class Comments
             return [];
         }
 
-        if (\TinyCat\Database\Connection::get()->inTransaction()) { return self::status_comment_rows_to_tree(self::status_comments_query($kind)->where('cc.content_id = ?', $contentId)->order('cc.created_at ASC, cc.id ASC')->all()); }
+        if (\TinyCat\Database\Connection::get()->inTransaction()) { return \TinyCat\Core\Ui\ThreadTree::fromRows(self::status_comments_query($kind)->where('cc.content_id = ?', $contentId)->order('cc.created_at ASC, cc.id ASC')->all()); }
 
         $cache =& \TinyCat\Social\Content\ReadCache::status_comments_cache();
 
         if (!array_key_exists($kind . ":" . $contentId, $cache)) {
-            $cache[$kind . ":" . $contentId] = \TinyCat\Social\Content\Comments::status_comment_rows_to_tree(
+            $cache[$kind . ":" . $contentId] = \TinyCat\Core\Ui\ThreadTree::fromRows(
                 \TinyCat\Social\Content\Comments::status_comments_query($kind)
                     ->where('cc.content_id = ?', $contentId)
                     ->order('cc.created_at ASC, cc.id ASC')
@@ -68,12 +62,6 @@ final class Comments
 
     /**
      * @param array<int, array<string, mixed>> $comments
-     * @return list<array<string, mixed>>
-     */
-    public static function status_comment_tree_rows(array $comments): array { return \TinyCat\Core\Ui\ThreadTree::flatten($comments); }
-
-    /**
-     * @param array<int, array<string, mixed>> $comments
      */
     public static function status_preload_comment_tree_user_likes(array $comments, int $userId): void
     {
@@ -82,7 +70,7 @@ final class Comments
         }
 
         \TinyCat\Social\Content\Comments::status_preload_comment_user_likes(
-            \TinyCat\Support\Text::positive_int_ids(array_column(\TinyCat\Social\Content\Comments::status_comment_tree_rows($comments), 'id')),
+            \TinyCat\Support\Text::positive_int_ids(array_column(\TinyCat\Core\Ui\ThreadTree::flatten($comments), 'id')),
             $userId
         );
     }

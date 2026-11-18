@@ -47,19 +47,9 @@ final class Roles
     {
     }
 
-    public static function allowsLogin(string $role): bool
-    {
-        return \TinyCat\Core\Identity\Roles::allowsLogin($role);
-    }
-
     public static function receivesNotifications(string $role): bool
     {
         return self::enabled($role, 'receives_notifications');
-    }
-
-    public static function managedByCoreAdmin(string $role): bool
-    {
-        return \TinyCat\Core\Identity\Roles::managedByCoreAdmin($role);
     }
 
     public static function canBeMuted(string $role): bool
@@ -82,7 +72,6 @@ final class Roles
      */
     public static function rolesWith(string $capability): array
     {
-        if (in_array($capability, ['allows_login', 'managed_by_core_admin'], true)) { return \TinyCat\Core\Identity\Roles::rolesWith($capability); }
     /**
      * @param array<mixed> $definition
      * @return array<mixed>
@@ -91,14 +80,6 @@ final class Roles
             self::$roles,
             static fn (array $definition): bool => !empty($definition[$capability])
         ));
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function coreAdminLabels(): array
-    {
-        return \TinyCat\Core\Identity\Roles::coreAdminLabels();
     }
 
     private static function enabled(string $role, string $capability): bool

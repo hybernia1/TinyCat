@@ -37,7 +37,6 @@ foreach ($graph as $owner => $targets) {
             // Social is one module; these explicit integrations replace its callback registry.
             $integrations = [
                 'Social\\Profiles\\Following' => 'Social\\Posts\\NotificationEvents',
-                'Social\\Profiles\\Pages' => 'Social\\Posts\\AuthorPages',
                 'Social\\Profiles\\Registration' => 'Social\\Posts\\Syndication',
                 'Social\\Profiles\\Repository' => 'Social\\Posts\\AuthorStatistics',
             ];

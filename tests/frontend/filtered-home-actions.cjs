@@ -10,16 +10,17 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
     lifecycle: { hydrate() {} }, i18n: {}, api: { unwrap: data => data.data }, actions: {},
     forms: { markClean() { clean++; } }, dialog: { close() {} },
     navigation: { async restore(event) { assert.ok(clean > 0, "The form is clean before shared navigation runs"); restored.push(event.state); } },
-    status: { card: item => item, controllers: { feed: { statusFeedForForm: () => feed, statusCardId: card => String(card.id) }, forms: { statusFormAction: () => action, statusFormCard: () => null }, editor: {} } }
+    publishing: { controllers: { editor: {} } },
+    status: { card: item => item, controllers: { feed: { statusFeedForForm: () => feed, statusCardId: card => String(card.id) }, forms: { statusFormAction: () => action, statusFormCard: () => null } } }
   };
-  const window = { TinyCat: T, location: { href: "https://tinycat.test/?feed=following&media=images" }, history: { state: { publicIndex: 3 } }, scrollX: 0, scrollY: 480 };
+  const window = { TinyCat: T, location: { href: "https://tinycat.test/?feed=following&media=images" }, history: { state: { pageIndex: 3 } }, scrollX: 0, scrollY: 480 };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/assets/status/form-actions.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document: {}, URL });
   const handle = T.status.controllers.actions.handleStatusJsonResponse;
   await handle(form, { data: { action, item: { id: 20 } } });
   assert.equal(prepended, 0, "Filtered results are determined by the server after publishing");
   assert.equal(reset, 1);
   assert.equal(restored.length, 1);
-  assert.equal(restored[0].publicIndex, 3);
+  assert.equal(restored[0].pageIndex, 3);
   assert.deepEqual(Array.from(restored[0].scroll), [0, 480]);
   action = "update";
   await handle(form, { data: { action, item: { id: 20 } } });

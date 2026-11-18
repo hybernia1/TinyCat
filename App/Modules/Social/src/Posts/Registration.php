@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-final class Registration implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Runtime\InitializesModule, \TinyCat\Core\Modules\ProvidesContributions
+final class Registration
 {
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
@@ -13,12 +13,6 @@ final class Registration implements \TinyCat\Core\Modules\StorageModule, \TinyCa
     public static function initialize(): void
     {
         \TinyCat\Core\Text\Policies::provide('tinycat.social', 'post', new \TinyCat\Core\Text\TextPolicy(Mentions::normalize_mentions_for_storage(...), InlinePresentation::segments(...), ContentLinks::navigation(...)));
-    }
-
-    /** @return list<string> */
-    public static function tables(): array
-    {
-        return [];
     }
 
     public static function register(\TinyCat\Http\Api $api): void

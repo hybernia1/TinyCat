@@ -15,7 +15,7 @@ import "../../../../../assets/ui/content/translation.js";
   "use strict";
   var TinyCat = window.TinyCat;
   var C = TinyCat.status.controllers, qsa = TinyCat.dom.all;
-  TinyCat.status.navigationUrl = C.media.mobileStatusUrl;
+  TinyCat.status.navigationUrl = TinyCat.status.navigation.mobileStatusUrl;
   TinyCat.status.hydrate = function (root) {
     TinyCat.publishing.hydrate(root); C.feed.initStatusFeedLazy(root); C.actions.prepareForms(root);
   };

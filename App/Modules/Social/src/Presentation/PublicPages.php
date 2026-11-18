@@ -19,7 +19,7 @@ final class PublicPages
         return [
             ['/social', 'home', static fn () => \TinyCat\Social\Posts\Pages::home(), static fn () => \TinyCat\Social\Posts\Pages::homeData(), ['feed', 'compact', 'media']],
             ['/status/{status_id:[0-9]+}', 'status', static fn (string $status_id) => \TinyCat\Social\Posts\Pages::detail((int) $status_id), static fn (string $status_id) => \TinyCat\Social\Posts\Pages::detailData((int) $status_id), ['compact']],
-            ['/author/{author_id:[0-9]+}', 'author', static fn (string $author_id) => \TinyCat\Social\Profiles\Pages::author((int) $author_id), static fn (string $author_id) => \TinyCat\Social\Profiles\Pages::authorData((int) $author_id), ['feed', 'compact', 'media']],
+            ['/author/{author_id:[0-9]+}', 'author', static fn (string $author_id) => \TinyCat\Social\Posts\AuthorPages::author((int) $author_id), static fn (string $author_id) => \TinyCat\Social\Posts\AuthorPages::authorData((int) $author_id), ['feed', 'compact', 'media']],
             ['/tag/{tag}', 'tag', static fn (string $tag) => \TinyCat\Social\Posts\Pages::tag($tag), static fn (string $tag) => \TinyCat\Social\Posts\Pages::tagData($tag), ['feed', 'compact', 'media']],
             ['/search', 'search', static fn () => \TinyCat\Social\Search\Pages::search(), static fn () => \TinyCat\Social\Search\Pages::data(), ['q', 'type', 'media']],
         ];
@@ -39,6 +39,7 @@ final class PublicPages
                 return $data !== null ? self::resource($kind, $data) : null;
             }, $query);
         }
+        \TinyCat\Http\Router::route('GET', '/author', static fn () => \TinyCat\Social\Posts\AuthorPages::author());
     }
 
     /** @return array<string, mixed> */
@@ -84,6 +85,7 @@ final class PublicPages
             }
         }
         return [
+            'constraints' => Posts::constraints(),
             'routes' => \TinyCat\Http\Router::pageDefinitions('tinycat.social'), 'version' => \TinyCat\Support\Version::CURRENT, 'kind' => $kind, 'url' => \TinyCat\Http\LocaleRouting::url($url), 'locale' => Localization::locale(), 'viewer' => $viewer !== null ? Users::profile($viewer) : null,
             'document' => \TinyCat\Core\Ui\Metadata::document($page),
             'tag' => (string) ($context['tag'] ?? ''), 'compact' => (bool) ($context['compact'] ?? false),

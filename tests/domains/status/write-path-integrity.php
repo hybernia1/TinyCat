@@ -19,7 +19,7 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
 $root = dirname(__DIR__, 3);
 define('TINYCAT', true);
 require_once $root . '/App/Core/Runtime/autoload.php';
-require_once $root . '/App/Modules/Social/src/Profiles/Avatar.php';
+require_once $root . '/App/Core/Identity/Avatar.php';
 require_once $root . '/App/Modules/Social/src/Content/ImageStorage.php';
 require_once $root . '/App/Core/Text/LinkParser.php';
 require_once $root . '/App/Core/Links/Metadata.php';
@@ -122,7 +122,6 @@ $assert($value('SELECT password FROM users WHERE id = 1') === 'first-password', 
 
 $tagText = implode(' ', array_map(static fn (int $id): string => '#tag' . $id, range(1, 12)));
 $assert(count(\TinyCat\Social\Posts\Tags::status_tags_from_text($tagText)) === 12, 'Tag parsing does not truncate at ten unique tags.');
-$assert(count(\TinyCat\Social\Posts\Actions::status_require_valid_tags($tagText)) === 12, 'Tag validation accepts more than ten unique tags.');
 $assert(\TinyCat\Social\Posts\Tags::status_tag_normalize(str_repeat('a', 33)) === '', 'The storage-backed per-tag length bound remains.');
 
 $youtube = \TinyCat\Core\Text\LinkParser::fromRaw('https://youtu.be/abc123');
@@ -222,6 +221,9 @@ $cleanDraft = \TinyCat\Social\Posts\PostCreation::fromText("  Manual  post […]
 $assert($cleanDraft->body === "Manual post …\n\nhttps://alpha.example #mixed-case" && $cleanDraft->tags === ['mixed-case'] && count($cleanDraft->links) === 1, 'Manual posts, edits and bot imports share whitespace and boilerplate cleanup before relation extraction.');
 $cleanCard = \TinyCat\Social\Posts\Resource::link(['normalized_url' => 'https://alpha.example', 'description' => 'Cached  preview […] Read more', 'link_type' => 'web']);
 $assert($cleanCard['description'] === 'Cached preview …', 'Previously cached metadata follows the same rules in server and API link-card resources.');
+$textConstraints = \TinyCat\Social\Posts\Resource::constraints();
+$assert($textConstraints['body']['max_length'] === \TinyCat\Social\Posts\PostCreation::BODY_MAX_LENGTH && $textConstraints['comment']['max_length'] === $textConstraints['body']['max_length'], 'Post and comment resource constraints use their owner rules.');
+$assert(\TinyCat\Http\Validator::validate(['body' => str_repeat("\u{1F642}", 2000)], \TinyCat\Social\Posts\PostCreation::rules()) === [], 'Social text limits count Unicode characters rather than UTF-16 code units.');
 $boundedDraft = \TinyCat\Social\Posts\PostCreation::fromText(str_repeat('x', 2000) . ' #outside');
 $assert(mb_strlen($boundedDraft->body) === 2000 && $boundedDraft->tags === [], 'Tags outside the shared text limit cannot leave invisible relations.');
 $image = ['path' => 'fixture.webp', 'width' => 10, 'height' => 20, 'bytes' => 100];
@@ -513,7 +515,7 @@ $database->exec('DELETE FROM notifications');
 $assert(\TinyCat\Social\Profiles\Following::author_is_followed(2, 1), 'Following creates the social relation.');
 $assert((int) $value("SELECT COUNT(*) FROM notifications WHERE user_id = 1 AND notification_key = 'follow:1:2'") === 1, 'Following creates one notification for the followed profile.');
 $assert(\TinyCat\Core\Notifications\Inbox::targetUrl(['type' => 'follow', 'actor_id' => 2]) === \TinyCat\Social\Profiles\Profiles::author_url(2), 'A follow notification links to the follower profile.');
-\TinyCat\Social\Profiles\Profiles::author_unfollow(2, 1);
+\TinyCat\Social\Profiles\Following::author_unfollow(2, 1);
 $assert(!\TinyCat\Social\Profiles\Following::author_is_followed(2, 1), 'Unfollowing removes the social relation.');
 \TinyCat\Social\Profiles\Following::author_follow(2, 1);
 $assert(\TinyCat\Social\Profiles\Following::author_is_followed(2, 1), 'Following can be restored after an unfollow.');
@@ -619,7 +621,7 @@ try {
 
 $database->beginTransaction();
 try {
-    \TinyCat\Social\Profiles\Avatar::replace(1, null, false, static fn (array $user): array => $user);
+    \TinyCat\Core\Identity\Avatar::replace(1, null, false, static fn (array $user): array => $user);
     $assert(false, 'Avatar replacement must reject an outer transaction.');
 } catch (LogicException) {
     $assert($database->inTransaction(), 'Rejecting nested avatar replacement must not roll back the caller transaction.');

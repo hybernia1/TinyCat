@@ -46,7 +46,7 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
     /** @return list<string> */
     public static function tables(): array
     {
-        return [...Content\ServiceProvider::tables(), ...Profiles\Registration::tables(), ...Posts\Registration::tables(), ...Moderation\Registration::tables(), ...Automation\Registration::tables()];
+        return [...Content\Schema::tables(), ...Content\InteractionSchema::tables(), ...Profiles\Schema::tables(), ...Moderation\Schema::tables(), ...Automation\Schema::tables()];
     }
 
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
@@ -54,7 +54,7 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
         return new \TinyCat\Core\Identity\Participant(prepareDelete: static function (array $user): \TinyCat\Core\Identity\Deletion {
             Posts\NotificationCleanup::prepareAccountDelete($user);
             return Content\AccountLifecycle::prepareDelete($user);
-        }, statusChanged: Automation\Registration::accountLifecycle()->statusChanged);
+        }, statusChanged: Automation\Registration::accountStatusChanged(...));
     }
 
     public static function register(Api $api): void

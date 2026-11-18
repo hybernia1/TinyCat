@@ -115,7 +115,7 @@ $pdo->rollBack(); Posts::delete($imageId); clearstatcache(true, $file);
 $assert(Posts::find($imageId) === null && !is_file($file), 'Successful deletion removes the file after commit');
 try { Posts::delete($id, static function () use ($pdo): void { $pdo->exec("UPDATE social_posts SET body = 'side effect'"); throw new RuntimeException('domain callback failed'); }); $assert(false, 'Callback must fail'); }
 catch (RuntimeException) { $assert(Posts::find($id)['body'] === $update->body, 'Related owner failure rolls back its effects and the publication'); }
-$deletion = TinyCat\Social\Content\ServiceProvider::accountLifecycle()->prepareDelete;
+$deletion = TinyCat\Social\Content\AccountLifecycle::prepareDelete(...);
 
 $pdo->beginTransaction(); $cleanup = $deletion($writer); $pdo->exec('DELETE FROM users WHERE id = 1'); ($cleanup->afterDelete)(); $pdo->commit(); ($cleanup->afterCommit)();
 $assert((int) Connection::value('SELECT COUNT(*) FROM social_posts WHERE author_id = 1') === 0 && (int) Connection::value('SELECT COUNT(*) FROM social_post_tags') === 0, 'Account deletion uses only publishing-owned cleanup');

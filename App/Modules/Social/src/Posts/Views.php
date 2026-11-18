@@ -45,7 +45,7 @@ final class Views
     {
         $user = (array) ($data['user'] ?? []);
         if ($user === [] || (int) ($data['content_id'] ?? 0) < 1) { return ''; }
-        return Components::render('status/comment-form', $data + ['viewer' => \TinyCat\Social\Profiles\Resource::profile($user), 'parent_id' => 0, 'mention' => '']);
+        return Components::render('status/comment-form', $data + ['constraints' => Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Resource::profile($user), 'parent_id' => 0, 'mention' => '']);
     }
 
     /** @param array<mixed> $data */
@@ -81,6 +81,7 @@ final class Views
     {
         $editor = (array) ($data['editor'] ?? []);
         return Components::render('status/composer-body', [
+            'constraints' => Resource::constraints(),
             'viewer' => \TinyCat\Social\Profiles\Resource::profile((array) ($data['user'] ?? [])),
             'value' => (string) ($editor['item']['body'] ?? ''),
             'image' => (array) ($editor['image'] ?? []),

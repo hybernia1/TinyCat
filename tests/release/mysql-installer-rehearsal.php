@@ -190,7 +190,7 @@ try {
 
     $mixedName = '2Pac.Žaneta';
     $mixedUserId = (int) \TinyCat\Database\Connection::insert('users', [
-        'username' => \TinyCat\Social\Profiles\Usernames::username_normalize($mixedName),
+        'username' => \TinyCat\Core\Identity\Usernames::normalize($mixedName),
         'password' => \TinyCat\Core\Identity\Authentication::authPassword($password),
         'role' => 'user',
         'status' => 'active',
@@ -198,7 +198,7 @@ try {
         'bio' => '',
     ]);
     $assert((string) \TinyCat\Database\Connection::value('SELECT username FROM users WHERE id = ?', [$mixedUserId]) === $mixedName, 'MySQL preserves the requested username case and diacritics.');
-    $assert(\TinyCat\Social\Profiles\Usernames::user_username_taken('2PAC.ŽANETA'), 'MySQL rejects case variants as duplicate usernames.');
+    $assert(\TinyCat\Core\Identity\Usernames::taken('2PAC.ŽANETA'), 'MySQL rejects case variants as duplicate usernames.');
     $assert(\TinyCat\Core\Identity\Login::auth_attempt(['username' => '2pac.žaneta', 'password' => $password]), 'Case-insensitive login works with a digit prefix and Unicode letters.');
     $assert((string) \TinyCat\Core\Identity\Authentication::auth('username') === $mixedName, 'Login preserves the account display spelling.');
     $assert(\TinyCat\Core\Identity\Login::auth_attempt(['username' => 'INSTALLER_STAGE1', 'password' => $password]), 'Existing lowercase accounts still accept differently cased login input.');

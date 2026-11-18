@@ -48,7 +48,7 @@ final class Web
             "img-src 'self' data: https:",
             "font-src 'self' data:",
             "connect-src 'self'" . ($analyticsConfigured ? ' https://www.google-analytics.com https://region1.google-analytics.com' : '') . $captchaCsp['connect'],
-            "frame-src 'self' " . implode(' ', $playerOrigins ?? \TinyCat\Core\Runtime\Startup::$frameOrigins) . $captchaCsp['frame'],
+            "frame-src 'self' " . implode(' ', $playerOrigins ?? \TinyCat\Core\Links\Providers::playerOrigins()) . $captchaCsp['frame'],
             "media-src 'self' https:",
             "worker-src 'self'",
             "manifest-src 'self'",

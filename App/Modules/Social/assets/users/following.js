@@ -36,7 +36,7 @@ import "../../../../../assets/ui/toasts.js";
       if (!grid.isConnected || !button.isConnected) return;
       payload = data.data;
       payload = Object.assign({}, payload, TinyCat.ui.pagination(data));
-      if (payload.items.length) grid.appendChild(TinyCat.users.profiles(payload.items));
+      if (payload.items.length) grid.appendChild(TinyCat.socialUsers.profiles(payload.items));
 
       if (payload && payload.next_url && payload.done !== true) {
         button.dataset.followingUrl = String(payload.next_url);
@@ -56,7 +56,7 @@ import "../../../../../assets/ui/toasts.js";
   function updateFollowResult(form, data) {
     var payload = unwrapResult(data) || {};
     var authorId = payload.author_id ? String(payload.author_id) : (form ? form.dataset.authorId : "");
-    TinyCat.users.follow(form, payload);
+    TinyCat.socialUsers.follow(form, payload);
 
     if (authorId) {
       qsa("[data-author-stat='followers']" + dataSelector("data-author-id", authorId)).forEach(function (node) {
@@ -78,7 +78,7 @@ import "../../../../../assets/ui/toasts.js";
     if (!source.matches("form[data-follow-form]")) { return false; }
     updateFollowResult(source, response); prepareForms(document); return [];
   };
-  TinyCat.users.following = { init: function () {
+  TinyCat.socialUsers.following = { init: function () {
     document.addEventListener("click", function (event) {
       var trigger = event.target.closest && event.target.closest("[data-following-more], [data-following-load]");
       if (trigger) { event.preventDefault(); loadFollowingMore(trigger); }

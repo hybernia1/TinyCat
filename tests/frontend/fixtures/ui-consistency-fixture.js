@@ -72,14 +72,14 @@
     const more = T.components.render('ui/load-more', { attributes: { class: 'load-more' }, button_attributes: { class: 'btn btn-secondary', type: 'button', 'data-following-more': '', 'data-following-url': '/api/following' }, label: 'More', loading_label: 'Loading' }); modal.append(more); document.body.append(modal);
     const button = more.querySelector('button'), state = more.querySelector('.load-more-state');
     let finish; T.api.request = () => new Promise(resolve => { finish = resolve; });
-    const pending = T.users.following.loadMore(button);
+    const pending = T.socialUsers.following.loadMore(button);
     check(button.disabled && more.classList.contains('is-loading') && more.getAttribute('aria-busy') === 'true' && !state.hidden, 'Following pagination uses the shared loading frame and live status');
     finish({ data: { items: [], done: true }, meta: { pagination: { page: 1, per_page: 25, total: 0 } } }); await pending;
     check(!more.isConnected, 'Exhausted following pagination removes its entire frame');
     modal.remove(); sidebar.remove(); row.remove(); form.remove();
     const draft = document.createElement('form'); draft.style.cssText = 'position:fixed;top:100px;left:12px;right:12px';
     draft.append(T.components.render('publishing/editor', {name:'body',value:'',placeholder:'Text',comment:false,suggest_url:'/api/search/suggestions'})); document.body.append(draft);
-    const E = T.status.controllers.editor, pendingSuggestions = [];
+    const E = T.publishing.controllers.editor, pendingSuggestions = [];
     T.api.request = (url, options) => new Promise(resolve => pendingSuggestions.push({url,options,resolve}));
     E.hydrate(draft);
     const editorRoot = draft.querySelector('[data-status-editor]'), editorInput = E.getInput(editorRoot), suggestions = E.getBox(editorRoot);

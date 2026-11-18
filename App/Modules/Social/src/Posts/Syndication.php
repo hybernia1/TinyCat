@@ -74,7 +74,7 @@ final class Syndication
 
         $siteName = \TinyCat\Core\Ui\Site::site_name();
         $selfUrl = \TinyCat\Core\Ui\Site::absolute_url($rssSelfLink);
-        $locale = \TinyCat\Social\Presentation\Discovery::locale();
+        $locale = \TinyCat\Support\Localization::defaultLocale();
         $items = [];
         // Load all preview candidates once; exporting a feed must not fetch remote metadata.
         Links::status_links_cache(array_column($rssItems, 'id'));

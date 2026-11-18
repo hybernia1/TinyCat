@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Search;
 
-final class Registration implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesContributions
+final class Registration
 {
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {

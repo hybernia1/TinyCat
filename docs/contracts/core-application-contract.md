@@ -155,6 +155,39 @@ seznamu v `PublicPages`. Navigaci, historii a ochranu konceptů nadále řídí
 `TinyCat.navigation`; Blog používá tentýž serverový router a společnou navigaci
 seznamů, bez vlastního veřejného AJAX rozcestníku.
 
+Klientská navigace stránky registruje
+`TinyCat.navigation.registerPage({ accepts, target, load, apply })`.
+Její klientský vstup importuje volitelný mechanismus `assets/core/page-navigation.js`;
+instalátor a stránky bez této navigace jej nestahují.
+`accepts(url)` vymezuje podporované URL, `target` je selektor obsahu,
+`load(url, signal)` vrací resource s kanonickým `url` a `apply(target, data)`
+synchronně vykreslí obsah vlastníka. Modul při čtení předává `signal`
+společnému API klientu. Core vlastní rušení souběžných čtení, busy stav,
+ochranu pozdních odpovědí, historii `pageIndex`, scroll, guard konceptů
+a fallback na dokument. Odstranění cílového kontejneru přes lifecycle ruší
+jeho čtení; dispose během schváleného vykreslení neruší dokončovanou navigaci.
+Historie dialogů sdílí tento index a obnovuje scroll pozadí přes core.
+Modul nezavádí vlastní `visit`/`restore` ani scroll listener.
+
+Klientská služba modulu má vlastní objekt. Sociální vztahy používají
+`TinyCat.socialUsers`, účty `TinyCat.accounts`; modul nerozšiřuje účtový objekt
+přes kompatibilní alias. Sdílený editor, média a překlady se používají přímo
+z `TinyCat.publishing.controllers`, nikoli kopírováním jeho ovladačů.
+
+Veřejné strojové dokumenty používají `Http/Document::respond()` a pro své
+protokolové chyby `Document::jsonError()`. Tento formát není aplikační API:
+doménové API nadále používá společnou obálku `Response` a `Result`.
+`Localization::defaultLocale()` vrací nakonfigurovaný jazyk instalace a nemění
+aktuální jazyk návštěvníka. Feed a embed si tak neodvozují další globální
+jazykovou politiku v modulu. CSP podporovaných přehrávačů vlastní společná
+HTTP vrstva a katalog core odkazů; moduly nezapisují do globálního seznamu originů.
+
+Status a komentář Socialu deklarují pravidla v `PostCreation::rules()` a
+`Interactions::rules()`. HTTP ověřuje typ a limit před přetypováním; příliš
+dlouhý ruční vstup vrátí HTTP 422 s chybou pole bez zkrácení konceptu.
+Metadata resource a editor používají `Validator::constraints()` a Unicode
+`data-max-length`. Feedová příprava nadále zkracuje anotace limitem vlastníka.
+
 ## UI a vynucení
 
 Modul dodává význam, pole a data. Core řídí načtení resource, sestavení formuláře,

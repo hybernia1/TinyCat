@@ -97,11 +97,11 @@ $assert(array_map(static fn ($entry): string => $entry->id, $reverse->entries->t
 \TinyCat\Support\Config::configure(new Configuration(['database' => ['dsn' => 'sqlite::memory:'], 'cache' => ['driver' => 'filesystem']]));
 $assert((new ReflectionMethod(\TinyCat\Support\Cache::class, 'driver'))->invoke(null) === 'filesystem' && !class_exists(\TinyCat\Core\Settings\Store::class, false), 'Technical cache configuration does not load Settings');
 \TinyCat\Support\Localization::locale('en');
-$menu = \TinyCat\Social\Presentation\Navigation::administration();
+$menu = \TinyCat\Core\Ui\Admin\Navigation::administration();
 $assert(count($menu) === 9 && $menu[0]['href'] === '/admin' && $menu[1]['href'] === '/admin/users' && $menu[8]['modal_url'] === '/api/settings/editor', 'Existing navigation shape is preserved alongside core module management');
 $assert(in_array('/admin/modules', array_column($menu, 'href'), true), 'Core module management is present in administration');
 \TinyCat\Support\Localization::locale('cs');
-$assert(\TinyCat\Social\Presentation\Navigation::administration()[1]['label'] !== $menu[1]['label'], 'Navigation labels resolve in the current language at render time');
+$assert(\TinyCat\Core\Ui\Admin\Navigation::administration()[1]['label'] !== $menu[1]['label'], 'Navigation labels resolve in the current language at render time');
 \TinyCat\Database\Connection::exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, task TEXT, status TEXT, started_at TEXT)');
 \TinyCat\Database\Connection::exec('INSERT INTO scheduler_runs (task, status, started_at) VALUES (?, ?, ?)', ['cleanup', 'completed', date('Y-m-d H:i:s')]);
 $withoutBots = new Catalog(array_values(array_filter($modules->catalog->definitions(), static fn ($definition): bool => $definition->id !== 'tinycat.social')));
@@ -115,7 +115,7 @@ $assert(isset(\TinyCat\Core\Tasks\Tasks::definitions()['feeds']), 'Leaving a sel
 $fingerprint = Resources::fingerprint();
 Resources::withCatalog(new Catalog([]), static function () use ($assert, $fingerprint): void {
     $assert(Resources::fingerprint() !== $fingerprint, 'A scoped selection invalidates the cached fingerprint');
-    $assert(\TinyCat\Core\Tasks\Tasks::definitions() === [] && \TinyCat\Social\Presentation\Navigation::administration() === [] && \TinyCat\Core\Health\Checks::definitions() === [] && \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks() === [], 'An empty selection has no domain contributions');
+    $assert(\TinyCat\Core\Tasks\Tasks::definitions() === [] && \TinyCat\Core\Ui\Admin\Navigation::administration() === [] && \TinyCat\Core\Health\Checks::definitions() === [] && \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks() === [], 'An empty selection has no domain contributions');
 });
 $assert(Resources::fingerprint() === $fingerprint, 'Leaving a scope restores the fingerprint of the original selection');
 

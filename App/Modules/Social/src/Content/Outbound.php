@@ -8,9 +8,6 @@ final class Outbound
     /** @param \Closure(): array<mixed>|null $attachments
      * @return array{url: string, original_url: string}|null */
     public static function resolve(string $hash, string $body, ?\Closure $attachments = null): ?array { return \TinyCat\Core\Links\Outbound::resolve($hash, $body, $attachments, self::tagged(...)); }
-    /** @param array{url: string, original_url: string}|null $link
-     * @return array{url: string, original_url: string} */
-    public static function response(\TinyCat\Http\Request $request, ?array $link): array { return \TinyCat\Core\Links\Outbound::response($request, $link); }
     /** @return array{url: string, original_url: string}|null */
     public static function destination(string $raw): ?array { return \TinyCat\Core\Links\Outbound::destination($raw, self::tagged(...)); }
 

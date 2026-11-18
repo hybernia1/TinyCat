@@ -5,7 +5,7 @@ import "./lifecycle.js";
 (function () {
   "use strict";
   var T = window.TinyCat, routes = new Map(), helpUrl = null, pageRoute = null, overlay = null, beforeLeave = function () { return true; };
-  var renderedPage = new URL(window.location.href).pathname + new URL(window.location.href).search;
+  var initial = new URL(window.location.href), renderedPage = initial.pathname + initial.search;
   function urlWithFormData(action, formData, omit) {
     var url = new URL(action || window.location.href, window.location.href);
     var ignored = omit || [];
@@ -66,23 +66,20 @@ import "./lifecycle.js";
       if (!(await beforeLeave())) return;
       var replace = overlay && overlay.leave();
       if (pageRoute && pageRoute.accepts(new URL(url, window.location.href))) {
-        if (await pageRoute.visit(new URL(url, window.location.href), null, replace) === false) return;
-        var page = new URL(window.location.href); renderedPage = page.pathname + page.search;
+        await pageRoute.visit(new URL(url, window.location.href), null, replace);
         return;
       }
       window.location[replace ? "replace" : "assign"](url);
     },
     registerOverlay: function (provider) { if (overlay) throw new TypeError("Duplicate navigation overlay provider."); overlay = provider; },
     canLeave: function () { return beforeLeave(); },
-    registerPage: function (route) { if (pageRoute) { throw new TypeError("Duplicate page navigation provider."); } pageRoute = route; },
+    registerPage: function (route) { if (pageRoute) { throw new TypeError("Duplicate page navigation provider."); } pageRoute = T.navigation.createPageRoute(route); },
     register: function (path, route) { if (routes.has(path)) { throw new TypeError("Duplicate history route: " + path); } routes.set(path, route); },
     pageUrl: function (url) { if (url) renderedPage = url.pathname + url.search; return renderedPage; },
     restorePage: async function (event, url) {
       var page = new URL(url || window.location.href, window.location.href);
       if (pageRoute && pageRoute.accepts(page)) {
-        if (await pageRoute.restore(event, page) === false) return false;
-        renderedPage = page.pathname + page.search;
-        return true;
+        return pageRoute.restore(event, page);
       }
       var route = routes.get(page.pathname), target = route && document.querySelector(route.target);
       if (!target) { return false; }

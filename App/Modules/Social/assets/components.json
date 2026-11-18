@@ -1075,7 +1075,10 @@
         ]
       },
       "suggest_url": "/api/search/suggestions",
-      "submit_controller": "social"
+      "submit_controller": "social",
+      "constraints": {
+        "get": "constraints"
+      }
     }
   },
   "status/comment": {
@@ -1109,7 +1112,10 @@
       },
       "suggest_url": "/api/search/suggestions",
       "submit_controller": "social",
-      "reply_mentions": true
+      "reply_mentions": true,
+      "constraints": {
+        "get": "item.constraints"
+      }
     }
   },
   "status/thread": {
@@ -1136,6 +1142,9 @@
           "mention": "",
           "viewer": {
             "get": "viewer"
+          },
+          "constraints": {
+            "get": "item.constraints"
           }
         },
         "when": {
@@ -1265,7 +1274,9 @@
               },
               "comment": false,
               "suggest_url": "/api/search/suggestions",
-              "max_length": 2000
+              "max_characters": {
+                "get": "constraints.body.max_length"
+              }
             }
           },
           {
@@ -8200,7 +8211,10 @@
                                 "t": "account.status_create",
                                 "values": {}
                               },
-                              "submit_icon": "send"
+                              "submit_icon": "send",
+                              "constraints": {
+                                "get": "constraints"
+                              }
                             }
                           }
                         ]

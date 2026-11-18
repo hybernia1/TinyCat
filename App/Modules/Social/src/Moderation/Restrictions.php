@@ -27,7 +27,7 @@ final class Restrictions
     {
         $userId = (int) ($user['id'] ?? 0);
 
-        if (\TinyCat\Social\Profiles\Profiles::user_is_admin($user)) {
+        if (\TinyCat\Core\Identity\Roles::isAdmin($user)) {
             return 'trusted';
         }
 

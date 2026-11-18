@@ -2,17 +2,14 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Automation;
 
-final class Registration implements \TinyCat\Core\Modules\ProvidesManagedSchema, \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle
+final class Registration
 {
-    public static function schema(): \TinyCat\Core\Modules\ModuleSchema { return Schema::schema(); }
-
-    public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
+    /** @param array<string, mixed> $user */
+    public static function accountStatusChanged(array $user, bool $active): void
     {
-        return new \TinyCat\Core\Identity\Participant(statusChanged: static function (array $user, bool $active): void {
-            if (!$active && ($user['role'] ?? '') === 'bot') {
-                \TinyCat\Database\Connection::update('bot_sources', ['enabled' => 0], ['bot_user_id' => (int) $user['id']]);
-            }
-        });
+        if (!$active && ($user['role'] ?? '') === 'bot') {
+            \TinyCat\Database\Connection::update('bot_sources', ['enabled' => 0], ['bot_user_id' => (int) $user['id']]);
+        }
     }
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
@@ -25,12 +22,6 @@ final class Registration implements \TinyCat\Core\Modules\ProvidesManagedSchema,
                 new \TinyCat\Core\Modules\MaintenanceTask('duplicate_bot_posts', static fn (int $batch): array => DuplicateCleanup::run($batch), 140),
             ],
         );
-    }
-
-    /** @return list<string> */
-    public static function tables(): array
-    {
-        return \TinyCat\Social\Automation\Importer::requiredTables();
     }
 
     /**

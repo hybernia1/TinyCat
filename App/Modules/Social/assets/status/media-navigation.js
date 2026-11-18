@@ -39,5 +39,5 @@ import "./controller.js";
     url.searchParams.set("compact", "1");
     return compactUrl(url);
   }
-  Object.assign(TinyCat.status.controllers.media, { mobileStatusUrl: mobileStatusUrl, mobileStatusPageUrl: mobileStatusPageUrl });
+  TinyCat.status.navigation = { mobileStatusUrl: mobileStatusUrl, mobileStatusPageUrl: mobileStatusPageUrl };
 }());

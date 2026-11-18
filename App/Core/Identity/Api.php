@@ -54,7 +54,7 @@ final class Api
             $user = ReadModel::tc_admin_user_by_id((int) $p['id']);
             if ($user === null || !Roles::managedByCoreAdmin((string) ($user['role'] ?? ''))) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
             $data = $r->validated(['enabled' => 'required|boolean']);
-            $active = in_array($data['enabled'], [true, 1, '1'], true);
+            $active = filter_var($data['enabled'], FILTER_VALIDATE_BOOLEAN);
             try { \TinyCat\Core\Identity\Administration::setActive(self::actor(), $user, $active, \TinyCat\Core\Identity\Participants::current()); }
             catch (\DomainException $exception) {
                 if ($exception->getMessage() === 'user_not_found') { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }

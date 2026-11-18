@@ -29,6 +29,18 @@ stejná pravidla pro výslednou anotaci. Dosavadní pravidlo pro odkazy v anotac
 zůstává: obecné URL nahradí samostatný odkaz článku, podporovaná videa zůstávají.
 Toto pravidlo parseru se nepoužívá na ručně napsaná těla příspěvků.
 
+## Limity ručního zadání a importu
+
+Social deklaruje limit těla v `PostCreation::rules()`. Ruční vytvoření a editace
+validují původní vstup společným validátorem před přetypováním a přípravou textu.
+Neplatný typ nebo více než 2000 Unicode znaků vrátí HTTP 422 s chybou pole `body`;
+editor zachová celý koncept. Prázdné tělo je přípustné při přiloženém obrázku.
+Metadata editoru odvozuje `Validator::constraints()` ze stejných pravidel.
+
+Feedový import používá `PostCreation::fromText()` a zachovává dosavadní zkrácení
+anotace na limit vlastníka před odvozením vztahů. Komentáře mají vlastní pravidla
+v `Interactions::rules()` a při překročení limitu chybu pole `comment`.
+
 ## Jednorázová oprava databáze
 
 Nástroj je pouze pro CLI, není migrací a nespouští se automaticky:

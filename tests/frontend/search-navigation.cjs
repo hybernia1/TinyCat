@@ -16,12 +16,13 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
     createElement: () => ({ setAttribute(key, value) { this[key] = value; }, remove() { const metaIndex = metaNodes.indexOf(this); if (metaIndex >= 0) { metaNodes.splice(metaIndex, 1); } const index = tagNodes.indexOf(this); if (index >= 0) { tagNodes.splice(index, 1); } } }), addEventListener: (name, fn) => { handlers[name] = fn; } };
   const data = { version: "4.5.0", locale: "cs", viewer: null, kind: "search", url: "/search?q=quartz&type=users", search: { query: "quartz" }, document: { title: "Search quartz", url: "http://tinycat.test/search?q=quartz&type=users" }, sidebar_url: "/api/site/sidebar" };
   const T = { urls: { split: p => ({ path: p, locale: "" }), prefix: () => "" }, dialog: { current: () => null },
-    navigation: { registerPage: r => { route = r; }, go: url => { current = url; }, canLeave: async () => true },
+    navigation: {},
     api: { request: async url => { requests.push(url); return { data }; }, csrfToken: () => "test" },
     lifecycle: { register: (name, service) => { services[name] = service; }, dispose: () => { disposed++; }, hydrate() {} },
     components: { render: () => ({ querySelector: () => slot }) }, site: { activateSidebar() {} } };
-  const window = { TinyCat: T, location: { href: "http://tinycat.test/", origin: "http://tinycat.test", assign() { assigned++; } }, history: { replaceState() { replacements++; }, pushState() { pushes++; }, go(distance) { rollbackDistance = distance; } }, matchMedia: () => ({ matches: true }), clearTimeout() {}, setTimeout() {}, addEventListener() {}, scrollTo() {} };
-  for (const file of ["assets/ui/document-navigation.js", "App/Modules/Social/assets/site/page-navigation.js"]) {
+  const window = { TinyCat: T, location: { href: "http://tinycat.test/", origin: "http://tinycat.test", assign() { assigned++; } }, history: { replaceState(state) { this.state = state; replacements++; }, pushState(state) { this.state = state; pushes++; }, go(distance) { rollbackDistance = distance; } }, matchMedia: () => ({ matches: true }), clearTimeout() {}, setTimeout() {}, addEventListener() {}, scrollTo() {} };
+  for (const file of ["assets/core/navigation.js", "assets/core/page-navigation.js", "assets/ui/document-navigation.js", "App/Modules/Social/assets/site/page-navigation.js"]) {
+    if (file.startsWith("App/Modules/Social/")) { const register = T.navigation.registerPage; T.navigation.registerPage = r => { route = r; register(r); }; }
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, URL, AbortController });
   }
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&type=users")), true);
@@ -31,7 +32,10 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   assert.equal(route.accepts(new URL("http://tinycat.test/?media=images")), true);
   assert.equal(route.accepts(new URL("http://tinycat.test/?feed=following&media=video")), true);
   assert.equal(route.accepts(new URL("http://tinycat.test/status/10?media=video")), false);
+  services.navigation.init();
+  services["page-navigation"].init();
   services["public-pages"].init();
+  const go = T.navigation.go; T.navigation.go = url => { current = url; };
   let prevented = false;
   const form = { action: "http://tinycat.test/search", querySelector: () => ({ value: "quartz" }) };
   handlers.submit({ target: { closest: () => form }, preventDefault() { prevented = true; } });
@@ -39,7 +43,15 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   form.action = "http://tinycat.test/search/all"; prevented = false;
   handlers.submit({ target: { closest: () => form }, preventDefault() { prevented = true; } });
   assert.equal(prevented, false, "Shared search uses native navigation instead of the specialized social renderer");
-  await route.visit(new URL("http://tinycat.test/search?q=quartz&type=users"));
+  const link = {href:"http://tinycat.test/search?q=clicked",hasAttribute:()=>false};
+  let intercepted = false;
+  handlers.click({button:0,target:{closest:()=>link},preventDefault(){intercepted=true;}});
+  assert.equal(intercepted,true,"Core intercepts ordinary links accepted by the page provider");
+  assert.equal(current,link.href);
+  intercepted=false;
+  handlers.click({button:0,ctrlKey:true,target:{closest:()=>link},preventDefault(){intercepted=true;}});
+  assert.equal(intercepted,false,"Modified clicks retain native browser navigation");
+  await go(new URL("http://tinycat.test/search?q=quartz&type=users"));
   assert.equal(retained, side, "Search navigation retains the exact sidebar node");
   assert.equal(requests.length, 1); assert.equal(new URL(requests[0]).pathname, "/api/site/pages");
   assert.equal(new URL(requests[0]).searchParams.get("q"), "quartz");
@@ -47,34 +59,35 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   assert.equal(input.value, "quartz"); assert.equal(results.hidden, true);
   assert.equal(assigned, 0, "Search does not fall back to a document reload"); assert.equal(disposed, 1);
   data.kind = "home"; data.url = "/?feed=following&media=video";
-  await route.visit(new URL("http://tinycat.test/?feed=following&media=video"));
+  await go(new URL("http://tinycat.test/?feed=following&media=video"));
   assert.equal(new URL(requests[1]).searchParams.get("media"), "video");
   assert.equal(new URL(requests[1]).searchParams.get("feed"), "following");
   assert.equal(assigned, 0, "Filtered home navigation does not reload the document");
   const previousPushes = pushes, previousReplacements = replacements;
-  await route.visit(new URL("http://tinycat.test/?feed=following&media=video"), null, true);
+  T.navigation.registerOverlay({ leave: () => true });
+  await go(new URL("http://tinycat.test/?feed=following&media=video"));
   assert.equal(pushes, previousPushes, "A visit from a modal does not add a duplicate page entry");
   assert.equal(replacements, previousReplacements + 2, "The visit snapshots scroll and reuses the modal entry without pushing another page");
   const previousRequests = requests.length;
-  T.navigation.canLeave = async () => false;
-  assert.equal(await route.restore({state:{publicIndex:2}}), false, "A cancelled page restoration explicitly reports that no content changed");
+  T.navigation.guard(async () => false);
+  assert.equal(await T.navigation.restorePage({state:{pageIndex:2}}), false, "A cancelled page restoration explicitly reports that no content changed");
   assert.equal(requests.length, previousRequests); assert.equal(rollbackDistance, 1);
-  assert.equal(await route.restore({state:{publicIndex:3}}), false, "The rollback traversal does not load another page");
-  T.navigation.canLeave = async () => true;
-  await route.restore({state:{publicIndex:1}}, new URL("http://tinycat.test/search?q=restored"));
+  assert.equal(await T.navigation.restorePage({state:{pageIndex:3}}), false, "The rollback traversal does not load another page");
+  T.navigation.guard(async () => true);
+  await T.navigation.restorePage({state:{pageIndex:1}}, new URL("http://tinycat.test/search?q=restored"));
   assert.equal(new URL(requests.at(-1)).searchParams.get('path'), '/search');
   assert.equal(new URL(requests.at(-1)).searchParams.get('q'), 'restored', "Overlay restoration supplies its clean base-page URL");
   data.kind = "status"; data.url = "/status/10"; data.document.type = "article"; data.document.tags = ["cats", "news"]; data.document.meta_title = "Clean post title"; data.document.locale = "cs_CZ";
-  await route.visit(new URL("http://tinycat.test/status/10"));
+  await go(new URL("http://tinycat.test/status/10"));
   assert.deepEqual(tagNodes.map(node => node.content), ["cats", "news"], "Post navigation publishes all article tags");
   assert.equal(head.querySelector('meta[property="og:title"]').content, "Clean post title", "Navigation uses the same normalized social title as HTML");
   assert.equal(head.querySelector('meta[name="twitter:title"]').content, "Clean post title");
   assert.equal(head.querySelector('meta[property="og:locale"]').content, "cs_CZ", "Navigation retains the document Open Graph locale");
   data.document.tags = ["updated"];
-  await route.visit(new URL("http://tinycat.test/status/11"));
+  await go(new URL("http://tinycat.test/status/11"));
   assert.deepEqual(tagNodes.map(node => node.content), ["updated"], "Next post replaces previous tags without duplicates");
   data.kind = "home"; data.document.type = "website"; delete data.document.tags;
-  await route.visit(new URL("http://tinycat.test/"));
+  await go(new URL("http://tinycat.test/"));
   assert.equal(tagNodes.length, 0, "Leaving a post removes its article tags");
   assert.equal(assigned, 0, "Metadata updates preserve client navigation");
   console.log("PASS search uses shared page navigation, preserves sidebar and submits without reload");

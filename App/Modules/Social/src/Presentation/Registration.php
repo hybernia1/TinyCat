@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Presentation;
 
-final class Registration implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Runtime\InitializesModule
+final class Registration
 {
     public static function initialize(): void
     {

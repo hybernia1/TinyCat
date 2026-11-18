@@ -128,7 +128,8 @@
     "uses": [
       "publishing.presentation",
       "publishing.editor",
-      "publishing.discussion-base"
+      "publishing.discussion-base",
+      "ui.form-constraints"
     ]
   },
   {

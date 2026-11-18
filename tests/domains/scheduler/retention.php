@@ -56,7 +56,7 @@ $file('uploads/avatars/.image-fresh', 60);
 $file('uploads/status-images/2026/10/.image-abandoned');
 $file('uploads/links/2026/10/.image-abandoned');
 for ($attempt = 0; $attempt < 20; $attempt++) {
-    $result = \TinyCat\Social\Profiles\Avatar::cleanupOrphans(2);
+    $result = \TinyCat\Core\Identity\Avatar::cleanupOrphans(2);
     $assert($result['changed'] <= 2, 'Avatar removal stays within its scan budget.');
     if (!$result['has_more']) { break; }
 }

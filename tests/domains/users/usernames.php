@@ -14,27 +14,27 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     }
 };
 foreach (['Al', 'Alice', 'Žaneta.Novák', 'Jan-Novak', '2Pac', 'old_user_', '李明', 'مريم', str_repeat('Ž', 32)] as $name) {
-    $assert(\TinyCat\Social\Profiles\Usernames::username_valid($name), 'Valid relaxed username rejected: ' . $name);
+    $assert(\TinyCat\Core\Identity\Usernames::valid($name), 'Valid relaxed username rejected: ' . $name);
 }
 foreach (['A', '123', '１２３', '_Alice', '.Alice', 'Alice.', 'Alice-', 'Alice Smith', 'Alice@example.com', '../Alice', 'Alice/Smith', '<Alice>', "Ali\nce", "Alice\u{200B}", 'Alice😺', str_repeat('a', 33), str_repeat('Ž', 33)] as $name) {
-    $assert(!\TinyCat\Social\Profiles\Usernames::username_valid($name), 'Invalid username accepted: ' . $name);
+    $assert(!\TinyCat\Core\Identity\Usernames::valid($name), 'Invalid username accepted: ' . $name);
 }
-$assert(\TinyCat\Social\Profiles\Usernames::username_normalize('  Žaneta.Novák  ') === 'Žaneta.Novák', 'Normalization must preserve display case and diacritics.');
-$assert(\TinyCat\Social\Profiles\Usernames::username_key('ŽANETA.NOVÁK') === \TinyCat\Social\Profiles\Usernames::username_key('žaneta.novák'), 'Mention lookup keys must be case insensitive for Unicode.');
+$assert(\TinyCat\Core\Identity\Usernames::normalize('  Žaneta.Novák  ') === 'Žaneta.Novák', 'Normalization must preserve display case and diacritics.');
+$assert(\TinyCat\Core\Identity\Usernames::key('ŽANETA.NOVÁK') === \TinyCat\Core\Identity\Usernames::key('žaneta.novák'), 'Mention lookup keys must be case insensitive for Unicode.');
 
 if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     $database = new PDO('sqlite::memory:');
     $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $database->sqliteCreateCollation('USERNAME_CASE', static fn (string $a, string $b): int => strcmp(\TinyCat\Social\Profiles\Usernames::username_key($a), \TinyCat\Social\Profiles\Usernames::username_key($b)));
+    $database->sqliteCreateCollation('USERNAME_CASE', static fn (string $a, string $b): int => strcmp(\TinyCat\Core\Identity\Usernames::key($a), \TinyCat\Core\Identity\Usernames::key($b)));
     $database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT COLLATE USERNAME_CASE UNIQUE NOT NULL, status TEXT NOT NULL)');
     $insert = $database->prepare("INSERT INTO users (id, username, status) VALUES (?, ?, 'active')");
     foreach ([1 => 'Žaneta.Novák', 2 => 'Jan-Novak', 3 => 'old_user_', 7 => '2Pac', 8 => str_repeat('a', 32)] as $id => $name) {
         $insert->execute([$id, $name]);
     }
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
-    $assert(\TinyCat\Social\Profiles\Usernames::user_username_taken('ŽANETA.NOVÁK'), 'A differently cased username must remain taken.');
-    $assert(!\TinyCat\Social\Profiles\Usernames::user_username_taken('ŽANETA.NOVÁK', 1), 'The current account must be excluded from duplicate checks.');
+    $assert(\TinyCat\Core\Identity\Usernames::taken('ŽANETA.NOVÁK'), 'A differently cased username must remain taken.');
+    $assert(!\TinyCat\Core\Identity\Usernames::taken('ŽANETA.NOVÁK', 1), 'The current account must be excluded from duplicate checks.');
     $assert(
         \TinyCat\Social\Posts\Mentions::normalize_mentions_for_storage('Ahoj @ŽANETA.NOVÁK. @2Pac @Jan-Novak @old_user_ @7') === 'Ahoj @1. @7 @2 @3 @7',
         'Unicode, case, punctuation, digit prefixes and existing numeric mention IDs must resolve consistently.'
@@ -51,9 +51,9 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
 }
 
 foreach ([
-    \TinyCat\Social\Profiles\Views::authForm(['mode' => 'register']),
-    \TinyCat\Social\Profiles\Views::adminFormFields(['create' => true]),
+    \TinyCat\Core\Identity\Views::authForm(['mode' => 'register']),
+    \TinyCat\Core\Identity\Views::adminFormFields(['create' => true]),
 ] as $form) {
-    $assert(str_contains($form, 'pattern="' . \TinyCat\Support\Html::e(\TinyCat\Social\Profiles\Usernames::username_pattern()) . '"'), 'Rendered username forms must use the shared validation pattern.');
+    $assert(str_contains($form, 'pattern="' . \TinyCat\Support\Html::e(\TinyCat\Core\Identity\Usernames::pattern()) . '"'), 'Rendered username forms must use the shared validation pattern.');
 }
 echo "PASS relaxed usernames ({$checks} checks)\n";

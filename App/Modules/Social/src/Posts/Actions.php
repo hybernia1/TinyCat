@@ -34,16 +34,6 @@ final class Actions
         }
     }
 
-    /**
-     * @return array<mixed>
-     */
-    public static function status_require_valid_tags(string $text): array
-    {
-        $rejection = PostCreation::tagRejection($text);
-        if ($rejection !== null) { self::status_content_rejected($rejection); }
-        return Tags::status_tags_from_text($text);
-    }
-
     /** @param array{code: string, message_key: string, params: array<string, int|string>} $rejection */
     private static function status_content_rejected(array $rejection): never
     {
@@ -122,7 +112,7 @@ final class Actions
      * @param array<mixed> $user
      * @return array<mixed>
      */
-    public static function status_json_create(array $user, string $redirect = '/'): array
+    public static function status_json_create(array $user): array
     {
         $draft = self::status_draft();
         $userId = (int) ($user['id'] ?? 0);
@@ -192,17 +182,10 @@ final class Actions
         return ['action' => 'react', 'status' => Posts::status_json_summary($contentId, $user)];
     }
 
-    /**
-     * @return array<mixed>
-     */
-    public static function status_payload(): array
-    {
-        return self::status_draft()->payload();
-    }
-
     private static function status_draft(): PostCreation
     {
-        $draft = PostCreation::fromText((string) \TinyCat\Http\Request::current()->input('body', ''));
+        $input = \TinyCat\Http\Request::current()->validated(PostCreation::rules());
+        $draft = PostCreation::fromText((string) ($input['body'] ?? ''));
         if ($draft->rejection !== null) { self::status_content_rejected($draft->rejection); }
         return $draft;
     }
@@ -266,7 +249,7 @@ final class Actions
      * @param array<mixed> $user
      * @return array<mixed>
      */
-    public static function status_json_update(int $contentId, array $user, string $redirect = '/'): array
+    public static function status_json_update(int $contentId, array $user): array
     {
         $item = \TinyCat\Social\Posts\Posts::status_find($contentId);
 
@@ -274,7 +257,7 @@ final class Actions
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden');
         }
 
-        if (!\TinyCat\Social\Profiles\Profiles::user_is_admin($user)) {
+        if (!\TinyCat\Core\Identity\Roles::isAdmin($user)) {
             \TinyCat\Social\Posts\Actions::status_json_require_not_muted($user);
         }
 
@@ -392,32 +375,33 @@ final class Actions
         return '/login?next=' . rawurlencode($next);
     }
 
+    private static function commentInput(): string
+    {
+        $input = \TinyCat\Http\Request::current()->validated(\TinyCat\Social\Content\Interactions::rules());
+        return (string) ($input['comment'] ?? '');
+    }
+
     /**
      * @param array<mixed> $user
      * @return array<mixed>
      */
-    public static function status_json_comment_payload(int $commentId, array $user, string $action, string $context = ''): array
+    private static function commentResource(int $commentId, array $user): array
     {
         $comment = \TinyCat\Social\Content\Comments::status_comment_item_find($commentId);
         if ($comment === null) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.comment_not_found'), 404, 'comment_not_found'); }
         return Resource::comment($comment, $user);
     }
 
-    public static function status_comment_input_body(): string
-    {
-        return \TinyCat\Social\Content\Interactions::body((string) \TinyCat\Http\Request::current()->input('comment', ''), 'post');
-    }
-
     /**
      * @param array<mixed> $user
      * @return array<mixed>
      */
-    public static function status_json_comment(int $contentId, int $parentId, array $user, string $redirect = '/', string $context = ''): array
+    public static function status_json_comment(int $contentId, int $parentId, array $user): array
     {
-        $result = \TinyCat\Social\Content\Interactions::write('post', $contentId, $user, 'comment', body: (string) \TinyCat\Http\Request::current()->input('comment', ''), parentId: $parentId);
+        $result = \TinyCat\Social\Content\Interactions::write('post', $contentId, $user, 'comment', body: self::commentInput(), parentId: $parentId);
         $id = (int) $result['comment_id'];
         return ['action' => 'comment', 'status' => Posts::status_json_summary($contentId, $user), 'comment_id' => $id,
-            'comment' => self::status_json_comment_payload($id, $user, $redirect, $context),
+            'comment' => self::commentResource($id, $user),
             'message' => \TinyCat\Support\Localization::t('account.messages.comment_created'), 'code' => 'comment_created'];
     }
 
@@ -442,7 +426,7 @@ final class Actions
     {
         $comment = \TinyCat\Social\Content\Comments::status_comment_find($commentId);
         $id = (int) ($comment['content_id'] ?? 0);
-        \TinyCat\Social\Content\Interactions::write('post', $id, $user, 'comment_update', $commentId, (string) \TinyCat\Http\Request::current()->input('comment', ''));
+        \TinyCat\Social\Content\Interactions::write('post', $id, $user, 'comment_update', $commentId, self::commentInput());
         return ['action' => 'comment_update', 'status' => Posts::status_json_summary($id, $user),
             'updated_comment' => Resource::comment(\TinyCat\Social\Content\Comments::status_comment_item_find($commentId) ?? [], $user),
             'message' => \TinyCat\Support\Localization::t('account.messages.comment_saved'), 'code' => 'comment_saved'];

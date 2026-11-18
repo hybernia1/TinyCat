@@ -75,6 +75,26 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.0.13
+
+Requires completed **6.0.10 or newer** and PHP 8.4. Refresh the inherited rescue
+launcher on 6.0.10 as documented below. No new database migrations are introduced;
+published migration checksums and installed module ownership remain unchanged.
+Social now shares core navigation, identity administration and HTTP mechanisms.
+The signed deletion plan removes eight retired Social adapters.
+
+Build the compatibility update separately from the production fresh installation,
+retaining Blog for existing installed owners:
+
+```sh
+php tools/release/build-update.php --version=6.0.13 --assembly=development --active=tinycat.social --output=.work/releases/release-6-0-13/update
+php tools/release/build-update.php --version=6.0.13 --assembly=platform --fresh-install --output=.work/releases/release-6-0-13/install
+```
+
+Verify the exact update artifact against published 6.0.10 and 6.0.12 platform
+sources with `--platform-baseline --direct-web --cached-autoload`, including exact
+rollback. The 6.0.11 platform baseline additionally covers its default-active Blog.
+
 ## Upgrading to 6.0.12
 
 Requires a completed **6.0.10 or newer** installation and PHP 8.4. From 6.0.10,

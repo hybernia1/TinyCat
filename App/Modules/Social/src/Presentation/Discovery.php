@@ -3,28 +3,10 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Presentation;
 
-use TinyCat\Http\Document;
 use TinyCat\Support\View;
-use TinyCat\Support\Xml;
 
 final class Discovery
 {
-    public static function handles(string $path): bool
-    {
-        return in_array($path, ['/robots.txt', '/robots', '/llms.txt', '/llms-full.txt', '/llms', '/sitemap.xml', '/sitemap'], true)
-            || preg_match('~^/sitemap-[a-z][a-z0-9_-]{0,63}-[1-9][0-9]*[.]xml$~D', $path) === 1
-            || preg_match('~^/(?:search|author/[0-9]+|tag/[^/]+)/feed$~D', $path) === 1;
-    }
-
-    public static function locale(): string
-    {
-        return \TinyCat\Support\Languages::language_code((string) \TinyCat\Core\Settings\Store::config('i18n.locale', \TinyCat\Core\Settings\Store::config('install.locale', 'en'))) ?: 'en';
-    }
-
-    public static function robots(): void
-    {
-        \TinyCat\Core\Discovery\Routes::robots();
-    }
 
     public static function llms(): string
     {
@@ -40,7 +22,6 @@ final class Discovery
             echo '- [Privacy and Rules](' . \TinyCat\Core\Ui\Site::absolute_url('/privacy') . '): Public-content rules, moderation policy, data handling, and feed principles.' . "\n\n";
             echo "## Optional\n\n";
             echo '- [Recent public-post sample](' . \TinyCat\Core\Ui\Site::absolute_url('/llms-full.txt') . '): TinyCat extension with a recent public-post sample; skip it when only site-level context is needed.' . "\n";
-
 
         });
         return $body;
@@ -89,8 +70,4 @@ final class Discovery
         });
     }
 
-    public static function sitemap(string $section = 'index', int $page = 1): void
-    {
-        \TinyCat\Core\Discovery\Sitemap::respond($section, $page);
-    }
 }

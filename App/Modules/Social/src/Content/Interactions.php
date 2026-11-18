@@ -14,6 +14,9 @@ use TinyCat\Support\Localization;
 /** Transactional social discussions and reactions with explicit post authorization. */
 final class Interactions
 {
+    /** @return array<string, string> */
+    public static function rules(): array { return ['comment' => 'string|max:' . PostCreation::BODY_MAX_LENGTH]; }
+
     /**
      * @param array<string, mixed>|null $actor */
     public static function target(string $kind, int $id, ?array $actor = null): InteractionTarget
@@ -111,7 +114,7 @@ final class Interactions
 
     public static function body(string $body, string $kind): string
     {
-        $body = \TinyCat\Support\Text::plain_text_limit($body, 2000);
+        \TinyCat\Http\Validator::validated(self::rules(), ['comment' => $body]);
         Policy::requireAllowedUrls($body);
         $body = Links::status_strip_external_urls($body);
         $draft = PostCreation::fromText($body, $kind);
