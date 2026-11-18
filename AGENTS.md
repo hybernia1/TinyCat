@@ -209,9 +209,80 @@ Vol odpovídající kontroly podle změny. Hlavní úplná kontrola je `composer
 po instalaci dev závislostí; nevytvářej alternativní univerzální runner.
 
 Během ucelené etapy používej cílené kontroly; úplný měřený preflight patří
-na její konec. Současné runnery zaznamenávají časy, výsledky, přeskoky a rozsah
+na její konec, pokud jej vyžaduje rozsah změny podle pravidel níže.
+Současné runnery zaznamenávají časy, výsledky, přeskoky a rozsah
 do `.work/tests/runs/`. Počet assertions není měřítkem pokrytí ani důvodem
 pro přidání další úplné integrační kopie stejného scénáře.
+
+### Rozsah ověření podle dopadu
+
+Rozhoduje dopad na chování a počet konzumentů, nikoli počet změněných řádků
+nebo přípona souboru. I jediný sdílený CSS selektor může zasáhnout celou aplikaci.
+
+| Rozsah změny | Potřebné ověření | Úplný preflight |
+| --- | --- | --- |
+| Pouze dokumentace | Diff, odkazy a věcná správnost. | Ne. |
+| Lokální vizuální úprava: barva, mezera, typografie nebo rozměr bez změny interakce | Diff, vizuální kontrola dotčené stránky na mobilu a desktopu; při změně CSS/assetů také UI kontrakty a asset report. | Ne; lze dokončit po cíleném ověření. |
+| Sdílené CSS, responzivní layout nebo prezentační šablona | UI kontrakty, asset report, reprezentativní stránky všech dotčených konzumentů a příslušné frontendové scénáře; u PHP šablon také lint a render-only kontrola. | Ne automaticky; ano při plošném refaktoru společné prezentace. |
+| Interakce UI: dialog, popover, filtr, navigace, fokus nebo lifecycle formuláře | Předchozí relevantní kontroly a cílené funkční/nativní regrese podle závazných kontraktů. | Ne automaticky; ano při změně společného mechanismu napříč aplikací. |
+| Izolovaná změna aplikační logiky nebo oprava chyby | Levné kontroly a cílené doménové či HTTP testy včetně regrese opravené chyby. | Ne automaticky, pokud je dopad prokazatelně omezený. |
+| Změna společného runtime, bezpečnostních mechanismů, datového schématu, instalace/updateru, skládání či doručování assetů nebo refaktor napříč doménami | Průběžně cílené kontroly; po dokončení celé etapy úplné ověření. | Ano na konci etapy. |
+| Release | Zdrojové kontroly pro finální commit a samostatné ověření vydávaných artefaktů podle release postupu. | Ano; odpovídající úspěšné CI může zajistit zdrojový průchod. |
+
+Před testováním stručně uveď zvolený rozsah a důvod. Rozšiř ho, pokud se ukáže
+další konzument, změna chování nebo nejasná hranice dopadu; samotná délka
+testovací sady není důvod povinnou kontrolu vynechat. Pro lokální opravu
+nepřidávej nový univerzální testovací profil ani test kopírující hodnoty CSS.
+
+Vizuální kontrolu prováděj na `https://tinycat.test/` po synchronizaci pouze
+dotčených runtime souborů podle pravidel lokálního prostředí. U sdílené
+komponenty zkontroluj skutečně dotčené veřejné/administrační či modulové
+povrchy a relevantní stavy (například dlouhý text, prázdný seznam, otevřený
+dialog). Změna geometrie, overflow nebo `z-index` vyžaduje kontrolu interakce,
+pokud ovlivňuje ovladatelnost, překrytí nebo fokus. Pokud vizuální či nativní
+ověření nebylo dostupné, výslovně to uveď; průchod statické kontroly je nenahrazuje.
+
+### Postup testování během práce
+
+- Před spuštěním vyber kontroly podle změněného chování a jeho volajících,
+  ne pouze podle adresáře. Zkontroluj poslední reporty a rozlišuj výsledky
+  pro současné zdroje od starších běhů. Úspěšný test neopakuj bez relevantní
+  změny zdrojů, fixture, prostředí nebo nového podezření na regresi.
+- Nejprve spusť levné dotčené kontroly: syntaxi, styl, statickou analýzu,
+  hranice, čistotu šablon a překlady podle povahy změny. Například nový účetní
+  přehled ověř i přes `tests/quality/render-only-partials.php` ještě před
+  browserovou sadou. Potom spusť cílené doménové, HTTP a nativní UI scénáře.
+- Používej existující výběr `php tests/run.php --only=ID1,ID2` a
+  `php tests/frontend/run.php --only=scenario.cjs`; ID zjistíš přes `--list`.
+  Při úpravě jednoho scénáře nespouštěj automaticky celou frontendovou sadu.
+  Povinné regrese z kontraktů tím nejsou zúžené.
+- Ucelenou etapu určuje dokončené chování nebo refaktor, nikoli každá odpověď
+  v chatu či přesun třídy. Pokud jej vyžaduje rozsah změny, úplný preflight
+  spusť až po dokončení implementace,
+  fixture, dokumentace a cílených kontrol. Nespouštěj před ním `composer test`
+  ani celou frontendovou sadu jen pro jistotu; preflight je obsahuje.
+- Během závěrečného preflightu neměň jeho zdroje, fixture ani generované vstupy
+  a nespouštěj nad nimi jiné zapisující operace, ani v jiném vlákně.
+  Potřebnou opravu nejprve odděl od běhu: nech ho dokončit bez editací,
+  nebo řízeně ukonči pouze příslušný runner a jeho workers. Potom opravuj.
+- Po selhání přečti konkrétní log, oprav příčinu a nejprve zopakuj selhanou
+  skupinu a související levné kontroly. Znovu nespouštěj celý preflight jako
+  prostředek ladění. Je-li úplný preflight vyžadovaný, po dokončení oprav
+  proveď závěrečný úplný běh nad
+  stabilními zdroji; cílem je jeden platný finální průchod, ne zákaz opakování
+  po skutečné opravě. `source_changes_during_run` musí být prázdné, jinak běh
+  nevydávej za úplné ověření finálního stavu.
+- Čistě dokumentační změna vyžaduje kontrolu diffu, odkazů a věcné správnosti,
+  nikoli aplikační preflight. Změní-li dokumentace také spustitelné vstupy
+  nebo kontrakt chování, ověř příslušnou implementaci.
+- Při releasu rozlišuj zdrojový preflight od ověření konkrétního podepsaného
+  artefaktu. ZIP, podpis, podporovaný update a rollback nenahrazuje zelené CI.
+  Již úspěšné CI stejného commitu lze využít pro stejný rozsah a prostředí;
+  další běh kvůli tagu sám o sobě nepřidává pokrytí, pokud se nemění vstupy.
+  Vyžadované release kontroly a pravidla publikace zachovej.
+- Ve výsledku uveď rozsah, výsledek a cestu reportu, případné přeskoky
+  a neprovedené kontroly. Časy rodiče a potomků nesčítej. Odhad úspory
+  odděl od měření a počet assertions nepoužívej jako důkaz účinnosti testů.
 
 | Změna | Relevantní kontroly |
 | --- | --- |

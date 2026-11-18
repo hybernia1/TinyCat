@@ -5,6 +5,11 @@ Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitn
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 
+Pro výběr kontrol, pořadí cílených běhů, závěrečný preflight a postup po
+selhání platí [postup testování během práce](../AGENTS.md#postup-testování-během-práce).
+Závěrečný běh vyžaduje stabilní zdroje i vůči jiným vláknům; úpravy během
+preflightu mohou znehodnotit výsledek a vyvolat zdánlivou chybu determinismu balíčků.
+
 Runnery měří každou PHP skupinu, JS scénář a preflight krok. Výsledek je
 v `.work/tests/runs/<run-id>/report.json`, průběžné události v `events.jsonl`
 a výstupy v samostatných logách. Report obsahuje verze prostředí, otisk
