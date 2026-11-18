@@ -210,6 +210,30 @@ $assert($status === 405 && str_contains($body, '405') && str_contains($body, '<h
 [$status, $body] = $exportRequest('/admin', 'POST', ['X-Test-Role' => 'admin'] + $csrf);
 $assert($status === 405 && str_contains($body, '405'), 'A valid CSRF token cannot revive legacy dashboard writes.');
 
+foreach (['guest', 'user', 'admin'] as $role) {
+    foreach ([400, 401, 403, 404, 405, 422, 429, 500, 502, 503] as $errorStatus) {
+        foreach (['/fixture-error/', '/admin/fixture-error/'] as $prefix) {
+            [$status, $body, $headers] = $exportRequest($prefix . $errorStatus, 'GET', ['X-Test-Role' => $role]);
+            $assert($status === $errorStatus && str_contains($body, (string) $errorStatus) && str_contains($headers['cache-control'], 'no-store'), 'HTML error retains its status and no-store policy: ' . $role . ' ' . $prefix . $errorStatus);
+            $assert(!str_contains($body, 'data-admin-shell') && !str_contains($body, 'admin-shell-page') && preg_match('~href="/admin/[^"<>]*"~', $body) !== 1, 'Public error documents exclude administration navigation and shell state: ' . $role . ' ' . $prefix . $errorStatus);
+            if ($errorStatus !== 503) {
+                $assert(str_contains($body, 'class="navbar"'), 'Error documents retain the public header: ' . $role . ' ' . $prefix . $errorStatus);
+                preg_match_all('~<script src="([^"]+)"~', $body, $errorScripts);
+                if ($prefix === '/fixture-error/') { $publicErrorScripts = $errorScripts[1]; }
+                else { $assert($errorScripts[1] === $publicErrorScripts, 'Public errors select public assets regardless of the failed URL: ' . $role . ' ' . $errorStatus); }
+            }
+        }
+    }
+}
+
+foreach ([400, 401, 403, 404, 405, 422, 429, 500, 502, 503] as $errorStatus) {
+    [$status, $body, $headers] = $exportRequest('/admin/fixture-error/' . $errorStatus, 'HEAD', ['X-Test-Role' => 'admin']);
+    $assert($status === $errorStatus && $body === '' && str_contains($headers['cache-control'], 'no-store'), 'Error HEAD responses preserve status without a body: ' . $errorStatus);
+    [$status, $body, $headers] = $exportRequest('/admin/fixture-error/' . $errorStatus, 'GET', ['Accept' => 'application/json', 'X-Test-Role' => 'admin']);
+    $errorPayload = json_decode($body, true);
+    $assert($status === $errorStatus && is_array($errorPayload) && $errorPayload['status'] === $errorStatus && $errorPayload['ok'] === false && str_contains($headers['content-type'], 'application/json'), 'JSON error requests keep the shared envelope instead of HTML navigation: ' . $errorStatus);
+}
+
 [$status, $body, $headers] = $exportRequest('/privacy');
 $policyDocument = new DOMDocument();
 libxml_use_internal_errors(true); $policyDocument->loadHTML($body); libxml_clear_errors();

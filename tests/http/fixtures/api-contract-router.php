@@ -80,6 +80,13 @@ if (getenv('TINYCAT_API_FOUNDATION_TEST') === '1') {
 \TinyCat\Http\Router::route(['GET', 'HEAD'], '/fixture-maintenance', static function (): void {
     header('Retry-After: 300'); \TinyCat\Core\Runtime\Errors::respond(503);
 });
+foreach ([400, 401, 403, 404, 405, 422, 429, 500, 502, 503] as $errorStatus) {
+    foreach (['/fixture-error/', '/admin/fixture-error/'] as $prefix) {
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], $prefix . $errorStatus, static function () use ($errorStatus): void {
+            \TinyCat\Core\Runtime\Errors::respond($errorStatus);
+        });
+    }
+}
 if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && $embedDocument) {
     \TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
 }

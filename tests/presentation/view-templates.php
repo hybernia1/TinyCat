@@ -161,6 +161,37 @@ try {
     $assert(str_contains($publicLayout, 'class="navbar"') && !str_contains($publicLayout, 'data-admin-shell'), 'Guest pages use the public shell.');
     $assert(str_contains($publicLayout, 'Public &lt;unsafe&gt;') && str_contains($publicLayout, 'id="page-fixture"'), 'Head metadata is escaped and prepared content is preserved.');
     $assert(substr_count($publicLayout, ' defer></script>') === 4, 'Split layout keeps scoped script delivery.');
+    $originalOptions = \TinyCat\Core\Runtime\Startup::$options;
+    try {
+        $defaultHomepage = \TinyCat\Core\Runtime\EntryPages::homepage()?->id;
+        $assert($defaultHomepage === 'tinycat.status.home', 'Adding the login candidate preserves the default Social homepage.');
+        $siteFields = \TinyCat\Core\Settings\Settings::section_site()['fields'];
+        $homepageFields = array_values(array_filter($siteFields, static fn (array $field): bool => $field['key'] === 'site.homepage'));
+        $assert(isset($homepageFields[0]['options']['tinycat.accounts.login']), 'Site settings expose the Identity-owned login homepage choice.');
+        \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'site.homepage' ? 'tinycat.accounts.login' : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
+        $loginHomepage = \TinyCat\Core\Runtime\EntryPages::homepage();
+        $assert($loginHomepage?->id === 'tinycat.accounts.login', 'The selected login entry is resolved by the shared homepage registry.');
+        $assert(!in_array('/login', array_column(\TinyCat\Core\Runtime\EntryPages::navigation(), 'href'), true), 'The login choice does not add a duplicate login navigation item.');
+        ob_start();
+        ($loginHomepage->render)();
+        $loginDocument = (string) ob_get_clean();
+        $assert(str_contains($loginDocument, 'name="username"') && str_contains($loginDocument, 'name="password"'), 'Selected login homepage renders the existing authentication form with Social active.');
+        \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
+        $content = "<!-- removable -->\n<div>  <span>Text</span>  </div><pre>  Keep\n spacing</pre><textarea>  Draft\n text</textarea>";
+        $renderDocument = static function () use ($content): string {
+            ob_start();
+            \TinyCat\Core\Ui\Document::render(['title' => 'Minification'], $content);
+            return (string) ob_get_clean();
+        };
+        \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'performance.minify_html' ? false : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
+        $rawDocument = $renderDocument();
+        \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'performance.minify_html' ? true : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
+        $minifiedDocument = $renderDocument();
+        $assert($minifiedDocument === \TinyCat\Support\Minifier::minifyHtml($rawDocument) && strlen($minifiedDocument) < strlen($rawDocument), 'The shared document honors HTML minification after shell composition.');
+        $assert(str_contains($minifiedDocument, "<pre>  Keep\n spacing</pre><textarea>  Draft\n text</textarea>"), 'Document minification preserves preformatted text and drafts.');
+    } finally {
+        \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
+    }
     \TinyCat\Core\Identity\Authentication::reset(['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'theme' => 'dark'], true);
     ob_start();
     \TinyCat\Social\Presentation\Layout::render(['title' => 'Administration', 'current' => '/admin/moderation/reports'], '<p>Admin content</p>');

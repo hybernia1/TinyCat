@@ -45,7 +45,8 @@ final class DocumentData
 
         $authUser = \TinyCat\Core\Identity\Authentication::auth();
         $hasGlobalSearch = \TinyCat\Core\Discovery\Search::sources() !== [];
-        $isAdminShell = $authUser !== null && (bool) ($adminShell ?? str_starts_with($current, '/admin'));
+        $isAdminShell = empty($public) && \TinyCat\Core\Identity\Roles::isAdmin($authUser)
+            && (bool) ($adminShell ?? ($current === '/admin' || str_starts_with($current, '/admin/')));
         $nav = $isAdminShell ? (array) ($nav ?? \TinyCat\Core\Ui\Admin\Navigation::administration()) : (array) ($frontendNav ?? \TinyCat\Core\Runtime\EntryPages::navigation());
         $nav = \TinyCat\Core\Ui\Admin\Navigation::prepare($nav, $current, $isAdminShell);
         $titleIcon = $isAdminShell ? (string) ($title_icon ?? \TinyCat\Core\Ui\Admin\Navigation::activeIcon($nav)) : '';

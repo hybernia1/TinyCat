@@ -26,7 +26,7 @@ final class EntryPages
     /** @return list<array{href: string, label: string, icon: string}> */
     public static function navigation(): array
     {
-        return array_map(static fn (\TinyCat\Core\Modules\EntryPage $page): array => ['href' => $page->path, 'label' => ($page->label)(), 'icon' => $page->icon], Registrations::current()->entries->homepages);
+        return array_values(array_map(static fn (\TinyCat\Core\Modules\EntryPage $page): array => ['href' => $page->path, 'label' => ($page->label)(), 'icon' => $page->icon], array_filter(Registrations::current()->entries->homepages, static fn (\TinyCat\Core\Modules\EntryPage $page): bool => $page->navigation)));
     }
 
     public static function register(): void

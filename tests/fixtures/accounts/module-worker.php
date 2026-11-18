@@ -25,5 +25,8 @@ $api = TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(
 TinyCat\Core\Identity\Integration::configure(['recovery' => static function (string $email) use ($workspace): void {
     TinyCat\Core\Identity\Recovery::request($email, static function (int $id, string $token) use ($workspace): void { file_put_contents($workspace . '/delivered-token', $token); });
 }]);
+if (in_array($_SERVER['HTTP_X_TEST_LANDING'] ?? '', ['/', '/login', '/register', '/admin', '/crm', 'https://example.test/'], true)) {
+    TinyCat\Core\Identity\Integration::provide('fixture.landing', ['landing' => static fn (?array $user): string => $_SERVER['HTTP_X_TEST_LANDING']]);
+}
 $api->get('/_accounts', static fn (): array => ['csrf' => TinyCat\Core\Security\Csrf::token()]);
 if (!TinyCat\Http\Router::dispatch()) { TinyCat\Http\Document::notFound('Not Found'); }

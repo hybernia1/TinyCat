@@ -28,6 +28,17 @@ v `E:/laragon/backup/tinycat-assets-20261115/httpd.conf`. Změna platí pro tent
 Laragon, nikoli pro produkční servery. Obnovení konfigurace vyžaduje reload
 Apache přes Laragon a následné ověření HTTP a hlaviček.
 
+Od 18. listopadu 2026 má tato instalace v nastavení zapnutou minifikaci JS,
+CSS i HTML. Společný HTML dokument používá stejnou minifikační cestu jako
+ostatní layouty. Repozitář i živá instalace dávají roční `immutable` cache
+assetům s hashem v názvu nebo s verzí `?v=<24 hex znaků>`; neverzované
+statické soubory se revalidují. Gzip zajišťuje Apache, včetně JSON webového
+manifestu. Na anonymní české homepage klesl přenos čtyř JS a jednoho CSS
+souboru přes gzip z 95 111 na 85 822 bajtů; HTML z přibližně 3 451 na
+3 312 bajtů. Jde o lokální měření velikosti přenosu, nikoli benchmark
+uživatelské rychlosti. Reporty a původní nastavení jsou v ignorovaném
+`.work/performance/assets-20261118/`.
+
 Společná testovací instalace **https://tinycat.test/** je oddělená od checkoutu
 v **`E:/laragon/www/tinycat`**. Repozitář v `C:/Users/Nikola/Documents/tinycat`
 obsahuje zdroje a vývojové nástroje, nikoli živá média, cache a stav updateru.

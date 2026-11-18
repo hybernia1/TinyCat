@@ -37,7 +37,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
-        return new \TinyCat\Core\Modules\Contributions(settings: Settings::sections(), temporaryDirectories: [
+        return new \TinyCat\Core\Modules\Contributions(homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.accounts.login', '/login', static function (): void { Pages::homepage(); }, PHP_INT_MAX, static fn (): string => \TinyCat\Support\Localization::t('auth.login_title'), 'login', navigation: false)], settings: Settings::sections(), temporaryDirectories: [
             new \TinyCat\Core\Modules\TemporaryDirectory('avatars', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/avatars'), 10),
         ], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.users.admin', static fn (): array => [
             'href' => '/admin/users', 'icon' => 'users', 'label' => \TinyCat\Support\Localization::t('users.list_title'),

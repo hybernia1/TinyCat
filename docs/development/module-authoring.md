@@ -190,6 +190,14 @@ PHP šablonu přes `View::render()` a výsledek předat stejnému `Page::render(
 
 Homepage a dashboard se nabízejí přes `Contributions.homepages` a `dashboards`
 pomocí `EntryPage`; obsluhu `/` a `/admin` vybírá core podle nastavení.
+Core Identity nabízí také `tinycat.accounts.login`: hostovi vykreslí přihlášení
+přímo na `/`, přihlášeného pošle na bezpečný cíl vlastníka účtu. Pokud cílem
+zůstává `/`, zobrazí přehled účtu bez dalšího přesměrování. Tato volba má
+nejnižší prioritu, takže automatický výběr dál preferuje funkční modul.
+`EntryPage` může přes `navigation: false` nabídnout homepage bez přidání
+další položky do veřejné navigace. Vlastní přihlašovací cíle nesměřuj na
+`/login`, `/register` ani externí URL; Identity takový cíl nahradí bezpečnou
+homepage. Platné explicitní `next` má nadále přednost.
 Vlastní routa modulu zůstává samostatná. Jazykové prefixy veřejných URL deklaruj
 přes `LocalizedRoute`, včetně povolených query parametrů. `PageTheme` nabízí
 vlastní veřejné rozložení nad společným dokumentem a headem.

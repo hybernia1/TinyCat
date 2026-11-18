@@ -12,7 +12,11 @@ final class Login
      */
     public static function auth_landing_url(?array $user = null): string
     {
-        return Integration::landing($user ?? Authentication::auth());
+        $user ??= Authentication::auth();
+        $target = self::auth_safe_next_url(Integration::landing($user));
+        $path = Integration::unlocalizedPath(self::auth_next_path($target));
+        if (($path === '/admin' || str_starts_with($path, '/admin/')) && !Roles::isAdmin($user)) { $target = ''; }
+        return $target !== '' ? $target : Integration::localUrl('/');
     }
 
     public static function auth_next_path(string $next): string

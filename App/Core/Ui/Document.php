@@ -23,6 +23,6 @@ final class Document
         $prepared['head'] = View::render('head', $prepared, __DIR__ . '/templates');
         $prepared['shell'] = $shell;
         $prepared['iconSpriteUrl'] = \TinyCat\Support\Assets::asset('icons.svg');
-        echo View::render('document', $prepared, __DIR__ . '/templates');
+        View::layout('document', $prepared, directory: __DIR__ . '/templates');
     }
 }

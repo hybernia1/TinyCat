@@ -19,6 +19,24 @@ use TinyCat\Support\View;
 /** HTTP page composition; view components receive already prepared data. */
 final class Pages
 {
+    public static function homepage(): void
+    {
+        $user = Authentication::auth();
+        if ($user === null) { self::login(); return; }
+        $next = Login::auth_request_next_url();
+        if (Integration::unlocalizedPath(Login::auth_next_path($next)) === '/') { $next = ''; }
+        $target = Login::auth_redirect_after_login($user, $next);
+        if (Integration::unlocalizedPath(Login::auth_next_path($target)) !== '/') { Web::redirect($target); }
+        Integration::render([
+            'title' => Localization::t('account.title'), 'current' => '/', 'public' => true,
+            'meta' => ['robots' => 'noindex,nofollow'],
+        ], View::render('account-home', [
+            'user' => $user,
+            'accountAction' => AdminViews::modalAction('account-editor-modal-' . (int) $user['id'], Localization::t('account.profile_settings'), 'settings', '/api/users/' . (int) $user['id'] . '/management?panel=account'),
+            'logoutUrl' => Integration::localUrl('/logout'),
+        ], __DIR__ . '/templates'));
+    }
+
     public static function administration(): void
     {
         Access::require_admin();

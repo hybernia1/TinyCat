@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.1.0 - 2026-11-18
+
+- Offer Login as an Identity-owned homepage, including in core-only installations. Preserve module landing destinations and valid next URLs; terminate authentication/homepage redirects with an account overview when no other destination exists.
+- Keep automatic functional-module homepages and public navigation unchanged. Allow homepage candidates to opt out of navigation.
+- Apply existing HTML minification to the shared document, revalidate unversioned assets and gzip web app manifests. Preserve existing minification settings on update.
+- Keep public error-page navigation and asset selection consistent across public and administrative URLs, with HTML, HEAD and JSON regression coverage for 400–503 responses.
+- Preserve the completed 6.0.10 update baseline, published migration history and installed Blog ownership. Introduce no database migrations.
+
 ## 6.0.13 - 2026-11-18
 
 - Consolidate Social navigation, account administration, HTTP documents and presentation on shared core mechanisms. Remove redundant adapters while preserving module-owned data and registration.

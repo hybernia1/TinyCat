@@ -75,6 +75,37 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.1.0
+
+Requires completed **6.0.10 or newer** and PHP 8.4. Refresh the inherited rescue
+launcher on 6.0.10 as documented below. No database migration is introduced.
+Existing configuration, module activation and minification settings are preserved.
+
+Site settings now offer **Login** as the homepage (`tinycat.accounts.login`).
+Guests see the existing login form directly at `/`; authenticated accounts use
+their permitted landing destination. Accounts without another destination see an
+account overview instead of redirecting between `/` and `/login`. Existing
+automatic Social and Blog homepage selection remains unchanged. Selecting Login
+changes the entry page; authorization of other routes remains their owner's policy.
+
+The shared HTML document now honors HTML minification. Minification remains
+configurable; updating does not enable previously disabled options. Apache cache
+rules revalidate unversioned assets and reserve yearly immutable caching for
+versioned URLs. Gzip also covers the web app manifest. Public error pages use
+public navigation and asset bundles even when the failed URL starts with `/admin`.
+
+Build the compatibility update with retained Blog sources separately from the
+production fresh installation:
+
+```sh
+php tools/release/build-update.php --version=6.1.0 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-0/update
+php tools/release/build-update.php --version=6.1.0 --assembly=platform --fresh-install --output=.work/releases/release-6-1-0/install
+```
+
+Verify the exact update artifact against published 6.0.10, 6.0.11 and 6.0.13
+platform sources with `--platform-baseline --direct-web --cached-autoload`,
+including exact rollback and retained installed Blog ownership.
+
 ## Upgrading to 6.0.13
 
 Requires completed **6.0.10 or newer** and PHP 8.4. Refresh the inherited rescue
