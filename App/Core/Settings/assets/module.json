@@ -6,17 +6,14 @@
     "entries": [
       "App/Core/Settings/assets/index.js"
     ],
-    "components": [],
+    "components": [
+      "settings/sections"
+    ],
     "styles": [],
     "translations": [
       "settings.title",
       "common.save",
-      "settings.enabled",
-      "settings.image_empty",
-      "settings.image_upload",
-      "settings.image_remove",
-      "settings.footer_placeholder",
-      "common.email"
+      "settings.footer_placeholder"
     ],
     "messages": {
       "common_request_failed": "common.request_failed",

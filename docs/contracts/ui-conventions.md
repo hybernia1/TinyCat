@@ -13,6 +13,11 @@ UI služby, CSS třídy i manifesty a trasy jednotlivých stylů.
 
 ## Jeden zdroj struktury
 
+Zápis katalogů, editorové schéma a hranice mezi handlerem, resource a komponentou
+popisuje [reference komponent](../reference/component-catalog.md). Build odmítá
+neznámé instrukce uzlů, neplatné kombinace a chybné operandy s přesnou cestou
+ke zdroji. Jedna komponenta nevyžaduje jeden soubor.
+
 Opakované odkazy na konkrétní obsah mají přístupný název složený z účelu
 a kontextu cíle. Pro akce používat `ui/action-label` a společný kontext
 příspěvku; ten obsahuje také ID, aby odlišil shodné autory a úryvky.

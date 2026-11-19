@@ -14,9 +14,13 @@ $assert(!str_contains($settingsHostPage, 'name="settings[') && !str_contains($se
 preg_match('/data-settings-presentation="([^"]+)"/', $settingsHostPage, $settingsPresentationMatch);
 $settingsPresentation = json_decode(html_entity_decode($settingsPresentationMatch[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true, 512, JSON_THROW_ON_ERROR);
 $assert(isset($settingsPresentation['sections']['content_images'], $settingsPresentation['fields']['moderation.blocked_urls']), 'The admin document derives Social presentation from the registered PHP settings owners.');
-foreach ($settingsPresentation['fields'] as $fieldPresentation) {
-    $assert(array_diff(array_keys($fieldPresentation), ['label', 'help', 'placeholder', 'span']) === [], 'Settings presentation contains no values, defaults, credentials or callbacks.');
-}
+$checkSettingsPresentation = static function (array $fieldPresentation) use (&$checkSettingsPresentation, $assert): void {
+    $assert(array_diff(array_keys($fieldPresentation), ['label', 'help', 'placeholder', 'span', 'fields']) === [], 'Settings presentation contains no values, defaults, credentials or callbacks.');
+    $assert(is_string($fieldPresentation['label'] ?? null), 'Every nested field has an owner-provided presentation label.');
+    foreach ($fieldPresentation['fields'] ?? [] as $child) { $checkSettingsPresentation($child); }
+};
+foreach ($settingsPresentation['fields'] as $fieldPresentation) { $checkSettingsPresentation($fieldPresentation); }
+$assert(isset($settingsPresentation['fields']['email.smtp']['fields']['host'], $settingsPresentation['fields']['email.smtp']['fields']['password']), 'Mail contributes nested SMTP presentation without JavaScript field declarations.');
 $moderationPage = file_get_contents('http://' . $address . '/admin/moderation/reports?status=open&reason=spam', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $moderationDocument = new DOMDocument();
 @$moderationDocument->loadHTML((string) $moderationPage);
@@ -53,6 +57,12 @@ $pure($payload);
 $assert($status === 200 && count($schema['data']['sections']) >= 2 && !str_contains(json_encode($schema), 'fixture-secret'), 'Deferred settings editor is authorized, complete and never exposes saved passwords.');
 $pure($schema);
 $fields = array_merge(...array_column($schema['data']['sections'], 'fields'));
+$smtpField = array_values(array_filter($fields, static fn (array $field): bool => $field['key'] === 'email.smtp'))[0];
+$assert($smtpField['value']['password'] === '' && count($smtpField['fields']) === 7, 'The SMTP group supplies its complete child schema and blank password.');
+foreach ($smtpField['fields'] as $child) {
+    $assert(array_intersect(['label', 'help', 'placeholder', 'span', 'default', 'normalize'], array_keys($child)) === [], 'Nested editor API fields exclude presentation, defaults and callbacks.');
+    if ($child['key'] === 'password') { $assert($child['value'] === '', 'Nested SMTP password values are write-only.'); }
+}
 $assert(in_array('moderation.blocked_urls', array_column($fields, 'key'), true), 'Remote settings include URL blocking.');
 [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Modular fixture', 'auth.registration.enabled' => false]], 'admin', $csrf);
 $assert($status === 200 && $payload['data']['saved'] && array_keys($payload['data']['images']) === ['site.logo_url', 'site.favicon_url'], 'Settings PATCH returns confirmation and saved public image paths for repeated AJAX saves.');

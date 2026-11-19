@@ -1598,5 +1598,271 @@
         }
       }
     ]
+  },
+  "users/auth-page": {
+    "tag": "section",
+    "attrs": {"class": {"if": [{"get": "register"}, "max-w-auth mx-auto", "max-w-auth-sm mx-auto"]}},
+    "children": [
+      {
+        "tag": "article",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h1",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [
+                  {"icon": {"if": [{"get": "register"}, "user-plus", "login"]}},
+                  " ",
+                  {"if": [{"get": "register"}, {"t": "auth.register_title"}, {"t": "auth.login_title"}]}
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body"},
+            "children": [
+              {
+                "component": "users/auth-content",
+                "data": {
+                  "mode": {"get": "mode"},
+                  "register": {"get": "register"},
+                  "next": {"get": "next"},
+                  "form_url": {"get": "form_url"},
+                  "switch_url": {"get": "switch_url"},
+                  "switch_modal_url": {"get": "switch_modal_url"},
+                  "registration_enabled": {"get": "registration_enabled"},
+                  "captcha": {"get": "captcha"},
+                  "options": {"get": "options"},
+                  "old": {"get": "old"},
+                  "error": {"get": "error"},
+                  "message": {"get": "message"}
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "users/recovery-page": {
+    "tag": "section",
+    "attrs": {"class": "max-w-auth mx-auto"},
+    "children": [
+      {
+        "tag": "article",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h1",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"icon": "key"}, " ", {"t": "auth.recovery_title"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "text-muted mb-0"},
+                "children": [{"if": [{"get": "reset"}, {"t": "auth.recovery_reset_intro"}, {"t": "auth.recovery_intro"}]}]
+              },
+              {
+                "tag": "form",
+                "attrs": {
+                  "method": "post",
+                  "action": {"if": [{"get": "reset"}, "/api/users/password-resets/confirm", "/api/users/password-resets"]},
+                  "class": "stack",
+                  "data-ajax-form": ""
+                },
+                "children": [
+                  {"csrf": true},
+                  {
+                    "tag": "input",
+                    "attrs": {"type": "hidden", "name": "action", "value": "reset"},
+                    "when": {"get": "reset"}
+                  },
+                  {
+                    "tag": "input",
+                    "attrs": {"type": "hidden", "name": "token", "value": {"get": "token"}},
+                    "when": {"get": "reset"}
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "common.new_password"},
+                      "attributes": {
+                        "class": "input",
+                        "type": "password",
+                        "autocomplete": "new-password",
+                        "minlength": 8,
+                        "maxlength": {"get": "password_max"},
+                        "required": true,
+                        "name": "password"
+                      }
+                    },
+                    "when": {"get": "reset"}
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "common.email"},
+                      "attributes": {"class": "input", "type": "email", "name": "email", "autocomplete": "email", "required": true}
+                    },
+                    "when": {"not": {"get": "reset"}}
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "common.password_confirm"},
+                      "attributes": {
+                        "class": "input",
+                        "type": "password",
+                        "autocomplete": "new-password",
+                        "minlength": 8,
+                        "maxlength": {"get": "password_max"},
+                        "required": true,
+                        "name": "password_confirm"
+                      }
+                    },
+                    "when": {"get": "reset"}
+                  },
+                  {"component": "ui/captcha", "data": {"config": {"get": "captcha"}}},
+                  {
+                    "tag": "button",
+                    "attrs": {"type": "submit", "class": "btn btn-primary"},
+                    "children": [{"icon": "save"}, " ", {"tag": "span", "children": [{"t": "auth.recovery_submit"}]}]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "cluster gap-2"},
+                "children": [
+                  {
+                    "tag": "a",
+                    "attrs": {"href": {"get": "login_url"}, "class": "btn btn-secondary btn-sm"},
+                    "children": [{"icon": "login"}, " ", {"tag": "span", "children": [{"t": "common.login"}]}]
+                  },
+                  {
+                    "tag": "a",
+                    "attrs": {"href": {"get": "privacy_url"}, "class": "btn btn-ghost btn-sm", "rel": "privacy-policy"},
+                    "children": [{"icon": "shield"}, " ", {"tag": "span", "children": [{"t": "privacy.title"}]}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "users/logout-page": {
+    "tag": "article",
+    "attrs": {"class": "card"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-header"},
+        "children": [
+          {
+            "tag": "h1",
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": "logout"}, " ", {"t": "auth.logout_title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body stack"},
+        "children": [
+          {"tag": "p", "attrs": {"class": "text-muted mb-0"}, "children": [{"t": "auth.logout_intro"}]},
+          {
+            "tag": "form",
+            "attrs": {
+              "method": "post",
+              "action": "/api/users/sessions/current",
+              "data-ajax-form": "",
+              "data-api-method": "DELETE",
+              "data-confirm": {"t": "auth.logout_confirm"},
+              "data-confirm-title": {"t": "auth.logout_title"},
+              "data-confirm-ok": {"t": "common.logout"},
+              "data-confirm-cancel": {"t": "common.cancel"},
+              "data-confirm-variant": "danger"
+            },
+            "children": [
+              {"csrf": true},
+              {"tag": "input", "attrs": {"type": "hidden", "name": "_method", "value": "DELETE"}},
+              {
+                "tag": "button",
+                "attrs": {"type": "submit", "class": "btn btn-danger"},
+                "children": [{"icon": "logout"}, " ", {"tag": "span", "children": [{"t": "common.logout"}]}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "users/account-home": {
+    "tag": "section",
+    "attrs": {"class": "max-w-auth-sm mx-auto"},
+    "children": [
+      {
+        "tag": "article",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h1",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"icon": "user"}, " ", {"t": "account.title"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {"tag": "p", "attrs": {"class": "m-0"}, "children": [{"concat": ["@", {"get": "user.username"}]}]},
+              {
+                "tag": "div",
+                "attrs": {"class": "cluster gap-2"},
+                "children": [
+                  {
+                    "component": "ui/modal-trigger",
+                    "data": {
+                      "modal": {"get": "account_modal"},
+                      "label": {"t": "account.profile_settings"},
+                      "icon": "settings",
+                      "url": {"get": "account_url"},
+                      "class": "btn btn-primary btn-sm"
+                    }
+                  },
+                  {
+                    "tag": "a",
+                    "attrs": {"href": {"get": "logout_url"}, "class": "btn btn-secondary"},
+                    "children": [{"icon": "logout"}, " ", {"t": "common.logout"}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

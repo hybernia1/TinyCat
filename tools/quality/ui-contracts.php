@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 /** Validate source catalogs before JSON decoding can hide duplicate keys. */
 return static function (?array $catalogFiles = null): array {
+    if (!class_exists(\TinyCat\Tools\Quality\ComponentSyntax::class, false)) { require_once __DIR__ . '/component-syntax.php'; }
     $catalogFiles ??= \TinyCat\Core\Modules\Resources::files('components');
     $definitions = [];
     $sources = [];
@@ -57,6 +58,7 @@ REGEX;
         foreach ($node as $child) { $visit($child, $owner); }
     };
     foreach ($definitions as $name => $definition) { $visit($definition, $name); }
+    foreach ($definitions as $name => $definition) { \TinyCat\Tools\Quality\ComponentSyntax::validate($definition, $sources[$name] . ' [' . $name . ']'); }
     // Recursive components are valid: status/comment renders a finite reply tree.
     // Existence is checked above; recursion terminates according to input data.
     return ['components' => count($definitions)];

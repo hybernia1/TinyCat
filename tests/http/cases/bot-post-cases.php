@@ -11,10 +11,13 @@ $seedBotPost = $botPostsDb->prepare('INSERT INTO social_posts (id, author_id, bo
 foreach (range(1, 31) as $number) {
     $seedBotPost->execute([94000 + $number, 'Managed bot post ' . $number, '2999-01-' . sprintf('%02d', $number) . ' 12:00:00']);
 }
-$botPage = file_get_contents('http://' . $address . '/admin/bots/3', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
-$assert(is_string($botPage) && str_contains($botPage, 'data-bot-detail-open="3"') && str_contains($botPage, 'id="bot-accounts-list"'), 'Direct bot links host the tabbed detail modal over the accounts list.');
-$retiredBotPage = file_get_contents('http://' . $address . '/admin/bots/3?view=page', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
-$assert(is_string($retiredBotPage) && str_contains($retiredBotPage, 'data-bot-detail-open="3"') && !str_contains($retiredBotPage, 'id="bot-posts-list"'), 'The retired page flag cannot restore the classic bot detail.');
+$botPageOptions = ['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true, 'follow_location' => 0]];
+foreach (['' => 'panel=detail', '?view=page&tab=posts&source=7' => 'tab=posts&source=7&panel=detail'] as $query => $expectedFragment) {
+    $botPage = file_get_contents('http://' . $address . '/admin/bots/3' . $query, false, stream_context_create($botPageOptions));
+    $botHeaders = http_get_last_response_headers() ?? [];
+    $assert(str_contains(implode("\n", $botHeaders), 'Location: /admin/bots/accounts#modal=bots/accounts/3&' . $expectedFragment), 'Direct bot links preserve modal state through the shared resource history.');
+    $assert(!str_contains((string) $botPage, 'data-bot-detail-open') && !str_contains((string) $botPage, 'id="bot-posts-list"'), 'Direct bot links do not render hidden opening markers or a second detail page.');
+}
 [$status] = $request('GET', '/api/bots/accounts/3/posts');
 $assert($status === 401, 'Bot post administration requires authentication.');
 [$status] = $request('GET', '/api/bots/accounts/3/posts', null, 'user');

@@ -1206,9 +1206,7 @@
                   }
                 }
               },
-              {
-                "get": ""
-              }
+              ""
             ]
           }
         ]
@@ -1523,5 +1521,6 @@
     },
     "catalog": "scheduler.options",
     "field": "label"
-  }
+  },
+  "scheduler/runs-page": {"tag": "div", "attrs": {"id": {"get": "target_id"}}, "children": [{"slot": {"get": "content"}}]}
 }

@@ -16,7 +16,8 @@
 /vendor/
 /App/module-packages.json
 /.idea/
-/.vscode/
+/.vscode/*
+!/.vscode/settings.json
 /.agents/
 
 # Local test suites

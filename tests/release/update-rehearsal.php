@@ -189,6 +189,7 @@ try {
     $copyTree($root . '/tools/assets/compile-assets.php', $candidateRoot . '/tools/assets/compile-assets.php');
     $copyTree($root . '/tools/quality/modal-contracts.php', $candidateRoot . '/tools/quality/modal-contracts.php');
     $copyTree($root . '/tools/quality/ui-contracts.php', $candidateRoot . '/tools/quality/ui-contracts.php');
+    $copyTree($root . '/tools/quality/component-syntax.php', $candidateRoot . '/tools/quality/component-syntax.php');
     $copyTree($root . '/tools/quality/translation-catalogs.php', $candidateRoot . '/tools/quality/translation-catalogs.php');
     $copyTree($root . '/tools/quality/client-translations.php', $candidateRoot . '/tools/quality/client-translations.php');
     $copyTree($root . '/tools/release/update-deletions.json', $candidateRoot . '/tools/release/update-deletions.json');

@@ -1,21 +1,14 @@
 <?php
 declare(strict_types=1);
 /** @var array<string, string> $pageUrls */
-/** @var string $content */
-/** @var bool $analyticsConfigured */
-/** @var string $analyticsConsent */
 /** @var string $appName */
 /** @var array<mixed>|null $authUser */
-/** @var string $cookieConsentTextKey */
 /** @var string $current */
-/** @var string $googleMeasurementId */
 /** @var string $loginModalId */
 /** @var string $loginModalUrl */
 /** @var array<mixed> $nav */
 /** @var array<mixed> $notificationItems */
 /** @var array<mixed> $notificationState */
-/** @var bool $profileNeedsEmail */
-/** @var string $profileUrl */
 /** @var string $searchQuery */
 /** @var string $siteLogoUrl */
 /** @var bool $viewerIsAdmin */

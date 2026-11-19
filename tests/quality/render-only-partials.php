@@ -51,10 +51,23 @@ $forbiddenStaticOwners = array_fill_keys([
     'UserRoles',
 ], true);
 $failures = [];
+// Page handlers compose components; only technical renderers and templates emit markup.
 $production = '';
-foreach (['App'] as $directory) {
-    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $directory, FilesystemIterator::SKIP_DOTS)) as $sourceFile) {
-        if ($sourceFile->getExtension() === 'php') { $production .= file_get_contents($sourceFile->getPathname()) . "\n"; }
+foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/App', FilesystemIterator::SKIP_DOTS)) as $sourceFile) {
+    if ($sourceFile->getExtension() !== 'php') { continue; }
+    $source = (string) file_get_contents($sourceFile->getPathname());
+    $production .= $source . "\n";
+    $handler = str_replace('\\', '/', substr($sourceFile->getPathname(), strlen($root) + 1));
+    if (preg_match('~(?:Pages|Dashboard)\.php$~', $handler) !== 1
+        && preg_match('~^App/Modules/[^/]+/src/(?:Posts/)?(?:Exports|Syndication)\.php$~', $handler) !== 1) { continue; }
+    foreach (token_get_all($source) as $token) {
+        if (is_array($token) && $token[0] === T_INLINE_HTML && trim($token[1]) !== '') {
+            $failures[] = $handler . ':' . $token[2] . ' must not contain inline HTML.';
+        }
+        if (is_array($token) && in_array($token[0], [T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE], true)
+            && preg_match('~</?[a-z][a-z0-9]*(?:\s|>)~i', $token[1]) === 1) {
+            $failures[] = $handler . ':' . $token[2] . ' must not construct HTML strings.';
+        }
     }
 }
 
@@ -76,6 +89,9 @@ foreach ($files as $file) {
     }
 
     $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
+    if (preg_match('/\bget_defined_vars\s*\(/', $source) === 1) {
+        $failures[] = $relative . ' must pass explicit presentation inputs instead of the entire PHP context.';
+    }
     if (preg_match('~^App/(?:Modules|Core)/([^/]+)/templates/parts/(.+)\.php$~', $relative, $match)) {
         $name = $match[1] . '/' . $match[2];
         if (!str_contains($production, "'" . $name . "'") && !str_contains($production, '"' . $name . '"')) { $failures[] = 'Unreferenced module partial: ' . $relative; }
@@ -111,7 +127,7 @@ foreach ($files as $file) {
 
         if (is_array($nextToken) && $nextToken[0] === T_DOUBLE_COLON) {
             $class = $imports[$name] ?? ltrim($name, '\\');
-            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Html|View|Localization|Dates|Text|Format|Components|Version)|Core\\\\Security\\\\Csrf|(?:Core\\\\(?:Identity|Notifications)|Social\\\\(?:Profiles|Posts|Automation|Presentation))\\\\Views)$~', $class) !== 1) {
+            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Html|View|Localization|Dates|Text|Format|Components|Version)|Core\\\\Security\\\\Csrf|(?:Core\\\\(?:Identity|Notifications)|Social\\\\(?:Profiles|Automation|Presentation))\\\\Views)$~', $class) !== 1) {
                 $failures[] = $relative . ':' . $token[2] . ' must compose presentation components instead of calling ' . $class . '::.';
             }
         }

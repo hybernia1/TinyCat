@@ -75,6 +75,27 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.1.3
+
+Requires completed **6.0.10 or newer** and PHP 8.4. No database migration or
+activation change is introduced. Public, administrative and installation pages
+share one HTML document. Installation, account and settings UI use owner component
+catalogs; redundant Social feed presentation is removed. Legacy bot detail URLs
+open through the common dialog lifecycle with filters and history preserved.
+
+Build the retained-owner update and production fresh installation separately:
+
+```sh
+php tools/release/build-update.php --version=6.1.3 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-3/update
+php tools/release/build-update.php --version=6.1.3 --assembly=platform --fresh-install --output=.work/releases/release-6-1-3/install
+```
+
+Verify the exact update against published 6.0.10, 6.0.11 and 6.1.2 platform sources
+with `--platform-baseline --direct-web --cached-autoload`, including retained Blog
+ownership, data preservation and rollback. Verify the production package with a
+fresh isolated MySQL installation. Existing 6.0.10 installations still require
+the rescue launcher preparation documented below.
+
 ## Upgrading to 6.1.2
 
 Requires completed **6.0.10 or newer** and PHP 8.4. No database migration or

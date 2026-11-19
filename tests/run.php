@@ -55,6 +55,7 @@ $tests = [
     'MySQL Blog product installation' => 'tests/domains/blog/mysql.php',
     'Social data ownership and optional composition' => 'tests/domains/publishing/social-boundaries.php',
     'Render-only partials' => 'tests/quality/render-only-partials.php',
+    'Installation component presentation' => 'tests/presentation/installation.php',
     'HTML sanitizer' => 'tests/domains/security/html-sanitizer.php',
     'Presentation templates' => 'tests/presentation/view-templates.php',
     'Module presentation components' => 'tests/presentation/components.php',

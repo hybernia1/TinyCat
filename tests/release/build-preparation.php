@@ -18,7 +18,7 @@ $manifest = [['routes' => ['/snapshot-probe'], 'entries' => [], 'components' => 
 try {
     file_put_contents($directory . '/probe.js', 'first');
     file_put_contents($directory . '/module.json', json_encode($manifest, JSON_THROW_ON_ERROR));
-    file_put_contents($directory . '/components.json', json_encode(['probe/snapshot' => ['tag' => 'span', 'text' => 'first']], JSON_THROW_ON_ERROR));
+    file_put_contents($directory . '/components.json', json_encode(['probe/snapshot' => ['tag' => 'span', 'children' => ['first']]], JSON_THROW_ON_ERROR));
     $plan = \TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', require $root . '/App/modules.php');
     $assert(!\TinyCat\Core\Modules\Distribution::includes($path, $plan), 'Unregistered asset probes cannot enter a signed package');
     $assert(\TinyCat\Core\Modules\Distribution::includes('assets/modules/admin/index.js', $plan), 'Explicit core-owned administration assets remain distributable');
@@ -44,15 +44,15 @@ try {
     } catch (RuntimeException $error) { $assert($error->getMessage() === 'probe', 'Build exceptions propagate.'); }
     $assert(AssetGraph::read($path) === 'third', 'A failed build releases cached source.');
     $withBuild(static function () use ($directory, $manifest, $dictionary, $assert): void {
-        $assert(ClientAssets::definitions('/snapshot-probe')['probe/snapshot']['text'] === 'first', 'Build reads component sources.');
+        $assert(ClientAssets::definitions('/snapshot-probe')['probe/snapshot']['children'][0] === 'first', 'Build reads component sources.');
         ClientAssets::catalog('/snapshot-probe', 'en', $dictionary);
         $manifest[0]['translations'] = ['snapshot.second'];
         file_put_contents($directory . '/module.json', json_encode($manifest, JSON_THROW_ON_ERROR));
-        file_put_contents($directory . '/components.json', json_encode(['probe/snapshot' => ['tag' => 'span', 'text' => 'second']], JSON_THROW_ON_ERROR));
-        $assert(ClientAssets::definitions('/snapshot-probe')['probe/snapshot']['text'] === 'first', 'Build keeps its selected component snapshot.');
+        file_put_contents($directory . '/components.json', json_encode(['probe/snapshot' => ['tag' => 'span', 'children' => ['second']]], JSON_THROW_ON_ERROR));
+        $assert(ClientAssets::definitions('/snapshot-probe')['probe/snapshot']['children'][0] === 'first', 'Build keeps its selected component snapshot.');
     });
     $withBuild(static function () use ($assert, $dictionary): void {
-        $assert(ClientAssets::definitions('/snapshot-probe')['probe/snapshot']['text'] === 'second', 'Next build refreshes component templates.');
+        $assert(ClientAssets::definitions('/snapshot-probe')['probe/snapshot']['children'][0] === 'second', 'Next build refreshes component templates.');
         $catalog = ClientAssets::catalog('/snapshot-probe', 'en', $dictionary);
         $assert(isset($catalog['snapshot.second']) && !isset($catalog['snapshot.first']), 'Next build refreshes manifest and catalog keys.');
         try { ClientAssets::catalog('/snapshot-probe', 'en', []); throw new LogicException('Missing translation accepted.'); }

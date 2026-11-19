@@ -1,0 +1,615 @@
+{
+  "installation/steps": {
+    "tag": "ol",
+    "attrs": {"class": "result-list", "aria-label": {"t": "install.title"}},
+    "children": [
+      {
+        "each": {"get": "steps"},
+        "as": "step",
+        "children": {
+          "tag": "li",
+          "attrs": {"class": "result-item", "aria-current": {"if": [{"get": "step.active"}, "step", null]}},
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {
+                "class": {"if": [{"or": [{"get": "step.active"}, {"get": "step.complete"}]}, "badge badge-primary", "badge"]}
+              },
+              "children": [{"icon": "check", "when": {"get": "step.complete"}}, {"get": "step.number"}]
+            },
+            {
+              "tag": "strong",
+              "attrs": {"class": "text-primary"},
+              "children": [{"get": "step.label"}],
+              "when": {"get": "step.active"}
+            },
+            {
+              "tag": "span",
+              "attrs": {"class": {"if": [{"get": "step.complete"}, null, "text-muted"]}},
+              "children": [{"get": "step.label"}],
+              "when": {"not": {"get": "step.active"}}
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "installation/language": {
+    "tag": "article",
+    "attrs": {"class": "card"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-header"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": "globe"}, " ", {"t": "install.language_title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body stack"},
+        "children": [
+          {
+            "tag": "form",
+            "attrs": {
+              "method": "post",
+              "action": "/api/installation/steps/language",
+              "class": "stack",
+              "data-installation-form": true
+            },
+            "children": [
+              {"csrf": true},
+              {"tag": "input", "attrs": {"type": "hidden", "name": "_install_step", "value": "language"}},
+              {
+                "tag": "div",
+                "attrs": {"class": "grid gap-2"},
+                "children": [
+                  {
+                    "each": {"get": "languages"},
+                    "as": "language",
+                    "children": {
+                      "tag": "label",
+                      "attrs": {"class": "check-card"},
+                      "children": [
+                        {
+                          "tag": "input",
+                          "attrs": {
+                            "type": "radio",
+                            "name": "locale",
+                            "value": {"get": "language.code"},
+                            "checked": {"eq": [{"get": "language.code"}, {"get": "locale"}]}
+                          }
+                        },
+                        {
+                          "tag": "span",
+                          "attrs": {"class": "stack stack-gap-4"},
+                          "children": [
+                            {"tag": "strong", "children": [{"get": "language.label"}]},
+                            {
+                              "tag": "small",
+                              "attrs": {"class": "text-muted"},
+                              "children": [{"get": "language.display_code"}]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "cluster"},
+                "children": [
+                  {
+                    "tag": "button",
+                    "attrs": {"class": "btn btn-primary", "type": "submit"},
+                    "children": [{"icon": "check"}, " ", {"tag": "span", "children": [{"t": "common.continue"}]}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "installation/database": {
+    "tag": "article",
+    "attrs": {"class": "card"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-header"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": "database"}, " ", {"t": "install.db_title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body stack"},
+        "children": [
+          {
+            "tag": "form",
+            "attrs": {
+              "method": "post",
+              "action": "/api/installation/steps/db",
+              "class": "stack",
+              "data-installation-form": true
+            },
+            "children": [
+              {"csrf": true},
+              {"tag": "input", "attrs": {"type": "hidden", "name": "_install_step", "value": "db"}},
+              {
+                "tag": "div",
+                "attrs": {"class": "grid sm:grid-2"},
+                "children": [
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "install.db_host"},
+                      "attributes": {"class": "input", "name": "host", "value": {"get": "database.host"}, "required": true},
+                      "help": null
+                    }
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "install.db_port"},
+                      "attributes": {
+                        "class": "input",
+                        "name": "port",
+                        "type": "number",
+                        "min": 1,
+                        "max": 65535,
+                        "value": {"get": "database.port"}
+                      },
+                      "help": null
+                    }
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "install.db_name"},
+                      "attributes": {"class": "input", "name": "name", "value": {"get": "database.name"}, "required": true},
+                      "help": null
+                    }
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "install.db_user"},
+                      "attributes": {"class": "input", "name": "user", "value": {"get": "database.user"}, "required": true},
+                      "help": null
+                    }
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "install.db_password"},
+                      "attributes": {"class": "input", "name": "password", "type": "password", "value": ""},
+                      "help": null
+                    }
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "install.db_charset"},
+                      "attributes": {"class": "input", "name": "charset", "value": {"get": "database.charset"}, "required": true},
+                      "help": null
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "cluster"},
+                "children": [
+                  {
+                    "tag": "a",
+                    "attrs": {"class": "btn btn-secondary", "href": "/install?step=language"},
+                    "children": [{"icon": "arrow-left"}, " ", {"tag": "span", "children": [{"t": "common.back"}]}]
+                  },
+                  {
+                    "tag": "button",
+                    "attrs": {"class": "btn btn-primary", "type": "submit"},
+                    "children": [{"icon": "arrow-right"}, " ", {"tag": "span", "children": [{"t": "install.db_test"}]}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "installation/tables": {
+    "tag": "article",
+    "attrs": {"class": "card"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-header"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": "database"}, " ", {"t": "install.tables_title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body stack"},
+        "children": [
+          {"tag": "p", "attrs": {"class": "text-muted mb-0"}, "children": [{"t": "install.tables_intro"}]},
+          {
+            "tag": "div",
+            "attrs": {"class": "alert alert-danger"},
+            "children": [{"t": "install.messages.db_failed", "values": {"message": {"get": "table_error"}}}],
+            "when": {"get": "table_error"}
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "table-wrap"},
+            "children": [
+              {
+                "tag": "table",
+                "attrs": {"class": "table"},
+                "children": [
+                  {
+                    "tag": "thead",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "children": [
+                          {"tag": "th", "children": [{"t": "install.table_name"}]},
+                          {"tag": "th", "children": [{"t": "install.table_purpose"}]},
+                          {"tag": "th", "children": [{"t": "install.table_state"}]}
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "tbody",
+                    "children": [
+                      {
+                        "each": {"get": "tables"},
+                        "as": "table",
+                        "children": {
+                          "tag": "tr",
+                          "children": [
+                            {"tag": "td", "children": [{"tag": "code", "children": [{"get": "table.name"}]}]},
+                            {"tag": "td", "children": [{"get": "table.purpose"}]},
+                            {
+                              "tag": "td",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attrs": {"class": {"if": [{"get": "table.exists"}, "badge badge-primary", "badge"]}},
+                                  "children": [
+                                    {
+                                      "if": [
+                                        {"get": "table.exists"},
+                                        {"t": "install.state_exists"},
+                                        {"t": "install.state_missing"}
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "form",
+            "attrs": {
+              "method": "post",
+              "action": "/api/installation/steps/tables",
+              "class": "cluster",
+              "data-installation-form": true
+            },
+            "children": [
+              {"csrf": true},
+              {"tag": "input", "attrs": {"type": "hidden", "name": "_install_step", "value": "tables"}},
+              {
+                "tag": "a",
+                "attrs": {"class": "btn btn-secondary", "href": "/install?step=db"},
+                "children": [{"icon": "arrow-left"}, " ", {"tag": "span", "children": [{"t": "common.back"}]}]
+              },
+              {
+                "tag": "button",
+                "attrs": {"class": "btn btn-primary", "type": "submit"},
+                "children": [{"icon": "check"}, " ", {"tag": "span", "children": [{"t": "install.create_tables"}]}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "installation/admin": {
+    "tag": "article",
+    "attrs": {"class": "card"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-header"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": "shield"}, " ", {"t": "install.admin_title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body stack"},
+        "children": [
+          {
+            "tag": "form",
+            "attrs": {
+              "method": "post",
+              "action": "/api/installation/steps/admin",
+              "class": "stack",
+              "data-installation-form": true
+            },
+            "children": [
+              {"csrf": true},
+              {"tag": "input", "attrs": {"type": "hidden", "name": "_install_step", "value": "admin"}},
+              {
+                "component": "ui/field",
+                "data": {
+                  "label": {"t": "common.username"},
+                  "attributes": {
+                    "class": "input",
+                    "name": "username",
+                    "autocomplete": "username",
+                    "autocapitalize": "none",
+                    "spellcheck": "false",
+                    "pattern": {"get": "username_pattern"},
+                    "minlength": 2,
+                    "maxlength": 32,
+                    "required": true
+                  },
+                  "help": {"get": "username_hint"}
+                }
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "grid sm:grid-2"},
+                "children": [
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "common.password"},
+                      "attributes": {
+                        "class": "input",
+                        "name": "password",
+                        "type": "password",
+                        "autocomplete": "new-password",
+                        "minlength": 8,
+                        "maxlength": {"get": "password_max"},
+                        "required": true
+                      },
+                      "help": null
+                    }
+                  },
+                  {
+                    "component": "ui/field",
+                    "data": {
+                      "label": {"t": "install.admin_password_confirm"},
+                      "attributes": {
+                        "class": "input",
+                        "name": "password_confirm",
+                        "type": "password",
+                        "autocomplete": "new-password",
+                        "minlength": 8,
+                        "maxlength": {"get": "password_max"},
+                        "required": true
+                      },
+                      "help": null
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "choice-row"},
+                "children": [
+                  {
+                    "tag": "a",
+                    "attrs": {"class": "btn btn-secondary", "href": "/install?step=tables"},
+                    "children": [{"icon": "arrow-left"}, " ", {"tag": "span", "children": [{"t": "common.back"}]}]
+                  },
+                  {
+                    "tag": "button",
+                    "attrs": {"class": "btn btn-primary", "type": "submit"},
+                    "children": [{"icon": "save"}, " ", {"tag": "span", "children": [{"t": "common.finish"}]}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "installation/done": {
+    "tag": "article",
+    "attrs": {"class": "card"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-header"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": "check-circle"}, " ", {"t": "install.done_title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body stack"},
+        "children": [
+          {"tag": "p", "attrs": {"class": "text-muted mb-0"}, "children": [{"t": "install.done_intro"}]},
+          {
+            "tag": "ul",
+            "attrs": {"class": "result-list"},
+            "children": [
+              {
+                "tag": "li",
+                "attrs": {"class": "result-item"},
+                "children": [
+                  {"icon": "globe"},
+                  " ",
+                  {
+                    "tag": "span",
+                    "children": [{"t": "common.language"}, ": ", {"tag": "strong", "children": [{"get": "locale"}]}]
+                  }
+                ]
+              },
+              {
+                "tag": "li",
+                "attrs": {"class": "result-item"},
+                "children": [
+                  {"icon": "database"},
+                  " ",
+                  {
+                    "tag": "span",
+                    "children": [{"t": "common.tables"}, ": ", {"tag": "strong", "children": [{"get": "required_tables"}]}]
+                  }
+                ]
+              },
+              {
+                "tag": "li",
+                "attrs": {"class": "result-item"},
+                "children": [
+                  {"icon": "shield"},
+                  " ",
+                  {
+                    "tag": "span",
+                    "children": [{"t": "common.account"}, ": ", {"tag": "strong", "children": [{"t": "common.done"}]}]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "btn-group"},
+            "children": [
+              {
+                "tag": "a",
+                "attrs": {"href": "/admin", "class": "btn btn-primary"},
+                "children": [{"icon": "dashboard"}, " ", {"tag": "span", "children": [{"t": "install.open_admin"}]}]
+              },
+              {
+                "tag": "a",
+                "attrs": {"class": "btn btn-secondary", "href": "/"},
+                "children": [{"icon": "home"}, " ", {"tag": "span", "children": [{"t": "install.open_index"}]}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "installation/page": [
+    {
+      "tag": "header",
+      "attrs": {"class": "navbar"},
+      "children": [
+        {
+          "tag": "div",
+          "attrs": {"class": "container navbar-inner"},
+          "children": [
+            {"tag": "strong", "children": ["TinyCat"]},
+            {
+              "tag": "span",
+              "attrs": {"class": "badge badge-primary"},
+              "children": [{"icon": "settings"}, " ", {"t": "install.title"}]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tag": "main",
+      "attrs": {"class": "section"},
+      "children": [
+        {
+          "tag": "div",
+          "attrs": {"class": "container-sm stack stack-gap-24"},
+          "children": [
+            {
+              "tag": "div",
+              "attrs": {"class": "stack stack-gap-8"},
+              "children": [{"tag": "h1", "attrs": {"class": "text-2xl m-0"}, "children": [{"t": "install.title"}]}]
+            },
+            {"component": "installation/steps", "data": {"steps": {"get": "steps"}}},
+            {
+              "tag": "div",
+              "attrs": {"class": "alert alert-danger"},
+              "children": [{"get": "error"}],
+              "when": {"get": "error"}
+            },
+            {
+              "tag": "div",
+              "attrs": {"class": "alert alert-success"},
+              "children": [{"get": "success"}],
+              "when": {"get": "success"}
+            },
+            {
+              "component": "installation/language",
+              "data": {"languages": {"get": "languages"}, "locale": {"get": "locale"}},
+              "when": {"eq": [{"get": "current"}, "language"]}
+            },
+            {
+              "component": "installation/database",
+              "data": {"database": {"get": "database"}},
+              "when": {"eq": [{"get": "current"}, "db"]}
+            },
+            {
+              "component": "installation/tables",
+              "data": {"tables": {"get": "tables"}, "table_error": {"get": "table_error"}},
+              "when": {"eq": [{"get": "current"}, "tables"]}
+            },
+            {
+              "component": "installation/admin",
+              "data": {
+                "username_pattern": {"get": "username_pattern"},
+                "username_hint": {"get": "username_hint"},
+                "password_max": {"get": "password_max"}
+              },
+              "when": {"eq": [{"get": "current"}, "admin"]}
+            },
+            {
+              "component": "installation/done",
+              "data": {"locale": {"get": "locale"}, "required_tables": {"get": "required_tables"}},
+              "when": {"eq": [{"get": "current"}, "done"]}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

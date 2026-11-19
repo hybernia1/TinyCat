@@ -14,7 +14,7 @@ use TinyCat\Core\Security\Captcha;
 use TinyCat\Support\AdminViews;
 use TinyCat\Support\Markup;
 use TinyCat\Support\Localization;
-use TinyCat\Support\View;
+use TinyCat\Support\Components;
 
 /** HTTP page composition; view components receive already prepared data. */
 final class Pages
@@ -30,11 +30,12 @@ final class Pages
         Integration::render([
             'title' => Localization::t('account.title'), 'current' => '/', 'public' => true,
             'meta' => ['robots' => 'noindex,nofollow'],
-        ], View::render('account-home', [
+        ], Components::render('users/account-home', [
             'user' => $user,
-            'accountAction' => AdminViews::modalAction('account-editor-modal-' . (int) $user['id'], Localization::t('account.profile_settings'), 'settings', '/api/users/' . (int) $user['id'] . '/management?panel=account'),
-            'logoutUrl' => Integration::localUrl('/logout'),
-        ], __DIR__ . '/templates'));
+            'account_modal' => 'account-editor-modal-' . (int) $user['id'],
+            'account_url' => '/api/users/' . (int) $user['id'] . '/management?panel=account',
+            'logout_url' => Integration::localUrl('/logout'),
+        ]));
     }
 
     public static function administration(): void
@@ -75,7 +76,7 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,follow',
             ],
-        ], View::render('login', compact('error', 'message', 'next', 'old'), __DIR__ . '/templates'));
+        ], Components::render('users/auth-page', AuthResource::make('login', $next) + ['old' => $old, 'error' => (string) $error, 'message' => (string) $message]));
     }
 
     public static function register(): void
@@ -97,7 +98,7 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,follow',
             ],
-        ], View::render('register', compact('next', 'old'), __DIR__ . '/templates'));
+        ], Components::render('users/auth-page', AuthResource::make('register', $next) + ['old' => $old]));
     }
 
     public static function logout(): void
@@ -112,18 +113,13 @@ final class Pages
                 'url' => '/logout',
                 'robots' => 'noindex,nofollow',
             ],
-        ], View::render('logout', [], __DIR__ . '/templates'));
+        ], Components::render('users/logout-page'));
     }
 
     public static function recovery(): void
     {
         $recoveryToken = trim((string) Web::get('token', ''));
 
-        $authPasswordMaxLength = \TinyCat\Core\Identity\Passwords::maxLength();
-        $field = Captcha::field('recovery');
-        $pageUrls = [];
-        foreach (['/recovery', '/login', '/privacy'] as $pagePath) { $pageUrls[$pagePath] = Integration::localUrl($pagePath); }
-        $pageUrls['/privacy'] = Integration::privacyUrl();
         Integration::render([
             'title' => Localization::t('auth.recovery_title'),
             'current' => '/recovery',
@@ -134,6 +130,9 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,nofollow',
             ],
-        ], View::render('recovery', compact('pageUrls', 'recoveryToken', 'authPasswordMaxLength', 'field'), __DIR__ . '/templates'));
+        ], Components::render('users/recovery-page', [
+            'reset' => $recoveryToken !== '', 'token' => $recoveryToken, 'password_max' => Passwords::maxLength(),
+            'captcha' => Captcha::configuration('recovery'), 'login_url' => Integration::localUrl('/login'), 'privacy_url' => Integration::privacyUrl(),
+        ]));
     }
 }

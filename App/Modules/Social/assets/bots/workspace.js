@@ -182,19 +182,6 @@ import "../../../../../assets/ui/tabs.js";
       T.filters.remove("bot-detail-posts-filter-modal");
       T.filters.remove("bot-detail-runs-filter-modal");
       states.delete(root);
-    },
-    hydrate: function (root) {
-      Array.from((root || document).querySelectorAll("[data-bot-detail-open]")).forEach(function (marker) {
-        if (marker.dataset.ready === "true") { return; }
-        marker.dataset.ready = "true";
-        var id = Number(marker.dataset.botDetailOpen), query = new URLSearchParams(marker.dataset.botDetailQuery || "");
-        query.delete("view");
-        query.set("panel", "detail");
-        var url = new URL("/api/bots/accounts/" + id + "?" + query, window.location.href);
-        T.dialog.openResource("bot-detail-modal", url.pathname + url.search, {
-          baseUrl: "/admin/bots/accounts", current: function () { return marker.isConnected; }
-        }).catch(failed);
-      });
     }
   };
 }());

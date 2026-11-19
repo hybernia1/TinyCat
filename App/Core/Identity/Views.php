@@ -7,7 +7,7 @@ use TinyCat\Core\Identity\Integration;
 
 use TinyCat\Support\Components;
 
-/** Presentation components: prepare inputs, then render their private partial. */
+/** Presentation helpers that adapt domain data to shared component inputs. */
 final class Views
 {
 
@@ -22,20 +22,6 @@ final class Views
             'protected' => !$create && $user !== null && ReadModel::tc_admin_user_is_super_admin($user),
             'options' => Resource::options() + ['roles' => (array) ($data['roles'] ?? []), 'statuses' => (array) ($data['statuses'] ?? [])],
         ]);
-    }
-
-    /** @param array<mixed> $data */
-    public static function authContent(array $data = []): string
-    {
-        $model = AuthResource::make((string) ($data['mode'] ?? 'login'), (string) ($data['next'] ?? ''));
-        return Components::render('users/auth-content', $model + ['old' => (array) ($data['old'] ?? []), 'error' => (string) ($data['error'] ?? ''), 'message' => (string) ($data['message'] ?? '')]);
-    }
-
-    /** @param array<mixed> $data */
-    public static function authForm(array $data = []): string
-    {
-        $model = AuthResource::make((string) ($data['mode'] ?? 'login'), (string) ($data['next'] ?? ''));
-        return Components::render('users/auth-form', $model + ['old' => (array) ($data['old'] ?? []), 'error' => (string) ($data['error'] ?? ''), 'message' => (string) ($data['message'] ?? '')]);
     }
 
     /** @param array<mixed> $data */

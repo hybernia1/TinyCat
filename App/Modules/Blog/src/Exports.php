@@ -4,7 +4,7 @@ namespace TinyCat\Blog;
 
 use TinyCat\Core\Feeds\Rss;
 use TinyCat\Core\Ui\Site;
-use TinyCat\Support\{Dates, Html, Localization, Text};
+use TinyCat\Support\{Components, Dates, Localization, Markup, Text};
 
 /** Blog owns selection and canonical URLs; core owns export transports. */
 final class Exports
@@ -29,8 +29,8 @@ final class Exports
         $article = Articles::find((int) $match[1]);
         if ($article === null) { return null; }
         $url = Site::absolute_url('/articles/' . (int) $article['id']);
-        $html = '<blockquote cite="' . Html::e($url) . '"><a href="' . Html::e($url) . '">' . Html::e((string) $article['title']) . '</a>'
-            . Rss::html(Text::excerpt((string) $article['body'], 500)) . '</blockquote>';
+        $html = Components::render('blog/embed-quote', ['url' => $url, 'title' => (string) $article['title'],
+            'excerpt' => new Markup(Rss::html(Text::excerpt((string) $article['body'], 500)))]);
         $data = ['title' => (string) $article['title'], 'author_name' => (string) $article['author'], 'html' => $html];
         $image = Images::url($article);
         if ($image !== '') { $data['thumbnail_url'] = Site::absolute_url($image); }

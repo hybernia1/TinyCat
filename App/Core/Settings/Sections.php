@@ -17,13 +17,25 @@ final class Sections
             }
             $result['sections'][$group] = array_intersect_key($section, array_flip(['label', 'icon']));
             foreach ($section['fields'] as $field) {
-                if (!is_string($field['label'] ?? null)) { throw new \LogicException('Missing settings field label: ' . $field['key']); }
-                $result['fields'][$field['key']] = array_intersect_key($field, array_flip(['label', 'help', 'placeholder', 'span']));
+                $result['fields'][$field['key']] = self::fieldPresentation($field);
             }
         }
         $sample = new \DateTimeImmutable('2026-07-05 15:04:09');
         foreach ([...array_keys(\TinyCat\Support\Dates::date_format_presets()), ...array_keys(\TinyCat\Support\Dates::time_format_presets()), ...array_keys(\TinyCat\Support\Dates::datetime_format_presets())] as $format) {
             $result['examples'][$format] = $sample->format($format);
+        }
+        return $result;
+    }
+
+    /** @param array<string, mixed> $field
+     * @return array<string, mixed> */
+    private static function fieldPresentation(array $field): array
+    {
+        if (!is_string($field['label'] ?? null)) { throw new \LogicException('Missing settings field label: ' . $field['key']); }
+        $result = array_intersect_key($field, array_flip(['label', 'help', 'placeholder', 'span']));
+        if (isset($field['fields'])) {
+            $result['fields'] = [];
+            foreach ($field['fields'] as $child) { $result['fields'][$child['key']] = self::fieldPresentation($child); }
         }
         return $result;
     }

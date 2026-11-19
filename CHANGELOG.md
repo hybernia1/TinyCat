@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.1.3 - 2026-11-19
+
+- Share one HTML document across public pages, administration and installation; keep owner metadata, consent, assets and existing minification behavior.
+- Move installation, account and settings presentation into owner component catalogs shared by server and client. Preserve lazy dialogs, draft guards, password redaction and canonical API data.
+- Remove unused Social feed render layers and inline application HTML. Open legacy bot detail URLs through the shared dialog route while preserving filters and history.
+- Add component JSON schema completion, grammar validation and precise source/component/path diagnostics; keep catalogs as ordinary JSON without per-component template files.
+- Retire ten presentation files through the signed deletion plan. Preserve installed owners, activation, data and published migration history; introduce no database migrations.
+
+
 ## 6.1.2 - 2026-11-18
 
 - Fix administrative UI initialization on Site Health, where scheduler run details are available without a scheduler list declaration. Keep hamburger navigation, settings and run-detail dialogs working.

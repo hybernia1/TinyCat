@@ -27,6 +27,7 @@ return static function (?array $sources = null): void {
 REGEX;
     foreach ($sources as $path => $source) {
         $source = str_replace(['\\"', "\\'"], ['"', "'"], $source);
-        if (preg_match($pattern, $source) || preg_match('~[\'"]?role[\'"]?\s*(?::|=>|=)\s*[\'"]dialog[\'"]~i', $source)) { throw new RuntimeException($path . ': prebuilt or module-owned dialog frames are forbidden; use a resource trigger and shared factories'); }
+        if (preg_match($pattern, $source) || preg_match('~[\'"]?role[\'"]?\s*(?::|=>|=)\s*[\'"]dialog[\'"]~i', $source)
+            || str_contains($source, 'data-bot-detail-open')) { throw new RuntimeException($path . ': prebuilt or module-owned dialog frames are forbidden; use a resource trigger and shared factories'); }
     }
 };

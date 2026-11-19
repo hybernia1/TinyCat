@@ -6,7 +6,6 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 use TinyCat\Social\Profiles\Views as UsersViews;
-use TinyCat\Social\Posts\Views as StatusViews;
 use TinyCat\Social\Presentation\Views as SiteViews;
 
 // No workspace database or cache is used by this rendering fixture.
@@ -99,6 +98,28 @@ $assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar
 
 $settingsSchema = \TinyCat\Core\Settings\Resource::editor();
 $assert(count($settingsSchema['sections']) >= 2 && $settingsSchema['sections'][0]['key'] === 'site', 'Settings expose a JSON editor schema for deferred loading.');
+$smtpFields = [];
+foreach ($settingsSchema['sections'] as $section) {
+    foreach ($section['fields'] as $field) { if ($field['key'] === 'email.smtp') { $smtpFields = $field['fields']; } }
+}
+$assert(array_column($smtpFields, 'key') === ['host', 'port', 'username', 'password', 'encryption', 'from_address', 'from_name'], 'Mail owns the complete nested SMTP editor schema.');
+$assert(is_int($smtpFields[1]['value']) && $smtpFields[1]['value'] >= 1 && $smtpFields[1]['value'] <= 65535 && $smtpFields[1]['max'] === 65535 && !$smtpFields[1]['optional'] && $smtpFields[3]['value'] === '', 'Nested fields retain canonical values, limits and write-only passwords.');
+foreach ($smtpFields as $field) {
+    $assert(array_intersect(['label', 'default', 'span', 'normalize'], array_keys($field)) === [], 'Nested API fields contain data and constraints without presentation or callbacks.');
+}
+$smtpPresentation = \TinyCat\Core\Settings\Sections::presentation()['fields']['email.smtp']['fields'];
+foreach ($smtpPresentation as $field) {
+    $assert(is_string($field['label']) && !array_intersect(['value', 'default', 'type', 'max', 'options'], array_keys($field)), 'Nested presentation contains owner labels without values or constraints.');
+}
+$settingsState = new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings');
+$savedSettingsState = $settingsState->getValue();
+try {
+    $settingsState->setValue(null, ['email.smtp' => ['host' => 'smtp.fixture.test', 'password' => 'fixture-secret-do-not-expose']]);
+    $privateEditor = \TinyCat\Core\Settings\Resource::editor();
+    $assert(!str_contains(json_encode($privateEditor, JSON_THROW_ON_ERROR), 'fixture-secret-do-not-expose'), 'SMTP secrets do not escape through the group or its child values.');
+} finally {
+    $settingsState->setValue(null, $savedSettingsState);
+}
 $assert(!str_contains((string) file_get_contents(__DIR__ . '/../../App/Core/Ui/Admin/templates/shell.php'), '$settingsEditor'), 'Admin pages do not embed a settings editor.');
 $botStat = \TinyCat\Support\Components::render('bots/stat', ['stat' => ['key' => 'posts', 'value' => 0]]);
 $assert(str_contains($botStat, 'class="card min-w-0"') && str_contains($botStat, '#file') && str_contains($botStat, 'data-bot-stat="posts">0</strong>'), 'Bot counters use the dashboard stat card, include their icon, and preserve zero values and live-update hooks.');
@@ -119,11 +140,11 @@ $assert($hasAction($sources, '/api/bots/sources/7/runs') && $hasAction($sources,
 $accounts = \TinyCat\Support\Components::render('bots/accounts', ['items' => [\TinyCat\Social\Automation\Administration::accountResource(['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01'])]]);
 $assert(str_contains($accounts, '/api/bots/accounts'), 'Bot accounts retain canonical API actions.');
 $item = ['id' => 7, 'likes_count' => 2, 'comments_count' => 1];
-$actions = StatusViews::actions(['item' => $item, 'user' => $member]);
+$actions = \TinyCat\Support\Components::render('status/actions', ['item' => \TinyCat\Social\Posts\Resource::post($item, $member), 'open_modal' => true]);
 $assert(str_contains($actions, 'action="/api/statuses/7/likes/me"'), 'Status reactions use the resource action.');
-$form = StatusViews::commentForm(['content_id' => 7, 'user' => $member]);
+$form = \TinyCat\Support\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Resource::profile($member), 'parent_id' => 0, 'mention' => '']);
 $assert(str_contains($form, 'action="/api/statuses/7/comments"') && str_contains($form, 'status-comment-input-shell'), 'Comment forms preserve the API action and editor structure.');
-$thread = StatusViews::commentsThread(['item' => $item, 'comments' => [['id' => 1, 'content_id' => 7]], 'user' => null]);
+$thread = \TinyCat\Support\Components::render('status/thread', ['item' => \TinyCat\Social\Posts\Resource::post($item, null), 'comments' => \TinyCat\Social\Posts\Resource::comments([['id' => 1, 'content_id' => 7]], null), 'viewer' => null, 'context' => '']);
 $assert(str_contains($thread, 'data-modal-url="/api/users/authentication?'), 'Guest comment threads keep the sign-in modal.');
 $botFields = \TinyCat\Support\Components::render('bots/account-fields', ['item' => ['id' => 3, 'username' => 'Bot', 'status' => 'active', 'bio' => 'Draft']]);
 $assert(str_contains($botFields, 'data-modal-url="/api/users/3/avatar"') && str_contains($botFields, 'name="bio"'), 'The sole bot account form keeps biography and the shared avatar editor.');

@@ -179,6 +179,160 @@
       ]
     },
     {
+      "name": "users/auth-page",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "users/auth-content"
+      ],
+      "inputs": [
+        "captcha",
+        "error",
+        "form_url",
+        "message",
+        "mode",
+        "next",
+        "old",
+        "options",
+        "register",
+        "registration_enabled",
+        "switch_modal_url",
+        "switch_url"
+      ]
+    },
+    {
+      "name": "users/recovery-page",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/captcha",
+        "ui/field"
+      ],
+      "inputs": [
+        "captcha",
+        "login_url",
+        "password_max",
+        "privacy_url",
+        "reset",
+        "token"
+      ]
+    },
+    {
+      "name": "users/logout-page",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "users/account-home",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/modal-trigger"
+      ],
+      "inputs": [
+        "account_modal",
+        "account_url",
+        "logout_url",
+        "user.username"
+      ]
+    },
+    {
+      "name": "installation/steps",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "step.active",
+        "step.complete",
+        "step.label",
+        "step.number",
+        "steps"
+      ]
+    },
+    {
+      "name": "installation/language",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "language.code",
+        "language.display_code",
+        "language.label",
+        "languages",
+        "locale"
+      ]
+    },
+    {
+      "name": "installation/database",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "database.charset",
+        "database.host",
+        "database.name",
+        "database.port",
+        "database.user"
+      ]
+    },
+    {
+      "name": "installation/tables",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "table.exists",
+        "table.name",
+        "table.purpose",
+        "table_error",
+        "tables"
+      ]
+    },
+    {
+      "name": "installation/admin",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "password_max",
+        "username_hint",
+        "username_pattern"
+      ]
+    },
+    {
+      "name": "installation/done",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "locale",
+        "required_tables"
+      ]
+    },
+    {
+      "name": "installation/page",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [
+        "installation/admin",
+        "installation/database",
+        "installation/done",
+        "installation/language",
+        "installation/steps",
+        "installation/tables"
+      ],
+      "inputs": [
+        "current",
+        "database",
+        "error",
+        "languages",
+        "locale",
+        "password_max",
+        "required_tables",
+        "steps",
+        "success",
+        "table_error",
+        "tables",
+        "username_hint",
+        "username_pattern"
+      ]
+    },
+    {
       "name": "notifications/copy",
       "source": "App/Core/Notifications/assets/components.json",
       "dependencies": [],
@@ -244,6 +398,72 @@
         "item",
         "items",
         "preview"
+      ]
+    },
+    {
+      "name": "settings/sections",
+      "source": "App/Core/Settings/assets/components.json",
+      "dependencies": [
+        "settings/field"
+      ],
+      "inputs": [
+        "field.attributes",
+        "field.checked",
+        "field.fields",
+        "field.help",
+        "field.kind",
+        "field.label",
+        "field.name",
+        "field.options",
+        "field.remove_name",
+        "field.root_class",
+        "field.root_tag",
+        "field.upload_name",
+        "field.value",
+        "section.fields",
+        "section.icon",
+        "section.key",
+        "section.label",
+        "sections"
+      ]
+    },
+    {
+      "name": "settings/field",
+      "source": "App/Core/Settings/assets/components.json",
+      "dependencies": [
+        "settings/field"
+      ],
+      "inputs": [
+        "attributes",
+        "checked",
+        "field.attributes",
+        "field.checked",
+        "field.fields",
+        "field.help",
+        "field.kind",
+        "field.label",
+        "field.name",
+        "field.options",
+        "field.remove_name",
+        "field.root_class",
+        "field.root_tag",
+        "field.upload_name",
+        "field.value",
+        "fields",
+        "help",
+        "kind",
+        "label",
+        "name",
+        "option.label",
+        "option.name",
+        "option.selected",
+        "option.value",
+        "options",
+        "remove_name",
+        "root_class",
+        "root_tag",
+        "upload_name",
+        "value"
       ]
     },
     {
@@ -326,7 +546,6 @@
         "scheduler/status"
       ],
       "inputs": [
-        "",
         "_key",
         "item.actor",
         "item.actor.id",
@@ -390,6 +609,15 @@
       "inputs": [
         "key",
         "name"
+      ]
+    },
+    {
+      "name": "scheduler/runs-page",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "content",
+        "target_id"
       ]
     },
     {
@@ -548,6 +776,16 @@
         "item.rejection.code",
         "item.title",
         "items"
+      ]
+    },
+    {
+      "name": "blog/embed-quote",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "excerpt",
+        "title",
+        "url"
       ]
     },
     {
@@ -1504,6 +1742,15 @@
       ]
     },
     {
+      "name": "status/rss-image",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "alt",
+        "url"
+      ]
+    },
+    {
       "name": "ui/field",
       "source": "assets/ui/components.json",
       "dependencies": [],
@@ -2109,6 +2356,14 @@
         "target.api_url",
         "target.id",
         "viewer"
+      ]
+    },
+    {
+      "name": "ui/dashboard",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "content"
       ]
     }
   ],
@@ -11320,31 +11575,21 @@
   ],
   "php_partials": [
     "App/Core/Identity/templates/parts/user-menu.php",
-    "App/Core/Installation/templates/parts/install/steps.php",
     "App/Core/Notifications/templates/parts/menu.php",
     "App/Core/Notifications/templates/parts/page.php",
     "App/Core/Ui/templates/parts/consent.php",
     "App/Core/Ui/templates/parts/flashes.php",
     "App/Core/Ui/templates/parts/public-header.php",
-    "App/Modules/Social/templates/parts/site/sidebar-slot.php",
-    "App/Modules/Social/templates/parts/status/feed.php",
-    "App/Modules/Social/templates/parts/status/home-feed.php"
+    "App/Modules/Social/templates/parts/site/sidebar-slot.php"
   ],
   "php_templates": [
     "App/Core/Health/templates/page.php",
-    "App/Core/Identity/templates/account-home.php",
-    "App/Core/Identity/templates/login.php",
-    "App/Core/Identity/templates/logout.php",
     "App/Core/Identity/templates/parts/user-menu.php",
-    "App/Core/Identity/templates/recovery.php",
-    "App/Core/Identity/templates/register.php",
-    "App/Core/Installation/templates/parts/install/steps.php",
     "App/Core/Notifications/templates/page.php",
     "App/Core/Notifications/templates/parts/menu.php",
     "App/Core/Notifications/templates/parts/page.php",
     "App/Core/Tasks/templates/actions.php",
     "App/Core/Tasks/templates/administration.php",
-    "App/Core/Ui/Admin/templates/document.php",
     "App/Core/Ui/Admin/templates/shell.php",
     "App/Core/Ui/templates/document.php",
     "App/Core/Ui/templates/errorFallback.php",
@@ -11362,8 +11607,6 @@
     "App/Modules/Blog/templates/article.php",
     "App/Modules/Blog/templates/listing.php",
     "App/Modules/Social/templates/parts/site/sidebar-slot.php",
-    "App/Modules/Social/templates/parts/status/feed.php",
-    "App/Modules/Social/templates/parts/status/home-feed.php",
     "App/Modules/Social/templates/site/privacy-section.php",
     "App/Modules/Social/templates/site/public.php",
     "App/Modules/Social/templates/status/embed.php"
@@ -11373,8 +11616,6 @@
       "source": "App/Core/Identity/Views.php",
       "methods": [
         "adminFormFields",
-        "authContent",
-        "authForm",
         "avatar"
       ]
     },
@@ -11402,19 +11643,6 @@
         "admin_list_url",
         "admin_per_page_view_data",
         "admin_pagination_view_data"
-      ]
-    },
-    {
-      "source": "App/Modules/Social/src/Posts/Views.php",
-      "methods": [
-        "feedMore",
-        "card",
-        "actions",
-        "commentForm",
-        "commentItem",
-        "commentsThread",
-        "composerBody",
-        "homeFeed"
       ]
     },
     {

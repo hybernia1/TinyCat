@@ -20,7 +20,10 @@ final class Pages
         $definition = \TinyCat\Core\Ui\Admin\Definitions::get('core.scheduler-runs');
         $title = Localization::t($definition['title']);
         $data = Administration::payload();
-        $content = '<div id="' . substr($definition['target'], 1) . '">' . \TinyCat\Support\Components::render($definition['component'], $data + ['state' => $data]) . '</div>';
+        $content = \TinyCat\Support\Components::render('scheduler/runs-page', [
+            'target_id' => substr($definition['target'], 1),
+            'content' => new \TinyCat\Support\Markup(\TinyCat\Support\Components::render($definition['component'], $data + ['state' => $data])),
+        ]);
         Layout::render(['title' => $title, 'current' => $definition['path']], $content);
     }
 

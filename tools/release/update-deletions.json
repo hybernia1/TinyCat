@@ -2037,5 +2037,17 @@
     "App/Core/Support/templates/parts/filter.php",
     "App/Modules/Social/src/Moderation/Views.php",
     "App/Core/Identity/ViewData.php"
+  ],
+  "6.1.3": [
+    "App/Core/Installation/templates/parts/install/steps.php",
+    "App/Core/Ui/Admin/templates/document.php",
+    "App/Core/Identity/templates/login.php",
+    "App/Core/Identity/templates/register.php",
+    "App/Core/Identity/templates/logout.php",
+    "App/Core/Identity/templates/recovery.php",
+    "App/Core/Identity/templates/account-home.php",
+    "App/Modules/Social/src/Posts/Views.php",
+    "App/Modules/Social/templates/parts/status/feed.php",
+    "App/Modules/Social/templates/parts/status/home-feed.php"
   ]
 }

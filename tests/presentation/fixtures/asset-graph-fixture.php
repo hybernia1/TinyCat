@@ -9,12 +9,12 @@ if ($mode === '--health-action') {
 }
 if ($mode === '--installation') {
     \TinyCat\Support\Localization::locale('cs');
-    ob_start();
-    $current = 'tables';
-    require __DIR__ . '/../../../App/Core/Installation/templates/parts/install/steps.php';
-    \TinyCat\Core\Installation\Pages::language_view(\TinyCat\Core\Installation\Installer::languages(), ['locale' => 'cs']);
-    \TinyCat\Core\Installation\Pages::database_view(['database' => ['host' => 'localhost', 'name' => 'fixture', 'user' => 'fixture', 'charset' => 'utf8mb4']]);
-    $html = (string) ob_get_clean();
+    $steps = \TinyCat\Core\Installation\Pages::prepare('tables', [], []);
+    $language = \TinyCat\Core\Installation\Pages::prepare('language', \TinyCat\Core\Installation\Installer::languages(), ['locale' => 'cs']);
+    $database = \TinyCat\Core\Installation\Pages::prepare('db', [], ['database' => ['host' => 'localhost', 'name' => 'fixture', 'user' => 'fixture', 'charset' => 'utf8mb4']]);
+    $html = \TinyCat\Support\Components::render('installation/steps', $steps)
+        . \TinyCat\Support\Components::render('installation/language', $language)
+        . \TinyCat\Support\Components::render('installation/database', $database);
     session_destroy();
     echo json_encode($html, JSON_THROW_ON_ERROR);
     exit;

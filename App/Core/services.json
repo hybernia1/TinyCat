@@ -63,7 +63,8 @@
       "resources": {
         "translations": "lang",
         "assets": "assets/module.json",
-        "migrations": "migrations"
+        "migrations": "migrations",
+        "components": "assets/components.json"
       }
     }
   },
@@ -84,7 +85,7 @@
       },
       "resources": {
         "assets": "assets/module.json",
-        "templates": "templates"
+        "components": "assets/components.json"
       }
     }
   },

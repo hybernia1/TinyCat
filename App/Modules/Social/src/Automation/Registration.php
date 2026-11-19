@@ -53,7 +53,7 @@ final class Registration
         \TinyCat\Http\Router::route('GET', '/admin/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
             Pages::detail(max(0, (int) $bot_id));
         });
-        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation'), static function (?int $openBot = null): void { Pages::accounts($openBot); });
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation'), static function (): void { Pages::accounts(); });
         \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('social.bot-sources'), static function (): void { Pages::sources(); });
     }
 }

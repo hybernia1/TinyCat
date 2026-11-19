@@ -4452,5 +4452,6 @@
         }
       }
     ]
-  }
+  },
+  "ui/dashboard": {"tag": "div", "attrs": {"class": "stack stack-gap-14", "data-dashboard": ""}, "children": [{"slot": {"get": "content"}}]}
 }

@@ -85,7 +85,6 @@ import "./workspace.js";
   };
   T.bots.dispose = function (root) { T.botDetail.dispose(root); };
   T.bots.hydrate = function (root) {
-    T.botDetail.hydrate(root);
     Array.from((root || document).querySelectorAll("[data-bot-posts-view]")).forEach(function (view) {
       if (view.dataset.botPostsReady === "true") { return; }
       view.dataset.botPostsReady = "true";

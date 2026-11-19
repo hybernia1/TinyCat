@@ -9640,5 +9640,6 @@
         ]
       }
     ]
-  }
+  },
+  "status/rss-image": {"tag": "p", "children": [{"tag": "img", "attrs": {"src": {"get": "url"}, "alt": {"get": "alt"}}}]}
 }

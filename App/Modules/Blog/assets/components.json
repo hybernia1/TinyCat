@@ -1684,5 +1684,6 @@
         ]
       }
     ]
-  }
+  },
+  "blog/embed-quote": {"tag": "blockquote", "attrs": {"cite": {"get": "url"}}, "children": [{"tag": "a", "attrs": {"href": {"get": "url"}}, "children": [{"get": "title"}]}, {"slot": {"get": "excerpt"}}]}
 }

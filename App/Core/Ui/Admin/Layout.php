@@ -51,6 +51,14 @@ final class Layout
             if (is_string($message) && $message !== '') { $flashToasts[] = ['message' => $message, 'type' => $type]; }
         }
         $shell = View::render('shell', compact('title', 'actions', 'content', 'authUser', 'appName', 'siteLogoUrl', 'adminIdentity', 'profileUrl', 'profileNeedsEmail', 'nav', 'titleIcon', 'userMenu'), __DIR__ . '/templates');
-        echo View::render('document', compact('settingsPresentation', 'title', 'shell', 'authUser', 'theme', 'styles', 'scripts', 'csrf', 'iconSprite', 'flashToasts', 'dateFormat', 'dateRelative'), __DIR__ . '/templates');
+        echo \TinyCat\Core\Ui\Document::frame([
+            'title' => $title, 'csrfToken' => $csrf, 'robots' => 'noindex,nofollow',
+            'htmlAttributes' => ['lang' => \TinyCat\Support\Localization::locale(), 'data-theme' => $theme !== 'system' ? $theme : null,
+                'data-date-format' => $dateFormat, 'data-date-relative' => $dateRelative ? 'true' : 'false'],
+            'bodyAttributes' => ['class' => 'admin-shell-page', 'data-application-version' => \TinyCat\Support\Version::CURRENT,
+                'data-current-user-id' => (int) ($authUser['id'] ?? 0), 'data-icon-sprite' => $iconSprite,
+                'data-settings-presentation' => $settingsPresentation !== '' ? $settingsPresentation : null],
+            'styles' => $styles, 'scripts' => $scripts, 'flashToasts' => $flashToasts,
+        ], new \TinyCat\Support\Markup($shell));
     }
 }

@@ -18,11 +18,17 @@ testů a CI zůstávají platné.
 | UI/modal/popover kontrakty | `php tests/quality/ui-contracts.php` |
 | Dosažitelnost a velikosti assetů | `php tools/assets/asset-report.php --check` |
 | Generovaný UI inventář | `python tools/assets/ui-inventory.py` |
+| Generované schéma komponent pro editor | `php tools/quality/component-schema.php` |
 
 `tools/assets/compile-assets.php`, `tools/quality/modal-contracts.php`, `tools/quality/ui-contracts.php`,
 `tools/quality/translation-catalogs.php` a `tools/quality/client-translations.php` poskytují načítané build
 funkce; nejde ve všech případech o samostatné CLI příkazy. Používej jejich
 runner nebo release builder.
+
+`component-syntax.php` vlastní autorskou gramatiku komponent používanou build
+validátorem i generátorem JSON schématu. Diagnostika obsahuje zdroj, název
+komponenty a cestu k chybnému poli. [Reference zápisu](../docs/reference/component-catalog.md)
+popisuje rozdělení odpovědností i připojení schématu do editoru.
 
 `asset-report.php --check --assembly=platform` ověřuje kombinovaný výběr
 Blog + Social proti stejným rozpočtům. Tuto nadmnožinu kontroluje také

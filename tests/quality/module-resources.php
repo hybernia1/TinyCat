@@ -90,7 +90,7 @@ try {
         'styles' => [$relative . '/probe.css'], 'translations' => ['selection_probe.value'],
         'admin' => ['fixture.probe' => ['path' => '/admin/probe', 'endpoint' => '/api/probe', 'api' => '/api/probe', 'target' => '#probe-list', 'component' => 'probe/selection', 'filter' => '', 'filterId' => '', 'title' => 'selection_probe.value', 'icon' => 'settings']],
     ]], JSON_THROW_ON_ERROR));
-    file_put_contents($directory . '/components.json', '{"probe/selection":{"tag":"span","attrs":{"data-probe":{"admin_ref":"fixture.probe","field":"target"}},"text":"Selection probe"}}');
+    file_put_contents($directory . '/components.json', '{"probe/selection":{"tag":"span","attrs":{"data-probe":{"admin_ref":"fixture.probe","field":"target"}},"children":["Selection probe"]}}');
     foreach (TranslationSources::packages() as $locale => $_) { file_put_contents($directory . '/lang/' . $locale . '.json', '{"selection_probe":{"value":"Selected"}}'); }
     file_put_contents($unselected . '/module.json', '{broken');
     file_put_contents($unselected . '/components.json', '{broken');

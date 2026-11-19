@@ -9,9 +9,12 @@ use TinyCat\Support\ClientAssets;
 
 $validate = require __DIR__ . '/../../tools/quality/ui-contracts.php';
 $result = $validate();
+$schemaPath = __DIR__ . '/../../docs/reference/component-catalog.schema.json';
+$schema = json_decode((string) file_get_contents($schemaPath), true, 512, JSON_THROW_ON_ERROR);
+if ($schema !== \TinyCat\Tools\Quality\ComponentSyntax::schema()) { throw new RuntimeException('Regenerate the component editor schema with php tools/quality/component-schema.php.'); }
 $validateModals = require __DIR__ . '/../../tools/quality/modal-contracts.php';
 $validateModals();
-foreach (["<?php View::part('Support/modal', []);", "<?php View::render('parts/modal', []);", '<div class="modal" hidden></div>', '<template data-settings-editor></template>', '<template><form></form></template>', '<div class=\"modal\"></div>'] as $source) {
+foreach (["<?php View::part('Support/modal', []);", "<?php View::render('parts/modal', []);", '<div class="modal" hidden></div>', '<template data-settings-editor></template>', '<template><form></form></template>', '<div class=\"modal\"></div>', '<span hidden data-bot-detail-open="3"></span>'] as $source) {
     try { $validateModals(['App/Example/page.php' => $source]); }
     catch (RuntimeException) { continue; }
     throw new RuntimeException('Modal policy accepted an eagerly rendered dialog.');
@@ -47,6 +50,16 @@ try {
     $reject('{"ui/example":{"use":"ui/missing"}}', 'unknown dependency');
     $reject('{"ui/example":{"tag":"details","attrs":{"data-popover":""},"children":[]}}', 'popover requires one direct trigger');
     $reject('{"ui/example":{"tag":"details","attrs":{"data-popover":""},"children":[{"tag":"summary"},{"tag":"div","attrs":{"class":"owned-panel"}}]}}', 'popover requires one direct trigger');
+    $reject('{"ui/example":{"tag":"div","childen":[]}}', '$.childen');
+    $reject('{"ui/example":{"tag":"div","icon":"user"}}', 'incompatible node instructions');
+    $reject('{"ui/example":{"each":{"get":"items"}}}', '$.children');
+    $reject('{"ui/example":{"tag":"input","attrs":{"onclick":"unsafe"}}}', '$.attrs.onclick');
+    $reject('{"ui/example":{"tag":"div","children":[{"get":"item..title"}]}}', '$.children[0].get');
+    $reject('{"ui/example":{"if":[true]}}', 'invalid operand count');
+    $reject('{"ui/example":{"plural":"example.items"}}', '$.count');
+    $reject('{"ui/example":{"tag":"div","children":{"csrf":false}}}', '$.children.csrf');
+    $reject('{"ui/example":{"tag":"div","attrs":{"class":{"lookup":{"get":"tone"},"catalog":"ui.tones"}}}}', 'catalog and field');
+    $reject('{"ui/example":{"tag":"div","children":{"gett":"item.title"}}}', 'unknown node instruction');
     // Ordinary repeated property names in separate objects remain valid.
     file_put_contents($temporary, json_encode(['ui/one' => ['tag' => 'div', 'attrs' => ['title' => 'escaped "key": { value }']], 'ui/two' => ['tag' => 'span', 'attrs' => ['title' => 'different object']]], JSON_THROW_ON_ERROR));
     if ($validate([$temporary])['components'] !== 2) { throw new RuntimeException('Valid catalog was rejected.'); }

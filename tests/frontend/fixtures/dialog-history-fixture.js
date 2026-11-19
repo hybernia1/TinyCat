@@ -26,7 +26,7 @@
     if (url.pathname === '/api/bots/accounts/7' || url.pathname === '/api/users/7/avatar' || /^\/api\/articles\/(?:creation|7\/management)$/.test(url.pathname)) return editor(id, false);
     return null;
   }});
-  if (!history.state && mode !== 'deep') history.replaceState({pageIndex:0, retained:'list-state'}, '');
+  if (!history.state && !mode.startsWith('deep')) history.replaceState({pageIndex:0, retained:'list-state'}, '');
   T.navigation.registerPage({
     accepts: url => !url.hash,
     target: '#history-test-results',
@@ -68,8 +68,12 @@
     await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
     check(location.hash.includes('modal=bots/accounts/7') && !location.hash.includes('#section'), 'A modal replaces the visible fragment without corrupting the base anchor');
     history.back(); await wait(() => !modal() && location.href === original, 'Closing restores the original page anchor');
-  } else if (mode === 'deep') {
+  } else if (mode.startsWith('deep')) {
     await wait(() => modal() && tab('history').getAttribute('aria-selected') === 'true', 'A direct URL opens its remote modal and selected tab');
+    if (mode === 'deep-filtered') {
+      const resource = new URL(requests[0], location.href);
+      check(resource.searchParams.get('source') === '12' && resource.searchParams.get('publication') === 'published' && resource.searchParams.get('q') === 'RSS fixture', 'Canonical bot detail fragments preserve resource filters without hidden markers');
+    }
     const length = count(); history.back();
     await wait(() => !modal() && !location.hash, 'Back from a direct modal URL stays on the underlying page');
     history.forward();

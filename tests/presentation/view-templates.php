@@ -39,12 +39,11 @@ $assert(str_contains($modal, 'Title &lt;unsafe&gt;'), 'Modal title is escaped.')
 $assert(str_contains($modal, 'data-snapshot="a&amp;b"'), 'Prepared modal attributes are escaped.');
 $assert(str_contains($modal, '<p id="snapshot-body">Safe body</p>'), 'Prepared modal body HTML is preserved.');
 
-$composerBody = \TinyCat\Social\Posts\Views::composerBody([
-    'user' => ['id' => 1, 'username' => 'alice', 'avatar_exists' => 0],
-    'editor' => ['item' => ['body' => 'Draft'], 'image' => []],
-    'submit_name' => 'save',
-    'submit_label' => 'Save',
-    'submit_icon' => 'save',
+$composerBody = \TinyCat\Support\Components::render('status/composer-body', [
+    'constraints' => \TinyCat\Social\Posts\Resource::constraints(),
+    'viewer' => \TinyCat\Social\Profiles\Resource::profile(['id' => 1, 'username' => 'alice', 'avatar_exists' => 0]),
+    'value' => 'Draft', 'image' => [], 'enabled' => false,
+    'submit_name' => 'save', 'submit_value' => '1', 'submit_label' => 'Save', 'submit_icon' => 'save',
 ]);
 $assert(str_contains($composerBody, 'class="status-compose-row"'), 'Composer body exposes the shared composer layout.');
 $assert(str_contains($composerBody, 'name="save"'), 'Composer body can render the edit submit action.');
@@ -55,26 +54,9 @@ $assert(str_contains($time, 'href="/status/7"'), 'Status time link uses the cano
 $assert(str_contains($time, '<time datetime="'), 'Status time link includes a machine-readable date.');
 $assert(!str_contains($time, 'data-modal-open'), 'Status time link respects the non-modal rendering option.');
 
-$statusCard = \TinyCat\Social\Posts\Views::card([
-    'item' => [
-        'id' => 7,
-        'author_id' => 1,
-        'author_name' => 'Alice',
-        'published_at' => '2026-08-09 12:00:00',
-        '_view' => [
-            'author_url' => '/author/1',
-            'anchor' => 'status-7',
-            'modal_id' => 'status-post-modal-7',
-            'modal_url' => '/api/statuses/7',
-            'body_html' => 'Post body',
-            'status_url' => '/status/7',
-            'permalink_label' => 'Alice, 9 August 2026 12:00',
-            'time' => ['iso' => '2026-08-09T12:00:00+00:00', 'label' => '9 August 2026 12:00'],
-        ],
-    ],
-    'anchor' => '',
-    'open_modal' => false,
-    'open_comments_modal' => false,
+$statusCard = \TinyCat\Support\Components::render('status/card', [
+    'item' => \TinyCat\Social\Posts\Resource::post(['id' => 7, 'author_id' => 1, 'author_name' => 'Alice', 'published_at' => '2026-08-09 12:00:00'], null),
+    'anchor' => false, 'open_modal' => false, 'action' => '/',
 ]);
 $assert(!str_contains($statusCard, 'id="status-7"'), 'Modal status cards can omit the feed anchor.');
 $assert(str_contains($statusCard, 'data-modal-parent-url="/api/statuses/7"'), 'Status cards consume their prepared modal route.');
@@ -107,28 +89,12 @@ $gaps = \TinyCat\Support\Components::render('ui/pagination', ['navigation' => \T
 $assert(substr_count($gaps, 'class="pagination-ellipsis"') === 2, 'Non-adjacent page ranges are separated by ellipses.');
 
 
-$comment = \TinyCat\Social\Posts\Views::commentItem([
-    'comment' => [
-        'id' => 13,
-        'content_id' => 7,
-        'author_name' => 'Alice <unsafe>',
-        'author_id' => 1,
-        'body' => 'Hello #tinycat <unsafe>',
-        'created_at' => '2026-08-09 12:01:00',
-        'likes_count' => 4,
-        'viewer_liked' => false,
-        'can_edit' => false,
-        'can_delete' => false,
-        'replies' => [],
-        '_view' => [
-            'author_url' => '/author/1',
-            'body_html' => 'Hello <a href="/author/2">@Bob</a>',
-            'time' => ['iso' => '2026-08-09T12:01:00+00:00', 'label' => '9 August 2026 12:01'],
-        ],
-    ],
-    'user' => null,
-    'show_replies' => false,
-    'show_reply_form' => false,
+$comment = \TinyCat\Support\Components::render('status/comment', [
+    'item' => \TinyCat\Social\Posts\Resource::comment([
+        'id' => 13, 'content_id' => 7, 'author_name' => 'Alice <unsafe>', 'author_id' => 1,
+        'body' => 'Hello #tinycat <unsafe>', 'created_at' => '2026-08-09 12:01:00', 'likes_count' => 4, 'replies' => [],
+    ], null),
+    'viewer' => null, 'context' => '', 'show_replies' => false, 'show_reply_form' => false, 'preview' => true,
 ]);
 $assert(str_contains($comment, 'href="/tag/tinycat"') && str_contains($comment, '&lt;unsafe&gt;'), 'Comment renders canonical segments and escapes literal body text.');
 $assert(str_contains($comment, 'Alice &lt;unsafe&gt;'), 'Comment still escapes prepared author text.');
@@ -151,6 +117,22 @@ if (class_exists(DOMDocument::class)) {
     $assert($dialog instanceof DOMElement && $dialog->getAttribute('role') === 'dialog', 'Modal exposes dialog semantics.');
 }
 
+// Account pages compose the same form definitions as resource-loaded dialogs.
+$loginPage = \TinyCat\Support\Components::render('users/auth-page', \TinyCat\Core\Identity\AuthResource::make('login', '/search') + ['old' => ['username' => '<Member>'], 'error' => '<Failed>']);
+$assert(str_contains($loginPage, 'action="/api/users/sessions"') && str_contains($loginPage, '&lt;Member&gt;') && str_contains($loginPage, '&lt;Failed&gt;'), 'The direct login page preserves canonical endpoints, previous input and escaped errors.');
+$disabledRegistration = \TinyCat\Core\Identity\AuthResource::make('register', '');
+$disabledRegistration['registration_enabled'] = false;
+$disabledRegistration = \TinyCat\Support\Components::render('users/auth-page', $disabledRegistration);
+$assert(!str_contains($disabledRegistration, '<form') && str_contains($disabledRegistration, 'alert-info'), 'Disabled registration renders its notice without a form.');
+$recoveryData = ['reset' => false, 'token' => '', 'password_max' => \TinyCat\Core\Identity\Passwords::maxLength(), 'captcha' => ['enabled' => false], 'login_url' => '/pl/login', 'privacy_url' => '/pl/privacy'];
+$recoveryPage = \TinyCat\Support\Components::render('users/recovery-page', $recoveryData);
+$assert(str_contains($recoveryPage, 'action="/api/users/password-resets"') && str_contains($recoveryPage, 'type="email"') && !str_contains($recoveryPage, 'name="password"'), 'Recovery requests use the email form.');
+$resetPage = \TinyCat\Support\Components::render('users/recovery-page', array_replace($recoveryData, ['reset' => true, 'token' => '"><unsafe>']));
+$assert(str_contains($resetPage, 'action="/api/users/password-resets/confirm"') && str_contains($resetPage, '&quot;&gt;&lt;unsafe&gt;') && substr_count($resetPage, 'autocomplete="new-password"') === 2, 'Password resets preserve the escaped token and both constrained password fields.');
+$assert(substr_count($resetPage, 'maxlength="' . \TinyCat\Core\Identity\Passwords::maxLength() . '"') === 2 && str_contains($resetPage, 'href="/pl/login"'), 'Recovery shares password constraints and localized navigation.');
+$logoutPage = \TinyCat\Support\Components::render('users/logout-page');
+$assert(str_contains($logoutPage, 'method="post"') && str_contains($logoutPage, 'data-api-method="DELETE"') && str_contains($logoutPage, 'data-confirm-variant="danger"') && str_contains($logoutPage, 'name="_csrf"'), 'Logout retains server CSRF, DELETE transport and the shared confirmation lifecycle.');
+
 // Layout composition must preserve a single document and select the correct shell.
 set_error_handler(static function (int $level, string $message): never { throw new ErrorException($message, 0, $level); });
 try {
@@ -161,6 +143,8 @@ try {
     $assert(str_contains($publicLayout, 'class="navbar"') && !str_contains($publicLayout, 'data-admin-shell'), 'Guest pages use the public shell.');
     $assert(str_contains($publicLayout, 'Public &lt;unsafe&gt;') && str_contains($publicLayout, 'id="page-fixture"'), 'Head metadata is escaped and prepared content is preserved.');
     $assert(substr_count($publicLayout, ' defer></script>') === 4, 'Split layout keeps scoped script delivery.');
+    $assert(substr_count($publicLayout, '<title>') === 1 && substr_count($publicLayout, 'name="csrf-token"') === 1, 'The public metadata fragment does not duplicate common head fields.');
+    $assert(str_contains($publicLayout, 'rel="canonical"') && str_contains($publicLayout, 'property="og:title"') && str_contains($publicLayout, 'data-interface-routes='), 'Public metadata and locale routing survive document unification.');
     $originalOptions = \TinyCat\Core\Runtime\Startup::$options;
     try {
         $defaultHomepage = \TinyCat\Core\Runtime\EntryPages::homepage()?->id;
@@ -198,6 +182,8 @@ try {
     $adminLayout = (string) ob_get_clean();
     $assert(str_contains($adminLayout, 'data-admin-shell') && !str_contains($adminLayout, 'class="navbar"'), 'Admin pages use only the admin shell.');
     $assert(str_contains($adminLayout, 'noindex,nofollow') && str_contains($adminLayout, 'data-theme="dark"'), 'Admin robots policy and account theme survive the split.');
+    $assert(substr_count($adminLayout, '<!doctype html>') === 1 && substr_count($adminLayout, '<title>') === 1 && substr_count($adminLayout, 'name="csrf-token"') === 1, 'Administration uses one complete common document.');
+    $assert(str_contains($adminLayout, 'data-settings-presentation=') && str_contains($adminLayout, 'data-date-relative=') && !str_contains($adminLayout, 'rel="canonical"') && !str_contains($adminLayout, 'googletagmanager'), 'Administration retains its explicit editor context without public metadata or analytics.');
     $assert(str_contains($adminLayout, 'open data-active="true"') && str_contains($adminLayout, 'aria-current="page"'), 'Prepared navigation expands and marks the active group.');
     $assert(preg_match('~class="admin-topbar-title".*?<strong>.*?#flag.*?Administration</strong>~s', $adminLayout) === 1, 'The admin title keeps the active section icon after list headers are removed.');
     $assert(str_contains($adminLayout, 'Admin &lt;unsafe&gt;'), 'Prepared administration identity is escaped.');

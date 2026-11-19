@@ -873,15 +873,19 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.dialog.openResource = savedResourceOpen;
   const savedSettingsListener = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
+  const settingsSchema = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--settings"], { encoding: "utf8" }));
+  const smtpFields = settingsSchema.sections.find(section => section.key === 'email').fields.find(field => field.key === 'email.smtp').fields;
   const settingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:{sections:[
     {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current name'}, {key:'site.meta_description',label:'Description',type:'textarea',value:'Draft'}]},
-    {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',value:{host:'smtp.example.test',password:''}}]}
+    {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',fields:smtpFields,value:{host:'smtp.example.test',password:'fixture-server-secret'}}]}
   ]}}, 'modal-settings-editor');
   const settingsForm = settingsDialog.querySelector('form');
   check(settingsDialog.dataset.modalDisposeOnClose === 'true' && settingsDialog.querySelectorAll('[data-tab]').length === 2, 'Settings are disposable resource editors using shared sections.');
   check(settingsDialog.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === settingsForm.id && settingsForm.getAttribute('enctype') === 'multipart/form-data', 'Deferred settings keep a shared footer and multipart uploads.');
   check(settingsForm.querySelector('textarea').textContent === 'Draft' && settingsForm.querySelectorAll('input').some(input => input.getAttribute('name') === 'settings[email.smtp][host]' && input.getAttribute('value') === 'smtp.example.test'), 'Deferred settings retain textareas and nested SMTP field names.');
   check(settingsForm.dataset.confirmUnsaved === 'true', 'Deferred settings protect unsaved changes.');
+  const smtpPassword = settingsForm.querySelector('[name="settings[email.smtp][password]"]');
+  check(smtpPassword.getAttribute('value') === '' && smtpFields.every(field => settingsForm.querySelector('[name="settings[email.smtp]['+field.key+']"]')), 'All owner-declared SMTP fields render and the password stays blank.');
   const savedLogo = new Node('input'); savedLogo.setAttribute('name', 'settings[site.logo_url]'); savedLogo.value = '/old.webp';
   const pendingLogo = new Node('input'); pendingLogo.type = 'file'; pendingLogo.value = 'selected.webp';
   const savedPassword = new Node('input'); savedPassword.type = 'password'; savedPassword.value = 'submitted secret';
@@ -890,7 +894,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   check(T.settings.result(settingsForm, {data:{saved:true,images:{'site.logo_url':'/new.webp'}}}).length === 0 && savedLogo.value === '/new.webp' && !pendingLogo.value && !savedPassword.value && !removeLogo.checked, 'Repeated settings saves retain image paths and clear submitted uploads and secrets.');
   Node.prototype.addEventListener = savedSettingsListener;
   settingsDialog.remove();
-  const socialSettings = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--settings"], { encoding: "utf8" }));
+  const socialSettings = settingsSchema;
   const socialSettingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:socialSettings}, 'modal-social-settings');
   check(socialSettingsDialog.querySelector('[name="settings[content_images.enabled]"]') && socialSettingsDialog.querySelector('[name="settings[moderation.blocked_urls]"]'), 'Social image and moderation settings use the common PHP-derived presentation.');
   socialSettingsDialog.remove();

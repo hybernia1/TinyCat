@@ -28,6 +28,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 
 - [Jak vytvořit modul — vstupní manuál a příklady](development/module-authoring.md).
 - [HTTP API](reference/api.md).
+- [Zápis komponentových katalogů a editorové schéma](reference/component-catalog.md).
 - [Inventář UI](reference/ui-inventory.md) a [strojový výstup](reference/ui-inventory.json).
   Obnovují se příkazem `python tools/assets/ui-inventory.py`.
 - [Sdílené vykreslování a partialy](development/partials.md).

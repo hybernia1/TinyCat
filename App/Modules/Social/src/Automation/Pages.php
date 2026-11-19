@@ -6,9 +6,7 @@ namespace TinyCat\Social\Automation;
 use TinyCat\Core\Ui\Page as Layout;
 use TinyCat\Support\AdminViews;
 use TinyCat\Support\Markup;
-use TinyCat\Support\Html;
 use TinyCat\Support\Localization;
-use TinyCat\Support\View;
 use TinyCat\Core\Identity\Access;
 
 
@@ -22,16 +20,13 @@ final class Pages
         \TinyCat\Core\Ui\Admin\Definitions::page('social.bot-queue', $data);
     }
 
-    public static function accounts(?int $openBot = null): void
+    public static function accounts(): void
     {
         Access::require_admin();
         $data = Administration::accountsPayload();
         $creation = \TinyCat\Core\Ui\Admin\Definitions::get('social.bot-creation');
         $title = Localization::t($creation['title']);
         $content = AdminViews::listCard($title, $creation['icon'], substr($creation['target'], 1), $creation['filterId'], new Markup(\TinyCat\Support\Components::render($creation['component'], $data)), primary: true);
-        if ($openBot !== null) {
-            $content .= '<span hidden data-bot-detail-open="' . Html::e($openBot) . '" data-bot-detail-query="' . Html::e((string) ($_SERVER['QUERY_STRING'] ?? '')) . '"></span>';
-        }
         Layout::render([
             'title' => $title, 'current' => $creation['path'],
             'actions' => AdminViews::modalAction(\TinyCat\Core\Ui\Admin\Definitions::modalId($creation['editor']['creation']), Localization::t($creation['editor']['title']), 'user-plus', $creation['editor']['creation']),
@@ -59,12 +54,13 @@ final class Pages
             Layout::render([
                 'title' => Localization::t('bots.detail_not_found'),
                 'current' => '/admin/bots/accounts',
-            ], \TinyCat\Support\View::capture(static function (): void {
-                ?><div class="alert alert-info"><?= Html::et('bots.detail_not_found') ?></div><?php
-            }));
+            ], \TinyCat\Support\Components::render('ui/notice', ['tone' => 'info', 'label' => Localization::t('bots.detail_not_found')]));
             return;
         }
 
-        self::accounts($botId);
+        $query = \TinyCat\Http\Request::current()->query();
+        unset($query['view'], $query['modal']);
+        $query['panel'] = 'detail';
+        \TinyCat\Http\Web::redirect('/admin/bots/accounts#modal=bots/accounts/' . $botId . '&' . http_build_query($query));
     }
 }
