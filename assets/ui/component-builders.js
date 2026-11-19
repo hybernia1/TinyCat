@@ -30,8 +30,15 @@ import "./filters.js";
     },
     hidden: function (name, value) { return e("input", { type: "hidden", name: name, value: value }); },
     button: function (key, attributes) { return e("button", Object.assign({ type: "button", "class": "btn btn-secondary" }, attributes || {}), T.ui.text(key)); },
-    form: function (url, method) {
-      var form = e("form", { action: url, method: "post", "class": "stack", "data-ajax-form": "", "data-api-method": method, "data-confirm-unsaved": "true" });
+    form: function (url, method, view) {
+      var attributes = { action: url, method: "post", "data-ajax-form": "", "data-api-method": method, "data-confirm-unsaved": "true" };
+      var form = e("form", attributes);
+      if (view) {
+        if (view.tagName !== "FORM") { throw new TypeError("Expected a component form."); }
+        Object.keys(attributes).forEach(function (key) { view.setAttribute(key, form.getAttribute(key)); });
+        form = view;
+      }
+      form.className = controlAttributes({ "class": "stack" }, { "class": form.className })["class"];
       form.dataset.confirmUnsavedTitle = T.ui.text("common.unsaved_title");
       form.dataset.confirmUnsavedMessage = T.ui.text("common.unsaved_message");
       form.dataset.confirmUnsavedOk = T.ui.text("common.leave");
@@ -50,10 +57,10 @@ import "./filters.js";
 
     accountDialogTitle: function (dialog, user) {
       var title = dialog.querySelector('[id="' + dialog.getAttribute("aria-labelledby") + '"]');
-      var status = e("span");
-      status.appendChild(T.components.render("ui/account-status", { status: user.status, label: T.ui.text("users.statuses." + user.status) }));
+      var content = T.components.render("ui/account-title", { user: user, status_label: T.ui.text("users.statuses." + user.status) });
+      var status = content.querySelector("[data-account-title-status]");
       title.classList.add("cluster", "gap-2");
-      title.replaceChildren(status, e("span", {}, user.username));
+      title.replaceChildren(content);
       return status;
     },
 

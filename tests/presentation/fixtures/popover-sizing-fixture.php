@@ -5,7 +5,7 @@ define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale('cs');
-$account = \TinyCat\Support\View::part('Identity/user-menu', [
+$account = \TinyCat\Core\Identity\Views::userMenu([
     'authUser' => null, 'profileUrl' => '/author/7', 'profileNeedsEmail' => false,
     'theme' => 'light', 'displayName' => 'catbyte', 'editModalId' => 'modal-users-7', 'editModalUrl' => '/api/users/7',
 ]);
@@ -25,8 +25,8 @@ foreach (['bots/queue-filter-form', 'bots/post-filter-form', 'bots/run-filter-fo
 }
 $filters['bots/source-filter'] = \TinyCat\Support\Components::render('bots/source-filter-form', ['bots' => []]);
 $filters['bots/account-filter'] = \TinyCat\Support\Components::render('bots/account-filter-form', ['statuses' => ['active']]);
-$notifications = \TinyCat\Support\View::part('Notifications/menu', ['state' => [], 'notifications' => []]);
-$public = \TinyCat\Support\View::part('Ui/public-header', [
+$notifications = \TinyCat\Core\Notifications\Views::menu(['state' => [], 'notifications' => []]);
+$public = \TinyCat\Core\Ui\DocumentData::publicHeader([
     'hasGlobalSearch' => true,
     'pageUrls' => ['/' => '/', '/search' => '/search', '/login' => '/login'], 'content' => '',
     'analyticsConfigured' => false, 'appName' => 'TinyCat', 'authUser' => null, 'current' => '/',

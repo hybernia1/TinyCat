@@ -102,7 +102,7 @@ import "../../../../../assets/ui/toasts.js";
     if (payload.comment) {
       var scope = modal || document;
       var list = payload.comment.parent_id ? qs('[data-comment-replies][data-comment-id="' + Number(payload.comment.parent_id) + '"]', scope) : qs('[data-status-comment-list][data-status-id="' + Number(payload.comment.content_id) + '"]', scope);
-      if (!list && payload.comment.parent_id) { var parent = qs('.status-comment[data-comment-id="' + Number(payload.comment.parent_id) + '"] .status-comment-main', scope); if (parent) { list = TinyCat.dom.element("div", { "class": "status-comment-replies", "data-comment-replies": "", "data-comment-id": payload.comment.parent_id }); parent.appendChild(list); } }
+      if (!list && payload.comment.parent_id) { var parent = qs('.status-comment[data-comment-id="' + Number(payload.comment.parent_id) + '"] .status-comment-main', scope); if (parent) { list = TinyCat.status.controllers.comments.ensureCommentReplies(parent.closest(".status-comment")); } }
       if (list) { list.appendChild(TinyCat.status.comment(payload.comment, modal ? "modal" : "", payload.comment.author)); hydrateDynamic(list); }
       TinyCat.status.controllers.comments.resetStatusCommentForm(form);
     }

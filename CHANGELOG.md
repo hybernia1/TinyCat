@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.1.4 - 2026-11-19
+
+- Consolidate product pages, menus and editor bodies in owner component catalogs. Retire seventeen redundant PHP templates while retaining document, layout, error and embed boundaries.
+- Standardize component JSON formatting and explicit object contexts, with server/client parity, schema validation and duplicate-key checks. Keep ten owner catalogs without introducing a template language or per-component files.
+- Move account, avatar, status, bot and moderation structure out of controllers. Preserve lazy resource dialogs, drafts, focus, password redaction and canonical API transports.
+- Render module administration, diagnostics, updates, search, privacy and consent through components; preserve activation guards, CSRF, maintenance recovery and long historical migration labels.
+- Clean up client resource disposal and stale reads; decouple notification pagination from Social. Keep existing asset delivery budgets and module independence.
+- Preserve configuration, accounts, content, uploads, installed module ownership and activation. Introduce no database migrations; support completed 6.0.10 and newer.
+
 ## 6.1.3 - 2026-11-19
 
 - Share one HTML document across public pages, administration and installation; keep owner metadata, consent, assets and existing minification behavior.

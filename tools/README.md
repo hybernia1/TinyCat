@@ -19,6 +19,7 @@ testů a CI zůstávají platné.
 | Dosažitelnost a velikosti assetů | `php tools/assets/asset-report.php --check` |
 | Generovaný UI inventář | `python tools/assets/ui-inventory.py` |
 | Generované schéma komponent pro editor | `php tools/quality/component-schema.php` |
+| Jednotný zápis komponentových katalogů | `php tools/quality/component-format.php --check` nebo `--write` |
 
 `tools/assets/compile-assets.php`, `tools/quality/modal-contracts.php`, `tools/quality/ui-contracts.php`,
 `tools/quality/translation-catalogs.php` a `tools/quality/client-translations.php` poskytují načítané build

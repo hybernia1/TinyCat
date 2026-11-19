@@ -7,7 +7,8 @@
       "App/Core/Settings/assets/index.js"
     ],
     "components": [
-      "settings/sections"
+      "settings/sections",
+      "settings/editor-form"
     ],
     "styles": [],
     "translations": [

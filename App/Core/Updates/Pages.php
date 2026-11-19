@@ -6,7 +6,7 @@ use TinyCat\Http\Request;
 use TinyCat\Http\Session;
 use TinyCat\Core\Ui\Page as Layout;
 use TinyCat\Support\Localization;
-use TinyCat\Support\View;
+use TinyCat\Support\Components;
 use TinyCat\Core\Identity\Access;
 
 
@@ -31,12 +31,12 @@ final class Pages
         $releaseCompatible = !is_array($release) || !array_key_exists('compatible', $release) || !empty($release['compatible']);
         $canInstall = !in_array(false, $extensions, true) && $releaseCompatible;
         $history = Manager::migrationHistory();
-        $available = is_array($release) && !empty($release['available']);
-        $actions = View::render('actions', compact('release', 'available', 'canInstall'), __DIR__ . '/templates');
+        $model = Views::model(compact('release', 'result', 'error', 'maintenance', 'extensions', 'releaseCompatible', 'canInstall', 'history'));
+        $actions = Components::render('updates/actions', $model);
         Layout::render([
             'title' => Localization::t('updates.title'),
             'current' => '/admin/updates',
             'actions' => $actions,
-        ], \TinyCat\Support\AdminViews::listCard(Localization::t('updates.release_title'), 'download', 'updates-overview', '', new \TinyCat\Support\Markup(View::render('administration', compact('release', 'result', 'error', 'maintenance', 'extensions', 'releaseCompatible', 'canInstall', 'history'), __DIR__ . '/templates')), primary: true));
+        ], \TinyCat\Support\AdminViews::listCard(Localization::t('updates.release_title'), 'download', 'updates-overview', '', new \TinyCat\Support\Markup(Components::render('updates/page', $model)), primary: true));
     }
 }

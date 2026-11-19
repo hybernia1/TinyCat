@@ -51,6 +51,7 @@ check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
 check(load("/admin").T.settings && load("/admin").T.accounts, "Every admin page includes settings and shared profile dialogs");
 check(load("/admin/updates").sources.includes("App/Core/Updates/assets/index.js") && !load("/admin").sources.includes("App/Core/Updates/assets/index.js"), "The release-notes renderer is scoped to the updates page.");
 check(!load("/install").T.status, "Installer boots without public modules");
+check(!load("/install").definitions.includes("ui/modal") && load("/admin").definitions.includes("ui/modal"), "Installer excludes unused dialog catalogs while administration retains them.");
 check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
 check(!load("/install").sources.some(s => s.includes("/Modules/Social/") || s.includes("/ui/ajax-bindings.js")) && load("/install").sources.some(s => s.includes("/ui/form-requests.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
 const schedulerPage = load("/admin/cron/list");

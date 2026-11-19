@@ -39,11 +39,9 @@ final class Layout
         $settingsPresentation = \TinyCat\Core\Identity\Roles::isAdmin($authUser)
             ? json_encode(\TinyCat\Core\Settings\Sections::presentation(), JSON_THROW_ON_ERROR) : '';
         $iconSprite = Assets::asset('icons.svg');
-        $userMenu = $authUser !== null ? View::part('Identity/user-menu', [
+        $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([
             'authUser' => $authUser, 'profileUrl' => $profileUrl, 'profileNeedsEmail' => $profileNeedsEmail,
-            'theme' => $theme, 'displayName' => (string) ($authUser['username'] ?? ''),
-            'editModalId' => 'account-editor-modal-' . (int) $authUser['id'],
-            'editModalUrl' => '/api/users/' . (int) $authUser['id'] . '/management?panel=account' . ($profileNeedsEmail ? '&focus=email' : ''),
+            'theme' => $theme,
         ]) : '';
         $flashToasts = [];
         foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', 'info' => 'info'] as $key => $type) {

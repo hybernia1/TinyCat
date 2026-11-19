@@ -4,7 +4,7 @@ namespace TinyCat\Core\Discovery;
 
 use TinyCat\Core\Modules\{Registrations, SearchSource};
 use TinyCat\Http\{Api, Request, Router};
-use TinyCat\Support\{Localization, View};
+use TinyCat\Support\{Components, Localization};
 
 /** Bounded fan-out over active sources. Owners retain SQL, visibility and cursors. */
 final class Search
@@ -66,7 +66,7 @@ final class Search
         foreach ($data['collections'] as &$group) { $group['next_url'] = \TinyCat\Support\LocalUrls::resolve($group['next_url']); }
         unset($group);
         $title = Localization::t('common.search');
-        $content = View::render('search', ['result' => $data, 'searchUrl' => $searchUrl], dirname(__DIR__) . '/Ui/templates');
+        $content = Components::render('ui/search-page', ['result' => $data, 'searchUrl' => $searchUrl]);
         \TinyCat\Core\Ui\Page::render(['title' => $title, 'current' => '/search/all', 'meta' => ['robots' => 'noindex,nofollow']], $content);
     }
 }

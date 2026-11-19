@@ -94,7 +94,8 @@
     ],
     "components": [
       "blog/source-fields",
-      "blog/source-preview"
+      "blog/source-preview",
+      "blog/source-form"
     ],
     "styles": [],
     "translations": [

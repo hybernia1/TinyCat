@@ -168,7 +168,7 @@ final class Components
             $name = (string) $value['use'];
             $templates = self::templates();
             if (!isset($templates[$name])) { throw new InvalidArgumentException('Unknown presentation value: ' . $name); }
-            return self::value($templates[$name], self::bindings((array) ($value['data'] ?? []), $data));
+            return self::value($templates[$name], self::context((array) ($value['data'] ?? []), $data));
         }
         if (array_key_exists('lookup', $value)) {
             $key = Values::string(self::value($value['lookup'], $data));
@@ -212,6 +212,20 @@ final class Components
         return $result;
     }
 
+    /** @param array<mixed> $bindings
+     * @param array<mixed> $data
+     * @return array<mixed> */
+    private static function context(array $bindings, array $data): array
+    {
+        if (count($bindings) !== 1 || !is_string($bindings['get'] ?? null)) { return self::bindings($bindings, $data); }
+        $context = self::value($bindings, $data);
+        if (!is_array($context) || ($context !== [] && array_is_list($context))) { throw new InvalidArgumentException('Component context must be a named object.'); }
+        foreach (array_keys($context) as $key) {
+            if (in_array($key, ['__proto__', 'constructor', 'prototype'], true)) { throw new InvalidArgumentException('Unsupported component key.'); }
+        }
+        return $context;
+    }
+
     private static function truth(mixed $value): bool
     {
         return $value !== null && $value !== false && $value !== '' && $value !== 0 && $value !== [];
@@ -230,7 +244,7 @@ final class Components
             }
             return $output;
         }
-        if (isset($node['component'])) { return self::render((string) $node['component'], self::bindings((array) ($node['data'] ?? []), $data)); }
+        if (isset($node['component'])) { return self::render((string) $node['component'], self::context((array) ($node['data'] ?? []), $data)); }
         if (isset($node['icon'])) { return Html::icon((string) self::value($node['icon'], $data), (string) ($node['class'] ?? 'icon')); }
         if (isset($node['csrf'])) { return \TinyCat\Core\Security\Csrf::field(); }
         if (isset($node['rich'])) { return self::rich((array) self::value($node['rich'], $data)); }

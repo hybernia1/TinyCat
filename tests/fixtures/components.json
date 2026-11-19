@@ -1287,22 +1287,477 @@
       "title": "Passed"
     }
   },
-  {"component": "users/auth-page", "data": {"mode": "login", "register": false, "next": "/", "form_url": "/login?next=%2F", "switch_url": "/register", "switch_modal_url": "/api/users/authentication?mode=register", "registration_enabled": true, "options": {"username_pattern": "[A-Za-z0-9._-]+", "password_max_length": 1024, "roles": {"admin": "Admin", "user": "User"}, "statuses": {"active": "Active", "ban": "Banned"}}, "captcha": {"enabled": false}, "old": {}}},
-  {"component": "users/auth-page", "data": {"mode": "register", "register": true, "next": "/", "form_url": "/login?next=%2F", "switch_url": "/register", "switch_modal_url": "/api/users/authentication?mode=register", "registration_enabled": true, "options": {"username_pattern": "[A-Za-z0-9._-]+", "password_max_length": 1024, "roles": {"admin": "Admin", "user": "User"}, "statuses": {"active": "Active", "ban": "Banned"}}, "captcha": {"enabled": true, "provider": "turnstile", "site_key": "test", "context": "register"}, "old": {}}},
-  {"component": "users/auth-page", "data": {"mode": "register", "register": true, "next": "/", "form_url": "/login?next=%2F", "switch_url": "/register", "switch_modal_url": "/api/users/authentication?mode=register", "registration_enabled": false, "options": {"username_pattern": "[A-Za-z0-9._-]+", "password_max_length": 1024, "roles": {"admin": "Admin", "user": "User"}, "statuses": {"active": "Active", "ban": "Banned"}}, "captcha": {"enabled": true, "provider": "turnstile", "site_key": "test", "context": "register"}, "old": {}}},
-  {"component": "users/recovery-page", "data": {"reset": false, "token": "\"><unsafe>&", "password_max": 1024, "captcha": {"enabled": true, "provider": "turnstile", "site_key": "public-fixture", "context": "recovery", "refresh": true}, "login_url": "/pl/login", "privacy_url": "/pl/privacy"}},
-  {"component": "users/recovery-page", "data": {"reset": true, "token": "\"><unsafe>&", "password_max": 1024, "captcha": {"enabled": true, "provider": "turnstile", "site_key": "public-fixture", "context": "recovery", "refresh": true}, "login_url": "/pl/login", "privacy_url": "/pl/privacy"}},
-  {"component": "users/logout-page", "data": {}},
-  {"component": "users/account-home", "data": {"user": {"username": "Member <unsafe>"}, "account_modal": "account-editor-modal-2", "account_url": "/api/users/2/management?panel=account", "logout_url": "/pl/logout"}},
-  {"component": "settings/field", "data": {"root_tag": "label", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture]", "value": "<value>&", "fields": [], "options": [], "attributes": {"type": "password", "name": "settings[fixture]", "value": "", "autocomplete": "new-password"}, "kind": "input"}},
-  {"component": "settings/field", "data": {"root_tag": "label", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture]", "value": "<value>&", "fields": [], "options": [], "attributes": {"name": "settings[fixture]", "rows": 8}, "kind": "textarea"}},
-  {"component": "settings/field", "data": {"root_tag": "label", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture]", "value": "<value>&", "fields": [], "options": [], "attributes": {}, "kind": "bool", "checked": false}},
-  {"component": "settings/field", "data": {"root_tag": "label", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture]", "value": "<value>&", "fields": [], "options": [{"value": "a", "label": "A <value>", "selected": false}, {"value": "b", "label": "B & value", "selected": true}], "attributes": {"name": "settings[fixture]"}, "kind": "select"}},
-  {"component": "settings/field", "data": {"root_tag": "div", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture]", "value": "<value>&", "fields": [], "options": [{"name": "settings[fixture][welcome]", "label": "Welcome", "selected": true}], "attributes": {}, "kind": "templates"}},
-  {"component": "settings/field", "data": {"root_tag": "div", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture]", "value": "/fixture.webp", "fields": [], "options": [], "attributes": {}, "kind": "image", "upload_name": "settings_files[fixture]", "remove_name": "settings_remove[fixture]"}},
-  {"component": "settings/field", "data": {"root_tag": "div", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture]", "value": "", "fields": [], "options": [], "attributes": {}, "kind": "image", "upload_name": "settings_files[fixture]", "remove_name": "settings_remove[fixture]"}},
-  {"component": "settings/field", "data": {"root_tag": "div", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture]", "value": "<value>&", "fields": [{"root_tag": "label", "root_class": "field min-w-0", "label": "Field <unsafe>", "help": "Help & context", "name": "settings[fixture][host]", "value": "<value>&", "fields": [], "options": [], "attributes": {"name": "settings[fixture][host]", "value": "smtp.example.test"}, "kind": "input"}], "options": [], "attributes": {}, "kind": "group"}},
-  {"component": "ui/dashboard", "data": {}, "slots": {"content": "Widgets <safe>"}},
-  {"component": "scheduler/runs-page", "data": {"target_id": "scheduler-runs"}, "slots": {"content": "Run list"}},
-  {"component": "status/rss-image", "data": {"url": "https://example.test/image.webp", "alt": "Image <unsafe>"}}
+  {
+    "component": "users/auth-page",
+    "data": {
+      "mode": "login",
+      "register": false,
+      "next": "/",
+      "form_url": "/login?next=%2F",
+      "switch_url": "/register",
+      "switch_modal_url": "/api/users/authentication?mode=register",
+      "registration_enabled": true,
+      "options": {
+        "username_pattern": "[A-Za-z0-9._-]+",
+        "password_max_length": 1024,
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statuses": {
+          "active": "Active",
+          "ban": "Banned"
+        }
+      },
+      "captcha": {
+        "enabled": false
+      },
+      "old": {}
+    }
+  },
+  {
+    "component": "users/auth-page",
+    "data": {
+      "mode": "register",
+      "register": true,
+      "next": "/",
+      "form_url": "/login?next=%2F",
+      "switch_url": "/register",
+      "switch_modal_url": "/api/users/authentication?mode=register",
+      "registration_enabled": true,
+      "options": {
+        "username_pattern": "[A-Za-z0-9._-]+",
+        "password_max_length": 1024,
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statuses": {
+          "active": "Active",
+          "ban": "Banned"
+        }
+      },
+      "captcha": {
+        "enabled": true,
+        "provider": "turnstile",
+        "site_key": "test",
+        "context": "register"
+      },
+      "old": {}
+    }
+  },
+  {
+    "component": "users/auth-page",
+    "data": {
+      "mode": "register",
+      "register": true,
+      "next": "/",
+      "form_url": "/login?next=%2F",
+      "switch_url": "/register",
+      "switch_modal_url": "/api/users/authentication?mode=register",
+      "registration_enabled": false,
+      "options": {
+        "username_pattern": "[A-Za-z0-9._-]+",
+        "password_max_length": 1024,
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statuses": {
+          "active": "Active",
+          "ban": "Banned"
+        }
+      },
+      "captcha": {
+        "enabled": true,
+        "provider": "turnstile",
+        "site_key": "test",
+        "context": "register"
+      },
+      "old": {}
+    }
+  },
+  {
+    "component": "users/recovery-page",
+    "data": {
+      "reset": false,
+      "token": "\"><unsafe>&",
+      "password_max": 1024,
+      "captcha": {
+        "enabled": true,
+        "provider": "turnstile",
+        "site_key": "public-fixture",
+        "context": "recovery",
+        "refresh": true
+      },
+      "login_url": "/pl/login",
+      "privacy_url": "/pl/privacy"
+    }
+  },
+  {
+    "component": "users/recovery-page",
+    "data": {
+      "reset": true,
+      "token": "\"><unsafe>&",
+      "password_max": 1024,
+      "captcha": {
+        "enabled": true,
+        "provider": "turnstile",
+        "site_key": "public-fixture",
+        "context": "recovery",
+        "refresh": true
+      },
+      "login_url": "/pl/login",
+      "privacy_url": "/pl/privacy"
+    }
+  },
+  {
+    "component": "users/logout-page",
+    "data": {}
+  },
+  {
+    "component": "users/account-home",
+    "data": {
+      "user": {
+        "username": "Member <unsafe>"
+      },
+      "account_modal": "account-editor-modal-2",
+      "account_url": "/api/users/2/management?panel=account",
+      "logout_url": "/pl/logout"
+    }
+  },
+  {
+    "component": "settings/field",
+    "data": {
+      "root_tag": "label",
+      "root_class": "field min-w-0",
+      "label": "Field <unsafe>",
+      "help": "Help & context",
+      "name": "settings[fixture]",
+      "value": "<value>&",
+      "fields": [],
+      "options": [],
+      "attributes": {
+        "type": "password",
+        "name": "settings[fixture]",
+        "value": "",
+        "autocomplete": "new-password"
+      },
+      "kind": "input"
+    }
+  },
+  {
+    "component": "settings/field",
+    "data": {
+      "root_tag": "label",
+      "root_class": "field min-w-0",
+      "label": "Field <unsafe>",
+      "help": "Help & context",
+      "name": "settings[fixture]",
+      "value": "<value>&",
+      "fields": [],
+      "options": [],
+      "attributes": {
+        "name": "settings[fixture]",
+        "rows": 8
+      },
+      "kind": "textarea"
+    }
+  },
+  {
+    "component": "settings/field",
+    "data": {
+      "root_tag": "label",
+      "root_class": "field min-w-0",
+      "label": "Field <unsafe>",
+      "help": "Help & context",
+      "name": "settings[fixture]",
+      "value": "<value>&",
+      "fields": [],
+      "options": [],
+      "attributes": {},
+      "kind": "bool",
+      "checked": false
+    }
+  },
+  {
+    "component": "settings/field",
+    "data": {
+      "root_tag": "label",
+      "root_class": "field min-w-0",
+      "label": "Field <unsafe>",
+      "help": "Help & context",
+      "name": "settings[fixture]",
+      "value": "<value>&",
+      "fields": [],
+      "options": [
+        {
+          "value": "a",
+          "label": "A <value>",
+          "selected": false
+        },
+        {
+          "value": "b",
+          "label": "B & value",
+          "selected": true
+        }
+      ],
+      "attributes": {
+        "name": "settings[fixture]"
+      },
+      "kind": "select"
+    }
+  },
+  {
+    "component": "settings/field",
+    "data": {
+      "root_tag": "div",
+      "root_class": "field min-w-0",
+      "label": "Field <unsafe>",
+      "help": "Help & context",
+      "name": "settings[fixture]",
+      "value": "<value>&",
+      "fields": [],
+      "options": [
+        {
+          "name": "settings[fixture][welcome]",
+          "label": "Welcome",
+          "selected": true
+        }
+      ],
+      "attributes": {},
+      "kind": "templates"
+    }
+  },
+  {
+    "component": "settings/field",
+    "data": {
+      "root_tag": "div",
+      "root_class": "field min-w-0",
+      "label": "Field <unsafe>",
+      "help": "Help & context",
+      "name": "settings[fixture]",
+      "value": "/fixture.webp",
+      "fields": [],
+      "options": [],
+      "attributes": {},
+      "kind": "image",
+      "upload_name": "settings_files[fixture]",
+      "remove_name": "settings_remove[fixture]"
+    }
+  },
+  {
+    "component": "settings/field",
+    "data": {
+      "root_tag": "div",
+      "root_class": "field min-w-0",
+      "label": "Field <unsafe>",
+      "help": "Help & context",
+      "name": "settings[fixture]",
+      "value": "",
+      "fields": [],
+      "options": [],
+      "attributes": {},
+      "kind": "image",
+      "upload_name": "settings_files[fixture]",
+      "remove_name": "settings_remove[fixture]"
+    }
+  },
+  {
+    "component": "settings/field",
+    "data": {
+      "root_tag": "div",
+      "root_class": "field min-w-0",
+      "label": "Field <unsafe>",
+      "help": "Help & context",
+      "name": "settings[fixture]",
+      "value": "<value>&",
+      "fields": [
+        {
+          "root_tag": "label",
+          "root_class": "field min-w-0",
+          "label": "Field <unsafe>",
+          "help": "Help & context",
+          "name": "settings[fixture][host]",
+          "value": "<value>&",
+          "fields": [],
+          "options": [],
+          "attributes": {
+            "name": "settings[fixture][host]",
+            "value": "smtp.example.test"
+          },
+          "kind": "input"
+        }
+      ],
+      "options": [],
+      "attributes": {},
+      "kind": "group"
+    }
+  },
+  {
+    "component": "ui/dashboard",
+    "data": {},
+    "slots": {
+      "content": "Widgets <safe>"
+    }
+  },
+  {
+    "component": "scheduler/runs-page",
+    "data": {
+      "target_id": "scheduler-runs"
+    },
+    "slots": {
+      "content": "Run list"
+    }
+  },
+  {
+    "component": "status/rss-image",
+    "data": {
+      "url": "https://example.test/image.webp",
+      "alt": "Image <unsafe>"
+    }
+  },
+  {
+    "component": "status/report-fields",
+    "data": {
+      "id": 42,
+      "note_max_length": 1000,
+      "reasons": {
+        "spam": "Spam",
+        "other": "Other"
+      }
+    }
+  },
+  {
+    "component": "status/comment-edit-fields",
+    "data": {
+      "dialog_id": "comment-test",
+      "comment": {
+        "id": 3,
+        "content": "Text <safe>"
+      },
+      "constraints": {
+        "comment": {
+          "max_length": 2000
+        }
+      }
+    }
+  },
+  {
+    "component": "users/account-form",
+    "data": {
+      "dialog_id": "account-test",
+      "user": {
+        "id": 2,
+        "username": "Alice",
+        "bio": "A < B",
+        "locale": "en",
+        "theme": "system"
+      },
+      "original_locale": "en",
+      "languages": {
+        "en": "English",
+        "cs": "Czech"
+      },
+      "options": {
+        "themes": {
+          "system": "System",
+          "dark": "Dark"
+        }
+      }
+    }
+  },
+  {
+    "component": "users/avatar-upload",
+    "data": {
+      "generated": false,
+      "user": {
+        "id": 2,
+        "avatar_url": "/uploads/avatar.webp"
+      }
+    }
+  },
+  {
+    "component": "notifications/page",
+    "data": {
+      "items": [],
+      "has_unread": false,
+      "next_url": null
+    }
+  },
+  {
+    "component": "notifications/menu",
+    "data": {
+      "items": [],
+      "has_unread": true,
+      "unread": 12,
+      "latest_id": 25,
+      "badge": "12",
+      "current": "/notifications"
+    }
+  },
+  {
+    "component": "ui/search-page",
+    "data": {
+      "searchUrl": "/cs/search/all",
+      "result": {
+        "query": "<query>",
+        "collections": [
+          {
+            "name": "Results",
+            "items": [
+              {
+                "title": "<unsafe>",
+                "url": "/status/1",
+                "excerpt": "A & B"
+              }
+            ],
+            "next_url": "/cs/search/all?q=test&cursor=2"
+          },
+          {
+            "name": "Empty",
+            "items": [],
+            "next_url": ""
+          }
+        ]
+      }
+    }
+  },
+  {
+    "component": "ui/consent",
+    "data": {
+      "show": true,
+      "privacyUrl": "/cs/privacy",
+      "googleMeasurementId": "G-TEST",
+      "captchaEnabled": true
+    }
+  },
+  {
+    "component": "updates/actions",
+    "data": {
+      "has_notes": true,
+      "available": true,
+      "version": "6.1.4",
+      "canInstall": false
+    }
+  },
+  {
+    "component": "updates/actions",
+    "data": {
+      "has_notes": false,
+      "available": false,
+      "version": "6.1.4",
+      "canInstall": true
+    }
+  },
+  {
+    "component": "ui/module-activation",
+    "data": {
+      "id": "tinycat.social",
+      "revision": "test-revision",
+      "enabled": "0",
+      "disabled": true,
+      "label": "Disable"
+    }
+  }
 ]

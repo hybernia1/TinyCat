@@ -150,10 +150,7 @@ import "../dialogs.js";
       return null;
     }
 
-    list = document.createElement("div");
-    list.className = "status-comment-replies";
-    list.dataset.commentReplies = "true";
-    list.dataset.commentId = parent.dataset.commentId || "";
+    list = TinyCat.components.render("publishing/comment-replies", { id: parent.dataset.commentId || "" });
     main.appendChild(list);
 
     return list;
@@ -206,27 +203,17 @@ import "../dialogs.js";
     }
   }
   function historyContent(revisions) {
-    var T = TinyCat, U = T.ui, e = T.dom.element, content = e("div");
-        content.className = "status-comment-history";
-        revisions.forEach(function (revision) {
-          var change = revision.changes && revision.changes.body || {};
-          var entry = e("article", { "class": "status-comment-history-entry" });
-          var at = revision.at || revision.created_at || "";
-          entry.appendChild(e("time", { "class": "status-comment-history-meta", datetime: at }, T.dates && T.dates.format ? T.dates.format(at) : at));
-          var before = String(change.from || ""), after = String(change.to || ""), start = 0, end = 0;
-          while (start < before.length && start < after.length && before[start] === after[start]) { start++; }
-          while (end < before.length - start && end < after.length - start && before[before.length - end - 1] === after[after.length - end - 1]) { end++; }
-          [[before, "del", "removed"], [after, "ins", "added"]].forEach(function (version) {
-            var row = e("div", { "class": "status-comment-history-diff" });
-            row.appendChild(e("span", { "class": "status-comment-diff-marker", "aria-hidden": "true" }, version[1] === "del" ? "-" : "+"));
-            row.appendChild(document.createTextNode(version[0].slice(0, start)));
-            row.appendChild(e(version[1], { "class": "status-comment-diff-" + version[2] }, version[0].slice(start, version[0].length - end)));
-            row.appendChild(document.createTextNode(end ? version[0].slice(-end) : ""));
-            entry.appendChild(row);
-          });
-          content.appendChild(entry);
-        });
-    return content;
+    var items = revisions.map(function (revision) {
+      var change = revision.changes && revision.changes.body || {}, at = revision.at || revision.created_at || "";
+      var before = String(change.from || ""), after = String(change.to || ""), start = 0, end = 0;
+      while (start < before.length && start < after.length && before[start] === after[start]) { start++; }
+      while (end < before.length - start && end < after.length - start && before[before.length - end - 1] === after[after.length - end - 1]) { end++; }
+      return { at: at, label: TinyCat.dates && TinyCat.dates.format ? TinyCat.dates.format(at) : at,
+        rows: [[before, "del", "removed", "-"], [after, "ins", "added", "+"]].map(function (version) {
+          return { tag: version[1], kind: version[2], marker: version[3], prefix: version[0].slice(0, start), change: version[0].slice(start, version[0].length - end), suffix: end ? version[0].slice(-end) : "" };
+        }) };
+    });
+    return TinyCat.components.render("publishing/comment-history", { revisions: items });
   }
   TinyCat.publishing.controllers.comments = { historyContent: historyContent, keepModalReplyVisible: keepModalReplyVisible, scheduleModalReplyVisibility: scheduleModalReplyVisibility, initCommentReplies: initCommentReplies, updateCommentLike: updateCommentLike, ensureCommentReplies: ensureCommentReplies, removeStatusComment: removeStatusComment, resetStatusCommentForm: resetStatusCommentForm };
 }());

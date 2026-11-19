@@ -1,22 +1,9 @@
 {
   "users/admin-fields": {
     "tag": "div",
-    "attrs": {
-      "class": "stack stack-gap-16",
-      "data-editor-sections": ""
-    },
+    "attrs": {"class": "stack stack-gap-16", "data-editor-sections": ""},
     "children": [
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "status",
-          "value": "active"
-        },
-        "when": {
-          "get": "create"
-        }
-      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "status", "value": "active"}, "when": {"get": "create"}},
       {
         "tag": "div",
         "attrs": {
@@ -28,136 +15,40 @@
         "children": [
           {
             "tag": "div",
-            "attrs": {
-              "class": "grid sm:grid-2"
-            },
+            "attrs": {"class": "grid sm:grid-2"},
             "children": [
               {
-                "tag": "label",
-                "attrs": {
-                  "class": "field"
-                },
-                "children": [
-                  {
-                    "tag": "span",
-                    "attrs": {
-                      "class": "label"
-                    },
-                    "children": [
-                      {
-                        "t": "common.username",
-                        "values": {}
-                      }
-                    ]
+                "component": "ui/field",
+                "data": {
+                  "label": {"t": "common.username"},
+                  "attributes": {
+                    "class": "input",
+                    "name": {"if": [{"get": "create"}, "username", null]},
+                    "value": {"if": [{"get": "create"}, "", {"get": "user.username"}]},
+                    "disabled": {"if": [{"not": {"get": "create"}}, true, null]},
+                    "required": {"if": [{"get": "create"}, true, null]},
+                    "pattern": {"if": [{"get": "create"}, {"get": "options.username_pattern"}, null]},
+                    "minlength": "2",
+                    "maxlength": "32",
+                    "autocomplete": "username",
+                    "autocapitalize": "none",
+                    "spellcheck": "false"
                   },
-                  {
-                    "tag": "input",
-                    "attrs": {
-                      "class": "input",
-                      "name": {
-                        "if": [
-                          {
-                            "get": "create"
-                          },
-                          "username",
-                          null
-                        ]
-                      },
-                      "value": {
-                        "if": [
-                          {
-                            "get": "create"
-                          },
-                          "",
-                          {
-                            "get": "user.username"
-                          }
-                        ]
-                      },
-                      "disabled": {
-                        "if": [
-                          {
-                            "not": {
-                              "get": "create"
-                            }
-                          },
-                          true,
-                          null
-                        ]
-                      },
-                      "required": {
-                        "if": [
-                          {
-                            "get": "create"
-                          },
-                          true,
-                          null
-                        ]
-                      },
-                      "pattern": {
-                        "if": [
-                          {
-                            "get": "create"
-                          },
-                          {
-                            "get": "options.username_pattern"
-                          },
-                          null
-                        ]
-                      },
-                      "minlength": "2",
-                      "maxlength": "32",
-                      "autocomplete": "username",
-                      "autocapitalize": "none",
-                      "spellcheck": "false"
-                    },
-                    "children": []
-                  },
-                  {
-                    "tag": "span",
-                    "when": {
-                      "get": "create"
-                    },
-                    "attrs": {
-                      "class": "help"
-                    },
-                    "children": [
-                      {
-                        "t": "account.username_hint"
-                      }
-                    ]
-                  }
-                ]
+                  "help": {"if": [{"get": "create"}, {"t": "account.username_hint"}, null]}
+                }
               },
               {
                 "component": "ui/field",
                 "data": {
-                  "label": {
-                    "t": "common.email",
-                    "values": {}
-                  },
-                  "value": {
-                    "get": "user.email"
-                  },
-                  "textarea": false,
+                  "label": {"t": "common.email"},
                   "attributes": {
                     "class": "input",
                     "name": "email",
                     "type": "email",
-                    "value": {
-                      "get": "user.email"
-                    },
+                    "value": {"get": "user.email"},
                     "maxlength": "254",
                     "autocomplete": "email",
-                    "data-email-check-url": {
-                      "concat": [
-                        "/api/users/",
-                        {
-                          "get": "user.id"
-                        },
-                        "/email-checks"
-                      ]
-                    }
+                    "data-email-check-url": {"concat": ["/api/users/", {"get": "user.id"}, "/email-checks"]}
                   }
                 }
               }
@@ -166,26 +57,12 @@
           {
             "component": "ui/field",
             "data": {
-              "label": {
-                "t": "account.bio",
-                "values": {}
-              },
-              "value": {
-                "get": "user.bio"
-              },
+              "label": {"t": "account.bio"},
+              "value": {"get": "user.bio"},
               "textarea": true,
-              "attributes": {
-                "class": "textarea",
-                "name": "bio",
-                "rows": "5",
-                "maxlength": "500"
-              }
+              "attributes": {"class": "textarea", "name": "bio", "rows": "5", "maxlength": "500"}
             },
-            "when": {
-              "not": {
-                "get": "create"
-              }
-            }
+            "when": {"not": {"get": "create"}}
           }
         ]
       },
@@ -200,74 +77,29 @@
         "children": [
           {
             "tag": "div",
-            "attrs": {
-              "class": "stack stack-gap-12"
-            },
+            "attrs": {"class": "stack stack-gap-12"},
             "children": [
               {
                 "tag": "input",
-                "attrs": {
-                  "type": "hidden",
-                  "name": "role",
-                  "value": {
-                    "get": "user.role"
-                  }
-                },
-                "children": [],
-                "when": {
-                  "get": "protected"
-                }
+                "attrs": {"type": "hidden", "name": "role", "value": {"get": "user.role"}},
+                "when": {"get": "protected"}
               },
               {
                 "component": "ui/select",
                 "data": {
-                  "label": {
-                    "t": "common.role",
-                    "values": {}
-                  },
+                  "label": {"t": "common.role"},
                   "attributes": {
                     "class": "select",
-                    "name": {
-                      "if": [
-                        {
-                          "get": "protected"
-                        },
-                        "role_locked",
-                        "role"
-                      ]
-                    },
-                    "disabled": {
-                      "if": [
-                        {
-                          "get": "protected"
-                        },
-                        true,
-                        null
-                      ]
-                    }
+                    "name": {"if": [{"get": "protected"}, "role_locked", "role"]},
+                    "disabled": {"if": [{"get": "protected"}, true, null]}
                   },
-                  "value": {
-                    "or": [
-                      {
-                        "get": "user.role"
-                      },
-                      "user"
-                    ]
-                  },
+                  "value": {"or": [{"get": "user.role"}, "user"]},
                   "choices": {
-                    "options": {
-                      "get": "options.roles"
-                    },
+                    "options": {"get": "options.roles"},
                     "cases": {
-                      "admin": {
-                        "t": "users.roles.admin"
-                      },
-                      "user": {
-                        "t": "users.roles.user"
-                      },
-                      "bot": {
-                        "t": "users.roles.bot"
-                      }
+                      "admin": {"t": "users.roles.admin"},
+                      "user": {"t": "users.roles.user"},
+                      "bot": {"t": "users.roles.bot"}
                     }
                   }
                 }
@@ -277,31 +109,16 @@
           {
             "component": "ui/field",
             "data": {
-              "label": {
-                "t": "common.password",
-                "values": {}
-              },
-              "value": "",
-              "textarea": false,
+              "label": {"t": "common.password"},
               "attributes": {
                 "class": "input",
                 "name": "password",
                 "type": "password",
                 "value": "",
                 "minlength": "8",
-                "maxlength": {
-                  "get": "options.password_max_length"
-                },
+                "maxlength": {"get": "options.password_max_length"},
                 "autocomplete": "new-password",
-                "required": {
-                  "if": [
-                    {
-                      "get": "create"
-                    },
-                    true,
-                    null
-                  ]
-                }
+                "required": {"if": [{"get": "create"}, true, null]}
               }
             }
           }
@@ -316,108 +133,47 @@
           "data-editor-icon": "user",
           "data-editor-editable": "false"
         },
+        "when": {"not": {"get": "create"}},
         "children": [
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "label"
-            },
-            "children": [
-              {
-                "t": "account.avatar",
-                "values": {}
-              }
-            ]
-          },
-          {
-            "component": "users/avatar-control",
-            "data": {
-              "user": {
-                "get": "user"
-              }
-            }
-          }
-        ],
-        "when": {
-          "not": {
-            "get": "create"
-          }
-        }
+          {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "account.avatar"}]},
+          {"component": "users/avatar-control", "data": {"user": {"get": "user"}}}
+        ]
       }
     ]
   },
   "users/admin-row": {
     "tag": "tr",
-    "attrs": {
-      "class": {
-        "if": [
-          {
-            "eq": [
-              {
-                "get": "user.status"
-              },
-              "active"
-            ]
-          },
-          null,
-          "table-row-inactive"
-        ]
-      }
-    },
+    "attrs": {"class": {"if": [{"eq": [{"get": "user.status"}, "active"]}, null, "table-row-inactive"]}},
     "children": [
       {
         "tag": "td",
-        "attrs": {},
         "children": [
           {
             "tag": "div",
-            "attrs": {
-              "class": "table-identity"
-            },
+            "attrs": {"class": "table-identity"},
             "children": [
               {
                 "component": "ui/account-status",
                 "data": {
-                  "status": {
-                    "get": "user.status"
-                  },
+                  "status": {"get": "user.status"},
                   "label": {
-                    "lookup": {
-                      "get": "user.status"
-                    },
+                    "lookup": {"get": "user.status"},
                     "cases": {
-                      "active": {
-                        "t": "users.statuses.active"
-                      },
-                      "waiting": {
-                        "t": "users.statuses.waiting"
-                      },
-                      "ban": {
-                        "t": "users.statuses.ban"
-                      }
+                      "active": {"t": "users.statuses.active"},
+                      "waiting": {"t": "users.statuses.waiting"},
+                      "ban": {"t": "users.statuses.ban"}
                     }
                   }
                 }
               },
               {
                 "tag": "div",
-                "attrs": {
-                  "class": "table-identity-body"
-                },
+                "attrs": {"class": "table-identity-body"},
                 "children": [
                   {
                     "tag": "strong",
-                    "attrs": {
-                      "class": "table-primary",
-                      "title": {
-                        "get": "user.username"
-                      }
-                    },
-                    "children": [
-                      {
-                        "get": "user.username"
-                      }
-                    ]
+                    "attrs": {"class": "table-primary", "title": {"get": "user.username"}},
+                    "children": [{"get": "user.username"}]
                   }
                 ]
               }
@@ -427,89 +183,42 @@
       },
       {
         "tag": "td",
-        "attrs": {},
         "children": [
           {
-            "lookup": {
-              "get": "user.role"
-            },
+            "lookup": {"get": "user.role"},
             "cases": {
-              "admin": {
-                "t": "users.roles.admin"
-              },
-              "user": {
-                "t": "users.roles.user"
-              },
-              "bot": {
-                "t": "users.roles.bot"
-              }
+              "admin": {"t": "users.roles.admin"},
+              "user": {"t": "users.roles.user"},
+              "bot": {"t": "users.roles.bot"}
             }
           }
         ]
       },
       {
         "tag": "td",
-        "attrs": {},
         "children": [
           {
             "tag": "time",
-            "attrs": {
-              "class": "table-meta",
-              "datetime": {
-                "get": "user.updated_at"
-              }
-            },
-            "children": [
-              {
-                "date": {
-                  "get": "user.updated_at"
-                }
-              }
-            ]
+            "attrs": {"class": "table-meta", "datetime": {"get": "user.updated_at"}},
+            "children": [{"date": {"get": "user.updated_at"}}]
           }
         ]
       },
       {
         "tag": "td",
-        "attrs": {
-          "class": "table-actions-cell"
-        },
+        "attrs": {"class": "table-actions-cell"},
         "children": [
           {
             "tag": "div",
-            "attrs": {
-              "class": "table-actions"
-            },
+            "attrs": {"class": "table-actions"},
             "children": [
               {
                 "component": "ui/modal-trigger",
                 "data": {
                   "class": "btn btn-sm btn-ghost btn-icon",
-                  "modal": {
-                    "concat": [
-                      "user-edit-",
-                      {
-                        "get": "user.id"
-                      }
-                    ]
-                  },
-                  "url": {
-                    "concat": [
-                      "/api/users/",
-                      {
-                        "get": "user.id"
-                      },
-                      "/management?panel=administration"
-                    ]
-                  },
-                  "label": {
-                    "t": "users.edit_user",
-                    "values": {
-                      "username": {
-                        "get": "user.username"
-                      }
-                    }
-                  },
+                  "modal": {"concat": ["user-edit-", {"get": "user.id"}]},
+                  "url": {"concat": ["/api/users/", {"get": "user.id"}, "/management?panel=administration"]},
+                  "label": {"t": "users.edit_user", "values": {"username": {"get": "user.username"}}},
                   "icon": "edit",
                   "icon_only": true
                 }
@@ -517,61 +226,24 @@
               {
                 "component": "ui/activation-action",
                 "data": {
-                  "active": {
-                    "eq": [
-                      {
-                        "get": "user.status"
-                      },
-                      "active"
-                    ]
-                  },
-                  "url": {
-                    "concat": [
-                      "/api/users/",
-                      {
-                        "get": "user.id"
-                      },
-                      "/activation"
-                    ]
-                  },
+                  "active": {"eq": [{"get": "user.status"}, "active"]},
+                  "url": {"concat": ["/api/users/", {"get": "user.id"}, "/activation"]},
                   "target": "#users-list"
                 },
-                "when": {
-                  "not": {
-                    "get": "user.protected"
-                  }
-                }
+                "when": {"not": {"get": "user.protected"}}
               },
               {
                 "component": "ui/api-action",
                 "data": {
-                  "url": {
-                    "concat": [
-                      "/api/users/",
-                      {
-                        "get": "user.id"
-                      }
-                    ]
-                  },
+                  "url": {"concat": ["/api/users/", {"get": "user.id"}]},
                   "method": "DELETE",
                   "target": "#users-list",
-                  "confirm": {
-                    "t": "users.delete_confirm",
-                    "values": {
-                      "username": {
-                        "get": "user.username"
-                      }
-                    }
-                  },
-                  "label": {
-                    "t": "common.delete"
-                  },
+                  "confirm": {"t": "users.delete_confirm", "values": {"username": {"get": "user.username"}}},
+                  "label": {"t": "common.delete"},
                   "icon": "trash",
                   "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
                 },
-                "when": {
-                  "get": "user.can_delete"
-                }
+                "when": {"get": "user.can_delete"}
               }
             ]
           }
@@ -586,18 +258,10 @@
       "data-admin-list": "core.users",
       "data-admin-state": {
         "json": {
-          "filters": {
-            "get": "filters"
-          },
-          "pagination": {
-            "get": "pagination"
-          },
-          "roles": {
-            "get": "roles"
-          },
-          "statuses": {
-            "get": "statuses"
-          }
+          "filters": {"get": "filters"},
+          "pagination": {"get": "pagination"},
+          "roles": {"get": "roles"},
+          "statuses": {"get": "statuses"}
         }
       }
     },
@@ -605,131 +269,62 @@
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": {
-            "admin_ref": "core.users",
-            "field": "endpoint"
-          },
-          "target": {
-            "admin_ref": "core.users",
-            "field": "target"
-          },
-          "history": {
-            "admin_ref": "core.users",
-            "field": "path"
-          },
-          "filters": {
-            "get": "filters"
-          },
-          "pagination": {
-            "get": "pagination"
-          },
-          "filter_modal": {
-            "admin_ref": "core.users",
-            "field": "filterId"
-          }
+          "url": {"admin_ref": "core.users", "field": "endpoint"},
+          "target": {"admin_ref": "core.users", "field": "target"},
+          "history": {"admin_ref": "core.users", "field": "path"},
+          "filters": {"get": "filters"},
+          "pagination": {"get": "pagination"},
+          "filter_modal": {"admin_ref": "core.users", "field": "filterId"}
         }
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "table-wrap"
-        },
+        "attrs": {"class": "table-wrap"},
         "children": [
           {
             "tag": "table",
-            "attrs": {
-              "class": "table"
-            },
+            "attrs": {"class": "table"},
             "children": [
               {
                 "tag": "thead",
-                "attrs": {},
                 "children": [
                   {
                     "tag": "tr",
-                    "attrs": {},
                     "children": [
                       {
                         "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
-                            "get": "sorting.username.aria"
-                          }
-                        },
+                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.username.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "users.table_user",
-                                "values": {}
-                              },
-                              "order": {
-                                "get": "sorting.username"
-                              }
-                            }
+                            "data": {"label": {"t": "users.table_user"}, "order": {"get": "sorting.username"}}
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
-                            "get": "sorting.role.aria"
-                          }
-                        },
+                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.role.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "common.role",
-                                "values": {}
-                              },
-                              "order": {
-                                "get": "sorting.role"
-                              }
-                            }
+                            "data": {"label": {"t": "common.role"}, "order": {"get": "sorting.role"}}
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
-                            "get": "sorting.updated_at.aria"
-                          }
-                        },
+                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.updated_at.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "common.updated",
-                                "values": {}
-                              },
-                              "order": {
-                                "get": "sorting.updated_at"
-                              }
-                            }
+                            "data": {"label": {"t": "common.updated"}, "order": {"get": "sorting.updated_at"}}
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {
-                          "class": "table-actions-cell",
-                          "scope": "col"
-                        },
-                        "children": [
-                          {
-                            "t": "common.actions",
-                            "values": {}
-                          }
-                        ]
+                        "attrs": {"class": "table-actions-cell", "scope": "col"},
+                        "children": [{"t": "common.actions"}]
                       }
                     ]
                   }
@@ -737,45 +332,18 @@
               },
               {
                 "tag": "tbody",
-                "attrs": {},
                 "children": [
                   {
-                    "each": {
-                      "get": "items"
-                    },
+                    "each": {"get": "items"},
                     "as": "user",
-                    "children": [
-                      {
-                        "component": "users/admin-row",
-                        "data": {
-                          "user": {
-                            "get": "user"
-                          }
-                        }
-                      }
-                    ]
+                    "children": [{"component": "users/admin-row", "data": {"user": {"get": "user"}}}]
                   },
                   {
                     "tag": "tr",
-                    "attrs": {},
+                    "when": {"not": {"get": "items"}},
                     "children": [
-                      {
-                        "tag": "td",
-                        "attrs": {
-                          "colspan": "4"
-                        },
-                        "children": [
-                          {
-                            "component": "ui/empty-state"
-                          }
-                        ]
-                      }
-                    ],
-                    "when": {
-                      "not": {
-                        "get": "items"
-                      }
-                    }
+                      {"tag": "td", "attrs": {"colspan": "4"}, "children": [{"component": "ui/empty-state"}]}
+                    ]
                   }
                 ]
               }
@@ -785,15 +353,7 @@
       },
       {
         "component": "ui/pagination",
-        "data": {
-          "navigation": {
-            "get": "navigation"
-          },
-          "target": {
-            "admin_ref": "core.users",
-            "field": "target"
-          }
-        }
+        "data": {"navigation": {"get": "navigation"}, "target": {"admin_ref": "core.users", "field": "target"}}
       }
     ]
   },
@@ -802,195 +362,79 @@
     "attrs": {
       "class": "stack",
       "method": "post",
-      "action": {
-        "get": "form_url"
-      },
+      "action": {"get": "form_url"},
       "data-ajax-form": "",
-      "data-ajax-action": {
-        "if": [
-          {
-            "get": "register"
-          },
-          "/api/users/registrations",
-          "/api/users/sessions"
-        ]
-      },
+      "data-ajax-action": {"if": [{"get": "register"}, "/api/users/registrations", "/api/users/sessions"]},
       "data-confirm-unsaved": "true",
-      "data-confirm-unsaved-title": {
-        "t": "common.unsaved_title",
-        "values": {}
-      },
-      "data-confirm-unsaved-message": {
-        "t": "common.unsaved_message",
-        "values": {}
-      },
-      "data-confirm-unsaved-ok": {
-        "t": "common.leave",
-        "values": {}
-      },
-      "data-confirm-unsaved-cancel": {
-        "t": "common.stay",
-        "values": {}
-      }
+      "data-confirm-unsaved-title": {"t": "common.unsaved_title"},
+      "data-confirm-unsaved-message": {"t": "common.unsaved_message"},
+      "data-confirm-unsaved-ok": {"t": "common.leave"},
+      "data-confirm-unsaved-cancel": {"t": "common.stay"}
     },
     "children": [
-      {
-        "csrf": true
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "next",
-          "value": {
-            "get": "next"
-          }
-        },
-        "children": []
-      },
+      {"csrf": true},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "next", "value": {"get": "next"}}},
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "auth.login_identifier",
-            "values": {}
-          },
-          "value": {
-            "get": "old.username"
-          },
-          "textarea": false,
+          "label": {"t": "auth.login_identifier"},
           "attributes": {
             "class": "input",
             "name": "username",
             "type": "text",
-            "value": {
-              "get": "old.username"
-            },
+            "value": {"get": "old.username"},
             "autocomplete": "username",
             "required": true,
             "autocapitalize": "none",
             "spellcheck": "false",
-            "pattern": {
-              "if": [
-                {
-                  "get": "register"
-                },
-                {
-                  "get": "options.username_pattern"
-                },
-                null
-              ]
-            },
-            "minlength": {
-              "if": [
-                {
-                  "get": "register"
-                },
-                "2",
-                null
-              ]
-            },
-            "maxlength": {
-              "if": [
-                {
-                  "get": "register"
-                },
-                "32",
-                null
-              ]
-            }
+            "pattern": {"if": [{"get": "register"}, {"get": "options.username_pattern"}, null]},
+            "minlength": {"if": [{"get": "register"}, "2", null]},
+            "maxlength": {"if": [{"get": "register"}, "32", null]}
           }
         }
       },
       {
         "tag": "span",
-        "attrs": {
-          "class": "help"
-        },
-        "children": [
-          {
-            "t": "account.username_hint"
-          }
-        ],
-        "when": {
-          "get": "register"
-        }
+        "attrs": {"class": "help"},
+        "when": {"get": "register"},
+        "children": [{"t": "account.username_hint"}]
       },
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "common.email",
-            "values": {}
-          },
-          "value": {
-            "get": "old.email"
-          },
-          "textarea": false,
+          "label": {"t": "common.email"},
           "attributes": {
             "class": "input",
             "name": "email",
             "type": "email",
-            "value": {
-              "get": "old.email"
-            },
+            "value": {"get": "old.email"},
             "maxlength": "254",
             "autocomplete": "email",
             "data-email-check-url": "/api/users/registrations/email-checks"
           }
         },
-        "when": {
-          "get": "register"
-        }
+        "when": {"get": "register"}
       },
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "common.password",
-            "values": {}
-          },
-          "value": "",
-          "textarea": false,
+          "label": {"t": "common.password"},
           "attributes": {
             "class": "input",
             "name": "password",
             "type": "password",
             "value": "",
             "required": true,
-            "autocomplete": {
-              "if": [
-                {
-                  "get": "register"
-                },
-                "new-password",
-                "current-password"
-              ]
-            },
-            "maxlength": {
-              "get": "options.password_max_length"
-            },
-            "minlength": {
-              "if": [
-                {
-                  "get": "register"
-                },
-                "8",
-                null
-              ]
-            }
+            "autocomplete": {"if": [{"get": "register"}, "new-password", "current-password"]},
+            "maxlength": {"get": "options.password_max_length"},
+            "minlength": {"if": [{"get": "register"}, "8", null]}
           }
         }
       },
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "common.password_confirm",
-            "values": {}
-          },
-          "value": "",
-          "textarea": false,
+          "label": {"t": "common.password_confirm"},
           "attributes": {
             "class": "input",
             "name": "password_confirm",
@@ -1001,15 +445,12 @@
             "minlength": "8"
           }
         },
-        "when": {
-          "get": "register"
-        }
+        "when": {"get": "register"}
       },
       {
         "tag": "label",
-        "attrs": {
-          "class": "check-line"
-        },
+        "attrs": {"class": "check-line"},
+        "when": {"get": "register"},
         "children": [
           {
             "tag": "input",
@@ -1018,53 +459,27 @@
               "name": "platform_terms",
               "value": "1",
               "required": true,
-              "checked": {
-                "if": [
-                  {
-                    "get": "old.platform_terms"
-                  },
-                  true,
-                  null
-                ]
-              }
-            },
-            "children": []
+              "checked": {"if": [{"get": "old.platform_terms"}, true, null]}
+            }
           },
           {
             "tag": "span",
-            "attrs": {},
             "children": [
-              {
-                "t": "auth.platform_terms_agree",
-                "values": {}
-              },
+              {"t": "auth.platform_terms_agree"},
               " ",
               {
                 "tag": "a",
-                "attrs": {
-                  "href": "/privacy",
-                  "target": "_blank",
-                  "rel": "privacy-policy"
-                },
-                "children": [
-                  {
-                    "t": "privacy.title",
-                    "values": {}
-                  }
-                ]
+                "attrs": {"href": "/privacy", "target": "_blank", "rel": "privacy-policy"},
+                "children": [{"t": "privacy.title"}]
               }
             ]
           }
-        ],
-        "when": {
-          "get": "register"
-        }
+        ]
       },
       {
         "tag": "label",
-        "attrs": {
-          "class": "check-line"
-        },
+        "attrs": {"class": "check-line"},
+        "when": {"not": {"get": "register"}},
         "children": [
           {
             "tag": "input",
@@ -1072,323 +487,101 @@
               "type": "checkbox",
               "name": "remember",
               "value": "1",
-              "checked": {
-                "if": [
-                  {
-                    "get": "old.remember"
-                  },
-                  true,
-                  null
-                ]
-              }
-            },
-            "children": []
-          },
-          {
-            "tag": "span",
-            "attrs": {},
-            "children": [
-              {
-                "t": "auth.remember_me",
-                "values": {}
-              }
-            ]
-          }
-        ],
-        "when": {
-          "not": {
-            "get": "register"
-          }
-        }
-      },
-      {
-        "component": "ui/captcha",
-        "data": {
-          "config": {
-            "get": "captcha"
-          }
-        }
-      },
-      {
-        "tag": "button",
-        "attrs": {
-          "class": "btn btn-primary",
-          "type": "submit"
-        },
-        "children": [
-          {
-            "icon": {
-              "if": [
-                {
-                  "get": "register"
-                },
-                "user-plus",
-                "login"
-              ]
+              "checked": {"if": [{"get": "old.remember"}, true, null]}
             }
           },
-          {
-            "if": [
-              {
-                "get": "register"
-              },
-              {
-                "t": "common.register",
-                "values": {}
-              },
-              {
-                "t": "common.login",
-                "values": {}
-              }
-            ]
-          }
+          {"tag": "span", "children": [{"t": "auth.remember_me"}]}
+        ]
+      },
+      {"component": "ui/captcha", "data": {"config": {"get": "captcha"}}},
+      {
+        "tag": "button",
+        "attrs": {"class": "btn btn-primary", "type": "submit"},
+        "children": [
+          {"icon": {"if": [{"get": "register"}, "user-plus", "login"]}},
+          {"if": [{"get": "register"}, {"t": "common.register"}, {"t": "common.login"}]}
         ]
       }
     ]
   },
   "users/auth-content": {
     "tag": "div",
-    "attrs": {
-      "class": "stack"
-    },
+    "attrs": {"class": "stack"},
     "children": [
       {
         "tag": "p",
-        "attrs": {
-          "class": "text-muted mb-0"
-        },
-        "children": [
-          {
-            "t": "auth.login_intro",
-            "values": {}
-          }
-        ],
-        "when": {
-          "not": {
-            "get": "register"
-          }
-        }
+        "attrs": {"class": "text-muted mb-0"},
+        "when": {"not": {"get": "register"}},
+        "children": [{"t": "auth.login_intro"}]
+      },
+      {"tag": "div", "attrs": {"class": "alert alert-danger"}, "when": {"get": "error"}, "children": [{"get": "error"}]},
+      {
+        "tag": "div",
+        "attrs": {"class": "alert alert-success"},
+        "when": {"get": "message"},
+        "children": [{"get": "message"}]
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "alert alert-danger"
-        },
-        "children": [
-          {
-            "get": "error"
-          }
-        ],
-        "when": {
-          "get": "error"
-        }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "alert alert-success"
-        },
-        "children": [
-          {
-            "get": "message"
-          }
-        ],
-        "when": {
-          "get": "message"
-        }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "alert alert-info"
-        },
-        "children": [
-          {
-            "t": "auth.registration_disabled",
-            "values": {}
-          }
-        ],
-        "when": {
-          "and": [
-            {
-              "get": "register"
-            },
-            {
-              "not": {
-                "get": "registration_enabled"
-              }
-            }
-          ]
-        }
+        "attrs": {"class": "alert alert-info"},
+        "when": {"and": [{"get": "register"}, {"not": {"get": "registration_enabled"}}]},
+        "children": [{"t": "auth.registration_disabled"}]
       },
       {
         "component": "users/auth-form",
         "data": {
-          "mode": {
-            "get": "mode"
-          },
-          "register": {
-            "get": "register"
-          },
-          "next": {
-            "get": "next"
-          },
-          "form_url": {
-            "get": "form_url"
-          },
-          "captcha": {
-            "get": "captcha"
-          },
-          "options": {
-            "get": "options"
-          },
-          "old": {
-            "get": "old"
-          }
+          "mode": {"get": "mode"},
+          "register": {"get": "register"},
+          "next": {"get": "next"},
+          "form_url": {"get": "form_url"},
+          "captcha": {"get": "captcha"},
+          "options": {"get": "options"},
+          "old": {"get": "old"}
         },
-        "when": {
-          "not": {
-            "and": [
-              {
-                "get": "register"
-              },
-              {
-                "not": {
-                  "get": "registration_enabled"
-                }
-              }
-            ]
-          }
-        }
+        "when": {"not": {"and": [{"get": "register"}, {"not": {"get": "registration_enabled"}}]}}
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "cluster gap-2"
-        },
+        "attrs": {"class": "cluster gap-2"},
+        "when": {"not": {"get": "register"}},
         "children": [
           {
             "tag": "a",
-            "attrs": {
-              "class": "btn btn-ghost btn-sm",
-              "href": "/recovery"
-            },
-            "children": [
-              {
-                "icon": "key"
-              },
-              {
-                "t": "auth.recovery_link",
-                "values": {}
-              }
-            ]
+            "attrs": {"class": "btn btn-ghost btn-sm", "href": "/recovery"},
+            "children": [{"icon": "key"}, {"t": "auth.recovery_link"}]
           },
           {
             "tag": "a",
-            "attrs": {
-              "class": "btn btn-ghost btn-sm",
-              "href": "/privacy",
-              "rel": "privacy-policy"
-            },
-            "children": [
-              {
-                "icon": "shield"
-              },
-              {
-                "t": "privacy.title",
-                "values": {}
-              }
-            ]
+            "attrs": {"class": "btn btn-ghost btn-sm", "href": "/privacy", "rel": "privacy-policy"},
+            "children": [{"icon": "shield"}, {"t": "privacy.title"}]
           }
-        ],
-        "when": {
-          "not": {
-            "get": "register"
-          }
-        }
+        ]
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "cluster gap-2"
-        },
+        "attrs": {"class": "cluster gap-2"},
+        "when": {"or": [{"get": "registration_enabled"}, {"get": "register"}]},
         "children": [
           {
             "tag": "span",
-            "attrs": {
-              "class": "text-muted"
-            },
-            "children": [
-              {
-                "if": [
-                  {
-                    "get": "register"
-                  },
-                  {
-                    "t": "auth.has_account",
-                    "values": {}
-                  },
-                  {
-                    "t": "auth.no_account",
-                    "values": {}
-                  }
-                ]
-              }
-            ]
+            "attrs": {"class": "text-muted"},
+            "children": [{"if": [{"get": "register"}, {"t": "auth.has_account"}, {"t": "auth.no_account"}]}]
           },
           {
             "tag": "a",
             "attrs": {
               "class": "btn btn-secondary btn-sm",
-              "href": {
-                "get": "switch_url"
-              },
+              "href": {"get": "switch_url"},
               "data-modal-open": "auth-modal",
-              "data-modal-url": {
-                "get": "switch_modal_url"
-              },
+              "data-modal-url": {"get": "switch_modal_url"},
               "data-modal-refresh": "true"
             },
             "children": [
-              {
-                "icon": {
-                  "if": [
-                    {
-                      "get": "register"
-                    },
-                    "login",
-                    "user-plus"
-                  ]
-                }
-              },
-              {
-                "if": [
-                  {
-                    "get": "register"
-                  },
-                  {
-                    "t": "common.login",
-                    "values": {}
-                  },
-                  {
-                    "t": "auth.register_link",
-                    "values": {}
-                  }
-                ]
-              }
+              {"icon": {"if": [{"get": "register"}, "login", "user-plus"]}},
+              {"if": [{"get": "register"}, {"t": "common.login"}, {"t": "auth.register_link"}]}
             ]
           }
-        ],
-        "when": {
-          "or": [
-            {
-              "get": "registration_enabled"
-            },
-            {
-              "get": "register"
-            }
-          ]
-        }
+        ]
       }
     ]
   },
@@ -1397,62 +590,26 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": {
-        "admin_ref": "core.users",
-        "field": "endpoint"
-      },
+      "action": {"admin_ref": "core.users", "field": "endpoint"},
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": {
-        "admin_ref": "core.users",
-        "field": "target"
-      },
-      "data-history": {
-        "admin_ref": "core.users",
-        "field": "path"
-      }
+      "data-ajax-target": {"admin_ref": "core.users", "field": "target"},
+      "data-history": {"admin_ref": "core.users", "field": "path"}
     },
     "children": [
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "q",
-          "value": {
-            "get": "filters.q"
-          }
-        },
-        "children": []
-      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "q", "value": {"get": "filters.q"}}},
       {
         "component": "ui/select",
         "data": {
-          "label": {
-            "t": "common.role",
-            "values": {}
-          },
-          "attributes": {
-            "class": "select",
-            "name": "role",
-            "disabled": null
-          },
-          "value": {
-            "get": "filters.role"
-          },
+          "label": {"t": "common.role"},
+          "attributes": {"class": "select", "name": "role", "disabled": null},
+          "value": {"get": "filters.role"},
           "choices": {
-            "options": {
-              "get": "roles"
-            },
+            "options": {"get": "roles"},
             "cases": {
-              "admin": {
-                "t": "users.roles.admin"
-              },
-              "user": {
-                "t": "users.roles.user"
-              },
-              "bot": {
-                "t": "users.roles.bot"
-              }
+              "admin": {"t": "users.roles.admin"},
+              "user": {"t": "users.roles.user"},
+              "bot": {"t": "users.roles.bot"}
             },
             "all": true
           }
@@ -1461,32 +618,15 @@
       {
         "component": "ui/select",
         "data": {
-          "label": {
-            "t": "common.status",
-            "values": {}
-          },
-          "attributes": {
-            "class": "select",
-            "name": "status",
-            "disabled": null
-          },
-          "value": {
-            "get": "filters.status"
-          },
+          "label": {"t": "common.status"},
+          "attributes": {"class": "select", "name": "status", "disabled": null},
+          "value": {"get": "filters.status"},
           "choices": {
-            "options": {
-              "get": "statuses"
-            },
+            "options": {"get": "statuses"},
             "cases": {
-              "active": {
-                "t": "users.statuses.active"
-              },
-              "waiting": {
-                "t": "users.statuses.waiting"
-              },
-              "ban": {
-                "t": "users.statuses.ban"
-              }
+              "active": {"t": "users.statuses.active"},
+              "waiting": {"t": "users.statuses.waiting"},
+              "ban": {"t": "users.statuses.ban"}
             },
             "all": true
           }
@@ -1495,65 +635,24 @@
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "common.updated_from",
-            "values": {}
-          },
-          "value": {
-            "get": "filters.updated_from"
-          },
-          "textarea": false,
+          "label": {"t": "common.updated_from"},
           "attributes": {
             "class": "input",
             "name": "updated_from",
             "type": "date",
-            "value": {
-              "get": "filters.updated_from"
-            }
+            "value": {"get": "filters.updated_from"}
           }
         }
       },
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "common.updated_to",
-            "values": {}
-          },
-          "value": {
-            "get": "filters.updated_to"
-          },
-          "textarea": false,
-          "attributes": {
-            "class": "input",
-            "name": "updated_to",
-            "type": "date",
-            "value": {
-              "get": "filters.updated_to"
-            }
-          }
+          "label": {"t": "common.updated_to"},
+          "attributes": {"class": "input", "name": "updated_to", "type": "date", "value": {"get": "filters.updated_to"}}
         }
       },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "per_page",
-          "value": {
-            "get": "pagination.per_page"
-          }
-        },
-        "children": []
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "page",
-          "value": "1"
-        },
-        "children": []
-      }
+      {"tag": "input", "attrs": {"type": "hidden", "name": "per_page", "value": {"get": "pagination.per_page"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "page", "value": "1"}}
     ]
   },
   "users/avatar-control": {
@@ -1561,43 +660,12 @@
     "attrs": {
       "class": "avatar avatar-xl profile-avatar-button",
       "type": "button",
-      "data-modal-open": {
-        "concat": [
-          "avatar-edit-modal-",
-          {
-            "get": "user.id"
-          }
-        ]
-      },
-      "data-modal-url": {
-        "concat": [
-          "/api/users/",
-          {
-            "get": "user.id"
-          },
-          "/avatar"
-        ]
-      },
-      "title": {
-        "t": "account.avatar_edit"
-      },
-      "aria-label": {
-        "t": "account.avatar_edit"
-      }
+      "data-modal-open": {"concat": ["avatar-edit-modal-", {"get": "user.id"}]},
+      "data-modal-url": {"concat": ["/api/users/", {"get": "user.id"}, "/avatar"]},
+      "title": {"t": "account.avatar_edit"},
+      "aria-label": {"t": "account.avatar_edit"}
     },
-    "children": [
-      {
-        "component": "ui/avatar-content",
-        "data": {
-          "user": {
-            "get": "user"
-          },
-          "alt": {
-            "get": "user.username"
-          }
-        }
-      }
-    ]
+    "children": [{"component": "ui/avatar-content", "data": {"user": {"get": "user"}, "alt": {"get": "user.username"}}}]
   },
   "users/auth-page": {
     "tag": "section",
@@ -1675,13 +743,17 @@
               {
                 "tag": "p",
                 "attrs": {"class": "text-muted mb-0"},
-                "children": [{"if": [{"get": "reset"}, {"t": "auth.recovery_reset_intro"}, {"t": "auth.recovery_intro"}]}]
+                "children": [
+                  {"if": [{"get": "reset"}, {"t": "auth.recovery_reset_intro"}, {"t": "auth.recovery_intro"}]}
+                ]
               },
               {
                 "tag": "form",
                 "attrs": {
                   "method": "post",
-                  "action": {"if": [{"get": "reset"}, "/api/users/password-resets/confirm", "/api/users/password-resets"]},
+                  "action": {
+                    "if": [{"get": "reset"}, "/api/users/password-resets/confirm", "/api/users/password-resets"]
+                  },
                   "class": "stack",
                   "data-ajax-form": ""
                 },
@@ -1717,7 +789,13 @@
                     "component": "ui/field",
                     "data": {
                       "label": {"t": "common.email"},
-                      "attributes": {"class": "input", "type": "email", "name": "email", "autocomplete": "email", "required": true}
+                      "attributes": {
+                        "class": "input",
+                        "type": "email",
+                        "name": "email",
+                        "autocomplete": "email",
+                        "required": true
+                      }
                     },
                     "when": {"not": {"get": "reset"}}
                   },
@@ -1858,6 +936,512 @@
                     "children": [{"icon": "logout"}, " ", {"t": "common.logout"}]
                   }
                 ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "users/account-form": {
+    "tag": "form",
+    "attrs": {
+      "id": {"concat": [{"get": "dialog_id"}, "-account-form"]},
+      "data-editor-section": "account",
+      "data-editor-label": "common.account",
+      "data-editor-icon": "user",
+      "data-original-locale": {"get": "original_locale"}
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "grid sm:grid-2"},
+        "children": [
+          {
+            "component": "ui/field",
+            "data": {
+              "label": {"t": "common.username"},
+              "attributes": {
+                "class": "input",
+                "name": "username",
+                "type": "text",
+                "value": {"get": "user.username"},
+                "disabled": true
+              }
+            }
+          },
+          {
+            "component": "ui/select",
+            "data": {
+              "label": {"t": "common.language"},
+              "value": {"get": "user.locale"},
+              "choices": {"get": "languages"},
+              "attributes": {"class": "select", "name": "locale"}
+            }
+          },
+          {
+            "component": "ui/select",
+            "data": {
+              "label": {"t": "account.theme"},
+              "value": {"get": "user.theme"},
+              "choices": {
+                "system": {"t": "account.theme_system"},
+                "light": {"t": "account.theme_light"},
+                "dark": {"t": "account.theme_dark"}
+              },
+              "attributes": {"class": "select", "name": "theme"}
+            }
+          },
+          {
+            "component": "ui/field",
+            "data": {
+              "label": {"t": "account.bio"},
+              "attributes": {"class": "textarea", "name": "bio", "maxlength": "500", "rows": "6"},
+              "textarea": true,
+              "value": {"get": "user.bio"},
+              "field_class": "field grid-span-full"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "users/email-form": {
+    "tag": "form",
+    "attrs": {
+      "id": {"concat": [{"get": "dialog_id"}, "-email-form"]},
+      "data-editor-section": "email",
+      "data-editor-label": "common.email",
+      "data-editor-icon": "mail"
+    },
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {"type": "hidden", "name": "bio", "value": {"get": "user.bio"}},
+        "when": {"not": {"get": "has_password"}}
+      },
+      {
+        "tag": "input",
+        "attrs": {"type": "hidden", "name": "locale", "value": {"get": "user.locale"}},
+        "when": {"not": {"get": "has_password"}}
+      },
+      {
+        "tag": "input",
+        "attrs": {"type": "hidden", "name": "theme", "value": {"get": "user.theme"}},
+        "when": {"not": {"get": "has_password"}}
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {"t": "common.email"},
+          "attributes": {
+            "class": "input",
+            "name": "email",
+            "type": "email",
+            "value": {"get": "user.email"},
+            "maxlength": "254",
+            "autocomplete": "email",
+            "data-email-check-url": {"concat": ["/api/users/", {"get": "user.id"}, "/email-checks"]}
+          }
+        }
+      },
+      {"tag": "span", "attrs": {"class": "help"}, "children": [{"t": "account.email_optional"}]},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "email_notifications", "value": "0"}},
+      {
+        "tag": "label",
+        "attrs": {"class": "check-line"},
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "checkbox",
+              "name": "email_notifications",
+              "value": "1",
+              "checked": {"not": {"not": {"get": "user.email_notifications"}}}
+            }
+          },
+          {"tag": "span", "children": [{"t": "account.email_notifications"}]}
+        ]
+      }
+    ]
+  },
+  "users/password-form": {
+    "tag": "form",
+    "attrs": {
+      "id": {"concat": [{"get": "dialog_id"}, "-security-form"]},
+      "data-editor-section": "security",
+      "data-editor-label": "account.security_settings",
+      "data-editor-icon": "lock",
+      "data-reset": "true"
+    },
+    "children": [
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {"t": "common.current_password"},
+          "attributes": {
+            "class": "input",
+            "name": "current_password",
+            "type": "password",
+            "value": "",
+            "required": true,
+            "autocomplete": "current-password"
+          }
+        }
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {"t": "common.password"},
+          "attributes": {
+            "class": "input",
+            "name": "password",
+            "type": "password",
+            "value": "",
+            "required": true,
+            "minlength": "8",
+            "maxlength": {"string": {"get": "options.password_max_length"}},
+            "autocomplete": "new-password"
+          }
+        }
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {"t": "common.password_confirm"},
+          "attributes": {
+            "class": "input",
+            "name": "password_confirm",
+            "type": "password",
+            "value": "",
+            "required": true,
+            "minlength": "8",
+            "autocomplete": "new-password"
+          }
+        }
+      }
+    ]
+  },
+  "users/account-editor": {
+    "tag": "div",
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"data-editor-sections": ""},
+        "children": [
+          {"slot": {"get": "account_form"}},
+          {"slot": {"get": "email_form"}},
+          {"slot": {"get": "password_form"}, "when": {"get": "has_password"}},
+          {
+            "tag": "div",
+            "attrs": {
+              "data-editor-section": "avatar",
+              "data-editor-label": "account.avatar",
+              "data-editor-icon": "user",
+              "data-editor-editable": "false"
+            },
+            "children": [{"component": "users/avatar-control", "data": {"user": {"get": "user"}}}]
+          }
+        ]
+      }
+    ]
+  },
+  "users/avatar-upload": {
+    "tag": "form",
+    "attrs": {
+      "id": {"concat": ["avatar-upload-form-", {"get": "user.id"}]},
+      "data-modal-close-on-success": "true",
+      "enctype": "multipart/form-data"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "avatar-upload", "data-avatar-upload": ""},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "avatar-editor-preview cluster gap-1"},
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "avatar avatar-xl avatar-upload-preview",
+                  "aria-label": {"t": "account.avatar_preview"}
+                },
+                "children": [
+                  {
+                    "tag": "img",
+                    "attrs": {
+                      "src": {"if": [{"get": "user.avatar_url"}, {"get": "user.avatar_url"}, null]},
+                      "alt": {"get": "user.username"},
+                      "data-avatar-upload-preview": "",
+                      "hidden": {"not": {"get": "user.avatar_url"}}
+                    }
+                  },
+                  {
+                    "tag": "span",
+                    "attrs": {
+                      "class": "avatar-fallback avatar-upload-empty",
+                      "data-avatar-upload-empty": "",
+                      "hidden": {"not": {"not": {"get": "user.avatar_url"}}}
+                    },
+                    "children": [{"icon": "user"}]
+                  }
+                ]
+              },
+              {
+                "tag": "button",
+                "attrs": {
+                  "type": "button",
+                  "class": "btn btn-icon avatar-creator-toggle",
+                  "aria-label": {"t": "account.avatar_creator"},
+                  "title": {"t": "account.avatar_creator"},
+                  "aria-expanded": "false",
+                  "aria-controls": {"concat": ["avatar-appearance-form-", {"get": "user.id"}]},
+                  "data-avatar-creator-toggle": ""
+                },
+                "when": {"get": "generated"},
+                "children": [{"icon": "chevron-right"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "avatar-editor-controls"},
+            "children": [
+              {
+                "tag": "small",
+                "attrs": {
+                  "class": "avatar-upload-empty-note",
+                  "data-avatar-upload-empty-note": "",
+                  "hidden": {"not": {"not": {"get": "user.avatar_url"}}}
+                },
+                "children": [{"t": "account.avatar_upload_empty"}]
+              },
+              {
+                "tag": "label",
+                "attrs": {"class": "avatar-upload-drop"},
+                "children": [
+                  {
+                    "tag": "input",
+                    "attrs": {
+                      "class": "sr-only",
+                      "type": "file",
+                      "name": "avatar",
+                      "required": true,
+                      "accept": "image/jpeg,image/png,image/webp",
+                      "aria-label": {"t": "account.avatar_upload_label"},
+                      "data-avatar-upload-input": "",
+                      "data-client-image-max-dimension": "400",
+                      "data-client-image-max-bytes": "26214400"
+                    }
+                  },
+                  {"icon": "upload"},
+                  {"tag": "span", "children": [{"t": "account.avatar_upload_label"}]}
+                ]
+              },
+              {"tag": "small", "attrs": {"class": "text-muted"}, "children": ["JPG, PNG, WebP"]}
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "users/avatar-appearance": {
+    "tag": "form",
+    "attrs": {
+      "id": {"concat": ["avatar-appearance-form-", {"get": "user.id"}]},
+      "class": "avatar-editor-appearance",
+      "data-avatar-appearance-form": "",
+      "data-modal-close-on-success": "true",
+      "hidden": true,
+      "data-original-appearance": {"json": {"get": "appearance"}}
+    },
+    "children": [
+      {
+        "each": {"get": "parameters"},
+        "as": "parameter",
+        "children": {
+          "component": "ui/select",
+          "data": {
+            "label": {"get": "parameter.label"},
+            "value": {"get": "parameter.value"},
+            "choices": {"get": "parameter.choices"},
+            "attributes": {
+              "class": "select",
+              "data-avatar-parameter": {"get": "parameter.key"},
+              "data-avatar-default": {"get": "parameter.default"},
+              "data-avatar-gender": {"if": [{"eq": [{"get": "parameter.key"}, "gender"]}, "", null]}
+            }
+          }
+        }
+      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "appearance", "value": {"json": {"get": "appearance"}}}}
+    ]
+  },
+  "users/avatar-remove": {
+    "tag": "form",
+    "attrs": {
+      "data-modal-close-on-success": "true",
+      "data-confirm": {"t": "account.remove_avatar_confirm"},
+      "data-confirm-title": {"t": "account.remove_avatar_title"},
+      "data-confirm-variant": "danger"
+    },
+    "children": [
+      {
+        "tag": "button",
+        "attrs": {"type": "submit", "class": "btn avatar-editor-remove"},
+        "children": [{"icon": "trash"}, {"tag": "span", "children": [{"t": "account.remove_avatar"}]}]
+      }
+    ]
+  },
+  "users/avatar-save": {
+    "tag": "button",
+    "attrs": {
+      "type": "submit",
+      "class": "btn btn-primary",
+      "form": {"get": "form_id"},
+      "data-avatar-save": "",
+      "disabled": true
+    },
+    "children": [{"t": "account.save_avatar"}]
+  },
+  "users/avatar-actions": {
+    "component": "ui/editor-actions",
+    "data": {
+      "cancel_label": {"t": "common.cancel"},
+      "primary": {"get": "save_action"},
+      "destructive": {"get": "remove_form"},
+      "class": "cluster gap-2 modal-editor-actions avatar-editor-actions"
+    }
+  },
+  "users/avatar-editor": {
+    "tag": "div",
+    "attrs": {"class": "avatar-editor"},
+    "children": [
+      {"slot": {"get": "upload_form"}},
+      {"slot": {"get": "appearance_form"}, "when": {"get": "generated"}},
+      {"slot": {"get": "actions"}}
+    ]
+  },
+  "users/admin-form": {
+    "tag": "form",
+    "attrs": {"data-admin-user-form": "true", "data-ajax-target": "#users-list", "data-modal-close-on-success": "true"},
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {"type": "hidden", "name": "scope", "value": "administration"},
+        "when": {"not": {"get": "create"}}
+      },
+      {"component": "users/admin-fields", "data": {"get": "fields"}},
+      {
+        "tag": "button",
+        "attrs": {"type": "submit", "class": "btn btn-primary"},
+        "children": [{"if": [{"get": "create"}, {"t": "common.create"}, {"t": "common.save"}]}]
+      }
+    ]
+  },
+  "users/menu": {
+    "tag": "details",
+    "attrs": {"class": "context-menu user-menu", "data-popover": ""},
+    "children": [
+      {
+        "tag": "summary",
+        "attrs": {
+          "class": "nav-link user-menu-trigger profile-nav-link",
+          "aria-label": {"t": "account.profile_settings"},
+          "title": {"get": "displayName"}
+        },
+        "children": [
+          {"tag": "span", "attrs": {"class": "avatar avatar-sm"}, "children": [{"slot": {"get": "avatar"}}]},
+          {"icon": "chevron-down"},
+          {
+            "tag": "span",
+            "attrs": {"class": "notification-badge profile-email-warning", "aria-hidden": "true"},
+            "when": {"get": "profileNeedsEmail"},
+            "children": ["!"]
+          },
+          {
+            "tag": "span",
+            "attrs": {"class": "sr-only"},
+            "when": {"get": "profileNeedsEmail"},
+            "children": [{"t": "account.email_missing_title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "popover-panel user-menu-popover"},
+        "children": [
+          {"tag": "strong", "attrs": {"class": "user-menu-identity"}, "children": [{"get": "displayName"}]},
+          {
+            "tag": "a",
+            "attrs": {"class": "context-menu-action", "href": {"get": "profileUrl"}, "data-popover-close": ""},
+            "when": {"get": "profileUrl"},
+            "children": [{"icon": "user"}, " ", {"tag": "span", "children": [{"t": "account.public_profile"}]}]
+          },
+          {
+            "tag": "a",
+            "attrs": {
+              "class": "context-menu-action",
+              "href": {"get": "profileUrl"},
+              "data-modal-open": {"get": "editModalId"},
+              "data-modal-url": {"get": "editModalUrl"},
+              "data-popover-close": ""
+            },
+            "children": [{"icon": "settings"}, " ", {"tag": "span", "children": [{"t": "settings.title"}]}]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "user-menu-theme"},
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {"class": "user-menu-theme-switch", "role": "group", "aria-label": {"t": "account.theme"}},
+                "children": [
+                  {
+                    "each": [
+                      {"value": "system", "label": {"t": "account.theme_system"}, "icon": "monitor"},
+                      {"value": "light", "label": {"t": "account.theme_light"}, "icon": "sun"},
+                      {"value": "dark", "label": {"t": "account.theme_dark"}, "icon": "moon"}
+                    ],
+                    "as": "option",
+                    "children": {
+                      "tag": "button",
+                      "attrs": {
+                        "type": "button",
+                        "data-user-menu-theme": {"get": "option.value"},
+                        "aria-label": {"get": "option.label"},
+                        "title": {"get": "option.label"},
+                        "aria-pressed": {"if": [{"eq": [{"get": "theme"}, {"get": "option.value"}]}, "true", "false"]}
+                      },
+                      "children": [{"icon": {"get": "option.icon"}}]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "form",
+            "attrs": {
+              "action": "/api/users/sessions/current",
+              "data-ajax-form": "",
+              "data-api-method": "DELETE",
+              "method": "post",
+              "data-confirm": {"t": "auth.logout_confirm"},
+              "data-confirm-title": {"t": "auth.logout_title"},
+              "data-confirm-ok": {"t": "common.logout"},
+              "data-confirm-cancel": {"t": "common.cancel"},
+              "data-confirm-variant": "danger"
+            },
+            "children": [
+              {"csrf": true},
+              {"tag": "input", "attrs": {"type": "hidden", "name": "_method", "value": "DELETE"}},
+              {
+                "tag": "button",
+                "attrs": {"class": "context-menu-action is-danger", "type": "submit"},
+                "children": [{"icon": "logout"}, " ", {"tag": "span", "children": [{"t": "common.logout"}]}]
               }
             ]
           }

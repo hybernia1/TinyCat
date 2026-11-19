@@ -22,6 +22,8 @@ class Node {
   set className(value) { this.setAttribute("class", value); }
   set id(value) { this.setAttribute("id", value); }
   get id() { return this.getAttribute("id") || ""; }
+  set hidden(value) { if (value) this.setAttribute("hidden", ""); else this.removeAttribute("hidden"); }
+  get hidden() { return this.getAttribute("hidden") !== null; }
   get className() { return this.getAttribute("class") || ""; }
   set value(value) { this._value = String(value); if (this.tag === "select") this.children.forEach(child => { child.selected = child.getAttribute("value") === this._value; }); }
   get value() { if (this.tag === "select") { const option = this.children.find(child => child.selected) || this.children[0]; return option ? option.getAttribute("value") : ""; } return this._value; }
@@ -43,6 +45,7 @@ class Node {
   querySelectorAll(selector) {
     const match = node => {
       if (selector.includes(",")) return selector.split(",").some(tag => node.tag === tag.trim());
+      if (selector.startsWith("#")) return node.id === selector.slice(1);
       const attr = selector.match(/^\[([^=\]]+)(?:="([^"]*)")?\]$/);
       if (attr) return node.getAttribute(attr[1]) !== null && (attr[2] === undefined || node.getAttribute(attr[1]) === attr[2]);
       return selector[0] === "." ? node.className.split(/\s+/).includes(selector.slice(1)) : node.tag === selector;
@@ -68,6 +71,20 @@ const context = vm.createContext({ window, document, Node, AbortController, URL,
 const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
 for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filename: asset.path });
 const T = window.TinyCat;
+const contextFixture = JSON.parse(fs.readFileSync(path.join(root, 'tests/fixtures/component-contexts.json'), 'utf8'));
+const contextPhp = JSON.parse(require('node:child_process').execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root, 'tests/presentation/fixtures/component-parity.php'), '--contexts'], {encoding:'utf8'}));
+T.components.register(contextFixture.definitions);
+contextFixture.cases.forEach((item, index) => {
+  if (item.error) {
+    assert.throws(() => T.components.render(item.component, item.data), error => error.message === item.error); checks++;
+    check(contextPhp[index].error === item.error, 'PHP and JS reject the same invalid object context');
+  } else {
+    const rendered = T.components.render(item.component, item.data);
+    check(rendered.textContent === item.text, 'Forwarded context is explicit, literal and recursion-safe');
+    const escaped = item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    check(contextPhp[index].html.replace(/<[^>]*>/g,'') === escaped, 'PHP preserves the same escaped context text');
+  }
+});
 // Minimal DOM fixture covers filter data; native popover interaction has its own browser suite.
 T.popovers.open = menu => { menu.open = true; };
 const mediaController = T.publishing.controllers.media;

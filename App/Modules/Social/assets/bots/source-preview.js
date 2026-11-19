@@ -1,3 +1,4 @@
+// @component-owned: structure is declared in owner catalogs.
 import "../../../../../assets/core/lifecycle.js";
 import "../../../../../assets/core/component-renderer.js";
 import "../../../../../assets/ui/component-builders.js";
@@ -19,7 +20,7 @@ import "../../../../../assets/ui/form-requests.js";
     binding.busy = true;
     var initial = signature(form), fields = values(form);
     var data = { feed_url: override || fields.feed_url, name: fields.name, post_template: fields.post_template };
-    var content = T.dom.element("div", { "class": "stack", "aria-live": "polite" }, U.text("bots.preview_loading"));
+    var content = T.components.render("bots/source-preview-state", {});
     var actions = U.editorActions();
     var dialog = U.dialog("bot-source-preview-" + (++serial), "bots.preview_title", content, false, actions);
     dialog.addEventListener("tinycat:modal-close", function () { T.forms.cancel(form); });
@@ -44,7 +45,7 @@ import "../../../../../assets/ui/form-requests.js";
         });
       });
       if (resource.items.length) {
-        var confirm = U.button("bots.preview_confirm", { "class": "btn btn-primary" });
+        var confirm = T.components.render("bots/source-preview-confirm", {});
         confirm.addEventListener("click", function () {
           T.dialog.close(dialog);
           if (signature(form) !== approvedSignature || !T.forms.validate(form)) { return; }

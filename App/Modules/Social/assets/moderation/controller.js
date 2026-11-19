@@ -1,3 +1,4 @@
+// @component-owned: structure is declared in owner catalogs.
 import "../../../../../assets/ui/content-updates.js";
 import "../../../../../assets/core/dates.js";
 import "../../../../../assets/core/component-renderer.js";
@@ -10,22 +11,14 @@ import "../../../../../assets/core/dom.js";
   T.moderation = {
     modal: function (url, response, id) {
       if (!/^\/api\/moderation\/reports\/\d+$/.test(url.pathname)) { return null; }
-      var U = T.ui, e = T.dom.element, data = response.data, post = data.content, definition = T.adminDefinitions["social.moderation-reports"];
+      var U = T.ui, data = response.data, post = data.content, definition = T.adminDefinitions["social.moderation-reports"];
       if (url.searchParams.get("panel") === "report") {
         var reportId = Number(url.pathname.split("/").pop());
         var report = data.reports.find(function (entry) { return Number(entry.id) === reportId; });
         if (!report) { return null; }
         return U.dialog(id, "moderation.detail", T.components.render("moderation/report-preview", { report: report }));
       }
-      var preview = e("div", { "class": "stack" });
-      if (post) {
-        if (post.status === "hidden") { preview.appendChild(e("p", { "class": "badge" }, U.text("moderation.hidden"))); }
-        if (data.preview) {
-          preview.classList.add("status-post-modal-content");
-          preview.appendChild(T.components.render("status/card", { item: data.preview.item, anchor: false, open_modal: false, preview: true }));
-          preview.appendChild(T.components.render("status/thread", { item: data.preview.item, comments: data.preview.comments, viewer: null, context: "moderation", preview: true }));
-        }
-      } else { preview.appendChild(e("p", {}, U.text("moderation.empty_content"))); }
+      var preview = T.components.render("moderation/detail-preview", data);
       var history = T.components.render("moderation/history", data);
       var tabs = U.tabbedContent(id, [
         { name: "preview", label: "moderation.preview", icon: "eye", content: preview },

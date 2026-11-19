@@ -10,13 +10,7 @@
       "assets/ui/popovers.js",
       "assets/ui/image-placeholders.js"
     ],
-    "components": [
-      "ui/modal",
-      "ui/field",
-      "ui/select",
-      "ui/editor-actions",
-      "ui/filter-chip"
-    ],
+    "components": [],
     "styles": [
       "assets/ui/styles/tokens.css",
       "assets/ui/styles/reset.css",
@@ -98,7 +92,14 @@
       "assets/ui/ajax-bindings.js",
       "assets/ui/confirm-actions.js"
     ],
-    "components": [],
+    "components": [
+      "ui/modal",
+      "ui/field",
+      "ui/select",
+      "ui/editor-actions",
+      "ui/filter-chip",
+      "ui/account-title"
+    ],
     "translations": [
       "common.leave",
       "common.save",
@@ -368,7 +369,9 @@
     "components": [
       "publishing/comment",
       "publishing/comment-form",
-      "publishing/like"
+      "publishing/like",
+      "publishing/comment-history",
+      "publishing/comment-replies"
     ],
     "styles": [
       "assets/ui/content/styles/discussion-content.css",
@@ -407,6 +410,17 @@
       "publishing/discussion"
     ],
     "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [
+      "assets/ui/styles/information-pages.css"
+    ],
     "translations": []
   }
 ]

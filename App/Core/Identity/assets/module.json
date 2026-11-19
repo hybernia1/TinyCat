@@ -8,7 +8,17 @@
       "ui/avatar",
       "users/auth-content",
       "users/avatar-control",
-      "ui/account-status"
+      "ui/account-status",
+      "users/account-editor",
+      "users/account-form",
+      "users/email-form",
+      "users/password-form",
+      "users/avatar-editor",
+      "users/avatar-upload",
+      "users/avatar-appearance",
+      "users/avatar-remove",
+      "users/avatar-save",
+      "users/avatar-actions"
     ],
     "entries": [
       "App/Core/Identity/assets/index.js"
@@ -45,8 +55,6 @@
       "common.password_confirm",
       "common.register",
       "common.save",
-      "users.edit_user",
-      "users.new_user",
       "account.email_available",
       "account.email_checking",
       "account.email_check_failed",
@@ -103,13 +111,9 @@
       "registration_failed": "auth.registration_failed",
       "settings_invalid_language": "settings.messages.invalid_language",
       "super_admin_protected": "users.messages.super_admin_protected",
-      "user_created": "users.messages.created",
       "user_not_found": "public.author_not_found",
-      "user_password_required": "users.validation.password_required",
       "user_saved": "users.messages.saved",
       "user_super_admin_protected": "users.messages.super_admin_protected",
-      "user_username_invalid": "users.messages.username_invalid",
-      "user_username_taken": "users.messages.username_taken",
       "email_check_limited": "account.messages.email_check_limited",
       "record_activated": "common.activated",
       "record_deactivated": "common.deactivated"
@@ -120,12 +124,21 @@
       "/admin/users"
     ],
     "components": [
-      "users/admin-fields"
+      "users/admin-fields",
+      "users/admin-form"
     ],
     "entries": [],
     "styles": [],
-    "translations": [],
-    "messages": {},
+    "translations": [
+      "users.edit_user",
+      "users.new_user"
+    ],
+    "messages": {
+      "user_created": "users.messages.created",
+      "user_password_required": "users.validation.password_required",
+      "user_username_invalid": "users.messages.username_invalid",
+      "user_username_taken": "users.messages.username_taken"
+    },
     "admin": {
       "core.users": {
         "path": "/admin/users",

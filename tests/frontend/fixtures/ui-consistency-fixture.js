@@ -180,6 +180,18 @@
     const feed = document.createElement('div'); feed.className = 'status-feed'; socialFeed.append(feed); document.body.append(socialFeed);
     check(Math.abs(feed.getBoundingClientRect().width-socialFeed.getBoundingClientRect().width) < 1, 'Social owns its full-width profile feed layout');
     socialFeed.remove();
+    const informationHost = document.createElement('div');
+    informationHost.className = 'container stack stack-gap-16';
+    const privacySection = T.components.render('site/privacy-section', {siteName:'TinyCat',privacyLimitRows:[{label:'Trusted account',post:'60 / hour',comment:'200 / hour',like:'1000 / hour',report:'30 / hour',search:'3000 / hour'}]});
+    const information = T.components.render('ui/privacy-page', {siteName:'TinyCat',siteCaptchaEnabled:false,siteGoogleAnalyticsConfigured:false,sections:privacySection});
+    informationHost.append(information); document.body.append(informationHost);
+    check(information.getBoundingClientRect().width <= informationHost.getBoundingClientRect().width + 1, 'Privacy content and action limits remain within the page container');
+    const limits = information.querySelector('.table-wrap');
+    if (limits.scrollWidth > limits.clientWidth) {
+      limits.scrollLeft = 40;
+      check(limits.scrollLeft > 0, 'Wide action limits scroll inside their table instead of expanding the page');
+    }
+    informationHost.remove();
     delete document.documentElement.dataset.theme;
     document.getElementById('results').textContent = JSON.stringify({ ok: true, checks });
   } catch (error) { document.getElementById('results').textContent = JSON.stringify({ ok: false, error: String(error.stack || error), checks }); }

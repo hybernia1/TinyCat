@@ -41,6 +41,52 @@
       ]
     },
     {
+      "name": "health/page",
+      "source": "App/Core/Health/assets/components.json",
+      "dependencies": [
+        "health/scheduler-findings",
+        "ui/empty-state",
+        "ui/modal-trigger",
+        "ui/notice",
+        "ui/stat-card",
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "check.advice",
+        "check.detail",
+        "check.duration_ms",
+        "check.id",
+        "check.metrics",
+        "check.status",
+        "check.status_label",
+        "check.title",
+        "checked_label",
+        "checks",
+        "has_http",
+        "history",
+        "issues",
+        "metric",
+        "metrics",
+        "passed",
+        "run.health_status",
+        "run.http_status",
+        "run.id",
+        "run.incomplete",
+        "run.run_label",
+        "run.started_at",
+        "run.started_label",
+        "run.status_label",
+        "run.total",
+        "run.ttfb",
+        "snapshot.latest_failed",
+        "snapshot.report",
+        "snapshot.report.checked_at",
+        "snapshot.stale",
+        "snapshot.status",
+        "status_label"
+      ]
+    },
+    {
       "name": "users/admin-fields",
       "source": "App/Core/Identity/assets/components.json",
       "dependencies": [
@@ -235,6 +281,157 @@
       ]
     },
     {
+      "name": "users/account-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/field",
+        "ui/select"
+      ],
+      "inputs": [
+        "dialog_id",
+        "languages",
+        "original_locale",
+        "user.bio",
+        "user.locale",
+        "user.theme",
+        "user.username"
+      ]
+    },
+    {
+      "name": "users/email-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "dialog_id",
+        "has_password",
+        "user.bio",
+        "user.email",
+        "user.email_notifications",
+        "user.id",
+        "user.locale",
+        "user.theme"
+      ]
+    },
+    {
+      "name": "users/password-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "dialog_id",
+        "options.password_max_length"
+      ]
+    },
+    {
+      "name": "users/account-editor",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "users/avatar-control"
+      ],
+      "inputs": [
+        "account_form",
+        "email_form",
+        "has_password",
+        "password_form",
+        "user"
+      ]
+    },
+    {
+      "name": "users/avatar-upload",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "generated",
+        "user.avatar_url",
+        "user.id",
+        "user.username"
+      ]
+    },
+    {
+      "name": "users/avatar-appearance",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/select"
+      ],
+      "inputs": [
+        "appearance",
+        "parameter.choices",
+        "parameter.default",
+        "parameter.key",
+        "parameter.label",
+        "parameter.value",
+        "parameters",
+        "user.id"
+      ]
+    },
+    {
+      "name": "users/avatar-remove",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "users/avatar-save",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "form_id"
+      ]
+    },
+    {
+      "name": "users/avatar-actions",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/editor-actions"
+      ],
+      "inputs": [
+        "remove_form",
+        "save_action"
+      ]
+    },
+    {
+      "name": "users/avatar-editor",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "actions",
+        "appearance_form",
+        "generated",
+        "upload_form"
+      ]
+    },
+    {
+      "name": "users/admin-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "users/admin-fields"
+      ],
+      "inputs": [
+        "create",
+        "fields"
+      ]
+    },
+    {
+      "name": "users/menu",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "avatar",
+        "displayName",
+        "editModalId",
+        "editModalUrl",
+        "option.icon",
+        "option.label",
+        "option.value",
+        "profileNeedsEmail",
+        "profileUrl",
+        "theme"
+      ]
+    },
+    {
       "name": "installation/steps",
       "source": "App/Core/Installation/assets/components.json",
       "dependencies": [],
@@ -401,25 +598,41 @@
       ]
     },
     {
+      "name": "notifications/page",
+      "source": "App/Core/Notifications/assets/components.json",
+      "dependencies": [
+        "notifications/items",
+        "ui/load-more"
+      ],
+      "inputs": [
+        "has_unread",
+        "items",
+        "next_url"
+      ]
+    },
+    {
+      "name": "notifications/menu",
+      "source": "App/Core/Notifications/assets/components.json",
+      "dependencies": [
+        "notifications/items"
+      ],
+      "inputs": [
+        "badge",
+        "current",
+        "has_unread",
+        "items",
+        "latest_id",
+        "unread"
+      ]
+    },
+    {
       "name": "settings/sections",
       "source": "App/Core/Settings/assets/components.json",
       "dependencies": [
         "settings/field"
       ],
       "inputs": [
-        "field.attributes",
-        "field.checked",
-        "field.fields",
-        "field.help",
-        "field.kind",
-        "field.label",
-        "field.name",
-        "field.options",
-        "field.remove_name",
-        "field.root_class",
-        "field.root_tag",
-        "field.upload_name",
-        "field.value",
+        "field",
         "section.fields",
         "section.icon",
         "section.key",
@@ -436,19 +649,7 @@
       "inputs": [
         "attributes",
         "checked",
-        "field.attributes",
-        "field.checked",
-        "field.fields",
-        "field.help",
-        "field.kind",
-        "field.label",
-        "field.name",
-        "field.options",
-        "field.remove_name",
-        "field.root_class",
-        "field.root_tag",
-        "field.upload_name",
-        "field.value",
+        "field",
         "fields",
         "help",
         "kind",
@@ -464,6 +665,16 @@
         "root_tag",
         "upload_name",
         "value"
+      ]
+    },
+    {
+      "name": "settings/editor-form",
+      "source": "App/Core/Settings/assets/components.json",
+      "dependencies": [
+        "settings/sections"
+      ],
+      "inputs": [
+        "sections"
       ]
     },
     {
@@ -618,6 +829,79 @@
       "inputs": [
         "content",
         "target_id"
+      ]
+    },
+    {
+      "name": "scheduler/actions",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "scheduler/administration",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "cronToken",
+        "cronUrl",
+        "taskViews",
+        "view.cli_command",
+        "view.help_label",
+        "view.http_command",
+        "view.icon",
+        "view.query_url",
+        "view.schedule_label",
+        "view.title_label"
+      ]
+    },
+    {
+      "name": "updates/actions",
+      "source": "App/Core/Updates/assets/components.json",
+      "dependencies": [
+        "ui/modal-trigger"
+      ],
+      "inputs": [
+        "available",
+        "canInstall",
+        "has_notes",
+        "version"
+      ]
+    },
+    {
+      "name": "updates/page",
+      "source": "App/Core/Updates/assets/components.json",
+      "dependencies": [
+        "ui/empty-state",
+        "ui/notice",
+        "ui/stat-card",
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "_key",
+        "error",
+        "extension",
+        "extensions",
+        "has_release",
+        "history",
+        "maintenance",
+        "maintenance_from",
+        "maintenance_to",
+        "migration.applied_at",
+        "migration.applied_label",
+        "migration.migration",
+        "migration.version",
+        "migration_count",
+        "minimum_php",
+        "minimum_version",
+        "missing_extensions",
+        "releaseCompatible",
+        "result",
+        "result.backup",
+        "result.version",
+        "stat",
+        "stats",
+        "status_label",
+        "tone"
       ]
     },
     {
@@ -786,6 +1070,49 @@
         "excerpt",
         "title",
         "url"
+      ]
+    },
+    {
+      "name": "blog/public-list",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [
+        "ui/empty-state"
+      ],
+      "inputs": [
+        "article.author",
+        "article.excerpt",
+        "article.id",
+        "article.published_iso",
+        "article.published_label",
+        "article.title",
+        "articles",
+        "next_url",
+        "title"
+      ]
+    },
+    {
+      "name": "blog/article-page",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "article.author",
+        "article.id",
+        "article.published_iso",
+        "article.published_label",
+        "article.title",
+        "canEdit",
+        "content",
+        "discussion"
+      ]
+    },
+    {
+      "name": "blog/source-form",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [
+        "blog/source-fields"
+      ],
+      "inputs": [
+        "resource"
       ]
     },
     {
@@ -1751,11 +2078,212 @@
       ]
     },
     {
+      "name": "status/dialog-form",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "action",
+        "body",
+        "enctype",
+        "form_class",
+        "id",
+        "url"
+      ]
+    },
+    {
+      "name": "status/report-fields",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/field",
+        "ui/select"
+      ],
+      "inputs": [
+        "id",
+        "note_max_length",
+        "reasons"
+      ]
+    },
+    {
+      "name": "status/edit-fields",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "status/composer-body"
+      ],
+      "inputs": [
+        "constraints",
+        "item.author",
+        "item.editable_body",
+        "item.image",
+        "options.images_enabled",
+        "viewer"
+      ]
+    },
+    {
+      "name": "status/comment-edit-fields",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "publishing/editor"
+      ],
+      "inputs": [
+        "comment.editable_body",
+        "constraints.comment.max_length",
+        "dialog_id"
+      ]
+    },
+    {
+      "name": "status/thread-dialog",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "status/card",
+        "status/thread"
+      ],
+      "inputs": [
+        "comments",
+        "item",
+        "page_path",
+        "viewer"
+      ]
+    },
+    {
+      "name": "status/embed-content",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "preview",
+        "snippet"
+      ]
+    },
+    {
+      "name": "status/feed-empty",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "feed",
+        "login_required"
+      ]
+    },
+    {
+      "name": "moderation/detail-preview",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "status/card",
+        "status/thread"
+      ],
+      "inputs": [
+        "content",
+        "content.status",
+        "preview",
+        "preview.comments",
+        "preview.item"
+      ]
+    },
+    {
+      "name": "bots/workspace",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "tabs"
+      ]
+    },
+    {
+      "name": "bots/workspace-account",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "bots/workspace-lists",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "posts_url",
+        "runs_url",
+        "sources_url"
+      ]
+    },
+    {
+      "name": "bots/workspace-form",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "bots/account-fields"
+      ],
+      "inputs": [
+        "resource"
+      ]
+    },
+    {
+      "name": "bots/workspace-retry",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "users/following-profiles",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "users/following-profile"
+      ],
+      "inputs": [
+        "items",
+        "user"
+      ]
+    },
+    {
+      "name": "users/following-dialog",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/load-more",
+        "users/following-profiles"
+      ],
+      "inputs": [
+        "items",
+        "next_url"
+      ]
+    },
+    {
+      "name": "users/follow-label",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "following"
+      ]
+    },
+    {
+      "name": "bots/source-preview-state",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "bots/source-preview-confirm",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "site/privacy-section",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "privacyLimitRows",
+        "row.comment",
+        "row.label",
+        "row.like",
+        "row.post",
+        "row.report",
+        "row.search",
+        "siteName"
+      ]
+    },
+    {
       "name": "ui/field",
       "source": "assets/ui/components.json",
       "dependencies": [],
       "inputs": [
         "attributes",
+        "field_class",
         "help",
         "help_id",
         "label",
@@ -2082,6 +2610,7 @@
       "dependencies": [],
       "inputs": [
         "cancel_label",
+        "class",
         "destructive",
         "primary"
       ]
@@ -2216,6 +2745,7 @@
       "dependencies": [],
       "inputs": [
         "comment",
+        "labelledby",
         "max_bytes",
         "max_characters",
         "max_length",
@@ -2365,6 +2895,175 @@
       "inputs": [
         "content"
       ]
+    },
+    {
+      "name": "publishing/comment-history",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "revision.at",
+        "revision.label",
+        "revision.rows",
+        "revisions",
+        "row.change",
+        "row.kind",
+        "row.marker",
+        "row.prefix",
+        "row.suffix",
+        "row.tag"
+      ]
+    },
+    {
+      "name": "ui/account-title",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/account-status"
+      ],
+      "inputs": [
+        "status_label",
+        "user.status",
+        "user.username"
+      ]
+    },
+    {
+      "name": "publishing/comment-replies",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "id"
+      ]
+    },
+    {
+      "name": "ui/code-block",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "attributes",
+        "text"
+      ]
+    },
+    {
+      "name": "ui/public-header",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "appName",
+        "authenticated",
+        "current",
+        "currentLanguageName",
+        "hasGlobalSearch",
+        "item.active",
+        "item.href",
+        "item.icon",
+        "item.label",
+        "item.target",
+        "languageFlagId",
+        "languageFlagSprite",
+        "languageLink.active",
+        "languageLink.language",
+        "languageLink.name",
+        "languageLink.url",
+        "languageLinks",
+        "languageSuggestion",
+        "languageSuggestion.action",
+        "languageSuggestion.close",
+        "languageSuggestion.language",
+        "languageSuggestion.message",
+        "languageSuggestion.url",
+        "loginModalId",
+        "loginModalUrl",
+        "nav",
+        "notificationMenu",
+        "searchQuery",
+        "siteLogoUrl",
+        "urls.home",
+        "urls.login",
+        "urls.search",
+        "userMenu",
+        "viewerIsAdmin"
+      ]
+    },
+    {
+      "name": "ui/search-page",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "group.items",
+        "group.name",
+        "group.next_url",
+        "item.excerpt",
+        "item.title",
+        "item.url",
+        "result.collections",
+        "result.query",
+        "searchUrl"
+      ]
+    },
+    {
+      "name": "ui/consent",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "captchaEnabled",
+        "googleMeasurementId",
+        "privacyUrl",
+        "show"
+      ]
+    },
+    {
+      "name": "ui/privacy-page",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "sections",
+        "siteCaptchaEnabled",
+        "siteGoogleAnalyticsConfigured",
+        "siteName"
+      ]
+    },
+    {
+      "name": "ui/module-activation",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "disabled",
+        "enabled",
+        "id",
+        "label",
+        "revision"
+      ]
+    },
+    {
+      "name": "ui/modules-page",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/module-activation",
+        "ui/notice",
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "_key",
+        "action",
+        "group.actions",
+        "group.active_count",
+        "group.modules",
+        "group.name",
+        "group.names",
+        "item.activation",
+        "item.blocked",
+        "item.dependencies",
+        "item.id",
+        "item.name",
+        "item.package_version",
+        "item.required",
+        "item.status_label",
+        "item.tone",
+        "problem",
+        "rows",
+        "snapshot.groups",
+        "snapshot.manageable",
+        "snapshot.problems"
+      ]
     }
   ],
   "duplicate_component_names": [],
@@ -2497,7 +3196,8 @@
     "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
     "assets/ui/styles/tooltip.css",
     "assets/ui/styles/identity-rows.css",
-    "assets/ui/styles/load-more.css"
+    "assets/ui/styles/load-more.css",
+    "assets/ui/styles/information-pages.css"
   ],
   "css_classes": {
     "admin-backdrop": [
@@ -4972,6 +5672,14 @@
         "line": 1,
         "context": [],
         "selector": ".image-preview-contain img"
+      }
+    ],
+    "information-page": [
+      {
+        "source": "assets/ui/styles/information-pages.css",
+        "line": 1,
+        "context": [],
+        "selector": ".information-page"
       }
     ],
     "inline-flex": [
@@ -11308,47 +12016,47 @@
         },
         {
           "name": "dialog",
-          "line": 41
+          "line": 48
         },
         {
           "name": "editorActions",
-          "line": 46
+          "line": 53
         },
         {
           "name": "accountDialogTitle",
-          "line": 50
+          "line": 57
         },
         {
           "name": "formDialog",
-          "line": 59
+          "line": 66
         },
         {
           "name": "tabbedContent",
-          "line": 74
+          "line": 81
         },
         {
           "name": "pinDialogTabs",
-          "line": 94
+          "line": 101
         },
         {
           "name": "sectionedDialog",
-          "line": 114
+          "line": 121
         },
         {
           "name": "adminDialog",
-          "line": 141
+          "line": 148
         },
         {
           "name": "editorFrame",
-          "line": 146
+          "line": 153
         },
         {
           "name": "pagination",
-          "line": 152
+          "line": 159
         },
         {
           "name": "captcha",
-          "line": 154
+          "line": 161
         }
       ]
     },
@@ -11574,47 +12282,32 @@
     }
   ],
   "php_partials": [
-    "App/Core/Identity/templates/parts/user-menu.php",
-    "App/Core/Notifications/templates/parts/menu.php",
-    "App/Core/Notifications/templates/parts/page.php",
-    "App/Core/Ui/templates/parts/consent.php",
     "App/Core/Ui/templates/parts/flashes.php",
-    "App/Core/Ui/templates/parts/public-header.php",
     "App/Modules/Social/templates/parts/site/sidebar-slot.php"
   ],
   "php_templates": [
-    "App/Core/Health/templates/page.php",
-    "App/Core/Identity/templates/parts/user-menu.php",
-    "App/Core/Notifications/templates/page.php",
-    "App/Core/Notifications/templates/parts/menu.php",
-    "App/Core/Notifications/templates/parts/page.php",
-    "App/Core/Tasks/templates/actions.php",
-    "App/Core/Tasks/templates/administration.php",
     "App/Core/Ui/Admin/templates/shell.php",
     "App/Core/Ui/templates/document.php",
     "App/Core/Ui/templates/errorFallback.php",
     "App/Core/Ui/templates/head.php",
-    "App/Core/Ui/templates/modules.php",
     "App/Core/Ui/templates/notFound.php",
-    "App/Core/Ui/templates/parts/consent.php",
     "App/Core/Ui/templates/parts/flashes.php",
-    "App/Core/Ui/templates/parts/public-header.php",
-    "App/Core/Ui/templates/privacy.php",
     "App/Core/Ui/templates/public-shell.php",
-    "App/Core/Ui/templates/search.php",
-    "App/Core/Updates/templates/actions.php",
-    "App/Core/Updates/templates/administration.php",
-    "App/Modules/Blog/templates/article.php",
-    "App/Modules/Blog/templates/listing.php",
     "App/Modules/Social/templates/parts/site/sidebar-slot.php",
-    "App/Modules/Social/templates/site/privacy-section.php",
     "App/Modules/Social/templates/site/public.php",
     "App/Modules/Social/templates/status/embed.php"
   ],
   "php_renderers": [
     {
+      "source": "App/Core/Health/Views.php",
+      "methods": [
+        "page"
+      ]
+    },
+    {
       "source": "App/Core/Identity/Views.php",
       "methods": [
+        "userMenu",
         "adminFormFields",
         "avatar"
       ]
@@ -11622,6 +12315,7 @@
     {
       "source": "App/Core/Notifications/Views.php",
       "methods": [
+        "menu",
         "items"
       ]
     },
@@ -11643,6 +12337,12 @@
         "admin_list_url",
         "admin_per_page_view_data",
         "admin_pagination_view_data"
+      ]
+    },
+    {
+      "source": "App/Core/Updates/Views.php",
+      "methods": [
+        "model"
       ]
     },
     {
@@ -12524,6 +13224,14 @@
         "manifest": "assets/ui/module.json",
         "routes": [
           "*"
+        ]
+      }
+    ],
+    "assets/ui/styles/information-pages.css": [
+      {
+        "manifest": "assets/ui/module.json",
+        "routes": [
+          "public"
         ]
       }
     ],

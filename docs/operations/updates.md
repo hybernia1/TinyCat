@@ -75,6 +75,28 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.1.4
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This release consolidates
+product pages and editor bodies in owner component catalogs, standardizes JSON
+authoring and removes redundant PHP templates. Document, layout, error and embed
+templates remain explicit technical boundaries. Client lifecycle cleanup preserves
+drafts and cancels obsolete reads. No database migration or activation change is
+introduced. Data, configuration, uploads and installed module ownership are retained.
+
+Build the retained-owner update and production fresh installation separately:
+
+```sh
+php tools/release/build-update.php --version=6.1.4 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-4/update
+php tools/release/build-update.php --version=6.1.4 --assembly=platform --fresh-install --output=.work/releases/release-6-1-4/install
+```
+
+Verify the exact update against published 6.0.10, 6.0.11 and 6.1.3 platform sources
+with `--platform-baseline --direct-web --cached-autoload`, including retained Blog
+ownership, data preservation and exact rollback. Verify the production package
+with a fresh isolated MySQL installation. On 6.0.10, prepare and verify the private
+rescue launcher as documented below before updating.
+
 ## Upgrading to 6.1.3
 
 Requires completed **6.0.10 or newer** and PHP 8.4. No database migration or

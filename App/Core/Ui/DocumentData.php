@@ -4,6 +4,26 @@ namespace TinyCat\Core\Ui;
 
 final class DocumentData
 {
+    /** @param array<mixed> $data */
+    public static function publicHeader(array $data): string
+    {
+        $authenticated = ($data['authUser'] ?? null) !== null;
+        $data['authenticated'] = $authenticated;
+        $data['urls'] = [
+            'home' => $data['pageUrls']['/'] ?? '/',
+            'search' => $data['pageUrls']['/search/all'] ?? '/search/all',
+            'login' => $data['pageUrls']['/login'] ?? '/login',
+        ];
+        $data['userMenu'] = new \TinyCat\Support\Markup((string) ($data['userMenu'] ?? ''));
+        $data['notificationMenu'] = new \TinyCat\Support\Markup($authenticated
+            ? \TinyCat\Core\Notifications\Views::menu([
+                'current' => $data['current'] ?? '',
+                'state' => $data['notificationState'] ?? [],
+                'notifications' => $data['notificationItems'] ?? [],
+            ]) : '');
+        return \TinyCat\Support\Components::render('ui/public-header', $data);
+    }
+
     /** @param array<mixed> $data
      * @return array<mixed>
      */
@@ -99,11 +119,8 @@ final class DocumentData
         $adminIdentity = $adminIdentity !== '' ? '@' . $adminIdentity : $appName;
         $profileUrl = $authUser !== null ? (\TinyCat\Core\Identity\Integration::profileUrl((int) $authUser['id']) ?? '') : '';
         $profileNeedsEmail = $authUser !== null && trim((string) ($authUser['email'] ?? '')) === '';
-        $userMenu = $authUser !== null ? \TinyCat\Support\View::part('Identity/user-menu', [
+        $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([
             'authUser' => $authUser, 'profileUrl' => $profileUrl, 'profileNeedsEmail' => $profileNeedsEmail, 'theme' => $theme,
-            'displayName' => trim((string) ($authUser['username'] ?? '')),
-            'editModalId' => 'account-editor-modal-' . (int) $authUser['id'],
-            'editModalUrl' => '/api/users/' . (int) $authUser['id'] . '/management?panel=account' . ($profileNeedsEmail ? '&focus=email' : ''),
         ]) : '';
         $viewerIsAdmin = \TinyCat\Core\Identity\Roles::isAdmin($authUser);
         $loginModalId = \TinyCat\Core\Identity\Login::auth_modal_id();
@@ -115,8 +132,12 @@ final class DocumentData
             $notificationState = \TinyCat\Core\Notifications\Inbox::state($notificationUserId);
             $notificationItems = \TinyCat\Core\Notifications\Inbox::items($notificationUserId, \TinyCat\Core\Notifications\Inbox::PREVIEW_LIMIT);
         }
-        $publicHeader = \TinyCat\Support\View::part('Ui/public-header', compact('pageUrls', 'appName', 'authUser', 'current', 'loginModalId', 'loginModalUrl', 'nav', 'notificationItems', 'notificationState', 'searchQuery', 'siteLogoUrl', 'viewerIsAdmin', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageLinks', 'languageSuggestion', 'userMenu', 'hasGlobalSearch'));
-        $consent = \TinyCat\Support\View::part('Ui/consent', compact('pageUrls', 'analyticsConfigured', 'analyticsConsent', 'googleMeasurementId', 'cookieConsentTextKey'));
+        $publicHeader = self::publicHeader(compact('pageUrls', 'appName', 'authUser', 'current', 'loginModalId', 'loginModalUrl', 'nav', 'notificationItems', 'notificationState', 'searchQuery', 'siteLogoUrl', 'viewerIsAdmin', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageLinks', 'languageSuggestion', 'userMenu', 'hasGlobalSearch'));
+        $consent = \TinyCat\Support\Components::render('ui/consent', [
+            'show' => $analyticsConfigured && !in_array($analyticsConsent, ['granted', 'denied'], true),
+            'googleMeasurementId' => $googleMeasurementId, 'privacyUrl' => $pageUrls['/privacy'],
+            'captchaEnabled' => $cookieConsentTextKey === 'privacy.cookie_consent_text_captcha',
+        ]);
         return compact('publicHeader', 'consent', 'hasGlobalSearch', 'titleIcon', 'userMenu', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'interfaceRoutes', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'title', 'viewerIsAdmin');
     }
 }

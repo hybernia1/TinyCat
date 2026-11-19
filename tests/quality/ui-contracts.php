@@ -20,12 +20,38 @@ foreach (["<?php View::part('Support/modal', []);", "<?php View::render('parts/m
     throw new RuntimeException('Modal policy accepted an eagerly rendered dialog.');
 }
 $validateModals(['App/Example/filter.php' => '<details><form data-filter-content></form></details>']);
+foreach (["document.createElement('div');", "T.dom.element('label', {});", "U.field('label', 'name');"] as $markup) {
+    try { $validateModals(['App/Example/controller.js' => '// @component-owned' . "\n" . $markup]); }
+    catch (RuntimeException $error) { if (str_contains($error->getMessage(), 'component-owned controller')) { continue; } throw $error; }
+    throw new RuntimeException('Component-owned controller accepted product DOM construction.');
+}
+$validateModals(['App/Example/controller.js' => "// @component-owned\ndocument.createElement('iframe');"]);
+$validateModals(['App/Example/controller.js' => "// @component-owned\ndocument.createElement( 'iframe' );"]);
 foreach (["T.components.render('ui/modal', {});", '{"component":"ui/modal"}', 'node.className="modal";', 'element.role="dialog";'] as $source) {
     try { $validateModals(['assets/modules/example/index.js' => $source]); }
     catch (RuntimeException) { continue; }
     throw new RuntimeException('Modal policy accepted a module-owned frame.');
 }
 $checks = 1;
+require_once __DIR__ . '/../../tools/quality/component-format.php';
+$formatSource = '{"ui/example":{"tag":"div","attrs":{},"children":[" ",{"t":"common.save","values":{}}]}}';
+$formatted = \TinyCat\Tools\Quality\ComponentFormat::format($formatSource);
+if ($formatted !== \TinyCat\Tools\Quality\ComponentFormat::format($formatted)
+    || $formatted !== \TinyCat\Tools\Quality\ComponentFormat::format(str_replace("\n", "\r\n", $formatted))
+    || json_decode($formatted, true, 512, JSON_THROW_ON_ERROR) !== ['ui/example' => ['tag' => 'div', 'children' => [' ', ['t' => 'common.save']]]]) {
+    throw new RuntimeException('Component formatting must be idempotent and retain text whitespace.');
+}
+$bindingSource = '{"ui/example":{"component":"ui/field","data":{"attrs":{},"children":[],"values":{},"tag":"literal"}}}';
+if (json_decode(\TinyCat\Tools\Quality\ComponentFormat::format($bindingSource), false, 512, JSON_THROW_ON_ERROR)
+    != json_decode($bindingSource, false, 512, JSON_THROW_ON_ERROR)) { throw new RuntimeException('Formatting must preserve ordinary data maps and empty object/list types.'); }
+try { \TinyCat\Tools\Quality\ComponentFormat::format('{"ui/example":{"tag":"div","attrs":{"class":"a","class":"b"}}}'); throw new LogicException('Formatter accepted duplicate keys.'); }
+catch (RuntimeException $error) { if (!str_contains($error->getMessage(), 'duplicate JSON key')) { throw $error; } }
+$pathPattern = $schema['definitions']['context']['then']['properties']['get']['pattern'];
+if (preg_match('~' . $pathPattern . '~D', 'field.attributes') !== 1 || preg_match('~' . $pathPattern . '~D', 'field..attributes') !== 0) { throw new RuntimeException('Editor schema must accept only dotted context paths.'); }
+$formatOutput = []; $formatExit = 0;
+exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../../tools/quality/component-format.php') . ' --check 2>&1', $formatOutput, $formatExit);
+if ($formatExit !== 0) { throw new RuntimeException(implode("\n", $formatOutput)); }
+$checks += 5;
 $temporary = tempnam(sys_get_temp_dir(), 'tinycat-ui-');
 $second = tempnam(sys_get_temp_dir(), 'tinycat-ui-');
 try {
@@ -60,6 +86,7 @@ try {
     $reject('{"ui/example":{"tag":"div","children":{"csrf":false}}}', '$.children.csrf');
     $reject('{"ui/example":{"tag":"div","attrs":{"class":{"lookup":{"get":"tone"},"catalog":"ui.tones"}}}}', 'catalog and field');
     $reject('{"ui/example":{"tag":"div","children":{"gett":"item.title"}}}', 'unknown node instruction');
+    $reject('{"ui/example":{"component":"ui/example","data":{"get":"field..attributes"}}}', '$.data.get');
     // Ordinary repeated property names in separate objects remain valid.
     file_put_contents($temporary, json_encode(['ui/one' => ['tag' => 'div', 'attrs' => ['title' => 'escaped "key": { value }']], 'ui/two' => ['tag' => 'span', 'attrs' => ['title' => 'different object']]], JSON_THROW_ON_ERROR));
     if ($validate([$temporary])['components'] !== 2) { throw new RuntimeException('Valid catalog was rejected.'); }

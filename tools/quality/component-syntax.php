@@ -7,8 +7,8 @@ namespace TinyCat\Tools\Quality;
 final class ComponentSyntax
 {
     private const array NODES = [
-        'tag' => ['tag', 'attrs', 'children', 'when'],
-        'each' => ['each', 'as', 'children', 'when'],
+        'tag' => ['tag', 'attrs', 'when', 'children'],
+        'each' => ['each', 'as', 'when', 'children'],
         'component' => ['component', 'data', 'when'],
         'icon' => ['icon', 'class', 'when'],
         'csrf' => ['csrf', 'when'], 'rich' => ['rich', 'when'], 'slot' => ['slot', 'when'], 'extensions' => ['extensions'],
@@ -28,6 +28,23 @@ final class ComponentSyntax
     public static function validate(mixed $definition, string $source): void
     {
         self::node($definition, $source, '$');
+    }
+
+    /** @return array<string, list<string>> */
+    public static function properties(bool $nodes): array { return $nodes ? self::NODES : self::EXPRESSIONS; }
+
+    public static function uniqueKeys(string $source, string $file): void
+    {
+        preg_match_all('~"(?:[^"\\\\]|\\\\.)*"|[{}\[\]:,]~s', $source, $matches);
+        $tokens = $matches[0]; $stack = [];
+        foreach ($tokens as $index => $token) {
+            if ($token === '{' || $token === '[') { $stack[] = []; continue; }
+            if ($token === '}' || $token === ']') { array_pop($stack); continue; }
+            if (!str_starts_with($token, '"') || ($tokens[$index + 1] ?? '') !== ':') { continue; }
+            $key = json_decode($token, true, 512, JSON_THROW_ON_ERROR); $depth = count($stack) - 1;
+            if (isset($stack[$depth][$key])) { throw new \RuntimeException($file . ': duplicate JSON key ' . $key); }
+            $stack[$depth][$key] = true;
+        }
     }
 
     private static function fail(string $source, string $path, string $message): never
@@ -86,7 +103,7 @@ final class ComponentSyntax
             }
             self::expression($node['attrs'], $source, $path . '.attrs');
         }
-        if (isset($node['data'])) { self::bindings($node['data'], $source, $path . '.data'); }
+        if (isset($node['data'])) { self::context($node['data'], $source, $path . '.data'); }
         if (array_key_exists('children', $node)) { self::node($node['children'], $source, $path . '.children'); }
     }
 
@@ -97,6 +114,12 @@ final class ComponentSyntax
             if (!$caseMap && in_array($key, ['__proto__', 'constructor', 'prototype'], true)) { self::fail($source, $path . '.' . $key, 'unsupported binding key'); }
             self::expression($expression, $source, $path . '.' . $key);
         }
+    }
+
+    private static function context(mixed $value, string $source, string $path): void
+    {
+        if (is_array($value) && count($value) === 1 && is_string($value['get'] ?? null)) { self::expression($value, $source, $path); }
+        else { self::bindings($value, $source, $path); }
     }
 
     private static function expression(mixed $value, string $source, string $path): void
@@ -120,7 +143,8 @@ final class ComponentSyntax
         }
         if ($operation === 'plural' && !array_key_exists('count', $value)) { self::fail($source, $path . '.count', 'required for plural'); }
         if ($operation === 'admin_ref' && !isset($value['field'])) { self::fail($source, $path . '.field', 'required for admin_ref'); }
-        foreach (['values', 'data', 'cases'] as $key) { if (isset($value[$key])) { self::bindings($value[$key], $source, $path . '.' . $key, $key === 'cases'); } }
+        foreach (['values', 'cases'] as $key) { if (isset($value[$key])) { self::bindings($value[$key], $source, $path . '.' . $key, $key === 'cases'); } }
+        if (isset($value['data'])) { self::context($value['data'], $source, $path . '.data'); }
         foreach (['count', 'default'] as $key) { if ($key !== $operation && array_key_exists($key, $value)) { self::expression($value[$key], $source, $path . '.' . $key); } }
         foreach (['where', 'format', 'catalog', 'field'] as $key) { if (isset($value[$key])) { self::text($value[$key], $source, $path . '.' . $key); } }
         if (isset($value['all']) && !is_bool($value['all'])) { self::fail($source, $path . '.all', 'expected a boolean'); }
@@ -134,11 +158,13 @@ final class ComponentSyntax
         $expression = ['$ref' => '#/definitions/expression']; $node = ['$ref' => '#/definitions/node'];
         $text = ['type' => 'string', 'minLength' => 1];
         $bindings = ['type' => 'object', 'additionalProperties' => $expression, 'propertyNames' => ['not' => ['enum' => ['__proto__', 'constructor', 'prototype']]]];
+        $context = ['$ref' => '#/definitions/context'];
         $operators = [];
         foreach (self::EXPRESSIONS as $operation => $keys) {
             $properties = array_fill_keys($keys, $expression);
             foreach (array_intersect($keys, ['admin_ref', 'get', 't', 'plural', 'use', 'where', 'format', 'catalog', 'field']) as $key) { $properties[$key] = $text; }
             foreach (array_intersect($keys, ['values', 'data', 'cases']) as $key) { $properties[$key] = $key === 'cases' ? ['type' => 'object', 'additionalProperties' => $expression] : $bindings; }
+            if (in_array('data', $keys, true)) { $properties['data'] = $context; }
             if (in_array($operation, ['if', 'eq', 'concat', 'and', 'or'], true)) { $properties[$operation] = ['type' => 'array', 'items' => $expression]; }
             if ($operation === 'get') { $properties['get']['pattern'] = '^[A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)*$'; }
             if ($operation === 'if') { $properties['if'] += ['minItems' => 2, 'maxItems' => 3]; }
@@ -153,7 +179,7 @@ final class ComponentSyntax
         $nodeForms = [];
         foreach (self::NODES as $instruction => $keys) {
             $properties = array_fill_keys($keys, $expression);
-            if ($instruction === 'component') { $properties['component'] = $text; $properties['data'] = $bindings; }
+            if ($instruction === 'component') { $properties['component'] = $text; $properties['data'] = $context; }
             if ($instruction === 'csrf') { $properties['csrf'] = ['const' => true]; }
             if ($instruction === 'extensions') { $properties['extensions'] = $text; }
             if ($instruction === 'icon') { $properties['class'] = ['type' => 'string']; }
@@ -171,6 +197,8 @@ final class ComponentSyntax
             'description' => 'Component definitions shared by PHP and the browser. Generated by tools/quality/component-schema.php.',
             'type' => 'object', 'patternProperties' => ['^[a-z][a-z0-9-]*/[a-z][a-z0-9-]*$' => $node], 'additionalProperties' => false,
             'definitions' => [
+                'context' => ['type' => 'object', 'if' => ['required' => ['get'], 'properties' => ['get' => ['type' => 'string']], 'maxProperties' => 1],
+                    'then' => ['properties' => ['get' => ['type' => 'string', 'pattern' => '^[A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)*$']], 'additionalProperties' => false], 'else' => $bindings],
                 'expression' => ['anyOf' => [$scalar, ['type' => 'array', 'items' => $expression],
                     ['type' => 'object', 'if' => ['anyOf' => array_map(static fn (string $key): array => ['required' => [$key]], array_keys(self::EXPRESSIONS))], 'then' => ['anyOf' => $operators], 'else' => $bindings]]],
                 'node' => ['anyOf' => [$scalar, ['type' => 'array', 'items' => $node], ...$nodeForms]],

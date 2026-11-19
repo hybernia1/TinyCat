@@ -4,7 +4,10 @@
       "public"
     ],
     "components": [
-      "users/following-profile"
+      "users/following-profile",
+      "users/following-profiles",
+      "users/following-dialog",
+      "users/follow-label"
     ],
     "styles": [
       "App/Modules/Social/assets/users/styles/profile-navigation.css",
@@ -35,7 +38,14 @@
       "status/thread",
       "status/composer-body",
       "publishing/editor",
-      "status/feed-more"
+      "status/feed-more",
+      "status/dialog-form",
+      "status/report-fields",
+      "status/edit-fields",
+      "status/comment-edit-fields",
+      "status/thread-dialog",
+      "status/embed-content",
+      "status/feed-empty"
     ],
     "entries": [
       "App/Modules/Social/assets/status/index.js"
@@ -314,7 +324,14 @@
       "bots/post-filter-form",
       "bots/stat",
       "bots/runs-list",
-      "bots/run-filter-form"
+      "bots/run-filter-form",
+      "bots/workspace",
+      "bots/workspace-account",
+      "bots/workspace-lists",
+      "bots/workspace-form",
+      "bots/workspace-retry",
+      "bots/source-preview-state",
+      "bots/source-preview-confirm"
     ],
     "entries": [
       "App/Modules/Social/assets/bots/index.js"
@@ -422,7 +439,8 @@
     "components": [
       "ui/api-action",
       "moderation/history",
-      "moderation/report-preview"
+      "moderation/report-preview",
+      "moderation/detail-preview"
     ],
     "entries": [
       "App/Modules/Social/assets/moderation/index.js"

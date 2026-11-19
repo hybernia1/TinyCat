@@ -17,7 +17,6 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
         "migrations": "migrations",
         "assets": "assets/module.json",
         "components": "assets/components.json",
@@ -129,7 +128,6 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
         "assets": "assets/module.json",
         "components": "assets/components.json",
         "migrations": "migrations"
@@ -153,7 +151,6 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
         "assets": "assets/module.json",
         "components": "assets/components.json",
         "entrypoints": "entrypoints",
@@ -179,7 +176,6 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
         "assets": "assets/module.json",
         "components": "assets/components.json",
         "componentExtensions": "assets/component-extensions.json"
@@ -200,8 +196,8 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
-        "assets": "assets/module.json"
+        "assets": "assets/module.json",
+        "components": "assets/components.json"
       }
     }
   }

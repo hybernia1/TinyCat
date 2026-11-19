@@ -10,6 +10,44 @@
     },
     "additionalProperties": false,
     "definitions": {
+        "context": {
+            "type": "object",
+            "if": {
+                "required": [
+                    "get"
+                ],
+                "properties": {
+                    "get": {
+                        "type": "string"
+                    }
+                },
+                "maxProperties": 1
+            },
+            "then": {
+                "properties": {
+                    "get": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)*$"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "else": {
+                "type": "object",
+                "additionalProperties": {
+                    "$ref": "#/definitions/expression"
+                },
+                "propertyNames": {
+                    "not": {
+                        "enum": [
+                            "__proto__",
+                            "constructor",
+                            "prototype"
+                        ]
+                    }
+                }
+            }
+        },
         "expression": {
             "anyOf": [
                 {
@@ -262,19 +300,7 @@
                                         "minLength": 1
                                     },
                                     "data": {
-                                        "type": "object",
-                                        "additionalProperties": {
-                                            "$ref": "#/definitions/expression"
-                                        },
-                                        "propertyNames": {
-                                            "not": {
-                                                "enum": [
-                                                    "__proto__",
-                                                    "constructor",
-                                                    "prototype"
-                                                ]
-                                            }
-                                        }
+                                        "$ref": "#/definitions/context"
                                     }
                                 },
                                 "additionalProperties": false
@@ -554,11 +580,11 @@
                                 }
                             ]
                         },
-                        "children": {
-                            "$ref": "#/definitions/node"
-                        },
                         "when": {
                             "$ref": "#/definitions/expression"
+                        },
+                        "children": {
+                            "$ref": "#/definitions/node"
                         }
                     },
                     "additionalProperties": false
@@ -577,11 +603,11 @@
                             "type": "string",
                             "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
                         },
-                        "children": {
-                            "$ref": "#/definitions/node"
-                        },
                         "when": {
                             "$ref": "#/definitions/expression"
+                        },
+                        "children": {
+                            "$ref": "#/definitions/node"
                         }
                     },
                     "additionalProperties": false
@@ -597,19 +623,7 @@
                             "minLength": 1
                         },
                         "data": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "$ref": "#/definitions/expression"
-                            },
-                            "propertyNames": {
-                                "not": {
-                                    "enum": [
-                                        "__proto__",
-                                        "constructor",
-                                        "prototype"
-                                    ]
-                                }
-                            }
+                            "$ref": "#/definitions/context"
                         },
                         "when": {
                             "$ref": "#/definitions/expression"
@@ -854,19 +868,7 @@
                             "minLength": 1
                         },
                         "data": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "$ref": "#/definitions/expression"
-                            },
-                            "propertyNames": {
-                                "not": {
-                                    "enum": [
-                                        "__proto__",
-                                        "constructor",
-                                        "prototype"
-                                    ]
-                                }
-                            }
+                            "$ref": "#/definitions/context"
                         },
                         "when": {
                             "$ref": "#/definitions/expression"

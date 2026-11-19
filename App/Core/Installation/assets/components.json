@@ -13,21 +13,23 @@
             {
               "tag": "span",
               "attrs": {
-                "class": {"if": [{"or": [{"get": "step.active"}, {"get": "step.complete"}]}, "badge badge-primary", "badge"]}
+                "class": {
+                  "if": [{"or": [{"get": "step.active"}, {"get": "step.complete"}]}, "badge badge-primary", "badge"]
+                }
               },
               "children": [{"icon": "check", "when": {"get": "step.complete"}}, {"get": "step.number"}]
             },
             {
               "tag": "strong",
               "attrs": {"class": "text-primary"},
-              "children": [{"get": "step.label"}],
-              "when": {"get": "step.active"}
+              "when": {"get": "step.active"},
+              "children": [{"get": "step.label"}]
             },
             {
               "tag": "span",
               "attrs": {"class": {"if": [{"get": "step.complete"}, null, "text-muted"]}},
-              "children": [{"get": "step.label"}],
-              "when": {"not": {"get": "step.active"}}
+              "when": {"not": {"get": "step.active"}},
+              "children": [{"get": "step.label"}]
             }
           ]
         }
@@ -156,7 +158,12 @@
                     "component": "ui/field",
                     "data": {
                       "label": {"t": "install.db_host"},
-                      "attributes": {"class": "input", "name": "host", "value": {"get": "database.host"}, "required": true},
+                      "attributes": {
+                        "class": "input",
+                        "name": "host",
+                        "value": {"get": "database.host"},
+                        "required": true
+                      },
                       "help": null
                     }
                   },
@@ -179,7 +186,12 @@
                     "component": "ui/field",
                     "data": {
                       "label": {"t": "install.db_name"},
-                      "attributes": {"class": "input", "name": "name", "value": {"get": "database.name"}, "required": true},
+                      "attributes": {
+                        "class": "input",
+                        "name": "name",
+                        "value": {"get": "database.name"},
+                        "required": true
+                      },
                       "help": null
                     }
                   },
@@ -187,7 +199,12 @@
                     "component": "ui/field",
                     "data": {
                       "label": {"t": "install.db_user"},
-                      "attributes": {"class": "input", "name": "user", "value": {"get": "database.user"}, "required": true},
+                      "attributes": {
+                        "class": "input",
+                        "name": "user",
+                        "value": {"get": "database.user"},
+                        "required": true
+                      },
                       "help": null
                     }
                   },
@@ -203,7 +220,12 @@
                     "component": "ui/field",
                     "data": {
                       "label": {"t": "install.db_charset"},
-                      "attributes": {"class": "input", "name": "charset", "value": {"get": "database.charset"}, "required": true},
+                      "attributes": {
+                        "class": "input",
+                        "name": "charset",
+                        "value": {"get": "database.charset"},
+                        "required": true
+                      },
                       "help": null
                     }
                   }
@@ -254,8 +276,8 @@
           {
             "tag": "div",
             "attrs": {"class": "alert alert-danger"},
-            "children": [{"t": "install.messages.db_failed", "values": {"message": {"get": "table_error"}}}],
-            "when": {"get": "table_error"}
+            "when": {"get": "table_error"},
+            "children": [{"t": "install.messages.db_failed", "values": {"message": {"get": "table_error"}}}]
           },
           {
             "tag": "div",
@@ -495,7 +517,11 @@
                   " ",
                   {
                     "tag": "span",
-                    "children": [{"t": "common.tables"}, ": ", {"tag": "strong", "children": [{"get": "required_tables"}]}]
+                    "children": [
+                      {"t": "common.tables"},
+                      ": ",
+                      {"tag": "strong", "children": [{"get": "required_tables"}]}
+                    ]
                   }
                 ]
               },
@@ -569,14 +595,14 @@
             {
               "tag": "div",
               "attrs": {"class": "alert alert-danger"},
-              "children": [{"get": "error"}],
-              "when": {"get": "error"}
+              "when": {"get": "error"},
+              "children": [{"get": "error"}]
             },
             {
               "tag": "div",
               "attrs": {"class": "alert alert-success"},
-              "children": [{"get": "success"}],
-              "when": {"get": "success"}
+              "when": {"get": "success"},
+              "children": [{"get": "success"}]
             },
             {
               "component": "installation/language",

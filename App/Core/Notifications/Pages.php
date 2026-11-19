@@ -6,7 +6,7 @@ use TinyCat\Core\Notifications\Inbox;
 use TinyCat\Http\Request;
 use TinyCat\Core\Ui\Page as Layout;
 use TinyCat\Support\Localization;
-use TinyCat\Support\View;
+use TinyCat\Support\Components;
 use TinyCat\Core\Identity\Access;
 
 /** HTTP page actions and prepared presentation composition. */
@@ -19,7 +19,7 @@ final class Pages
 
         $batch = Inbox::page($userId);
         $unread = Inbox::unreadCount($userId);
-        $viewItems = (array) $batch['items'];
+        $items = array_map(Resource::item(...), (array) $batch['items']);
 
         Layout::render([
             'title' => Localization::t('notifications.title'),
@@ -29,6 +29,6 @@ final class Pages
                 'url' => '/notifications',
                 'robots' => 'noindex,nofollow',
             ],
-        ], View::render('page', compact('batch', 'unread', 'viewItems'), __DIR__ . '/templates'));
+        ], Components::render('notifications/page', ['items' => $items, 'has_unread' => $unread > 0, 'next_url' => (string) $batch['next_url']]));
     }
 }

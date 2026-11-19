@@ -25,7 +25,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), vm = requ
     ui: { text: key => key, button: (key, attrs) => new Element("button", attrs, key), editorActions() { const actions = new Element("div"); actions.appendChild(new Element("button")); return actions; }, dialog(id, title, content, persistent, footer) { const dialog = new Element("modal"); dialog.appendChild(content); if (footer) dialog.appendChild(footer); document.body.appendChild(dialog); dialogs.push(dialog); return dialog; } },
     dialog: { open() {}, close(dialog) { dialog.fire("tinycat:modal-close"); dialog.parent = null; } },
     forms: { setSubmitGuard(form, guard) { form.submitGuard=guard; }, validate: form => form.reportValidity(), request(form, url, options) { return new Promise((resolve, reject) => requests.push({ form, url, options, resolve, reject })); }, cancel() { cancelled++; }, markClean() {} },
-    components: { render(name, resource) { const result = new Element("div"); result.resource = resource; return result; } },
+    components: { render(name, resource) { const result = new Element(name === "bots/source-preview-confirm" ? "button" : "div", {}, name === "bots/source-preview-confirm" ? "bots.preview_confirm" : ""); result.resource = resource; return result; } },
     toasts: { show() {} }, bots: { result() {} } };
   class FormData {
     constructor(form) { this.form = form; }

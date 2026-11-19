@@ -1,7 +1,16 @@
 [
   {
-    "routes": ["/admin/updates"],
-    "entries": ["App/Core/Updates/assets/index.js"],
-    "translations": ["updates.changelog"]
+    "routes": [
+      "/admin/updates"
+    ],
+    "entries": [
+      "App/Core/Updates/assets/index.js"
+    ],
+    "translations": [
+      "updates.changelog"
+    ],
+    "components": [
+      "ui/code-block"
+    ]
   }
 ]

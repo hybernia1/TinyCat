@@ -1,3 +1,4 @@
+// @component-owned: structure is declared in owner catalogs.
 import "../../../../assets/ui/image-uploads.js";
 import "../../../../assets/ui/component-builders.js";
 import "../../../../assets/core/modules.js";
@@ -63,9 +64,7 @@ import "../../../../assets/core/modules.js";
           return prepareField(spec, (presentation.fields || {})[spec.key], null, presentation.examples);
         }) };
       });
-      var form = U.form("/api/settings", "PATCH");
-      form.setAttribute("enctype", "multipart/form-data");
-      form.append(T.components.render("settings/sections", { sections: sections }), U.button("common.save", { type: "submit", "class": "btn btn-primary" }));
+      var form = U.form("/api/settings", "PATCH", T.components.render("settings/editor-form", { sections: sections }));
       return U.sectionedDialog(id, "settings.title", form, false);
     },
     result: function (source, response) {

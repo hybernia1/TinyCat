@@ -18,24 +18,7 @@
             {
               "each": {"get": "section.fields"},
               "as": "field",
-              "children": {
-                "component": "settings/field",
-                "data": {
-                  "root_tag": {"get": "field.root_tag"},
-                  "root_class": {"get": "field.root_class"},
-                  "kind": {"get": "field.kind"},
-                  "label": {"get": "field.label"},
-                  "help": {"get": "field.help"},
-                  "name": {"get": "field.name"},
-                  "value": {"get": "field.value"},
-                  "checked": {"get": "field.checked"},
-                  "attributes": {"get": "field.attributes"},
-                  "options": {"get": "field.options"},
-                  "fields": {"get": "field.fields"},
-                  "upload_name": {"get": "field.upload_name"},
-                  "remove_name": {"get": "field.remove_name"}
-                }
-              }
+              "children": {"component": "settings/field", "data": {"get": "field"}}
             }
           ]
         }
@@ -51,12 +34,13 @@
       {
         "tag": "textarea",
         "attrs": {"get": "attributes"},
-        "children": [{"get": "value"}],
-        "when": {"eq": [{"get": "kind"}, "textarea"]}
+        "when": {"eq": [{"get": "kind"}, "textarea"]},
+        "children": [{"get": "value"}]
       },
       {
         "tag": "select",
         "attrs": {"get": "attributes"},
+        "when": {"eq": [{"get": "kind"}, "select"]},
         "children": [
           {
             "each": {"get": "options"},
@@ -67,8 +51,7 @@
               "children": [{"get": "option.label"}]
             }
           }
-        ],
-        "when": {"eq": [{"get": "kind"}, "select"]}
+        ]
       },
       {
         "tag": "input",
@@ -78,43 +61,26 @@
       {
         "tag": "span",
         "attrs": {"class": "check-line"},
+        "when": {"eq": [{"get": "kind"}, "bool"]},
         "children": [
           {
             "tag": "input",
             "attrs": {"type": "checkbox", "name": {"get": "name"}, "value": "1", "checked": {"get": "checked"}}
           },
           {"tag": "span", "children": [{"t": "settings.enabled"}]}
-        ],
-        "when": {"eq": [{"get": "kind"}, "bool"]}
+        ]
       },
       {
         "tag": "div",
         "attrs": {"class": "grid sm:grid-2"},
+        "when": {"eq": [{"get": "kind"}, "group"]},
         "children": [
           {
             "each": {"get": "fields"},
             "as": "field",
-            "children": {
-              "component": "settings/field",
-              "data": {
-                "root_tag": {"get": "field.root_tag"},
-                "root_class": {"get": "field.root_class"},
-                "kind": {"get": "field.kind"},
-                "label": {"get": "field.label"},
-                "help": {"get": "field.help"},
-                "name": {"get": "field.name"},
-                "value": {"get": "field.value"},
-                "checked": {"get": "field.checked"},
-                "attributes": {"get": "field.attributes"},
-                "options": {"get": "field.options"},
-                "fields": {"get": "field.fields"},
-                "upload_name": {"get": "field.upload_name"},
-                "remove_name": {"get": "field.remove_name"}
-              }
-            }
+            "children": {"component": "settings/field", "data": {"get": "field"}}
           }
-        ],
-        "when": {"eq": [{"get": "kind"}, "group"]}
+        ]
       },
       {
         "tag": "input",
@@ -124,6 +90,7 @@
       {
         "tag": "div",
         "attrs": {"class": "stack gap-2"},
+        "when": {"eq": [{"get": "kind"}, "templates"]},
         "children": [
           {
             "each": {"get": "options"},
@@ -145,8 +112,7 @@
               ]
             }
           }
-        ],
-        "when": {"eq": [{"get": "kind"}, "templates"]}
+        ]
       },
       {
         "tag": "input",
@@ -159,20 +125,21 @@
           "class": "content-image-preview image-preview-contain",
           "data-empty": {"if": [{"get": "value"}, null, "true"]}
         },
+        "when": {"eq": [{"get": "kind"}, "image"]},
         "children": [
           {"tag": "img", "attrs": {"src": {"get": "value"}, "alt": "", "loading": "lazy"}, "when": {"get": "value"}},
           {
             "tag": "span",
             "attrs": {"class": "content-image-preview-empty"},
-            "children": [{"icon": "image"}, {"tag": "span", "children": [{"t": "settings.image_empty"}]}],
-            "when": {"not": {"get": "value"}}
+            "when": {"not": {"get": "value"}},
+            "children": [{"icon": "image"}, {"tag": "span", "children": [{"t": "settings.image_empty"}]}]
           }
-        ],
-        "when": {"eq": [{"get": "kind"}, "image"]}
+        ]
       },
       {
         "tag": "div",
         "attrs": {"class": "content-image-actions"},
+        "when": {"eq": [{"get": "kind"}, "image"]},
         "children": [
           {
             "tag": "label",
@@ -194,16 +161,23 @@
           {
             "tag": "label",
             "attrs": {"class": "check-line mb-0"},
+            "when": {"get": "value"},
             "children": [
               {"tag": "input", "attrs": {"type": "checkbox", "name": {"get": "remove_name"}, "value": "1"}},
               {"tag": "span", "children": [{"t": "settings.image_remove"}]}
-            ],
-            "when": {"get": "value"}
+            ]
           }
-        ],
-        "when": {"eq": [{"get": "kind"}, "image"]}
+        ]
       },
-      {"tag": "span", "attrs": {"class": "help"}, "children": [{"get": "help"}], "when": {"get": "help"}}
+      {"tag": "span", "attrs": {"class": "help"}, "when": {"get": "help"}, "children": [{"get": "help"}]}
+    ]
+  },
+  "settings/editor-form": {
+    "tag": "form",
+    "attrs": {"enctype": "multipart/form-data"},
+    "children": [
+      {"component": "settings/sections", "data": {"sections": {"get": "sections"}}},
+      {"tag": "button", "attrs": {"type": "submit", "class": "btn btn-primary"}, "children": [{"t": "common.save"}]}
     ]
   }
 }

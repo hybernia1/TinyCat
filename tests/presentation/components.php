@@ -21,7 +21,7 @@ $database->exec('CREATE TABLE social_comment_likes (comment_id INTEGER, user_id 
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $admin = ['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'avatar_exists' => 0];
 $member = ['id' => 2, 'username' => 'Member', 'role' => 'user', 'status' => 'active', 'avatar_exists' => 0];
-$accountMenu = \TinyCat\Support\View::part('Identity/user-menu', [
+$accountMenu = \TinyCat\Core\Identity\Views::userMenu([
     'authUser' => $member, 'profileUrl' => '/author/2', 'profileNeedsEmail' => false, 'theme' => 'system',
     'displayName' => 'Member', 'editModalId' => \TinyCat\Social\Profiles\Profiles::author_profile_edit_modal_id(2),
     'editModalUrl' => \TinyCat\Social\Profiles\Profiles::author_profile_edit_modal_url(2),
@@ -152,10 +152,10 @@ $healthChecks = [
     ['id' => 'scheduler', 'status' => 'warning', 'duration_ms' => 1, 'metrics' => []],
     ['id' => 'http', 'status' => 'warning', 'duration_ms' => 1, 'metrics' => []],
 ];
-$healthHtml = \TinyCat\Support\View::render('page', [
+$healthHtml = \TinyCat\Core\Health\Views::page([
     'snapshot' => ['status' => 'warning', 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => ['checked_at' => '2026-11-01T12:00:00Z']],
     'checks' => $healthChecks, 'issues' => $healthChecks, 'http' => $healthChecks[1], 'passed' => 0,
-], __DIR__ . '/../../App/Core/Health/templates');
+]);
 $healthDocument = new DOMDocument();
 $previousXmlErrors = libxml_use_internal_errors(true);
 try { $healthDocument->loadHTML('<?xml encoding="UTF-8">' . $healthHtml); }
@@ -172,6 +172,64 @@ $criticalNotice = \TinyCat\Support\Components::render('ui/notice', ['tone' => 'c
 $assert(str_contains($criticalNotice, 'alert-danger') && str_contains($criticalNotice, 'role="alert"') && str_contains($criticalNotice, 'Missing &lt;extensions&gt;') && str_contains($criticalNotice, 'Unsafe &lt;img src=x&gt;'), 'Critical update and health notices retain their danger tone and escaped rich text fields.');
 $simpleNotice = \TinyCat\Support\Components::render('ui/notice', ['tone' => 'danger', 'label' => 'Search <failure>']);
 $assert(str_contains($simpleNotice, 'Search &lt;failure&gt;') && !str_contains($simpleNotice, '<strong>'), 'Simple search notices retain their label without an empty title.');
+$updateData = [
+    'release' => null, 'result' => [], 'error' => '', 'maintenance' => [],
+    'extensions' => ['cURL' => true, 'Sodium' => true, 'ZIP / Phar' => true],
+    'releaseCompatible' => true, 'canInstall' => true, 'history' => [],
+];
+foreach ([false, true] as $available) {
+    foreach ([false, true] as $compatible) {
+        foreach ([false, true] as $extensionsReady) {
+            $model = \TinyCat\Core\Updates\Views::model(array_replace($updateData, [
+                'release' => ['available' => $available, 'version' => '6.1.4', 'notes' => '<notes>'],
+                'releaseCompatible' => $compatible, 'canInstall' => $compatible && $extensionsReady,
+                'extensions' => ['cURL' => $extensionsReady],
+            ]));
+            $html = \TinyCat\Support\Components::render('updates/actions', $model);
+            $doc = new DOMDocument();
+            $previousXmlErrors = libxml_use_internal_errors(true);
+            try { $doc->loadHTML($html); }
+            finally { libxml_clear_errors(); libxml_use_internal_errors($previousXmlErrors); }
+            $xpath = new DOMXPath($doc);
+            $install = $xpath->query('//form[@action="/api/updates/installations"]');
+            $assert($install->length === (int) $available, 'Install action exists only when an update is available.');
+            if ($available) {
+                $assert($xpath->query('//form[@action="/api/updates/installations"]//button[@disabled]')->length === (int) !($compatible && $extensionsReady), 'Requirements and compatibility retain the disabled install state.');
+                $assert($xpath->query('//form[@action="/api/updates/installations"]//input[@name="_csrf"]')->length === 1, 'Install form retains its CSRF field.');
+            }
+            $assert($xpath->query('//form[@action="/api/updates/checks"]')->length === 1 && str_contains($html, '/api/updates/release-notes'), 'Checks and release notes preserve their canonical transport.');
+        }
+    }
+}
+$updateModel = \TinyCat\Core\Updates\Views::model(array_replace($updateData, [
+    'error' => '<unsafe error>', 'maintenance' => ['from_version' => '6.1.3', 'to_version' => '6.1.4'],
+    'history' => [['migration' => '<migration>', 'version' => '20260801_profile_links_and_legacy_cleanup', 'applied_at' => '2026-11-01T12:00:00Z']],
+]));
+$updateHtml = \TinyCat\Support\Components::render('updates/page', $updateModel);
+$assert(str_contains($updateHtml, '&lt;unsafe error&gt;') && str_contains($updateHtml, '&lt;migration&gt;') && str_contains($updateHtml, '20260801_profile_links_and_legacy_cleanup'), 'Updater page escapes errors and preserves long historical migration labels.');
+$assert(str_contains($updateHtml, 'action="/api/updates/maintenance"') && str_contains($updateHtml, 'data-api-method="DELETE"') && str_contains($updateHtml, 'name="_method" value="DELETE"'), 'Maintenance recovery retains its DELETE transport.');
+$emptyHealth = \TinyCat\Core\Health\Views::page(['snapshot' => ['status' => 'unknown', 'report' => null, 'history' => [], 'latest_failed' => false, 'stale' => false], 'checks' => [], 'issues' => [], 'http' => null, 'passed' => 0]);
+$assert(!str_contains($emptyHealth, '/api/scheduler/runs/') && str_contains($emptyHealth, 'empty-state'), 'Health without a report remains renderable and does not invent history actions.');
+$headerData = [
+    'appName' => 'Tiny <Cat>', 'authUser' => null, 'current' => '/cs/login',
+    'pageUrls' => ['/' => '/cs/', '/search/all' => '/cs/search/all', '/login' => '/cs/login'],
+    'siteLogoUrl' => '/logo.svg', 'hasGlobalSearch' => true, 'searchQuery' => '<query>',
+    'nav' => [['href' => '/about', 'label' => 'About', 'icon' => 'info', 'active' => true]],
+    'viewerIsAdmin' => false, 'loginModalId' => 'login', 'loginModalUrl' => '/api/users/authentication',
+    'currentLanguageName' => 'English', 'languageFlagSprite' => '/flags.svg', 'languageFlagId' => 'flag-en',
+    'languageLinks' => [['language' => 'en', 'name' => 'English', 'url' => '/', 'active' => true]],
+    'languageSuggestion' => ['language' => 'cs', 'url' => '/cs/', 'message' => 'Czech <available>', 'action' => 'Switch', 'close' => 'Close'],
+];
+$guestHeader = \TinyCat\Core\Ui\DocumentData::publicHeader($headerData);
+$assert(str_contains($guestHeader, 'action="/cs/search/all"') && str_contains($guestHeader, 'value="&lt;query&gt;"'), 'Header preserves localized search and escaped query.');
+$assert(str_contains($guestHeader, '<use href="/flags.svg#flag-en"') && str_contains($guestHeader, 'data-language-menu'), 'Guest header retains the SVG flag sprite and language popover.');
+$assert(str_contains($guestHeader, 'data-modal-url="/api/users/authentication"') && str_contains($guestHeader, 'Czech &lt;available&gt;'), 'Guest header retains resource login and escaped language suggestion.');
+$memberHeader = \TinyCat\Core\Ui\DocumentData::publicHeader(array_replace($headerData, [
+    'authUser' => $member, 'viewerIsAdmin' => true, 'userMenu' => $accountMenu,
+    'notificationState' => ['unread' => 0], 'notificationItems' => [], 'hasGlobalSearch' => false,
+]));
+$assert(str_contains($memberHeader, 'href="/admin"') && str_contains($memberHeader, 'data-notification-button') && str_contains($memberHeader, 'user-menu-trigger'), 'Authenticated header composes owner menus and administration link.');
+$assert(!str_contains($memberHeader, 'data-language-menu') && !str_contains($memberHeader, 'data-global-search'), 'Authenticated header respects conditional language and search surfaces.');
 restore_error_handler();
 foreach ([['onclick' => 'alert(1)'], ['style' => 'color:red'], ['srcdoc' => '<script>bad</script>'], ['src' => 'javascript:alert(1)'], ['formaction' => "java\nscript:alert(1)"], ['src' => 'data:text/html,bad']] as $attributes) {
     $rejected = false;

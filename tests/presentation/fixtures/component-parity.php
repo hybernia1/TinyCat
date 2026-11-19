@@ -8,6 +8,20 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\
 \TinyCat\Support\Localization::locale('en');
 if (($argv[1] ?? '') === '--page-routes') { echo json_encode(\TinyCat\Http\Router::pageDefinitions('tinycat.social'), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
+if (($argv[1] ?? '') === '--contexts') {
+    $fixture = json_decode((string) file_get_contents(__DIR__ . '/../../fixtures/component-contexts.json'), true, 512, JSON_THROW_ON_ERROR);
+    $saved = \TinyCat\Support\Components::templates();
+    $property = new ReflectionProperty(\TinyCat\Support\Components::class, 'templates');
+    $property->setValue(null, $saved + $fixture['definitions']);
+    $results = [];
+    try {
+        foreach ($fixture['cases'] as $case) {
+            try { $results[] = ['html' => \TinyCat\Support\Components::render($case['component'], $case['data'])]; }
+            catch (InvalidArgumentException $error) { $results[] = ['error' => $error->getMessage()]; }
+        }
+    } finally { $property->setValue(null, $saved); }
+    echo json_encode($results, JSON_THROW_ON_ERROR); exit(0);
+}
 if (($argv[1] ?? '') === '--settings') { echo json_encode(\TinyCat\Core\Settings\Resource::editor(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--settings-presentation') { echo json_encode(\TinyCat\Core\Settings\Sections::presentation(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--admin-definitions') { echo json_encode(\TinyCat\Core\Ui\Admin\Definitions::all(), JSON_THROW_ON_ERROR); exit(0); }

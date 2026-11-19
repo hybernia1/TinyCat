@@ -2049,5 +2049,24 @@
     "App/Modules/Social/src/Posts/Views.php",
     "App/Modules/Social/templates/parts/status/feed.php",
     "App/Modules/Social/templates/parts/status/home-feed.php"
+  ],
+  "6.1.4": [
+    "App/Core/Notifications/templates/page.php",
+    "App/Core/Notifications/templates/parts/page.php",
+    "App/Core/Notifications/templates/parts/menu.php",
+    "App/Core/Tasks/templates/actions.php",
+    "App/Core/Tasks/templates/administration.php",
+    "App/Modules/Blog/templates/listing.php",
+    "App/Modules/Blog/templates/article.php",
+    "App/Core/Identity/templates/parts/user-menu.php",
+    "App/Core/Ui/templates/parts/public-header.php",
+    "App/Core/Ui/templates/modules.php",
+    "App/Core/Ui/templates/search.php",
+    "App/Core/Ui/templates/privacy.php",
+    "App/Core/Ui/templates/parts/consent.php",
+    "App/Core/Health/templates/page.php",
+    "App/Core/Updates/templates/administration.php",
+    "App/Core/Updates/templates/actions.php",
+    "App/Modules/Social/templates/site/privacy-section.php"
   ]
 }

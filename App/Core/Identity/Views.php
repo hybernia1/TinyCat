@@ -10,6 +10,21 @@ use TinyCat\Support\Components;
 /** Presentation helpers that adapt domain data to shared component inputs. */
 final class Views
 {
+    /** @param array<mixed> $data */
+    public static function userMenu(array $data): string
+    {
+        $user = (array) ($data['authUser'] ?? []);
+        $id = (int) ($user['id'] ?? 0);
+        $needsEmail = (bool) ($data['profileNeedsEmail'] ?? false);
+        return Components::render('users/menu', [
+            'profileUrl' => (string) ($data['profileUrl'] ?? ''), 'profileNeedsEmail' => $needsEmail,
+            'theme' => (string) ($data['theme'] ?? 'system'),
+            'displayName' => (string) ($data['displayName'] ?? trim((string) ($user['username'] ?? ''))),
+            'editModalId' => (string) ($data['editModalId'] ?? 'account-editor-modal-' . $id),
+            'editModalUrl' => (string) ($data['editModalUrl'] ?? '/api/users/' . $id . '/management?panel=account' . ($needsEmail ? '&focus=email' : '')),
+            'avatar' => new \TinyCat\Support\Markup(self::avatar(['user' => $user])),
+        ]);
+    }
 
     /** @param array<mixed> $data */
     public static function adminFormFields(array $data = []): string
