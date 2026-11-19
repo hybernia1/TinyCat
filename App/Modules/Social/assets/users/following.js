@@ -1,5 +1,6 @@
 import "../../../../../assets/core/dom.js";
 import "../../../../../assets/core/api-client.js";
+import "../../../../../assets/core/request-lifecycle.js";
 import "../../../../../assets/core/i18n.js";
 import "./controller.js";
 import "../../../../../assets/ui/component-builders.js";
@@ -26,14 +27,15 @@ import "../../../../../assets/ui/toasts.js";
       return;
     }
 
+    var request = TinyCat.requests.begin(button);
     button.dataset.followingBusy = "true";
     button.disabled = true;
     if (control) { control.classList.add("is-loading"); control.setAttribute("aria-busy", "true"); }
     if (state) state.hidden = false;
 
     try {
-      data = await TinyCat.api.request(url, { method: "GET" });
-      if (!grid.isConnected || !button.isConnected) return;
+      data = await TinyCat.api.request(url, { method: "GET", signal: request.signal });
+      if (!request.current() || !grid.isConnected || !button.isConnected) return;
       payload = data.data;
       payload = Object.assign({}, payload, TinyCat.ui.pagination(data));
       if (payload.items.length) grid.appendChild(TinyCat.socialUsers.profiles(payload.items));
@@ -45,9 +47,10 @@ import "../../../../../assets/ui/toasts.js";
         (control || button).remove();
       }
     } catch (error) {
-      if (button.isConnected && error.name !== "AbortError") TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
+      if (request.current() && button.isConnected && error.name !== "AbortError") TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
       button.disabled = false;
     } finally {
+      request.finish();
       delete button.dataset.followingBusy;
       if (control) { control.classList.remove("is-loading"); control.removeAttribute("aria-busy"); }
       if (state) state.hidden = true;

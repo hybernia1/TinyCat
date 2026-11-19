@@ -146,6 +146,36 @@
       }
       dialog.remove();
     }
+    for (const [assembly, assets] of Object.entries(window.notificationAssemblySources)) {
+      check(!assets.some(asset => asset.path.startsWith('App/Modules/Social/')), 'Notification assembly excludes Social: ' + assembly);
+      const frame = document.createElement('iframe'); frame.src = '/notification-frame';
+      await new Promise(resolve => { frame.onload = resolve; document.body.append(frame); });
+      const w = frame.contentWindow, d = frame.contentDocument;
+      w.eval(assets.filter(asset => asset.path !== 'assets/bootstrap.js').map(asset => asset.source).join('\n'));
+      const N = w.TinyCat;
+      N.components.register(window.notificationTemplates); N.i18n.register('en', window.notificationLabels);
+      const list = d.createElement('div'); list.id = 'notifications-list';
+      const item = id => ({id, type:'generic', message:'Notice '+id, icon:'bell', actor:{}, excerpt:'', url:'/notifications/'+id, unread:true, created_at:'2026-01-01T12:00:00+00:00'});
+      list.append(N.notifications.items(Array.from({length:40}, (_, i) => item(i + 1)), false)); d.body.append(list);
+      const more = N.components.render('ui/load-more', {attributes:{class:'load-more','data-notification-more':''}, button_attributes:{type:'button',class:'btn','data-ajax':'','data-url':'/api/notifications?cursor_id=1','data-method':'GET','data-ajax-target':'#notifications-list'},label:'More',loading_label:'Loading'});
+      d.body.append(more); N.lifecycle.start();
+      const button = more.querySelector('[data-ajax]'); let finish, options, calls = 0;
+      N.api.request = (_url, settings) => { calls++; options = settings; return new Promise(resolve => {finish = resolve;}); };
+      button.click(); await tick();
+      check(calls === 1 && button.getAttribute('aria-busy') === 'true' && options.signal, 'Core AJAX owns pagination request and loading: '+assembly);
+      finish({data:{items:[item(40),item(41)],unread_count:41,latest_id:41},meta:{pagination:{next_url:'/api/notifications?cursor_id=41'}}}); await tick();
+      check(list.querySelectorAll('[data-notification-id]').length === 41 && button.dataset.url.endsWith('cursor_id=41'), 'Notifications deduplicate a second page and retain cursor without Social: '+assembly);
+      button.click(); await tick();
+      finish({data:{items:[item(42)],unread_count:42,latest_id:42},meta:{pagination:{next_url:'',done:true}}}); await tick();
+      check(list.querySelectorAll('[data-notification-id]').length === 42 && !more.isConnected, 'Final notification page removes the whole loading control: '+assembly);
+      const pendingMore = N.components.render('ui/load-more', {attributes:{'data-notification-more':''},button_attributes:{type:'button','data-ajax':'','data-url':'/api/notifications','data-method':'GET','data-ajax-target':'#notifications-list'},label:'More'});
+      d.body.append(pendingMore); pendingMore.querySelector('button').click(); await tick();
+      N.content.remove(list);
+      check(options.signal.aborted, 'Removing the inbox cancels the pending cursor request: '+assembly);
+      finish({data:{items:[item(43)]},meta:{pagination:{done:true}}}); await tick();
+      check(list.querySelectorAll('[data-notification-id]').length === 42, 'Late notification response cannot update a disposed inbox: '+assembly);
+      frame.remove();
+    }
     const socialFeed = document.createElement('div'); socialFeed.className = 'container profile-main';
     const feed = document.createElement('div'); feed.className = 'status-feed'; socialFeed.append(feed); document.body.append(socialFeed);
     check(Math.abs(feed.getBoundingClientRect().width-socialFeed.getBoundingClientRect().width) < 1, 'Social owns its full-width profile feed layout');

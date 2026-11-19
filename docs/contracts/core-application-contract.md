@@ -209,6 +209,17 @@ formuláře během čekání nesmí později zahájit zápis.
 
 Společná obsluha čeká také na Promise z `module.result()`. Modul vrací `false`
 synchronně pro cizí výsledky; Promise smí vrátit až pro výsledek, který převzal.
+Obsloužený výsledek vrací pole změněných DOM kořenů (`Node[]`); `[]` znamená,
+že nové UI nepotřebuje hydrataci. Core hydratuje jen připojené kořeny a vynechá
+vnořené duplicity. Vestavěné moduly nepoužívají `true` pro hydrataci celého
+cíle či dokumentu. Tato starší hodnota zůstává pouze kompatibilním adaptérem
+pro externí moduly; `false` samo o sobě hydrataci nespouští.
+
+Společné schopnosti se registrují do lifecycle právě jednou. Doménový modul
+znovu nevolá hydrate/dispose již registrovaného společného editoru či médií.
+Dispose zneplatní i asynchronní výsledky místního zpracování souborů; pozdní
+úspěch ani chyba nesmí upravit odstraněné UI nebo zobrazit jeho toast.
+
 Po dokončení core provede společné dokončení formuláře. Klient čte resource z
 `response.data`, zprávu z `response.message` a prezentační typ z `response.meta.type`;
 samotný payload ani zprávy ukryté v něm nejsou alternativním API formátem.

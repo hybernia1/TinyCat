@@ -191,7 +191,7 @@ import "../../../../assets/ui/toasts.js";
           }, 0);
         }
       }
-      return true;
+      return Array.from(roots || []);
     }
   };
 }());

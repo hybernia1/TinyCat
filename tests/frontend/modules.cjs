@@ -493,7 +493,8 @@ check(!target.querySelector('[data-api-method="DELETE"]'), "Protected-account ca
 const existingBio = new Node("p", "Retained profile bio");
 document.querySelectorAll = selector => selector.includes("data-author-bio") ? [existingBio] : [];
 const avatarForm = new Node("form"); avatarForm.setAttribute("action", "/api/users/2/avatar"); avatarForm.setAttribute("method", "post"); avatarForm.closest = () => null;
-T.accounts.result(avatarForm, { data: { user: { id: 2, username: "Member", avatar_url: "" } } }, null);
+const avatarResultRoots = T.accounts.result(avatarForm, { data: { user: { id: 2, username: "Member", avatar_url: "" } } }, null);
+check(Array.isArray(avatarResultRoots) && !avatarResultRoots.length, "Account results without replaced avatars do not hydrate the document.");
 check(existingBio.textContent === "Retained profile bio", "Partial avatar resources never erase profile fields they do not contain.");
 let localeReloads = 0;
 document.body.dataset.currentUserId = "2";

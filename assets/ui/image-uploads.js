@@ -5,7 +5,7 @@ import "./toasts.js";
   "use strict";
   var TinyCat = window.TinyCat = window.TinyCat || {};
   TinyCat.images = {};
-  var qsa = TinyCat.dom.all;
+  var qsa = TinyCat.dom.all, inputs = new WeakMap();
   function clientImageFile(file, maxDimension, maxBytes) {
     return new Promise(function (resolve, reject) {
       var bitmapPromise;
@@ -119,13 +119,15 @@ import "./toasts.js";
     });
   }
   function initClientImageInput(input) {
-    var selectionRequestId = 0;
+    var selectionRequestId = 0, disposed = false;
+    function current() { return !disposed && input.isConnected !== false; }
 
     if (!input || input.dataset.clientImageInputReady === "true") {
       return;
     }
 
     input.dataset.clientImageInputReady = "true";
+    inputs.set(input, function () { disposed = true; selectionRequestId++; });
     input.addEventListener("change", async function () {
       var file = input.files && input.files[0] ? input.files[0] : null;
       var requestId = ++selectionRequestId;
@@ -137,12 +139,12 @@ import "./toasts.js";
 
       try {
         prepared = await prepareClientImageInput(input, file);
-        if (requestId !== selectionRequestId) {
+        if (!current() || requestId !== selectionRequestId) {
           return;
         }
         replaceImageInputFile(input, prepared);
       } catch (error) {
-        if (requestId !== selectionRequestId) {
+        if (!current() || requestId !== selectionRequestId) {
           return;
         }
         input.value = "";
@@ -151,5 +153,9 @@ import "./toasts.js";
     });
   }
   Object.assign(TinyCat.images, { prepare: prepareClientImageInput, replace: replaceImageInputFile, hydrate: function (root) { qsa("[data-client-image-input]", root).forEach(initClientImageInput); } });
-  TinyCat.lifecycle.register("images", { hydrate: TinyCat.images.hydrate });
+  TinyCat.lifecycle.register("images", { hydrate: TinyCat.images.hydrate, dispose: function (root) {
+    var nodes = qsa("[data-client-image-input]", root);
+    if (root.matches && root.matches("[data-client-image-input]")) { nodes.push(root); }
+    nodes.forEach(function (input) { var cleanup = inputs.get(input); if (cleanup) { cleanup(); inputs.delete(input); } });
+  } });
 }());

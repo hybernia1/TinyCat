@@ -23,7 +23,6 @@ import "./editor-entry.js";
         form.dataset.apiMethod = button && button.getAttribute("aria-pressed") === "true" ? "DELETE" : "PUT";
       }
     });
-    C.editor.hydrate(root);
   }
   T.modules.register("publishing-discussion", {
     hydrate: hydrate,

@@ -6,7 +6,7 @@ import "../image-uploads.js";
 import "../toasts.js";
 (function () {
   "use strict";
-  var TinyCat = window.TinyCat;
+  var TinyCat = window.TinyCat, uploads = new WeakMap();
   var qs = TinyCat.dom.find;
   var compactUrl = TinyCat.navigation.compact;
   var prepareClientImageInput = TinyCat.images.prepare;
@@ -119,6 +119,11 @@ import "../toasts.js";
       (qs("[data-status-video-mount]", root) || root).replaceChildren(iframe);
     });
   }
+  function disposeImages(root) {
+    var images = TinyCat.dom.all("[data-status-image]", root);
+    if (root.matches && root.matches("[data-status-image]")) { images.push(root); }
+    images.forEach(function (image) { var cleanup = uploads.get(image); if (cleanup) { cleanup(); uploads.delete(image); } });
+  }
   function dispose(root) {
     var players = TinyCat.dom.all("audio.status-audio-player", root);
     if (root.matches && root.matches("audio.status-audio-player")) players.push(root);
@@ -139,16 +144,19 @@ import "../toasts.js";
     var originalSrc = preview ? String(preview.getAttribute("src") || "") : "";
     var originalAlt = preview ? String(preview.getAttribute("alt") || "") : "";
     var previewRequestId = 0;
-    var selectionRequestId = 0;
+    var selectionRequestId = 0, pendingReader = null, disposed = false;
+    function current() { return !disposed && root.isConnected !== false; }
 
     if (!input || !preview || root.dataset.statusImageReady === "true") {
       return;
     }
 
     root.dataset.statusImageReady = "true";
+    uploads.set(root, function () { disposed = true; selectionRequestId++; previewRequestId++; if (pendingReader) { pendingReader.abort(); pendingReader = null; } });
 
     function revokePreview() {
       previewRequestId++;
+      if (pendingReader) { pendingReader.abort(); pendingReader = null; }
     }
 
     function showOriginal() {
@@ -189,9 +197,9 @@ import "../toasts.js";
         picker.hidden = true;
       }
 
-      reader = new FileReader();
+      reader = new FileReader(); pendingReader = reader;
       reader.addEventListener("load", function () {
-        if (requestId !== previewRequestId || typeof reader.result !== "string") {
+        if (!current() || requestId !== previewRequestId || typeof reader.result !== "string") {
           return;
         }
 
@@ -199,7 +207,7 @@ import "../toasts.js";
         preview.alt = originalAlt;
       });
       reader.addEventListener("error", function () {
-        if (requestId === previewRequestId) {
+        if (current() && requestId === previewRequestId) {
           preview.hidden = true;
           previewWrap.hidden = true;
           if (picker) {
@@ -229,13 +237,13 @@ import "../toasts.js";
 
       try {
         prepared = await prepareClientImageInput(input, file);
-        if (requestId !== selectionRequestId) {
+        if (!current() || requestId !== selectionRequestId) {
           return;
         }
         replaceImageInputFile(input, prepared);
         showFile(prepared);
       } catch (error) {
-        if (requestId !== selectionRequestId) {
+        if (!current() || requestId !== selectionRequestId) {
           return;
         }
         input.value = "";
@@ -266,9 +274,9 @@ import "../toasts.js";
 
     if (root.closest("form")) {
       root.closest("form").addEventListener("reset", function () {
-        window.setTimeout(showOriginal, 0);
+        window.setTimeout(function () { if (current()) { showOriginal(); } }, 0);
       });
     }
   }
-  TinyCat.publishing.controllers.media = { dispose: dispose, markStatusLinkImageMissing: linkImageMissing, markStatusLinkImageReady: linkImageReady, initStatusLinkImageRoot: initStatusLinkImageRoot, allowedStatusVideoUrl: allowedStatusVideoUrl, initStatusVideoRoot: initStatusVideoRoot, initStatusImageRoot: initStatusImageRoot };
+  TinyCat.publishing.controllers.media = { dispose: dispose, disposeImages: disposeImages, markStatusLinkImageMissing: linkImageMissing, markStatusLinkImageReady: linkImageReady, initStatusLinkImageRoot: initStatusLinkImageRoot, allowedStatusVideoUrl: allowedStatusVideoUrl, initStatusVideoRoot: initStatusVideoRoot, initStatusImageRoot: initStatusImageRoot };
 }());

@@ -3,6 +3,15 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 $mode = $argv[1] ?? '--all';
+if (in_array($mode, ['--notifications-core', '--notifications-blog'], true)) {
+    $root = dirname(__DIR__, 3);
+    $selection = $mode === '--notifications-blog' ? ['tinycat.blog' => 'App/Modules/Blog/module.json'] : [];
+    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, $selection)->catalog);
+    $paths = \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries('/notifications'));
+    echo json_encode(array_map(static fn (string $path): array => ['path' => $path, 'source' => \TinyCat\Support\AssetGraph::javascript([$path])], $paths), JSON_THROW_ON_ERROR);
+    exit;
+}
+
 if ($mode === '--health-action') {
     echo json_encode(\TinyCat\Support\Components::render('ui/api-action', ['url' => '/api/site-health/checks', 'method' => 'POST', 'label' => 'Run check']), JSON_THROW_ON_ERROR);
     exit;

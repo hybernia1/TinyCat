@@ -6,7 +6,7 @@ const vm = require("node:vm");
 const source = fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/assets/status/feed-loader.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
 (async function () {
   let checks = 0;
-  for (const kind of ["posts", "entities", "notifications"]) {
+  for (const kind of ["posts", "entities"]) {
     const errors = [], renders = [];
     const card = id => ({ dataset: kind === "entities" ? { feedId: String(id) } : { statusId: String(id) }, classList: { contains: name => name === "status-card" && kind !== "entities" }, hasAttribute: name => name === "data-feed-item" && kind === "entities" });
     const target = { id: kind === "notifications" ? "notifications-list" : "search-results", dataset: kind === "entities" ? { feedComponent: "search/items" } : {}, children: [card(1)], appendChild(fragment) { this.children.push(...fragment.children); } };
@@ -23,7 +23,7 @@ const source = fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/as
     await feed.loadStatusFeedMore(control);
     assert.deepEqual(target.children.map(n => n.dataset.feedId || n.dataset.statusId), ["1", "2"]); checks++;
     assert.equal(control.dataset.statusFeedUrl, response.meta.pagination.next_url); checks++;
-    assert.equal(renders[0], kind === "entities" ? "search/items" : kind === "posts" ? "status" : "notifications"); checks++;
+    assert.equal(renders[0], kind === "entities" ? "search/items" : "status"); checks++;
     response = { data: { items: [{ id: 3 }] }, meta: { pagination: { next_url: "", done: true } } };
     await feed.loadStatusFeedMore(control);
     assert.equal(control.isConnected, false); checks++;

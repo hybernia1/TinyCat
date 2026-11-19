@@ -38,6 +38,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 - [Core, vlastnictví modulů a jejich inicializace](development/core-and-modules.md).
 - [Audit významových hranic core a modulů](audits/core-module-boundaries-2026-11-12.md)
   a [plán platformních služeb a kombinovatelných funkcí](plans/core-services-and-feature-modules.md).
+- [Audit aplikačního JavaScriptu po 6.1.3](audits/application-javascript-2026-11-19.md).
 - [Platformní služby: implementace a ověření etapy 1A](audits/core-services-stage-1a-2026-11-12.md).
 - [Identita, schránka, health a společný HTTP tok](audits/core-services-stage-1b-2026-11-12.md).
 - [Dokončení adaptérů, nastavení, šablon a nasazení Blog + Social](audits/platform-completion-2026-11-12.md).

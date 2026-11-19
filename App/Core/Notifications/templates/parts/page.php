@@ -29,8 +29,8 @@ $nextUrl = (string) ($next_url ?? '');
     </article>
     <?php if ($nextUrl !== ''): ?>
         <?= \TinyCat\Support\Components::render('ui/load-more', [
-            'attributes' => ['class' => 'load-more status-feed-more', 'data-status-feed-more' => '', 'data-status-feed-target' => '#notifications-list', 'data-status-feed-url' => $nextUrl],
-            'button_attributes' => ['class' => 'btn btn-secondary status-feed-more-button', 'type' => 'button', 'data-status-feed-load' => ''],
+            'attributes' => ['class' => 'load-more', 'data-notification-more' => ''],
+            'button_attributes' => ['class' => 'btn btn-secondary', 'type' => 'button', 'data-ajax' => '', 'data-url' => $nextUrl, 'data-method' => 'GET', 'data-ajax-target' => '#notifications-list'],
             'label' => \TinyCat\Support\Localization::t('notifications.load_more'),
             'loading_label' => \TinyCat\Support\Localization::t('notifications.loading'),
         ]) ?>

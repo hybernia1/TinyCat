@@ -65,7 +65,7 @@ import "./toasts.js";
     if (Array.isArray(roots)) {
       roots = Array.from(new Set(roots)).filter(function (root) { return root && root.isConnected !== false; });
       roots.filter(function (root) { return !roots.some(function (parent) { return parent !== root && parent.contains(root); }); }).forEach(hydrateDynamic);
-    } else { hydrateDynamic(target || document); }
+    } else if (roots === true) { hydrateDynamic(target || document); }
     if (filterState) { TinyCat.filters.restore(filterState); }
     if (menuState) { TinyCat.popovers.restore(menuState); }
     resetForm(source);

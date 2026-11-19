@@ -12931,7 +12931,8 @@
       "source": "App/Core/Notifications/assets/index.js",
       "imports": [
         "assets/core/modules.js",
-        "App/Core/Notifications/assets/controller.js"
+        "App/Core/Notifications/assets/controller.js",
+        "assets/ui/ajax-bindings.js"
       ],
       "entries": [
         {
@@ -13248,7 +13249,6 @@
         "assets/core/i18n.js",
         "assets/core/lifecycle.js",
         "assets/core/navigation.js",
-        "App/Core/Notifications/assets/controller.js",
         "App/Modules/Social/assets/status/controller.js",
         "assets/ui/dialogs.js",
         "assets/ui/component-builders.js",
@@ -13346,6 +13346,7 @@
       "imports": [
         "assets/core/dom.js",
         "assets/core/api-client.js",
+        "assets/core/request-lifecycle.js",
         "assets/core/i18n.js",
         "App/Modules/Social/assets/users/controller.js",
         "assets/ui/component-builders.js",

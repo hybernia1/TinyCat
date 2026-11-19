@@ -14,12 +14,12 @@ import "../../../../../assets/ui/content/translation.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;
-  var C = TinyCat.status.controllers, qsa = TinyCat.dom.all;
+  var C = TinyCat.status.controllers;
   TinyCat.status.navigationUrl = TinyCat.status.navigation.mobileStatusUrl;
   TinyCat.status.hydrate = function (root) {
-    TinyCat.publishing.hydrate(root); C.feed.initStatusFeedLazy(root); C.actions.prepareForms(root);
+    C.feed.initStatusFeedLazy(root); C.actions.prepareForms(root);
   };
-  TinyCat.status.dispose = function (root) { C.feed.dispose(root); TinyCat.publishing.dispose(root); };
+  TinyCat.status.dispose = function (root) { C.feed.dispose(root); };
 
   TinyCat.status.init = function () {
     C.comments.initCommentReplies(); C.actions.initStatusForms();

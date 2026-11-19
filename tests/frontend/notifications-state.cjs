@@ -23,14 +23,15 @@ function harness() {
   let requests = 0, resolve, reject;
   const T = { ui: {}, dom: {}, components: { render: (_name, data) => data.items }, i18n: { plural: () => "new notifications" }, toasts: { show() {} },
     api: { request() { requests++; return new Promise((yes, no) => { resolve = yes; reject = no; }); } } };
-  const window = { TinyCat: T, setInterval(fn) { timers.push(fn); } };
-  vm.runInNewContext(source, { window, document });
+  const window = { TinyCat: T, location: new URL("https://tinycat.test/"), setInterval(fn) { timers.push(fn); } };
+  vm.runInNewContext(source, { window, document, URL });
   const result = data => T.notifications.result({ dataset: {}, getAttribute: () => "/api/notifications/7" }, { data });
   return { T, rows, badges, readAll, button, handlers, timers, result, count: () => requests, resolve: r => resolve(r), reject: e => reject(e) };
 }
 (async function () {
   const h = harness();
-  h.result({ id: 7, deleted: false, unread_count: 1, latest_id: 8 });
+  const changedRoots = h.result({ id: 7, deleted: false, unread_count: 1, latest_id: 8 });
+  assert.ok(Array.isArray(changedRoots) && changedRoots.length === 0, "Notification mutations update existing nodes without document hydration");
   assert.ok(h.rows.every(n => !n.classList.contains("is-unread")), "Reading a notification updates both preview and full-page copies");
   assert.ok(h.rows.every(n => n.read.removed), "Read controls disappear from every copy");
   h.result({ id: 7, deleted: true, unread_count: 0, latest_id: 8 });

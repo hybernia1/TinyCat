@@ -546,5 +546,5 @@ import "../component-builders.js";
   function hydrate (scope) {
     qsa("[data-status-editor]", scope || document).forEach(initRoot);
   }
-  TinyCat.publishing.controllers.editor = { username, getSource, getInput, getBox, getCounter, syncModalSize, getSuggestUrl, getText, setText, selectionOffsets, getCaret, replaceRange, activeToken, sync, hideSuggestions, selectSuggestion, renderSuggestionItems, requestSuggestions, renderSuggestions, insertSuggestion, initRoot, reset, hydrate };
+  TinyCat.publishing.controllers.editor = { username, getSource, getInput, getBox, getText, setText, activeToken, sync, hideSuggestions, reset, hydrate };
 }());
