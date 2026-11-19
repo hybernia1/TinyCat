@@ -265,7 +265,8 @@ try {
     $_SERVER['REQUEST_METHOD'] = 'GET';
     $_SERVER['HTTP_HOST'] = 'localhost';
     \TinyCat\Core\Identity\Authentication::authLogin($firstAdmin);
-    foreach (['accounts-page.php', 'sources-page.php', 'detail.php'] as $botPage) {
+    // Detail URLs redirect and are covered by the HTTP contract scenarios.
+    foreach (['accounts-page.php', 'sources-page.php'] as $botPage) {
         $_GET = ['id' => $botId];
         $_SERVER['REQUEST_URI'] = '/admin/bots/' . $botId;
         ob_start();
@@ -273,7 +274,6 @@ try {
             match ($botPage) {
                 'accounts-page.php' => \TinyCat\Social\Automation\Pages::accounts(),
                 'sources-page.php' => \TinyCat\Social\Automation\Pages::sources(),
-                default => \TinyCat\Social\Automation\Pages::detail($botId),
             };
             $botHtml = (string) ob_get_contents();
         } finally {

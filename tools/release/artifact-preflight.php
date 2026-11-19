@@ -50,7 +50,7 @@ $removeTree = static function (string $path) use (&$removeTree, $temporaryRoot):
 
     rmdir($resolved);
 };
-$run = static function (array $command) use (&$checks, &$failures): void {
+$run = static function (array $command, ?string $completion = null) use (&$checks, &$failures): void {
     $checks++;
     $escaped = implode(' ', array_map(escapeshellarg(...), $command));
     $output = [];
@@ -58,6 +58,8 @@ $run = static function (array $command) use (&$checks, &$failures): void {
 
     if ($exitCode !== 0) {
         $failures[] = implode(' ', $command) . ': ' . implode(' ', $output);
+    } elseif ($completion !== null && !str_contains(implode("\n", $output), $completion)) {
+        $failures[] = implode(' ', $command) . ': missing completion confirmation: ' . $completion;
     }
 };
 
@@ -133,7 +135,7 @@ try {
     $core = (string) file_get_contents($installRoot . '/App/Core/Support/Version.php');
     $assert(str_contains($core, "public const string CURRENT = '{$version}';"), 'Extracted runtime reports the current version.');
     $run([PHP_BINARY, $root . '/tests/http/public-route-smoke.php', '--root=' . $installRoot]);
-    $run([PHP_BINARY, $root . '/tests/release/mysql-installer-rehearsal.php', '--root=' . $installRoot]);
+    $run([PHP_BINARY, $root . '/tests/release/mysql-installer-rehearsal.php', '--root=' . $installRoot], 'PASS restart-safe MySQL installer rehearsal');
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();
 } finally {
