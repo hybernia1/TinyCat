@@ -66,7 +66,7 @@ final class Feed
             ? ' FORCE INDEX (content_feed_index)'
             : '';
 
-        return self::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
+        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
             'SELECT c.id FROM social_posts c' . $feedIndex . ' INNER JOIN users u ON u.id = c.author_id'
         )->where('u.status = ?', 'active'));
     }
@@ -77,7 +77,7 @@ final class Feed
             ? ' FORCE INDEX (content_author_index)'
             : '';
 
-        return self::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
+        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
             'SELECT c.id FROM social_posts c' . $authorIndex . ' INNER JOIN users u ON u.id = c.author_id'
         )->where('u.status = ?', 'active'));
     }
@@ -85,7 +85,7 @@ final class Feed
     public static function public_status_tag_id_query(int $termId): \TinyCat\Database\Query
     {
         // Let selective tags start with (term_id, content_id), without forcing a global feed scan.
-        return self::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
+        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
             'SELECT c.id FROM social_post_tags ct INNER JOIN social_posts c ON c.id = ct.content_id INNER JOIN users u ON u.id = c.author_id'
         )->where('ct.term_id = ?', $termId)->where('u.status = ?', 'active'));
     }
@@ -121,7 +121,7 @@ final class Feed
     public static function public_status_query(): \TinyCat\Database\Query
     {
         return self::public_status_apply_visibility(
-            \TinyCat\Database\Queries::db_select(self::public_status_select_sql())->where('u.status = ?', 'active')
+            \TinyCat\Database\Query::select(self::public_status_select_sql())->where('u.status = ?', 'active')
         );
     }
 

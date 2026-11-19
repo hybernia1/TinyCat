@@ -146,49 +146,6 @@ class Manager extends Package
         }
     }
 
-    /** Called only by the signed compatibility migration while the 5.x updater holds its lock. */
-    public static function prepareLegacyBackup(string $version, string $fromVersion): string
-    {
-        if (!self::maintenanceActive()) { throw new RuntimeException('Legacy backup adoption requires maintenance mode.'); }
-        $base = self::updateRoot() . '/backups'; $matches = [];
-        foreach (scandir($base) ?: [] as $name) {
-            if (!str_starts_with($name, $fromVersion . '-to-' . $version . '-')) { continue; }
-            $path = $base . '/' . $name;
-            if (!is_dir($path) || is_link($path) || !is_file($path . '/backup.json') || is_file($path . '/completed.json')) { continue; }
-            $metadata = self::decodeJson((string) file_get_contents($path . '/backup.json'), 'legacy backup');
-            if (($metadata['from_version'] ?? null) === $fromVersion && ($metadata['to_version'] ?? null) === $version && !isset($metadata['format'])) { $matches[$name] = $metadata; }
-        }
-        if ($matches === []) { throw new RuntimeException('The active legacy updater backup is missing.'); }
-        krsort($matches, SORT_STRING); $name = array_key_first($matches); $metadata = $matches[$name];
-        $backup = $base . '/' . $name . '-domain';
-        if (file_exists($backup)) { throw new RuntimeException('Restore the existing legacy conversion backup before retrying.'); }
-        self::ensureDirectory($backup . '/files');
-        foreach ((array) ($metadata['files'] ?? []) as $relative => $hash) {
-            $relative = self::managedPath((string) $relative);
-            $source = self::pathBelow($base . '/' . $name . '/files', $relative);
-            self::assertNoManagedSymlink($source, $relative); self::verifyFileHash($source, (string) $hash);
-            $destination = self::pathBelow($backup . '/files', $relative); self::ensureDirectory(dirname($destination));
-            if (!copy($source, $destination)) { throw new RuntimeException('Cannot preserve the legacy file backup.'); }
-        }
-        $metadata['format'] = 2;
-        // The old updater never recorded original absence. Preserve ambiguous paths on rollback.
-        $metadata['new_files'] = [];
-        $metadata['deployment'] = \TinyCat\Core\Modules\Deployment::read(\TinyCat\Support\Paths::basePath());
-        $state = \TinyCat\Support\Paths::basePath('storage/deployment.json');
-        $metadata['deployment_source'] = is_file($state) ? file_get_contents($state) : null;
-        $metadata['database_backup_required'] = true;
-        self::writeJsonFile($backup . '/backup.json', $metadata);
-        self::backupDatabase($backup);
-        self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'applying', 'backup' => basename($backup), 'kind' => 'legacy-package']);
-        return $backup;
-    }
-
-    public static function finishLegacyBackup(string $backup): void
-    {
-        // The enclosing 5.x updater still owns file retirement and maintenance completion.
-        self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'complete', 'backup' => basename($backup), 'kind' => 'legacy-package']);
-    }
-
     private static function completeOperation(string $backup, string $version): void
     {
         self::clearRuntimeCache(); \TinyCat\Support\Cache::resetOpcache();
@@ -598,11 +555,11 @@ class Manager extends Package
             if (!is_array($manifest['distribution'])) { throw new RuntimeException('Invalid signed product descriptor.'); }
             $plan = \TinyCat\Core\Modules\Distribution::validate($manifest['distribution']);
             if (!isset($normalizedFiles['App/distribution.json'])) { throw new RuntimeException('A product package must contain its descriptor.'); }
-            if (\TinyCat\Core\Modules\Distribution::modular($plan) && version_compare($minimumVersion, \TinyCat\Core\Modules\Distribution::RUNTIME, '<')) { throw new RuntimeException('Module-aware packages must require a module-aware runtime.'); }
-            if ($plan['format'] === 2 && \TinyCat\Core\Modules\Distribution::modular($plan) && version_compare($minimumVersion, \TinyCat\Core\Modules\Distribution::FRAMEWORK_RUNTIME, '<')) { throw new RuntimeException('Framework packages require the activation transition runtime.'); }
-            if ($plan['format'] === 3 && version_compare($minimumVersion, \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME, '<')) { throw new RuntimeException('Domain-owned schema packages require the domain transition runtime.'); }
+            // A newer installation may still inspect the last published signed release.
+            if (version_compare($version, \TinyCat\Support\Version::CURRENT, '>') && version_compare($minimumVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<')) { throw new RuntimeException('Product packages must require the supported runtime baseline.'); }
+            if ($plan['format'] === 4 && version_compare($minimumVersion, \TinyCat\Core\Modules\SchemaMigration::ARCHIVE_RUNTIME, '<')) { throw new RuntimeException('Archived migration packages require the checkpoint-aware updater.'); }
             foreach ($plan['schemas'] as $schema) {
-                foreach ($schema['migrations'] as $migration) { if (($normalizedFiles[$migration['file']] ?? '') !== $migration['checksum']) { throw new RuntimeException('Signed module migration is missing or inconsistent.'); } }
+                foreach ($schema['migrations'] as $migration) { if ($migration['file'] !== null && ($normalizedFiles[$migration['file']] ?? '') !== $migration['checksum']) { throw new RuntimeException('Signed module migration is missing or inconsistent.'); } }
             }
             $manifest['distribution'] = $plan;
         } elseif (isset($normalizedFiles['App/distribution.json'])) { throw new RuntimeException('Unsigned product identity is not allowed.'); }
@@ -643,7 +600,7 @@ class Manager extends Package
         if (is_array($plan)) { \TinyCat\Core\Modules\Deployment::transition(\TinyCat\Support\Paths::basePath(), $plan); }
         else {
             $current = \TinyCat\Core\Modules\Distribution::read(\TinyCat\Support\Paths::basePath());
-            if ($current !== null && \TinyCat\Core\Modules\Distribution::modular($current)) { throw new RuntimeException('This product requires a module-aware update package.'); }
+            if ($current !== null) { throw new RuntimeException('This product requires a module-aware update package.'); }
         }
         $version = (string) ($manifest['version'] ?? '');
         $minimumVersion = (string) ($manifest['minimum_version'] ?? '');

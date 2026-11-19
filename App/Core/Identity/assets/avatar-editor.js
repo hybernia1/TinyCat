@@ -5,7 +5,7 @@ import "../../../../assets/ui/image-uploads.js";
 import "../../../../assets/ui/toasts.js";
 (function () {
   "use strict";
-  var TinyCat = window.TinyCat;
+  var TinyCat = window.TinyCat, uploads = new WeakMap();
   var qs = TinyCat.dom.find;
   var prepareClientImageInput = TinyCat.images.prepare;
   var replaceImageInputFile = TinyCat.images.replace;
@@ -48,13 +48,15 @@ import "../../../../assets/ui/toasts.js";
     }
     var originalSrc = preview ? String(preview.getAttribute("src") || "") : "";
     var previewRequestId = 0;
-    var selectionRequestId = 0;
+    var selectionRequestId = 0, reader = null, disposed = false;
+    function current() { return !disposed && root.isConnected !== false; }
 
     if (!input || !preview || root.dataset.avatarUploadReady === "true") {
       return;
     }
 
     root.dataset.avatarUploadReady = "true";
+    uploads.set(root, function () { disposed = true; selectionRequestId++; previewRequestId++; if (reader) { reader.abort(); reader = null; } });
     if (toggle) {
       toggle.addEventListener("click", function () {
         var expanded = toggle.getAttribute("aria-expanded") !== "true";
@@ -98,18 +100,19 @@ import "../../../../assets/ui/toasts.js";
     }
 
     function showFile(file) {
-      var reader = new FileReader();
+      if (reader) { reader.abort(); }
+      reader = new FileReader();
       var requestId = ++previewRequestId;
 
       reader.addEventListener("load", function () {
-        if (requestId !== previewRequestId || typeof reader.result !== "string") {
+        if (!current() || requestId !== previewRequestId || typeof reader.result !== "string") {
           return;
         }
 
         preview.src = reader.result;
         preview.hidden = false;
       });
-      reader.addEventListener("error", showOriginal);
+      reader.addEventListener("error", function () { if (current() && requestId === previewRequestId) { showOriginal(); } });
       reader.readAsDataURL(file);
 
       if (empty) {
@@ -138,14 +141,14 @@ import "../../../../assets/ui/toasts.js";
 
       try {
         prepared = await prepareClientImageInput(input, file);
-        if (requestId !== selectionRequestId) {
+        if (!current() || requestId !== selectionRequestId) {
           return;
         }
         replaceImageInputFile(input, prepared);
         showFile(prepared);
         syncSave(true);
       } catch (error) {
-        if (requestId !== selectionRequestId) {
+        if (!current() || requestId !== selectionRequestId) {
           return;
         }
         input.value = "";
@@ -164,7 +167,7 @@ import "../../../../assets/ui/toasts.js";
           variant: "danger"
         });
 
-        if (!confirmed) {
+        if (!confirmed || !current()) {
           return;
         }
 
@@ -177,5 +180,13 @@ import "../../../../assets/ui/toasts.js";
         form.requestSubmit();
       });
     }
-  }  TinyCat.accounts.avatarUpload = { hydrate: function (root) { TinyCat.dom.all("[data-avatar-upload]", root).forEach(initAvatarUploadRoot); } };
+  }
+  TinyCat.accounts.avatarUpload = {
+    hydrate: function (root) { TinyCat.dom.all("[data-avatar-upload]", root).forEach(initAvatarUploadRoot); },
+    dispose: function (root) {
+      var nodes = TinyCat.dom.all("[data-avatar-upload]", root);
+      if (root.matches && root.matches("[data-avatar-upload]")) { nodes.push(root); }
+      nodes.forEach(function (node) { var cleanup = uploads.get(node); if (cleanup) { cleanup(); uploads.delete(node); } });
+    }
+  };
 }());

@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 use \TinyCat\Core\Updates\Manager;
 
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $passed = 0;
 $failed = 0;
@@ -77,7 +77,7 @@ $test('managed update paths reject protected and traversal targets', static func
 
 $test('manifest rejects case collisions and write-delete overlap', static function () use ($invoke, $expectFailure): void {
     $base = [
-        'version' => '1.0.5',
+        'release_version' => '1.0.5',
         'minimum_version' => '1.0.4',
         'minimum_php' => '8.4.0',
         'package' => 'tinycat-1.0.5.zip',
@@ -101,6 +101,21 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
     $deleteCollision = $base;
     $deleteCollision['delete'] = ['Public/old.php', 'public/OLD.php'];
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $deleteCollision));
+});
+
+$test('published releases remain readable after raising the update floor', static function () use ($invoke, $expect, $expectFailure): void {
+    $manifest = [
+        'version' => '6.0.8', 'minimum_version' => '6.0.7', 'minimum_php' => '8.4.0',
+        'kind' => 'update', 'package' => 'tinycat-6.0.8.zip', 'sha256' => str_repeat('a', 64), 'size' => 1024,
+        'files' => ['App/distribution.json' => str_repeat('b', 64)], 'delete' => [], 'migrations' => [],
+        'distribution' => ['format' => 3, 'product' => 'fixture.runtime', 'framework' => \TinyCat\Core\Runtime\Framework::CAPABILITIES,
+            'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => [], 'schemaOwners' => [], 'legacy' => false],
+    ];
+    $expect($invoke('validateManifest', $manifest)['version'] === '6.0.8', 'The signed reader bridge is readable from its successor.');
+    $future = $manifest; $future['version'] = '999.0.0'; $future['package'] = 'tinycat-999.0.0.zip';
+    $expectFailure(static fn (): mixed => $invoke('validateManifest', $future));
+    $archived = $manifest; $archived['distribution']['format'] = 4;
+    $expectFailure(static fn (): mixed => $invoke('validateManifest', $archived));
 });
 
 $test('file backups exclude unchanged files from a complete release package', static function () use ($invoke, $expect): void {
@@ -205,9 +220,10 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $expect(\TinyCat\Core\Updates\MigrationRegistry::hasPending(['test_001' => $checksum]));
 
         \TinyCat\Core\Updates\MigrationRegistry::ensure();
-        \TinyCat\Database\Connection::insert('schema_migrations', [
+        \TinyCat\Database\Connection::insert('migrations', [
+            'kind' => 'global', 'stream' => 'tinycat',
             'migration' => 'test_001',
-            'version' => '1.0.5',
+            'release_version' => '1.0.5',
             'checksum' => $checksum,
             'applied_at' => \TinyCat\Support\Dates::dateDb(),
         ]);
@@ -221,13 +237,14 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
         \TinyCat\Core\Updates\MigrationRegistry::ensure();
-        \TinyCat\Database\Connection::insert('schema_migrations', [
+        \TinyCat\Database\Connection::insert('migrations', [
+            'kind' => 'global', 'stream' => 'tinycat',
             'migration' => 'test_001',
-            'version' => '1.0.5',
+            'release_version' => '1.0.5',
             'checksum' => str_repeat('a', 64),
             'applied_at' => \TinyCat\Support\Dates::dateDb(),
         ]);
-        $expect((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM schema_migrations') === 1);
+        $expect((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM migrations') === 1);
     });
 
     $test('outdated migration registry is rejected by the major baseline', static function () use ($expectFailure): void {

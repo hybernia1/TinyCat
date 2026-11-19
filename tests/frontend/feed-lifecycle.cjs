@@ -4,7 +4,7 @@ const feed = { id: "feed", dataset: {}, isConnected: true, children: [] };
 const section = { matches: () => true, querySelector: () => feed, querySelectorAll: () => [], appendChild() {} };
 const T = { dom: { find: (_, scope) => scope === section ? feed : null, all: () => [], element: () => ({}) },
   api: { unwrap: response => response.data }, ui: { text: () => "", pagination: () => ({}) }, lifecycle: { register() {}, hydrate() {}, dispose() {} },
-  content: { replaceChildren() {}, remove() {} }, navigation: { compact: url => url.pathname + url.search }, i18n: {}, notifications: {} };
+  content: { replaceChildren() {}, remove() {} }, components: { render: () => ({}) }, navigation: { compact: url => url.pathname + url.search }, i18n: {}, notifications: {} };
 const window = { TinyCat: T, location: new URL("https://tinycat.test/"), clearTimeout() {} };
 const context = vm.createContext({ window, document: {}, URL, AbortController });
 for (const file of ["assets/core/request-lifecycle.js", "App/Modules/Social/assets/status/controller.js", "App/Modules/Social/assets/status/feed-loader.js"]) vm.runInContext(fs.readFileSync(path.join(__dirname, "../../", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context);

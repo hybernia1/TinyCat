@@ -10,7 +10,7 @@ if (preg_match('~^/assets/[A-Za-z0-9_./-]+\.(?:js|css|svg|woff2?)$~D', $path)) {
     if ($assetPath !== false && $assetRoot !== false && str_starts_with($assetPath, $assetRoot . DIRECTORY_SEPARATOR) && is_file($assetPath)) { return false; }
 }
 define('TINYCAT', true);
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 if ($path === '/fixture-core-maintenance') { TinyCat\Core\Runtime\Errors::respond(503); exit; }
 // Match Laragon's public cache-asset rewrite for changed module selections.
 if (preg_match('~^/cache/assets/([A-Za-z0-9._-]+\.(css|js))$~D', $path, $asset)) {

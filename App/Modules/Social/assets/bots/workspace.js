@@ -1,3 +1,4 @@
+// @component-owned: structure is declared in owner catalogs.
 import "../../../../../assets/ui/content-updates.js";
 import "../../../../../assets/ui/list-navigation.js";
 import "../../../../../assets/core/dom.js";
@@ -6,7 +7,7 @@ import "../../../../../assets/ui/component-builders.js";
 import "../../../../../assets/ui/tabs.js";
 (function () {
   "use strict";
-  var T = window.TinyCat, U = T.ui, e = T.dom.element, states = new WeakMap();
+  var T = window.TinyCat, U = T.ui, states = new WeakMap();
   function owner() { return document.querySelector("[data-bot-workspace-id]"); }
   function request(state, url) {
     var controller = new AbortController();
@@ -80,7 +81,7 @@ import "../../../../../assets/ui/tabs.js";
       T.lifecycle.hydrate(root);
     }).catch(function (error) {
       if (error.name !== "AbortError" && state.dialog.isConnected && generation === root.dataset.apiGeneration && url === (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) {
-        var retry = U.button("common.refresh");
+        var retry = T.components.render("bots/workspace-retry", {});
         retry.addEventListener("click", function () { load(state, name, true); });
         T.content.replaceChildren(root, retry); delete state.pagers[name];
         if (state.active === name) { footer(state); }
@@ -103,22 +104,13 @@ import "../../../../../assets/ui/tabs.js";
   T.botDetail = {
     modal: function (url, response, id) {
       var data = response.data, botId = Number(data.item.id);
-      var form = U.form("/api/bots/accounts/" + botId, "PATCH");
-      form.dataset.ajaxTarget = "#bot-detail-account";
-      var fields = T.components.render("bots/account-fields", data);
-      form.appendChild(fields);
-      form.appendChild(U.button("common.save", { type: "submit", "class": "btn btn-primary" }));
+      var form = U.form("/api/bots/accounts/" + botId, "PATCH", T.components.render("bots/workspace-form", { resource: data }));
       var dialog = U.adminDialog(id, data.item.username, form);
       dialog.dataset.botWorkspaceId = String(botId);
-      var content = e("div", { "class": "stack stack-gap-16" });
       var status = U.accountDialogTitle(dialog, data.item);
-      var summary = e("div", { "class": "grid sm:grid-2 md:grid-4" });
-      var sources = e("div", { id: "bot-detail-sources-list", "class": "stack" });
-      var posts = e("div", { id: "bot-detail-posts-list", "class": "stack" });
-      sources.dataset.listUrl = "/api/bots/sources?bot=" + botId;
-      posts.dataset.botPostsUrl = postUrl(botId, url.searchParams);
-      var history = e("div", { id: "bot-detail-runs-list", "class": "stack" });
-      history.dataset.listUrl = "/api/bots/accounts/" + botId + "/runs";
+      var summary = T.components.render("bots/workspace-account", {});
+      var lists = T.components.render("bots/workspace-lists", { sources_url: "/api/bots/sources?bot=" + botId, runs_url: "/api/bots/accounts/" + botId + "/runs", posts_url: postUrl(botId, url.searchParams) });
+      var sources = lists.querySelector("#bot-detail-sources-list"), posts = lists.querySelector("#bot-detail-posts-list"), history = lists.querySelector("#bot-detail-runs-list");
       var initial = url.searchParams.get("tab") || (url.searchParams.has("source") || url.searchParams.has("publication") || url.searchParams.has("q") ? "posts" : "account");
       var layout = U.tabbedContent(id, [
         { name: "account", label: "bots.detail_account", icon: "settings" },
@@ -128,7 +120,7 @@ import "../../../../../assets/ui/tabs.js";
       ], initial, data.item.username);
       initial = layout.initial;
       var panels = layout.panels, tabButtons = layout.buttons;
-      content.appendChild(layout.content);
+      var content = T.components.render("bots/workspace", { tabs: layout.content });
       panels.account.id = "bot-detail-account";
       tabButtons.account.setAttribute("aria-controls", panels.account.id);
       panels.account.append(summary, form); panels.sources.appendChild(sources); panels.history.appendChild(history); panels.posts.appendChild(posts);
@@ -182,19 +174,6 @@ import "../../../../../assets/ui/tabs.js";
       T.filters.remove("bot-detail-posts-filter-modal");
       T.filters.remove("bot-detail-runs-filter-modal");
       states.delete(root);
-    },
-    hydrate: function (root) {
-      Array.from((root || document).querySelectorAll("[data-bot-detail-open]")).forEach(function (marker) {
-        if (marker.dataset.ready === "true") { return; }
-        marker.dataset.ready = "true";
-        var id = Number(marker.dataset.botDetailOpen), query = new URLSearchParams(marker.dataset.botDetailQuery || "");
-        query.delete("view");
-        query.set("panel", "detail");
-        var url = new URL("/api/bots/accounts/" + id + "?" + query, window.location.href);
-        T.dialog.openResource("bot-detail-modal", url.pathname + url.search, {
-          baseUrl: "/admin/bots/accounts", current: function () { return marker.isConnected; }
-        }).catch(failed);
-      });
     }
   };
 }());

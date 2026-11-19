@@ -1,6 +1,6 @@
 # Jednotná pravidla textu příspěvků
 
-Tělo nového i upravovaného sociálního příspěvku připravuje `Social/Content/PostCreation::fromText()`.
+Tělo nového i upravovaného sociálního příspěvku připravuje `Social/Posts/PostCreation::fromText()`.
 Ruční zadání, API, náhled bota a import používají stejný `Core/Text/PostText` před
 omezením délky a rozpoznáním odkazů, zmínek a hashtagů. Pravidla se nevztahují
 na komentáře, životopisy ani jiná textová pole.
@@ -28,6 +28,18 @@ RSS/Atom/JSON parser navíc odstraňuje HTML odkazy s přesným popiskem výzvy
 stejná pravidla pro výslednou anotaci. Dosavadní pravidlo pro odkazy v anotaci
 zůstává: obecné URL nahradí samostatný odkaz článku, podporovaná videa zůstávají.
 Toto pravidlo parseru se nepoužívá na ručně napsaná těla příspěvků.
+
+## Limity ručního zadání a importu
+
+Social deklaruje limit těla v `PostCreation::rules()`. Ruční vytvoření a editace
+validují původní vstup společným validátorem před přetypováním a přípravou textu.
+Neplatný typ nebo více než 2000 Unicode znaků vrátí HTTP 422 s chybou pole `body`;
+editor zachová celý koncept. Prázdné tělo je přípustné při přiloženém obrázku.
+Metadata editoru odvozuje `Validator::constraints()` ze stejných pravidel.
+
+Feedový import používá `PostCreation::fromText()` a zachovává dosavadní zkrácení
+anotace na limit vlastníka před odvozením vztahů. Komentáře mají vlastní pravidla
+v `Interactions::rules()` a při překročení limitu chybu pole `comment`.
 
 ## Jednorázová oprava databáze
 

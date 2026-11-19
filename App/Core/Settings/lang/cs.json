@@ -8,7 +8,6 @@
       "security": "Bezpečnost",
       "site": "Web",
       "performance": "Výkon",
-      "content_images": "Obrázky příspěvků",
       "email": "Email",
       "analytics": "Analytika"
     },
@@ -53,6 +52,7 @@
     "image_remove": "Odebrat obrázek"
   },
   "install": {
+    "purpose_migrations": "Historie migrací, jejich pořadí a kontrolní součty.",
     "language_label": "Čeština",
     "title": "Instalace TinyCat CMS",
     "step_language": "Jazyk",
@@ -70,7 +70,7 @@
     "db_charset": "Charset",
     "db_test": "Otestovat a pokračovat",
     "tables_title": "Vytvoření tabulek",
-    "tables_intro": "TinyCat vytvoří základní tabulky pro účty, obsah, notifikace, moderaci, rate limity, obnovu hesla a nastavení.",
+    "tables_intro": "TinyCat vytvoří tabulky core a vybraných modulů.",
     "create_tables": "Vytvořit tabulky",
     "table_name": "Tabulka",
     "table_purpose": "Účel",
@@ -79,18 +79,7 @@
     "state_missing": "Chybí",
     "state_exists": "Existuje",
     "purpose_users": "Admin účty a uživatelé.",
-    "purpose_content": "Veřejné příspěvky uživatelů.",
-    "purpose_content_images": "Komprimované obrázky připojené k příspěvkům.",
-    "purpose_terms": "Termy pro štítky.",
-    "purpose_content_tags": "Vazby mezi příspěvky a termy.",
-    "purpose_links": "Unikátní metadata uložených odkazů.",
-    "purpose_content_links": "Vazby mezi příspěvky a odkazy.",
-    "purpose_content_likes": "Lajky u příspěvků.",
-    "purpose_content_comments": "Vnořené komentáře k příspěvkům.",
-    "purpose_comment_likes": "Lajky u komentářů.",
-    "purpose_user_followers": "Sledování profilů uživateli.",
-    "purpose_notifications": "Upozornění na lajky, komentáře, označení a sledování.",
-    "purpose_content_reports": "Uživatelská nahlášení pro moderaci.",
+    "purpose_notifications": "Oznámení účtů s předměty spravovanými jejich vlastníky.",
     "purpose_ip_action_limits": "Počítadla limitů podle účtu nebo IP adresy pro vybrané akce.",
     "purpose_password_reset_tokens": "Krátkodobé tokeny obnovy hesla posílané emailem.",
     "purpose_settings": "Databázová nastavení aplikace.",
@@ -116,9 +105,6 @@
       "password_mismatch": "Hesla se neshodují.",
       "config_write_failed": "Nepodařilo se zapsat config.php.",
       "db_failed": "Připojení k databázi selhalo: {message}"
-    },
-    "purpose_bot_sources": "Pravidla publikování RSS a Atom zdrojů pro bot účty.",
-    "purpose_bot_feed_history": "Poslední hashe položek feedu zabraňující duplicitním příspěvkům botů.",
-    "purpose_bot_source_runs": "Úsporná diagnostická historie kontrol a importů botích zdrojů."
+    }
   }
 }

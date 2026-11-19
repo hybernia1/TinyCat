@@ -25,7 +25,7 @@ final class Mentions
                 $users[$id] = null;
             }
 
-            foreach (\TinyCat\Database\Queries::db_select('SELECT id, username FROM users')
+            foreach (\TinyCat\Database\Query::select('SELECT id, username FROM users')
                 ->where('status = ?', 'active')
                 ->whereIn('id', $missing)
                 ->all() as $user) {
@@ -56,7 +56,7 @@ final class Mentions
     public static function status_author_url_mention(string $url): string
     {
         $path = \TinyCat\Social\Content\Links::status_internal_url_path($url);
-        $path = \TinyCat\Social\Content\Integration::unlocalizedPath($path);
+        $path = \TinyCat\Http\LocaleRouting::split($path)['path'];
 
         if ($path === '' || preg_match('~^/author/([0-9]+)/?$~', $path, $match) !== 1) {
             return '';
@@ -114,7 +114,7 @@ final class Mentions
         $map = [];
 
         if ($handles !== []) {
-            foreach (\TinyCat\Database\Queries::db_select('SELECT id, username FROM users')
+            foreach (\TinyCat\Database\Query::select('SELECT id, username FROM users')
                 ->where('status = ?', 'active')
                 ->whereIn('username', array_values($handles))
                 ->all() as $user) {

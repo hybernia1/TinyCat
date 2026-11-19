@@ -35,7 +35,7 @@ use TinyCat\Database\Connection;
 
 define('TINYCAT', true);
 $workspace = $argv[2];
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(locale: static fn (): string => 'en'));
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($workspace, [
 ])->catalog);
@@ -125,7 +125,7 @@ try {
     clearstatcache(true, $file);
     $assert($status === 200 && !is_file($file) && (int) Connection::value('SELECT avatar_exists FROM users WHERE id = 1') === 0, 'Removal preserves generated identity and clears the physical upload');
     $assert((glob($workspace . '/uploads/avatars/.avatar-*') ?: []) === [], 'Successful and failed mutations leave no staged avatar files');
-    foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Profiles\\Avatar', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration', 'TinyCat\\Social\\Moderation\\Restrictions', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Runtime\\Errors'] as $class) { $assert(!class_exists($class, false), 'Account resources did not load ' . $class); }
+    foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration', 'TinyCat\\Social\\Moderation\\Restrictions', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Runtime\\Errors'] as $class) { $assert(!class_exists($class, false), 'Account resources did not load ' . $class); }
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     Connection::set(new PDO('sqlite::memory:')); $pdo = null;

@@ -28,7 +28,7 @@ final class Repository
         $last = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($last, $page));
         return [
-            'runs' => $selection->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Core\Tasks\Sorting::LISTS['runs'], $filters))->limit($perPage, ($page - 1) * $perPage)->all(),
+            'runs' => $selection->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Core\Tasks\Sorting::runs(), $filters))->limit($perPage, ($page - 1) * $perPage)->all(),
             'pagination' => ['page' => $page, 'last_page' => $last, 'total' => $total, 'per_page' => $perPage, 'from' => $total > 0 ? ($page - 1) * $perPage + 1 : 0, 'to' => min($total, $page * $perPage)],
         ];
     }

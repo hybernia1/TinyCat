@@ -1,8 +1,33 @@
 <?php
 declare(strict_types=1);
 define('TINYCAT', true);
-require __DIR__ . '/../../../App/autoload.php';
+require __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 $mode = $argv[1] ?? '--all';
+if (in_array($mode, ['--notifications-core', '--notifications-blog'], true)) {
+    $root = dirname(__DIR__, 3);
+    $selection = $mode === '--notifications-blog' ? ['tinycat.blog' => 'App/Modules/Blog/module.json'] : [];
+    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, $selection)->catalog);
+    $paths = \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries('/notifications'));
+    echo json_encode(array_map(static fn (string $path): array => ['path' => $path, 'source' => \TinyCat\Support\AssetGraph::javascript([$path])], $paths), JSON_THROW_ON_ERROR);
+    exit;
+}
+
+if ($mode === '--health-action') {
+    echo json_encode(\TinyCat\Support\Components::render('ui/api-action', ['url' => '/api/site-health/checks', 'method' => 'POST', 'label' => 'Run check']), JSON_THROW_ON_ERROR);
+    exit;
+}
+if ($mode === '--installation') {
+    \TinyCat\Support\Localization::locale('cs');
+    $steps = \TinyCat\Core\Installation\Pages::prepare('tables', [], []);
+    $language = \TinyCat\Core\Installation\Pages::prepare('language', \TinyCat\Core\Installation\Installer::languages(), ['locale' => 'cs']);
+    $database = \TinyCat\Core\Installation\Pages::prepare('db', [], ['database' => ['host' => 'localhost', 'name' => 'fixture', 'user' => 'fixture', 'charset' => 'utf8mb4']]);
+    $html = \TinyCat\Support\Components::render('installation/steps', $steps)
+        . \TinyCat\Support\Components::render('installation/language', $language)
+        . \TinyCat\Support\Components::render('installation/database', $database);
+    session_destroy();
+    echo json_encode($html, JSON_THROW_ON_ERROR);
+    exit;
+}
 if ($mode === '--locale-routes') { echo json_encode(\TinyCat\Http\LocaleRouting::patterns(), JSON_THROW_ON_ERROR); exit; }
 if ($mode === '--localized-urls') {
     \TinyCat\Http\LocaleRouting::prepare('/pl/');
@@ -28,10 +53,18 @@ if ($mode === '--styles') {
     echo json_encode(\TinyCat\Support\AssetGraph::stylesheet(array_values(array_unique($styles))), JSON_THROW_ON_ERROR);
     exit;
 }
-$roots = $mode === '--core' ? ['assets/ui/component-builders.js', 'assets/ui/dialogs.js'] : ($mode === '--validation' ? ['assets/ui/ajax-bindings.js', 'App/Modules/Social/assets/status/form-actions.js', 'App/Modules/Social/assets/moderation/controller.js', 'App/Core/Settings/assets/index.js', 'App/Modules/Social/assets/users/index.js', 'App/Modules/Social/assets/bots/index.js', 'App/Core/Updates/assets/index.js'] : []);
+$roots = $mode === '--core' ? ['assets/ui/component-builders.js', 'assets/ui/dialogs.js', 'assets/core/page-navigation.js'] : ($mode === '--validation' ? ['assets/ui/ajax-bindings.js', 'App/Modules/Social/assets/status/form-actions.js', 'App/Modules/Social/assets/moderation/controller.js', 'App/Core/Settings/assets/index.js', 'App/Modules/Social/assets/users/index.js', 'App/Modules/Social/assets/bots/index.js', 'App/Core/Updates/assets/index.js'] : []);
+if ($mode === '--blog-settings') {
+    $catalog = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.blog' => 'App/Modules/Blog/module.json'])->catalog;
+    \TinyCat\Core\Modules\Resources::configure($catalog);
+    echo json_encode(['presentation' => \TinyCat\Core\Settings\Sections::presentation(), ...\TinyCat\Core\Settings\Resource::editor()], JSON_THROW_ON_ERROR);
+    exit;
+}
 if ($mode === '--validation') {
+    $roots[] = 'assets/ui/admin-resources.js';
+    $roots[] = 'App/Modules/Social/assets/users/public.js';
+    $roots[] = 'assets/ui/form-constraints.js';
     $roots[] = 'App/Core/Identity/assets/admin.js';
-    foreach (\TinyCat\Support\ClientAssets::entries('/admin') as $entry) { if (str_ends_with($entry, '/settings-presentation.js')) { $roots[] = $entry; } }
 }
 if ($mode === '--all') {
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {

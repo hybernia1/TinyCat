@@ -17,7 +17,6 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
         "migrations": "migrations",
         "assets": "assets/module.json",
         "components": "assets/components.json",
@@ -63,7 +62,8 @@
       "resources": {
         "translations": "lang",
         "assets": "assets/module.json",
-        "migrations": "migrations"
+        "migrations": "migrations",
+        "components": "assets/components.json"
       }
     }
   },
@@ -80,12 +80,11 @@
         "tinycat.settings"
       ],
       "providers": {
-        "routes": "TinyCat\\Core\\Installation\\ServiceProvider",
-        "services": "TinyCat\\Core\\Installation\\ServiceProvider"
+        "routes": "TinyCat\\Core\\Installation\\ServiceProvider"
       },
       "resources": {
         "assets": "assets/module.json",
-        "templates": "templates"
+        "components": "assets/components.json"
       }
     }
   },
@@ -129,7 +128,6 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
         "assets": "assets/module.json",
         "components": "assets/components.json",
         "migrations": "migrations"
@@ -153,7 +151,6 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
         "assets": "assets/module.json",
         "components": "assets/components.json",
         "entrypoints": "entrypoints",
@@ -179,7 +176,6 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
         "assets": "assets/module.json",
         "components": "assets/components.json",
         "componentExtensions": "assets/component-extensions.json"
@@ -200,8 +196,8 @@
       },
       "resources": {
         "translations": "lang",
-        "templates": "templates",
-        "assets": "assets/module.json"
+        "assets": "assets/module.json",
+        "components": "assets/components.json"
       }
     }
   }

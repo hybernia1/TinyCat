@@ -15,18 +15,27 @@ final class CompiledAssets
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return []; }
         $file = Paths::basePath('assets/build/manifest.json');
         self::$manifest ??= is_file($file) ? json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) : [];
-        if (isset(self::$manifest['selection'])) {
-            if (class_exists(\TinyCat\Core\Modules\Resources::class)) {
-                if (self::$manifest['selection'] !== \TinyCat\Core\Modules\Resources::fingerprint()) { return []; }
-            } elseif (is_file(Paths::basePath('storage/deployment.json'))) { return []; }
-        }
-        if (!isset(self::$manifest['selection']) && is_file(Paths::basePath('storage/deployment.json'))) { return []; }
-        return self::$manifest ?? [];
+        $manifest = self::$manifest ?? [];
+        return CompiledTranslations::matchesSelection($manifest) ? $manifest : [];
     }
 
     public static function asset(string $path, bool $minify): ?string
     {
         return self::manifest()['assets'][$path][$minify ? 'min' : 'raw'] ?? null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function components(): ?array
+    {
+        $manifest = self::manifest();
+        $name = $manifest['server_components'] ?? null;
+        if ($name === null) { return null; }
+        // Package upgrades can change definitions without changing selected module IDs.
+        $packages = Paths::basePath('App/module-packages.json');
+        $revision = is_file($packages) ? hash_file('sha256', $packages) : null;
+        if ($revision === false || ($manifest['server_components_packages'] ?? null) !== $revision) { return null; }
+        if (!is_string($name) || preg_match('/^components\.[a-f0-9]{24}\.php$/D', $name) !== 1) { throw new \RuntimeException('Invalid compiled component path.'); }
+        return require Paths::basePath('App/Core/Support/compiled/' . $name);
     }
 
     /** @return array{scripts: list<string>, style: string}|null */

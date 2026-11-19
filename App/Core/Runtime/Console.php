@@ -27,7 +27,7 @@ final class Console
             }
             if ($command === 'rescue') {
                 $file = $root . '/storage/updates/console.php';
-                $bootstrap = "<?php\ndeclare(strict_types=1);\nif (PHP_SAPI !== 'cli') { http_response_code(403); exit; }\ndefine('TINYCAT', true);\nrequire " . var_export($root . '/App/autoload.php', true) . ";\nexit(\\TinyCat\\Core\\Runtime\\Console::run(\$argv));\n";
+                $bootstrap = "<?php\ndeclare(strict_types=1);\nif (PHP_SAPI !== 'cli') { http_response_code(403); exit; }\ndefine('TINYCAT', true);\nrequire " . var_export($root . '/App/Core/Runtime/autoload.php', true) . ";\nexit(\\TinyCat\\Core\\Runtime\\Console::run(\$argv));\n";
                 if (!\TinyCat\Support\Storage::write($file, $bootstrap)) { throw new \RuntimeException('Cannot prepare the private rescue launcher.'); }
                 $result = ['launcher' => 'storage/updates/console.php'];
             }
@@ -77,6 +77,7 @@ final class Console
                 } elseif (in_array($command, ['activate', 'deactivate', 'upgrade'], true)) {
                     $state = Deployment::read($root);
                     $active = $state['active'] ?? $plan['active'];
+                    $plan = Distribution::withDiscovered($root, $plan, array_slice($arguments, 2));
                     $ids = \TinyCat\Core\Modules\FeatureSelection::expand($plan, array_slice($arguments, 2), $command === 'activate');
                     foreach ($ids as $id) { if (!isset($plan['selection'][$id])) { throw new \InvalidArgumentException('Module is not available in this distribution.'); } }
                     if ($command !== 'upgrade' && $ids === []) { throw new \InvalidArgumentException('Specify at least one module ID.'); }

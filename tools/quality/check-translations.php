@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__, 2);
 define('TINYCAT', true);
-require_once $root . '/App/autoload.php';
+require_once $root . '/App/Core/Runtime/autoload.php';
 try {
     $validate = require __DIR__ . '/translation-catalogs.php';
     $catalogs = $validate($root);

@@ -8,7 +8,6 @@
       "security": "Sécurité",
       "site": "Site",
       "performance": "Performance",
-      "content_images": "Publier des images",
       "email": "E-mail",
       "analytics": "Analytique"
     },
@@ -53,6 +52,7 @@
     "image_remove": "Supprimer l'image"
   },
   "install": {
+    "purpose_migrations": "Historique des migrations, ordre et sommes de contrôle.",
     "language_label": "Français",
     "title": "Installer le système de gestion de contenu TinyCat",
     "step_language": "Langue",
@@ -70,7 +70,7 @@
     "db_charset": "Jeu de caractères",
     "db_test": "Testez et continuez",
     "tables_title": "Créer des tableaux",
-    "tables_intro": "TinyCat créera des tableaux de base pour les comptes, le contenu, les notifications, la modération, les limites de débit, la récupération de mot de passe et les paramètres.",
+    "tables_intro": "TinyCat créera les tables du noyau et des modules sélectionnés.",
     "create_tables": "Créer des tableaux",
     "table_name": "Tableau",
     "table_purpose": "But",
@@ -79,18 +79,7 @@
     "state_missing": "Manquant",
     "state_exists": "Existe",
     "purpose_users": "Comptes administrateurs et utilisateurs.",
-    "purpose_content": "Messages d'utilisateurs publics.",
-    "purpose_content_images": "Images compressées jointes aux publications.",
-    "purpose_terms": "Termes pour les balises.",
-    "purpose_content_tags": "Relations entre les postes et les termes.",
-    "purpose_links": "Métadonnées de lien stockées uniques.",
-    "purpose_content_links": "Relations entre les articles et les liens.",
-    "purpose_content_likes": "J'aime sur les publications.",
-    "purpose_content_comments": "Commentaires imbriqués sur les publications.",
-    "purpose_comment_likes": "J'aime sur les commentaires.",
-    "purpose_user_followers": "Le profil suit entre les utilisateurs.",
-    "purpose_notifications": "Alertes pour les likes, les commentaires, les mentions et les suivis.",
-    "purpose_content_reports": "Les utilisateurs signalent pour modération.",
+    "purpose_notifications": "Notifications des comptes avec des objets gérés par leurs propriétaires.",
     "purpose_ip_action_limits": "Compteurs de limitation par compte ou adresse IP pour certaines actions.",
     "purpose_password_reset_tokens": "Jetons de réinitialisation de mot de passe de courte durée envoyés par e-mail.",
     "purpose_settings": "Paramètres d'application basés sur une base de données.",
@@ -116,9 +105,6 @@
       "password_mismatch": "Les mots de passe ne correspondent pas.",
       "config_write_failed": "Impossible d'écrire config.php.",
       "db_failed": "Échec de la connexion à la base de données : {message}"
-    },
-    "purpose_bot_sources": "Règles de publication RSS et Atom pour les comptes de robots.",
-    "purpose_bot_feed_history": "Hachages d'éléments de fil récents utilisés pour éviter les publications de robots en double.",
-    "purpose_bot_source_runs": "Historique de diagnostic compact des vérifications et des importations de sources de robots."
+    }
   }
 }

@@ -3,12 +3,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $path = (string) ($argv[1] ?? '/');
 $locale = (string) ($argv[2] ?? 'en');
 \TinyCat\Support\Localization::locale($locale);
-$assets = [];
 if (($argv[3] ?? '') === '--compiled-min') {
     (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['performance.minify_js' => true, 'performance.minify_css' => true]);
 }
@@ -28,16 +27,20 @@ if (($argv[3] ?? '') === '--compiled' || ($argv[3] ?? '') === '--compiled-min') 
     }
     (new ReflectionProperty(\TinyCat\Support\CompiledAssets::class, 'manifest'))->setValue(null, json_decode($compiledFiles['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR));
 }
-foreach (\TinyCat\Support\ClientAssets::scripts($path) as $url) {
-    $file = str_starts_with($url, '/cache/assets/')
-        ? \TinyCat\Support\Cache::file(basename($url), 'assets')
-        : \TinyCat\Support\Paths::basePath((string) parse_url($url, PHP_URL_PATH));
-    $compiled = $compiledFiles[ltrim((string) parse_url($url, PHP_URL_PATH), '/')] ?? null;
-    $assets[] = ['url' => $url, 'source' => $compiled ?? (string) file_get_contents($file)];
-}
-echo json_encode(['locale' => $locale, 'assets' => $assets,
-    'styles' => \TinyCat\Support\ClientAssets::styles($path),
-    'sources' => \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($path)),
-    'catalog' => \TinyCat\Support\ClientAssets::catalog($path, $locale),
-    'definitions' => array_keys(\TinyCat\Support\ClientAssets::definitions($path)),
-], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+// Prepared bundles are virtual files; expected catalogs are derived from sources.
+\TinyCat\Support\Components::withFreshTemplates(static function () use ($path, $locale, $compiledFiles): void {
+    $assets = [];
+    foreach (\TinyCat\Support\ClientAssets::scripts($path) as $url) {
+        $file = str_starts_with($url, '/cache/assets/')
+            ? \TinyCat\Support\Cache::file(basename($url), 'assets')
+            : \TinyCat\Support\Paths::basePath((string) parse_url($url, PHP_URL_PATH));
+        $compiled = $compiledFiles[ltrim((string) parse_url($url, PHP_URL_PATH), '/')] ?? null;
+        $assets[] = ['url' => $url, 'source' => $compiled ?? (string) file_get_contents($file)];
+    }
+    echo json_encode(['locale' => $locale, 'assets' => $assets,
+        'styles' => \TinyCat\Support\ClientAssets::styles($path),
+        'sources' => \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($path)),
+        'catalog' => \TinyCat\Support\ClientAssets::catalog($path, $locale),
+        'definitions' => array_keys(\TinyCat\Support\ClientAssets::definitions($path)),
+    ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+});

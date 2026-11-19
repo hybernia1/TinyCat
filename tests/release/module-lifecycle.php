@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 // Real signed products and fresh PHP workers; the developer's DB/config/storage are never targets.
 $source = dirname(__DIR__, 2);
+require_once $source . '/tests/support/execution.php';
+require_once $source . '/App/Core/Support/Version.php';
+[$major, $minor, $patch] = array_map('intval', explode('.', \TinyCat\Support\Version::MINIMUM_UPDATE));
+$versions = array_map(static fn (int $offset): string => $major . '.' . $minor . '.' . ($patch + $offset), range(0, 3));
 $workspace = sys_get_temp_dir() . '/tinycat-distribution-' . bin2hex(random_bytes(10));
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
@@ -12,11 +16,15 @@ $copy = static function (string $from, string $to) use (&$copy): void {
     foreach (scandir($from) ?: [] as $name) { if ($name !== '.' && $name !== '..' && !is_link($from . '/' . $name)) { $copy($from . '/' . $name, $to . '/' . $name); } }
 };
 $run = static function (array $command, string $directory, string $input = '', array $environment = []): array {
-    $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $directory, array_merge(getenv(), $environment));
-    if (!is_resource($process)) { throw new RuntimeException('Cannot start distribution fixture worker.'); }
-    fwrite($pipes[0], $input); fclose($pipes[0]);
-    $output = stream_get_contents($pipes[1]); $errors = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
-    return [proc_close($process), (string) $output, (string) $errors];
+    $label = basename((string) $command[1]);
+    if (in_array($label, ['Console.php', 'console.php'], true) && preg_match('/^[a-z][a-z-]*$/D', (string) ($command[2] ?? '')) === 1) { $label .= '/' . $command[2]; }
+    return \TinyCatTests\Execution::measure('worker/' . $label, static function () use ($command, $directory, $input, $environment): array {
+        $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $directory, array_merge(getenv(), $environment));
+        if (!is_resource($process)) { throw new RuntimeException('Cannot start distribution fixture worker.'); }
+        fwrite($pipes[0], $input); fclose($pipes[0]);
+        $output = stream_get_contents($pipes[1]); $errors = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
+        return [proc_close($process), (string) $output, (string) $errors];
+    });
 };
 $http = null;
 try {
@@ -55,15 +63,18 @@ try {
     file_put_contents($candidate . '/App/Modules/Blog/selection.php', '<?php return ' . var_export($selection, true) . ';');
     $pair = sodium_crypto_sign_keypair(); $secret = sodium_crypto_sign_secretkey($pair); $public = sodium_crypto_sign_publickey($pair);
     $key = $workspace . '/signing.key'; file_put_contents($key, base64_encode($secret));
-    $build = static function (string $version, string $output) use ($run, $candidate, $key, $base, $assert): void {
-        [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-update.php', '--version=' . $version, '--assembly=blog', '--active=' . implode(',', $base), '--allow-dirty', '--both', '--output=' . $output, '--key=' . $key], $candidate);
+    $build = static function (string $version, string $output, bool $fresh = false) use ($run, $candidate, $key, $base, $assert): void {
+        // Only these variants are consumed: the initial installation and three successive updates.
+        $command = [PHP_BINARY, $candidate . '/tools/release/build-update.php', '--version=' . $version, '--assembly=blog', '--active=' . implode(',', $base), '--allow-dirty', '--output=' . $output . ($fresh ? '/install' : '/update'), '--key=' . $key];
+        if ($fresh) { $command[] = '--fresh-install'; }
+        [$exit, $text, $error] = $run($command, $candidate);
         $assert($exit === 0, 'Signed Blog build: ' . $text . $error);
     };
     $initialVersionFile = $candidate . '/App/Core/Support/Version.php';
-    file_put_contents($initialVersionFile, preg_replace("/CURRENT = '[^']+'/", "CURRENT = '6.0.0-dev.10'", (string) file_get_contents($initialVersionFile)));
-    $build('6.0.0-dev.10', $workspace . '/v1');
+    file_put_contents($initialVersionFile, preg_replace("/CURRENT = '[^']+'/", "CURRENT = '" . $versions[0] . "'", (string) file_get_contents($initialVersionFile)));
+    $build($versions[0], $workspace . '/v1', true);
     $installManifest = json_decode((string) file_get_contents($workspace . '/v1/install/tinycat-blog-install.json'), true, 512, JSON_THROW_ON_ERROR);
-    $assert($installManifest['distribution']['product'] === 'tinycat.blog' && $installManifest['minimum_version'] === '6.0.0-dev.9.2', 'Signed identity prevents old updaters from applying module packages');
+    $assert($installManifest['distribution']['product'] === 'tinycat.blog' && $installManifest['minimum_version'] === $versions[0], 'Signed identity prevents old updaters from applying module packages');
     $assert($installManifest['migrations'] === [] && !isset($installManifest['files']['App/Modules/Social/src/Posts/Registration.php']) && isset($installManifest['files']['App/Core/Settings/Store.php']) && isset($installManifest['files']['App/Modules/Notes/src/Module.php']), 'Blog package contains only available product owners, including inactive modules');
     $assert(isset($installManifest['files']['scheduled-tasks.php']) && isset($installManifest['files']['App/Console.php']), 'Blog has a working production CLI instead of a missing social scheduler');
     $root = $workspace . '/installation'; mkdir($root, 0700);
@@ -124,8 +135,8 @@ try {
     // Update inactive data, then activate and update again with the old provider already cached in PHP.
     $makeModule('notes', 2, ['tinycat.accounts']);
     $versionFile = $candidate . '/App/Core/Support/Version.php'; $versionSource = (string) file_get_contents($versionFile);
-    file_put_contents($versionFile, str_replace("CURRENT = '6.0.0-dev.10'", "CURRENT = '6.0.0-dev.11'", $versionSource));
-    $build('6.0.0-dev.11', $workspace . '/v2');
+    file_put_contents($versionFile, str_replace("CURRENT = '" . $versions[0] . "'", "CURRENT = '" . $versions[1] . "'", $versionSource));
+    $build($versions[1], $workspace . '/v2');
     $update = static function (string $directory) use ($console): array {
         $manifest = json_decode((string) file_get_contents($directory . '/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
         return $console(['update', $directory . '/tinycat-blog-update.json', $directory . '/tinycat-blog-update.sig', $directory . '/' . $manifest['package']]);
@@ -135,8 +146,8 @@ try {
     $assert((int) $pdo->query("SELECT version FROM module_installations WHERE module_id = 'fixture.notes'")->fetchColumn() === 2 && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Inactive module migrates without losing data');
     [$exit, $text, $error] = $console(['activate', 'fixture.notes']); $assert($exit === 0, 'Updated inactive module can be activated: ' . $text . $error);
     $makeModule('notes', 3, ['tinycat.accounts']);
-    file_put_contents($versionFile, str_replace("CURRENT = '6.0.0-dev.10'", "CURRENT = '6.0.0-dev.12'", $versionSource));
-    $build('6.0.0-dev.12', $workspace . '/v3');
+    file_put_contents($versionFile, str_replace("CURRENT = '" . $versions[0] . "'", "CURRENT = '" . $versions[2] . "'", $versionSource));
+    $build($versions[2], $workspace . '/v3');
     $manifest = json_decode((string) file_get_contents($workspace . '/v3/update/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/update-worker.php', $root, $workspace . '/v3/update/tinycat-blog-update.json', $workspace . '/v3/update/tinycat-blog-update.sig', $workspace . '/v3/update/' . $manifest['package']], $root);
     $assert($exit === 0 && (json_decode($text, true)['cached_provider_version'] ?? null) === 2, 'Update uses signed migrations while the old PHP provider is cached: ' . $text . $error);
@@ -151,8 +162,8 @@ try {
     $stateBytes = file_get_contents($root . '/storage/deployment.json');
     $makeModule('notes', 4, ['tinycat.accounts']);
     file_put_contents($candidate . '/App/Console.php', "\n// New managed CLI entry for recovery regression.\n", FILE_APPEND);
-    file_put_contents($versionFile, str_replace("CURRENT = '6.0.0-dev.10'", "CURRENT = '6.0.0-dev.13'", $versionSource));
-    $build('6.0.0-dev.13', $workspace . '/v4');
+    file_put_contents($versionFile, str_replace("CURRENT = '" . $versions[0] . "'", "CURRENT = '" . $versions[3] . "'", $versionSource));
+    $build($versions[3], $workspace . '/v4');
     if (PHP_OS_FAMILY === 'Windows') {
         $replacement = json_decode((string) file_get_contents($workspace . '/v4/update/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
         [$exit, $text, $error] = $run([PHP_BINARY, $root . '/App/Console.php', 'update', $workspace . '/v4/update/tinycat-blog-update.json', $workspace . '/v4/update/tinycat-blog-update.sig', $workspace . '/v4/update/' . $replacement['package']], $root);

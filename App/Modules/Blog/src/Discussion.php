@@ -10,6 +10,13 @@ use TinyCat\Support\{Dates, Localization, Text};
 /** Blog owns discussion authorization and persistence; core supplies rendering. */
 final class Discussion
 {
+    public const int COMMENT_MAX_LENGTH = 2000;
+
+    /** @return array<string, string> */
+    public static function rules(): array { return ['comment' => 'required|string|max:' . self::COMMENT_MAX_LENGTH]; }
+    /** @return array<string, array<string, mixed>> */
+    public static function constraints(): array { return \TinyCat\Http\Validator::constraints(self::rules()); }
+
     public static function initialize(): void { \TinyCat\Core\Security\RateLimitPolicy::retainWindows('tinycat.blog', [60]); }
 
     /** @param array<string, mixed>|null $actor */
@@ -31,16 +38,19 @@ final class Discussion
     public static function resource(int $id, ?array $actor): array
     {
         $target = self::target($id, $actor); $actorId = (int) ($actor['id'] ?? 0);
-        return ['target' => ['owner' => 'tinycat.blog', 'kind' => 'article', 'id' => $id, 'url' => $target->url, 'api_url' => '/api/articles/' . $id], 'capabilities' => ['comment' => $target->interact, 'react' => $target->interact], 'likes_count' => Connection::count('blog_article_likes', ['article_id' => $id]), 'liked' => $actorId > 0 && Connection::find('blog_article_likes', ['article_id' => $id, 'user_id' => $actorId]) !== null, 'items' => \TinyCat\Core\Ui\DiscussionResource::comments(Comments::tree($id, $actorId), $actor, $target), 'viewer' => $actor !== null ? \TinyCat\Core\Identity\Resource::profile($actor) : null];
+        return ['constraints' => self::constraints(), 'target' => ['owner' => 'tinycat.blog', 'kind' => 'article', 'id' => $id, 'url' => $target->url, 'api_url' => '/api/articles/' . $id], 'capabilities' => ['comment' => $target->interact, 'react' => $target->interact], 'likes_count' => Connection::count('blog_article_likes', ['article_id' => $id]), 'liked' => $actorId > 0 && Connection::find('blog_article_likes', ['article_id' => $id, 'user_id' => $actorId]) !== null, 'items' => \TinyCat\Core\Ui\DiscussionResource::comments(Comments::tree($id, $actorId), $actor, $target), 'viewer' => $actor !== null ? \TinyCat\Core\Identity\Resource::profile($actor) : null];
     }
 
     private static function body(string $body): string
     {
-        $body = Text::plain_text_limit($body, 2000); $host = Settings::blockedHost($body);
+        $body = trim(Text::strip_html_tags_preserving_text(str_replace(["\r\n", "\r"], "\n", $body)));
+        $errors = \TinyCat\Http\Validator::validate(['comment' => $body], self::rules(), structured: true);
+        if ($errors !== []) { Response::validation($errors); }
+        $host = Settings::blockedHost($body);
         if ($host !== '') { Response::error(Localization::t('blog.messages.blocked_url', ['host' => $host]), 422, 'blocked_url', ['host' => $host]); }
         $body = \TinyCat\Core\Text\PostText::normalize(Links::status_strip_external_urls($body));
         foreach (\TinyCat\Core\Text\Hashtags::tokens($body) as $token) { if (strlen(Text::slug($token)) > 32) { Response::error(Localization::t('account.messages.status_tag_too_long', ['max' => '32']), 422, 'status_tag_too_long', ['max' => '32']); } }
-        $body = Text::plain_text_limit(\TinyCat\Core\Text\Hashtags::normalizeText($body), 2000);
+        $body = Text::plain_text_limit(\TinyCat\Core\Text\Hashtags::normalizeText($body), self::COMMENT_MAX_LENGTH);
         if (trim($body) === '') { Response::error(Localization::t('account.messages.comment_required'), 422, 'comment_required'); }
         return $body;
     }
@@ -101,9 +111,10 @@ final class Discussion
             if ($comment === null) { Response::error('Comment not found.', 404, 'comment_not_found'); }
             $item = \TinyCat\Core\Ui\DiscussionResource::comment($comment, $actor, $target);
             if (!$item['capabilities']['edit'] && !$item['capabilities']['delete']) { Response::error('Forbidden.', 403, 'forbidden'); }
-            return ['item' => $item, 'target' => ['id' => $target->id, 'kind' => 'article', 'api_url' => '/api/articles/' . $target->id], 'revisions' => $item['capabilities']['edit'] ? \TinyCat\Core\Text\Revisions::read((string) ($comment['comments_diff'] ?? '')) : []];
+            return ['constraints' => self::constraints(), 'item' => $item, 'target' => ['id' => $target->id, 'kind' => 'article', 'api_url' => '/api/articles/' . $target->id], 'revisions' => $item['capabilities']['edit'] ? \TinyCat\Core\Text\Revisions::read((string) ($comment['comments_diff'] ?? '')) : []];
         }, 'user');
         $save = static function (Request $r, array $p, string $action, ?bool $desired = null) use ($api): array {
+            if (in_array($action, ['comment', 'comment_update'], true)) { $r->validated(['comment' => 'required|string']); }
             $id = (int) $p['id']; $result = self::write($id, $api->actor() ?? [], $action, (int) ($p['commentId'] ?? 0), (string) $r->input('comment', ''), (int) $r->input('parent_id', 0), $desired);
             return self::resource($id, $api->actor()) + ['action' => $action, 'comment_id' => (int) ($result['comment_id'] ?? 0)];
         };

@@ -24,7 +24,7 @@ Ověřené překážky v aktuálním kódu:
 
 | Místo | Současný stav | Potřebná hranice |
 | --- | --- | --- |
-| [Seznam modulů](../../App/modules.php), [bootstrap](../../App/bootstrap.php) | Explicitních 13 modulů; rozhraní umí registraci rout a případně názvy tabulek. Bootstrap přímo vybírá Users pro autentizaci a připravenost instalace. | Jeden katalog celé sestavy a předané kontrakty identity a připravenosti. |
+| [Seznam modulů](../../App/modules.php), [bootstrap](../../App/Core/Runtime/Application.php) | Explicitních 13 modulů; rozhraní umí registraci rout a případně názvy tabulek. Bootstrap přímo vybírá Users pro autentizaci a připravenost instalace. | Jeden katalog celé sestavy a předané kontrakty identity a připravenosti. |
 | [Status](../../App/Status/Module.php) | Registruje `/`, příspěvky i tagy. | Úvodní stránku vybírá sestava; publikování není povinné. |
 | [Users](../../App/Users/Module.php), [role](../../App/Users/Roles.php) | Účty zahrnují sledování, autorské feedy, sociální vlastnosti rolí a vazby na Status. | Oddělit identitu od sociálního profilu a vztahů. |
 | [Instalátor](../../App/Installation/Installer.php) | Obsahuje DDL, nastavení domén a vytvoření účtu. | Modul vlastní schéma a výchozí hodnoty; instalátor koordinuje. |

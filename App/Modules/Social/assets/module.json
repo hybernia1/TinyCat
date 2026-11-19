@@ -4,7 +4,10 @@
       "public"
     ],
     "components": [
-      "users/following-profile"
+      "users/following-profile",
+      "users/following-profiles",
+      "users/following-dialog",
+      "users/follow-label"
     ],
     "styles": [
       "App/Modules/Social/assets/users/styles/profile-navigation.css",
@@ -35,7 +38,14 @@
       "status/thread",
       "status/composer-body",
       "publishing/editor",
-      "status/feed-more"
+      "status/feed-more",
+      "status/dialog-form",
+      "status/report-fields",
+      "status/edit-fields",
+      "status/comment-edit-fields",
+      "status/thread-dialog",
+      "status/embed-content",
+      "status/feed-empty"
     ],
     "entries": [
       "App/Modules/Social/assets/status/index.js"
@@ -128,7 +138,8 @@
     "uses": [
       "publishing.presentation",
       "publishing.editor",
-      "publishing.discussion-base"
+      "publishing.discussion-base",
+      "ui.form-constraints"
     ]
   },
   {
@@ -305,19 +316,22 @@
     ],
     "components": [
       "ui/avatar",
-      "bots/accounts",
-      "bots/sources",
       "bots/source-fields",
       "bots/runs",
       "bots/account-fields",
-      "bots/queue",
-      "bots/queue-filter-form",
       "bots/source-preview",
       "bots/posts",
       "bots/post-filter-form",
       "bots/stat",
       "bots/runs-list",
-      "bots/run-filter-form"
+      "bots/run-filter-form",
+      "bots/workspace",
+      "bots/workspace-account",
+      "bots/workspace-lists",
+      "bots/workspace-form",
+      "bots/workspace-retry",
+      "bots/source-preview-state",
+      "bots/source-preview-confirm"
     ],
     "entries": [
       "App/Modules/Social/assets/bots/index.js"
@@ -372,6 +386,50 @@
       "bot_feed_preview": "bots.preview_invalid",
       "record_activated": "common.activated",
       "record_deactivated": "common.deactivated"
+    },
+    "uses": [
+      "ui.form-constraints"
+    ],
+    "admin": {
+      "social.bot-queue": {
+        "path": "/admin/bots/queue",
+        "api": "/api/bots/queue",
+        "endpoint": "/api/bots/queue",
+        "target": "#bot-queue-list",
+        "component": "bots/queue",
+        "filter": "bots/queue-filter-form",
+        "filterId": "bot-queue-filter-modal",
+        "title": "bots.queue_title",
+        "icon": "clock"
+      },
+      "social.bot-creation": {
+        "api": "/api/bots/accounts",
+        "target": "#bot-accounts-list",
+        "title": "bots.accounts_title",
+        "icon": "users",
+        "editor": {
+          "creation": "/api/bots/accounts/creation",
+          "fields": "bots/account-creation-fields",
+          "title": "bots.new_account",
+          "submit": "common.create"
+        },
+        "path": "/admin/bots/accounts",
+        "endpoint": "/api/bots/accounts",
+        "component": "bots/accounts",
+        "filter": "bots/account-filter-form",
+        "filterId": "bot-accounts-filter-modal"
+      },
+      "social.bot-sources": {
+        "path": "/admin/bots/list",
+        "endpoint": "/api/bots/sources",
+        "api": "/api/bots/sources",
+        "target": "#bots-list",
+        "title": "bots.sources_title",
+        "icon": "rss",
+        "component": "bots/sources",
+        "filter": "bots/source-filter-form",
+        "filterId": "bots-filter-modal"
+      }
     }
   },
   {
@@ -379,11 +437,10 @@
       "/admin/moderation"
     ],
     "components": [
-      "moderation/reports",
-      "moderation/filter-form",
       "ui/api-action",
       "moderation/history",
-      "moderation/report-preview"
+      "moderation/report-preview",
+      "moderation/detail-preview"
     ],
     "entries": [
       "App/Modules/Social/assets/moderation/index.js"
@@ -417,22 +474,20 @@
       "status_not_found": "account.messages.status_not_found",
       "url_blocker_saved": "moderation.messages.url_blocker_saved",
       "content_published": "moderation.messages.content_published"
+    },
+    "admin": {
+      "social.moderation-reports": {
+        "path": "/admin/moderation/reports",
+        "endpoint": "/api/moderation/reports",
+        "api": "/api/moderation",
+        "target": "#moderation-reports",
+        "component": "moderation/reports",
+        "filter": "moderation/filter-form",
+        "filterId": "moderation-filter-modal",
+        "title": "moderation.reports_title",
+        "icon": "flag"
+      }
     }
-  },
-  {
-    "routes": [
-      "admin"
-    ],
-    "entries": [
-      "App/Modules/Social/assets/moderation/settings-presentation.js"
-    ],
-    "components": [],
-    "styles": [],
-    "translations": [
-      "moderation.url_blocker_help",
-      "moderation.url_blocker_label",
-      "moderation.url_blocker_placeholder"
-    ]
   },
   {
     "routes": [
@@ -501,25 +556,10 @@
     "routes": [
       "admin"
     ],
-    "entries": [
-      "App/Modules/Social/assets/content/settings-presentation.js"
-    ],
+    "entries": [],
     "components": [],
     "styles": [],
-    "translations": [
-      "settings.fields.content_images_enabled",
-      "settings.fields.content_images_enabled_help",
-      "settings.fields.content_images_max_upload_kb",
-      "settings.fields.content_images_max_upload_kb_help",
-      "settings.fields.utm_campaign",
-      "settings.fields.utm_enabled",
-      "settings.fields.utm_medium",
-      "settings.fields.utm_source",
-      "settings.fields.utm_source_help",
-      "moderation.url_blocker_label",
-      "moderation.url_blocker_placeholder",
-      "moderation.url_blocker_help"
-    ],
+    "translations": [],
     "messages": {
       "url_blocker_saved": "moderation.messages.url_blocker_saved"
     }

@@ -14,21 +14,42 @@ use TinyCat\Core\Security\Captcha;
 use TinyCat\Support\AdminViews;
 use TinyCat\Support\Markup;
 use TinyCat\Support\Localization;
-use TinyCat\Support\View;
+use TinyCat\Support\Components;
 
 /** HTTP page composition; view components receive already prepared data. */
 final class Pages
 {
+    public static function homepage(): void
+    {
+        $user = Authentication::auth();
+        if ($user === null) { self::login(); return; }
+        $next = Login::auth_request_next_url();
+        if (Integration::unlocalizedPath(Login::auth_next_path($next)) === '/') { $next = ''; }
+        $target = Login::auth_redirect_after_login($user, $next);
+        if (Integration::unlocalizedPath(Login::auth_next_path($target)) !== '/') { Web::redirect($target); }
+        Integration::render([
+            'title' => Localization::t('account.title'), 'current' => '/', 'public' => true,
+            'meta' => ['robots' => 'noindex,nofollow'],
+        ], Components::render('users/account-home', [
+            'user' => $user,
+            'account_modal' => 'account-editor-modal-' . (int) $user['id'],
+            'account_url' => '/api/users/' . (int) $user['id'] . '/management?panel=account',
+            'logout_url' => Integration::localUrl('/logout'),
+        ]));
+    }
+
     public static function administration(): void
     {
         Access::require_admin();
-        $data = ViewData::tc_admin_users_view_data();
+        $payload = Actions::tc_admin_users_api_payload();
+        $data = Resource::listing($payload, $payload['pagination']);
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('core.users');
         $content = AdminViews::listCard(
-            Localization::t('users.list_title'), 'users', 'users-list', 'users-filter-modal',
-            new Markup(Views::adminList($data)), primary: true,
+            Localization::t($definition['title']), $definition['icon'], substr($definition['target'], 1), $definition['filterId'],
+            new Markup(\TinyCat\Support\Components::render($definition['component'], $data)), primary: true,
         );
         Integration::render([
-            'title' => Localization::t('users.meta_title'), 'current' => '/admin/users',
+            'title' => Localization::t('users.meta_title'), 'current' => $definition['path'],
             'actions' => AdminViews::modalAction('modal-users-creation', Localization::t('users.new_user'), 'user-plus', '/api/users/creation'),
         ], $content);
     }
@@ -55,7 +76,7 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,follow',
             ],
-        ], View::render('login', compact('error', 'message', 'next', 'old'), __DIR__ . '/templates'));
+        ], Components::render('users/auth-page', AuthResource::make('login', $next) + ['old' => $old, 'error' => (string) $error, 'message' => (string) $message]));
     }
 
     public static function register(): void
@@ -77,7 +98,7 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,follow',
             ],
-        ], View::render('register', compact('next', 'old'), __DIR__ . '/templates'));
+        ], Components::render('users/auth-page', AuthResource::make('register', $next) + ['old' => $old]));
     }
 
     public static function logout(): void
@@ -92,18 +113,13 @@ final class Pages
                 'url' => '/logout',
                 'robots' => 'noindex,nofollow',
             ],
-        ], View::render('logout', [], __DIR__ . '/templates'));
+        ], Components::render('users/logout-page'));
     }
 
     public static function recovery(): void
     {
         $recoveryToken = trim((string) Web::get('token', ''));
 
-        $authPasswordMaxLength = \TinyCat\Core\Identity\Passwords::maxLength();
-        $field = Captcha::field('recovery');
-        $pageUrls = [];
-        foreach (['/recovery', '/login', '/privacy'] as $pagePath) { $pageUrls[$pagePath] = Integration::localUrl($pagePath); }
-        $pageUrls['/privacy'] = Integration::privacyUrl();
         Integration::render([
             'title' => Localization::t('auth.recovery_title'),
             'current' => '/recovery',
@@ -114,6 +130,9 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,nofollow',
             ],
-        ], View::render('recovery', compact('pageUrls', 'recoveryToken', 'authPasswordMaxLength', 'field'), __DIR__ . '/templates'));
+        ], Components::render('users/recovery-page', [
+            'reset' => $recoveryToken !== '', 'token' => $recoveryToken, 'password_max' => Passwords::maxLength(),
+            'captcha' => Captcha::configuration('recovery'), 'login_url' => Integration::localUrl('/login'), 'privacy_url' => Integration::privacyUrl(),
+        ]));
     }
 }

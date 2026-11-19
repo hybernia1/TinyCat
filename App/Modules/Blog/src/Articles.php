@@ -8,17 +8,44 @@ use TinyCat\Support\{Dates, Text};
 /** Blog owns complete articles, their visibility and all persistent relations. */
 final class Articles
 {
+    public const int TITLE_MAX_LENGTH = 200;
+    public const int BODY_MAX_BYTES = 60000;
+    public const array STATUSES = ['published', 'hidden'];
+    public const string DEFAULT_STATUS = 'published';
+
+    /** @return array<string, string> */
+    public static function rules(): array
+    {
+        return ['title' => 'required|string|max:' . self::TITLE_MAX_LENGTH, 'body' => 'required|string|max_bytes:' . self::BODY_MAX_BYTES, 'status' => 'string|in:' . implode(',', self::STATUSES)];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    public static function constraints(): array { return \TinyCat\Http\Validator::constraints(self::rules()); }
+
+    /** Preparation preserves invalid types for the shared validator to reject.
+     * @param array<mixed> $input
+     * @return array<mixed> */
+    public static function prepareInput(array $input): array
+    {
+        foreach (['title', 'body'] as $field) {
+            $value = $input[$field] ?? '';
+            $input[$field] = is_string($value) ? trim(Text::strip_html_tags_preserving_text($value)) : $value;
+        }
+        if (!array_key_exists('status', $input)) { $input['status'] = self::DEFAULT_STATUS; }
+        return $input;
+    }
+
+    /** @return array<string, int> */
+    public static function messageParams(): array { return ['title_max' => self::TITLE_MAX_LENGTH, 'body_max' => self::BODY_MAX_BYTES]; }
+
     /** @param array<mixed> $input
      * @param array<mixed> $actor
      * @param array<mixed>|null $file */
     public static function save(array $input, array $actor, int $id = 0, ?array $file = null): int
     {
         self::authorize($actor);
-        foreach (['title', 'body', 'status'] as $key) { if (isset($input[$key]) && !is_string($input[$key])) { throw new \InvalidArgumentException('Invalid article.', 422); } }
-        $title = trim(Text::strip_html_tags_preserving_text((string) ($input['title'] ?? '')));
-        $body = trim(Text::strip_html_tags_preserving_text((string) ($input['body'] ?? '')));
-        $status = (string) ($input['status'] ?? 'published'); self::validateText($title, $body);
-        if (!in_array($status, ['published', 'hidden'], true)) { throw new \InvalidArgumentException('Invalid article.', 422); }
+        $input = self::prepareInput($input); self::validatePrepared($input);
+        $title = (string) $input['title']; $body = (string) $input['body']; $status = (string) $input['status'];
         if ($id > 0 && self::find($id, false) === null) { throw new \DomainException('Article not found.', 404); }
         $remove = filter_var($input['remove_image'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if (($file !== null || $remove) && Connection::get()->inTransaction()) { throw new \LogicException('Media changes require ownership of the commit.'); }
@@ -53,8 +80,8 @@ final class Articles
      * @param array<mixed>|null $image */
     public static function createPrepared(int $author, string $title, string $body, string $status, array $links, ?array $image, string $publishedAt): int
     {
-        self::validateText($title, $body);
-        if ($author < 1 || !in_array($status, ['published', 'hidden'], true)) { throw new \InvalidArgumentException('Invalid article.'); }
+        self::validatePrepared(compact('title', 'body', 'status'));
+        if ($author < 1) { throw new \InvalidArgumentException('Invalid article.'); }
         return Transactions::run(static function () use ($author, $title, $body, $status, $links, $image, $publishedAt): int {
             $now = Dates::dateDb();
             $id = (int) Connection::insert('blog_articles', ['author_id' => $author, 'title' => $title, 'body' => $body, 'excerpt' => self::excerpt($body), 'status' => $status, 'published_at' => $publishedAt, 'created_at' => $now, 'updated_at' => $now]);
@@ -73,7 +100,15 @@ final class Articles
     public static function excerpt(string $body): string { return Text::plain_text_limit(\TinyCat\Core\Text\Hashtags::normalizeText(\TinyCat\Core\Text\PostText::normalize($body)), 2000); }
     public static function validateText(string $title, string $body): void
     {
-        if ($title === '' || mb_strlen($title) > 200 || trim($body) === '' || strlen($body) > 60000 || !mb_check_encoding($title . $body, 'UTF-8') || Settings::blockedHost($body) !== '') { throw new \InvalidArgumentException('Invalid article.', 422); }
+        self::validatePrepared(['title' => $title, 'body' => $body, 'status' => self::DEFAULT_STATUS]);
+    }
+
+    /** @param array<mixed> $input */
+    private static function validatePrepared(array $input): void
+    {
+        if (\TinyCat\Http\Validator::validate($input, self::rules()) !== []) { throw new \InvalidArgumentException('Invalid article.', 422); }
+        $title = (string) $input['title']; $body = (string) $input['body'];
+        if (trim($title) === '' || trim($body) === '' || !mb_check_encoding($title . $body, 'UTF-8') || Settings::blockedHost($body) !== '') { throw new \InvalidArgumentException('Invalid article.', 422); }
         foreach (\TinyCat\Core\Text\Hashtags::tokens($body) as $token) { if (strlen(Text::slug($token)) > 32) { throw new \InvalidArgumentException('Rejected article tag.', 422); } }
     }
 

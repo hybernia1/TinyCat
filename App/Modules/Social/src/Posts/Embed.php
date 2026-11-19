@@ -11,25 +11,17 @@ use TinyCat\Social\Content\Links;
 
 use TinyCat\Database\Connection;
 use TinyCat\Http\Document;
-use TinyCat\Http\Request;
 use TinyCat\Http\Web;
-use TinyCat\Social\Presentation\Discovery;
-use TinyCat\Http\LocaleRouting;
 use TinyCat\Core\Ui\Site as Presentation;
 use TinyCat\Support\Assets;
 use TinyCat\Support\Dates;
 use TinyCat\Support\Html;
 use TinyCat\Support\Localization;
 use TinyCat\Support\View;
-use TinyCat\Support\Xml;
 
 /** Public, session-independent oEmbed provider and read-only post documents. */
 final class Embed
 {
-    public static function handles(string $path): bool
-    {
-        return $path === '/oembed' || preg_match('~^/status/[0-9]+/(?:embed|embed-code)$~D', $path) === 1;
-    }
 
     public static function discoveryUrl(int $id, string $format = 'json'): string
     {
@@ -44,25 +36,6 @@ final class Embed
             FROM social_posts c INNER JOIN users u ON u.id = c.author_id
             LEFT JOIN social_post_images ci ON ci.content_id = c.id
             WHERE c.id = ? AND u.status = ? AND c.published_at <= ? AND c.kind = \'post\' AND c.status = \'published\' LIMIT 1', [$id, 'active', Dates::dateDb()]);
-    }
-
-    /** Resolve only this installation's public URLs; never fetch the supplied URL. */
-    public static function postId(string $url): int
-    {
-        $base = parse_url(Presentation::absolute_url('/'));
-        $parts = parse_url($url);
-        if (!is_array($base) || !is_array($parts) || isset($parts['user']) || isset($parts['pass'])
-            || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
-            || strtolower($parts['host'] ?? '') !== strtolower($base['host'] ?? '')
-            || $parts['scheme'] !== ($base['scheme'] ?? '')
-            || ($parts['port'] ?? ($parts['scheme'] === 'https' ? 443 : 80)) !== ($base['port'] ?? ($base['scheme'] === 'https' ? 443 : 80))) { return 0; }
-        $basePath = rtrim($base['path'] ?? '', '/');
-        $path = $parts['path'] ?? '';
-        if ($basePath !== '' && !str_starts_with($path, $basePath . '/')) { return 0; }
-        $path = LocaleRouting::split(substr($path, strlen($basePath)))['path'];
-        if (preg_match('~^/status/([1-9][0-9]*)$~D', $path, $match) !== 1) { return 0; }
-        $id = filter_var($match[1], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        return $id === false ? 0 : $id;
     }
 
     private static function dimension(string $name, int $default): ?int
@@ -144,7 +117,7 @@ final class Embed
 
     public static function page(int $id, bool $share = false): void
     {
-        Localization::locale(Discovery::locale());
+        Localization::locale(Localization::defaultLocale());
         header('Content-Language: ' . Localization::locale());
         header('X-Robots-Tag: noindex, nofollow');
         if (!$share) {
@@ -152,7 +125,7 @@ final class Embed
             header("Content-Security-Policy: default-src 'none'; media-src 'self' https:; img-src 'self' https: data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors *; frame-src " . implode(' ', Providers::playerOrigins()));
         }
         $height = self::dimension('maxheight', 600);
-        if ($height === null) { self::error(400, 'Invalid dimensions.'); return; }
+        if ($height === null) { Document::jsonError(400, 'Invalid dimensions.'); return; }
         $item = self::find($id);
         if ($item === null) { Document::notFound(Localization::t('public.status_not_found')); return; }
         $media = self::media($item);
@@ -161,7 +134,7 @@ final class Embed
             $parsed = LinkParser::fromRaw((string) $link['url']);
             if ($parsed !== null) { $hiddenHashes[] = (string) $parsed['url_hash']; }
         }
-        $segments = \TinyCat\Core\Text\Segments::text((string) $item['body'], $hiddenHashes, (int) $item['id']);
+        $segments = \TinyCat\Core\Text\Segments::text((string) $item['body'], 'post', $hiddenHashes, (int) $item['id']);
         foreach ($segments as &$segment) {
             if (isset($segment['url'])) { $segment['url'] = Presentation::absolute_url($segment['outbound_url'] ?? $segment['url']); }
         }
@@ -185,11 +158,4 @@ final class Embed
         Document::respond($html, 'text/html', 0);
     }
 
-    private static function error(int $status, string $message): void
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=UTF-8');
-        header('Cache-Control: no-store');
-        if (Request::current()->method() !== 'HEAD') { echo json_encode(['error' => $message], JSON_THROW_ON_ERROR); }
-    }
 }

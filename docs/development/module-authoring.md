@@ -9,6 +9,29 @@ Audity a otevřené plány nejsou referencí aktuálního API.
 
 ## Co poskytuje core a co vlastní modul
 
+Společné chování a veřejné vstupy určuje [kontrakt core pro API, UI a validace](../contracts/core-application-contract.md).
+
+Limity a povolené hodnoty pole deklaruj jednou v pravidlech vlastníka. Pro metadata
+editoru použij `Validator::constraints($rules)` a pro server stejná pravidla;
+výchozí hodnoty a přípravu vstupu vlastní modul. Připravený vstup validuj také
+při ukládání mimo HTTP. Komponenty čerpají z `constraints`, nikoli z další kopie
+čísel. Znakové limity mapuj na `data-max-length`/`data-min-length`, UTF-8 bajty
+na `data-max-bytes`; společné formuláře zajišťují kontrolu a zachování konceptu.
+Editor v asset manifestu deklaruje `uses: ["ui.form-constraints"]`.
+
+Pro přechody mezi celými stránkami použij
+`TinyCat.navigation.registerPage({ accepts, target, load, apply })`.
+Ve svém klientském vstupu importuj `assets/core/page-navigation.js`.
+`load(url, signal)` načte vlastní data přes společný API klient a vrátí i
+kanonické `url`; `apply(target, data)` vykreslí obsah. Historii, scroll,
+rušení čtení a guard konceptů řeší core. Běžné seznamy dál používají společnou
+navigaci seznamů. Podrobnosti jsou v kontraktu core uvedeném výše.
+
+Formulář připoj ke společnému AJAX submitu; vlastní callback aktualizuje doménové
+výsledky. Potvrzení náhledu nebo jinou podmínku připoj přes
+`TinyCat.forms.setSubmitGuard(form, callback)`, nikoli dalším submit listenerem.
+Veřejnou stránku s AJAX resource registruj přes `Router::page()` a klientovi
+předej `Router::pageDefinitions()`; neduplikuj seznam cest v PHP a JavaScriptu.
 Core je povinný framework. Modul vlastní konkrétní funkci od registrace přes
 data a pravidla až po UI. Vypnutí odstraní runtime příspěvky, zachová data.
 
@@ -81,8 +104,8 @@ return [
 ```
 
 Pokud zachováváš Social či Blog, ponech i jejich manifesty. Samotný adresář
-modul neaktivuje. V sestavené instalaci dostupnost určuje distribuční descriptor
-a aktivaci spravuje lifecycle. Vlastní distribuční profil je potřeba jen pro
+modul neaktivuje. Dostupnost určuje manifest ve složce modulu, aktivaci spravuje
+explicitní stav a lifecycle. Vlastní distribuční profil je potřeba jen pro
 samostatnou instalační sestavu, ne pro každý modul.
 
 ## 2. Registrace stránek a menu
@@ -167,6 +190,14 @@ PHP šablonu přes `View::render()` a výsledek předat stejnému `Page::render(
 
 Homepage a dashboard se nabízejí přes `Contributions.homepages` a `dashboards`
 pomocí `EntryPage`; obsluhu `/` a `/admin` vybírá core podle nastavení.
+Core Identity nabízí také `tinycat.accounts.login`: hostovi vykreslí přihlášení
+přímo na `/`, přihlášeného pošle na bezpečný cíl vlastníka účtu. Pokud cílem
+zůstává `/`, zobrazí přehled účtu bez dalšího přesměrování. Tato volba má
+nejnižší prioritu, takže automatický výběr dál preferuje funkční modul.
+`EntryPage` může přes `navigation: false` nabídnout homepage bez přidání
+další položky do veřejné navigace. Vlastní přihlašovací cíle nesměřuj na
+`/login`, `/register` ani externí URL; Identity takový cíl nahradí bezpečnou
+homepage. Platné explicitní `next` má nadále přednost.
 Vlastní routa modulu zůstává samostatná. Jazykové prefixy veřejných URL deklaruj
 přes `LocalizedRoute`, včetně povolených query parametrů. `PageTheme` nabízí
 vlastní veřejné rozložení nad společným dokumentem a headem.
@@ -254,14 +285,7 @@ maž po commitu.
 
 Povinný framework se vždy inicializuje před funkčními manifesty. `coreApi`
 deklaruje jeho kontrakt; `requires` potřebuje uvádět funkční modulové závislosti,
-nikoli aktivaci povinných služeb core. Historický vlastník může implementovat
-`ProvidesLegacyUpgrade::prepareLegacyUpgrade(PDO, callable)`: pouze explicitní
-aktualizace zavolá tento kontrakt a vlastník rozhodne, zda má spustit předaný
-ověřený globální migrační stream. Registrace tento callback nevyhodnocuje.
-Exportovaný root callback může běžet z ověřené pracovní složky balíčku;
-pro cílové soubory a aktivační stav používej kanonický `Paths::basePath()`,
-nikoli `dirname(__DIR__)` migračního souboru. Výchozí aktivace musí být data
-podepsaného buildu, protože běžící updater může mít načtené starší providery.
+nikoli aktivaci povinných služeb core.
 
 API registruj přes předaný `TinyCat\Http\Api`. Databázové API stejně jako Blog
 obal kontrolou připravenosti schématu přes `whenReady`. Server ověřuje oprávnění
@@ -299,7 +323,8 @@ callbacky se při registraci neprovádějí.
 | `homepages`, `dashboards` | `EntryPage`: kandidáti pro `/` a `/admin`. |
 | `themes`, `widgets`, `localizedRoutes` | `PageTheme`, `DashboardWidget`, `LocalizedRoute`: rozložení, dashboard a jazyky URL. |
 | `tasks`, `maintenance` | `ScheduledTask`, `MaintenanceTask`: úlohy a údržba. |
-| `settings`, `configOverrides` | `SettingsSection` a provozní nastavení vlastníka. |
+| `componentLookups` | `ComponentLookup`: lazy prezentační metadata pro sdílené komponenty. |
+| `settings`, `configOverrides` | `SettingsSection` a provozní nastavení vlastníka; prezentace editoru se odvozuje ze stejné deklarace (viz níže). |
 | `notificationTypes` | `NotificationType`: typy oznámení, hydratace a odkazy. |
 | `search`, `sitemaps`, `embeds` | `SearchSource`, `SitemapSection`, `EmbedSource`: hledání, sitemap a oEmbed. |
 | `health`, `temporaryDirectories` | `HealthProbe`, `TemporaryDirectory`: diagnostika a dočasné soubory. |
@@ -344,8 +369,9 @@ Hranice hlídají `tests/quality/module-boundaries.php` a `dependencies.php`,
 metadata a zdroje `module-catalog.php`, `module-resources.php` a `runtime-registries.php`.
 Inventář obnovuj přes `python tools/assets/ui-inventory.py`.
 
-Modul může být součástí distribuce nebo samostatným ZIPem. Zkopírování adresáře
-do sestaveného webu nestačí; instalaci a aktivaci provádí správce modulů.
+Modul může být součástí distribuce, samostatným ZIPem nebo ručně přidanou složkou.
+Zkopírování adresáře jej zpřístupní ve správci jako vypnutý, bez spuštění PHP;
+instalaci schématu a aktivaci provádí až výslovná operace správce modulů.
 CLI a podepsané balíčky popisuje [provozní návod](../operations/module-deployment.md).
 Místní živé ověření používá [Laragon prostředí](local-environment.md);
 destruktivní scénáře patří do izolovaných fixtures.
@@ -386,3 +412,37 @@ kolizi jejich souborů. Modul dodávaný přímo distribucí se v této etapě
 aktualizuje distribučním updaterem, nikoli samostatným ZIPem. Pro čisté core
 lze sestavit `build-update.php --assembly=core`; `--active=` ponechá všechny
 dostupné volitelné moduly vypnuté.
+
+## Společný inventář dostupných modulů
+
+Build celé platformy a vývojové kontroly načítají manifesty přímo z
+`App/Modules/*/module.json`; další centrální seznam se neupravuje. Samostatný
+build modulu vybere jeho manifest a tranzitivní závislosti. Inventář pouze čte
+JSON a nespouští PHP modulů. Stejný inventář určuje dostupnost ve správci;
+samotné nalezení modulu jej neaktivuje. Aktivace zůstává explicitní
+v `App/modules.php`, distribučním plánu a registru instalovaných balíčků.
+
+## Nastavení bez klientské registrace
+
+Pro běžné administrační seznamy a editory lze podobně využít deklaraci `admin`
+ve vlastním asset manifestu; viz [kontrakt administrace](../contracts/admin-ui-conventions.md#declared-list-and-editor-wiring).
+HTTP obsluhy, dotazy, oprávnění a zvláštní UI dál implementuje vlastník.
+
+Modul přispívá lazy `SettingsSection` přes `Contributions.settings`. Callback vrací
+sekci s přeloženým `label`, `icon` a `fields`; každé pole obsahuje `key`, `type`,
+`label` a podle potřeby `default`, omezení, `help`, `placeholder` či `span`.
+Překlad zavolej uvnitř callbacku, nikoli při registraci, aby se použilo aktuální
+locale. Sekce stejné skupiny se slučují; klíč pole má jediného vlastníka.
+
+Core Settings z těchto definic odvodí prezentační metadata pro administrační HTML
+(`data-settings-presentation`). Přenáší jen názvy sekcí, ikony, popisky, nápovědu,
+placeholdery a rozložení. Hodnoty, výchozí hodnoty, možnosti a callbacky se sem
+nekopírují. Metadata se escapují jako atribut HTML a nevytvářejí formulář ani modal.
+Neúplná prezentace vyvolá konkrétní chybu sekce nebo pole.
+
+`GET /api/settings/editor` nadále vrací autorizovaná data a omezení bez HTML,
+překladových klíčů a komponentových definic. Aktuální hodnoty se načítají až při
+otevření společným resource loaderem. Modul nepotřebuje `settings-presentation.js`
+ani opakování překladových závislostí těchto popisků v asset manifestu; katalogy
+a samotné definice dál vlastní modul. Core nezná jeho název ani klíče nastavení.
+Vypnutý nebo chybějící vlastník nepřispívá sekcí ani prezentačními metadaty.

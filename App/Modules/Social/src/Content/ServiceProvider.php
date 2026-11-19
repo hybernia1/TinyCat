@@ -2,32 +2,19 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Content;
 
-use TinyCat\Core\Links\Providers;
-
-/** Shared storage, policy and export transports; modules own publication routes. */
-final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle, \TinyCat\Core\Runtime\InitializesModule, \TinyCat\Core\Modules\ProvidesManagedSchemas
+/** Internal Social contributions, HTTP routes and runtime caches. */
+final class ServiceProvider
 {
-    /** @return array<string, \TinyCat\Core\Modules\ModuleSchema> */
-    public static function schemas(): array { return ['tinycat.publishing' => Schema::schema(), 'tinycat.status' => InteractionSchema::schema()]; }
 
     public static function initialize(): void
     {
-        Integration::configure();
-        Interactions::reset();
-        \TinyCat\Core\Runtime\Startup::$frameOrigins = Providers::playerOrigins();
+        Interactions::invalidate();
     }
 
-    /** @return list<string> */
-    public static function tables(): array { return [...Schema::tables(), ...InteractionSchema::tables()]; }
     public static function register(\TinyCat\Http\Api $api): void
     {
         $api->get('/moderation/blocked-urls', Policy::resource(...), 'admin');
         $api->put('/moderation/blocked-urls', Policy::save(...), 'admin');
-    }
-
-    public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
-    {
-        return new \TinyCat\Core\Identity\Participant(prepareDelete: AccountLifecycle::prepareDelete(...));
     }
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions

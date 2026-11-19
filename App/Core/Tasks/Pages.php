@@ -8,7 +8,6 @@ use TinyCat\Core\Ui\Page as Layout;
 use TinyCat\Support\LocalUrls;
 use TinyCat\Support\Localization;
 use TinyCat\Support\Paths;
-use TinyCat\Support\View;
 use TinyCat\Core\Identity\Access;
 
 /** HTTP authorization, actions and prepared page composition. */
@@ -17,10 +16,14 @@ final class Pages
     public static function listing(): void
     {
         Access::require_admin();
-        $title = Localization::t('cron.list_title');
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('core.scheduler-runs');
+        $title = Localization::t($definition['title']);
         $data = Administration::payload();
-        $content = '<div id="scheduler-list">' . \TinyCat\Support\Components::render('scheduler/list', $data + ['state' => $data]) . '</div>';
-        Layout::render(['title' => $title, 'current' => '/admin/cron/list'], $content);
+        $content = \TinyCat\Support\Components::render('scheduler/runs-page', [
+            'target_id' => substr($definition['target'], 1),
+            'content' => new \TinyCat\Support\Markup(\TinyCat\Support\Components::render($definition['component'], $data + ['state' => $data])),
+        ]);
+        Layout::render(['title' => $title, 'current' => $definition['path']], $content);
     }
 
     public static function administration(): void
@@ -54,6 +57,7 @@ final class Pages
 
         foreach ($taskViews as $task => &$view) {
             $taskUrl = $cronUrl . '?task=' . rawurlencode($task);
+            foreach (['title', 'help', 'schedule'] as $label) { $view[$label . '_label'] = Localization::t((string) $view[$label]); }
             $view['query_url'] = LocalUrls::absolute('/api/scheduler/triggers/' . rawurlencode($task));
             $view['http_command'] = 'curl -fsS -X POST -H "Authorization: Bearer ' . $cronToken . '" "' . $taskUrl . '"';
             $view['cli_command'] = 'php "' . $runnerPath . '" --task=' . $task . ' ' . (string) $view['cli_arguments'];
@@ -63,7 +67,7 @@ final class Pages
         Layout::render([
             'title' => Localization::t('cron.title'),
             'current' => '/admin/cron',
-            'actions' => View::render('actions', [], __DIR__ . '/templates'),
-        ], \TinyCat\Support\AdminViews::listCard(Localization::t('cron.title'), 'clock', 'scheduler-settings', '', new \TinyCat\Support\Markup(View::render('administration', compact('cronToken', 'cronUrl', 'taskViews'), __DIR__ . '/templates')), primary: true));
+            'actions' => \TinyCat\Support\Components::render('scheduler/actions'),
+        ], \TinyCat\Support\AdminViews::listCard(Localization::t('cron.title'), 'clock', 'scheduler-settings', '', new \TinyCat\Support\Markup(\TinyCat\Support\Components::render('scheduler/administration', compact('cronToken', 'cronUrl', 'taskViews'))), primary: true));
     }
 }

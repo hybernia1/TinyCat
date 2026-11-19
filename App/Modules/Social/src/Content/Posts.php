@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Content;
 
+use TinyCat\Social\Posts\{Tags, PostCreation};
+
 use TinyCat\Database\Connection;
 use TinyCat\Database\Transactions;
 
@@ -11,7 +13,7 @@ final class Posts
     /** @return array<mixed>|null */
     public static function find(int $id): ?array
     {
-        return $id > 0 ? \TinyCat\Database\Queries::db_select('SELECT * FROM social_posts')->where('id = ?', $id)->limit(1)->one() : null;
+        return $id > 0 ? \TinyCat\Database\Query::select('SELECT * FROM social_posts')->where('id = ?', $id)->limit(1)->one() : null;
     }
 
     /** @param array<mixed>|null $item

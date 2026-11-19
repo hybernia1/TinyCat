@@ -1,6 +1,7 @@
 {
   "format": 1,
   "coreApi": 1,
+  "development": true,
   "id": "tinycat.blog",
   "namespace": "TinyCat\\Blog\\",
   "requires": [],

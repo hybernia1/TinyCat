@@ -1,0 +1,393 @@
+{
+  "updates/actions": {
+    "tag": "div",
+    "attrs": {"class": "cluster gap-2"},
+    "children": [
+      {
+        "component": "ui/modal-trigger",
+        "data": {
+          "class": "btn btn-secondary btn-sm",
+          "modal": "modal-updates-release-notes",
+          "url": "/api/updates/release-notes",
+          "label": {"t": "updates.changelog"},
+          "icon": "file"
+        },
+        "when": {"get": "has_notes"}
+      },
+      {
+        "tag": "form",
+        "attrs": {"method": "post", "action": "/api/updates/checks", "data-ajax-form": ""},
+        "children": [
+          {"csrf": true},
+          {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "check"}},
+          {
+            "tag": "button",
+            "attrs": {
+              "class": {"if": [{"get": "available"}, "btn btn-secondary btn-sm", "btn btn-primary btn-sm"]},
+              "type": "submit"
+            },
+            "children": [{"icon": "refresh"}, " ", {"tag": "span", "children": [{"t": "updates.check"}]}]
+          }
+        ]
+      },
+      {
+        "tag": "form",
+        "attrs": {
+          "method": "post",
+          "action": "/api/updates/installations",
+          "data-ajax-form": "",
+          "data-confirm": {"t": "updates.install_confirm", "values": {"version": {"get": "version"}}},
+          "data-confirm-title": {"t": "updates.install_title"},
+          "data-confirm-ok": {"t": "updates.install"}
+        },
+        "when": {"get": "available"},
+        "children": [
+          {"csrf": true},
+          {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "install"}},
+          {
+            "tag": "button",
+            "attrs": {"class": "btn btn-primary btn-sm", "type": "submit", "disabled": {"not": {"get": "canInstall"}}},
+            "children": [{"icon": "download"}, " ", {"tag": "span", "children": [{"t": "updates.install"}]}]
+          }
+        ]
+      }
+    ]
+  },
+  "updates/page": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-16 min-w-0"},
+    "children": [
+      {
+        "tag": "section",
+        "attrs": {"class": "alert alert-warning stack"},
+        "when": {"get": "maintenance"},
+        "children": [
+          {
+            "tag": "strong",
+            "attrs": {"class": "cluster gap-2"},
+            "children": [{"icon": "alert"}, " ", {"t": "updates.maintenance_active"}]
+          },
+          {
+            "tag": "span",
+            "children": [
+              {
+                "t": "updates.maintenance_active_help",
+                "values": {"from": {"get": "maintenance_from"}, "to": {"get": "maintenance_to"}}
+              }
+            ]
+          },
+          {
+            "tag": "form",
+            "attrs": {
+              "method": "post",
+              "action": "/api/updates/maintenance",
+              "data-api-method": "DELETE",
+              "data-ajax-form": "",
+              "data-confirm": {"t": "updates.maintenance_disable_confirm"},
+              "data-confirm-variant": "danger"
+            },
+            "children": [
+              {"csrf": true},
+              {"tag": "input", "attrs": {"type": "hidden", "name": "_method", "value": "DELETE"}},
+              {
+                "tag": "button",
+                "attrs": {"class": "btn btn-danger btn-sm", "type": "submit"},
+                "children": [
+                  {"icon": "unlock"},
+                  " ",
+                  {"tag": "span", "children": [{"t": "updates.maintenance_disable"}]}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "alert alert-danger stack"},
+        "when": {"get": "error"},
+        "children": [
+          {"tag": "strong", "children": [{"t": "updates.error_detail"}]},
+          {"tag": "code", "children": [{"get": "error"}]}
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "stack"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "cluster"},
+            "children": [
+              {"component": "ui/status-badge", "data": {"tone": {"get": "tone"}, "label": {"get": "status_label"}}}
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "grid sm:grid-2 md:grid-3"},
+            "children": [
+              {
+                "each": {"get": "stats"},
+                "as": "stat",
+                "children": {"component": "ui/stat-card", "data": {"get": "stat"}}
+              }
+            ]
+          },
+          {
+            "tag": "p",
+            "attrs": {"class": "table-meta m-0"},
+            "when": {"not": {"get": "has_release"}},
+            "children": [{"t": "updates.check_help"}]
+          },
+          {
+            "component": "ui/notice",
+            "data": {
+              "tone": "warning",
+              "title": {
+                "t": "updates.incompatible",
+                "values": {"version": {"get": "minimum_version"}, "php": {"get": "minimum_php"}}
+              }
+            },
+            "when": {"and": [{"get": "has_release"}, {"not": {"get": "releaseCompatible"}}]}
+          },
+          {
+            "component": "ui/notice",
+            "data": {"tone": "critical", "title": {"t": "updates.missing_extensions"}},
+            "when": {"get": "missing_extensions"}
+          }
+        ]
+      },
+      {
+        "tag": "details",
+        "attrs": {"class": "disclosure-item"},
+        "children": [
+          {
+            "tag": "summary",
+            "attrs": {"class": "disclosure-summary"},
+            "children": [
+              {"tag": "span", "children": [{"t": "updates.requirements"}]},
+              {"icon": "chevron-down", "class": "icon disclosure-chevron"}
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "ul",
+                "attrs": {"class": "result-list"},
+                "children": [
+                  {
+                    "each": {"get": "extensions"},
+                    "as": "extension",
+                    "children": {
+                      "tag": "li",
+                      "attrs": {"class": "result-item"},
+                      "children": [
+                        {
+                          "component": "ui/status-badge",
+                          "data": {
+                            "tone": {"if": [{"get": "extension"}, "ok", "critical"]},
+                            "label": {
+                              "if": [{"get": "extension"}, {"t": "common.done"}, {"t": "updates.missing_extensions"}]
+                            }
+                          }
+                        },
+                        {"tag": "span", "children": ["PHP ", {"get": "_key"}]}
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "li",
+                    "attrs": {"class": "result-item"},
+                    "children": [
+                      {"component": "ui/status-badge", "data": {"tone": "ok", "label": {"t": "common.done"}}},
+                      " ",
+                      {"tag": "span", "children": [{"t": "updates.signed_packages"}]}
+                    ]
+                  },
+                  {
+                    "tag": "li",
+                    "attrs": {"class": "result-item"},
+                    "children": [
+                      {"component": "ui/status-badge", "data": {"tone": "ok", "label": {"t": "common.done"}}},
+                      " ",
+                      {"tag": "span", "children": [{"t": "updates.automatic_backup"}]}
+                    ]
+                  },
+                  {
+                    "tag": "li",
+                    "attrs": {"class": "result-item"},
+                    "children": [
+                      {"component": "ui/status-badge", "data": {"tone": "ok", "label": {"t": "common.done"}}},
+                      " ",
+                      {"tag": "span", "children": [{"t": "updates.protected_runtime"}]}
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "alert alert-warning"},
+                "when": {"get": "missing_extensions"},
+                "children": [{"t": "updates.missing_extensions"}]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card"},
+        "when": {"get": "result"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"icon": "check-circle"}, " ", {"t": "updates.last_result"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "m-0"},
+                "children": [
+                  {"t": "updates.installed_version"},
+                  " ",
+                  {"tag": "strong", "children": ["v", {"get": "result.version"}]}
+                ]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "m-0"},
+                "when": {"get": "result.backup"},
+                "children": [{"t": "updates.backup_path"}, " ", {"tag": "code", "children": [{"get": "result.backup"}]}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "m-0"},
+                "children": [
+                  {"t": "updates.applied_migrations"},
+                  " ",
+                  {"tag": "strong", "children": [{"get": "migration_count"}]}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"t": "updates.migration_history"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "component": "ui/empty-state",
+                "data": {"label": {"t": "updates.no_migrations"}, "icon": "clock"},
+                "when": {"not": {"get": "history"}}
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "table-wrap min-w-0"},
+                "when": {"get": "history"},
+                "children": [
+                  {
+                    "tag": "table",
+                    "attrs": {"class": "table"},
+                    "children": [
+                      {
+                        "tag": "thead",
+                        "children": [
+                          {
+                            "tag": "tr",
+                            "children": [
+                              {"tag": "th", "children": [{"t": "updates.migration"}]},
+                              {"tag": "th", "children": [{"t": "updates.version"}]},
+                              {"tag": "th", "children": [{"t": "updates.applied_at"}]}
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "tbody",
+                        "children": [
+                          {
+                            "each": {"get": "history"},
+                            "as": "migration",
+                            "children": {
+                              "tag": "tr",
+                              "children": [
+                                {
+                                  "tag": "td",
+                                  "children": [
+                                    {
+                                      "tag": "div",
+                                      "attrs": {"class": "table-identity"},
+                                      "children": [
+                                        {
+                                          "tag": "div",
+                                          "attrs": {"class": "table-identity-body"},
+                                          "children": [
+                                            {
+                                              "tag": "code",
+                                              "attrs": {
+                                                "class": "table-primary",
+                                                "title": {"get": "migration.migration"}
+                                              },
+                                              "children": [{"get": "migration.migration"}]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {"tag": "td", "children": ["v", {"get": "migration.version"}]},
+                                {
+                                  "tag": "td",
+                                  "children": [
+                                    {
+                                      "tag": "time",
+                                      "attrs": {"class": "table-meta", "datetime": {"get": "migration.applied_at"}},
+                                      "children": [{"get": "migration.applied_label"}]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

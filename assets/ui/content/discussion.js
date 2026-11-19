@@ -7,13 +7,14 @@ import "./editor-entry.js";
   "use strict";
   var T = window.TinyCat, C = T.publishing.controllers, U = T.ui, all = T.dom.all;
   function render(item, thread) {
-    return T.components.render("publishing/comment", { item: item, viewer: thread.__viewer, show_replies: true, show_reply_form: true, api_base: thread.dataset.discussionApi });
+    return T.components.render("publishing/comment", { item: item, viewer: thread.__viewer, show_replies: true, show_reply_form: true, api_base: thread.dataset.discussionApi, constraints: thread.__constraints });
   }
   function find(items, id) {
     for (var item of items || []) { if (Number(item.id) === Number(id)) return item; var child = find(item.replies, id); if (child) return child; }
     return null;
   }
   function hydrate(root) {
+    all("[data-discussion]", root).forEach(function (thread) { thread.__constraints = JSON.parse(thread.dataset.discussionConstraints || "{}"); });
     all("[data-discussion-form]", root).forEach(function (form) {
       form.dataset.ajaxForm = "";
       var action = (form.elements.namedItem("action") || {}).value;
@@ -22,7 +23,6 @@ import "./editor-entry.js";
         form.dataset.apiMethod = button && button.getAttribute("aria-pressed") === "true" ? "DELETE" : "PUT";
       }
     });
-    C.editor.hydrate(root);
   }
   T.modules.register("publishing-discussion", {
     hydrate: hydrate,
@@ -31,7 +31,7 @@ import "./editor-entry.js";
       if (!source.matches("[data-discussion-form]")) return false;
       var data = response.data, id = data.target.id, thread = document.querySelector('[data-discussion-id="' + Number(id) + '"]');
       if (!thread) return [];
-      thread.__viewer = data.viewer;
+      thread.__viewer = data.viewer; thread.__constraints = data.constraints; thread.dataset.discussionConstraints = JSON.stringify(data.constraints);
       var item = find(data.items, data.comment_id), roots = [];
       if (data.action === "comment" && item) {
         var parent = item.parent_id && thread.querySelector('.status-comment[data-comment-id="' + Number(item.parent_id) + '"] .status-comment-main');
@@ -64,7 +64,7 @@ import "./editor-entry.js";
       if (item.capabilities.edit) {
         var form = U.form(endpoint, "PATCH");
         form.dataset.discussionForm = ""; form.dataset.modalCloseOnSuccess = "true";
-        form.appendChild(T.components.render("publishing/editor", { name: "comment", value: item.editable_body, comment: true, max_length: 2000, required: true }));
+        form.appendChild(T.components.render("publishing/editor", { name: "comment", value: item.editable_body, comment: true, max_characters: data.constraints.comment.max_length, required: true }));
         form.appendChild(U.button("common.save", { type: "submit" })); content.appendChild(form);
       }
       if (item.capabilities.delete) {

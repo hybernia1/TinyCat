@@ -60,7 +60,7 @@ final class Segments
      * @param list<string> $hiddenHashes
      * @return list<array<string, string>>
      */
-    public static function text(string $text, array $hiddenHashes = [], int $contentId = 0, int $commentId = 0, string $kind = 'post'): array
+    public static function text(string $text, string $kind, array $hiddenHashes = [], int $contentId = 0, int $commentId = 0): array
     {
         $segments = [];
         $offset = 0;

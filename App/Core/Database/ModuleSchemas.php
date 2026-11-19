@@ -19,13 +19,14 @@ final class ModuleSchemas
         foreach ($schemas as $id => $schema) {
             $state = self::state($pdo, $id);
             if ($state === null) {
-                foreach ($schema->tables as $table) { if ($schema->legacy === null && self::tableExists($pdo, $table) && !\TinyCat\Core\Tasks\Schema::mayAdopt($pdo, $id, $schema)) { throw new RuntimeException('Refusing to adopt an unmanaged table: ' . $table); } }
+                foreach ($schema->tables as $table) { if ($schema->legacy === null && self::tableExists($pdo, $table)) { throw new RuntimeException('Refusing to adopt an unmanaged table: ' . $table); } }
                 $pending = true; continue;
             }
             $version = (int) $state['version'];
             $retired = $state['status'] === 'retired' && $schema->legacy !== null && $version < $schema->version;
             if ($state['status'] !== 'ready' && !$retired) { throw new RuntimeException('Recover the interrupted module operation before continuing: ' . $id); }
             if ($version > $schema->version) { throw new RuntimeException('Module schema downgrade is not supported.'); }
+            self::supported($id, $schema, $version);
             self::verifyHistory($pdo, $id, $schema, $version);
             if ($version < $schema->version) { $pending = true; }
             elseif (!self::ready($pdo, [$id => $schema])) { throw new RuntimeException('Installed module tables are missing: ' . $id); }
@@ -51,7 +52,8 @@ final class ModuleSchemas
 
     private static function applyFile(PDO $pdo, SchemaMigration $migration): void
     {
-        $checksum = self::checksum($migration->file);
+        if ($migration->file === null) { throw new RuntimeException('Archived migrations cannot be executed.'); }
+        $checksum = self::migrationChecksum($migration);
         $apply = require $migration->file;
         if (!$apply instanceof \Closure) { throw new RuntimeException('Module migration must return a closure.'); }
         $apply($pdo);
@@ -62,10 +64,11 @@ final class ModuleSchemas
     private static function convertLegacy(PDO $pdo, string $id, ModuleSchema $schema): bool
     {
         $migration = $schema->legacy ?? throw new RuntimeException('Missing legacy conversion.');
-        $checksum = self::checksum($migration->file); $apply = require $migration->file;
+        $file = $migration->file ?? throw new RuntimeException('Legacy conversion requires executable source.');
+        $checksum = self::migrationChecksum($migration); $apply = require $file;
         if (!$apply instanceof \Closure) { throw new RuntimeException('Legacy conversion must return a closure.'); }
         $converted = $apply($pdo);
-        if (!is_bool($converted) || !hash_equals($checksum, self::checksum($migration->file))) { throw new RuntimeException('Invalid legacy conversion result or changed source.'); }
+        if (!is_bool($converted) || !hash_equals($checksum, self::checksum($file))) { throw new RuntimeException('Invalid legacy conversion result or changed source.'); }
         if (!$converted) { return false; }
         foreach ($schema->tables as $table) { if (!self::tableExists($pdo, $table)) { throw new RuntimeException('Legacy conversion did not create the declared table: ' . $table); } }
         self::systemTables($pdo);
@@ -100,7 +103,7 @@ final class ModuleSchemas
                     throw new RuntimeException('Module is already installed; use upgrade or recover its backup: ' . $id);
                 }
                 foreach ($schema->tables as $table) {
-                    if (self::tableExists($pdo, $table) && !\TinyCat\Core\Tasks\Schema::mayAdopt($pdo, $id, $schema)) { throw new RuntimeException('Refusing to adopt an unmanaged table: ' . $table); }
+                    if (self::tableExists($pdo, $table)) { throw new RuntimeException('Refusing to adopt an unmanaged table: ' . $table); }
                 }
                 self::writeState($pdo, $id, 0, 'installing');
                 try {
@@ -126,6 +129,8 @@ final class ModuleSchemas
                 if ($state === null) { throw new RuntimeException('Module is not installed: ' . $id); }
                 $version = (int) $state['version'];
                 if ($version > $schema->version) { throw new RuntimeException('Module schema downgrade is not supported.'); }
+                if ($version !== 0) { self::supported($id, $schema, $version); }
+                elseif ($schema->minimumVersion > 0 && $state['status'] !== 'installing' && $state['status'] !== 'failed') { throw new RuntimeException('Invalid interrupted fresh installation state.'); }
                 self::verifyHistory($pdo, $id, $schema, $version);
                 // A retired owner's explicit migration must observe the retained
                 // retirement marker before creating its independent storage.
@@ -157,9 +162,20 @@ final class ModuleSchemas
 
     public static function checksum(string $file): string
     {
-        $source = file_get_contents($file);
-        if ($source === false) { throw new RuntimeException('Unreadable module migration.'); }
-        return hash('sha256', str_replace(["\r\n", "\r"], "\n", $source));
+        return Migrations::checksum($file);
+    }
+
+    public static function migrationChecksum(SchemaMigration $migration): string
+    {
+        if ($migration->file === null) { return $migration->checksum ?? throw new RuntimeException('Missing archived migration checksum.'); }
+        $checksum = self::checksum($migration->file);
+        if ($migration->checksum !== null && !hash_equals($migration->checksum, $checksum)) { throw new RuntimeException('Migration source does not match its declared checksum.'); }
+        return $checksum;
+    }
+
+    private static function supported(string $id, ModuleSchema $schema, int $version): void
+    {
+        if ($version < $schema->minimumVersion) { throw new RuntimeException('Module ' . $id . ' requires completed schema version ' . $schema->minimumVersion . '; apply the checkpoint release first.'); }
     }
 
     /** @return array<string, mixed>|null */
@@ -185,16 +201,16 @@ final class ModuleSchemas
             foreach ($schema->migrations as $migration) {
                 if (isset($ids[$migration->id])) { throw new RuntimeException('Duplicate migration ID: ' . $migration->id); }
                 $ids[$migration->id] = true;
-                self::checksum($migration->file);
+                self::migrationChecksum($migration);
             }
-            foreach ([$schema->baseline, $schema->legacy] as $operation) { if ($operation !== null) { self::checksum($operation->file); } }
+            foreach ([$schema->baseline, $schema->legacy] as $operation) { if ($operation !== null) { self::migrationChecksum($operation); } }
         }
     }
 
     private static function systemTables(PDO $pdo): void
     {
         $pdo->exec('CREATE TABLE IF NOT EXISTS module_installations (module_id VARCHAR(190) PRIMARY KEY, version INTEGER NOT NULL, status VARCHAR(20) NOT NULL)');
-        $pdo->exec('CREATE TABLE IF NOT EXISTS module_migrations (module_id VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, version INTEGER NOT NULL, checksum CHAR(64) NOT NULL, PRIMARY KEY (module_id, migration))');
+        Migrations::prepare($pdo);
     }
 
     private static function connection(PDO $pdo): void
@@ -204,10 +220,7 @@ final class ModuleSchemas
 
     private static function tableExists(PDO $pdo, string $table): bool
     {
-        $mysql = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
-        $query = $pdo->prepare($mysql ? 'SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?' : "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?");
-        $query->execute([$table]);
-        return $query->fetchColumn() !== false;
+        return Schema::exists($pdo, $table);
     }
 
     private static function writeState(PDO $pdo, string $id, int $version, string $status): void
@@ -221,20 +234,17 @@ final class ModuleSchemas
 
     private static function record(PDO $pdo, string $id, SchemaMigration $migration): void
     {
-        $query = $pdo->prepare('INSERT INTO module_migrations (module_id, migration, version, checksum) VALUES (?, ?, ?, ?)');
-        $query->execute([$id, $migration->id, $migration->version, self::checksum($migration->file)]);
+        Migrations::record($pdo, 'schema', $id, $migration->id, $migration->version, null, self::migrationChecksum($migration));
     }
 
     private static function verifyHistory(PDO $pdo, string $id, ModuleSchema $schema, int $version): void
     {
-        if ($id === \TinyCat\Core\Tasks\Schema::OWNER) { \TinyCat\Core\Tasks\Schema::validateLegacyHistory($pdo); }
-        $query = $pdo->prepare('SELECT migration, version, checksum FROM module_migrations WHERE module_id = ? ORDER BY version');
-        $query->execute([$id]);
-        $rows = $query->fetchAll(PDO::FETCH_ASSOC);
+        $rows = Migrations::history($pdo, 'schema', $id);
+        usort($rows, static fn (array $left, array $right): int => (int) $left['sequence'] <=> (int) $right['sequence']);
         if (count($rows) !== $version) { throw new RuntimeException('Module migration history is incomplete.'); }
         foreach ($rows as $index => $row) {
             $migration = $schema->migrations[$index];
-            if ($row['migration'] !== $migration->id || (int) $row['version'] !== $migration->version || !hash_equals((string) $row['checksum'], self::checksum($migration->file))) { throw new RuntimeException('Applied module migration checksum or ID mismatch.'); }
+            if ($row['migration'] !== $migration->id || (int) $row['sequence'] !== $migration->version || !hash_equals((string) $row['checksum'], self::migrationChecksum($migration))) { throw new RuntimeException('Applied module migration checksum or ID mismatch.'); }
         }
     }
 

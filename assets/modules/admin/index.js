@@ -1,5 +1,2 @@
 import "./navigation.js";
-(function () {
-  "use strict";
-  var TinyCat = window.TinyCat;
-}());
+import "../../ui/admin-resources.js";

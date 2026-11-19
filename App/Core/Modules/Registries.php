@@ -14,7 +14,7 @@ final readonly class Registries
     /** @param array<string, Contributions> $modules */
     public function __construct(array $modules = [])
     {
-        $tasks = []; $navigation = []; $health = []; $maintenance = []; $temporaryDirectories = []; $configOverrides = []; $notificationTypes = []; $notificationInbox = false; $themes = []; $homepages = []; $dashboards = []; $settings = []; $features = []; $mailDelivery = false; $sitemaps = []; $search = []; $crawlerHints = []; $localizedRoutes = []; $information = []; $widgets = []; $embeds = []; $owners = [];
+        $tasks = []; $navigation = []; $health = []; $maintenance = []; $temporaryDirectories = []; $configOverrides = []; $notificationTypes = []; $notificationInbox = false; $themes = []; $homepages = []; $dashboards = []; $settings = []; $features = []; $mailDelivery = false; $sitemaps = []; $search = []; $crawlerHints = []; $localizedRoutes = []; $information = []; $widgets = []; $embeds = []; $componentLookups = []; $owners = [];
         foreach ($modules as $owner => $bundle) {
             if ($bundle->mailDelivery) {
                 if ($mailDelivery) { throw new InvalidArgumentException('Duplicate mail delivery provider.'); }
@@ -24,7 +24,7 @@ final readonly class Registries
                 if ($notificationInbox) { throw new InvalidArgumentException('Duplicate notification inbox provider.'); }
                 $notificationInbox = true; $owners['service:notification-inbox'] = $owner;
             }
-            foreach (['task' => $bundle->tasks, 'navigation' => $bundle->navigation, 'health' => $bundle->health, 'maintenance' => $bundle->maintenance, 'temporary' => $bundle->temporaryDirectories, 'notification' => $bundle->notificationTypes, 'theme' => $bundle->themes, 'homepage' => $bundle->homepages, 'dashboard' => $bundle->dashboards, 'settings' => $bundle->settings, 'feature' => $bundle->features, 'sitemap' => $bundle->sitemaps, 'search' => $bundle->search, 'crawler-hint' => $bundle->crawlerHints, 'localized-route' => $bundle->localizedRoutes, 'information' => $bundle->information, 'widget' => $bundle->widgets, 'embed' => $bundle->embeds] as $kind => $entries) {
+            foreach (['task' => $bundle->tasks, 'navigation' => $bundle->navigation, 'health' => $bundle->health, 'maintenance' => $bundle->maintenance, 'temporary' => $bundle->temporaryDirectories, 'notification' => $bundle->notificationTypes, 'theme' => $bundle->themes, 'homepage' => $bundle->homepages, 'dashboard' => $bundle->dashboards, 'settings' => $bundle->settings, 'feature' => $bundle->features, 'sitemap' => $bundle->sitemaps, 'search' => $bundle->search, 'crawler-hint' => $bundle->crawlerHints, 'localized-route' => $bundle->localizedRoutes, 'information' => $bundle->information, 'widget' => $bundle->widgets, 'embed' => $bundle->embeds, 'component-lookup' => $bundle->componentLookups] as $kind => $entries) {
                 foreach ($entries as $entry) {
                     if (preg_match('/^[a-z][a-z0-9_.-]*$/D', $entry->id) !== 1) { throw new InvalidArgumentException('Invalid contribution ID: ' . $entry->id); }
                     $key = $kind . ':' . $entry->id;
@@ -32,6 +32,7 @@ final readonly class Registries
                     $owners[$key] = $owner;
                 }
             }
+            $componentLookups = [...$componentLookups, ...$bundle->componentLookups];
             $tasks = [...$tasks, ...$bundle->tasks];
             $navigation = [...$navigation, ...$bundle->navigation];
             $health = [...$health, ...$bundle->health];
@@ -73,6 +74,7 @@ final readonly class Registries
             information: self::ordered($information),
             widgets: self::ordered($widgets),
             embeds: self::ordered($embeds),
+            componentLookups: self::ordered($componentLookups),
         );
         $this->owners = $owners;
     }
@@ -100,7 +102,7 @@ final readonly class Registries
         return $this->entries->maintenance[0]->id ?? '';
     }
 
-    /** @template T of ScheduledTask|NavigationItem|HealthProbe|MaintenanceTask|TemporaryDirectory|PageTheme|EntryPage|SettingsSection|FeatureGroup|SitemapSection|SearchSource|CrawlerHint|LocalizedRoute|InformationSection|DashboardWidget|EmbedSource
+    /** @template T of ComponentLookup|ScheduledTask|NavigationItem|HealthProbe|MaintenanceTask|TemporaryDirectory|PageTheme|EntryPage|SettingsSection|FeatureGroup|SitemapSection|SearchSource|CrawlerHint|LocalizedRoute|InformationSection|DashboardWidget|EmbedSource
      * @param list<T> $entries
      * @return list<T> */
     private static function ordered(array $entries): array

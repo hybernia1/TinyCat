@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 define('TINYCAT', true);
-require __DIR__ . '/../../App/autoload.php';
+require __DIR__ . '/../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Support\AssetGraph;
 
@@ -24,7 +24,7 @@ try {
     file_put_contents($directory . '/b.js', "import \"./a.js\";\n");
     $reject(static fn () => AssetGraph::order([$relative . '/a.js']));
     $reject(static fn () => AssetGraph::resolve($relative . '/a.js', './missing.js'));
-    $reject(static fn () => AssetGraph::resolve($relative . '/a.js', '../../App/bootstrap.php'));
+    $reject(static fn () => AssetGraph::resolve($relative . '/a.js', '../../App/Core/Runtime/Application.php'));
     file_put_contents($directory . '/b.js', 'export const unsupported = true;');
     $reject(static fn () => AssetGraph::javascript([$relative . '/b.js']));
 } finally {

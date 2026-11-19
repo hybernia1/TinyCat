@@ -4,6 +4,9 @@ Core je povinný framework. Funkční modul přidává konkrétní použití apl
 a lze jej vypnout. Social a Blog mohou běžet samostatně, společně, nebo být
 oba neaktivní. Administrace a správa modulů zůstávají součástí core.
 
+Společné veřejné vstupy a jejich vynucení určuje
+[kontrakt core pro API, UI a validace](../contracts/core-application-contract.md).
+
 Začínáš nový modul? Použij [vstupní manuál s příklady](module-authoring.md).
 
 Výsledek přestavby, kompatibilitu a měřené ověření zachycuje
@@ -11,11 +14,8 @@ Výsledek přestavby, kompatibilitu a měřené ověření zachycuje
 
 ```text
 App/
-  autoload.php
-  bootstrap.php
   Console.php
   modules.php                    # Výchozí výběr Socialu
-  available-modules.php          # Social a Blog
   Core/
     services.json                # Povinné registrace frameworku, ne modulové manifesty
     Runtime/                     # HTTP/CLI start a načtení frameworku
@@ -70,12 +70,73 @@ Vrstva `Composition` ani produktové bootstrapy neexistují. Vnitřní složky
 Socialu nemají manifesty, aktivační stav ani samostatné položky ve správci.
 Jejich pomocné registrace volá výhradně `Social/Module.php`.
 
+Uvnitř Socialu profily volají přímo jeho autorské stránky, statistiky a
+notifikační události. Příspěvky používají přímo vlastní notifikační služby;
+tyto pevné vazby nepotřebují další callbackový registr. Lazy příspěvky do core
+a veřejné kontrakty mezi modulem a frameworkem zůstávají zachované.
+
+`Social/Posts/PostCreation` je jediná příprava a vytvoření sociálního příspěvku,
+společná pro ruční zápis i feed import. `Social/Posts/Tags` vlastní normalizaci,
+vazby tagů a jejich veřejné výpisy bez dědičné mezivrstvy. `Posts/Resource`
+předává vlastní odkazy přímo společnému `Core/Ui/RichTextResource`.
+Transakční aktualizaci a mazání uložených dat nadále poskytuje `Content/Posts`.
+Diskuse a reakce volají přímo `Posts/InteractionPolicy`; vlastní interní registr
+vlastníků nemají. Nastavení a lokalizaci URL čtou z core a blokování odkazů
+z vlastní `Content/Policy`. Textové politiky registrují přímo do `Core/Text/Policies`.
+
+Účtové akce, uživatelská jména a avatary se volají přímo přes `Core/Identity`.
+Social nemá přeposílací třídy `Profiles/Actions`, `Profiles/Usernames`,
+`Profiles/Avatar`, `Profiles/Avatars` ani `Profiles/Accounts`. `Profiles/Roles` vlastní pouze sociální
+vlastnosti rolí; přihlašování a správa účtů používají `Core/Identity/Roles`.
+Klientský Social přispívá do core navigace načtením a vykreslením stránky;
+historii, scroll a řízení souběžných přechodů vlastní společný mechanismus.
+
+`Social/Module` je jediný poskytovatel modulových kontraktů. Vnitřní
+`Registration` a `Content/ServiceProvider` jsou pomocné třídy bez vlastních
+modulových rozhraní. Jediným zdrojem inventáře tabulek jsou příslušná `Schema`;
+hlavní modul z nich skládá úplný seznam. Aktivační stav účtu mění
+`Core/Identity/Administration`, Social připojuje lazy callback pro své botí zdroje.
+Historické migrační streamy, baseline soubory a checksumy se tím nemění.
+
+Profily neposkytují účtové stránky, administrativní view data ani obálku
+administrativní navigace. Veřejné autorské stránky registruje `PublicPages`
+přímo přes `Posts/AuthorPages`. `Profiles/Resource` doplňuje k identitě sociální
+URL; `Profiles/Views` vlastní zobrazení sledovaných autorů. Sledování i jeho
+odstranění patří do `Profiles/Following`.
+
+Klientské účty používají `TinyCat.accounts`, sociální vztahy
+`TinyCat.socialUsers`. Sdílený objekt ani alias `TinyCat.users` neexistuje.
+Editor, přehrávače a překlady používají přímo `TinyCat.publishing.controllers`;
+Social k nim nekopíruje druhé ovladače. Mobilní sociální URL vlastní jeho
+samostatná navigační politika. `Presentation/Sidebar` připravuje totožná data
+pro počáteční HTML i deferred resource.
+
+Výchozí jazyk dokumentů zajišťuje `Localization::defaultLocale()` nezávisle na
+jazyku návštěvníka. Technické oEmbed URL ověřuje core; Social poskytuje data
+viditelného statusu. Strojové chyby dokumentů používají `Http/Document`, API dál
+společnou API obálku. HTTP CSP čerpá podporované přehrávače přímo z core katalogu,
+Social ani Blog neudržují globální kopii povolených originů. Inicializace Socialu
+neresetuje URL konfiguraci ani vlastnictví textových politik jiných poskytovatelů.
+
 ## Načtení a vlastnictví
+
+HTTP vstup načítá přímo `Core/Runtime/autoload.php`, explicitně volá
+`Application::start()` a předává požadavek `HttpKernel::respond()`. Samostatná
+bootstrapová obálka není potřeba. Stejný loader používají produkční CLI vstupy;
+kontrola minimální verze PHP probíhá před autoloadováním tříd.
+
+Externí skripty a nástroje načítají `App/Core/Runtime/autoload.php` pomocí
+`require_once`; loader nezahajuje aplikaci, SQL ani session. Nástroj, který
+potřebuje celý runtime, pak explicitně volá `Application::start()`.
+Obálka `App/autoload.php` je odstraněná. Před aktualizací z dokončené 6.0.10
+obnov privátní rescue launcher příkazem `php App/Console.php rescue` podle
+[aktualizačního návodu](../operations/updates.md#retiring-the-autoload-facade).
 
 `Core/Runtime/Framework` nejprve načte čistá metadata povinných služeb
 z `Core/services.json`. `Core/Modules/Loader` k nim přidá explicitně vybrané
-funkční manifesty, ověří namespace a závislosti a vytvoří společný katalog.
-Nepoužívá filesystem discovery. Například:
+aktivované funkční manifesty, ověří namespace a závislosti a vytvoří společný katalog.
+Dostupnost určuje metadata-only inventář `App/Modules/*/module.json`; neaktivní
+modul se při inventarizaci nenačítá jako PHP. Výchozí aktivace zdrojů například:
 
 ```php
 return [
@@ -86,8 +147,8 @@ return [
 
 Prázdný výběr znamená celý framework bez funkčních modulů. Služby core
 se neuvádějí do tohoto seznamu ani do `storage/deployment.json`. Stabilní
-interní capability ID, například `tinycat.publishing`, umožňuje modulům
-deklarovat požadovaný kontrakt; nejde o vypínatelný modul.
+interní capability ID označují povinné služby frameworku. Historické migrační
+streamy jako `tinycat.publishing` nejsou capability ani aktivovatelné moduly.
 
 `Core/Modules/Resources` poskytuje stejný katalog bootstrapu, překladům,
 komponentám, assetům i buildu. Soukromé zdroje patří svému vlastníkovi.
@@ -120,23 +181,33 @@ definic; vypnutí jednoho modulu neodstraní účet ani data druhého.
 
 ## Migrace a kompatibilita
 
-Podepsaný descriptor formátu 3 odděluje `selection` od povinného `framework`
+Podepsaný descriptor odděluje `selection` od povinného `framework`
 bez Publishingu. `schemaOwners` přiřazuje historické streamy aktuálním vlastníkům.
-Social vlastní Users, Moderation, Bots, Publishing verze 4 a Status verze 2;
+Social vlastní Users, Moderation, Bots, Publishing verze 4 a Status verze 3;
 Blog vlastní verzi 4. Historické ID není aktivační jednotka. Publikované migrační
-bajty a checksumy se nemění. Explicitní podepsané `fresh` a `legacy` operace
-umožňují čistou instalaci bez starého společného DDL a doložený převod dat.
+bajty a checksumy se nemění. Vestavěná historie je od 6.0.9 archivní prefix
+formátu 4 s původními ID, pořadím, checksumy a explicitním `file: null`.
+Každý vlastník má samostatnou podepsanou `fresh` baseline bez řetězení starých
+datových převodů. Původní journalové záznamy se nepřepisují.
 Aktualizační cesta a retirement historie jsou v [datovém kontraktu](domain-storage.md).
 
-`Core/Modules/Upgrade` převádí pouze aktivační ID: technická ID odstraní
-z aktivačního seznamu a staré sociální části sjednotí na `tinycat.social`.
-Nainstalovaný vypnutý Social zůstane vypnutý a zachová vlastnictví dat.
-Částečně aktivovaný starý Social se při převodu stane jedním aktivním modulem.
-Neznámý nainstalovaný modul nelze přechodem zahodit.
+Současné zdroje podporují descriptor formátu 3 i 4 a vyžadují dokončenou 6.0.8
+nebo novější instalaci. Archivovaný prefix vyžaduje také odpovídající dokončené
+schéma vlastníka. Starší aktivační ID převádí nezměněný podepsaný release
+6.0.6, archivní čtení přidává neměnná 6.0.8; současný core nemá seznam částí
+Socialu ani převodní adaptér. Povinné
+technické schopnosti deklaruje `Core/Runtime/Framework::CAPABILITIES`.
+Nainstalovaný vypnutý vlastník zůstane vypnutý a zachová vlastnictví dat.
+Neznámý nainstalovaný modul nelze přechodem zahodit ani přejmenovat.
 
-`Core/Runtime/LegacyNames` zachovává bývalá jména tříd pro publikované
-migrace a kompatibilitu. Nový kód používá kanonické namespace v Core nebo
-Social; aliasy nesmějí vytvářet další implementace ani aktivovat modul.
+Popisky tabulek pro instalátor a klientskou prezentaci vlastních nastavení
+dodává vlastník ve svých překladech a assetech. Core vybírá tabulky z registrací;
+instalační text nepředpokládá přítomnost konkrétního funkčního modulu.
+
+Textové renderery `Core/Text/Segments` a `Core/Ui/RichTextResource` vyžadují
+explicitní druh textu. Registr `Core/Text/Policies` použije příspěvek vlastníka
+pro tento druh, nebo neutrální chování, pokud příspěvek neexistuje. Aktivní
+Social nemění renderování textu jiného vlastníka.
 
 Postup instalace, aktivace a aktualizace popisuje
 [provozní návod](../operations/module-deployment.md). Závazné transportní

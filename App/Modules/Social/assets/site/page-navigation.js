@@ -1,28 +1,19 @@
 import "../../../../../assets/ui/document-navigation.js";
-import "../../../../../assets/core/navigation.js";
+import "../../../../../assets/core/page-navigation.js";
 import "../../../../../assets/core/api-client.js";
 import "../../../../../assets/core/component-renderer.js";
 import "../../../../../assets/core/lifecycle.js";
 import "../../../../../assets/ui/dialogs.js";
 (function () {
-  var T = window.TinyCat, pending = null, currentIndex = 0, rollback = false, sidebar = null, scrollSaveTimer = null;
+  var T = window.TinyCat, sidebar = null;
   function supported(url) {
     if (url.origin !== window.location.origin || url.hash || !document.querySelector("[data-public-page]")) { return false; }
-    var parts = T.urls.split(url.pathname), path = parts.path, home = path === "/" || path === "/social";
-    if (parts.locale !== T.urls.prefix() || !(home || path === "/search" || /^\/(?:tag\/[^/]+|author\/[1-9][0-9]*|status\/[1-9][0-9]*)$/.test(path))) { return false; }
-    return Array.from(url.searchParams.keys()).every(function (key) { return path === "/search" ? key === "q" || key === "type" || key === "media" : key === "feed" || key === "compact" || ((home || path.startsWith("/tag/") || path.startsWith("/author/")) && key === "media"); });
-  }
-  function saveScroll() {
-    window.clearTimeout(scrollSaveTimer);
-    scrollSaveTimer = null;
-    if (!pending && supported(new URL(window.location.href))) {
-      window.history.replaceState(Object.assign({}, window.history.state, { publicIndex: currentIndex, scroll: [window.scrollX, window.scrollY] }), "");
-    }
-  }
-  function queueScrollSave() {
-    window.clearTimeout(scrollSaveTimer);
-    // Keep history writes out of the continuous scrolling path.
-    scrollSaveTimer = window.setTimeout(saveScroll, 150);
+    var parts = T.urls.split(url.pathname), root = document.querySelector("[data-public-page]");
+    if (parts.locale !== T.urls.prefix()) { return false; }
+    var routes = JSON.parse(root.dataset.publicRoutes || "[]");
+    return routes.some(function (route) {
+      return new RegExp(route.pattern, "u").test(parts.path) && Array.from(url.searchParams.keys()).every(function (key) { return route.query.includes(key); });
+    });
   }
   function apply(target, data) {
     if (String(data.viewer && data.viewer.id || 0) !== String(document.body.dataset.currentUserId || 0) || data.version !== document.body.dataset.applicationVersion || data.locale !== document.documentElement.lang) { throw new Error("Page shell changed."); }
@@ -43,48 +34,14 @@ import "../../../../../assets/ui/dialogs.js";
     document.querySelectorAll(".navbar a[href]").forEach(function (node) { if (new URL(node.href).pathname === new URL(data.url, window.location.href).pathname) { node.setAttribute("aria-current", "page"); } });
     var main = document.getElementById("main-content"); main.focus({ preventScroll: true });
   }
-  async function visit(url, restored, replace) {
-    window.clearTimeout(scrollSaveTimer);
-    scrollSaveTimer = null;
-    if (pending) { pending.abort(); }
-    if (!restored) { saveScroll(); }
-    var target = document.querySelector("#main-content > .container"), controller = new AbortController(); pending = controller;
-    target.setAttribute("aria-busy", "true"); target.dataset.navigationBusy = "true";
+  T.navigation.registerPage({ accepts: supported, target: "#main-content > .container", apply: apply, load: async function (url, signal) {
     var request = new URL("/api/site/pages", window.location.href); request.searchParams.set("path", url.pathname);
     url.searchParams.forEach(function (value, key) { request.searchParams.set(key, value); });
-    try {
-      var response = await T.api.request(request.href, { signal: controller.signal, cache: "no-store" });
-      if (pending !== controller) { return false; }
-      var next = new URL(response.data.url, window.location.href);
-      if (!restored) { currentIndex++; window.history[replace ? "replaceState" : "pushState"]({ publicIndex: currentIndex, scroll: [0, 0] }, "", next.pathname + next.search); }
-      apply(target, response.data);
-      var scroll = restored && restored.scroll || [0, 0];
-      window.scrollTo(scroll[0], scroll[1]);
-      return true;
-    } catch (error) {
-      if (error.name !== "AbortError" && pending === controller) { window.location[replace ? "replace" : "assign"](url.href); }
-      return false;
-    } finally {
-      if (pending === controller) { pending = null; target.removeAttribute("aria-busy"); delete target.dataset.navigationBusy; }
-    }
-  }
-  T.navigation.registerPage({ accepts: supported, visit: visit, restore: async function (event, url) {
-    if (rollback) { rollback = false; return false; }
-    var state = event && event.state || window.history.state || {};
-    if (!(await T.navigation.canLeave())) {
-      rollback = true; window.history.go(currentIndex - (state.publicIndex || 0)); return false;
-    }
-    currentIndex = state.publicIndex || 0;
-    return visit(url || new URL(window.location.href), state);
+    var response = await T.api.request(request.href, { signal: signal, cache: "no-store" });
+    return response.data;
   } });
   T.lifecycle.register("public-pages", { init: function () {
     if (!document.querySelector("[data-public-page]")) { return; }
-    window.history.scrollRestoration = "manual"; saveScroll();
-    window.addEventListener("scroll", queueScrollSave, { passive: true });
-    window.addEventListener("pagehide", saveScroll);
-    document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "hidden") { saveScroll(); }
-    });
     document.addEventListener("submit", function (event) {
       var form = event.target.closest && event.target.closest("form[data-global-search]");
       if (!form || event.defaultPrevented) { return; }
@@ -95,12 +52,5 @@ import "../../../../../assets/ui/dialogs.js";
       if (!supported(url)) { return; }
       event.preventDefault(); T.navigation.go(url.href);
     });
-    document.addEventListener("click", function (event) {
-      var link = event.target.closest && event.target.closest("a[href]");
-      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || !link || link.target || link.hasAttribute("download") || link.hasAttribute("data-ajax") || link.hasAttribute("data-modal-open")) { return; }
-      var url = new URL(link.href, window.location.href);
-      if (!supported(url)) { return; }
-      event.preventDefault(); T.navigation.go(url.href);
-    }, true);
   } });
 }());

@@ -31,26 +31,26 @@ if (($argv[1] ?? '') !== '--isolated') {
 
 use TinyCat\Database\Connection;
 use TinyCat\Social\Content\Archive;
-use TinyCat\Social\Content\Integration;
-use TinyCat\Social\Content\PostCreation;
+use TinyCat\Core\Text\{Policies, TextPolicy};
+use TinyCat\Social\Posts\PostCreation;
 use TinyCat\Social\Content\Posts;
 use TinyCat\Social\Content\Queries;
 
 define('TINYCAT', true);
 $workspace = $argv[2];
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $core = TinyCat\Core\Modules\Loader::fromSelection($workspace, []);
 TinyCat\Core\Modules\Resources::configure($core->catalog);
 $coreDb = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-TinyCat\Database\ModuleSchemas::install($coreDb, TinyCat\Core\Modules\Distribution::definitions($core, false));
+TinyCat\Database\ModuleSchemas::install($coreDb, TinyCat\Core\Modules\Distribution::definitions($core));
 $coreTables = $coreDb->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
-$assert($coreTables === ['ip_action_limits', 'module_installations', 'module_migrations', 'notifications', 'password_reset_tokens', 'scheduler_runs', 'settings', 'users'], 'Core creates exactly eight framework tables without a domain module');
+$assert($coreTables === ['ip_action_limits', 'migrations', 'module_installations', 'notifications', 'password_reset_tokens', 'scheduler_runs', 'settings', 'users'], 'Core creates exactly eight framework tables without a domain module');
 $assert(!$core->catalog->has('tinycat.publishing') && !$core->catalog->has('tinycat.social') && !$core->catalog->has('tinycat.blog'), 'Core has no implicit publication capability or domain owner');
 foreach (['Status', 'Users', 'Bots', 'Notifications', 'Moderation', 'Settings', 'Site', 'Search'] as $domain) { $assert(!is_dir($workspace . '/App/Modules/' . $domain), 'No physical product sources: ' . $domain); }
 $modules = TinyCat\Core\Modules\Loader::load($workspace);
-$modules->initialize(); Integration::configure();
+$modules->initialize(); Policies::forget('post');
 $api = TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(new TinyCat\Core\Runtime\Configuration(['datetime' => ['timezone' => 'UTC'], 'publishing' => ['base_url' => 'https://publication.example']]), locale: static fn (): string => 'en'), $modules);
 $assert(array_keys(TinyCat\Core\Identity\Participants::current()) === ['tinycat.accounts', 'tinycat.social'], 'Only selected owners contribute account lifecycle');
 $assert(TinyCat\Core\Modules\Registrations::current()->owner('maintenance', 'orphan_terms') === 'tinycat.social', 'Existing maintenance ID has the publishing owner');
@@ -92,12 +92,14 @@ $pdo->exec("CREATE TRIGGER reject_update BEFORE UPDATE ON social_posts BEGIN SEL
 try { Posts::update($id, PostCreation::fromText('Rejected #change'), [], null, false, null); $assert(false, 'Update must fail'); }
 catch (PDOException) { $assert(Posts::find($id)['body'] === $update->body, 'Failed update preserves original social_posts'); }
 $pdo->exec('DROP TRIGGER reject_update');
-Integration::configure(blocked: static fn (string $text): string => str_contains($text, 'blocked.test') ? 'blocked.test' : '', mentions: static fn (string $text): string => str_replace('@reader', '@1', $text));
+$originalOptions = TinyCat\Core\Runtime\Startup::$options;
+TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default): mixed => $key === 'moderation.blocked_urls' ? 'blocked.test' : ($originalOptions !== null ? $originalOptions($key, $default) : TinyCat\Support\Config::get($key, $default));
+Policies::provide('tinycat.social', 'post', new TextPolicy(normalize: static fn (string $text): string => str_replace('@reader', '@1', $text)));
 $blocked = PostCreation::fromText('https://blocked.test');
 $assert($blocked->rejection['code'] === 'blocked_url' && PostCreation::fromText('@reader')->body === '@1', 'Product policies are explicit lazy inputs');
 $assert(TinyCat\Support\Localization::t($blocked->rejection['message_key'], ['host' => 'blocked.test']) !== $blocked->rejection['message_key'], 'Policy rejection text does not require Moderation sources');
 try { PostCreation::create(1, $blocked, []); $assert(false, 'Rejected draft cannot be persisted'); } catch (InvalidArgumentException) { $assert(true, 'Shared writer rejects policy failures'); }
-Integration::configure();
+TinyCat\Core\Runtime\Startup::$options = $originalOptions; Policies::forget('post');
 $assert(PostCreation::fromText('#' . str_repeat('x', 33))->rejection['code'] === 'status_tag_too_long', 'Tag bounds use the same publishing validation');
 $assert(TinyCat\Support\Localization::t('account.messages.status_tag_too_long', ['max' => '32']) !== 'account.messages.status_tag_too_long', 'Publishing owns its validation catalog');
 mkdir($workspace . '/uploads/status-images/2000/01', 0700, true); $imagePath = '2000/01/' . str_repeat('a', 32) . '.webp';
@@ -113,7 +115,7 @@ $pdo->rollBack(); Posts::delete($imageId); clearstatcache(true, $file);
 $assert(Posts::find($imageId) === null && !is_file($file), 'Successful deletion removes the file after commit');
 try { Posts::delete($id, static function () use ($pdo): void { $pdo->exec("UPDATE social_posts SET body = 'side effect'"); throw new RuntimeException('domain callback failed'); }); $assert(false, 'Callback must fail'); }
 catch (RuntimeException) { $assert(Posts::find($id)['body'] === $update->body, 'Related owner failure rolls back its effects and the publication'); }
-$deletion = TinyCat\Social\Content\ServiceProvider::accountLifecycle()->prepareDelete;
+$deletion = TinyCat\Social\Content\AccountLifecycle::prepareDelete(...);
 
 $pdo->beginTransaction(); $cleanup = $deletion($writer); $pdo->exec('DELETE FROM users WHERE id = 1'); ($cleanup->afterDelete)(); $pdo->commit(); ($cleanup->afterCommit)();
 $assert((int) Connection::value('SELECT COUNT(*) FROM social_posts WHERE author_id = 1') === 0 && (int) Connection::value('SELECT COUNT(*) FROM social_post_tags') === 0, 'Account deletion uses only publishing-owned cleanup');

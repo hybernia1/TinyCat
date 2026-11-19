@@ -1,0 +1,27 @@
+{
+  "definitions": {
+    "fixture/context-leaf": {"tag": "span", "children": [{"get": "value"}, "|", {"get": "parent_marker"}]},
+    "fixture/context-object": {"component": "fixture/context-leaf", "data": {"get": "row"}},
+    "fixture/context-value": {"concat": [{"get": "value"}, "|", {"get": "parent_marker"}]},
+    "fixture/context-use": {"tag": "span", "children": [{"use": "fixture/context-value", "data": {"get": "row"}}]},
+    "fixture/context-tree": {"tag": "div", "children": [{"get": "title"}, {"each": {"get": "children"}, "as": "child", "children": {"component": "fixture/context-tree", "data": {"get": "child"}}}]},
+    "fixture/context-bindings": {"component": "fixture/context-leaf", "data": {"get": {"string": "literal"}, "value": {"get": "source"}}}
+  },
+  "cases": [
+    {"component": "fixture/context-object", "data": {"parent_marker": "PRIVATE", "row": {"value": "<unsafe>&", "get": "literal data", "t": "literal data"}}, "text": "<unsafe>&|"},
+    {"component": "fixture/context-use", "data": {"parent_marker": "PRIVATE", "row": {"value": "translated", "parent_marker": "selected"}}, "text": "translated|selected"},
+    {"component": "fixture/context-tree", "data": {"title": "A", "children": [{"title": "B", "children": [{"title": "C", "children": []}]}]}, "text": "ABC"},
+    {"component": "fixture/context-bindings", "data": {"source": "kept", "parent_marker": "PRIVATE"}, "text": "kept|"},
+    {"component": "fixture/context-object", "data": {"row": {}}, "text": "|"},
+    {"component": "fixture/context-object", "data": {"row": []}, "text": "|"},
+    {"component": "fixture/context-object", "data": {}, "error": "Component context must be a named object."},
+    {"component": "fixture/context-object", "data": {"row": null}, "error": "Component context must be a named object."},
+    {"component": "fixture/context-object", "data": {"row": "invalid"}, "error": "Component context must be a named object."},
+    {"component": "fixture/context-use", "data": {"row": false}, "error": "Component context must be a named object."},
+    {"component": "fixture/context-object", "data": {"row": 42}, "error": "Component context must be a named object."},
+    {"component": "fixture/context-object", "data": {"row": [{"value": "not a named object"}]}, "error": "Component context must be a named object."},
+    {"component": "fixture/context-object", "data": {"row": {"0": "not", "1": "named"}}, "error": "Component context must be a named object."},
+    {"component": "fixture/context-object", "data": {"row": {"constructor": "blocked"}}, "error": "Unsupported component key."},
+    {"component": "fixture/context-use", "data": {"row": {"__proto__": {"value": "blocked"}}}, "error": "Unsupported component key."}
+  ]
+}

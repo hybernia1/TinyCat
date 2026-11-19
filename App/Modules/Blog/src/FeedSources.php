@@ -10,6 +10,33 @@ use TinyCat\Support\Dates;
 
 final class FeedSources
 {
+    public const int NAME_MAX_LENGTH = 120;
+    public const int URL_MAX_BYTES = 2048;
+    public const int INTERVAL_MIN = 5;
+    public const int INTERVAL_MAX = 43200;
+    public const int DEFAULT_INTERVAL = 60;
+    public const string DEFAULT_STATUS = 'hidden';
+
+    /** @return array<string, string> */
+    public static function rules(): array
+    {
+        return ['name' => 'required|string|max:' . self::NAME_MAX_LENGTH, 'feed_url' => 'required|string|max_bytes:' . self::URL_MAX_BYTES, 'author_id' => 'required|integer|min:1', 'interval_minutes' => 'required|integer|min:' . self::INTERVAL_MIN . '|max:' . self::INTERVAL_MAX, 'publication_status' => 'string|in:' . implode(',', array_reverse(Articles::STATUSES)), 'enabled' => 'boolean', 'import_images' => 'boolean'];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    public static function constraints(): array { return \TinyCat\Http\Validator::constraints(self::rules()); }
+
+    /** @param array<mixed> $input
+     * @return array<mixed> */
+    public static function prepareInput(array $input): array
+    {
+        foreach (['name', 'feed_url'] as $field) { if (is_string($input[$field] ?? null)) { $input[$field] = trim($input[$field]); } }
+        return $input + ['name' => '', 'feed_url' => '', 'author_id' => 0, 'interval_minutes' => self::DEFAULT_INTERVAL, 'publication_status' => self::DEFAULT_STATUS, 'enabled' => true, 'import_images' => false];
+    }
+
+    /** @return array<string, int> */
+    public static function messageParams(): array { return ['interval_min' => self::INTERVAL_MIN, 'interval_max' => self::INTERVAL_MAX]; }
+
     public static function pipeline(): FeedPipeline { return new FeedPipeline(new FeedStore(), new FeedPublication()); }
 
     public static function task(): ScheduledTask
@@ -19,7 +46,7 @@ final class FeedSources
                 $options['source_limit'] = max(1, min(100, (int) $options['source_limit']));
                 if (isset($options['source_id']) && $options['source_id'] < 1) { throw new \InvalidArgumentException('Invalid feed source ID.'); }
                 return $options;
-            }, batchOption: 'source_limit');
+            }, batchOption: 'source_limit', optionLabels: ['source_limit' => 'cron.options.bot_limit', 'source_id' => 'cron.options.source_id']);
     }
 
     /** @param array<string, mixed> $context
@@ -50,13 +77,12 @@ final class FeedSources
     /** @param array<string, mixed> $input */
     public static function save(array $input, int $id = 0): int
     {
-        foreach (['name', 'feed_url', 'publication_status'] as $field) { if (isset($input[$field]) && !is_string($input[$field])) { throw new \InvalidArgumentException('Invalid source.'); } }
-        $name = trim((string) ($input['name'] ?? '')); $url = trim((string) ($input['feed_url'] ?? ''));
-        $authorId = filter_var($input['author_id'] ?? 0, FILTER_VALIDATE_INT);
-        $author = $authorId !== false && $authorId > 0 ? Connection::find('users', ['id' => $authorId]) : null;
-        $interval = filter_var($input['interval_minutes'] ?? 60, FILTER_VALIDATE_INT);
-        $status = (string) ($input['publication_status'] ?? 'hidden');
-        if ($name === '' || mb_strlen($name) > 120 || strlen($url) > 2048 || !\TinyCat\Http\Client::isSafeUrl($url) || $author === null || $author['status'] !== 'active' || !\TinyCat\Core\Identity\Roles::isAdmin($author) || $interval === false || $interval < 5 || $interval > 43200 || !in_array($status, ['hidden', 'published'], true)) { throw new \InvalidArgumentException('Invalid source.'); }
+        $input = self::prepareInput($input);
+        if (\TinyCat\Http\Validator::validate($input, self::rules()) !== []) { throw new \InvalidArgumentException('Invalid source.'); }
+        $name = (string) $input['name']; $url = (string) $input['feed_url'];
+        $author = Connection::find('users', ['id' => (int) $input['author_id']]);
+        $interval = (int) $input['interval_minutes']; $status = (string) $input['publication_status'];
+        if (!\TinyCat\Http\Client::isSafeUrl($url) || $author === null || $author['status'] !== 'active' || !\TinyCat\Core\Identity\Roles::isAdmin($author)) { throw new \InvalidArgumentException('Invalid source.'); }
         $data = ['name' => $name, 'feed_url' => $url, 'feed_hash' => hash('sha256', \TinyCat\Core\Feeds\SourceUrl::normalize($url)), 'author_id' => (int) $author['id'], 'interval_minutes' => $interval, 'publication_status' => $status,
             'enabled' => (int) filter_var($input['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN), 'import_images' => (int) filter_var($input['import_images'] ?? false, FILTER_VALIDATE_BOOLEAN)];
         return Transactions::run(static function () use ($id, $data): int {
@@ -78,7 +104,7 @@ final class FeedSources
     {
         $url = is_string($input['feed_url'] ?? null) ? trim($input['feed_url']) : '';
         $body = is_string($input['document'] ?? null) ? $input['document'] : '';
-        if (strlen($url) > 2048 || strlen($body) > 2097152 || ($url !== '' && !\TinyCat\Http\Client::isSafeUrl($url)) || ($url === '' && $body === '')) { throw new \InvalidArgumentException('Invalid feed.'); }
+        if (strlen($url) > self::URL_MAX_BYTES || strlen($body) > 2097152 || ($url !== '' && !\TinyCat\Http\Client::isSafeUrl($url)) || ($url === '' && $body === '')) { throw new \InvalidArgumentException('Invalid feed.'); }
         $document = \TinyCat\Http\Session::withoutLock(static fn (): array => $body !== '' ? FeedParser::document($body, $url) : FeedParser::inspect($url));
         $items = [];
         foreach (array_slice(array_reverse($document['items']), 0, 3) as $item) {

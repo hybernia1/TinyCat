@@ -1,3 +1,4 @@
+// @component-owned: structure is declared in owner catalogs.
 import "../../../../../assets/core/lifecycle.js";
 import "../../../../../assets/core/component-renderer.js";
 import "../../../../../assets/ui/component-builders.js";
@@ -19,7 +20,7 @@ import "../../../../../assets/ui/form-requests.js";
     binding.busy = true;
     var initial = signature(form), fields = values(form);
     var data = { feed_url: override || fields.feed_url, name: fields.name, post_template: fields.post_template };
-    var content = T.dom.element("div", { "class": "stack", "aria-live": "polite" }, U.text("bots.preview_loading"));
+    var content = T.components.render("bots/source-preview-state", {});
     var actions = U.editorActions();
     var dialog = U.dialog("bot-source-preview-" + (++serial), "bots.preview_title", content, false, actions);
     dialog.addEventListener("tinycat:modal-close", function () { T.forms.cancel(form); });
@@ -30,7 +31,7 @@ import "../../../../../assets/ui/form-requests.js";
       if (!dialog.isConnected || !form.isConnected) { return; }
       if (signature(form) !== initial) { content.textContent = U.text("bots.preview_changed"); return; }
       var resource = result.data, name = form.querySelector('[name="name"]');
-      if (name && !name.value && resource.title) { name.value = resource.title.slice(0, 120); }
+      if (name && !name.value && resource.title) { name.value = resource.title; }
       var approvedSignature = signature(form);
       content.replaceChildren(T.components.render("bots/source-preview", resource));
       content.querySelectorAll("[data-bot-preview-source]").forEach(function (button) {
@@ -44,10 +45,10 @@ import "../../../../../assets/ui/form-requests.js";
         });
       });
       if (resource.items.length) {
-        var confirm = U.button("bots.preview_confirm", { "class": "btn btn-primary" });
+        var confirm = T.components.render("bots/source-preview-confirm", {});
         confirm.addEventListener("click", function () {
           T.dialog.close(dialog);
-          if (signature(form) !== approvedSignature || !form.reportValidity()) { return; }
+          if (signature(form) !== approvedSignature || !T.forms.validate(form)) { return; }
           binding.approved = approvedSignature;
           form.requestSubmit();
         });
@@ -62,10 +63,10 @@ import "../../../../../assets/ui/form-requests.js";
     var binding = { busy: false, approved: null };
     bindings.set(form, binding);
     if (button) { button.addEventListener("click", function () { preview(form); }); }
-    form.addEventListener("submit", function (event) {
-      if (binding.approved === signature(form)) { binding.approved = null; return; }
-      event.preventDefault(); event.stopImmediatePropagation(); preview(form);
-    }, true);
+    T.forms.setSubmitGuard(form, function () {
+      if (binding.approved === signature(form)) { binding.approved = null; return true; }
+      preview(form); return false;
+    });
   }
   T.lifecycle.register("bot-source-preview", {
     hydrate: function (root) {
@@ -76,7 +77,7 @@ import "../../../../../assets/ui/form-requests.js";
 
     },
     dispose: function (root) {
-      root.querySelectorAll("form").forEach(function (form) { if (bindings.has(form)) { T.forms.cancel(form); } });
+      root.querySelectorAll("form").forEach(function (form) { if (bindings.has(form)) { T.forms.cancel(form); T.forms.setSubmitGuard(form, null); bindings.delete(form); } });
     }
   });
 }());

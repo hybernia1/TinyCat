@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require __DIR__ . '/../../../App/bootstrap.php';
+require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 use TinyCat\Social\Posts\Mentions;
 use TinyCat\Social\Posts\Tags;
@@ -45,18 +45,19 @@ foreach (['https://example.test/@jana#Žluťoučký', 'www.example.test/@7#novin
 }
 $assert(Mentions::normalize_mentions_for_storage('Ahoj,@jana') === 'Ahoj,@7', 'Punctuation allows mentions');
 $assert(Tags::status_tags_from_text('mail@#tag ##tag a.#tag') === [], 'Invalid token boundaries are ignored');
-$segments = TinyCat\Core\Text\Segments::text('Update #1 #1980s');
+$segments = TinyCat\Core\Text\Segments::text('Update #1 #1980s', 'post');
+$assert(TinyCat\Core\Text\Segments::text('#one @jana', 'fixture.plain') === [['type' => 'text', 'text' => '#one @jana']], 'An explicit foreign text kind never inherits the active Social tag or mention policy');
 $assert(count(array_filter($segments, static fn (array $segment): bool => $segment['type'] === 'tag')) === 1, 'Rendering links only the alphanumeric tag');
-$wall = TinyCat\Core\Text\Segments::text('Article #one #two #three #four #five #six');
+$wall = TinyCat\Core\Text\Segments::text('Article #one #two #three #four #five #six', 'post');
 $compact = TinyCat\Core\Text\Segments::compactTags($wall);
 $overflow = $compact[array_key_last($compact)];
 $assert($overflow['type'] === 'tag-overflow' && $overflow['count'] === 3, 'Long tag runs show three tags and an exact overflow count');
 $restored = array_slice($compact, 0, -1);
 array_push($restored, ...$overflow['segments']);
 $assert($restored === $wall, 'Expanding preserves every tag, URL and separator in order');
-$sentence = TinyCat\Core\Text\Segments::text('#one is #two and #three with #four and #five');
+$sentence = TinyCat\Core\Text\Segments::text('#one is #two and #three with #four and #five', 'post');
 $assert(TinyCat\Core\Text\Segments::compactTags($sentence) === $sentence, 'Tags inside prose are never hidden');
-$short = TinyCat\Core\Text\Segments::text('#one #two #three #four');
+$short = TinyCat\Core\Text\Segments::text('#one #two #three #four', 'post');
 $assert(TinyCat\Core\Text\Segments::compactTags($short) === $short, 'Short tag runs stay visible');
 $html = TinyCat\Support\Components::render('publishing/segments', ['segments' => $compact]);
 $assert(str_contains($html, '<details class="status-tags-overflow">') && str_contains($html, '# +3') && str_contains($html, '/tag/six'), 'Shared rendering exposes all overflow links through native disclosure');
@@ -64,7 +65,7 @@ $parts = TinyCat\Core\Text\Segments::splitTags($compact);
 $assert(count($parts['text_segments']) === 1 && count($parts['tag_segments']) > 0, 'Trailing tags are separated from the translatable text');
 $bodyHtml = TinyCat\Support\Components::render('status/body', ['item' => $parts]);
 $assert(str_contains($bodyHtml, 'class="status-tags" translate="no"') && str_contains($bodyHtml, '<summary class="badge">'), 'Tags opt out of translation and the disclosure uses a badge');
-$assert(TinyCat\Core\Text\Segments::splitTags(TinyCat\Core\Text\Segments::text('#one sentence'))['tag_segments'] === [], 'Inline tags remain inside prose');
+$assert(TinyCat\Core\Text\Segments::splitTags(TinyCat\Core\Text\Segments::text('#one sentence', 'post'))['tag_segments'] === [], 'Inline tags remain inside prose');
 $database->exec('CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT); CREATE TABLE content_tags (content_id INTEGER, term_id INTEGER)');
 foreach ([1 => '1', 2 => '1980s', 3 => '2026', 4 => '3d', 5 => 'gothic-1'] as $id => $name) {
     $database->prepare('INSERT INTO terms VALUES (?, ?)')->execute([$id, $name]);

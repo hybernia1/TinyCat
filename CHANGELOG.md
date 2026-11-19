@@ -1,5 +1,108 @@
 # Changelog
 
+## 6.1.4 - 2026-11-19
+
+- Consolidate product pages, menus and editor bodies in owner component catalogs. Retire seventeen redundant PHP templates while retaining document, layout, error and embed boundaries.
+- Standardize component JSON formatting and explicit object contexts, with server/client parity, schema validation and duplicate-key checks. Keep ten owner catalogs without introducing a template language or per-component files.
+- Move account, avatar, status, bot and moderation structure out of controllers. Preserve lazy resource dialogs, drafts, focus, password redaction and canonical API transports.
+- Render module administration, diagnostics, updates, search, privacy and consent through components; preserve activation guards, CSRF, maintenance recovery and long historical migration labels.
+- Clean up client resource disposal and stale reads; decouple notification pagination from Social. Keep existing asset delivery budgets and module independence.
+- Preserve configuration, accounts, content, uploads, installed module ownership and activation. Introduce no database migrations; support completed 6.0.10 and newer.
+
+## 6.1.3 - 2026-11-19
+
+- Share one HTML document across public pages, administration and installation; keep owner metadata, consent, assets and existing minification behavior.
+- Move installation, account and settings presentation into owner component catalogs shared by server and client. Preserve lazy dialogs, draft guards, password redaction and canonical API data.
+- Remove unused Social feed render layers and inline application HTML. Open legacy bot detail URLs through the shared dialog route while preserving filters and history.
+- Add component JSON schema completion, grammar validation and precise source/component/path diagnostics; keep catalogs as ordinary JSON without per-component template files.
+- Retire ten presentation files through the signed deletion plan. Preserve installed owners, activation, data and published migration history; introduce no database migrations.
+
+
+## 6.1.2 - 2026-11-18
+
+- Fix administrative UI initialization on Site Health, where scheduler run details are available without a scheduler list declaration. Keep hamburger navigation, settings and run-detail dialogs working.
+- Keep health checks on the shared AJAX transport and return to the administration page instead of navigating to raw API JSON.
+- Guard scheduler list-only polling, rendering and lifecycle callbacks when no list is present; preserve full scheduler history and token actions.
+- Add source, compiled/minified bundle and native browser regressions for this detail-only administration surface. Introduce no database migrations or activation changes.
+
+## 6.1.1 - 2026-11-18
+
+- Derive settings labels and layout from their owning PHP sections. Blog and Social can contribute settings independently without a second JavaScript field registry.
+- Fix saving unchanged Blog settings: empty blocked URL rules and optional UTM source/campaign values remain valid, while UTM medium retains required validation.
+- Declare administrative lists and standard editors in owner asset manifests. Share navigation, filters and list refresh across Blog articles/sources, Social bot administration/moderation, accounts and scheduler history; preserve specialized editors, polling and draft guards.
+- Remove retired presentation adapters through the signed deletion plan. Preserve module activation, owned data and the completed 6.0.10 update baseline; introduce no database migrations.
+
+## 6.1.0 - 2026-11-18
+
+- Offer Login as an Identity-owned homepage, including in core-only installations. Preserve module landing destinations and valid next URLs; terminate authentication/homepage redirects with an account overview when no other destination exists.
+- Keep automatic functional-module homepages and public navigation unchanged. Allow homepage candidates to opt out of navigation.
+- Apply existing HTML minification to the shared document, revalidate unversioned assets and gzip web app manifests. Preserve existing minification settings on update.
+- Keep public error-page navigation and asset selection consistent across public and administrative URLs, with HTML, HEAD and JSON regression coverage for 400–503 responses.
+- Preserve the completed 6.0.10 update baseline, published migration history and installed Blog ownership. Introduce no database migrations.
+
+## 6.0.13 - 2026-11-18
+
+- Consolidate Social navigation, account administration, HTTP documents and presentation on shared core mechanisms. Remove redundant adapters while preserving module-owned data and registration.
+- Enforce shared Unicode text constraints for posts and comments, preserve drafts on overflow, and normalize account activation consistently.
+- Remove eight retired Social PHP files through the signed deletion plan. Preserve published migration history and introduce no new database migrations.
+- Reduce repeated browser setup, fixture inserts and unused lifecycle package builds in preflight. Retain all behavioral scenarios; make the archived 2.0.25 report integrity check explicitly opt-in and record lifecycle phase timings.
+
+## 6.0.12 - 2026-11-17
+
+- Discover available modules from manifests on disk without executing inactive PHP. Missing inactive modules no longer break the module manager; missing active owners and their dependents are suspended without erasing activation state or data.
+- Support explicit activation of manually copied module directories through the existing package registry, dependency checks, updater lock, backups and migration lifecycle. Report invalid inactive manifests in administration.
+- Mark Blog as a development module and omit it from new production installations. The compatibility update retains the previously bundled Blog for installed owners from earlier public releases; fresh installations contain Social only.
+- Simplify Social by removing internal callback registries and redundant identity adapters. Consolidate post preparation and tags, and retain transactional writes, file cleanup and notification ownership.
+- Remove eight retired Social PHP files through the 6.0.12 deletion plan. Preserve published migration history and introduce no new database migrations.
+
+## 6.0.11 - 2026-11-17
+
+- Remove the public autoload facade and point developer tools, tests and external-script examples directly at the core runtime loader. Require completed 6.0.10 and refresh inherited private rescue launchers with its existing CLI before updating; exercise signed web update and exact rollback through the refreshed launcher.
+- Discover available source modules from their manifests during platform builds and development checks, without a manually maintained central list or executing module PHP. Standalone module builds include transitive dependencies; installed runtime selection and activation remain explicit.
+
+## 6.0.10 - 2026-11-17
+
+- Remove the redundant bootstrap wrapper and start HTTP/CLI explicitly through the runtime. Keep autoloading independent of startup and preserve the public autoload facade used by published private rescue launchers, including update and rollback.
+- Route Social status and follow forms through the shared AJAX lifecycle, including validation, mutation locks, submitters and field errors. Use a core submit guard for source previews and accept only the canonical API envelope.
+- Register Social public HTTP routes, AJAX resources and client navigation patterns from one owner declaration. Share source byte constraints and Blog comment character constraints across server and UI, and retire unused composer/follow partials through the deletion plan.
+- Derive Blog article and feed-source editor constraints from their server rules through the core validator. Share Unicode and UTF-8 byte validation across API, persistence, imports and forms, preserving drafts on overflow and deriving translated help from owner limits.
+- Define the authoritative core contract for API, UI and validation. Reject malformed validation definitions as server errors, handle invalid input types without PHP diagnostics, and enforce stable field issue codes and field ownership.
+- Remove the retired asset optimizer, old cache bridge and transitional distribution target on the next supported update; keep these legacy files out of release artifacts.
+
+## 6.0.9 - 2026-11-17
+
+- Require completed 6.0.8 installations and switch built-in distributions to archival format 4. Preserve all 24 original migration IDs, sequences and checksums without rewriting database journal rows.
+- Remove 32 historical migration, auxiliary DDL and legacy conversion PHP files through the signed deletion plan; keep independent current fresh baselines for all eleven schema owners.
+- Verify archival metadata against the published baseline and test the signed update with its original updater classes already loaded, including exact rollback restoration of deleted PHP.
+- Keep checks of the last published release readable after raising the source update floor; retain the required minimum for incoming updates and archival packages.
+
+## 6.0.8 - 2026-11-17
+
+- Require completed 6.0.7 installations and prepare a checkpoint-aware updater while retaining the format-3 bridge and every published built-in migration file.
+- Support an archived immutable migration prefix with checksums and no PHP source, signed distribution format 4 and independent module ZIP format 2. Reject older module schema states before changing live files or data.
+- Verify archived history without reading retired PHP, execute only remaining deltas, and install directly from the current fresh schema while preserving journal identities.
+- Test archival in SQLite/MySQL and through independent module ZIP updates, inactive owners, cached providers, integrity failures and standard rollback restoring retired files.
+
+## 6.0.7 - 2026-11-17
+
+- Remove historical activation remapping and distribution formats 1/2; completed 6.0.6 deployments retain canonical active and installed owner IDs.
+- Move Social image-setting presentation and table-purpose translations into Social, and make installation text independent of selected functional modules in all twelve locales.
+- Require explicit text rendering kinds so shared renderers never select the Social policy by default.
+- Require a completed 6.0.6 baseline and remove the runtime SchemaInspection adapter, dual-journal copying and compatibility writer.
+- Retire the module_migrations view through a new signed schema step while preserving all physical journal records and normal rollback.
+- Remove pre-baseline global-table adoption entries from core, Social and Blog and use one current installation/readiness path. Applied migration snapshots and checksums remain unchanged.
+- Exercise the published 6.0.6 updater with its original schema, journal and lifecycle classes already loaded, retained opaque version labels and a compatibility view.
+
+## 6.0.6 - 2026-11-17
+
+- Preserve opaque historical migration version labels up to 190 characters when converting the unified journal. Widen existing 6.0.5 storage through a new schema step without changing published migration checksums.
+- Reproduce the retained pre-6.0.4 labels in the SQLite/MySQL journal tests and the signed 6.0.4 update and rollback rehearsal.
+- Include the startup, scheduler-registration, shared styling and unified-journal changes from 6.0.5, whose signed assets remain unchanged and withdrawn from the stable channel.
+
+## 6.0.5 - withdrawn from stable updates
+
+- This release's unified-journal conversion rejects historical version labels longer than 32 characters. Sites upgraded from older releases can retain these labels even after a completed 6.0.4 update. The published signed assets remain unchanged; use the corrected 6.0.6 successor.
+
 ## 6.0.4 - 2026-11-15
 
 - Reduce repeated core startup work with selection-scoped provider validation and immutable distribution snapshots.

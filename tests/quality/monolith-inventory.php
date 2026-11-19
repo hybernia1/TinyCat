@@ -32,17 +32,17 @@ foreach (['Connection', 'Router', 'Authentication', 'Posts', 'Comments', 'Inbox'
 if (!defined('TINYCAT')) {
     define('TINYCAT', true);
 }
-require_once $root . '/App/bootstrap.php';
+require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $assert(
     \TinyCat\Support\Text::positive_int_ids([3, '2', 3, 0, -1, 'invalid', 2]) === [3, 2],
     'Positive-ID normalization keeps ordered unique positive values.'
 );
-$assert(!\TinyCat\Social\Profiles\Profiles::user_is_admin(null), 'A missing user is not an administrator.');
-$assert(!\TinyCat\Social\Profiles\Profiles::user_is_admin(['role' => 'user']), 'A regular user is not an administrator.');
-$assert(\TinyCat\Social\Profiles\Profiles::user_is_admin(['role' => 'admin']), 'Administrator identity uses the shared policy helper.');
+$assert(!\TinyCat\Core\Identity\Roles::isAdmin(null), 'A missing user is not an administrator.');
+$assert(!\TinyCat\Core\Identity\Roles::isAdmin(['role' => 'user']), 'A regular user is not an administrator.');
+$assert(\TinyCat\Core\Identity\Roles::isAdmin(['role' => 'admin']), 'Administrator identity uses the shared policy helper.');
 
-$commentRows = \TinyCat\Social\Content\Comments::status_comment_tree_rows([
+$commentRows = \TinyCat\Core\Ui\ThreadTree::flatten([
     ['id' => 1, 'replies' => [['id' => 2, 'replies' => []]]],
     ['id' => 3, 'replies' => []],
 ]);

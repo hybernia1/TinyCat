@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Maksimum görüntü boyutu (KB)",
       "content_images_enabled_help": "Mevcut resimler, yüklemeler devre dışı bırakıldığında görünür durumda kalır.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
+    },
+    "sections": {
+      "content_images": "Gönderi resimleri"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "Raporunuz çözüldü.",
       "report_dismissed": "Raporunuz reddedildi."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Genel kullanıcı gönderileri.",
+    "purpose_social_post_images": "Gönderilere eklenen sıkıştırılmış resimler.",
+    "purpose_social_terms": "Etiketlere ilişkin terimler.",
+    "purpose_social_post_tags": "Mesajlar ve terimler arasındaki ilişkiler.",
+    "purpose_social_links": "Benzersiz depolanan bağlantı meta verileri.",
+    "purpose_social_post_links": "Gönderiler ve bağlantılar arasındaki ilişkiler.",
+    "purpose_social_post_likes": "Gönderilerdeki beğeniler.",
+    "purpose_social_comments": "Gönderilerde iç içe geçmiş yorumlar.",
+    "purpose_social_comment_likes": "Yorumları beğeniyorum.",
+    "purpose_user_followers": "Profili kullanıcılar arasında takip eder.",
+    "purpose_content_reports": "Denetleme için kullanıcı raporları.",
+    "purpose_bot_sources": "Bot hesapları için RSS ve Atom yayınlama kuralları.",
+    "purpose_bot_feed_history": "Yinelenen bot gönderilerini önlemek için kullanılan son yayın öğesi karmaları.",
+    "purpose_bot_source_runs": "Bot kaynak kontrolleri ve içe aktarmalarının kompakt tanılama geçmişi."
   }
 }

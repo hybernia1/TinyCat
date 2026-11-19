@@ -7,9 +7,24 @@ use TinyCat\Core\Identity\Integration;
 
 use TinyCat\Support\Components;
 
-/** Presentation components: prepare inputs, then render their private partial. */
+/** Presentation helpers that adapt domain data to shared component inputs. */
 final class Views
 {
+    /** @param array<mixed> $data */
+    public static function userMenu(array $data): string
+    {
+        $user = (array) ($data['authUser'] ?? []);
+        $id = (int) ($user['id'] ?? 0);
+        $needsEmail = (bool) ($data['profileNeedsEmail'] ?? false);
+        return Components::render('users/menu', [
+            'profileUrl' => (string) ($data['profileUrl'] ?? ''), 'profileNeedsEmail' => $needsEmail,
+            'theme' => (string) ($data['theme'] ?? 'system'),
+            'displayName' => (string) ($data['displayName'] ?? trim((string) ($user['username'] ?? ''))),
+            'editModalId' => (string) ($data['editModalId'] ?? 'account-editor-modal-' . $id),
+            'editModalUrl' => (string) ($data['editModalUrl'] ?? '/api/users/' . $id . '/management?panel=account' . ($needsEmail ? '&focus=email' : '')),
+            'avatar' => new \TinyCat\Support\Markup(self::avatar(['user' => $user])),
+        ]);
+    }
 
     /** @param array<mixed> $data */
     public static function adminFormFields(array $data = []): string
@@ -22,28 +37,6 @@ final class Views
             'protected' => !$create && $user !== null && ReadModel::tc_admin_user_is_super_admin($user),
             'options' => Resource::options() + ['roles' => (array) ($data['roles'] ?? []), 'statuses' => (array) ($data['statuses'] ?? [])],
         ]);
-    }
-
-    /** @param array<mixed> $data */
-    public static function adminList(array $data = []): string
-    {
-        $items = array_map(Resource::legacyUser(...), (array) ($data['users'] ?? []));
-        $model = Resource::listing(['items' => $items, 'filters' => (array) ($data['filters'] ?? []), 'roles' => (array) ($data['roles'] ?? []), 'statuses' => (array) ($data['statuses'] ?? [])], (array) ($data['pagination'] ?? []));
-        return Components::render('users/list', $model + ['state' => $model]);
-    }
-
-    /** @param array<mixed> $data */
-    public static function authContent(array $data = []): string
-    {
-        $model = AuthResource::make((string) ($data['mode'] ?? 'login'), (string) ($data['next'] ?? ''));
-        return Components::render('users/auth-content', $model + ['old' => (array) ($data['old'] ?? []), 'error' => (string) ($data['error'] ?? ''), 'message' => (string) ($data['message'] ?? '')]);
-    }
-
-    /** @param array<mixed> $data */
-    public static function authForm(array $data = []): string
-    {
-        $model = AuthResource::make((string) ($data['mode'] ?? 'login'), (string) ($data['next'] ?? ''));
-        return Components::render('users/auth-form', $model + ['old' => (array) ($data['old'] ?? []), 'error' => (string) ($data['error'] ?? ''), 'message' => (string) ($data['message'] ?? '')]);
     }
 
     /** @param array<mixed> $data */

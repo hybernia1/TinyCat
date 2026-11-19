@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once __DIR__ . '/../../App/bootstrap.php';
+require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 use TinyCat\Support\Localization;
 
@@ -57,4 +57,10 @@ try {
     $manifest->setValue(null, $originalManifest);
     $compiled->setValue(null, $originalCatalogs);
 }
+Localization::configure(static fn (): string => 'cs_CZ');
+Localization::locale('fr');
+$check(Localization::defaultLocale() === 'cs-cz');
+$check(Localization::locale() === 'fr');
+Localization::configure(static fn (): string => 'en');
+
 echo 'PASS localization fallback and literal interpolation (' . $checks . " checks)\n";

@@ -5,6 +5,6 @@ namespace TinyCat\Support;
 
 final class Version
 {
-    public const string MINIMUM_UPDATE = '5.16.0';
-    public const string CURRENT = '6.0.4';
+    public const string MINIMUM_UPDATE = '6.0.10';
+    public const string CURRENT = '6.1.4';
 }

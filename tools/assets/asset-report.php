@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 if (PHP_SAPI !== 'cli') { exit(1); }
 define('TINYCAT', true);
-require_once __DIR__ . '/../../App/autoload.php';
+require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 
 $options = getopt('', ['assembly:', 'check']);
 $assembly = (string) ($options['assembly'] ?? 'source');
 if (!in_array($assembly, ['source', 'platform'], true)) { fwrite(STDERR, "Use --assembly=source or --assembly=platform.\n"); exit(1); }
 if ($assembly === 'platform') {
     $root = dirname(__DIR__, 2);
-    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, require $root . '/App/available-modules.php')->catalog);
+    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, \TinyCat\Core\Modules\SourceModules::selection($root))->catalog);
 }
 
 use TinyCat\Support\AssetGraph;

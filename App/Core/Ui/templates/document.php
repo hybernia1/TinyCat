@@ -1,22 +1,56 @@
 <?php
 declare(strict_types=1);
-/** @var array<mixed>|null $authUser */
-/** @var string $applicationVersion */
-/** @var string $bodyClasses */
+/** @var string $title */
+/** @var string $csrfToken */
+/** @var array<string, string|int|null> $htmlAttributes */
+/** @var array<string, string|int|null> $bodyAttributes */
+/** @var \TinyCat\Support\Markup $metadata */
+/** @var \TinyCat\Support\Markup $content */
+/** @var list<string> $styles */
+/** @var list<string> $scripts */
+/** @var list<array<string, string>> $flashToasts */
 /** @var string $privacyUrl */
-/** @var bool $hasPublicSidebar */
-/** @var bool $isAdminShell */
-/** @var string $head */
-/** @var string $shell */
-/** @var string $iconSpriteUrl */
+/** @var string $analyticsMeasurementId */
+/** @var bool $skipLink */
+/** @var bool $colorScheme */
+/** @var string $robots */
+use TinyCat\Support\Html;
 ?>
-<?= $head ?>
-<body<?= $bodyClasses !== '' ? ' class="' . \TinyCat\Support\Html::e($bodyClasses) . '"' : '' ?> data-application-version="<?= \TinyCat\Support\Html::e($applicationVersion) ?>" data-current-user-id="<?= \TinyCat\Support\Html::e((int) ($authUser['id'] ?? 0)) ?>" data-icon-sprite="<?= \TinyCat\Support\Html::e($iconSpriteUrl) ?>">
-    <a class="skip-link" href="#main-content"><?= \TinyCat\Support\Html::et('common.skip_to_content') ?></a>
-    <?= $shell ?>
-    <?php if (!$isAdminShell && !$hasPublicSidebar): ?>
+<!doctype html>
+<html<?php foreach ($htmlAttributes as $name => $value): ?><?php if ($value !== null): ?> <?= Html::e($name) ?>="<?= Html::e($value) ?>"<?php endif; ?><?php endforeach; ?>>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?php if ($colorScheme): ?><meta name="color-scheme" content="light dark"><?php endif; ?>
+    <?php if ($csrfToken !== ''): ?><meta name="csrf-token" content="<?= Html::e($csrfToken) ?>"><?php endif; ?>
+    <title><?= Html::e($title) ?></title>
+    <?php if ($robots !== ''): ?><meta name="robots" content="<?= Html::e($robots) ?>"><?php endif; ?>
+    <?= $metadata->html ?>
+    <?php foreach ($styles as $url): ?><link rel="stylesheet" href="<?= Html::e($url) ?>"><?php endforeach; ?>
+    <?php foreach ($scripts as $url): ?><script src="<?= Html::e($url) ?>" defer></script><?php endforeach; ?>
+    <?php if ($analyticsMeasurementId !== ''): ?>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= \TinyCat\Support\Html::e($analyticsMeasurementId) ?>"></script>
+        <script>
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+            gtag('consent','default',{
+                analytics_storage:'granted',
+                ad_storage:'denied',
+                ad_user_data:'denied',
+                ad_personalization:'denied',
+                wait_for_update:500
+            });
+            gtag('js',new Date());
+            gtag('config','<?= \TinyCat\Support\Html::e($analyticsMeasurementId) ?>');
+        </script>
+    <?php endif; ?>
+    <?= \TinyCat\Support\View::part('Ui/flashes', ['items' => $flashToasts]) ?>
+</head>
+<body<?php foreach ($bodyAttributes as $name => $value): ?><?php if ($value !== null): ?> <?= Html::e($name) ?>="<?= Html::e($value) ?>"<?php endif; ?><?php endforeach; ?>>
+    <?php if ($skipLink): ?><a class="skip-link" href="#main-content"><?= Html::et('common.skip_to_content') ?></a><?php endif; ?>
+    <?= $content->html ?>
+    <?php if ($privacyUrl !== ''): ?>
     <footer class="container section text-sm text-muted desktop-only">
-        <a class="cluster gap-2 text-muted" href="<?= \TinyCat\Support\Html::e($privacyUrl) ?>" rel="privacy-policy"><?= \TinyCat\Support\Html::icon('shield') ?> <span><?= \TinyCat\Support\Html::et('privacy.title') ?></span></a>
+        <a class="cluster gap-2 text-muted" href="<?= Html::e($privacyUrl) ?>" rel="privacy-policy"><?= Html::icon('shield') ?> <span><?= Html::et('privacy.title') ?></span></a>
     </footer>
     <?php endif; ?>
 </body>

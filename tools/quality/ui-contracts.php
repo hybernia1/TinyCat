@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 /** Validate source catalogs before JSON decoding can hide duplicate keys. */
 return static function (?array $catalogFiles = null): array {
+    if (!class_exists(\TinyCat\Tools\Quality\ComponentSyntax::class, false)) { require_once __DIR__ . '/component-syntax.php'; }
     $catalogFiles ??= \TinyCat\Core\Modules\Resources::files('components');
     $definitions = [];
     $sources = [];
@@ -16,21 +17,7 @@ return static function (?array $catalogFiles = null): array {
         $source = (string) file_get_contents($file);
         $catalog = json_decode($source, true, 512, JSON_THROW_ON_ERROR);
         if (!is_array($catalog) || !str_starts_with(ltrim($source), '{')) { throw new RuntimeException($file . ': expected a component object'); }
-        $pattern = <<<'REGEX'
-~"(?:[^"\\]|\\.)*"|[{}\[\]:,]~s
-REGEX;
-        preg_match_all($pattern, $source, $matches);
-        $tokens = $matches[0];
-        $stack = [];
-        foreach ($tokens as $index => $token) {
-            if ($token === '{' || $token === '[') { $stack[] = []; continue; }
-            if ($token === '}' || $token === ']') { array_pop($stack); continue; }
-            if (!str_starts_with($token, '"') || ($tokens[$index + 1] ?? '') !== ':') { continue; }
-            $key = json_decode($token, true, 512, JSON_THROW_ON_ERROR);
-            $depth = count($stack) - 1;
-            if (isset($stack[$depth][$key])) { throw new RuntimeException($file . ': duplicate JSON key ' . $key); }
-            $stack[$depth][$key] = true;
-        }
+        \TinyCat\Tools\Quality\ComponentSyntax::uniqueKeys($source, $file);
         foreach ($catalog as $name => $definition) {
             if (!preg_match('~^[a-z][a-z0-9-]*/[a-z][a-z0-9-]*$~D', (string) $name)) { throw new RuntimeException($file . ': invalid component name ' . $name); }
             if (array_key_exists($name, $definitions)) { throw new RuntimeException($file . ': duplicate component ' . $name . ' (also in ' . $sources[$name] . ')'); }
@@ -57,6 +44,7 @@ REGEX;
         foreach ($node as $child) { $visit($child, $owner); }
     };
     foreach ($definitions as $name => $definition) { $visit($definition, $name); }
+    foreach ($definitions as $name => $definition) { \TinyCat\Tools\Quality\ComponentSyntax::validate($definition, $sources[$name] . ' [' . $name . ']'); }
     // Recursive components are valid: status/comment renders a finite reply tree.
     // Existence is checked above; recursion terminates according to input data.
     return ['components' => count($definitions)];

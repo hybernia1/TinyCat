@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Maximale Bildgröße (KB)",
       "content_images_enabled_help": "Vorhandene Bilder bleiben sichtbar, wenn Uploads deaktiviert sind.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
+    },
+    "sections": {
+      "content_images": "Posten Sie Bilder"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "Ihre Meldung wurde gelöst.",
       "report_dismissed": "Ihr Bericht wurde abgewiesen."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Öffentliche Benutzerbeiträge.",
+    "purpose_social_post_images": "Komprimierte Bilder, die an Beiträge angehängt sind.",
+    "purpose_social_terms": "Begriffe für Tags.",
+    "purpose_social_post_tags": "Beziehungen zwischen Beiträgen und Begriffen.",
+    "purpose_social_links": "Eindeutige gespeicherte Link-Metadaten.",
+    "purpose_social_post_links": "Beziehungen zwischen Beiträgen und Links.",
+    "purpose_social_post_likes": "Likes für Beiträge.",
+    "purpose_social_comments": "Verschachtelte Kommentare zu Beiträgen.",
+    "purpose_social_comment_likes": "Likes für Kommentare.",
+    "purpose_user_followers": "Profil folgt zwischen Benutzern.",
+    "purpose_content_reports": "Benutzerberichte zur Moderation.",
+    "purpose_bot_sources": "RSS- und Atom-Veröffentlichungsregeln für Bot-Konten.",
+    "purpose_bot_feed_history": "Aktuelle Feed-Element-Hashes werden verwendet, um doppelte Bot-Beiträge zu verhindern.",
+    "purpose_bot_source_runs": "Kompakter Diagnoseverlauf von Bot-Quellenprüfungen und -Importen."
   }
 }

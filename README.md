@@ -10,7 +10,9 @@ in the platform assembly, with a shared identity and [module lifecycle](docs/ope
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **6.0.4**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`. The signed 6.0.4 update supports the normal administration updater from stable 5.16.0 and newer, including 5.22.2, without manually installing development releases. See the [update procedure](docs/operations/updates.md#upgrading-to-604).
+TinyCat defines the [authoritative core contract for API, UI and validation](docs/contracts/core-application-contract.md). Modules retain their domain rules and extend the common platform through its declared interfaces.
+
+Current release: **6.1.4**. Product pages, account/avatar/status editors, menus and administrative forms share owner component catalogs. JSON authoring has one canonical formatter and explicit object contexts; no per-component template files or new template language are required. Client lifecycle cleanup cancels obsolete reads and preserves drafts. Document, layout, error and embed templates retain their technical boundaries. Existing module activation and data are preserved, with no database migration. Updating requires a completed **6.0.10** installation or newer; before updating, refresh the private rescue launcher with `php App/Console.php rescue` and verify `php storage/updates/console.php help`. Older supported installations must first apply the unchanged signed 6.0.10 release through its supported predecessors. See the [update procedure](docs/operations/updates.md#supported-update-baseline) and [launcher preparation](docs/operations/updates.md#retiring-the-autoload-facade). TinyCat uses [Semantic Versioning](https://semver.org/); the source runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -119,7 +121,7 @@ Administrators can check and install signed stable releases under **Admin → Up
 
 Before applying files, TinyCat enables maintenance mode and creates a rollback snapshot below `storage/updates/backups/`. It contains only application files that will change or be removed; a database backup is created only when the release has migrations that still need to be applied. Updates never overwrite `config.php`, `storage/`, or `uploads/`. The web-server user needs write access to managed application files while an update is installed; deployments that keep source code read-only can continue to deploy release assets manually.
 
-Database changes are versioned PHP migrations recorded in `schema_migrations`. Fresh installations always receive the current schema directly; migrations exist only to move already running installations forward. See [`docs/operations/updates.md`](docs/operations/updates.md) for package creation, signing, publishing, recovery, and migration rules.
+Database changes are versioned PHP migrations recorded in the shared `migrations` journal. Its `kind` and `stream` distinguish global release history from independently owned schema histories. Fresh installations receive the current schema directly and retain the published migration identities and checksums. See [`docs/operations/updates.md`](docs/operations/updates.md) for package creation, signing, publishing, recovery, and migration rules.
 
 ## Bots
 

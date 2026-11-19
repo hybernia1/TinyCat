@@ -13,7 +13,7 @@ use TinyCat\Core\Runtime\Configuration;
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 $reject = static function (callable $action, string $message) use ($assert): void {
@@ -44,6 +44,11 @@ $assert($registries->initialMaintenance() === 'update_files', 'The existing init
 $assert($registries->owner('task', 'feeds') === 'tinycat.social' && $registries->owner('maintenance', 'old_password_reset_tokens') === 'tinycat.accounts', 'Tasks and retention have explicit owners');
 $assert($registries->task('feeds')->options === ['bot_limit' => 20], 'Feed defaults remain stable');
 $bundle = new Contributions(tasks: [$registries->task('feeds')]);
+$lookupCalls = 0;
+$lookup = new \TinyCat\Core\Modules\ComponentLookup('fixture.lookup', static function () use (&$lookupCalls): array { $lookupCalls++; return []; });
+$lookupBundle = new Contributions(componentLookups: [$lookup]);
+$reject(static fn () => new Registries(['fixture.one' => $lookupBundle, 'fixture.two' => $lookupBundle]), 'Duplicate component lookup IDs across owners');
+$assert($lookupCalls === 0, 'Component lookup registrations do not evaluate presentation builders');
 $reject(static fn () => new Registries(['fixture.one' => $bundle, 'fixture.two' => $bundle]), 'Duplicate task IDs across owners');
 foreach (['navigation', 'health', 'maintenance', 'localizedRoutes', 'information', 'widgets', 'embeds'] as $kind) {
     $entries = $registries->entries->$kind;
@@ -92,11 +97,11 @@ $assert(array_map(static fn ($entry): string => $entry->id, $reverse->entries->t
 \TinyCat\Support\Config::configure(new Configuration(['database' => ['dsn' => 'sqlite::memory:'], 'cache' => ['driver' => 'filesystem']]));
 $assert((new ReflectionMethod(\TinyCat\Support\Cache::class, 'driver'))->invoke(null) === 'filesystem' && !class_exists(\TinyCat\Core\Settings\Store::class, false), 'Technical cache configuration does not load Settings');
 \TinyCat\Support\Localization::locale('en');
-$menu = \TinyCat\Social\Presentation\Navigation::administration();
+$menu = \TinyCat\Core\Ui\Admin\Navigation::administration();
 $assert(count($menu) === 9 && $menu[0]['href'] === '/admin' && $menu[1]['href'] === '/admin/users' && $menu[8]['modal_url'] === '/api/settings/editor', 'Existing navigation shape is preserved alongside core module management');
 $assert(in_array('/admin/modules', array_column($menu, 'href'), true), 'Core module management is present in administration');
 \TinyCat\Support\Localization::locale('cs');
-$assert(\TinyCat\Social\Presentation\Navigation::administration()[1]['label'] !== $menu[1]['label'], 'Navigation labels resolve in the current language at render time');
+$assert(\TinyCat\Core\Ui\Admin\Navigation::administration()[1]['label'] !== $menu[1]['label'], 'Navigation labels resolve in the current language at render time');
 \TinyCat\Database\Connection::exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, task TEXT, status TEXT, started_at TEXT)');
 \TinyCat\Database\Connection::exec('INSERT INTO scheduler_runs (task, status, started_at) VALUES (?, ?, ?)', ['cleanup', 'completed', date('Y-m-d H:i:s')]);
 $withoutBots = new Catalog(array_values(array_filter($modules->catalog->definitions(), static fn ($definition): bool => $definition->id !== 'tinycat.social')));
@@ -110,7 +115,7 @@ $assert(isset(\TinyCat\Core\Tasks\Tasks::definitions()['feeds']), 'Leaving a sel
 $fingerprint = Resources::fingerprint();
 Resources::withCatalog(new Catalog([]), static function () use ($assert, $fingerprint): void {
     $assert(Resources::fingerprint() !== $fingerprint, 'A scoped selection invalidates the cached fingerprint');
-    $assert(\TinyCat\Core\Tasks\Tasks::definitions() === [] && \TinyCat\Social\Presentation\Navigation::administration() === [] && \TinyCat\Core\Health\Checks::definitions() === [] && \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks() === [], 'An empty selection has no domain contributions');
+    $assert(\TinyCat\Core\Tasks\Tasks::definitions() === [] && \TinyCat\Core\Ui\Admin\Navigation::administration() === [] && \TinyCat\Core\Health\Checks::definitions() === [] && \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks() === [], 'An empty selection has no domain contributions');
 });
 $assert(Resources::fingerprint() === $fingerprint, 'Leaving a scope restores the fingerprint of the original selection');
 
@@ -145,7 +150,7 @@ try {
     try { \TinyCat\Core\Modules\Providers::duringStartup($selection, static function (): never { throw new RuntimeException('Scope fixture'); }); }
     catch (RuntimeException) { $assert($ownership->getValue() === null, 'A failed startup discards its validation cache'); }
     $product = 'fixture.product';
-    $plan = ['format' => 1, 'product' => &$product, 'legacy' => false, 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => []];
+    $plan = ['format' => 3, 'framework' => \TinyCat\Core\Runtime\Framework::CAPABILITIES, 'schemaOwners' => [], 'product' => &$product, 'legacy' => false, 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => []];
     \TinyCat\Core\Modules\Distribution::validate($plan);
     $product = 'INVALID'; $invalid = false;
     try { \TinyCat\Core\Modules\Distribution::validate($plan); } catch (RuntimeException) { $invalid = true; }
@@ -166,5 +171,41 @@ try {
 exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../fixtures/modules/minimal-boot.php') . ' 2>&1', $output, $exitCode);
 if ($exitCode !== 0) { throw new RuntimeException('Minimal runtime failed: ' . implode("\n", $output)); }
 echo implode("\n", $output) . "\n";
+
+// An unknown owner needs no client registration and contributes only lazily.
+$savedRegistries = \TinyCat\Core\Modules\Registrations::current();
+$settingsCalls = 0;
+$settingsEntry = new \TinyCat\Core\Modules\SettingsSection('fixture.settings', 'fixture', static function () use (&$settingsCalls): array {
+    $settingsCalls++;
+    return ['label' => 'Fixture "<section>"', 'icon' => 'settings', 'fields' => [
+        ['key' => 'fixture.secret', 'label' => 'Secret <field>', 'type' => 'password', 'default' => 'private-default', 'value' => 'private-value', 'normalize' => static fn (mixed $value): mixed => $value],
+    ]];
+});
+try {
+    \TinyCat\Core\Modules\Registrations::configure(new Registries(['fixture.owner' => new Contributions(settings: [$settingsEntry])]));
+    $assert($settingsCalls === 0, 'Settings registration never evaluates the owner callback');
+    $presentation = \TinyCat\Core\Settings\Sections::presentation();
+    $assert($presentation['sections']['fixture']['label'] === 'Fixture "<section>"' && $presentation['fields']['fixture.secret'] === ['label' => 'Secret <field>'], 'Unknown owners derive presentation without client declarations or private data');
+    $encoded = json_encode($presentation, JSON_THROW_ON_ERROR);
+    $assert(!str_contains($encoded, 'private-') && !str_contains($encoded, 'normalize'), 'Presentation excludes values, defaults and operational callbacks');
+    foreach ([['label' => 'Missing icon', 'fields' => []], ['label' => 'Section', 'icon' => 'settings', 'fields' => [['key' => 'fixture.missing', 'type' => 'text']]]] as $invalid) {
+        try { \TinyCat\Core\Settings\Sections::presentation(['fixture' => $invalid]); throw new RuntimeException('Incomplete settings presentation was accepted'); }
+        catch (LogicException $error) { $assert(str_contains($error->getMessage(), 'fixture'), 'Incomplete presentation identifies the section or field owner'); }
+    }
+    \TinyCat\Core\Modules\Registrations::configure(new Registries());
+    $emptyPresentation = \TinyCat\Core\Settings\Sections::presentation();
+    $assert($emptyPresentation['sections'] === [] && $emptyPresentation['fields'] === [], 'Removing the owner removes its settings presentation');
+} finally { \TinyCat\Core\Modules\Registrations::configure($savedRegistries); }
 $assert($exitCode === 0, 'The minimal runtime works in its own clean process');
+
+$output = [];
+exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../fixtures/modules/minimal-boot.php') . ' --framework 2>&1', $output, $exitCode);
+if ($exitCode !== 0) { throw new RuntimeException('Framework startup failed: ' . implode("\n", $output)); }
+echo implode("\n", $output) . "\n";
+$assert($exitCode === 0, 'Framework registration keeps operational callbacks lazy');
 echo 'PASS offline registries, ownership, selection and technical startup (' . $checks . " checks)\n";
+
+$output = []; $exitCode = 0;
+exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../fixtures/modules/minimal-boot.php') . ' --social 2>&1', $output, $exitCode);
+$assert($exitCode === 0, 'Social registration stays lazy: ' . implode("\n", $output));
+echo implode("\n", $output) . "\n";

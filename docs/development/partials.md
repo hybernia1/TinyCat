@@ -12,6 +12,53 @@ Novou komponentu upravovat v definici, nikoli přidáním druhé HTML implementa
 
 ## Odpovědnosti
 
+Současný sociální feed připravuje `Social/Presentation/PublicPages` a vykresluje
+`site/public-page`; tutéž strukturu používá klient. Staré PHP partialy feedu
+a `Posts/Views` jsou odstraněné. Příprava kanonických dat proběhne před renderem
+přes resources, včetně dávkových preloadů.
+HTML obálky dashboardu, seznamu plánovače a doménových exportů vlastní katalogy.
+Přímý odkaz na detail bota přesměruje na stránku seznamu s resource fragmentem;
+otevření, reload a Back/Forward obstarává společná historie dialogů.
+
+Instalační průvodce používá jeden katalog `Core/Installation/assets/components.json`
+pro kroky, pole a obsah stránky. `Installation/Pages::prepare()` sestaví explicitní
+vstupy před vykreslením; pouze krok tabulek ověřuje DB. Handler neobsahuje HTML.
+Společný `Core/Ui/Document::frame()` přijímá hotový `Markup`, locale a assety
+bez závislosti na dokončené instalaci. JavaScript
+instalace zajišťuje odesílání formulářů, nikoli druhou definici jejich struktury.
+Veřejný povrch, administrace i instalace používají jediný HTML dokument
+`Core/Ui/templates/document.php`. `head.php` dodává pouze veřejná metadata,
+nikoli otevření dokumentu nebo doručování assetů. `Document::frame()` nemá
+vlastní načítání nastavení, účtu, session ani databáze. Volající předává
+atributy, metadata, assety, flash zprávy a případný consent pro analytics.
+Veřejnou hlavičku a consent připravuje `DocumentData` s explicitními vstupy;
+core i Social shell dostávají hotové fragmenty a nepředávají celý PHP kontext.
+
+Nové struktury formulářů a obsahu patří do katalogu vlastníka. PHP šablona
+nemá být průchozí obálkou, která pouze volá další render. Vstupy předávej
+explicitně; nepřidávej `get_defined_vars()`. Nový operátor rendereru přidávej
+až pro doloženou potřebu více konzumentů; složité výpočty patří do přípravy dat.
+
+Účtové stránky volají přímo komponenty `users/auth-page`, `users/recovery-page`,
+`users/logout-page` a `users/account-home` z katalogu Identity. Přihlášení
+a registrace skládají existující `users/auth-content` a `users/auth-form`,
+takže stránka i dialog zachovávají tentýž formulář. `AuthResource::make()`
+připravuje kanonické vstupy; mezi handlerem a komponentou není PHP partial
+ani průchozí `Views::authContent()` / `Views::authForm()`. Obnova hesla používá
+společná pole a `ui/captcha`, bez skládání důvěryhodných HTML řetězců.
+
+Editor nastavení vlastní strukturu v `Core/Settings/assets/components.json`.
+Controller připravuje hodnoty, atributy a formátované možnosti; HTML polí,
+náhledů a skupin vzniká pouze přes komponenty `settings/sections` a `settings/field`.
+Formulář a dialog nadále používají společné factory a ochranu konceptu.
+Vnořená pole podporovaného typu deklaruje vlastník pomocí `fields` uvnitř pole SettingsSection;
+například Mail vlastní podpole SMTP včetně výchozích hodnot a omezení.
+Resource rekurzivně odstraní popisky, callbacky a defaults a vynuluje hesla.
+`Sections::presentation()` zvlášť odvodí pouze popisky a prezentační metadata,
+také pro podpole. JavaScript nevede druhý seznam SMTP polí ani jejich popisků.
+`fields` je schéma editoru; nemění serverová pravidla ukládání ani validaci
+složené hodnoty SMTP.
+
 - `App/<Modul>/Resource` připravuje kanonická JSON data včetně oprávnění,
   bezpečných URL a omezení formulářů. Překládané popisky vlastní prezentace;
   resource nevrací HTML ani CSS instrukce.
@@ -90,6 +137,13 @@ Shared infrastructure lives in `assets/core`, UI primitives in `assets/ui`, and 
 Run `php tools/preflight.php`. Frontend tests exercise source and compiled bundles, minified delivery, scoped ownership and parity against the reviewed CSS baseline. `tests/assets/graph.php` checks graph ordering and invalid imports.
 
 `php tools/assets/asset-report.php` reports release payload sizes for each scope, using the largest locale and the sum of separately gzipped minified JavaScript responses. Icons are reported separately by the browser and are outside the JS/CSS budgets. `--check` rejects unreachable JS/CSS sources, changed scopes and exceeded limits from `tests/fixtures/asset-budgets.json`. Limits allow approximately 15% growth rounded up to KiB; changing them requires reviewing the size report. This detects unreachable files, not unused branches or selectors, which require behavior-aware review.
+
+The shared Unicode/byte constraint implementation is exported as
+`ui.form-constraints`; editors opt in through their asset manifests. The generic
+form transport retains only its validation hook. The initial 6.0.10 constraint-stage
+platform report measured `/admin/updates` at 205,023 raw JS bytes, requiring a
+256-byte adjustment of that scope's raw budget to 205,056. All other JS/CSS,
+compressed-size and request-count budgets remain unchanged.
 
 ## Kompozice stránek a testovací data
 

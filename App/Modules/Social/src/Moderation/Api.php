@@ -26,7 +26,7 @@ final class Api
             \TinyCat\Core\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs);
             return Result::from($data);
         });
-        $api->get('/moderation/reports', static fn (): Result => Result::from(Actions::adminReports()), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.moderation-reports', 'endpoint'), static fn (): Result => Result::from(Actions::adminReports()), 'admin');
         $api->get('/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Reports::detail((int) $p['id'])), 'admin');
         $api->patch('/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminReportReview((int) $p['id'])), 'admin');
         $api->post('/moderation/posts/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Result::from(Actions::adminPostPublish((int) $p['id'])), 'admin', 200);

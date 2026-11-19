@@ -9,8 +9,10 @@ const {webkit} = require(modulePath);
 function read(file, ...args) {
   return JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root, file), ...args], {encoding:'utf8', maxBuffer:8e6}));
 }
-const scripts = read('tests/presentation/fixtures/asset-graph-fixture.php', '--all').map(asset => asset.source).join('\n');
+const adminDefinitions = read('tests/presentation/fixtures/component-parity.php','--admin-definitions');
+const scripts = 'window.TinyCat = {adminDefinitions:'+JSON.stringify(adminDefinitions)+'};' + read('tests/presentation/fixtures/asset-graph-fixture.php', '--all').map(asset => asset.source).join('\n');
 const templates = read('tests/presentation/fixtures/component-parity.php', '--templates');
+const constraints = read('tests/presentation/fixtures/component-parity.php', '--social-constraints');
 const labels = read('tests/presentation/fixtures/asset-graph-fixture.php', '--catalog', 'cs');
 const css = read('tests/presentation/fixtures/asset-graph-fixture.php', '--styles');
 const html = '<!doctype html><html lang="cs"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body><main tabindex="-1" id="main-content"></main><script>'+scripts+'\nTinyCat.components.register('+JSON.stringify(templates)+');TinyCat.i18n.register("cs",'+JSON.stringify(labels)+');</script></body></html>';
@@ -23,16 +25,16 @@ const html = '<!doctype html><html lang="cs"><head><meta name="viewport" content
     for (const width of [320,390,844]) for (const action of ['edit','history']) for (const scrolled of [false,true]) {
       const page = await browser.newPage({viewport:{width,height:812},isMobile:true,hasTouch:true});
       await page.goto('http://127.0.0.1:'+server.address().port+'/');
-      await page.evaluate(() => {
+      await page.evaluate(constraints => {
         const T = TinyCat;
         const comment = {id:20,content_id:10,author:{id:7,username:'Test',url:'/author/7'},capabilities:{edit:true},editable_body:'Test',created_at:'2026-11-01T12:00:00Z',segments:[{type:'text',text:'Test comment body'}],replies:[]};
         window.commentModalReads = []; window.commentModalErrors = [];
         const wrap = document.createElement('div'); wrap.className='status-card'; wrap.dataset.modalParentOpen='status-post-modal-10'; wrap.dataset.modalParentUrl='/api/statuses/10'; wrap.dataset.statusUrl='/status/10';
         wrap.append(T.status.comment(comment)); document.querySelector("main").append(wrap);
-        T.api.request = async url => { commentModalReads.push(url); return {data:url.includes('revisions') ? {items:[]} : {item:{id:10},comments:[comment]}}; };
+        T.api.request = async url => { commentModalReads.push(url); return {data:url.includes('revisions') ? {items:[]} : {constraints,item:{id:10},comments:[comment]}}; };
         document.addEventListener('tinycat:dialog-error',event => commentModalErrors.push(event.detail.error.message));
         T.popovers.init(); T.dialog.init();
-      });
+      }, constraints);
       if (scrolled) await page.evaluate(() => { document.body.style.minHeight='3000px'; document.querySelector('.status-card').style.marginTop='1500px'; window.scrollTo(0,1200); });
       await page.locator('.status-comment-menu summary').tap();
       if (scrolled) { await page.setViewportSize({width,height:460}); await page.waitForTimeout(100); }

@@ -24,6 +24,6 @@ final class Dashboard
         }
         $content = Components::render('ui/dashboard-overview', ['stats' => $stats]);
         foreach (\TinyCat\Core\Modules\Registrations::current()->entries->widgets as $widget) { $content .= ($widget->render)(); }
-        \TinyCat\Core\Ui\Page::render(['title' => Localization::t('common.dashboard'), 'current' => '/admin'], '<div class="stack stack-gap-14" data-dashboard>' . $content . '</div>');
+        \TinyCat\Core\Ui\Page::render(['title' => Localization::t('common.dashboard'), 'current' => '/admin'], Components::render('ui/dashboard', ['content' => new \TinyCat\Support\Markup($content)]));
     }
 }

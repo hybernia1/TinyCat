@@ -9,9 +9,6 @@ final class NotificationEvents
     /** @var array<int, string> */
     private static array $recipientRoles = [];
 
-    /** System notifications have no invented actor and never send mail implicitly. */
-    public static function siteHealth(bool $healthy, int $runId): int { return \TinyCat\Core\Health\Alerts::send($healthy, $runId); }
-
     public static function create(
         int $userId,
         string $type,

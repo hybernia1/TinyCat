@@ -3,197 +3,106 @@
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-article-list-state": {
-        "json": {
-          "filters": {
-            "get": "filters"
-          },
-          "authors": {
-            "get": "authors"
-          },
-          "pagination": {
-            "get": "pagination"
-          }
-        }
+      "data-admin-list": "blog.articles",
+      "data-admin-state": {
+        "json": {"filters": {"get": "filters"}, "authors": {"get": "authors"}, "pagination": {"get": "pagination"}}
       }
     },
     "children": [
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": "/api/articles/management",
-          "target": "#blog-articles",
-          "history": "/admin/articles",
-          "filters": {
-            "get": "filters"
-          },
-          "pagination": {
-            "get": "pagination"
-          },
-          "filter_modal": "blog-article-filter"
+          "url": {"admin_ref": "blog.articles", "field": "endpoint"},
+          "target": {"admin_ref": "blog.articles", "field": "target"},
+          "history": {"admin_ref": "blog.articles", "field": "path"},
+          "filters": {"get": "filters"},
+          "pagination": {"get": "pagination"},
+          "filter_modal": {"admin_ref": "blog.articles", "field": "filterId"}
         }
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "table-wrap"
-        },
+        "attrs": {"class": "table-wrap"},
         "children": [
           {
             "tag": "table",
-            "attrs": {
-              "class": "table"
-            },
+            "attrs": {"class": "table"},
             "children": [
               {
                 "tag": "thead",
-                "attrs": {},
                 "children": [
                   {
                     "tag": "tr",
-                    "attrs": {},
                     "children": [
                       {
                         "tag": "th",
-                        "attrs": {
-                          "aria-sort": {
-                            "get": "sorting.title.aria"
-                          }
-                        },
+                        "attrs": {"aria-sort": {"get": "sorting.title.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "blog.title"
-                              },
-                              "order": {
-                                "get": "sorting.title"
-                              }
-                            }
+                            "data": {"label": {"t": "blog.title"}, "order": {"get": "sorting.title"}}
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {
-                          "aria-sort": {
-                            "get": "sorting.author.aria"
-                          }
-                        },
+                        "attrs": {"aria-sort": {"get": "sorting.author.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "common.username"
-                              },
-                              "order": {
-                                "get": "sorting.author"
-                              }
-                            }
+                            "data": {"label": {"t": "common.username"}, "order": {"get": "sorting.author"}}
                           }
                         ]
                       },
+                      {"tag": "th", "children": [{"t": "blog.visibility"}]},
                       {
                         "tag": "th",
-                        "attrs": {},
-                        "children": [
-                          {
-                            "t": "blog.visibility"
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "aria-sort": {
-                            "get": "sorting.published_at.aria"
-                          }
-                        },
+                        "attrs": {"aria-sort": {"get": "sorting.published_at.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "blog.published"
-                              },
-                              "order": {
-                                "get": "sorting.published_at"
-                              }
-                            }
+                            "data": {"label": {"t": "blog.published"}, "order": {"get": "sorting.published_at"}}
                           }
                         ]
                       },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "class": "table-actions-cell"
-                        },
-                        "children": [
-                          {
-                            "t": "common.actions"
-                          }
-                        ]
-                      }
+                      {"tag": "th", "attrs": {"class": "table-actions-cell"}, "children": [{"t": "common.actions"}]}
                     ]
                   }
                 ]
               },
               {
                 "tag": "tbody",
-                "attrs": {},
                 "children": [
                   {
-                    "each": {
-                      "get": "items"
-                    },
+                    "each": {"get": "items"},
                     "as": "article",
                     "children": [
                       {
                         "tag": "tr",
-                        "attrs": {},
                         "children": [
                           {
                             "tag": "td",
-                            "attrs": {},
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {
-                                  "class": "table-identity"
-                                },
+                                "attrs": {"class": "table-identity"},
                                 "children": [
                                   {
                                     "tag": "span",
-                                    "attrs": {
-                                      "class": "table-identity-icon"
-                                    },
-                                    "children": [
-                                      {
-                                        "icon": "file-text"
-                                      }
-                                    ]
+                                    "attrs": {"class": "table-identity-icon"},
+                                    "children": [{"icon": "file-text"}]
                                   },
                                   {
                                     "tag": "div",
-                                    "attrs": {
-                                      "class": "table-identity-body"
-                                    },
+                                    "attrs": {"class": "table-identity-body"},
                                     "children": [
                                       {
                                         "tag": "strong",
                                         "attrs": {
                                           "class": "table-primary table-text",
-                                          "title": {
-                                            "get": "article.title"
-                                          }
+                                          "title": {"get": "article.title"}
                                         },
-                                        "children": [
-                                          {
-                                            "get": "article.title"
-                                          }
-                                        ]
+                                        "children": [{"get": "article.title"}]
                                       }
                                     ]
                                   }
@@ -201,148 +110,58 @@
                               }
                             ]
                           },
+                          {"tag": "td", "children": [{"get": "article.author"}]},
                           {
                             "tag": "td",
-                            "attrs": {},
-                            "children": [
-                              {
-                                "get": "article.author"
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "attrs": {},
                             "children": [
                               {
                                 "component": "ui/status-badge",
                                 "data": {
                                   "label": {
                                     "if": [
-                                      {
-                                        "eq": [
-                                          {
-                                            "get": "article.state"
-                                          },
-                                          "scheduled"
-                                        ]
-                                      },
-                                      {
-                                        "t": "blog.scheduled"
-                                      },
+                                      {"eq": [{"get": "article.state"}, "scheduled"]},
+                                      {"t": "blog.scheduled"},
                                       {
                                         "if": [
-                                          {
-                                            "eq": [
-                                              {
-                                                "get": "article.state"
-                                              },
-                                              "published"
-                                            ]
-                                          },
-                                          {
-                                            "t": "blog.published"
-                                          },
-                                          {
-                                            "t": "blog.hidden"
-                                          }
+                                          {"eq": [{"get": "article.state"}, "published"]},
+                                          {"t": "blog.published"},
+                                          {"t": "blog.hidden"}
                                         ]
                                       }
                                     ]
                                   },
                                   "tone": {
                                     "if": [
-                                      {
-                                        "eq": [
-                                          {
-                                            "get": "article.state"
-                                          },
-                                          "scheduled"
-                                        ]
-                                      },
+                                      {"eq": [{"get": "article.state"}, "scheduled"]},
                                       "warning",
-                                      {
-                                        "if": [
-                                          {
-                                            "eq": [
-                                              {
-                                                "get": "article.state"
-                                              },
-                                              "published"
-                                            ]
-                                          },
-                                          "ok",
-                                          "neutral"
-                                        ]
-                                      }
+                                      {"if": [{"eq": [{"get": "article.state"}, "published"]}, "ok", "neutral"]}
                                     ]
                                   }
                                 }
                               }
                             ]
                           },
+                          {"tag": "td", "children": [{"date": {"get": "article.published_at"}}]},
                           {
                             "tag": "td",
-                            "attrs": {},
-                            "children": [
-                              {
-                                "date": {
-                                  "get": "article.published_at"
-                                }
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "attrs": {
-                              "class": "table-actions-cell"
-                            },
+                            "attrs": {"class": "table-actions-cell"},
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {
-                                  "class": "table-actions"
-                                },
+                                "attrs": {"class": "table-actions"},
                                 "children": [
                                   {
                                     "component": "ui/modal-trigger",
                                     "data": {
                                       "class": "btn btn-sm btn-ghost btn-icon",
-                                      "modal": {
-                                        "concat": [
-                                          "modal-articles-",
-                                          {
-                                            "get": "article.id"
-                                          }
-                                        ]
-                                      },
-                                      "url": {
-                                        "concat": [
-                                          "/api/articles/",
-                                          {
-                                            "get": "article.id"
-                                          },
-                                          "/management"
-                                        ]
-                                      },
+                                      "modal": {"concat": ["modal-articles-", {"get": "article.id"}]},
+                                      "url": {"concat": ["/api/articles/", {"get": "article.id"}, "/management"]},
                                       "icon": "edit",
                                       "label": {
                                         "concat": [
-                                          {
-                                            "t": "common.edit"
-                                          },
+                                          {"t": "common.edit"},
                                           ": ",
-                                          {
-                                            "concat": [
-                                              {
-                                                "get": "article.title"
-                                              },
-                                              " #",
-                                              {
-                                                "get": "article.id"
-                                              }
-                                            ]
-                                          }
+                                          {"concat": [{"get": "article.title"}, " #", {"get": "article.id"}]}
                                         ]
                                       },
                                       "icon_only": true
@@ -351,78 +170,32 @@
                                   {
                                     "tag": "a",
                                     "attrs": {
-                                      "href": {
-                                        "concat": [
-                                          "/articles/",
-                                          {
-                                            "get": "article.id"
-                                          }
-                                        ]
-                                      },
+                                      "href": {"concat": ["/articles/", {"get": "article.id"}]},
                                       "class": "btn btn-sm btn-ghost btn-icon",
                                       "aria-label": {
                                         "concat": [
-                                          {
-                                            "t": "blog.view"
-                                          },
+                                          {"t": "blog.view"},
                                           ": ",
-                                          {
-                                            "concat": [
-                                              {
-                                                "get": "article.title"
-                                              },
-                                              " #",
-                                              {
-                                                "get": "article.id"
-                                              }
-                                            ]
-                                          }
+                                          {"concat": [{"get": "article.title"}, " #", {"get": "article.id"}]}
                                         ]
                                       }
                                     },
-                                    "children": [
-                                      {
-                                        "icon": "external-link"
-                                      }
-                                    ],
-                                    "when": {
-                                      "get": "article.publicly_visible"
-                                    }
+                                    "when": {"get": "article.publicly_visible"},
+                                    "children": [{"icon": "external-link"}]
                                   },
                                   {
                                     "component": "ui/api-action",
                                     "data": {
-                                      "url": {
-                                        "concat": [
-                                          "/api/articles/",
-                                          {
-                                            "get": "article.id"
-                                          }
-                                        ]
-                                      },
+                                      "url": {"concat": ["/api/articles/", {"get": "article.id"}]},
                                       "method": "DELETE",
-                                      "target": "#blog-articles",
-                                      "confirm": {
-                                        "t": "common.confirm_action"
-                                      },
+                                      "target": {"admin_ref": "blog.articles", "field": "target"},
+                                      "confirm": {"t": "common.confirm_action"},
                                       "icon": "trash",
                                       "label": {
                                         "concat": [
-                                          {
-                                            "t": "common.delete"
-                                          },
+                                          {"t": "common.delete"},
                                           ": ",
-                                          {
-                                            "concat": [
-                                              {
-                                                "get": "article.title"
-                                              },
-                                              " #",
-                                              {
-                                                "get": "article.id"
-                                              }
-                                            ]
-                                          }
+                                          {"concat": [{"get": "article.title"}, " #", {"get": "article.id"}]}
                                         ]
                                       },
                                       "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
@@ -438,31 +211,19 @@
                   },
                   {
                     "tag": "tr",
-                    "attrs": {},
+                    "when": {"not": {"get": "items"}},
                     "children": [
                       {
                         "tag": "td",
-                        "attrs": {
-                          "colspan": "5"
-                        },
+                        "attrs": {"colspan": "5"},
                         "children": [
                           {
                             "component": "ui/empty-state",
-                            "data": {
-                              "label": {
-                                "t": "common.no_records"
-                              },
-                              "icon": "file-text"
-                            }
+                            "data": {"label": {"t": "common.no_records"}, "icon": "file-text"}
                           }
                         ]
                       }
-                    ],
-                    "when": {
-                      "not": {
-                        "get": "items"
-                      }
-                    }
+                    ]
                   }
                 ]
               }
@@ -472,12 +233,7 @@
       },
       {
         "component": "ui/pagination",
-        "data": {
-          "navigation": {
-            "get": "navigation"
-          },
-          "target": "#blog-articles"
-        }
+        "data": {"navigation": {"get": "navigation"}, "target": {"admin_ref": "blog.articles", "field": "target"}}
       }
     ]
   },
@@ -486,145 +242,49 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": "/api/articles/management",
+      "action": {"admin_ref": "blog.articles", "field": "endpoint"},
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": "#blog-articles",
-      "data-history": "/admin/articles"
+      "data-ajax-target": {"admin_ref": "blog.articles", "field": "target"},
+      "data-history": {"admin_ref": "blog.articles", "field": "path"}
     },
     "children": [
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "q",
-          "value": {
-            "get": "filters.q"
-          }
-        },
-        "children": []
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "per_page",
-          "value": {
-            "get": "filters.per_page"
-          }
-        },
-        "children": []
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "sort",
-          "value": {
-            "get": "filters.sort"
-          }
-        },
-        "children": []
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "direction",
-          "value": {
-            "get": "filters.direction"
-          }
-        },
-        "children": []
-      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "q", "value": {"get": "filters.q"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "per_page", "value": {"get": "filters.per_page"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "sort", "value": {"get": "filters.sort"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "direction", "value": {"get": "filters.direction"}}},
       {
         "component": "ui/select",
         "data": {
-          "label": {
-            "t": "blog.visibility"
-          },
-          "value": {
-            "get": "filters.status"
-          },
+          "label": {"t": "blog.visibility"},
+          "value": {"get": "filters.status"},
           "choices": {
-            "options": [
-              "published",
-              "hidden",
-              "scheduled"
-            ],
+            "options": ["published", "hidden", "scheduled"],
             "cases": {
-              "published": {
-                "t": "blog.published"
-              },
-              "hidden": {
-                "t": "blog.hidden"
-              },
-              "scheduled": {
-                "t": "blog.scheduled"
-              }
+              "published": {"t": "blog.published"},
+              "hidden": {"t": "blog.hidden"},
+              "scheduled": {"t": "blog.scheduled"}
             },
             "all": true
           },
-          "attributes": {
-            "class": "select",
-            "name": "status"
-          }
+          "attributes": {"class": "select", "name": "status"}
         }
       },
       {
         "tag": "label",
-        "attrs": {
-          "class": "field"
-        },
+        "attrs": {"class": "field"},
         "children": [
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "label"
-            },
-            "children": [
-              {
-                "t": "common.username"
-              }
-            ]
-          },
+          {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "common.username"}]},
           {
             "tag": "select",
-            "attrs": {
-              "class": "select",
-              "name": "author"
-            },
+            "attrs": {"class": "select", "name": "author"},
             "children": [
+              {"tag": "option", "attrs": {"value": ""}, "children": [{"t": "common.all"}]},
               {
-                "tag": "option",
-                "attrs": {
-                  "value": ""
-                },
-                "children": [
-                  {
-                    "t": "common.all"
-                  }
-                ]
-              },
-              {
-                "each": {
-                  "get": "authors"
-                },
+                "each": {"get": "authors"},
                 "as": "author",
                 "children": [
-                  {
-                    "tag": "option",
-                    "attrs": {
-                      "value": {
-                        "get": "author.id"
-                      }
-                    },
-                    "children": [
-                      {
-                        "get": "author.username"
-                      }
-                    ]
-                  }
+                  {"tag": "option", "attrs": {"value": {"get": "author.id"}}, "children": [{"get": "author.username"}]}
                 ]
               }
             ]
@@ -635,29 +295,19 @@
   },
   "blog/article-fields": {
     "tag": "div",
-    "attrs": {
-      "class": "stack stack-gap-16"
-    },
+    "attrs": {"class": "stack stack-gap-16"},
     "children": [
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "blog.title"
-          },
-          "value": {
-            "get": "item.title"
-          },
+          "label": {"t": "blog.title"},
+          "value": {"get": "item.title"},
           "attributes": {
             "class": "input",
             "name": "title",
-            "value": {
-              "get": "item.title"
-            },
-            "required": true,
-            "maxlength": {
-              "get": "limits.title"
-            }
+            "value": {"get": "item.title"},
+            "required": {"get": "constraints.title.required"},
+            "data-max-length": {"get": "constraints.title.max_length"}
           }
         }
       },
@@ -665,177 +315,99 @@
         "component": "publishing/editor",
         "data": {
           "name": "body",
-          "value": {
-            "get": "item.body"
-          },
-          "placeholder": {
-            "t": "blog.body"
-          },
-          "max_length": 60000,
-          "required": true,
-          "rows": 16
+          "value": {"get": "item.body"},
+          "placeholder": {"t": "blog.body"},
+          "required": {"get": "constraints.body.required"},
+          "rows": 16,
+          "max_bytes": {"get": "constraints.body.max_bytes"}
         }
       },
-      {
-        "component": "publishing/image-field",
-        "data": {
-          "image": {
-            "get": "image"
-          },
-          "enabled": {
-            "get": "images_enabled"
-          }
-        }
-      },
+      {"component": "publishing/image-field", "data": {"image": {"get": "image"}, "enabled": {"get": "images_enabled"}}},
       {
         "tag": "p",
-        "attrs": {
-          "class": "help m-0"
-        },
+        "attrs": {"class": "help m-0"},
         "children": [
           {
-            "t": "blog.invalid"
+            "t": "blog.invalid",
+            "values": {
+              "title_max": {"get": "constraints.title.max_length"},
+              "body_max": {"get": "constraints.body.max_bytes"}
+            }
           }
         ]
       },
       {
         "component": "ui/select",
         "data": {
-          "label": {
-            "t": "blog.visibility"
-          },
-          "value": {
-            "get": "item.status"
-          },
+          "label": {"t": "blog.visibility"},
+          "value": {"get": "item.status"},
           "choices": {
-            "options": {
-              "get": "statuses"
-            },
+            "options": {"get": "constraints.status.values"},
             "cases": {
-              "published": {
-                "t": "blog.published"
-              },
-              "hidden": {
-                "t": "blog.hidden"
-              },
-              "scheduled": {
-                "t": "blog.scheduled"
-              }
+              "published": {"t": "blog.published"},
+              "hidden": {"t": "blog.hidden"},
+              "scheduled": {"t": "blog.scheduled"}
             }
           },
-          "attributes": {
-            "class": "select",
-            "name": "status"
-          }
+          "attributes": {"class": "select", "name": "status"}
         }
       }
     ]
   },
   "blog/source-fields": {
     "tag": "div",
-    "attrs": {
-      "class": "stack stack-gap-16"
-    },
+    "attrs": {"class": "stack stack-gap-16"},
     "children": [
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "blog.title"
-          },
-          "value": {
-            "get": "item.name"
-          },
+          "label": {"t": "blog.title"},
+          "value": {"get": "item.name"},
           "attributes": {
             "class": "input",
             "name": "name",
-            "value": {
-              "get": "item.name"
-            },
-            "required": true,
-            "maxlength": 120
+            "value": {"get": "item.name"},
+            "required": {"get": "constraints.name.required"},
+            "data-max-length": {"get": "constraints.name.max_length"}
           }
         }
       },
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "blog.feeds.url"
-          },
-          "value": {
-            "get": "item.feed_url"
-          },
+          "label": {"t": "blog.feeds.url"},
+          "value": {"get": "item.feed_url"},
           "attributes": {
             "class": "input",
             "name": "feed_url",
-            "value": {
-              "get": "item.feed_url"
-            },
-            "required": true,
-            "maxlength": 2048,
+            "value": {"get": "item.feed_url"},
+            "required": {"get": "constraints.feed_url.required"},
             "type": "url",
-            "readonly": {
-              "not": {
-                "get": "permissions.change_feed_url"
-              }
-            }
+            "readonly": {"not": {"get": "permissions.change_feed_url"}},
+            "data-max-bytes": {"get": "constraints.feed_url.max_bytes"}
           }
         }
       },
       {
         "tag": "label",
-        "attrs": {
-          "class": "field"
-        },
+        "attrs": {"class": "field"},
         "children": [
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "label"
-            },
-            "children": [
-              {
-                "t": "common.username"
-              }
-            ]
-          },
+          {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "common.username"}]},
           {
             "tag": "select",
-            "attrs": {
-              "class": "select",
-              "name": "author_id",
-              "required": true
-            },
+            "attrs": {"class": "select", "name": "author_id", "required": {"get": "constraints.author_id.required"}},
             "children": [
               {
-                "each": {
-                  "get": "authors"
-                },
+                "each": {"get": "authors"},
                 "as": "author",
                 "children": [
                   {
                     "tag": "option",
                     "attrs": {
-                      "value": {
-                        "get": "author.id"
-                      },
-                      "selected": {
-                        "eq": [
-                          {
-                            "get": "author.id"
-                          },
-                          {
-                            "get": "item.author_id"
-                          }
-                        ]
-                      }
+                      "value": {"get": "author.id"},
+                      "selected": {"eq": [{"get": "author.id"}, {"get": "item.author_id"}]}
                     },
-                    "children": [
-                      {
-                        "get": "author.username"
-                      }
-                    ]
+                    "children": [{"get": "author.username"}]
                   }
                 ]
               }
@@ -846,348 +418,170 @@
       {
         "component": "ui/field",
         "data": {
-          "label": {
-            "t": "blog.feeds.interval"
-          },
-          "value": {
-            "get": "item.interval_minutes"
-          },
+          "label": {"t": "blog.feeds.interval"},
+          "value": {"get": "item.interval_minutes"},
           "attributes": {
             "class": "input",
             "name": "interval_minutes",
-            "value": {
-              "get": "item.interval_minutes"
-            },
+            "value": {"get": "item.interval_minutes"},
             "type": "number",
-            "min": 5,
-            "max": 43200,
-            "required": true
+            "min": {"get": "constraints.interval_minutes.min"},
+            "max": {"get": "constraints.interval_minutes.max"},
+            "required": {"get": "constraints.interval_minutes.required"}
           }
         }
       },
       {
         "component": "ui/select",
         "data": {
-          "label": {
-            "t": "blog.visibility"
-          },
-          "value": {
-            "get": "item.publication_status"
-          },
+          "label": {"t": "blog.visibility"},
+          "value": {"get": "item.publication_status"},
           "choices": {
-            "options": {
-              "get": "statuses"
-            },
-            "cases": {
-              "hidden": {
-                "t": "blog.hidden"
-              },
-              "published": {
-                "t": "blog.published"
-              }
-            },
+            "options": {"get": "constraints.publication_status.values"},
+            "cases": {"hidden": {"t": "blog.hidden"}, "published": {"t": "blog.published"}},
             "all": false
           },
-          "attributes": {
-            "class": "select",
-            "name": "publication_status"
-          }
+          "attributes": {"class": "select", "name": "publication_status"}
         }
       },
       {
         "component": "ui/select",
         "data": {
-          "label": {
-            "t": "settings.enabled"
-          },
-          "value": {
-            "if": [
-              {
-                "get": "item.enabled"
-              },
-              "1",
-              "0"
-            ]
-          },
+          "label": {"t": "settings.enabled"},
+          "value": {"if": [{"get": "item.enabled"}, "1", "0"]},
           "choices": {
-            "options": [
-              "1",
-              "0"
-            ],
-            "cases": {
-              "1": {
-                "t": "modules.active"
-              },
-              "0": {
-                "t": "modules.inactive"
-              }
-            },
+            "options": ["1", "0"],
+            "cases": {"1": {"t": "modules.active"}, "0": {"t": "modules.inactive"}},
             "all": false
           },
-          "attributes": {
-            "class": "select",
-            "name": "enabled"
-          }
+          "attributes": {"class": "select", "name": "enabled"}
         }
       },
       {
         "component": "ui/select",
         "data": {
-          "label": {
-            "t": "blog.feeds.images"
-          },
-          "value": {
-            "if": [
-              {
-                "get": "item.import_images"
-              },
-              "1",
-              "0"
-            ]
-          },
+          "label": {"t": "blog.feeds.images"},
+          "value": {"if": [{"get": "item.import_images"}, "1", "0"]},
           "choices": {
-            "options": [
-              "1",
-              "0"
-            ],
-            "cases": {
-              "1": {
-                "t": "modules.active"
-              },
-              "0": {
-                "t": "modules.inactive"
-              }
-            },
+            "options": ["1", "0"],
+            "cases": {"1": {"t": "modules.active"}, "0": {"t": "modules.inactive"}},
             "all": false
           },
-          "attributes": {
-            "class": "select",
-            "name": "import_images"
-          }
+          "attributes": {"class": "select", "name": "import_images"}
         }
       },
-      {
-        "tag": "p",
-        "attrs": {
-          "class": "help m-0"
-        },
-        "children": [
-          {
-            "t": "blog.feeds.help"
-          }
-        ]
-      }
+      {"tag": "p", "attrs": {"class": "help m-0"}, "children": [{"t": "blog.feeds.help"}]}
     ]
   },
   "blog/sources": {
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-source-list-state": {
-        "json": {
-          "filters": {
-            "get": "filters"
-          },
-          "pagination": {
-            "get": "pagination"
-          }
-        }
-      }
+      "data-admin-list": "blog.sources",
+      "data-admin-state": {"json": {"filters": {"get": "filters"}, "pagination": {"get": "pagination"}}}
     },
     "children": [
       {
         "component": "ui/list-toolbar",
         "data": {
-          "url": "/api/article-sources/management",
-          "target": "#blog-sources",
-          "history": "/admin/article-sources",
-          "filters": {
-            "get": "filters"
-          },
-          "pagination": {
-            "get": "pagination"
-          },
-          "filter_modal": "blog-source-filter"
+          "url": {"admin_ref": "blog.sources", "field": "endpoint"},
+          "target": {"admin_ref": "blog.sources", "field": "target"},
+          "history": {"admin_ref": "blog.sources", "field": "path"},
+          "filters": {"get": "filters"},
+          "pagination": {"get": "pagination"},
+          "filter_modal": {"admin_ref": "blog.sources", "field": "filterId"}
         }
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "table-wrap"
-        },
+        "attrs": {"class": "table-wrap"},
         "children": [
           {
             "tag": "table",
-            "attrs": {
-              "class": "table"
-            },
+            "attrs": {"class": "table"},
             "children": [
               {
                 "tag": "thead",
-                "attrs": {},
                 "children": [
                   {
                     "tag": "tr",
-                    "attrs": {},
                     "children": [
                       {
                         "tag": "th",
-                        "attrs": {
-                          "aria-sort": {
-                            "get": "sorting.name.aria"
-                          }
-                        },
+                        "attrs": {"aria-sort": {"get": "sorting.name.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "blog.title"
-                              },
-                              "order": {
-                                "get": "sorting.name"
-                              }
-                            }
+                            "data": {"label": {"t": "blog.title"}, "order": {"get": "sorting.name"}}
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {
-                          "aria-sort": {
-                            "get": "sorting.author.aria"
-                          }
-                        },
+                        "attrs": {"aria-sort": {"get": "sorting.author.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "common.username"
-                              },
-                              "order": {
-                                "get": "sorting.author"
-                              }
-                            }
+                            "data": {"label": {"t": "common.username"}, "order": {"get": "sorting.author"}}
                           }
                         ]
                       },
+                      {"tag": "th", "children": [{"t": "settings.enabled"}]},
                       {
                         "tag": "th",
-                        "attrs": {},
-                        "children": [
-                          {
-                            "t": "settings.enabled"
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "aria-sort": {
-                            "get": "sorting.last_checked_at.aria"
-                          }
-                        },
+                        "attrs": {"aria-sort": {"get": "sorting.last_checked_at.aria"}},
                         "children": [
                           {
                             "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "blog.feeds.checked"
-                              },
-                              "order": {
-                                "get": "sorting.last_checked_at"
-                              }
-                            }
+                            "data": {"label": {"t": "blog.feeds.checked"}, "order": {"get": "sorting.last_checked_at"}}
                           }
                         ]
                       },
-                      {
-                        "tag": "th",
-                        "attrs": {},
-                        "children": [
-                          {
-                            "t": "common.actions"
-                          }
-                        ]
-                      }
+                      {"tag": "th", "children": [{"t": "common.actions"}]}
                     ]
                   }
                 ]
               },
               {
                 "tag": "tbody",
-                "attrs": {},
                 "children": [
                   {
-                    "each": {
-                      "get": "items"
-                    },
+                    "each": {"get": "items"},
                     "as": "source",
                     "children": [
                       {
                         "tag": "tr",
-                        "attrs": {},
                         "children": [
                           {
                             "tag": "td",
-                            "attrs": {},
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {
-                                  "class": "table-identity"
-                                },
+                                "attrs": {"class": "table-identity"},
                                 "children": [
                                   {
                                     "tag": "span",
-                                    "attrs": {
-                                      "class": "table-identity-icon"
-                                    },
-                                    "children": [
-                                      {
-                                        "icon": "rss"
-                                      }
-                                    ]
+                                    "attrs": {"class": "table-identity-icon"},
+                                    "children": [{"icon": "rss"}]
                                   },
                                   {
                                     "tag": "div",
-                                    "attrs": {
-                                      "class": "table-identity-body"
-                                    },
+                                    "attrs": {"class": "table-identity-body"},
                                     "children": [
                                       {
                                         "tag": "strong",
-                                        "attrs": {
-                                          "class": "table-primary"
-                                        },
-                                        "children": [
-                                          {
-                                            "get": "source.name"
-                                          }
-                                        ]
+                                        "attrs": {"class": "table-primary"},
+                                        "children": [{"get": "source.name"}]
                                       },
                                       {
                                         "tag": "span",
-                                        "attrs": {
-                                          "class": "table-meta"
-                                        },
-                                        "children": [
-                                          {
-                                            "get": "source.feed_url"
-                                          }
-                                        ]
+                                        "attrs": {"class": "table-meta"},
+                                        "children": [{"get": "source.feed_url"}]
                                       },
                                       {
                                         "tag": "span",
-                                        "attrs": {
-                                          "class": "table-meta text-danger"
-                                        },
-                                        "children": [
-                                          {
-                                            "get": "source.last_error"
-                                          }
-                                        ]
+                                        "attrs": {"class": "table-meta text-danger"},
+                                        "children": [{"get": "source.last_error"}]
                                       }
                                     ]
                                   }
@@ -1195,114 +589,51 @@
                               }
                             ]
                           },
+                          {"tag": "td", "children": [{"get": "source.author"}]},
                           {
                             "tag": "td",
-                            "attrs": {},
-                            "children": [
-                              {
-                                "get": "source.author"
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "attrs": {},
                             "children": [
                               {
                                 "component": "ui/status-badge",
                                 "data": {
                                   "label": {
                                     "if": [
-                                      {
-                                        "get": "source.enabled"
-                                      },
-                                      {
-                                        "t": "modules.active"
-                                      },
-                                      {
-                                        "t": "modules.inactive"
-                                      }
+                                      {"get": "source.enabled"},
+                                      {"t": "modules.active"},
+                                      {"t": "modules.inactive"}
                                     ]
                                   },
-                                  "tone": {
-                                    "if": [
-                                      {
-                                        "get": "source.enabled"
-                                      },
-                                      "ok",
-                                      "neutral"
-                                    ]
-                                  }
+                                  "tone": {"if": [{"get": "source.enabled"}, "ok", "neutral"]}
                                 }
                               }
                             ]
                           },
+                          {"tag": "td", "children": [{"date": {"get": "source.last_checked_at"}}]},
                           {
                             "tag": "td",
-                            "attrs": {},
-                            "children": [
-                              {
-                                "date": {
-                                  "get": "source.last_checked_at"
-                                }
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "attrs": {
-                              "class": "table-actions-cell"
-                            },
+                            "attrs": {"class": "table-actions-cell"},
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {
-                                  "class": "table-actions"
-                                },
+                                "attrs": {"class": "table-actions"},
                                 "children": [
                                   {
                                     "component": "ui/modal-trigger",
                                     "data": {
                                       "class": "btn btn-sm btn-ghost btn-icon",
-                                      "modal": {
-                                        "concat": [
-                                          "modal-article-sources-",
-                                          {
-                                            "get": "source.id"
-                                          }
-                                        ]
-                                      },
+                                      "modal": {"concat": ["modal-article-sources-", {"get": "source.id"}]},
                                       "url": {
                                         "concat": [
-                                          {
-                                            "concat": [
-                                              "/api/article-sources/",
-                                              {
-                                                "get": "source.id"
-                                              }
-                                            ]
-                                          },
+                                          {"concat": ["/api/article-sources/", {"get": "source.id"}]},
                                           "/management"
                                         ]
                                       },
                                       "icon": "edit",
                                       "label": {
                                         "concat": [
-                                          {
-                                            "t": "common.edit"
-                                          },
+                                          {"t": "common.edit"},
                                           ": ",
-                                          {
-                                            "concat": [
-                                              {
-                                                "get": "source.name"
-                                              },
-                                              " #",
-                                              {
-                                                "get": "source.id"
-                                              }
-                                            ]
-                                          }
+                                          {"concat": [{"get": "source.name"}, " #", {"get": "source.id"}]}
                                         ]
                                       },
                                       "icon_only": true
@@ -1312,38 +643,16 @@
                                     "component": "ui/api-action",
                                     "data": {
                                       "url": {
-                                        "concat": [
-                                          {
-                                            "concat": [
-                                              "/api/article-sources/",
-                                              {
-                                                "get": "source.id"
-                                              }
-                                            ]
-                                          },
-                                          "/run"
-                                        ]
+                                        "concat": [{"concat": ["/api/article-sources/", {"get": "source.id"}]}, "/run"]
                                       },
                                       "method": "POST",
-                                      "target": "#blog-sources",
+                                      "target": {"admin_ref": "blog.sources", "field": "target"},
                                       "icon": "play",
                                       "label": {
                                         "concat": [
-                                          {
-                                            "t": "blog.feeds.run"
-                                          },
+                                          {"t": "blog.feeds.run"},
                                           ": ",
-                                          {
-                                            "concat": [
-                                              {
-                                                "get": "source.name"
-                                              },
-                                              " #",
-                                              {
-                                                "get": "source.id"
-                                              }
-                                            ]
-                                          }
+                                          {"concat": [{"get": "source.name"}, " #", {"get": "source.id"}]}
                                         ]
                                       },
                                       "button_class": "btn btn-sm btn-ghost btn-icon"
@@ -1352,37 +661,16 @@
                                   {
                                     "component": "ui/api-action",
                                     "data": {
-                                      "url": {
-                                        "concat": [
-                                          "/api/article-sources/",
-                                          {
-                                            "get": "source.id"
-                                          }
-                                        ]
-                                      },
+                                      "url": {"concat": ["/api/article-sources/", {"get": "source.id"}]},
                                       "method": "DELETE",
-                                      "target": "#blog-sources",
-                                      "confirm": {
-                                        "t": "common.confirm_action"
-                                      },
+                                      "target": {"admin_ref": "blog.sources", "field": "target"},
+                                      "confirm": {"t": "common.confirm_action"},
                                       "icon": "trash",
                                       "label": {
                                         "concat": [
-                                          {
-                                            "t": "common.delete"
-                                          },
+                                          {"t": "common.delete"},
                                           ": ",
-                                          {
-                                            "concat": [
-                                              {
-                                                "get": "source.name"
-                                              },
-                                              " #",
-                                              {
-                                                "get": "source.id"
-                                              }
-                                            ]
-                                          }
+                                          {"concat": [{"get": "source.name"}, " #", {"get": "source.id"}]}
                                         ]
                                       },
                                       "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
@@ -1398,31 +686,16 @@
                   },
                   {
                     "tag": "tr",
-                    "attrs": {},
+                    "when": {"not": {"get": "items"}},
                     "children": [
                       {
                         "tag": "td",
-                        "attrs": {
-                          "colspan": "5"
-                        },
+                        "attrs": {"colspan": "5"},
                         "children": [
-                          {
-                            "component": "ui/empty-state",
-                            "data": {
-                              "label": {
-                                "t": "common.no_records"
-                              },
-                              "icon": "rss"
-                            }
-                          }
+                          {"component": "ui/empty-state", "data": {"label": {"t": "common.no_records"}, "icon": "rss"}}
                         ]
                       }
-                    ],
-                    "when": {
-                      "not": {
-                        "get": "items"
-                      }
-                    }
+                    ]
                   }
                 ]
               }
@@ -1432,12 +705,7 @@
       },
       {
         "component": "ui/pagination",
-        "data": {
-          "navigation": {
-            "get": "navigation"
-          },
-          "target": "#blog-sources"
-        }
+        "data": {"navigation": {"get": "navigation"}, "target": {"admin_ref": "blog.sources", "field": "target"}}
       }
     ]
   },
@@ -1446,154 +714,197 @@
     "attrs": {
       "class": "stack",
       "method": "get",
-      "action": "/api/article-sources/management",
+      "action": {"admin_ref": "blog.sources", "field": "endpoint"},
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": "#blog-sources",
-      "data-history": "/admin/article-sources"
+      "data-ajax-target": {"admin_ref": "blog.sources", "field": "target"},
+      "data-history": {"admin_ref": "blog.sources", "field": "path"}
     },
     "children": [
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "q",
-          "value": {
-            "get": "filters.q"
-          }
-        },
-        "children": []
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "per_page",
-          "value": {
-            "get": "filters.per_page"
-          }
-        },
-        "children": []
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "sort",
-          "value": {
-            "get": "filters.sort"
-          }
-        },
-        "children": []
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "direction",
-          "value": {
-            "get": "filters.direction"
-          }
-        },
-        "children": []
-      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "q", "value": {"get": "filters.q"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "per_page", "value": {"get": "filters.per_page"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "sort", "value": {"get": "filters.sort"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "direction", "value": {"get": "filters.direction"}}},
       {
         "component": "ui/select",
         "data": {
-          "label": {
-            "t": "settings.enabled"
-          },
-          "value": {
-            "get": "filters.enabled"
-          },
+          "label": {"t": "settings.enabled"},
+          "value": {"get": "filters.enabled"},
           "choices": {
-            "options": [
-              "1",
-              "0"
-            ],
-            "cases": {
-              "1": {
-                "t": "modules.active"
-              },
-              "0": {
-                "t": "modules.inactive"
-              }
-            },
+            "options": ["1", "0"],
+            "cases": {"1": {"t": "modules.active"}, "0": {"t": "modules.inactive"}},
             "all": true
           },
-          "attributes": {
-            "class": "select",
-            "name": "enabled"
-          }
+          "attributes": {"class": "select", "name": "enabled"}
         }
       }
     ]
   },
   "blog/source-preview": {
     "tag": "div",
-    "attrs": {
-      "class": "stack stack-gap-14"
-    },
+    "attrs": {"class": "stack stack-gap-14"},
     "children": [
       {
-        "each": {
-          "get": "items"
-        },
+        "each": {"get": "items"},
         "as": "item",
         "children": [
           {
             "tag": "section",
-            "attrs": {
-              "class": "stack"
-            },
+            "attrs": {"class": "stack"},
             "children": [
-              {
-                "tag": "strong",
-                "children": [
-                  {
-                    "get": "item.title"
-                  }
-                ]
-              },
-              {
-                "tag": "p",
-                "attrs": {
-                  "class": "blog-excerpt"
+              {"tag": "strong", "children": [{"get": "item.title"}]},
+              {"tag": "p", "attrs": {"class": "blog-excerpt"}, "children": [{"get": "item.body"}]},
+              {"tag": "p", "attrs": {"class": "text-danger"}, "children": [{"get": "item.rejection.code"}]}
+            ]
+          }
+        ]
+      },
+      {"tag": "p", "when": {"not": {"get": "items"}}, "children": [{"t": "blog.feeds.preview_empty"}]}
+    ]
+  },
+  "blog/embed-quote": {
+    "tag": "blockquote",
+    "attrs": {"cite": {"get": "url"}},
+    "children": [
+      {"tag": "a", "attrs": {"href": {"get": "url"}}, "children": [{"get": "title"}]},
+      {"slot": {"get": "excerpt"}}
+    ]
+  },
+  "blog/public-list": {
+    "tag": "section",
+    "attrs": {"class": "blog-page section stack stack-gap-16"},
+    "children": [
+      {"tag": "header", "children": [{"tag": "h1", "children": [{"get": "title"}]}]},
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "blog.empty"}, "icon": "file-text"},
+        "when": {"not": {"get": "articles"}}
+      },
+      {
+        "each": {"get": "articles"},
+        "as": "article",
+        "children": {
+          "tag": "article",
+          "attrs": {"class": "card blog-article"},
+          "children": [
+            {
+              "tag": "div",
+              "attrs": {"class": "card-body stack stack-gap-16"},
+              "children": [
+                {
+                  "tag": "header",
+                  "attrs": {"class": "stack"},
+                  "children": [
+                    {
+                      "tag": "p",
+                      "attrs": {"class": "text-muted m-0"},
+                      "children": [
+                        {"get": "article.author"},
+                        " · ",
+                        {
+                          "tag": "time",
+                          "attrs": {"datetime": {"get": "article.published_iso"}},
+                          "children": [{"get": "article.published_label"}]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "h2",
+                      "attrs": {"class": "m-0"},
+                      "children": [
+                        {
+                          "tag": "a",
+                          "attrs": {"href": {"concat": ["/articles/", {"get": "article.id"}]}},
+                          "children": [{"get": "article.title"}]
+                        }
+                      ]
+                    }
+                  ]
                 },
-                "children": [
-                  {
-                    "get": "item.body"
-                  }
-                ]
-              },
+                {"tag": "p", "attrs": {"class": "blog-excerpt m-0"}, "children": [{"get": "article.excerpt"}]},
+                {
+                  "tag": "a",
+                  "attrs": {"href": {"concat": ["/articles/", {"get": "article.id"}]}},
+                  "children": [
+                    {"t": "blog.view"},
+                    {
+                      "tag": "span",
+                      "attrs": {"class": "sr-only"},
+                      "children": [": ", {"get": "article.title"}, " #", {"get": "article.id"}]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "tag": "nav",
+        "attrs": {"class": "section", "aria-label": {"t": "common.pagination"}},
+        "when": {"get": "next_url"},
+        "children": [
+          {
+            "tag": "a",
+            "attrs": {"class": "btn btn-secondary", "href": {"get": "next_url"}},
+            "children": [{"t": "blog.older"}]
+          }
+        ]
+      }
+    ]
+  },
+  "blog/article-page": {
+    "tag": "article",
+    "attrs": {"class": "blog-page section stack stack-gap-16"},
+    "children": [
+      {
+        "tag": "header",
+        "attrs": {"class": "stack stack-gap-16"},
+        "children": [
+          {"tag": "h1", "attrs": {"class": "blog-title m-0"}, "children": [{"get": "article.title"}]},
+          {
+            "tag": "p",
+            "attrs": {"class": "text-muted m-0"},
+            "children": [
+              {"get": "article.author"},
+              " · ",
               {
-                "tag": "p",
-                "attrs": {
-                  "class": "text-danger"
-                },
-                "children": [
-                  {
-                    "get": "item.rejection.code"
-                  }
-                ]
+                "tag": "time",
+                "attrs": {"datetime": {"get": "article.published_iso"}},
+                "children": [{"get": "article.published_label"}]
               }
             ]
           }
         ]
       },
+      {"slot": {"get": "content"}},
+      {"slot": {"get": "discussion"}},
       {
-        "tag": "p",
-        "when": {
-          "not": {
-            "get": "items"
-          }
-        },
+        "tag": "div",
+        "attrs": {"class": "cluster"},
+        "when": {"get": "canEdit"},
         "children": [
           {
-            "t": "blog.feeds.preview_empty"
+            "tag": "a",
+            "attrs": {"class": "btn btn-secondary", "href": {"concat": ["/admin/articles/", {"get": "article.id"}]}},
+            "children": [{"icon": "edit"}, " ", {"t": "common.edit"}]
           }
         ]
       }
+    ]
+  },
+  "blog/source-form": {
+    "tag": "form",
+    "attrs": {"data-ajax-target": "#blog-sources", "data-modal-close-on-success": "true"},
+    "children": [
+      {"component": "blog/source-fields", "data": {"get": "resource"}},
+      {
+        "tag": "button",
+        "attrs": {"type": "button", "class": "btn btn-secondary", "data-article-source-preview": ""},
+        "children": [{"t": "blog.feeds.preview"}]
+      },
+      {"tag": "div", "attrs": {"aria-live": "polite", "class": "stack", "data-article-source-output": ""}},
+      {"tag": "button", "attrs": {"type": "submit", "class": "btn btn-secondary"}, "children": [{"t": "common.save"}]}
     ]
   }
 }

@@ -32,14 +32,8 @@
     "routes": [
       "/admin/articles"
     ],
-    "entries": [
-      "App/Modules/Blog/assets/index.js"
-    ],
-    "components": [
-      "blog/articles",
-      "blog/article-filter",
-      "blog/article-fields"
-    ],
+    "entries": [],
+    "components": [],
     "styles": [],
     "translations": [
       "blog.editor",
@@ -54,15 +48,37 @@
       "common.close"
     ],
     "uses": [
-      "publishing.editor"
-    ]
+      "publishing.editor",
+      "ui.form-constraints"
+    ],
+    "admin": {
+      "blog.articles": {
+        "path": "/admin/articles",
+        "api": "/api/articles",
+        "endpoint": "/api/articles/management",
+        "target": "#blog-articles",
+        "component": "blog/articles",
+        "filter": "blog/article-filter",
+        "filterId": "blog-article-filter",
+        "title": "blog.articles",
+        "icon": "file-text",
+        "editor": {
+          "creation": "/api/articles/creation",
+          "management": "/api/articles/{id}/management",
+          "fields": "blog/article-fields",
+          "title": "blog.editor",
+          "method": "PUT"
+        }
+      }
+    }
   },
   {
     "routes": [
       "/articles"
     ],
     "uses": [
-      "publishing.discussion"
+      "publishing.discussion",
+      "ui.form-constraints"
     ],
     "entries": [],
     "components": [],
@@ -77,10 +93,9 @@
       "App/Modules/Blog/assets/sources.js"
     ],
     "components": [
-      "blog/sources",
       "blog/source-fields",
-      "blog/source-filter",
-      "blog/source-preview"
+      "blog/source-preview",
+      "blog/source-form"
     ],
     "styles": [],
     "translations": [
@@ -96,6 +111,22 @@
       "common.stay",
       "common.cancel",
       "common.close"
-    ]
+    ],
+    "uses": [
+      "ui.form-constraints"
+    ],
+    "admin": {
+      "blog.sources": {
+        "path": "/admin/article-sources",
+        "api": "/api/article-sources",
+        "endpoint": "/api/article-sources/management",
+        "target": "#blog-sources",
+        "component": "blog/sources",
+        "filter": "blog/source-filter",
+        "filterId": "blog-source-filter",
+        "title": "blog.feeds.title",
+        "icon": "rss"
+      }
+    }
   }
 ]

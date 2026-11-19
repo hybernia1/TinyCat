@@ -4,7 +4,7 @@ namespace TinyCat\Core\Ui;
 
 use TinyCat\Core\Modules\Registrations;
 use TinyCat\Http\{Document as ResponseDocument, Router};
-use TinyCat\Support\{Localization, View};
+use TinyCat\Support\{Components, Localization, Markup};
 
 /** Framework information surfaces compose lazy sections from active owners. */
 final class Information
@@ -27,7 +27,7 @@ final class Information
     public static function privacy(): void
     {
         $siteName = Site::site_name(); $siteCaptchaEnabled = Site::site_captcha_enabled(); $siteGoogleAnalyticsConfigured = Site::site_google_analytics_configured();
-        $sections = self::sections('privacy');
+        $sections = new Markup(self::sections('privacy'));
         $url = Site::absolute_url(\TinyCat\Http\LocaleRouting::url('/privacy'));
         Page::render(['title' => Localization::t('privacy.title'), 'current' => '/privacy', 'public' => true, 'meta' => [
             'url' => $url, 'type' => 'website', 'jsonld' => [
@@ -35,7 +35,7 @@ final class Information
                 'url' => $url, 'name' => Localization::t('privacy.title'), 'inLanguage' => Localization::locale(),
                 'isPartOf' => ['@type' => 'WebSite', 'url' => Site::absolute_url('/'), 'name' => $siteName],
             ],
-        ]], View::render('privacy', compact('siteName', 'siteCaptchaEnabled', 'siteGoogleAnalyticsConfigured', 'sections'), __DIR__ . '/templates'));
+        ]], Components::render('ui/privacy-page', compact('siteName', 'siteCaptchaEnabled', 'siteGoogleAnalyticsConfigured', 'sections')));
     }
     public static function llms(bool $full = false): void
     {

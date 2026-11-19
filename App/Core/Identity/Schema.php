@@ -7,14 +7,14 @@ final class Schema
 {
     public static function install(\PDO $pdo): void
     {
-        $install = require __DIR__ . '/migrations/001-initial.php';
+        $install = require __DIR__ . '/migrations/fresh-v1.php';
         $install($pdo);
     }
 
     public static function schema(): \TinyCat\Core\Modules\ModuleSchema
     {
         return new \TinyCat\Core\Modules\ModuleSchema(1, ServiceProvider::tables(), self::install(...), [
-            new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.accounts.initial', __DIR__ . '/migrations/001-initial.php'),
-        ], null, new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.accounts.legacy-v1', __DIR__ . '/migrations/legacy-v1.php'));
+            new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.accounts.initial', null, '5cb72aa5ac46c2fa23649f3778c6db11f4b84ce54821bfef1c9a4b4ca1358911'),
+        ], new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.accounts.fresh-v1', __DIR__ . '/migrations/fresh-v1.php'));
     }
 }

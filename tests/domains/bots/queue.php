@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require __DIR__ . '/../../../App/bootstrap.php';
+require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 use TinyCat\Social\Automation\Queue;
 use TinyCat\Database\Connection;
 use TinyCat\Support\Components;

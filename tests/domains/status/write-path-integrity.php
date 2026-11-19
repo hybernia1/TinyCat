@@ -18,8 +18,8 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
 
 $root = dirname(__DIR__, 3);
 define('TINYCAT', true);
-require_once $root . '/App/autoload.php';
-require_once $root . '/App/Modules/Social/src/Profiles/Avatar.php';
+require_once $root . '/App/Core/Runtime/autoload.php';
+require_once $root . '/App/Core/Identity/Avatar.php';
 require_once $root . '/App/Modules/Social/src/Content/ImageStorage.php';
 require_once $root . '/App/Core/Text/LinkParser.php';
 require_once $root . '/App/Core/Links/Metadata.php';
@@ -122,7 +122,6 @@ $assert($value('SELECT password FROM users WHERE id = 1') === 'first-password', 
 
 $tagText = implode(' ', array_map(static fn (int $id): string => '#tag' . $id, range(1, 12)));
 $assert(count(\TinyCat\Social\Posts\Tags::status_tags_from_text($tagText)) === 12, 'Tag parsing does not truncate at ten unique tags.');
-$assert(count(\TinyCat\Social\Posts\Actions::status_require_valid_tags($tagText)) === 12, 'Tag validation accepts more than ten unique tags.');
 $assert(\TinyCat\Social\Posts\Tags::status_tag_normalize(str_repeat('a', 33)) === '', 'The storage-backed per-tag length bound remains.');
 
 $youtube = \TinyCat\Core\Text\LinkParser::fromRaw('https://youtu.be/abc123');
@@ -215,13 +214,16 @@ $assert((int) $value('SELECT COUNT(*) FROM social_post_links WHERE content_id = 
 
 
 $draft = \TinyCat\Social\Posts\PostCreation::fromText("  <b>Hello</b> @actor #Mixed_CASE\r\nhttps://alpha.example  ");
-$assert($draft instanceof \TinyCat\Social\Posts\PostCreation && $draft instanceof \TinyCat\Social\Content\PostCreation, 'The compatibility factory preserves the legacy draft type and the canonical publishing contract.');
+$assert($draft instanceof \TinyCat\Social\Posts\PostCreation, 'The canonical draft factory returns the social post draft.');
 $assert($draft->body === "Hello @2 #mixed-case\nhttps://alpha.example", 'The shared draft cleans markup, line endings, mentions and tags.');
 $assert($draft->tags === ['mixed-case'] && count($draft->links) === 1, 'Draft relations are extracted from the normalized stored text.');
 $cleanDraft = \TinyCat\Social\Posts\PostCreation::fromText("  Manual  post […]\n\n\nRead more → https://alpha.example #Mixed_CASE");
 $assert($cleanDraft->body === "Manual post …\n\nhttps://alpha.example #mixed-case" && $cleanDraft->tags === ['mixed-case'] && count($cleanDraft->links) === 1, 'Manual posts, edits and bot imports share whitespace and boilerplate cleanup before relation extraction.');
 $cleanCard = \TinyCat\Social\Posts\Resource::link(['normalized_url' => 'https://alpha.example', 'description' => 'Cached  preview […] Read more', 'link_type' => 'web']);
 $assert($cleanCard['description'] === 'Cached preview …', 'Previously cached metadata follows the same rules in server and API link-card resources.');
+$textConstraints = \TinyCat\Social\Posts\Resource::constraints();
+$assert($textConstraints['body']['max_length'] === \TinyCat\Social\Posts\PostCreation::BODY_MAX_LENGTH && $textConstraints['comment']['max_length'] === $textConstraints['body']['max_length'], 'Post and comment resource constraints use their owner rules.');
+$assert(\TinyCat\Http\Validator::validate(['body' => str_repeat("\u{1F642}", 2000)], \TinyCat\Social\Posts\PostCreation::rules()) === [], 'Social text limits count Unicode characters rather than UTF-16 code units.');
 $boundedDraft = \TinyCat\Social\Posts\PostCreation::fromText(str_repeat('x', 2000) . ' #outside');
 $assert(mb_strlen($boundedDraft->body) === 2000 && $boundedDraft->tags === [], 'Tags outside the shared text limit cannot leave invisible relations.');
 $image = ['path' => 'fixture.webp', 'width' => 10, 'height' => 20, 'bytes' => 100];
@@ -502,7 +504,7 @@ $botPublicationId = (int) $botPublication['content_id'];
 $assert((string) $value('SELECT published_at FROM social_posts WHERE id = ' . $botPublicationId) <= \TinyCat\Support\Dates::dateDb(), 'Bot imports publish immediately through the shared writer.');
 \TinyCat\Social\Posts\NotificationEvents::notifyMentions('@1', ['id' => 3, 'role' => 'bot'], $botPublicationId);
 $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id = ' . $botPublicationId) === 0, 'Bot imports and direct bot mention delivery do not send notifications.');
-$assert(\TinyCat\Social\Posts\PostCreation::sendsMentionNotifications('admin') && !\TinyCat\Social\Posts\PostCreation::sendsMentionNotifications('bot'), 'Mention sender policy distinguishes human accounts from bots.');
+$assert(\TinyCat\Social\Profiles\Roles::receivesNotifications('admin') && !\TinyCat\Social\Profiles\Roles::receivesNotifications('bot'), 'Mention sender policy distinguishes human accounts from bots.');
 $_POST = ['body' => 'Admin edited bot post @actor'];
 \TinyCat\Http\Request::reset();
 \TinyCat\Social\Posts\Actions::status_json_update($botPublicationId, ['id' => 1, 'username' => 'owner', 'role' => 'admin']);
@@ -512,8 +514,8 @@ $database->exec('DELETE FROM notifications');
 \TinyCat\Social\Profiles\Following::author_follow(2, 1);
 $assert(\TinyCat\Social\Profiles\Following::author_is_followed(2, 1), 'Following creates the social relation.');
 $assert((int) $value("SELECT COUNT(*) FROM notifications WHERE user_id = 1 AND notification_key = 'follow:1:2'") === 1, 'Following creates one notification for the followed profile.');
-$assert(\TinyCat\Social\Posts\LegacyInbox::targetUrl(['type' => 'follow', 'actor_id' => 2]) === \TinyCat\Social\Profiles\Profiles::author_url(2), 'A follow notification links to the follower profile.');
-\TinyCat\Social\Profiles\Profiles::author_unfollow(2, 1);
+$assert(\TinyCat\Core\Notifications\Inbox::targetUrl(['type' => 'follow', 'actor_id' => 2]) === \TinyCat\Social\Profiles\Profiles::author_url(2), 'A follow notification links to the follower profile.');
+\TinyCat\Social\Profiles\Following::author_unfollow(2, 1);
 $assert(!\TinyCat\Social\Profiles\Following::author_is_followed(2, 1), 'Unfollowing removes the social relation.');
 \TinyCat\Social\Profiles\Following::author_follow(2, 1);
 $assert(\TinyCat\Social\Profiles\Following::author_is_followed(2, 1), 'Following can be restored after an unfollow.');
@@ -619,7 +621,7 @@ try {
 
 $database->beginTransaction();
 try {
-    \TinyCat\Social\Profiles\Avatar::replace(1, null, false, static fn (array $user): array => $user);
+    \TinyCat\Core\Identity\Avatar::replace(1, null, false, static fn (array $user): array => $user);
     $assert(false, 'Avatar replacement must reject an outer transaction.');
 } catch (LogicException) {
     $assert($database->inTransaction(), 'Rejecting nested avatar replacement must not roll back the caller transaction.');
@@ -638,27 +640,8 @@ $assert($value('SELECT provider FROM social_links WHERE id = 9002') === 'youtube
 $wpLinkId = \TinyCat\Social\Content\Links::status_link_upsert(['normalized_url' => 'https://wp.example/article', 'url_hash' => hash('sha256', 'wp-taxonomy'), 'provider' => 'wordpress', 'link_type' => 'web', 'title' => 'Article']);
 $assert($value('SELECT provider FROM social_links WHERE id = ' . $wpLinkId) === 'wordpress' && $value('SELECT link_type FROM social_links WHERE id = ' . $wpLinkId) === 'web', 'Recognized WordPress social_links persist their platform separately from social_posts type.');
 
-$migrationDb = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$migrationDb->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, title TEXT, description TEXT, image_url TEXT, video_id TEXT)');
-$migrationDb->exec('CREATE TABLE content_links (content_id INTEGER, link_id INTEGER, created_at TEXT, PRIMARY KEY (content_id, link_id))');
-$migrationInsert = $migrationDb->prepare('INSERT INTO links VALUES (?, ?, ?, ?, ?, ?, ?)');
-$migrationInsert->execute([1, 'https://twitter.com/account/status/123?s=20', 'old-x', 'Account', '', '', '']);
-$migrationInsert->execute([2, 'https://x.com/account/status/123/photo/1', 'old-photo', '', 'Caption', '/uploads/preview.webp', '']);
-$migrationDb->exec("INSERT INTO content_links VALUES (10, 1, '2026-10-27'), (10, 2, '2026-10-27'), (20, 2, '2026-10-27')");
-$normalizeStored = require $root . '/migrations/20261027_002_link_normalization.php';
-$dryReport = $normalizeStored($migrationDb, false);
-$assert($dryReport['changed'] === 2 && $dryReport['merged'] === 1 && (int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 2, 'Normalization audit reports duplicates without changing records.');
-$migrationDb->exec("CREATE TRIGGER fail_normalization BEFORE UPDATE ON links BEGIN SELECT RAISE(ABORT, 'forced migration failure'); END");
-try { $normalizeStored($migrationDb); } catch (PDOException) { }
-$assert((int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 2 && (int) $migrationDb->query('SELECT COUNT(*) FROM content_links')->fetchColumn() === 3, 'Normalization failure restores deleted links and transferred relations.');
-$migrationDb->exec('DROP TRIGGER fail_normalization');
-$normalizeStored($migrationDb);
-$migrated = $migrationDb->query('SELECT * FROM links')->fetch(PDO::FETCH_ASSOC);
-$assert($migrated['normalized_url'] === 'https://x.com/i/web/status/123' && $migrated['url_hash'] === hash('sha256', $migrated['normalized_url']), 'Migration stores one canonical identity.');
-$assert($migrated['title'] === 'Account' && $migrated['description'] === 'Caption' && $migrated['image_url'] === '/uploads/preview.webp', 'Duplicate merge preserves complementary cached metadata.');
-$assert((int) $migrationDb->query('SELECT COUNT(*) FROM content_links WHERE link_id = 1')->fetchColumn() === 2 && (int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 1, 'Duplicate merge preserves both posts and collapses overlapping relations.');
-$again = $normalizeStored($migrationDb);
-$assert($again['changed'] === 0 && $again['merged'] === 0, 'Normalization migration is repeatable.');
+// Stored-link normalization, merging, dry-run and rollback are covered by
+// tests/tools/link-optimizer.php against the current Social tables on SQLite/MySQL.
 $preparedDuplicates = \TinyCat\Social\Content\Links::prepareLinks([
     ['normalized_url' => 'https://alpha.example?utm_source=one', 'url_hash' => 'stale-one'],
     ['normalized_url' => 'https://alpha.example?utm_source=two', 'url_hash' => 'stale-two'],
@@ -695,10 +678,10 @@ $detail = \TinyCat\Social\Moderation\Reports::detail(9500);
 $assert($detail['content'] === ['id' => 9500, 'status' => 'hidden'], 'Moderation details expose only the necessary content state.');
 $assert(str_contains($detail['reports'][0]['created_at'], 'T') && !array_key_exists('reviewed_by', $detail['reports'][0]), 'Report entries use canonical dates and omit raw database metadata.');
 $database->exec("INSERT INTO notifications (id, user_id, actor_id, subject_id, type, notification_key, created_at, updated_at) VALUES (9500, 2, 1, 9500, 'content_like', 'hidden-evidence-notification', '2026-01-01', '2026-01-01')");
-$hiddenNotification = array_values(array_filter(\TinyCat\Social\Posts\LegacyInbox::items(2), static fn (array $item): bool => (int) $item['id'] === 9500))[0];
+$hiddenNotification = array_values(array_filter(\TinyCat\Core\Notifications\Inbox::items(2), static fn (array $item): bool => (int) $item['id'] === 9500))[0];
 $hiddenNotificationResource = \TinyCat\Core\Notifications\Resource::item($hiddenNotification);
 $assert($hiddenNotificationResource['excerpt'] === '' && $hiddenNotificationResource['url'] === '/notifications', 'Existing notifications do not expose hidden post text or broken post links.');
-$assert(\TinyCat\Social\Posts\LegacyInbox::open(9500, 2) === '/notifications', 'Opening an old notification respects current post visibility.');
+$assert(\TinyCat\Core\Notifications\Inbox::open(9500, 2) === '/notifications', 'Opening an old notification respects current post visibility.');
 $assert((int) $value('SELECT subject_id FROM notifications WHERE id = 9500') === 9500, 'Hiding preserves the notification record and its original relationship.');
 
 $database->exec("INSERT INTO social_posts (id, author_id, body) VALUES (9502, 1, 'Kept evidence')");

@@ -12,7 +12,7 @@
     "empty": "Henüz makale yok.",
     "older": "Eski makaleler",
     "not_found": "Makale bulunamadı.",
-    "invalid": "Başlık (en fazla 200 karakter) ve metin (en fazla 60.000 UTF-8 baytı) girin.",
+    "invalid": "Başlık (en fazla {title_max} karakter) ve metin (en fazla {body_max} UTF-8 baytı) girin.",
     "articles": "Articles",
     "scheduled": "Planlandı",
     "feeds": {
@@ -27,7 +27,7 @@
       "run": "İçe aktarmayı başlat",
       "preview": "İçe aktarma önizlemesi",
       "preview_empty": "Kullanılabilir öğe yok.",
-      "invalid": "Adı, herkese açık akış URL’sini, etkin yöneticiyi ve 5 ile 43.200 dakika arasındaki aralığı kontrol edin. Kaydedilen kaynak URL’si değiştirilemez."
+      "invalid": "Adı, herkese açık akış URL’sini, etkin yöneticiyi ve {interval_min} ile {interval_max} dakika arasındaki aralığı kontrol edin. Kaydedilen kaynak URL’si değiştirilemez."
     },
     "settings": {
       "images_enabled": "Gönderi görsellerine izin ver",

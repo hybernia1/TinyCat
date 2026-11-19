@@ -5,7 +5,6 @@ import "../../../../../assets/core/api-client.js";
 import "../../../../../assets/core/i18n.js";
 import "../../../../../assets/core/lifecycle.js";
 import "../../../../../assets/core/navigation.js";
-import "../../../../Core/Notifications/assets/controller.js";
 import "./controller.js";
 import "../../../../../assets/ui/dialogs.js";
 import "../../../../../assets/ui/component-builders.js";
@@ -36,7 +35,7 @@ import "../../../../../assets/ui/toasts.js";
   }
   function statusFeedFragment(target, items) {
     if (target.dataset.feedComponent) { return { content: TinyCat.components.render(target.dataset.feedComponent, { items: items }) }; }
-    return target.id === "notifications-list" ? { content: TinyCat.notifications.items(items, false) } : TinyCat.status.fragment(items);
+    return TinyCat.status.fragment(items);
   }
   function statusFeedTarget(control) {
     var selector = control ? control.dataset.statusFeedTarget : "";
@@ -501,5 +500,5 @@ import "../../../../../assets/ui/toasts.js";
     });
 
   }
-  TinyCat.status.controllers.feed = { dispose: dispose, statusFeedPayload: statusFeedPayload, statusFeedTarget: statusFeedTarget, statusFeedNearViewport: statusFeedNearViewport, statusFeedCards: statusFeedCards, statusFeedGap: statusFeedGap, statusFeedSpacer: statusFeedSpacer, statusFeedSpacerHeight: statusFeedSpacerHeight, setStatusFeedSpacerHeight: setStatusFeedSpacerHeight, statusFeedFirstPageUrl: statusFeedFirstPageUrl, statusFeedControlForTarget: statusFeedControlForTarget, statusFeedStartRequest: statusFeedStartRequest, statusFeedRequestActive: statusFeedRequestActive, statusFeedFinishRequest: statusFeedFinishRequest, appendStatusFeedItems: appendStatusFeedItems, queueStatusFeedMore: queueStatusFeedMore, statusFeedCardProtected: statusFeedCardProtected, pruneStatusFeed: pruneStatusFeed, refreshPrunedStatusFeed: refreshPrunedStatusFeed, maybeRefreshPrunedStatusFeeds: maybeRefreshPrunedStatusFeeds, queuePrunedStatusFeedRefreshCheck: queuePrunedStatusFeedRefreshCheck, loadStatusFeedMore: loadStatusFeedMore, statusCardId: statusCardId, statusFeedScope: statusFeedScope, statusFeedForForm: statusFeedForForm, initStatusFeedLazy: initStatusFeedLazy };
+  TinyCat.status.controllers.feed = { dispose: dispose, statusFeedTarget: statusFeedTarget, statusFeedCards: statusFeedCards, statusFeedFirstPageUrl: statusFeedFirstPageUrl, statusFeedStartRequest: statusFeedStartRequest, statusFeedRequestActive: statusFeedRequestActive, statusFeedFinishRequest: statusFeedFinishRequest, pruneStatusFeed: pruneStatusFeed, refreshPrunedStatusFeed: refreshPrunedStatusFeed, loadStatusFeedMore: loadStatusFeedMore, statusCardId: statusCardId, statusFeedForForm: statusFeedForForm, initStatusFeedLazy: initStatusFeedLazy };
 }());

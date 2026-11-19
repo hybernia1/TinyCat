@@ -14,11 +14,11 @@ final class Settings
         return new \TinyCat\Core\Modules\SettingsSection('tinycat.blog.settings', 'blog', static fn (): array => ['label' => \TinyCat\Support\Localization::t('blog.articles'), 'icon' => 'file-text', 'fields' => [
             ['key' => 'blog.images.enabled', 'label' => \TinyCat\Support\Localization::t('blog.settings.images_enabled'), 'type' => 'bool', 'default' => true],
             ['key' => 'blog.images.max_upload_kb', 'label' => \TinyCat\Support\Localization::t('blog.settings.images_max_upload_kb'), 'type' => 'int', 'default' => 100, 'min' => 20, 'max' => 1024],
-            ['key' => 'blog.blocked_urls', 'label' => \TinyCat\Support\Localization::t('blog.settings.blocked_urls'), 'type' => 'string', 'default' => ''],
+            ['key' => 'blog.blocked_urls', 'label' => \TinyCat\Support\Localization::t('blog.settings.blocked_urls'), 'type' => 'textarea', 'default' => '', 'span' => true],
             ['key' => 'blog.links.utm.enabled', 'label' => \TinyCat\Support\Localization::t('blog.settings.utm_enabled'), 'type' => 'bool', 'default' => true],
-            ['key' => 'blog.links.utm.source', 'label' => \TinyCat\Support\Localization::t('blog.settings.utm_source'), 'type' => 'string', 'default' => ''],
-            ['key' => 'blog.links.utm.medium', 'label' => \TinyCat\Support\Localization::t('blog.settings.utm_medium'), 'type' => 'string', 'default' => 'referral'],
-            ['key' => 'blog.links.utm.campaign', 'label' => \TinyCat\Support\Localization::t('blog.settings.utm_campaign'), 'type' => 'string', 'default' => ''],
+            ['key' => 'blog.links.utm.source', 'label' => \TinyCat\Support\Localization::t('blog.settings.utm_source'), 'type' => 'optional_text', 'default' => ''],
+            ['key' => 'blog.links.utm.medium', 'label' => \TinyCat\Support\Localization::t('blog.settings.utm_medium'), 'type' => 'text', 'default' => 'referral'],
+            ['key' => 'blog.links.utm.campaign', 'label' => \TinyCat\Support\Localization::t('blog.settings.utm_campaign'), 'type' => 'optional_text', 'default' => ''],
         ]], 350);
     }
 

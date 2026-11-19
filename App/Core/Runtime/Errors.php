@@ -57,7 +57,7 @@ final class Errors
         if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'HEAD') { return; }
         if ($status !== 503) {
             $level = ob_get_level(); ob_start();
-            try { \TinyCat\Core\Ui\Page::render(['title' => $title, 'current' => $path, 'public' => true, 'meta' => ['robots' => 'noindex,follow']], \TinyCat\Support\View::render('notFound', ['notFoundTitle' => $title, 'notFoundMessage' => Localization::t('errors.intro'), 'errorStatus' => $status], dirname(__DIR__) . '/Ui/templates')); $body = (string) ob_get_clean(); echo $body; return; }
+            try { \TinyCat\Core\Ui\Page::render(['title' => $title, 'current' => $path, 'public' => true, 'asset_path' => '/', 'meta' => ['robots' => 'noindex,follow']], \TinyCat\Support\View::render('notFound', ['notFoundTitle' => $title, 'notFoundMessage' => Localization::t('errors.intro'), 'errorStatus' => $status], dirname(__DIR__) . '/Ui/templates')); $body = (string) ob_get_clean(); echo $body; return; }
             catch (Throwable $exception) { while (ob_get_level() > $level) { ob_end_clean(); } error_log('TinyCat error page failed: ' . $exception); }
         }
         // This template needs no database, external assets or layout service.

@@ -101,7 +101,7 @@ final class Actions
             'status' => $status,
             'updated_from' => \TinyCat\Core\Identity\ReadModel::tc_admin_user_filter_date((string) \TinyCat\Http\Web::get('updated_from', '')),
             'updated_to' => \TinyCat\Core\Identity\ReadModel::tc_admin_user_filter_date((string) \TinyCat\Http\Web::get('updated_to', '')),
-        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Core\Identity\Sorting::LISTS['users']);
+        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Core\Identity\Sorting::users());
     }
 
     /** @param array<mixed>|int $user */
@@ -187,7 +187,7 @@ final class Actions
         $query = $withFilters ? array_replace(self::tc_admin_users_list_params(), $params) : $params;
         $id = max(0, (int) ($query['id'] ?? 0));
         unset($query['id']);
-        return \TinyCat\Support\AdminViews::admin_list_url('/api/users' . ($id > 0 ? '/' . $id : ''), $query);
+        return \TinyCat\Support\AdminViews::admin_list_url(\TinyCat\Core\Ui\Admin\Definitions::value('core.users', 'endpoint') . ($id > 0 ? '/' . $id : ''), $query);
     }
 
     /**
@@ -218,7 +218,7 @@ final class Actions
             \TinyCat\Support\AdminViews::admin_page(),
             \TinyCat\Support\AdminViews::admin_per_page()
         );
-        $items = $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Core\Identity\Sorting::LISTS['users'], $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
+        $items = $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Core\Identity\Sorting::users(), $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
 
         return [
             'items' => $items,

@@ -6,7 +6,7 @@ use TinyCat\Http\Request;
 use TinyCat\Social\Moderation\Restrictions;
 use TinyCat\Support\Cache;
 use TinyCat\Support\Localization;
-use TinyCat\Support\View;
+use TinyCat\Support\Components;
 use TinyCat\Core\Identity\Access;
 
 /** HTTP authorization, actions and prepared page composition. */
@@ -19,7 +19,7 @@ final class Pages
 
     public static function privacySection(): string
     {
-        return View::render('privacy-section', ['siteName' => \TinyCat\Core\Ui\Site::site_name(), 'privacyLimitRows' => self::privacyLimitRows()], dirname(__DIR__, 2) . '/templates/site');
+        return Components::render('site/privacy-section', ['siteName' => \TinyCat\Core\Ui\Site::site_name(), 'privacyLimitRows' => self::privacyLimitRows()]);
     }
     /** @return list<array<string, string>> */
     private static function privacyLimitRows(): array

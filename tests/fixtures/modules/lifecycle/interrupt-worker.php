@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require $argv[1] . '/App/autoload.php';
+require $argv[1] . '/App/Core/Runtime/autoload.php';
 TinyCat\Support\Config::load();
 TinyCat\Core\Updates\Manager::runLifecycle(static function (): array {
     TinyCat\Database\Connection::exec('CREATE TABLE interrupted_module (id INTEGER)');

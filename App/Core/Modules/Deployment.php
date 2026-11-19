@@ -21,14 +21,14 @@ final class Deployment
         return $state;
     }
 
-    /** @param array<string, string> $source
+    /** @param array<string, string>|(\Closure(): array<string, string>) $source
      * @return array<string, string> */
-    public static function selection(string $root, array $source): array
+    public static function selection(string $root, array|\Closure $source): array
     {
         $plan = Distribution::read($root); $state = self::read($root);
         if ($plan === null) {
             if ($state !== null) { throw new \RuntimeException('Deployment state requires its product descriptor.'); }
-            return $source;
+            return $source instanceof \Closure ? $source() : $source;
         }
         if ($state !== null && ($state['product'] !== $plan['product'] || array_diff($state['installed'], array_keys($plan['selection'])) !== [])) { throw new \RuntimeException('Installed product does not match its available modules.'); }
         return Distribution::selection($plan, $state['active'] ?? $plan['active']);
@@ -60,9 +60,9 @@ final class Deployment
         } else { $product = $current['product']; }
         if ($product !== $candidate['product']) { throw new \RuntimeException('An update cannot change the installed product.'); }
         $state = self::read($root);
-        $installed = Upgrade::ids($candidate, $state['installed'] ?? array_keys($current['selection'] ?? require $root . '/App/modules.php'));
+        $installed = $state['installed'] ?? array_keys($current['selection'] ?? require $root . '/App/modules.php');
         if (array_diff($installed, array_keys($candidate['selection'])) !== []) { throw new \RuntimeException('An update cannot remove installed module sources or data.'); }
-        $active = Upgrade::ids($candidate, $state['active'] ?? $current['active'] ?? $installed);
+        $active = $state['active'] ?? $current['active'] ?? $installed;
         $active = array_values(array_unique([...$active, ...$candidate['required']]));
         Distribution::selection($candidate, $active);
         return ['active' => $active, 'installed' => array_values(array_unique([...$installed, ...$active]))];

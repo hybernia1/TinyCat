@@ -208,6 +208,7 @@
     "login_required": "Faça login para continuar."
   },
   "modules": {
+    "missing": "Faltam arquivos do módulo",
     "title": "Módulos",
     "help": "Gerir módulos disponíveis. Desativar preserva os seus dados.",
     "required": "Obrigatório",

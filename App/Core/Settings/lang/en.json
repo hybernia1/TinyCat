@@ -8,7 +8,6 @@
       "security": "Security",
       "site": "Site",
       "performance": "Performance",
-      "content_images": "Post images",
       "email": "Email",
       "analytics": "Analytics"
     },
@@ -53,6 +52,7 @@
     "image_remove": "Remove image"
   },
   "install": {
+    "purpose_migrations": "Migration history, ordering and checksums.",
     "language_label": "English",
     "title": "Install TinyCat CMS",
     "step_language": "Language",
@@ -70,7 +70,7 @@
     "db_charset": "Charset",
     "db_test": "Test and continue",
     "tables_title": "Create tables",
-    "tables_intro": "TinyCat will create core tables for accounts, content, notifications, moderation, rate limits, password recovery, and settings.",
+    "tables_intro": "TinyCat will create tables for the core and selected modules.",
     "create_tables": "Create tables",
     "table_name": "Table",
     "table_purpose": "Purpose",
@@ -79,18 +79,7 @@
     "state_missing": "Missing",
     "state_exists": "Exists",
     "purpose_users": "Admin accounts and users.",
-    "purpose_content": "Public user posts.",
-    "purpose_content_images": "Compressed images attached to posts.",
-    "purpose_terms": "Terms for tags.",
-    "purpose_content_tags": "Relations between posts and terms.",
-    "purpose_links": "Unique stored link metadata.",
-    "purpose_content_links": "Relations between posts and links.",
-    "purpose_content_likes": "Likes on posts.",
-    "purpose_content_comments": "Nested comments on posts.",
-    "purpose_comment_likes": "Likes on comments.",
-    "purpose_user_followers": "Profile follows between users.",
-    "purpose_notifications": "Alerts for likes, comments, mentions, and follows.",
-    "purpose_content_reports": "User reports for moderation.",
+    "purpose_notifications": "Account notifications with subjects managed by their owners.",
     "purpose_ip_action_limits": "Account- or IP-based rate-limit buckets for selected actions.",
     "purpose_password_reset_tokens": "Short-lived password-reset tokens sent by email.",
     "purpose_settings": "Database-backed application settings.",
@@ -116,9 +105,6 @@
       "password_mismatch": "The passwords do not match.",
       "config_write_failed": "Could not write config.php.",
       "db_failed": "Database connection failed: {message}"
-    },
-    "purpose_bot_sources": "RSS and Atom publishing rules for bot accounts.",
-    "purpose_bot_feed_history": "Recent feed item hashes used to prevent duplicate bot posts.",
-    "purpose_bot_source_runs": "Compact diagnostic history of bot source checks and imports."
+    }
   }
 }

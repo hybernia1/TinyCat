@@ -6,7 +6,7 @@ if (!is_string($workspace) || !is_file($workspace . '/accounts.sqlite')) { throw
 $path = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if (preg_match('~^/assets/build/[a-z0-9.-]+\.(?:js|css|svg)$~D', $path) && is_file($workspace . $path)) { return false; }
 define('TINYCAT', true);
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 register_shutdown_function(static function () use ($workspace): void {
     foreach (get_declared_classes() as $class) {
         if (preg_match('/^TinyCat\\\\(?:Users|Status|Bots|Settings|Site|Moderation|Notifications)\\\\/', $class)) { file_put_contents($workspace . '/product-loads.log', $class . "\n", FILE_APPEND); }
@@ -25,5 +25,8 @@ $api = TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(
 TinyCat\Core\Identity\Integration::configure(['recovery' => static function (string $email) use ($workspace): void {
     TinyCat\Core\Identity\Recovery::request($email, static function (int $id, string $token) use ($workspace): void { file_put_contents($workspace . '/delivered-token', $token); });
 }]);
+if (in_array($_SERVER['HTTP_X_TEST_LANDING'] ?? '', ['/', '/login', '/register', '/admin', '/crm', 'https://example.test/'], true)) {
+    TinyCat\Core\Identity\Integration::provide('fixture.landing', ['landing' => static fn (?array $user): string => $_SERVER['HTTP_X_TEST_LANDING']]);
+}
 $api->get('/_accounts', static fn (): array => ['csrf' => TinyCat\Core\Security\Csrf::token()]);
 if (!TinyCat\Http\Router::dispatch()) { TinyCat\Http\Document::notFound('Not Found'); }

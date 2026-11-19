@@ -1,11 +1,6 @@
 <?php
 declare(strict_types=1);
-/** @var bool $analyticsConfigured */
-/** @var string $analyticsConsent */
 /** @var string $appName */
-/** @var string $csrfToken */
-/** @var array<mixed> $flashToasts */
-/** @var string $googleMeasurementId */
 /** @var array<mixed> $meta */
 /** @var string $metaDescription */
 /** @var string $metaImage */
@@ -27,25 +22,11 @@ declare(strict_types=1);
 /** @var string $metaUrl */
 /** @var string $privacyUrl */
 /** @var string $pageTitle */
-/** @var list<string> $scriptUrls */
 /** @var string $siteFaviconUrl */
 /** @var array<mixed> $siteIdentity */
-/** @var list<string> $styleUrls */
 /** @var list<array{language: string, url: string}> $languageAlternatives */
-/** @var string $interfacePrefix */
-/** @var string $interfaceRoutes */
-/** @var string $interfaceLocales */
 /** @var string $theme */
-/** @var string $themeAttribute */
-/** @var string $dateFormat */
-/** @var bool $dateRelative */
 ?>
-<!doctype html>
-<html lang="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Localization::locale()) ?>"<?= $themeAttribute ?> data-interface-prefix="<?= \TinyCat\Support\Html::e($interfacePrefix) ?>" data-interface-routes="<?= \TinyCat\Support\Html::e($interfaceRoutes) ?>" data-interface-locales="<?= \TinyCat\Support\Html::e($interfaceLocales) ?>" data-date-format="<?= \TinyCat\Support\Html::e($dateFormat) ?>" data-date-relative="<?= $dateRelative ? 'true' : 'false' ?>">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
     <?php if ($theme === 'light'): ?>
         <meta name="theme-color" content="<?= \TinyCat\Support\Html::e((string) $siteIdentity['light_theme_color']) ?>">
     <?php elseif ($theme === 'dark'): ?>
@@ -55,10 +36,6 @@ declare(strict_types=1);
         <meta name="theme-color" content="<?= \TinyCat\Support\Html::e((string) $siteIdentity['dark_theme_color']) ?>" media="(prefers-color-scheme: dark)">
     <?php endif; ?>
     <link rel="manifest" href="<?= \TinyCat\Support\Html::e((string) $siteIdentity['manifest_url']) ?>">
-    <?php if ($csrfToken !== ''): ?>
-        <meta name="csrf-token" content="<?= \TinyCat\Support\Html::e($csrfToken) ?>">
-    <?php endif; ?>
-    <title><?= \TinyCat\Support\Html::e($pageTitle) ?></title>
     <?php if ($metaDescription !== ''): ?>
         <meta name="description" content="<?= \TinyCat\Support\Html::e($metaDescription) ?>">
     <?php endif; ?>
@@ -129,26 +106,3 @@ declare(strict_types=1);
     <?php if (is_string($metaJsonLdJson) && $metaJsonLdJson !== ''): ?>
         <script type="application/ld+json"><?= $metaJsonLdJson ?></script>
     <?php endif; ?>
-    <?php foreach ($styleUrls as $styleUrl): ?>
-        <link rel="stylesheet" href="<?= \TinyCat\Support\Html::e($styleUrl) ?>">
-    <?php endforeach; ?>
-    <?php foreach ($scriptUrls as $scriptUrl): ?>
-        <script src="<?= \TinyCat\Support\Html::e($scriptUrl) ?>" defer></script>
-    <?php endforeach; ?>
-    <?php if ($analyticsConfigured && $analyticsConsent === 'granted'): ?>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= \TinyCat\Support\Html::e($googleMeasurementId) ?>"></script>
-        <script>
-            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
-            gtag('consent','default',{
-                analytics_storage:'granted',
-                ad_storage:'denied',
-                ad_user_data:'denied',
-                ad_personalization:'denied',
-                wait_for_update:500
-            });
-            gtag('js',new Date());
-            gtag('config','<?= \TinyCat\Support\Html::e($googleMeasurementId) ?>');
-        </script>
-    <?php endif; ?>
-    <?= \TinyCat\Support\View::part('Ui/flashes', ['items' => $flashToasts]) ?>
-</head>

@@ -16,26 +16,75 @@ final class Router
 {
     /** @var list<array{methods: array<string>, path: string, handler: callable, contentType: string}> */
     private static array $routes = [];
+    /** @var array<string, true> */
+    private static array $routeKeys = [];
     private static bool $debug = false;
+    /** @var list<array{group: string, path: string, resource: callable, query: list<string>}> */
+    private static array $pages = [];
 
     /** Validate one provider before exposing its routes; preserve legacy aliases.
      * @param callable(): void $register */
     public static function registerModule(callable $register): void
     {
         $before = self::$routes;
+        $beforeKeys = self::$routeKeys;
+        $beforePages = self::$pages;
         try {
             $register();
-            $seen = [];
-            foreach (self::$routes as $index => $route) {
+            $seen = $beforeKeys;
+            foreach (array_slice(self::$routes, count($before)) as $route) {
                 $methods = $route['methods'];
                 if (in_array('GET', $methods, true)) { $methods[] = 'HEAD'; }
                 foreach (array_unique($methods) as $method) {
                     $key = $method . ':' . $route['path'];
-                    if ($index >= count($before) && isset($seen[$key])) { throw new InvalidArgumentException('Duplicate module route: ' . $key); }
+                    if (isset($seen[$key])) { throw new InvalidArgumentException('Duplicate module route: ' . $key); }
                     $seen[$key] = true;
                 }
             }
-        } catch (Throwable $error) { self::$routes = $before; throw $error; }
+        } catch (Throwable $error) { self::$routes = $before; self::$routeKeys = $beforeKeys; self::$pages = $beforePages; throw $error; }
+    }
+
+    /** Register one public page for native HTTP and optional client navigation.
+     * @param callable(): (array<string, mixed>|null) $resource
+     * @param list<string> $query */
+    public static function page(string $group, string $path, callable $handler, callable $resource, array $query = []): void
+    {
+        foreach ($query as $key) { if (preg_match('/^[a-z][a-z0-9_]*$/D', $key) !== 1) { throw new InvalidArgumentException('Invalid page query key.'); } }
+        self::route(['GET', 'HEAD'], $path, $handler);
+        self::$pages[] = compact('group', 'path', 'resource', 'query');
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function pageResource(string $group, string $path): ?array
+    {
+        if ($path === '/') { $path = \TinyCat\Core\Runtime\EntryPages::homepage()->path ?? '/'; }
+        foreach (self::$pages as $page) {
+            if ($page['group'] !== $group) { continue; }
+            $params = self::routeMatch($page['path'], $path);
+            if ($params !== null) { return call_user_func_array($page['resource'], $params); }
+        }
+        return null;
+    }
+
+    /** Data only: the same route patterns and query allowlists used by the owner.
+     * @return list<array{pattern: string, query: list<string>}> */
+    public static function pageDefinitions(string $group): array
+    {
+        $definitions = []; $home = \TinyCat\Core\Runtime\EntryPages::homepage()?->path;
+        foreach (self::$pages as $page) {
+            if ($page['group'] !== $group) { continue; }
+            $pattern = self::pattern($page['path']);
+            $definitions[] = ['pattern' => $pattern, 'query' => $page['query']];
+            if ($page['path'] === $home && $home !== '/') { $definitions[] = ['pattern' => '^/$', 'query' => $page['query']]; }
+        }
+        return $definitions;
+    }
+
+    public static function pattern(string $path): string
+    {
+        $pattern = substr(self::routeRegex($path), 1, -2);
+        $pattern = (string) preg_replace('/\(\?P<[^>]+>/', '(?:', $pattern);
+        return str_replace(['\\-', '\\#'], ['-', '#'], $pattern);
     }
 
     /**
@@ -43,12 +92,16 @@ final class Router
      */
     public static function route(array|string $methods, string $path, callable $handler, string $contentType = 'text/html'): void
     {
+        $methods = self::normalizeMethods($methods);
+        $path = Request::current()->path($path);
         self::$routes[] = [
-            'methods' => self::normalizeMethods($methods),
-            'path' => Request::current()->path($path),
+            'methods' => $methods,
+            'path' => $path,
             'handler' => $handler,
             'contentType' => $contentType,
         ];
+        if (in_array('GET', $methods, true)) { $methods[] = 'HEAD'; }
+        foreach ($methods as $method) { self::$routeKeys[$method . ':' . $path] = true; }
     }
 
     public static function responseType(string $path): string
@@ -157,6 +210,8 @@ final class Router
         if ($routePath === $path) {
             return [];
         }
+
+        if (!str_contains($routePath, '{') && !str_contains($routePath, '%')) { return null; }
 
         if (!preg_match(self::routeRegex($routePath), $path, $matches)) {
             return null;

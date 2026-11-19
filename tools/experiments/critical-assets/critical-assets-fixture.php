@@ -43,7 +43,7 @@ try {
     $sidebar = $get('/api/site/sidebar');
 } finally { $pool->stop(); }
 define('TINYCAT', true);
-require_once $root . '/App/autoload.php';
+require_once $root . '/App/Core/Runtime/autoload.php';
 $compile = require __DIR__ . '/../../assets/compile-assets.php'; $files = $compile();
 $manifest = json_decode($files['assets/build/manifest.json'], true, flags: JSON_THROW_ON_ERROR);
 $client = $manifest['clients']['/']; $selected = [];

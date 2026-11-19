@@ -31,13 +31,14 @@ if (($argv[1] ?? '') !== '--isolated') {
 use TinyCat\Core\Identity\Deletion;
 use TinyCat\Core\Identity\Lifecycle;
 use TinyCat\Core\Identity\Participant;
+use TinyCat\Core\Identity\Participants;
 use TinyCat\Core\Modules\Loader;
 use TinyCat\Core\Modules\Resources;
 use TinyCat\Database\Connection;
 
 define('TINYCAT', true);
 $root = $argv[2];
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $modules = Loader::load($root);
@@ -60,10 +61,9 @@ Lifecycle::setActive(['id' => 1, 'role' => 'user'], false);
 $assert(Connection::value('SELECT status FROM users WHERE id = 1') === 'ban', 'Accounts works with only its table');
 Lifecycle::setActive(['id' => 1], true);
 $assert(Connection::value('SELECT status FROM users WHERE id = 1') === 'active', 'Account can be activated without social SQL');
-$assert(class_exists(TinyCat\Social\Profiles\Accounts::class), 'Load the compatibility facade while its owning module is selected');
 Resources::withCatalog($selection, static function () use ($assert): void {
-    TinyCat\Social\Profiles\Accounts::setActive(['id' => 1, 'role' => 'bot'], false);
-    $assert(Connection::value('SELECT status FROM users WHERE id = 1') === 'ban', 'Legacy facade respects selected owners, even for a bot role');
+    TinyCat\Core\Identity\Administration::setActive(['id' => 99, 'role' => 'admin'], ['id' => 1, 'role' => 'bot'], false, Participants::current());
+    $assert(Connection::value('SELECT status FROM users WHERE id = 1') === 'ban', 'Canonical activation respects selected owners and the stored role');
 });
 $events = [];
 $observer = new Participant(prepareDelete: static function (array $user) use (&$events, $pdo, $assert): Deletion {

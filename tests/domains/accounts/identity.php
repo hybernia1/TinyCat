@@ -11,7 +11,7 @@ use TinyCat\Database\Connection;
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 try { throw new \TinyCat\Core\Identity\ValidationException(['email' => ['invalid']]); }
@@ -133,9 +133,7 @@ try {
     $assert(TinyCat\Core\Identity\Authentication::auth('id') === 9, 'Legacy accessor observes canonical identity state');
     TinyCat\Core\Identity\Authentication::reset(['id' => 10, 'role' => 'user'], true);
     $assert(Authentication::auth('id') === 10 && !TinyCat\Core\Identity\Authentication::authIs('admin'), 'Legacy reset updates canonical state');
-    $assert(TinyCat\Social\Profiles\Roles::rolesWith('allows_login') === Roles::rolesWith('allows_login'), 'Legacy role metadata delegates account policy');
     $assert(TinyCat\Social\Profiles\Roles::receivesNotifications('admin') && !TinyCat\Social\Profiles\Roles::receivesNotifications('bot'), 'Social role capabilities retain their own policy');
-    $assert(TinyCat\Social\Profiles\Profiles::app_auth_account_ready() === Readiness::ready(), 'Legacy readiness delegates to Accounts');
     $assert(array_column($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(PDO::FETCH_ASSOC), 'name') === ['users'], 'No social or settings schema was created');
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }

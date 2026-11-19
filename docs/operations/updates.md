@@ -8,6 +8,379 @@ distributions and independently owned Blog and Social storage. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Supported update baseline
+
+New source packages require a completed TinyCat **6.0.10** installation or newer,
+for all assemblies. Older supported sites first apply the unchanged signed
+6.0.10 release, using its documented predecessor hops when needed. Before updating,
+refresh the private rescue launcher as described below. The published
+6.0.10 accepts completed 6.0.8 installations. The builder rejects older
+minimum versions and `--legacy-upgrade`.
+
+The 6.0.8 reader supports metadata-only archival prefixes in
+distribution format 4. Its published bridge remains format 3 and retains all
+published migration PHP so the 6.0.7 updater can install it. Current sources
+use format 4 and archive all 24 existing built-in migration records. They require
+6.0.8 and an installed module schema at or beyond each archived prefix. Historical
+PHP is explicitly deleted during update; each owner retains an executable current
+fresh baseline. Later schema changes append new executable migrations.
+Independent module ZIPs use format 2 for this contract. Neither core nor module
+updates bypass integrity checks, adopt unrelated tables or discard journal rows.
+See [the archival contract](../development/domain-storage.md#archivace-migrační-historie).
+
+The only physical journal is `migrations`. Existing IDs, stream names, checksums,
+sequences, opaque version labels and application times are preserved. Historical
+version values may be migration names up to 190 characters rather than SemVer.
+`module_installations` retains current schema state separately.
+
+The 6.0.7 core task schema step 5 removes the `module_migrations` compatibility
+view and its SQLite trigger. This view served an already-loaded pre-6.0.6 writer;
+completed 6.0.6 engines write the unified journal directly. Removing the view
+changes no journal rows. Standard snapshot and rollback restore it when present
+in the baseline. The current journal never reads, copies or adopts the retired
+physical journal tables; an incomplete pre-baseline database is rejected.
+
+Current installation and readiness use one owner schema path. Global-table
+adoption callbacks and `SchemaInspection` are retired; normal inspection belongs
+to `TinyCat\Database\Schema`. Archived IDs, sequences and checksums match the
+immutable published SQL; no historical PHP is needed for validation. They are
+never replayed when updating a completed 6.0.8 site, and fresh installations use
+the current signed baseline.
+Published release tags and assets remain unchanged.
+
+Format-3 bridge descriptors retain executable history. Format 4 also supports
+archived history records without executable files. Completed 6.0.6 deployment state
+already contains canonical functional module IDs; updates preserve those IDs,
+including installed inactive owners. Historical activation remapping and the
+format 1/2 registration branches are removed from current sources. Unknown
+installed owners still prevent an update that would discard their sources or data.
+
+
+For a new release, use:
+
+```sh
+php tools/release/build-update.php --version=X.Y.Z --both --output=dist/release-X.Y.Z
+php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/update --baseline-version=6.0.10 --direct-web --cached-autoload
+```
+
+The rehearsal uses the published `v6.0.10` source and a disposable MySQL database.
+It checks representative Social data, retained long historical version labels,
+the signed update and exact rollback, including
+with the baseline schema, journal and lifecycle classes already loaded.
+It refreshes an inherited private rescue launcher with the baseline CLI and uses
+that launcher for rollback after deleting the facade. The release version must
+be newer than 6.0.10. The automated file rehearsal
+uses a synthetic successor in an isolated copy when the source matches the baseline.
+
+The release notes below describe historical packages. Their old bridge commands
+and supported version ranges do not apply to the current builder.
+
+## Upgrading to 6.1.4
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This release consolidates
+product pages and editor bodies in owner component catalogs, standardizes JSON
+authoring and removes redundant PHP templates. Document, layout, error and embed
+templates remain explicit technical boundaries. Client lifecycle cleanup preserves
+drafts and cancels obsolete reads. No database migration or activation change is
+introduced. Data, configuration, uploads and installed module ownership are retained.
+
+Build the retained-owner update and production fresh installation separately:
+
+```sh
+php tools/release/build-update.php --version=6.1.4 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-4/update
+php tools/release/build-update.php --version=6.1.4 --assembly=platform --fresh-install --output=.work/releases/release-6-1-4/install
+```
+
+Verify the exact update against published 6.0.10, 6.0.11 and 6.1.3 platform sources
+with `--platform-baseline --direct-web --cached-autoload`, including retained Blog
+ownership, data preservation and exact rollback. Verify the production package
+with a fresh isolated MySQL installation. On 6.0.10, prepare and verify the private
+rescue launcher as documented below before updating.
+
+## Upgrading to 6.1.3
+
+Requires completed **6.0.10 or newer** and PHP 8.4. No database migration or
+activation change is introduced. Public, administrative and installation pages
+share one HTML document. Installation, account and settings UI use owner component
+catalogs; redundant Social feed presentation is removed. Legacy bot detail URLs
+open through the common dialog lifecycle with filters and history preserved.
+
+Build the retained-owner update and production fresh installation separately:
+
+```sh
+php tools/release/build-update.php --version=6.1.3 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-3/update
+php tools/release/build-update.php --version=6.1.3 --assembly=platform --fresh-install --output=.work/releases/release-6-1-3/install
+```
+
+Verify the exact update against published 6.0.10, 6.0.11 and 6.1.2 platform sources
+with `--platform-baseline --direct-web --cached-autoload`, including retained Blog
+ownership, data preservation and rollback. Verify the production package with a
+fresh isolated MySQL installation. Existing 6.0.10 installations still require
+the rescue launcher preparation documented below.
+
+## Upgrading to 6.1.2
+
+Requires completed **6.0.10 or newer** and PHP 8.4. No database migration or
+activation change is introduced. This patch fixes the 6.1.1 Site Health client
+startup regression: scheduler run details no longer require a scheduler list
+declaration. Navigation, settings dialogs and AJAX health checks initialize normally.
+
+Build the retained-owner update and production fresh installation separately:
+
+```sh
+php tools/release/build-update.php --version=6.1.2 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-2/update
+php tools/release/build-update.php --version=6.1.2 --assembly=platform --fresh-install --output=.work/releases/release-6-1-2/install
+```
+
+Verify the exact update against published 6.0.10, 6.0.11 and 6.1.1 platform sources
+with `--platform-baseline --direct-web --cached-autoload`, including retained Blog
+ownership and rollback. Existing 6.0.10 installations still require the rescue
+launcher preparation documented below.
+
+## Upgrading to 6.1.1
+
+Requires completed **6.0.10 or newer** and PHP 8.4. Refresh inherited rescue
+launchers as documented below. No database migration is introduced; installed
+module activation, data and published migration history remain unchanged.
+
+Settings presentation now comes from the owning PHP sections. Administrative
+list wiring comes from owner asset manifests; specialized account, RSS and bot
+editors and scheduler polling keep their existing responsibilities. Empty optional
+Blog URL rules and UTM source/campaign values can be saved without a required-field
+error. The signed deletion plan retires fourteen redundant presentation files.
+
+Build the compatibility update with retained Blog sources separately from the
+production fresh installation:
+
+```sh
+php tools/release/build-update.php --version=6.1.1 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-1/update
+php tools/release/build-update.php --version=6.1.1 --assembly=platform --fresh-install --output=.work/releases/release-6-1-1/install
+```
+
+Verify the exact update artifact against published 6.0.10, 6.0.11 and 6.1.0
+platform sources with `--platform-baseline --direct-web --cached-autoload`,
+including rollback and retained installed Blog ownership. The source preflight
+and artifact checks are separate; a local dirty-worktree candidate is not a
+published release.
+
+## Upgrading to 6.1.0
+
+Requires completed **6.0.10 or newer** and PHP 8.4. Refresh the inherited rescue
+launcher on 6.0.10 as documented below. No database migration is introduced.
+Existing configuration, module activation and minification settings are preserved.
+
+Site settings now offer **Login** as the homepage (`tinycat.accounts.login`).
+Guests see the existing login form directly at `/`; authenticated accounts use
+their permitted landing destination. Accounts without another destination see an
+account overview instead of redirecting between `/` and `/login`. Existing
+automatic Social and Blog homepage selection remains unchanged. Selecting Login
+changes the entry page; authorization of other routes remains their owner's policy.
+
+The shared HTML document now honors HTML minification. Minification remains
+configurable; updating does not enable previously disabled options. Apache cache
+rules revalidate unversioned assets and reserve yearly immutable caching for
+versioned URLs. Gzip also covers the web app manifest. Public error pages use
+public navigation and asset bundles even when the failed URL starts with `/admin`.
+
+Build the compatibility update with retained Blog sources separately from the
+production fresh installation:
+
+```sh
+php tools/release/build-update.php --version=6.1.0 --assembly=development --active=tinycat.social --output=.work/releases/release-6-1-0/update
+php tools/release/build-update.php --version=6.1.0 --assembly=platform --fresh-install --output=.work/releases/release-6-1-0/install
+```
+
+Verify the exact update artifact against published 6.0.10, 6.0.11 and 6.0.13
+platform sources with `--platform-baseline --direct-web --cached-autoload`,
+including exact rollback and retained installed Blog ownership.
+
+## Upgrading to 6.0.13
+
+Requires completed **6.0.10 or newer** and PHP 8.4. Refresh the inherited rescue
+launcher on 6.0.10 as documented below. No new database migrations are introduced;
+published migration checksums and installed module ownership remain unchanged.
+Social now shares core navigation, identity administration and HTTP mechanisms.
+The signed deletion plan removes eight retired Social adapters.
+
+Build the compatibility update separately from the production fresh installation,
+retaining Blog for existing installed owners:
+
+```sh
+php tools/release/build-update.php --version=6.0.13 --assembly=development --active=tinycat.social --output=.work/releases/release-6-0-13/update
+php tools/release/build-update.php --version=6.0.13 --assembly=platform --fresh-install --output=.work/releases/release-6-0-13/install
+```
+
+Verify the exact update artifact against published 6.0.10 and 6.0.12 platform
+sources with `--platform-baseline --direct-web --cached-autoload`, including exact
+rollback. The 6.0.11 platform baseline additionally covers its default-active Blog.
+
+## Upgrading to 6.0.12
+
+Requires a completed **6.0.10 or newer** installation and PHP 8.4. From 6.0.10,
+refresh and verify the private rescue launcher as documented below before updating.
+There are no new database migrations or changes to published migration checksums.
+
+The module manager discovers manifest files without executing inactive module PHP.
+Removing a never-activated module no longer breaks administration. Missing active
+modules and their dependents are suspended while their stored state and data remain
+intact. Manually copied modules appear inactive and use the existing lifecycle on
+explicit activation. Social's internal callback registries and compatibility wrappers
+are simplified; eight retired Social files are deleted by the signed update plan.
+
+New production installations omit the development Blog module. Public 6.0.11
+packages included and enabled Blog by default, so the compatibility update retains
+its files and metadata for existing installed owners. It does not remove retained
+Blog data or silently change activation. Build the release variants separately:
+The build-only `development` hint is omitted from packaged runtime manifests so
+already-loaded supported updater classes can read them.
+
+```sh
+php tools/release/build-update.php --version=6.0.12 --assembly=development --active=tinycat.social --output=.work/releases/release-6-0-12/update
+php tools/release/build-update.php --version=6.0.12 --assembly=platform --fresh-install --output=.work/releases/release-6-0-12/install
+```
+
+Verify updates against both the minimum supported baseline and the last public
+platform release, with the original updater classes cached:
+
+```sh
+php tools/release/release-update-rehearsal.php --artifact=.work/releases/release-6-0-12/update --baseline-version=6.0.10 --platform-baseline --direct-web --cached-autoload
+php tools/release/release-update-rehearsal.php --artifact=.work/releases/release-6-0-12/update --baseline-version=6.0.11 --platform-baseline --direct-web --cached-autoload
+```
+
+## Upgrading to 6.0.11
+
+Requires a completed **6.0.10 or newer** installation and PHP 8.4. Before updating
+from 6.0.10, prepare and verify the private rescue launcher using the commands
+below. Older sites must first apply the unchanged signed 6.0.10 release through
+its supported predecessors. There are no new database migrations.
+
+This release removes `App/autoload.php` and the manual source inventory
+`App/available-modules.php` through the signed deletion plan. Platform builds
+discover source manifests directly; standalone module builds select their
+transitive dependencies. Discovery reads JSON without executing module PHP.
+Installed module selection and activation remain explicit, so adding a source
+directory does not enable a module on a running site. Update and rollback preserve
+data, journal history, installed inactive owners, configuration and uploads.
+
+## Retiring the autoload facade
+
+Sources after 6.0.10 remove `App/autoload.php`. HTTP and public CLI entry points
+already use `App/Core/Runtime/autoload.php` directly. External scripts must switch
+their `require_once` to that loader; call `Application::start()` explicitly only
+when the script needs the application runtime.
+
+An update preserves `storage/`, including private rescue launchers generated by
+older releases. Being on 6.0.10 alone does not refresh those launchers. Before
+installing a successor package, run these commands from each installed site's
+root while it is still on the completed 6.0.10 release:
+
+```sh
+php App/Console.php rescue
+php storage/updates/console.php help
+```
+
+The existing 6.0.10 command replaces the inherited launcher with one requiring
+the core loader. If either command fails, resolve the error before applying the
+update. This is an operator prerequisite; the published 6.0.10 web updater does
+not enforce it or rewrite private launchers automatically. The prepared launcher
+continues working after the facade is removed and after rollback to 6.0.10.
+The normal signed deletion inventory backs up the removed facade and restores
+its original bytes on rollback. No database migration is needed for this cleanup.
+
+## Upgrading to 6.0.10
+
+Requires a completed **6.0.8 or newer** installation and PHP 8.4. Sites on 6.0.9
+can update directly through **Admin > Updates**. There are no new database
+migrations; existing journal records, data, configuration, uploads and module
+activation are preserved.
+
+The release makes core API, validation and form lifecycle contracts authoritative.
+Social forms use the shared AJAX lifecycle, source previews use its submit guard,
+and public HTTP/AJAX navigation derives from one route declaration. Editor limits
+distinguish Unicode characters from UTF-8 bytes. Overlong Blog comments now return
+a field error without changing the saved comment or truncating the draft.
+
+HTTP and CLI start explicitly through the runtime. The deletion plan removes six
+additional retired paths, including the bootstrap wrapper and unused presentation
+partials. The public autoload facade remains for private rescue launchers created
+by published versions. Signed update, cached-code recovery and standard rollback
+preserve those launchers and restore removed files when rolling back.
+
+## Upgrading to 6.0.9
+
+Requires a completed **6.0.8 or newer** installation and PHP 8.4. Older supported
+sites must first apply the unchanged signed 6.0.8 reader bridge. Update through
+**Admin > Updates** using the normal signed package.
+
+The distribution uses format 4 and archives all 24 existing built-in migrations
+with their original IDs, sequences and checksums. The updater removes 32 obsolete
+PHP files, including historical DDL helpers and data converters. All eleven
+schema owners retain independent current fresh baselines; fresh installation
+does not replay archived migrations. No new schema migration runs on a completed
+6.0.8 installation, and existing journal rows and timestamps remain unchanged.
+
+Standard snapshots and rollback restore deleted PHP and exact database state.
+Configuration, uploads, runtime storage and module activation are preserved.
+Checking the last published signed release also remains possible after the
+source update floor advances; incoming updates still enforce their required
+runtime baseline and archival reader.
+
+## Upgrading to 6.0.8
+
+Requires a completed **6.0.7 or newer** installation and PHP 8.4. Apply the signed
+update through **Admin > Updates**. This is the reader bridge: it retains
+format 3, every published built-in migration PHP file, and the current database
+journal. It introduces support for archival format 4 and independent module
+ZIP format 2, which both require at least the 6.0.8 reader.
+
+No built-in schema migration or deletion is introduced. Existing migration IDs,
+checksums, timestamps, domain data, configuration and activation are preserved.
+Physical retirement of built-in historical PHP belongs to a later release.
+
+## Upgrading to 6.0.7
+
+Requires a completed **6.0.6 or newer** installation and PHP 8.4. Apply the signed
+update through **Admin > Updates**. Older supported installations first use the
+unchanged published 6.0.6 bridge. The 6.0.7 package retains both Social and Blog
+sources; installed and active module selections remain installation-owned.
+
+Task-schema step 5 retires the journal writer view while preserving all physical
+migration history. Published applied migration bytes, IDs and checksums remain
+unchanged. The standard update snapshot and rollback preserve configuration,
+media, deployment state and database contents.
+
+## Upgrading to 6.0.6
+
+Use the signed 6.0.6 update from a completed 6.0.4 or 6.0.5 installation.
+Historical version labels up to 190 characters are preserved without changing
+their values, checksums or application times. A new schema step widens journals
+created by 6.0.5, including when the running updater retains its old PHP classes.
+Published migrations remain unchanged. If 6.0.5 is in a failed maintenance state,
+first verify its backup and perform the normal rollback, then apply 6.0.6.
+
+## Upgrading to 6.0.5
+
+**Withdrawn from stable updates.** Do not apply 6.0.5: its journal conversion
+rejects historical version labels longer than 32 characters. A completed 6.0.4
+installation can retain those labels from earlier upgrades. If this failure
+leaves a site in maintenance mode, verify its original database/file snapshot
+and use the normal update rollback before reopening it. Do not clear the
+maintenance marker or rewrite historical migration records to bypass the error.
+The original signed 6.0.5 assets remain available unchanged for recovery.
+The corrected signed successor is 6.0.6.
+
+This release
+reduces startup work, compiles server component catalogs, unifies migration
+journals and derives scheduler presentation from registered tasks. Configuration,
+uploads and runtime storage stay in place. The updater snapshots the database
+before journal conversion and supports restoring the original 6.0.4 installation.
+
+The published 6.0.5 and 6.0.6 packages retained `SchemaInspection` for immutable
+migrations and a running 6.0.4 updater with its original schema class loaded.
+Current sources use `TinyCat\Database\Schema` and require completed 6.0.6;
+the runtime adapter is removed. Applied SQL sources and checksums are unchanged.
+Older installations must first install the published signed 6.0.4 release.
+
 ## Upgrading to 6.0.4
 
 Release 6.0.4 improves core startup and shared UI asset selection. It adds no
@@ -527,7 +900,7 @@ not backfilled and old episodes are not imported again.
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/release/build-update.php --version=5.22.2
+php tools/release/build-update.php --version=6.0.9 --assembly=platform
 php tools/release/verify-update.php dist
 ```
 
@@ -541,12 +914,12 @@ Source checkouts without the inventory retain an on-demand development fallback.
 The builder creates:
 
 ```text
-dist/tinycat-5.22.2.zip
+dist/tinycat-6.0.9.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v5.22.2` tag and upload all three files
+Create a GitHub release for the matching `v6.0.9` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -557,9 +930,9 @@ new top-level managed file requires a prior updater bridge release. Removed runt
 listed by target version in `tools/release/update-deletions.json`; this prevents legacy
 PHP files from surviving an overlay update.
 
-Release tools use **5.16.0** as the minimum supported update source, defined by
+Release tools use **6.0.10** as the minimum supported update source, defined by
 `TinyCat\Support\Version::MINIMUM_UPDATE`. Production update rehearsals start
-from the exact `v5.16.0` tag and verify signed installation, protected files,
+from the exact `v6.0.10` tag and verify signed installation, protected files,
 migration checksums and rollback. Older releases and upgrade instructions remain
 available in Git history. Historical performance comparisons against 2.0.25 are
 benchmark references, not supported upgrade paths.
@@ -567,10 +940,10 @@ benchmark references, not supported upgrade paths.
 For a fresh installation, build into a separate output directory:
 
 ```bash
-php tools/release/build-update.php --version=5.22.2 --fresh-install --output=dist/fresh
+php tools/release/build-update.php --version=6.0.9 --assembly=platform --fresh-install --output=dist/fresh
 ```
 
-The fresh-install outputs are `tinycat-5.22.2-install.zip`, `tinycat-install.json`
+The fresh-install outputs are `tinycat-6.0.9-install.zip`, `tinycat-install.json`
 and `tinycat-install.sig`; they cannot overwrite or be mistaken for updater assets.
 Verify them with `php tools/release/verify-update.php dist/fresh --fresh-install`.
 This package excludes `migrations/` and update deletions. The installer creates
@@ -582,9 +955,9 @@ The shipped operational documentation includes `docs/reference/api.md`,
 To prepare both variants with a single validated compilation:
 
 ```bash
-php tools/release/build-update.php --version=5.22.2 --both --output=dist/release-5.22.2
-php tools/release/verify-update.php dist/release-5.22.2/update
-php tools/release/verify-update.php dist/release-5.22.2/install --fresh-install
+php tools/release/build-update.php --version=6.0.9 --assembly=platform --both --output=dist/release-6.0.9
+php tools/release/verify-update.php dist/release-6.0.9/update
+php tools/release/verify-update.php dist/release-6.0.9/install --fresh-install
 ```
 
 The update and install subdirectories each contain their ZIP, manifest and
@@ -629,7 +1002,7 @@ return static function (PDO $database): void {
 ```
 
 Every migration is authenticated by the release manifest and recorded with its
-checksum in `schema_migrations`. A previously applied migration whose checksum
+checksum in the global stream of `migrations`. A previously applied migration whose checksum
 changes is rejected. Never edit a published migration; create a new one.
 The package builder normalizes migration files to LF before hashing and archiving
 them so the checksum stays stable across Windows and Linux release worktrees.

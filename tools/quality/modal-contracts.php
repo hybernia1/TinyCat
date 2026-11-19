@@ -27,6 +27,11 @@ return static function (?array $sources = null): void {
 REGEX;
     foreach ($sources as $path => $source) {
         $source = str_replace(['\\"', "\\'"], ['"', "'"], $source);
-        if (preg_match($pattern, $source) || preg_match('~[\'"]?role[\'"]?\s*(?::|=>|=)\s*[\'"]dialog[\'"]~i', $source)) { throw new RuntimeException($path . ': prebuilt or module-owned dialog frames are forbidden; use a resource trigger and shared factories'); }
+        if (str_contains($source, '@component-owned')
+            && preg_match('~(?:document\.createElement\((?!\s*[\'"]iframe[\'"])|\b(?:T|TinyCat)\.dom\.(?:element|create)\s*\(|\be\s*\(|\bU\.(?:field|select|button|hidden)\s*\()~', $source)) {
+            throw new RuntimeException($path . ': component-owned controller must declare product markup in its catalog');
+        }
+        if (preg_match($pattern, $source) || preg_match('~[\'"]?role[\'"]?\s*(?::|=>|=)\s*[\'"]dialog[\'"]~i', $source)
+            || str_contains($source, 'data-bot-detail-open')) { throw new RuntimeException($path . ': prebuilt or module-owned dialog frames are forbidden; use a resource trigger and shared factories'); }
     }
 };

@@ -4,6 +4,105 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
+  if (mode === 'health-shell') {
+    check(!T.adminDefinitions, 'The actual health bundle has no scheduler list declaration');
+    const toggle = T.dom.element('button',{'data-admin-nav-toggle':'',type:'button'});
+    const sidebar = T.dom.element('aside',{'data-admin-sidebar':''});
+    sidebar.append(T.dom.element('a',{href:'#'},'Account')); document.body.append(toggle,sidebar);
+    window.fetch = async (url,options) => {
+      const pathname = new URL(url,location.href).pathname;
+      if (pathname === '/api/settings/editor') return new Response(JSON.stringify({ok:true,status:200,code:"ok",params:{},message:null,data:window.settingsSchema,meta:{}}),{headers:{'Content-Type':'application/json'}});
+      check(pathname === '/api/site-health/checks' && options.method === 'POST', 'Health checks use the shared POST transport');
+      sessionStorage.setItem('health-ajax','true');
+      return new Response(JSON.stringify({ok:true,status:201,code:'health_check_finished',params:{},message:null,data:{execution:{ok:true},redirect:'/admin/site-health'},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}});
+    };
+    T.lifecycle.start(); toggle.click();
+    check(document.body.classList.contains('admin-nav-open'), 'Health hamburger navigation opens');
+    toggle.click(); check(!document.body.classList.contains('admin-nav-open'), 'Health hamburger navigation closes');
+    const dialog = await T.settings.open('site');
+    check(dialog.isConnected && dialog.querySelector('form'), 'Settings modal opens from the detail-only health bundle');
+    T.dialog.close(dialog,{history:false});
+    const local = T.urls.local;
+    let canonicalRedirect = false;
+    T.urls.local = function (url,locale) {
+      if (url === '/admin/site-health') { canonicalRedirect = true; return '#health-complete'; }
+      return local(url,locale);
+    };
+    const form = document.querySelector('form[data-ajax-form]');
+    form.querySelector('button').click();
+    await wait(() => canonicalRedirect && location.hash === '#health-complete', 'Health AJAX completion follows its canonical UI redirect');
+    check(sessionStorage.getItem('health-ajax') === 'true', 'The health action never falls back to a native API page submission');
+    document.getElementById('validation-test-results').textContent = JSON.stringify({ok:true,mode,checks});
+    return;
+  }
+  if (mode === 'social-forms') {
+    const follow=T.dom.element('form',{method:'post',action:'/api/users/2/followers/me','data-follow-form':'','data-author-id':'2'});
+    follow.append(T.ui.hidden('action','follow'),T.ui.button('public.follow',{type:'submit'})); document.body.append(follow);
+    const react=T.dom.element('form',{method:'post',action:'/api/statuses/7/likes/me','data-status-form':'','data-status-id':'7'});
+    const like=T.ui.button('common.save',{type:'submit','data-status-like-button':'','aria-pressed':'false'});
+    react.append(T.ui.hidden('action','react'),like); document.body.append(react);
+    const calls=[]; let release;
+    window.fetch=async(url,options)=>{
+      const method=options.body.get('_method'), isFollow=new URL(url).pathname.includes('/followers/');
+      calls.push(method);
+      if(calls.length===1) await new Promise(resolve=>{release=resolve;});
+      const data=isFollow?{author_id:2,following:method==='PUT',followers_count:method==='PUT'?1:0}:{action:'react',status:{id:7,liked:method==='PUT',likes_count:method==='PUT'?1:0}};
+      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data,meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
+    };
+    T.lifecycle.start(); follow.querySelector('button').click(); await wait(()=>!!release,'Social forms reach the shared transport');
+    follow.requestSubmit(); await pause(); check(calls.length===1,'A pending follow cannot send a second mutation'); release();
+    await wait(()=>follow.elements.namedItem('action').value==='unfollow'&&!follow.dataset.apiBusy,'Following updates the domain state and releases the shared lock');
+    follow.querySelector('button').click(); await wait(()=>calls.length===2&&!follow.dataset.apiBusy,'Unfollowing uses the current state after the first result');
+    like.click(); await wait(()=>like.getAttribute('aria-pressed')==='true'&&!react.dataset.apiBusy,'The shared lifecycle applies a status reaction');
+    like.click(); await wait(()=>calls.length===4&&!react.dataset.apiBusy,'A second status reaction uses the updated state');
+    T.forms.setSubmitGuard(react,()=>false); like.click(); await pause(); check(calls.length===4&&!react.dataset.apiBusy,'A declined domain submit guard preserves state without a network mutation'); T.forms.setSubmitGuard(react,null);
+    check(calls.join(',')==='PUT,DELETE,PUT,DELETE','Follow and status mutations use one transport with explicit desired-state methods');
+    check(!follow.querySelector('button').disabled&&!like.disabled&&!follow.hasAttribute('aria-busy'),'Shared loading restores both Social forms');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
+  if (mode === 'social-constraints') {
+    const constraints = window.socialConstraints, form = T.ui.form('/api/statuses', 'POST');
+    form.append(T.components.render('status/composer-body', {constraints,viewer:{id:1},value:''}));
+    const commentForm = T.components.render('status/comment-form', {constraints,content_id:7,parent_id:0,viewer:{id:1}});
+    document.body.append(form, commentForm); T.lifecycle.start(); T.publishing.controllers.editor.hydrate(document);
+    for (const [host,name] of [[form,'body'],[commentForm,'comment']]) {
+      const source=host.elements.namedItem(name), editor=source.closest('[data-status-editor]').querySelector('[data-status-editor-input]');
+      check(Number(source.dataset.maxLength)===constraints[name].max_length&&!source.hasAttribute('maxlength'),'Social '+name+' uses server-derived Unicode constraints');
+      editor.textContent='\u{1F642}'.repeat(constraints[name].max_length); editor.dispatchEvent(new Event('input',{bubbles:true}));
+      check(T.forms.validate(host),'Social '+name+' accepts the exact emoji character boundary');
+      editor.textContent+='\u{1F642}'; editor.dispatchEvent(new Event('input',{bubbles:true}));
+      check(!T.forms.validate(host)&&Array.from(source.value).length===constraints[name].max_length+1,'Social '+name+' retains its overflowing draft and rejects it through the common validator');
+    }
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
+  if (mode === 'constraints') {
+    const c = window.inputConstraints, form = T.ui.form('/api/constraint-fixture', 'POST');
+    form.append(T.ui.field('Title', 'title', '', 'input', {'data-max-length':c.title.max_length,required:c.title.required}));
+    form.append(T.components.render('publishing/editor',{name:'body',value:'',max_bytes:c.body.max_bytes,required:c.body.required}));
+    form.append(T.ui.field('Interval','interval',String(c.interval.min),'input',{type:'number',min:c.interval.min,max:c.interval.max,required:c.interval.required}));
+    form.append(T.components.render('publishing/editor',{name:'comment',value:'\u{1F600}\u{1F600}',max_characters:c.comment.max_length,required:true}));
+    const submit = T.ui.button('common.save',{type:'submit'}); form.append(submit);
+    const dialog = T.ui.adminDialog('constraint-fixture','common.edit',form,false); document.body.append(dialog);
+    let calls=0; window.fetch=async()=>{ calls++; return new Response(JSON.stringify({ok:true,status:201,code:'ok',params:{},message:null,data:{},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}}); };
+    T.lifecycle.start(); T.publishing.controllers.editor.hydrate(document); T.dialog.open(dialog);
+    const title=form.elements.namedItem('title'), body=form.elements.namedItem('body'), editor=form.querySelector('[data-status-editor-input]');
+    const input=(field,value)=>{ if(field.isContentEditable) field.textContent=value; else field.value=value; field.dispatchEvent(new Event('input',{bubbles:true})); };
+    const comment=form.elements.namedItem('comment'), commentEditor=comment.closest('[data-status-editor]').querySelector('[data-status-editor-input]');
+    input(commentEditor,'\u{1F600}\u{1F600}\u{1F600}');
+    check(comment.value==='\u{1F600}\u{1F600}\u{1F600}'&&!comment.hasAttribute('maxlength'),'Character budgets preserve an overflowing Unicode draft without a UTF-16 cap');
+    check(!T.forms.validate(form),'The shared validator rejects an extra Unicode character in the rich editor');
+    input(commentEditor,'\u{1F600}\u{1F600}');
+    input(title,'😀😀'); input(editor,'ěěě');
+    check(!title.hasAttribute('maxlength') && !body.hasAttribute('maxlength'), 'Unicode and byte constraints do not impose a conflicting UTF-16 maxlength');
+    check(T.forms.validate(form) && body.value==='ěěě', 'Server-derived character and byte boundaries accept the exact Unicode limits');
+    input(editor,'ěěěě'); submit.click(); await pause();
+    check(calls===0 && body.value==='ěěěě' && editor.getAttribute('aria-invalid')==='true','Byte overflow blocks submission through the shared field proxy without truncating the draft');
+    input(editor,'ěěě'); input(title,'😀😀😀'); check(!T.forms.validate(form),'Unicode length rejects one extra code point'); await pause();
+    input(title,'😀😀'); input(form.elements.namedItem('interval'),String(c.interval.min-1)); check(!T.forms.validate(form),'Server-derived numeric lower bounds use native validation'); await pause();
+    input(form.elements.namedItem('interval'),String(c.interval.max)); submit.click(); await wait(()=>calls===1,'A corrected boundary submission sends exactly one request');
+    check(!form.querySelector('[aria-invalid="true"]'),'Correcting constraints clears their shared validation feedback');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
   if (mode === 'creation') {
     const defaults = T.dom.element('form');
     const text = T.dom.element('input', { name: 'name' }), checkbox = T.dom.element('input', { name: 'enabled', type: 'checkbox' });
@@ -35,12 +134,12 @@
     T.lifecycle.start();
     check(initBlocked && !document.querySelector('.modal'), 'Initialization cannot construct a hidden modal');
     const list = T.dom.element('div',{id:'users-list'}); document.body.append(list);
-    T.users.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}});
+    T.modules.result({dataset:{apiMethod:"GET"},getAttribute:name=>name==="href"?"/api/users":null},{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}},list);
     T.lifecycle.hydrate(list);
     check(!document.querySelector('.modal') && !Object.keys(reads).length, 'List hydration contains filters but no creation modal or resource read');
     const editor = await T.dialog.openResource('modal-users-creation','/api/users/creation');
     const username = editor.querySelector('[name="username"]'); username.value='UnsentAccount'; username.dispatchEvent(new Event('input',{bubbles:true}));
-    T.users.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}}); T.lifecycle.hydrate(list);
+    T.modules.result({dataset:{apiMethod:"GET"},getAttribute:name=>name==="href"?"/api/users":null},{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}},list); T.lifecycle.hydrate(list);
     check(document.getElementById('modal-users-creation') === editor && username.value === 'UnsentAccount', 'Refreshing the list preserves an open creation draft');
     const confirmation = T.dialog.confirm; T.forms.confirmWith(async () => false);
     const trigger = T.dom.element('button',{'data-modal-open':'modal-users-creation','data-modal-url':'/api/users/creation','data-modal-refresh':'true'}); document.body.append(trigger); trigger.click(); await pause();
@@ -71,7 +170,11 @@
     check(!document.querySelector('.modal'), 'All resource dialogs are removed after closing');
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
-  if (mode === 'settings') {
+  if (mode === 'settings' || mode === 'settings-blog') {
+    if (mode === 'settings-blog') {
+      window.settingsSchema = {sections: window.blogSettings.sections};
+      document.body.dataset.settingsPresentation = JSON.stringify(window.blogSettings.presentation);
+    }
     const schema = window.settingsSchema || {sections:[
       {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.footer_html',label:'Footer',type:'textarea',value:'Saved footer'}]},
       {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',value:{host:'smtp.example.test',port:587}}]}
@@ -104,6 +207,14 @@
     check(dialog.querySelectorAll('.image-preview-contain').length === 2 && dialog.querySelector('.grid-span-full'), 'Site images and full-width settings retain shared layout primitives');
     check([...dialog.querySelectorAll('.field > .label')].every(label => label.textContent.trim()), 'Every server field has a client-owned presentation label');
     check(footer.value === 'Saved footer' && form.elements.namedItem('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
+    if (mode === 'settings-blog') {
+      check(form.checkValidity(), 'Unchanged Blog defaults pass native form validation');
+      for (const key of ['blog.blocked_urls','blog.links.utm.source','blog.links.utm.campaign']) {
+        const control = form.elements.namedItem('settings['+key+']');
+        check(control.value === '' && !control.required, 'Blog optional settings retain valid empty defaults: '+key);
+      }
+      check(form.elements.namedItem('settings[blog.links.utm.medium]').required, 'Blog UTM medium retains required native validation');
+    }
     footer.value='Edited footer'; footer.dispatchEvent(new Event('input',{bubbles:true}));
     check(T.forms.dirty(dialog).length === 1, 'Settings edits use the shared draft guard');
     const confirmation = T.dialog.confirm;
@@ -193,7 +304,7 @@
     const errors = {[errorName]:[{code:'test_validation',message:'Specific validation message.',params:{}}]};
     return new Response(JSON.stringify({ok,status,code:ok?'created':'validation_error',params:{},message:ok?null:'Check the fields.',data:ok?{}:null,meta:{},error:ok?null:{details:{errors}}}),{status,headers:{'Content-Type':'application/json'}});
   };
-  T.lifecycle.start(); T.status.controllers.editor.hydrate(document); T.dialog.open(dialog);
+  T.lifecycle.start(); T.publishing.controllers.editor.hydrate(document); T.dialog.open(dialog);
   const access = [...dialog.querySelectorAll('[data-tab]')].find(tab => tab.dataset.tab === 'access');
   if (mode === 'scroll') {
     const spacer = document.createElement('div'); spacer.style.height='1100px'; spacer.style.flexShrink='0'; password.closest('.field').before(spacer);

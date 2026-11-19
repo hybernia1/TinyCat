@@ -47,14 +47,14 @@ final class Api
         $api->patch('/users/me', static fn (): Result => self::profile(self::actor()));
         $api->patch('/users/me/email', static fn (): Result => self::result(Actions::user_email_update_request(self::actor())));
         $api->put('/users/me/password', static fn (): Result => self::result(Actions::user_password_update_request(self::actor())));
-        $api->get('/users', self::listing(...), 'admin');
+        $api->get(substr(\TinyCat\Core\Ui\Admin\Definitions::route('core.users', 'endpoint'), 4), self::listing(...), 'admin');
         $api->get('/users/creation', static fn (): array => Resource::creation(), 'admin');
         $api->post('/users', static fn (): Result => self::result(self::adminCreate()), 'admin');
         $api->put('/users/{id:[0-9]+}/activation', static function (Request $r, array $p): Result {
             $user = ReadModel::tc_admin_user_by_id((int) $p['id']);
             if ($user === null || !Roles::managedByCoreAdmin((string) ($user['role'] ?? ''))) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
             $data = $r->validated(['enabled' => 'required|boolean']);
-            $active = in_array($data['enabled'], [true, 1, '1'], true);
+            $active = filter_var($data['enabled'], FILTER_VALIDATE_BOOLEAN);
             try { \TinyCat\Core\Identity\Administration::setActive(self::actor(), $user, $active, \TinyCat\Core\Identity\Participants::current()); }
             catch (\DomainException $exception) {
                 if ($exception->getMessage() === 'user_not_found') { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }

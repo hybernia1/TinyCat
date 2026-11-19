@@ -50,7 +50,7 @@ $removeTree = static function (string $path) use (&$removeTree, $temporaryRoot):
 
     rmdir($resolved);
 };
-$run = static function (array $command) use (&$checks, &$failures): void {
+$run = static function (array $command, ?string $completion = null) use (&$checks, &$failures): void {
     $checks++;
     $escaped = implode(' ', array_map(escapeshellarg(...), $command));
     $output = [];
@@ -58,6 +58,8 @@ $run = static function (array $command) use (&$checks, &$failures): void {
 
     if ($exitCode !== 0) {
         $failures[] = implode(' ', $command) . ': ' . implode(' ', $output);
+    } elseif ($completion !== null && !str_contains(implode("\n", $output), $completion)) {
+        $failures[] = implode(' ', $command) . ': missing completion confirmation: ' . $completion;
     }
 };
 
@@ -72,17 +74,8 @@ try {
     $assert($packageName === 'tinycat-' . $version . '.zip' && is_file($packagePath), 'The versioned package is present.');
     $assert(($manifest['version'] ?? null) === $version, 'Manifest targets the current version.');
     define('TINYCAT', true);
-    require_once $root . '/App/autoload.php';
-    $distribution = $manifest['distribution'] ?? null;
-    $minimum = is_array($distribution) && \TinyCat\Core\Modules\Distribution::modular($distribution)
-        ? match ($distribution['format'] ?? 1) {
-            3 => \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME,
-            2 => \TinyCat\Core\Modules\Distribution::FRAMEWORK_RUNTIME,
-            default => isset($distribution['schemas']['tinycat.support'])
-                ? \TinyCat\Core\Modules\Distribution::CORE_SCHEMA_RUNTIME
-                : \TinyCat\Core\Modules\Distribution::RUNTIME,
-        }
-        : \TinyCat\Support\Version::MINIMUM_UPDATE;
+    require_once $root . '/App/Core/Runtime/autoload.php';
+    $minimum = \TinyCat\Support\Version::MINIMUM_UPDATE;
     $assert(($manifest['minimum_version'] ?? null) === $minimum, 'Manifest uses its supported runtime baseline.');
     $assert(($manifest['minimum_php'] ?? null) === '8.4.0', 'Manifest retains the PHP 8.4 runtime floor.');
     foreach ((array) ($manifest['migrations'] ?? []) as $migration) {
@@ -142,7 +135,7 @@ try {
     $core = (string) file_get_contents($installRoot . '/App/Core/Support/Version.php');
     $assert(str_contains($core, "public const string CURRENT = '{$version}';"), 'Extracted runtime reports the current version.');
     $run([PHP_BINARY, $root . '/tests/http/public-route-smoke.php', '--root=' . $installRoot]);
-    $run([PHP_BINARY, $root . '/tests/release/mysql-installer-rehearsal.php', '--root=' . $installRoot]);
+    $run([PHP_BINARY, $root . '/tests/release/mysql-installer-rehearsal.php', '--root=' . $installRoot], 'PASS restart-safe MySQL installer rehearsal');
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();
 } finally {

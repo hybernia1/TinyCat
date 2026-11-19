@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Dimensione massima immagine (KB)",
       "content_images_enabled_help": "Le immagini esistenti rimangono visibili quando i caricamenti sono disabilitati.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
+    },
+    "sections": {
+      "content_images": "Pubblica immagini"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "La tua segnalazione è stata risolta.",
       "report_dismissed": "La tua segnalazione è stata respinta."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Post utente pubblici.",
+    "purpose_social_post_images": "Immagini compresse allegate ai post.",
+    "purpose_social_terms": "Termini per i tag.",
+    "purpose_social_post_tags": "Relazioni tra post e termini.",
+    "purpose_social_links": "Metadati di collegamento memorizzati univoci.",
+    "purpose_social_post_links": "Relazioni tra post e collegamenti.",
+    "purpose_social_post_likes": "Mi piace sui post.",
+    "purpose_social_comments": "Commenti nidificati sui post.",
+    "purpose_social_comment_likes": "Mi piace sui commenti.",
+    "purpose_user_followers": "Il profilo segue tra gli utenti.",
+    "purpose_content_reports": "Segnalazioni utente per moderazione.",
+    "purpose_bot_sources": "RSS e regole di pubblicazione Atom per gli account bot.",
+    "purpose_bot_feed_history": "Hash degli elementi del feed recenti utilizzati per impedire post duplicati dei bot.",
+    "purpose_bot_source_runs": "Cronologia diagnostica compatta dei controlli e delle importazioni delle origini bot."
   }
 }

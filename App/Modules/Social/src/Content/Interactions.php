@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Content;
 
+use TinyCat\Social\Posts\{InteractionPolicy, PostCreation};
+
 use TinyCat\Core\Ui\InteractionTarget;
 
 use TinyCat\Database\Connection;
@@ -9,28 +11,18 @@ use TinyCat\Database\Transactions;
 use TinyCat\Http\Response;
 use TinyCat\Support\Localization;
 
-/** One transactional discussion/reaction implementation for explicitly registered owners. */
+/** Transactional social discussions and reactions with explicit post authorization. */
 final class Interactions
 {
-    /** @var array<string, InteractionPolicy> */
-    private static array $policies = [];
-
-    public static function reset(): void { self::$policies = []; self::invalidate(); }
-
-    public static function provide(InteractionPolicy $policy): void
-    {
-        if (preg_match('/^[a-z][a-z0-9_.-]{0,39}$/D', $policy->kind) !== 1 || $policy->owner === '') { throw new \InvalidArgumentException('Invalid interaction owner.'); }
-        if (isset(self::$policies[$policy->kind]) && self::$policies[$policy->kind]->owner !== $policy->owner) { throw new \LogicException('Duplicate interaction owner: ' . $policy->kind); }
-        self::$policies[$policy->kind] = $policy;
-    }
+    /** @return array<string, string> */
+    public static function rules(): array { return ['comment' => 'string|max:' . PostCreation::BODY_MAX_LENGTH]; }
 
     /**
      * @param array<string, mixed>|null $actor */
     public static function target(string $kind, int $id, ?array $actor = null): InteractionTarget
     {
-        $policy = self::$policies[$kind] ?? null;
-        $target = $policy !== null && $id > 0 ? ($policy->resolve)($id, $actor) : null;
-        if ($target === null || !$target->read || $target->id !== $id || $target->kind !== $kind || $target->owner !== $policy->owner) { self::fail('status_not_found', 404); }
+        $target = $kind === 'post' && $id > 0 ? InteractionPolicy::resolve($id, $actor) : null;
+        if ($target === null || !$target->read || $target->id !== $id || $target->kind !== $kind || $target->owner !== 'tinycat.social') { self::fail('status_not_found', 404); }
         return $target;
     }
 
@@ -79,11 +71,11 @@ final class Interactions
                 if ($next === $liked) { return $data + ['changed' => false, 'liked' => $liked]; }
                 if (!$target->interact) { self::fail('forbidden', 403); }
                 $data['liked'] = $next; $data['explicit'] = $desired !== null;
-                self::callback('before', $action, $target, $actor, $data);
+                InteractionPolicy::before($action, $target, $actor, $data);
                 if ($next) { Connection::insert($table, [$key => $subject, 'user_id' => $userId]); }
                 else { Connection::delete($table, [$key => $subject, 'user_id' => $userId]); }
                 self::invalidate();
-                self::callback('event', $action, $target, $actor, $data);
+                InteractionPolicy::event($action, $target, $actor, $data);
                 return $data + ['changed' => true];
             }
             if ($action === 'comment') {
@@ -95,7 +87,7 @@ final class Interactions
                     $parentId = (int) ($parent['parent_id'] ?? 0) ?: $parentId;
                 }
                 $data['body'] = $body;
-                self::callback('before', $action, $target, $actor, $data);
+                InteractionPolicy::before($action, $target, $actor, $data);
                 $data['comment_id'] = (int) Connection::insert('social_comments', ['content_id' => $id, 'parent_id' => $parentId ?: null, 'user_id' => $userId, 'body' => $body, 'created_at' => \TinyCat\Support\Dates::dateDb()]);
             } elseif (in_array($action, ['comment_update', 'comment_delete'], true)) {
                 if ($comment === null) { self::fail('comment_not_found', 404); }
@@ -107,37 +99,28 @@ final class Interactions
                     $body = self::body($body, $kind); $data['body'] = $body;
                     $history = Comments::status_comment_history_append($comment, $body, $actor);
                     if ($history === null) { return $data + ['changed' => false]; }
-                    self::callback('before', $action, $target, $actor, $data);
+                    InteractionPolicy::before($action, $target, $actor, $data);
                     Connection::update('social_comments', ['body' => $body, 'comments_diff' => $history], ['id' => $commentId]);
                 } else {
-                    self::callback('before', $action, $target, $actor, $data);
+                    InteractionPolicy::before($action, $target, $actor, $data);
                     Comments::status_delete_comment_rows($commentId);
                 }
             } else { throw new \InvalidArgumentException('Unknown interaction action.'); }
             self::invalidate();
-            self::callback('event', $action, $target, $actor, $data);
+            InteractionPolicy::event($action, $target, $actor, $data);
             return $data + ['changed' => true];
         });
     }
 
     public static function body(string $body, string $kind): string
     {
-        $body = \TinyCat\Support\Text::plain_text_limit($body, 2000);
+        \TinyCat\Http\Validator::validated(self::rules(), ['comment' => $body]);
         Policy::requireAllowedUrls($body);
         $body = Links::status_strip_external_urls($body);
         $draft = PostCreation::fromText($body, $kind);
         if ($draft->rejection !== null) { Response::error(Localization::t($draft->rejection['message_key'], $draft->rejection['params']), 422, $draft->rejection['code']); }
         if (trim($draft->body) === '') { self::fail('comment_required', 422); }
         return $draft->body;
-    }
-
-    /**
-     * @param array<string, mixed> $actor
-     * @param array<string, mixed> $data */
-    private static function callback(string $phase, string $action, InteractionTarget $target, array $actor, array $data): void
-    {
-        $callback = self::$policies[$target->kind]->$phase;
-        if ($callback !== null) { $callback($action, $target, $actor, $data); }
     }
 
     public static function invalidate(): void
@@ -153,10 +136,9 @@ final class Interactions
         if ($comment === null) { return; }
         $publication = Posts::find((int) $comment['content_id']);
         $kind = (string) ($publication['kind'] ?? '');
-        $policy = self::$policies[$kind] ?? null;
-        if ($policy === null || $policy->event === null) { return; }
+        if ($kind !== 'post') { return; }
         // Cleanup does not grant access; an inactive owner never resolves public targets.
-        ($policy->event)('comment_removed', new InteractionTarget($policy->owner, $kind, (int) $comment['content_id'], '', false, false, false), [], ['comment_id' => $id]);
+        InteractionPolicy::event('comment_removed', new InteractionTarget('tinycat.social', $kind, (int) $comment['content_id'], '', false, false, false), [], ['comment_id' => $id]);
     }
 
     private static function fail(string $code, int $status): never

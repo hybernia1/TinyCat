@@ -98,20 +98,13 @@ final class Installer
     {
         $pdo = \TinyCat\Database\Connection::get();
         $catalog = \TinyCat\Core\Modules\Resources::catalog();
-        // Legacy installations retain their published global history. Fresh DDL
-        // is nevertheless supplied only by selected table owners.
-        $legacyModuleSchemas = \TinyCat\Core\Modules\Providers::schemas($catalog);
-        $moduleSchemas = \TinyCat\Core\Runtime\Startup::$legacySchemas
-            ? $legacyModuleSchemas
-            : \TinyCat\Core\Modules\Providers::schemas($catalog, true);
+        $standaloneSchemas = \TinyCat\Core\Modules\Providers::schemas($catalog);
         foreach (\TinyCat\Core\Modules\Providers::schemas($catalog, true) as $id => $schema) {
-            if (isset($moduleSchemas[$id])) { \TinyCat\Database\ModuleSchemas::synchronize($pdo, [$id => $schema]); }
+            \TinyCat\Database\ModuleSchemas::synchronize($pdo, [$id => $schema]);
             // Managed owners also repair restartable DDL, such as missing indexes.
-            if (!isset($legacyModuleSchemas[$id])) { ($schema->install)($pdo); }
+            if (!isset($standaloneSchemas[$id])) { ($schema->install)($pdo); }
         }
-        $pdo->exec($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
-            ? 'CREATE TABLE IF NOT EXISTS schema_migrations (migration VARCHAR(190) NOT NULL PRIMARY KEY, version VARCHAR(32) NOT NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL)'
-            : 'CREATE TABLE IF NOT EXISTS schema_migrations (migration VARCHAR(190) NOT NULL PRIMARY KEY, version VARCHAR(32) NOT NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+        \TinyCat\Database\Migrations::prepare($pdo);
     }
 
     /** @param array<mixed> $state */

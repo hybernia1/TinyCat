@@ -99,23 +99,16 @@ final class Reports
      */
     public static function tc_admin_moderation_reports_payload(): array
     {
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('social.moderation-reports');
         $query = self::reportsQuery();
         $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
-        $filters = self::filters() + ['per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Moderation\Sorting::LISTS['reports']);
+        $filters = self::filters() + ['per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Moderation\Sorting::reports());
         return [
-            'items' => array_map(static fn (array $report): array => Resource::report($report) + ['action_url' => \TinyCat\Support\AdminViews::admin_list_url('/api/moderation/reports/' . (int) $report['id'], $filters + ['page' => $pagination['page']])], $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Moderation\Sorting::LISTS['reports']))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
+            'items' => array_map(static fn (array $report): array => Resource::report($report) + ['action_url' => \TinyCat\Support\AdminViews::admin_list_url($definition['endpoint'] . '/' . (int) $report['id'], $filters + ['page' => $pagination['page']])], $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Moderation\Sorting::reports()))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
             'filters' => $filters, 'pagination' => $pagination,
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Moderation\Sorting::LISTS['reports'], $filters),
-            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, '/api/moderation/reports', '#moderation-reports', $filters, historyPath: '/admin/moderation/reports'),
+            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Moderation\Sorting::reports(), $filters),
+            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $filters, historyPath: $definition['path']),
         ];
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function tc_admin_moderation_reports_view_data(): array
-    {
-        return self::tc_admin_moderation_reports_payload();
     }
 
     /** @return array<string, mixed> */

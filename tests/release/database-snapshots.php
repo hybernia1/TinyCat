@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require dirname(__DIR__, 2) . '/App/autoload.php';
+require dirname(__DIR__, 2) . '/App/Core/Runtime/autoload.php';
 use TinyCat\Database\Snapshots;
 
 $directory = sys_get_temp_dir() . '/tinycat-snapshot-' . bin2hex(random_bytes(10));

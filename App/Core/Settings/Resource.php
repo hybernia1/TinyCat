@@ -12,27 +12,41 @@ final class Resource
         foreach ($sections as $key => &$section) {
             $section['key'] = $key;
             unset($section['label'], $section['icon']);
-            foreach ($section['fields'] as &$field) {
-                $value = $field['value'];
-                if ($field['type'] === 'language') { $field['value'] = \TinyCat\Support\Languages::language_code((string) $value); }
-                if ($field['type'] === 'password') { $field['value'] = ''; }
-                if ($field['type'] === 'email_smtp') {
-                    $field['value'] = array_intersect_key(is_array($value) ? $value : [], array_fill_keys(['host', 'port', 'username', 'encryption', 'from_address', 'from_name'], true)) + ['password' => ''];
-                }
-                $field['options'] = match ($field['type']) {
-                    'language' => array_map(static fn (string $code, string $name): array => ['value' => $code, 'name' => $name], array_keys(\TinyCat\Support\Languages::language_packages()), array_values(\TinyCat\Support\Languages::language_packages())),
-                    'timezone' => self::timezones((string) $value),
-                    'date_format', 'time_format', 'datetime_format' => self::formats($field['type']),
-                    'email_templates' => array_map(static fn (string $name): array => ['value' => $name], \TinyCat\Core\Mail\Templates::email_template_keys()),
-                    'select' => array_map(static fn (int|string $option, mixed $name): array => ['value' => (string) $option, 'name' => $name], array_keys($field['options']), array_values($field['options'])),
-                    default => [],
-                };
-                unset($field['label'], $field['help'], $field['placeholder'], $field['span'], $field['path_key'], $field['variant'], $field['default'], $field['normalize']);
-            }
-            unset($field);
+            $section['fields'] = array_map(self::editorField(...), $section['fields']);
         }
         unset($section);
         return ['sections' => array_values($sections)];
+    }
+
+    /** @param array<string, mixed> $field
+     * @return array<string, mixed> */
+    private static function editorField(array $field): array
+    {
+        $value = $field['value'];
+        if ($field['type'] === 'language') { $field['value'] = \TinyCat\Support\Languages::language_code((string) $value); }
+        if ($field['type'] === 'password') { $field['value'] = ''; }
+        if ($field['type'] === 'email_smtp') {
+            $field['value'] = array_intersect_key(is_array($value) ? $value : [], array_fill_keys(['host', 'port', 'username', 'encryption', 'from_address', 'from_name'], true)) + ['password' => ''];
+        }
+        $field['options'] = match ($field['type']) {
+            'language' => array_map(static fn (string $code, string $name): array => ['value' => $code, 'name' => $name], array_keys(\TinyCat\Support\Languages::language_packages()), array_values(\TinyCat\Support\Languages::language_packages())),
+            'timezone' => self::timezones((string) $value),
+            'date_format', 'time_format', 'datetime_format' => self::formats($field['type']),
+            'email_templates' => array_map(static fn (string $name): array => ['value' => $name], \TinyCat\Core\Mail\Templates::email_template_keys()),
+            'select' => array_map(static fn (int|string $option, mixed $name): array => ['value' => (string) $option, 'name' => $name], array_keys($field['options']), array_values($field['options'])),
+            default => [],
+        };
+        if (isset($field['fields'])) {
+            $values = is_array($field['value']) ? $field['value'] : [];
+            $children = [];
+            foreach ($field['fields'] as $child) {
+                $child['value'] = $values[$child['key']] ?? $child['default'] ?? '';
+                $children[] = self::editorField($child);
+            }
+            $field['fields'] = $children;
+        }
+        unset($field['label'], $field['help'], $field['placeholder'], $field['span'], $field['path_key'], $field['variant'], $field['default'], $field['normalize']);
+        return $field;
     }
 
     /** @return list<array{value: string, offset: string}> */

@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
+define('TINYCAT', true);
+require $root . '/App/Core/Runtime/autoload.php';
+if (is_file($root . '/App/autoload.php') || is_file($root . '/App/bootstrap.php')) { throw new RuntimeException('Runtime entry points must use the core loader directly.'); }
 $checks = 0;
 $failures = [];
 $assert = static function (bool $condition, string $message) use (&$checks, &$failures): void {
@@ -32,8 +35,8 @@ foreach (glob($root . '/App/Modules/*/src/Api.php') ?: [] as $path) {
 }
 
 $assert((require $root . '/App/modules.php') === ['tinycat.social' => 'App/Modules/Social/module.json'], 'Source selects one Social module');
-$available = require $root . '/App/available-modules.php';
-$assert(array_keys($available) === ['tinycat.social', 'tinycat.blog'], 'Only functional modules are available for activation');
+$available = \TinyCat\Core\Modules\SourceModules::selection($root);
+$assert(array_keys($available) === ['tinycat.blog', 'tinycat.social'], 'Only functional modules are available for activation');
 $framework = json_decode((string) file_get_contents($root . '/App/Core/services.json'), true, 512, JSON_THROW_ON_ERROR);
 foreach ($framework as $entry) {
     $assert(!isset($available[$entry['metadata']['id']]), 'Framework capability is not a selectable module');
@@ -48,8 +51,8 @@ $assert(!str_contains($securityModule, 'Api::register') && !str_contains($securi
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/App', FilesystemIterator::SKIP_DOTS)) as $file) {
     if ($file->getExtension() !== 'php') { continue; }
     $source = (string) file_get_contents($file->getPathname());
-    if (str_replace('\\', '/', $file->getPathname()) !== str_replace('\\', '/', $root . '/App/Modules/Social/src/Content/PostCreation.php')) {
-        $assert(!preg_match('/\b(?:insert\s*\(\s*[\'"]content[\'"]|INSERT\s+INTO\s+[`"]?content\b)/i', $source), 'New posts must use Publishing/PostCreation: ' . $file->getPathname());
+    if (str_replace('\\', '/', $file->getPathname()) !== str_replace('\\', '/', $root . '/App/Modules/Social/src/Posts/PostCreation.php')) {
+        $assert(!preg_match('/\b(?:insert\s*\(\s*[\'"]content[\'"]|INSERT\s+INTO\s+[`"]?content\b)/i', $source), 'New posts must use Social/Posts/PostCreation: ' . $file->getPathname());
     }
     $assert(!preg_match('/(?:Core::|use Core;|\bwants_partial\s*\(|\bapi_payload\s*\(|X_TINYCAT_VIEW|legacyPresentation|legacyAliases)/', $source), 'Removed adapter or HTML negotiation remains: ' . $file->getPathname());
     $assert(!preg_match('/^function &?\w+\(/m', $source), 'Application globals must have a module owner: ' . $file->getPathname());

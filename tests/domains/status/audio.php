@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 use TinyCat\Core\Links\Audio;
 use TinyCat\Social\Content\Links;
 use TinyCat\Core\Text\LinkParser;
 use TinyCat\Core\Links\Metadata;
 use TinyCat\Core\Links\Providers;
-use TinyCat\Social\Automation\FeedParser;
+use TinyCat\Core\Feeds\FeedParser;
 
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {

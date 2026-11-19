@@ -186,6 +186,8 @@ import "../component-builders.js";
     var text;
     var max;
     var remaining;
+    var byteLimit;
+    var characterLimit;
     var template;
 
     if (!editor || !source) {
@@ -193,16 +195,18 @@ import "../component-builders.js";
     }
 
     text = getText(editor);
-    max = Number(source.getAttribute("maxlength") || 0);
+    byteLimit = source.hasAttribute("data-max-bytes");
+    characterLimit = source.hasAttribute("data-max-length");
+    max = Number(source.getAttribute(byteLimit ? "data-max-bytes" : characterLimit ? "data-max-length" : "maxlength") || 0);
 
-    if (max > 0 && text.length > max) {
+    if (!byteLimit && !characterLimit && max > 0 && text.length > max) {
       text = text.slice(0, max);
       setText(editor, text, max);
     }
 
     source.value = text;
-    if (counter && max > 0) {
-      remaining = Math.max(0, max - text.length);
+    if (counter && (byteLimit || characterLimit || max > 0)) {
+      remaining = Math.max(0, max - (byteLimit ? new TextEncoder().encode(text).length : characterLimit ? Array.from(text).length : text.length));
       template = counter.dataset.statusCounterTemplate || "{count}";
       counter.textContent = template.replace("{count}", String(remaining));
       counter.classList.toggle("is-warning", remaining <= Math.max(20, Math.floor(max * 0.1)));
@@ -414,7 +418,7 @@ import "../component-builders.js";
     shell.appendChild(box);
     source.insertAdjacentElement("beforebegin", shell);
 
-    if (Number(source.getAttribute("maxlength") || 0) > 0 && source.dataset.statusEditorCounterDisabled !== "true") {
+    if ((source.hasAttribute("data-max-bytes") || source.hasAttribute("data-max-length") || Number(source.getAttribute("maxlength") || 0) > 0) && source.dataset.statusEditorCounterDisabled !== "true") {
       counterSequence += 1;
       counterId = source.id ? source.id + "-counter" : "status-editor-counter-" + counterSequence;
       meta = document.createElement("div");
@@ -542,5 +546,5 @@ import "../component-builders.js";
   function hydrate (scope) {
     qsa("[data-status-editor]", scope || document).forEach(initRoot);
   }
-  TinyCat.publishing.controllers.editor = { username, getSource, getInput, getBox, getCounter, syncModalSize, getSuggestUrl, getText, setText, selectionOffsets, getCaret, replaceRange, activeToken, sync, hideSuggestions, selectSuggestion, renderSuggestionItems, requestSuggestions, renderSuggestions, insertSuggestion, initRoot, reset, hydrate };
+  TinyCat.publishing.controllers.editor = { username, getSource, getInput, getBox, getText, setText, activeToken, sync, hideSuggestions, reset, hydrate };
 }());

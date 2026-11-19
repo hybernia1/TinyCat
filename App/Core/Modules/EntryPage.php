@@ -10,7 +10,7 @@ final readonly class EntryPage
     public \Closure $label;
     /** @param callable(): void $render
      * @param (callable(): string)|null $label */
-    public function __construct(public string $id, public string $path, callable $render, public int $order = 100, ?callable $label = null, public string $icon = 'file-text')
+    public function __construct(public string $id, public string $path, callable $render, public int $order = 100, ?callable $label = null, public string $icon = 'file-text', public bool $navigation = true)
     {
         $this->render = \Closure::fromCallable($render);
         $this->label = $label === null ? static fn (): string => $id : \Closure::fromCallable($label);

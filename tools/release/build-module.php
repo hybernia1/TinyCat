@@ -4,21 +4,18 @@ declare(strict_types=1);
 /** Build a standalone module ZIP; installed hosts need neither Composer nor these tools. */
 if (PHP_SAPI !== 'cli') { http_response_code(403); exit(1); }
 $root = dirname(__DIR__, 2);
-define('TINYCAT', true); require $root . '/App/autoload.php';
+define('TINYCAT', true); require $root . '/App/Core/Runtime/autoload.php';
 $options = getopt('', ['module:', 'version:', 'output:', 'minimum-core:', 'minimum-php:']);
 $module = realpath($root . '/' . (string) ($options['module'] ?? ''));
 $base = realpath($root . '/App/Modules');
 if ($module === false || $base === false || dirname($module) !== $base || is_link($module)) { throw new InvalidArgumentException('Use --module=App/Modules/Name --version=X.Y.Z [--output=directory].'); }
 $definition = \TinyCat\Core\Modules\Definition::fromManifest($module . '/module.json');
-$selection = require $root . '/App/available-modules.php';
-$selection[$definition->id] = 'App/Modules/' . basename($module) . '/module.json';
+$selection = \TinyCat\Core\Modules\SourceModules::selection($root, $definition->id);
 $loader = \TinyCat\Core\Modules\Loader::fromSelection($root, $selection);
 \TinyCat\Core\Modules\Providers::validateAll($loader->catalog);
 $loader->registries();
 \TinyCat\Core\Modules\Resources::configure($loader->catalog);
 $compile = require $root . '/tools/assets/compile-assets.php'; $compile();
-$plan = \TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.package', $selection, []);
-$schemas = array_filter($plan['schemas'], static fn (string $id): bool => ($plan['schemaOwners'][$id] ?? '') === $definition->id, ARRAY_FILTER_USE_KEY);
 $sources = []; $hashes = [];
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($module, FilesystemIterator::SKIP_DOTS)) as $file) {
     if ($file->isLink()) { throw new RuntimeException('Module packages cannot contain symbolic links.'); }
@@ -30,12 +27,9 @@ foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($module, F
     $sources[$relative] = $source; $hashes[$relative] = hash('sha256', $source);
 }
 ksort($sources); ksort($hashes);
-$package = \TinyCat\Core\Modules\ModulePackage::validate([
-    'format' => 1, 'kind' => 'tinycat-module', 'id' => $definition->id, 'directory' => basename($module),
-    'version' => (string) ($options['version'] ?? ''), 'minimum_core' => (string) ($options['minimum-core'] ?? \TinyCat\Support\Version::CURRENT),
-    'minimum_php' => (string) ($options['minimum-php'] ?? '8.4.0'),
-    'manifest' => json_decode($sources['module.json'], true, 64, JSON_THROW_ON_ERROR), 'schemas' => $schemas, 'files' => $hashes,
-]);
+$package = \TinyCat\Core\Modules\PackageRegistry::capture($root, $definition->id, $selection,
+    (string) ($options['version'] ?? ''), (string) ($options['minimum-core'] ?? \TinyCat\Support\Version::CURRENT), (string) ($options['minimum-php'] ?? '8.4.0'));
+if ($package['files'] !== $hashes) { throw new RuntimeException('Module sources changed during packaging.'); }
 $sources['package.json'] = json_encode($package, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
 $output = (string) ($options['output'] ?? $root . '/dist/modules');
 if (!is_dir($output) && !mkdir($output, 0700, true)) { throw new RuntimeException('Cannot create module output directory.'); }

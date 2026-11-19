@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Core\Modules\Loader;
 use TinyCat\Core\Modules\Resources;
 use TinyCat\Core\Modules\ModuleSchema;
@@ -52,7 +52,7 @@ try {
     $tables = $modules->register(new \TinyCat\Http\Api());
     $assert(!class_exists(\TinyCat\Database\Connection::class, false), 'Manifest providers and routes are discovered without connecting to a database');
     $assert(!class_exists(\TinyCat\Core\Settings\Store::class, false), 'Manifest discovery does not load application settings');
-    $assert(in_array('pilot_notes', $tables, true) && in_array('module_migrations', $tables, true), 'Selected schema tables join the readiness inventory');
+    $assert(in_array('pilot_notes', $tables, true) && in_array('migrations', $tables, true), 'Selected schema tables join the readiness inventory');
     $assert($registries->owner('task', 'pilot.notes.refresh') === 'demo.notes', 'Manifest contribution provider is registered');
     $missingDependency = ['demo.notes' => $relative . '/module.json'];
     $assert(Loader::fromSelection($root, $missingDependency)->catalog->has('tinycat.scheduler'), 'Module receives the mandatory scheduler capability without selecting a framework module');
@@ -119,6 +119,33 @@ PHP;
     }), 'A module route shadowing an existing GET/HEAD route');
     $assert((new ReflectionProperty(\TinyCat\Http\Router::class, 'routes'))->getValue() === $before, 'Rejected route providers leave no partial routes');
 
+    \TinyCat\Http\Router::registerModule(static function (): void {
+        \TinyCat\Http\Router::route('GET', '/_pilot-new', static fn (): null => null);
+    });
+    $assert(true, 'A rejected provider leaves its new route available for a later registration');
+    $reject(static fn () => \TinyCat\Http\Router::registerModule(static function (): void {
+        \TinyCat\Http\Router::route('GET', '/_pilot-internal', static fn (): null => null);
+        \TinyCat\Http\Router::route('HEAD', '/_pilot-internal', static fn (): null => null);
+    }), 'Duplicate GET/HEAD routes within one provider');
+    $reject(static fn () => \TinyCat\Http\Router::registerModule(static function (): void {
+        \TinyCat\Http\Router::route('POST', '/_pilot-nested-outer', static fn (): null => null);
+        \TinyCat\Http\Router::registerModule(static function (): void {
+            \TinyCat\Http\Router::route('POST', '/_pilot-nested-inner', static fn (): null => null);
+        });
+        throw new InvalidArgumentException('Fixture registration failure.');
+    }), 'An outer provider failure after a nested registration');
+    \TinyCat\Http\Router::registerModule(static function (): void {
+        \TinyCat\Http\Router::route('GET', '/_pilot-internal', static fn (): null => null);
+        \TinyCat\Http\Router::route('POST', '/_pilot-nested-inner', static fn (): null => null);
+        \TinyCat\Http\Router::route('POST', '/_pilot-nested-outer', static fn (): null => null);
+    });
+    $assert(true, 'Internal collisions and nested failures restore the route index as well as routes');
+
+    $literalCalls = 0;
+    \TinyCat\Http\Router::route('GET', '/_pilot-literal.v1', static function () use (&$literalCalls): void { $literalCalls++; });
+    $assert(!\TinyCat\Http\Router::dispatch('/_pilot-literalXv1', 'GET') && $literalCalls === 0, 'Static route punctuation remains literal');
+    $assert(\TinyCat\Http\Router::dispatch('/_pilot-literal.v1', 'HEAD') && $literalCalls === 1, 'Static routes retain exact matching and implicit HEAD');
+
     $schema = $schemas['demo.notes'];
     $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC];
     $sqliteConfig = ['dsn' => 'sqlite:' . $directory . '/http.sqlite'];
@@ -131,7 +158,8 @@ PHP;
         }
         return ['columns' => $connection->query('PRAGMA table_info(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC), 'indexes' => $connection->query('PRAGMA index_list(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC), 'foreign_keys' => $connection->query('PRAGMA foreign_key_list(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC)];
     };
-    $matrix = static function (PDO $fresh, PDO $upgrade) use ($schema, $assert, $reject, $structure): void {
+    $checkpointMatrix = require $root . '/tests/fixtures/modules/archived-history.php';
+    $matrix = static function (PDO $fresh, PDO $upgrade) use ($schema, $assert, $reject, $structure, $checkpointMatrix): void {
         ModuleSchemas::install($fresh, ['demo.notes' => $schema]);
         ModuleSchemas::install($fresh, ['demo.notes' => $schema]);
         $assert(ModuleSchemas::ready($fresh, ['demo.notes' => $schema]), 'Fresh install is ready and repeat-safe');
@@ -144,12 +172,13 @@ PHP;
         $assert($row['title'] === 'preserved' && (int) $row['created_by'] === 7 && (int) $row['refresh_count'] === 0, 'Upgrade preserves existing records');
         ModuleSchemas::upgrade($upgrade, ['demo.notes' => $schema]);
         $assert((int) $upgrade->query('SELECT COUNT(*) FROM pilot_notes')->fetchColumn() === 1, 'Repeated upgrade does not replay data changes');
-        $upgrade->exec("UPDATE module_migrations SET checksum = '" . str_repeat('0', 64) . "' WHERE version = 1");
+        $upgrade->exec("UPDATE migrations SET checksum = '" . str_repeat('0', 64) . "' WHERE sequence = 1");
         $reject(static fn () => ModuleSchemas::upgrade($upgrade, ['demo.notes' => $schema]), 'Changed applied migration checksum');
         $assert(ModuleSchemas::state($upgrade, 'demo.notes')['status'] === 'ready', 'Checksum rejection happens before changing installation state');
-        $restore = $upgrade->prepare('UPDATE module_migrations SET checksum = ? WHERE version = 1'); $restore->execute([ModuleSchemas::checksum($schema->migrations[0]->file)]);
+        $restore = $upgrade->prepare('UPDATE migrations SET checksum = ? WHERE sequence = 1'); $restore->execute([ModuleSchemas::checksum($schema->migrations[0]->file)]);
         $reject(static fn () => ModuleSchemas::upgrade($upgrade, ['demo.notes' => $initial]), 'Schema downgrade');
         $reject(static fn () => ModuleSchemas::install($fresh, ['demo.one' => $schema, 'demo.two' => $schema]), 'Duplicate schema table owners');
+        $checkpointMatrix($fresh, $upgrade);
     };
     $matrix($pdo, $old);
     $failure = new PDO('sqlite::memory:', null, null, $options);

@@ -15,7 +15,7 @@ if (in_array($assetPath, ['/assets/fallback/image.svg', '/assets/fallback/avatar
 // This router is used only by the isolated HTTP contract test, never by production.
 define('TINYCAT', true);
 ini_set('error_log', 'php://stderr');
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 
 
 $database = new PDO('sqlite:' . (string) getenv('TINYCAT_API_TEST_DATABASE'));
@@ -47,7 +47,12 @@ if (($_SERVER['HTTP_X_TEST_CAPTCHA'] ?? '') === '1') {
     (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
 }
 
-if (!\TinyCat\Social\Presentation\Discovery::handles($assetPath) && !\TinyCat\Social\Posts\Embed::handles($assetPath)) {
+// Session isolation is fixture policy, not a production module API.
+$embedDocument = $assetPath === '/oembed' || preg_match('~^/status/[0-9]+/(?:embed|embed-code)$~D', $assetPath) === 1;
+$discoveryDocument = in_array($assetPath, ['/robots.txt', '/robots', '/llms.txt', '/llms-full.txt', '/llms', '/sitemap.xml', '/sitemap'], true)
+    || preg_match('~^/sitemap-[a-z][a-z0-9_-]{0,63}-[1-9][0-9]*[.]xml$~D', $assetPath) === 1
+    || preg_match('~^/(?:search|author/[0-9]+|tag/[^/]+)/feed$~D', $assetPath) === 1;
+if (!$discoveryDocument && !$embedDocument) {
     session_start();
     $_SESSION['_csrf'] = str_repeat('a', 64);
 }
@@ -75,7 +80,14 @@ if (getenv('TINYCAT_API_FOUNDATION_TEST') === '1') {
 \TinyCat\Http\Router::route(['GET', 'HEAD'], '/fixture-maintenance', static function (): void {
     header('Retry-After: 300'); \TinyCat\Core\Runtime\Errors::respond(503);
 });
-if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && \TinyCat\Social\Posts\Embed::handles($assetPath)) {
+foreach ([400, 401, 403, 404, 405, 422, 429, 500, 502, 503] as $errorStatus) {
+    foreach (['/fixture-error/', '/admin/fixture-error/'] as $prefix) {
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], $prefix . $errorStatus, static function () use ($errorStatus): void {
+            \TinyCat\Core\Runtime\Errors::respond($errorStatus);
+        });
+    }
+}
+if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && $embedDocument) {
     \TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
 }
 require __DIR__ . '/../../../index.php';

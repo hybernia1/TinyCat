@@ -28,10 +28,19 @@ try {
     $database->exec('CREATE TABLE content_tags (content_id INT, term_id INT, PRIMARY KEY (content_id, term_id), FOREIGN KEY (content_id) REFERENCES content(id), FOREIGN KEY (term_id) REFERENCES terms(id)) ENGINE=InnoDB');
     $body = 'Feature Update #1 #1980s #2026 #3d';
     $database->prepare('INSERT INTO content VALUES (10, ?)')->execute([$body]);
-    for ($id = 1; $id <= 502; $id++) {
-        $tag = [1 => '1', 500 => '1980s', 501 => '2026', 502 => '3d'][$id] ?? 'topic-' . $id;
-        $database->prepare('INSERT INTO terms VALUES (?, ?)')->execute([$id, $tag]);
-        $database->prepare('INSERT INTO content_tags VALUES (10, ?)')->execute([$id]);
+    $term = $database->prepare('INSERT INTO terms VALUES (?, ?)');
+    $relation = $database->prepare('INSERT INTO content_tags VALUES (10, ?)');
+    $database->beginTransaction();
+    try {
+        for ($id = 1; $id <= 502; $id++) {
+            $tag = [1 => '1', 500 => '1980s', 501 => '2026', 502 => '3d'][$id] ?? 'topic-' . $id;
+            $term->execute([$id, $tag]);
+            $relation->execute([$id]);
+        }
+        $database->commit();
+    } catch (Throwable $error) {
+        if ($database->inTransaction()) { $database->rollBack(); }
+        throw $error;
     }
     $migration = require __DIR__ . '/../../../migrations/20261101_002_numeric_tags.php';
     $migration($database);

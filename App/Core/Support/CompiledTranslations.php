@@ -17,13 +17,19 @@ final class CompiledTranslations
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return []; }
         $file = Paths::basePath('App/Core/Support/compiled/translations.php');
         self::$manifest ??= is_file($file) ? require $file : [];
-        if (isset(self::$manifest['selection'])) {
-            if (class_exists(\TinyCat\Core\Modules\Resources::class)) {
-                if (self::$manifest['selection'] !== \TinyCat\Core\Modules\Resources::fingerprint()) { return []; }
-            } elseif (is_file(Paths::basePath('storage/deployment.json'))) { return []; }
+        $manifest = self::$manifest ?? [];
+        return self::matchesSelection($manifest) ? $manifest : [];
+    }
+
+    /** Shared deployment identity check; readers reject scoped builds before loading.
+     * @internal
+     * @param array<mixed> $manifest */
+    public static function matchesSelection(array $manifest): bool
+    {
+        if (isset($manifest['selection']) && class_exists(\TinyCat\Core\Modules\Resources::class)) {
+            return $manifest['selection'] === \TinyCat\Core\Modules\Resources::fingerprint();
         }
-        if (!isset(self::$manifest['selection']) && is_file(Paths::basePath('storage/deployment.json'))) { return []; }
-        return self::$manifest ?? [];
+        return !is_file(Paths::basePath('storage/deployment.json'));
     }
 
     /** @return array<string, string>|null */
@@ -36,9 +42,10 @@ final class CompiledTranslations
     private static function catalog(string $locale): ?array
     {
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return null; }
-        if (self::manifest() === []) { return null; }
+        $manifest = self::manifest();
+        if ($manifest === []) { return null; }
         if (isset(self::$catalogs[$locale])) { return self::$catalogs[$locale]; }
-        $name = self::manifest()['catalogs'][$locale] ?? null;
+        $name = $manifest['catalogs'][$locale] ?? null;
         if (!is_string($name)) { return null; }
         if (!preg_match('/^[a-z0-9-]+\.[a-f0-9]{24}\.php$/D', $name)) {
             throw new \RuntimeException('Invalid compiled translation path.');

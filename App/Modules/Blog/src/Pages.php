@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace TinyCat\Blog;
 
 use TinyCat\Support\Localization;
-use TinyCat\Support\View;
+use TinyCat\Support\Components;
 
 final class Pages
 {
@@ -18,8 +18,9 @@ final class Pages
         $path = \TinyCat\Http\Request::current()->path();
         $title = (string) \TinyCat\Support\Config::get('blog.title', Localization::t('blog.articles'));
         foreach ($articles as &$entry) { $entry['excerpt'] = \TinyCat\Support\Text::plain_text_limit((string) $entry['body'], 320); $entry['publicly_visible'] = $entry['status'] === 'published' && $entry['published_at'] <= \TinyCat\Support\Dates::dateDb(); $entry['state'] = $entry['status'] === 'published' && !$entry['publicly_visible'] ? 'scheduled' : $entry['status']; }
+        foreach ($articles as &$entry) { $entry['id'] = (int) $entry['id']; $entry['published_iso'] = \TinyCat\Support\Dates::dateIso((string) $entry['published_at']); $entry['published_label'] = \TinyCat\Support\Dates::displayDateTime((string) $entry['published_at']); }
         unset($entry);
-        $content = View::render('listing', compact('articles', 'next', 'at', 'public', 'path', 'title'), dirname(__DIR__) . '/templates');
+        $content = Components::render('blog/public-list', ['articles' => $articles, 'title' => $title, 'next_url' => $next > 0 ? $path . '?before=' . $next . '&at=' . rawurlencode($at) : '']);
         self::render(['title' => $title, 'current' => $path, 'public' => $public, 'meta' => ['rss' => '/blog/feed']], $content);
     }
 
@@ -27,9 +28,7 @@ final class Pages
     {
         \TinyCat\Core\Identity\Access::require_admin();
         $data = Administration::listing(\TinyCat\Http\Request::current()->query());
-        $content = \TinyCat\Support\Components::render('blog/articles', $data);
-        $content = \TinyCat\Support\AdminViews::listCard(Localization::t('blog.articles'), 'file-text', 'blog-articles', 'blog-article-filter', new \TinyCat\Support\Markup($content), primary: true);
-        self::render(['title' => Localization::t('blog.articles'), 'current' => '/admin/articles', 'actions' => \TinyCat\Support\AdminViews::modalAction('modal-articles-creation', Localization::t('blog.editor'), 'plus', '/api/articles/creation')], $content);
+        \TinyCat\Core\Ui\Admin\Definitions::page('blog.articles', $data);
     }
 
     public static function editor(int $id = 0): never
@@ -56,7 +55,7 @@ final class Pages
             'jsonld' => ['@context' => 'https://schema.org', '@type' => 'Article', 'headline' => (string) $article['title'],
                 'url' => \TinyCat\Support\LocalUrls::absolute('/articles/' . $id), 'datePublished' => \TinyCat\Support\Dates::dateIso((string) $article['published_at']),
                 'author' => ['@type' => 'Person', 'name' => (string) $article['author']], ...($picture !== null ? ['image' => $picture] : [])],
-        ] + $pictureMeta], View::render('article', compact('article', 'canEdit', 'content', 'discussion'), dirname(__DIR__) . '/templates'));
+        ] + $pictureMeta], Components::render('blog/article-page', ['article' => $article + ['published_iso' => \TinyCat\Support\Dates::dateIso((string) $article['published_at']), 'published_label' => \TinyCat\Support\Dates::displayDateTime((string) $article['published_at'])], 'canEdit' => $canEdit, 'content' => new \TinyCat\Support\Markup($content), 'discussion' => new \TinyCat\Support\Markup($discussion)]));
     }
 
     /** @param array<string, mixed> $page */

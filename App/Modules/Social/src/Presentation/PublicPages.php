@@ -13,19 +13,43 @@ use TinyCat\Social\Profiles\Resource as Users;
 /** Shared public page resources and SSR composition; APIs contain no markup. */
 final class PublicPages
 {
+    /** @return list<array{string, string, callable, callable, list<string>}> */
+    private static function routes(): array
+    {
+        return [
+            ['/social', 'home', static fn () => \TinyCat\Social\Posts\Pages::home(), static fn () => \TinyCat\Social\Posts\Pages::homeData(), ['feed', 'compact', 'media']],
+            ['/status/{status_id:[0-9]+}', 'status', static fn (string $status_id) => \TinyCat\Social\Posts\Pages::detail((int) $status_id), static fn (string $status_id) => \TinyCat\Social\Posts\Pages::detailData((int) $status_id), ['compact']],
+            ['/author/{author_id:[0-9]+}', 'author', static fn (string $author_id) => \TinyCat\Social\Posts\AuthorPages::author((int) $author_id), static fn (string $author_id) => \TinyCat\Social\Posts\AuthorPages::authorData((int) $author_id), ['feed', 'compact', 'media']],
+            ['/tag/{tag}', 'tag', static fn (string $tag) => \TinyCat\Social\Posts\Pages::tag($tag), static fn (string $tag) => \TinyCat\Social\Posts\Pages::tagData($tag), ['feed', 'compact', 'media']],
+            ['/search', 'search', static fn () => \TinyCat\Social\Search\Pages::search(), static fn () => \TinyCat\Social\Search\Pages::data(), ['q', 'type', 'media']],
+        ];
+    }
+
+    /** @return list<\TinyCat\Core\Modules\LocalizedRoute> */
+    public static function localizedRoutes(): array
+    {
+        return array_map(static fn (array $route): \TinyCat\Core\Modules\LocalizedRoute => new \TinyCat\Core\Modules\LocalizedRoute('social.' . $route[1], \TinyCat\Http\Router::pattern($route[0]), $route[4]), self::routes());
+    }
+
+    public static function register(): void
+    {
+        foreach (self::routes() as [$path, $kind, $handler, $load, $query]) {
+            \TinyCat\Http\Router::page('tinycat.social', $path, $handler, static function (string ...$params) use ($kind, $load): ?array {
+                $data = $load(...$params);
+                return $data !== null ? self::resource($kind, $data) : null;
+            }, $query);
+        }
+        \TinyCat\Http\Router::route('GET', '/author', static fn () => \TinyCat\Social\Posts\AuthorPages::author());
+    }
+
     /** @return array<string, mixed> */
     public static function find(string $path): array
     {
         if (\TinyCat\Http\LocaleRouting::split($path)['locale'] !== null) { $path = \TinyCat\Http\LocaleRouting::prepare($path); \TinyCat\Http\LocaleRouting::apply(); }
-        $kind = ''; $data = null;
-        if ($path === '/social' || ($path === '/' && \TinyCat\Social\Posts\Feed::homePath() === '/')) { $kind = 'home'; $data = \TinyCat\Social\Posts\Pages::homeData(); }
-        elseif ($path === '/search') { $kind = 'search'; $data = \TinyCat\Social\Search\Pages::data(); }
-        elseif (preg_match('~^/status/([1-9][0-9]*)$~D', $path, $match)) { $kind = 'status'; $data = \TinyCat\Social\Posts\Pages::detailData((int) $match[1]); }
-        elseif (preg_match('~^/author/([1-9][0-9]*)$~D', $path, $match)) { $kind = 'author'; $data = \TinyCat\Social\Profiles\Pages::authorData((int) $match[1]); }
-        elseif (preg_match('~^/tag/([^/]+)$~D', $path, $match)) { $kind = 'tag'; $data = \TinyCat\Social\Posts\Pages::tagData($match[1]); }
-        if ($data === null) { Response::error(Localization::t('public.not_found_title'), 404, 'not_found'); }
+        $resource = \TinyCat\Http\Router::pageResource('tinycat.social', $path);
+        if ($resource === null) { Response::error(Localization::t('public.not_found_title'), 404, 'not_found'); }
         header('Cache-Control: no-store, private');
-        return self::resource($kind, $data);
+        return $resource;
     }
 
     /** @param array<string, mixed> $data */
@@ -61,7 +85,8 @@ final class PublicPages
             }
         }
         return [
-            'version' => \TinyCat\Support\Version::CURRENT, 'kind' => $kind, 'url' => \TinyCat\Http\LocaleRouting::url($url), 'locale' => Localization::locale(), 'viewer' => $viewer !== null ? Users::profile($viewer) : null,
+            'constraints' => Posts::constraints(),
+            'routes' => \TinyCat\Http\Router::pageDefinitions('tinycat.social'), 'version' => \TinyCat\Support\Version::CURRENT, 'kind' => $kind, 'url' => \TinyCat\Http\LocaleRouting::url($url), 'locale' => Localization::locale(), 'viewer' => $viewer !== null ? Users::profile($viewer) : null,
             'document' => \TinyCat\Core\Ui\Metadata::document($page),
             'tag' => (string) ($context['tag'] ?? ''), 'compact' => (bool) ($context['compact'] ?? false),
             'feed' => (string) ($context['feed'] ?? 'all'), 'feed_id' => $feedId,

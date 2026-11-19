@@ -1,0 +1,8 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["/App/**/assets/components.json", "/assets/**/components.json"],
+      "url": "./docs/reference/component-catalog.schema.json"
+    }
+  ]
+}

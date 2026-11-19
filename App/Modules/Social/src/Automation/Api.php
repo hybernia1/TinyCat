@@ -10,11 +10,11 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
-        $api->get('/bots/queue', static fn (): Result => Queue::listing(), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-queue', 'endpoint'), static fn (): Result => Queue::listing(), 'admin');
         $api->post('/bots/queue/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Queue::publish((int) $p['id']), 'admin');
 
-        $api->get('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccounts()), 'admin');
-        $api->get('/bots/accounts/creation', static fn (): array => Resource::creation(), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'endpoint'), static fn (): Result => Result::from(Actions::adminBotAccounts()), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'editor.creation'), static fn (): array => Resource::creation(), 'admin');
         $api->post('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccountCreate()), 'admin');
         $api->get('/bots/accounts/{id:[0-9]+}/runs', static function (Request $r, array $p): Result {
             $id = (int) $p['id'];
@@ -25,8 +25,8 @@ final class Api
             $account = Administration::accountById((int) $p['id']);
             if ($account === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
             $data = $r->validated(['enabled' => 'required|boolean']);
-            $active = in_array($data['enabled'], [true, 1, '1'], true);
-            \TinyCat\Social\Profiles\Accounts::setActive($account, $active);
+            $active = filter_var($data['enabled'], FILTER_VALIDATE_BOOLEAN);
+            \TinyCat\Core\Identity\Administration::setActive(\TinyCat\Core\Identity\Api::actor(), $account, $active, \TinyCat\Core\Identity\Participants::current());
             return Result::from(Administration::accountsPayload((int) $p['id']) + \TinyCat\Support\AdminViews::activationNotice($active, '@' . $account['username']));
         }, 'admin');
         $api->get('/bots/accounts/{id:[0-9]+}/posts', static function (Request $request, array $params): array {
@@ -46,16 +46,16 @@ final class Api
         }, 'admin');
         $api->patch('/bots/accounts/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotAccountUpdate((int) $p['id'])), 'admin');
         $api->delete('/bots/accounts/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotAccountDelete((int) $p['id'])), 'admin');
-        $api->get('/bots/sources', static fn (): Result => Result::from(Actions::adminBotSources()), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-sources', 'endpoint'), static fn (): Result => Result::from(Actions::adminBotSources()), 'admin');
         $api->get('/bots/sources/management', static function (): array {
             $data = Administration::sourceFormData(null);
-            return ['item' => $data['source'] + ['post_template' => Importer::defaultSourceTemplate(), 'enabled' => true], 'bots' => $data['bots']];
+            return ['item' => $data['source'] + ['post_template' => Importer::defaultSourceTemplate(), 'enabled' => true], 'bots' => $data['bots'], 'constraints' => $data['constraints']];
         }, 'admin');
         $api->get('/bots/sources/{id:[0-9]+}/management', static function (Request $request, array $params): array {
             $source = Importer::findSource((int) $params['id']);
             if ($source === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.not_found'), 404, 'bot_source_not_found'); }
             $data = Administration::sourceFormData($source);
-            return ['item' => Importer::sourceResource($source), 'bots' => $data['bots']];
+            return ['item' => Importer::sourceResource($source), 'bots' => $data['bots'], 'constraints' => $data['constraints']];
         }, 'admin');
         $api->post('/bots/sources/previews', static fn (): array => SourcePreview::payload(), 'admin');
         $api->post('/bots/sources', static fn (): Result => Result::from(Actions::adminBotSourceCreate()), 'admin');

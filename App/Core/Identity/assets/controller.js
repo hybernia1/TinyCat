@@ -1,3 +1,4 @@
+// @component-owned: structure is declared in owner catalogs.
 import "../../../../assets/ui/content-updates.js";
 import "../../../../assets/core/dates.js";
 import "../../../../assets/core/component-renderer.js";
@@ -11,135 +12,49 @@ import "../../../../assets/ui/component-builders.js";
 import "../../../../assets/ui/toasts.js";
 (function () {
   "use strict";
-  var T = window.TinyCat, U = T.ui, e = T.dom.element;
-  function addSubmit(form, label) { form.appendChild(U.button(label || "common.save", { type: "submit", "class": "btn btn-primary" })); }
-  function check(form, name, label, checked) {
-    var root = e("label", { "class": "check-line" });
-    var input = e("input", { type: "checkbox", name: name, value: "1" });
-    input.checked = Boolean(checked);
-    root.append(input, e("span", {}, U.text(label))); form.appendChild(root);
-  }
+  var T = window.TinyCat, U = T.ui;
   function accountEditor(data, url, id) {
-    var user = data.user, content = e("div"), sections = e("div", { "data-editor-sections": "" });
-    content.appendChild(sections);
+    var user = data.user, languages = {};
+    Object.keys(data.options.languages).forEach(function (key) { var value = data.options.languages[key]; languages[key] = typeof value === "object" ? (value.name || value.label || key) : value; });
+    var model = Object.assign({}, data, { dialog_id: id, original_locale: user.locale || "", languages: languages, has_password: Boolean(data.capabilities.password) });
+    var account = U.form("/api/users/" + user.id, "PATCH", T.components.render("users/account-form", model));
+    var email = U.form(model.has_password ? "/api/users/me/email" : "/api/users/" + user.id, "PATCH", T.components.render("users/email-form", model));
+    var password = model.has_password ? U.form("/api/users/me/password", "PUT", T.components.render("users/password-form", model)) : null;
+    var content = T.components.render("users/account-editor", Object.assign({}, model, { account_form: account, email_form: email, password_form: password }));
     var focus = url.searchParams.get("focus") || "bio";
     var active = /^(security|password|current_password)$/.test(focus) ? "security" : (focus === "email" ? "email" : (focus === "avatar" ? "avatar" : "account"));
-    function panel(form, key, label, icon) {
-      form.id = id + "-" + key + "-form";
-      form.dataset.editorSection = key; form.dataset.editorLabel = label; form.dataset.editorIcon = icon;
-      sections.appendChild(form);
-    }
-    var form = U.form("/api/users/" + user.id, "PATCH");
-    form.dataset.originalLocale = user.locale || "";
-    var grid = e("div", { "class": "grid sm:grid-2" });
-    grid.appendChild(U.field("common.username", "username", user.username, "text", { disabled: true }));
-    var languages = {};
-    Object.keys(data.options.languages).forEach(function (key) { var value = data.options.languages[key]; languages[key] = typeof value === "object" ? (value.name || value.label || key) : value; });
-    grid.appendChild(U.select("common.language", "locale", user.locale, languages));
-    grid.appendChild(U.select("account.theme", "theme", user.theme, { system: U.text("account.theme_system"), light: U.text("account.theme_light"), dark: U.text("account.theme_dark") }));
-    var bio = U.field("account.bio", "bio", user.bio, "textarea", { maxlength: "500", rows: "6" }); bio.classList.add("grid-span-full"); grid.appendChild(bio); form.appendChild(grid);
-    panel(form, "account", "common.account", "user");
-    var email = U.form(data.capabilities.password ? "/api/users/me/email" : "/api/users/" + user.id, "PATCH");
-    if (!data.capabilities.password) { ["bio", "locale", "theme"].forEach(function (name) { email.appendChild(U.hidden(name, user[name] || "")); }); }
-    email.appendChild(U.field("common.email", "email", user.email, "email", { maxlength: "254", autocomplete: "email", "data-email-check-url": "/api/users/" + user.id + "/email-checks" }));
-    email.appendChild(e("span", { "class": "help" }, U.text("account.email_optional")));
-    email.appendChild(U.hidden("email_notifications", "0")); check(email, "email_notifications", "account.email_notifications", user.email_notifications);
-    panel(email, "email", "common.email", "mail");
-    if (data.capabilities.password) {
-      var password = U.form("/api/users/me/password", "PUT");
-      password.dataset.reset = "true";
-      password.appendChild(U.field("common.current_password", "current_password", "", "password", { required: true, autocomplete: "current-password" }));
-      password.appendChild(U.field("common.password", "password", "", "password", { required: true, minlength: "8", maxlength: String(data.options.password_max_length), autocomplete: "new-password" }));
-      password.appendChild(U.field("common.password_confirm", "password_confirm", "", "password", { required: true, minlength: "8", autocomplete: "new-password" }));
-      panel(password, "security", "account.security_settings", "lock");
-    }
-    var avatarSection = e("div", { "data-editor-section": "avatar", "data-editor-label": "account.avatar", "data-editor-icon": "user", "data-editor-editable": "false" });
-    avatarSection.appendChild(T.components.render("users/avatar-control", { user: user })); sections.appendChild(avatarSection);
     var dialog = U.sectionedDialog(id, "@" + user.username, content, false, active);
     dialog.dataset.accountEditor = "true";
     U.accountDialogTitle(dialog, user);
     if (focus) { var field = dialog.querySelector('[name="' + (active === "security" ? "current_password" : focus.replace(/[^a-z_]/g, "")) + '"]'); if (field) { field.autofocus = true; } }
     return dialog;
   }
-
   function avatar(data) {
-    var user = data.user, content = e("div", { "class": "avatar-editor" });
-    var form = U.form("/api/users/" + user.id + "/avatar", "PUT");
-    form.id = "avatar-upload-form-" + user.id;
-    form.dataset.modalCloseOnSuccess = "true";
-    form.enctype = "multipart/form-data";
-    var upload = e("div", { "class": "avatar-upload", "data-avatar-upload": "" }), preview = e("div", { "class": "avatar avatar-xl avatar-upload-preview", "aria-label": U.text("account.avatar_preview") });
-    preview.appendChild(e("img", { src: user.avatar_url || null, alt: user.username, "data-avatar-upload-preview": "", hidden: !user.avatar_url }));
-    var empty = e("span", { "class": "avatar-upload-empty", "data-avatar-upload-empty": "", hidden: Boolean(user.avatar_url) }); empty.appendChild(U.icon("user")); preview.appendChild(empty);
-    var previewGroup = e("div", { "class": "avatar-editor-preview" });
-    previewGroup.appendChild(preview); upload.appendChild(previewGroup);
-    if (user.avatar_custom === false) {
-      var creatorToggle = U.button("account.avatar_creator", { "class": "btn btn-icon avatar-creator-toggle", "aria-label": U.text("account.avatar_creator"), title: U.text("account.avatar_creator"), "aria-expanded": "false", "aria-controls": "avatar-appearance-form-" + user.id, "data-avatar-creator-toggle": "" });
-      creatorToggle.replaceChildren(U.icon("chevron-right")); previewGroup.appendChild(creatorToggle);
-    }
-    var controls = e("div", { "class": "avatar-editor-controls" });
-    controls.appendChild(e("small", { "class": "avatar-upload-empty-note", "data-avatar-upload-empty-note": "", hidden: Boolean(user.avatar_url) }, U.text("account.avatar_upload_empty")));
-    var drop = e("label", { "class": "avatar-upload-drop" });
-    drop.append(e("input", { "class": "sr-only", type: "file", name: "avatar", required: true, accept: "image/jpeg,image/png,image/webp", "aria-label": U.text("account.avatar_upload_label"), "data-avatar-upload-input": "", "data-client-image-max-dimension": "400", "data-client-image-max-bytes": "26214400" }), U.icon("upload"), e("span", {}, U.text("account.avatar_upload_label")));
-    controls.append(drop, e("small", { "class": "text-muted" }, "JPG, PNG, WebP"));
-    upload.appendChild(controls); form.appendChild(upload); content.appendChild(form);
-    var appearanceForm = null;
-    if (user.avatar_custom === false) {
-      appearanceForm = U.form("/api/users/" + user.id + "/avatar", "PATCH");
-      appearanceForm.id = "avatar-appearance-form-" + user.id;
-      appearanceForm.classList.add("avatar-editor-appearance");
-      appearanceForm.dataset.avatarAppearanceForm = "";
-      appearanceForm.dataset.modalCloseOnSuccess = "true";
-      appearanceForm.hidden = true;
-      var settings = { version: 1 };
-      Object.keys(data.appearance_options || {}).forEach(function (key) {
-        var option = data.appearance_options[key], choices = {};
-        option.values.forEach(function (value) { var choiceLabel = "account.avatar_" + (key === "gender" ? "gender_" : "") + value; choices[value] = U.text(choiceLabel); });
-        settings[key] = user.avatar_appearance && user.avatar_appearance[key] || option.default;
-        var fieldLabel = "account.avatar_" + key;
-        var field = U.select(fieldLabel, "avatar_" + key, settings[key], choices);
-        var select = field.querySelector("select");
-        select.dataset.avatarParameter = key; select.dataset.avatarDefault = option.default;
-        if (key === "gender") { select.dataset.avatarGender = ""; }
-        select.removeAttribute("name"); appearanceForm.appendChild(field);
-      });
-      appearanceForm.dataset.originalAppearance = JSON.stringify(settings);
-      appearanceForm.appendChild(U.hidden("appearance", JSON.stringify(settings)));
-      content.appendChild(appearanceForm);
-    }
-    var remove = null;
-    if (user.avatar_url && user.avatar_custom !== false) {
-      remove = U.form("/api/users/" + user.id + "/avatar", "DELETE");
-      remove.dataset.modalCloseOnSuccess = "true";
-      remove.dataset.confirm = U.text("account.remove_avatar_confirm");
-      remove.dataset.confirmTitle = U.text("account.remove_avatar_title");
-      remove.dataset.confirmVariant = "danger";
-      var removeButton = U.button("account.remove_avatar", { type: "submit", "class": "btn avatar-editor-remove" });
-      removeButton.replaceChildren(U.icon("trash"), e("span", {}, U.text("account.remove_avatar"))); remove.appendChild(removeButton);
-    }
-    var footer = U.editorActions(U.button("account.save_avatar", { type: "submit", "class": "btn btn-primary", form: appearanceForm ? appearanceForm.id : form.id, "data-avatar-save": "", disabled: true }), remove);
-    footer.classList.add("avatar-editor-actions");
-    content.appendChild(footer);
-    return content;
+    var user = data.user, generated = user.avatar_custom === false, appearance = { version: 1 };
+    var parameters = generated ? Object.keys(data.appearance_options || {}).map(function (key) {
+      var option = data.appearance_options[key], choices = {};
+      option.values.forEach(function (value) { var choiceLabel = "account.avatar_" + (key === "gender" ? "gender_" : "") + value; choices[value] = U.text(choiceLabel); });
+      appearance[key] = user.avatar_appearance && user.avatar_appearance[key] || option.default;
+      var fieldLabel = "account.avatar_" + key;
+      return { key: key, label: U.text(fieldLabel), value: appearance[key], choices: choices, default: option.default };
+    }) : [];
+    var model = Object.assign({}, data, { generated: generated, appearance: appearance, parameters: parameters });
+    var upload = U.form("/api/users/" + user.id + "/avatar", "PUT", T.components.render("users/avatar-upload", model));
+    var creator = generated ? U.form("/api/users/" + user.id + "/avatar", "PATCH", T.components.render("users/avatar-appearance", model)) : null;
+    var remove = user.avatar_url && !generated ? U.form("/api/users/" + user.id + "/avatar", "DELETE", T.components.render("users/avatar-remove", model)) : null;
+    var save = T.components.render("users/avatar-save", { form_id: creator ? creator.id : upload.id });
+    var actions = T.components.render("users/avatar-actions", { save_action: save, remove_form: remove });
+    return T.components.render("users/avatar-editor", { generated: generated, upload_form: upload, appearance_form: creator, actions: actions });
   }
   function authentication(data) {
     return T.components.render("users/auth-content", Object.assign({}, data, { register: data.mode === "register", old: {} }));
   }
 
-  function adminForm(user, options, create) {
-    var form = U.form(create ? "/api/users" : "/api/users/" + user.id, create ? "POST" : "PATCH");
-    form.dataset.adminUserForm = "true";
-    form.dataset.modalCloseOnSuccess = "true";
-    if (!create) { form.appendChild(U.hidden("scope", "administration")); }
-    form.appendChild(T.components.render("users/admin-fields", { user: user, create: create, protected: Boolean(user.protected), options: Object.assign({}, options.options, options) }));
-    addSubmit(form, create ? "common.create" : "common.save"); return form;
-  }
   T.accounts = {
 
     modal: function (url, response, id) {
       var data = response.data, path = url.pathname;
       if (path.indexOf("/api/users/") !== 0) { return null; }
-      if (path === "/api/users/creation") { return U.sectionedDialog(id, "users.new_user", adminForm({}, data, true), false); }
       if (path === "/api/users/authentication") {
         var authContent = authentication(data), authTitle = data.mode === "register" ? "common.register" : "common.login";
         return authContent.querySelector("form") ? U.formDialog(id, authTitle, authContent, false, { size: "compact", icon: data.mode === "register" ? "user-plus" : "login" }) : U.dialog(id, authTitle, authContent);
@@ -152,11 +67,6 @@ import "../../../../assets/ui/toasts.js";
         return avatarDialog;
       }
       if (/\/management$/.test(path)) {
-        if (url.searchParams.get("panel") === "administration") {
-          var adminDialog = U.sectionedDialog(id, data.user.username, adminForm(data.user, Object.assign({}, data.administration, { options: data.options }), false));
-          U.accountDialogTitle(adminDialog, data.user);
-          return adminDialog;
-        }
         return accountEditor(data, url, id);
       }
       return null;
@@ -190,8 +100,7 @@ import "../../../../assets/ui/toasts.js";
           }, 0);
         }
       }
-      return true;
+      return Array.from(roots || []);
     }
   };
-  T.users = T.accounts; // Compatibility for existing product integrations.
 }());

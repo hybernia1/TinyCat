@@ -15,6 +15,8 @@ function setup() {
     modules: { result: (source, response) => { applied.push(response.data); } }, toasts: { show: message => { toasts.push(message); } }
   };
   T.forms.request = (form, url, options) => T.api.request(url, options);
+  T.forms.validate = () => true;
+T.forms.canSubmit = () => true;
   const window = { TinyCat: T, location: new URL("https://tinycat.test/admin/users"), history: { pushState: (_, __, url) => { history.push(url); } }, addEventListener() {} };
   const context = vm.createContext({ window, document, URL, FormData, AbortController });
   for (const file of ["assets/core/request-lifecycle.js", "assets/core/navigation.js", "assets/ui/list-navigation.js", "assets/ui/ajax-bindings.js"]) {

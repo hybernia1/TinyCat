@@ -9,6 +9,12 @@ use TinyCat\Social\Content\Links;
 
 final class Resource
 {
+    /** @return array<string, array<string, mixed>> */
+    public static function constraints(): array
+    {
+        return \TinyCat\Http\Validator::constraints(PostCreation::rules() + \TinyCat\Social\Content\Interactions::rules());
+    }
+
     /**
      * @param array<mixed> $item
      * @param array<mixed>|null $user
@@ -18,11 +24,11 @@ final class Resource
     {
         $id = (int) ($item['id'] ?? 0);
         $body = (string) ($item['body'] ?? '');
-        $presentation = \TinyCat\Social\Content\Resource::content($id, $body, 'post');
+        $presentation = \TinyCat\Core\Ui\RichTextResource::content($id, $body, 'post', Links::status_links_for_content($id));
         $segments = $presentation['segments'];
         $at = (string) ($item['published_at'] ?? '');
         return [
-            'id' => $id, 'url' => Posts::status_url($id),
+            'id' => $id, 'url' => Posts::status_url($id), 'constraints' => self::constraints(),
             'author' => self::author($item),
             'body' => $body,
             'editable_body' => Mentions::mentions_for_editing((string) ($item['body'] ?? '')),
@@ -69,7 +75,7 @@ final class Resource
      */
     public static function link(array $link, int $contentId = 0): array
     {
-        return \TinyCat\Social\Content\Resource::link($link, $contentId, 'post');
+        return \TinyCat\Core\Ui\RichTextResource::link($link, 'post', $contentId);
     }
 
     /**
@@ -81,10 +87,10 @@ final class Resource
     {
         $id = (int) ($comment['id'] ?? 0);
         $at = (string) ($comment['created_at'] ?? '');
-        return ['id' => $id, 'content_id' => (int) ($comment['content_id'] ?? 0), 'parent_id' => (int) ($comment['parent_id'] ?? 0),
+        return ['constraints' => self::constraints(), 'id' => $id, 'content_id' => (int) ($comment['content_id'] ?? 0), 'parent_id' => (int) ($comment['parent_id'] ?? 0),
             'author' => self::author($comment), 'body' => (string) ($comment['body'] ?? ''),
             'editable_body' => Mentions::mentions_for_editing((string) ($comment['body'] ?? '')),
-            'segments' => \TinyCat\Core\Text\Segments::compactTags(\TinyCat\Core\Text\Segments::text((string) ($comment['body'] ?? ''), [], (int) ($comment['content_id'] ?? 0), $id)),
+            'segments' => \TinyCat\Core\Text\Segments::compactTags(\TinyCat\Core\Text\Segments::text((string) ($comment['body'] ?? ''), 'post', [], (int) ($comment['content_id'] ?? 0), $id)),
             'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'likes_count' => (int) ($comment['likes_count'] ?? 0),
             'liked' => $user !== null && Comments::status_comment_user_liked($id, (int) $user['id']),
@@ -121,7 +127,7 @@ final class Resource
     public static function preloadComments(array $comments, ?array $user): void
     {
         $mentionIds = [];
-        foreach (Comments::status_comment_tree_rows($comments) as $comment) {
+        foreach (\TinyCat\Core\Ui\ThreadTree::flatten($comments) as $comment) {
             if (preg_match_all(Mentions::mention_id_pattern(), \TinyCat\Core\Text\InlineText::withoutLinks((string) ($comment['body'] ?? '')), $matches)) {
                 foreach ($matches[1] as $id) { $mentionIds[] = (int) $id; }
             }

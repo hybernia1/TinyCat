@@ -18,7 +18,7 @@ import "./icons.js";
     if (own(expr, "t")) { return T.i18n.t(expr.t, bindings(expr.values || {}, data)); }
     if (own(expr, "use")) {
       if (!own(templates, expr.use)) { throw new TypeError("Unknown presentation value: " + expr.use); }
-      return value(templates[expr.use], bindings(expr.data || {}, data));
+      return value(templates[expr.use], bindings(expr.data || {}, data, true));
     }
     if (own(expr, "lookup")) { var key = String(value(expr.lookup, data) || ""); return value(own(expr.cases, key) ? expr.cases[key] : (own(expr, "default") ? expr.default : key), data); }
     if (own(expr, "options")) {
@@ -33,14 +33,19 @@ import "./icons.js";
     if (own(expr, "not")) { return !truth(value(expr.not, data)); }
     if (own(expr, "and")) { return expr.and.every(function (part) { return truth(value(part, data)); }); }
     if (own(expr, "or")) { for (var i = 0; i < expr.or.length; i++) { var result = value(expr.or[i], data); if (truth(result)) { return result; } } return null; }
-    var output = {};
-    Object.keys(expr).forEach(function (key) { if (/^(?:__proto__|constructor|prototype)$/.test(key)) { throw new TypeError("Unsupported component key."); } output[key] = value(expr[key], data); }); return output;
+    return bindings(expr, data);
   }
-  function bindings(expressions, data) {
-    var output = {};
-    Object.keys(expressions).forEach(function (key) {
+  function bindings(expressions, data, objectContext) {
+    var forwarded = objectContext && Object.keys(expressions).length === 1 && typeof expressions.get === "string";
+    if (forwarded) {
+      expressions = value(expressions, data);
+      if (!expressions || typeof expressions !== "object") { throw new TypeError("Component context must be a named object."); }
+    }
+    var keys = Object.keys(expressions), output = {};
+    if (forwarded && (Array.isArray(expressions) ? expressions.length : keys.length && keys.every(function (key, index) { return key === String(index); }))) { throw new TypeError("Component context must be a named object."); }
+    keys.forEach(function (key) {
       if (/^(?:__proto__|constructor|prototype)$/.test(key)) { throw new TypeError("Unsupported component key."); }
-      output[key] = value(expressions[key], data);
+      output[key] = forwarded ? expressions[key] : value(expressions[key], data);
     });
     return output;
   }
@@ -61,7 +66,7 @@ import "./icons.js";
     if (Array.isArray(spec)) { fragment = document.createDocumentFragment(); spec.forEach(function (child) { fragment.appendChild(node(child, data)); }); return fragment; }
     if (Object.prototype.hasOwnProperty.call(spec, "when") && !truth(value(spec.when, data))) { return document.createDocumentFragment(); }
     if (spec.each) { fragment = document.createDocumentFragment(); var items = value(spec.each, data) || {}; Object.keys(items).forEach(function (key) { var scope = Object.assign({}, data, { _key: Array.isArray(items) ? Number(key) : key }); scope[spec.as || "entry"] = items[key]; fragment.appendChild(node(spec.children, scope)); }); return fragment; }
-    if (spec.component) { return T.components.render(spec.component, bindings(spec.data || {}, data)); }
+    if (spec.component) { return T.components.render(spec.component, bindings(spec.data || {}, data, true)); }
     if (spec.icon) { var icon = T.icons.create(value(spec.icon, data)); if (spec.class) { icon.setAttribute("class", spec.class); } return icon; }
     if (spec.csrf) { return T.dom.element("input", { type: "hidden", name: "_csrf", value: T.api.csrfToken() }); }
     if (spec.rich) { fragment = document.createDocumentFragment(); rich(fragment, value(spec.rich, data)); return fragment; }

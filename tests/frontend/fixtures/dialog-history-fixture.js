@@ -26,13 +26,12 @@
     if (url.pathname === '/api/bots/accounts/7' || url.pathname === '/api/users/7/avatar' || /^\/api\/articles\/(?:creation|7\/management)$/.test(url.pathname)) return editor(id, false);
     return null;
   }});
-  if (!history.state && mode !== 'deep') history.replaceState({publicIndex:0, retained:'list-state'}, '');
+  if (!history.state && !mode.startsWith('deep')) history.replaceState({pageIndex:0, retained:'list-state'}, '');
   T.navigation.registerPage({
     accepts: url => !url.hash,
-    visit(url, restored, replace) {
-      history[replace ? 'replaceState' : 'pushState']({publicIndex:1}, '', url); return Promise.resolve();
-    },
-    restore() { restores++; }
+    target: '#history-test-results',
+    load(url) { return Promise.resolve({url: url.href}); },
+    apply() { if (location.pathname + location.search !== T.navigation.pageUrl()) restores++; }
   });
   document.addEventListener('tinycat:dialog-error', event => { document.body.dataset.dialogError = event.detail.error.message; });
   T.lifecycle.start(); await pause();
@@ -69,8 +68,12 @@
     await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
     check(location.hash.includes('modal=bots/accounts/7') && !location.hash.includes('#section'), 'A modal replaces the visible fragment without corrupting the base anchor');
     history.back(); await wait(() => !modal() && location.href === original, 'Closing restores the original page anchor');
-  } else if (mode === 'deep') {
+  } else if (mode.startsWith('deep')) {
     await wait(() => modal() && tab('history').getAttribute('aria-selected') === 'true', 'A direct URL opens its remote modal and selected tab');
+    if (mode === 'deep-filtered') {
+      const resource = new URL(requests[0], location.href);
+      check(resource.searchParams.get('source') === '12' && resource.searchParams.get('publication') === 'published' && resource.searchParams.get('q') === 'RSS fixture', 'Canonical bot detail fragments preserve resource filters without hidden markers');
+    }
     const length = count(); history.back();
     await wait(() => !modal() && !location.hash, 'Back from a direct modal URL stays on the underlying page');
     history.forward();
@@ -90,7 +93,7 @@
     await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
     const length = count();
     check(location.hash.includes('modal=bots/accounts/7') && location.hash.includes('panel=detail'), 'Opening a modal adds its readable resource URL');
-    check(history.state.publicIndex === 0 && history.state.retained === 'list-state' && history.state.tinycatModal.stack.length === 1, 'Modal metadata is isolated from the page navigation state');
+    check(history.state.pageIndex === 0 && history.state.retained === 'list-state' && history.state.tinycatModal.stack.length === 1, 'Modal metadata is isolated from the page navigation state');
     tab('history').click();
     check(location.hash.includes('tab=history') && count() === length, 'Tab selection replaces the modal entry');
     await T.dialog.openResource('avatar-modal', '/api/users/7/avatar');
@@ -102,7 +105,7 @@
     await wait(() => modal() && modal().id === 'bot-detail-modal' && location.hash.includes('tab=history'), 'Back closes only the nested editor');
     check(tab('history').getAttribute('aria-selected') === 'true', 'The existing parent keeps its active tab');
     history.back(); await wait(() => !modal() && !location.hash, 'Back closes the root modal');
-    await pause(); check(Math.abs(scrollY - scroll) < 2 && document.activeElement === opener, 'Closing restores list scroll and opener focus');
+    await pause(); check(Math.abs(scrollY - scroll) < 2 && document.activeElement === opener, 'Closing restores list scroll and opener focus: ' + JSON.stringify({actual:scrollY, expected:scroll, focus:document.activeElement.id, state:history.state}));
     check(restores === 0, 'Modal Back does not call the page restoration provider');
     history.forward(); await wait(() => modal() && tab('history').getAttribute('aria-selected') === 'true', 'Forward fetches and reopens the selected modal tab');
     T.dialog.close(modal()); await wait(() => !location.hash, 'A programmatic save/close consumes the modal history entry');

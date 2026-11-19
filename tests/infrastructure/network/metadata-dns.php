@@ -37,7 +37,7 @@ namespace TinyCat\Http {
 namespace {
     require_once __DIR__ . '/../../support/cache-isolation.php';
     define('TINYCAT', true);
-    require_once __DIR__ . '/../../../App/autoload.php';
+    require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
     $checks = 0;
     $assert = static function (bool $condition, string $message) use (&$checks): void {
         $checks++;

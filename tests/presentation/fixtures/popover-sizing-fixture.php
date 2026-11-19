@@ -2,10 +2,10 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require __DIR__ . '/../../../App/bootstrap.php';
+require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale('cs');
-$account = \TinyCat\Support\View::part('Identity/user-menu', [
+$account = \TinyCat\Core\Identity\Views::userMenu([
     'authUser' => null, 'profileUrl' => '/author/7', 'profileNeedsEmail' => false,
     'theme' => 'light', 'displayName' => 'catbyte', 'editModalId' => 'modal-users-7', 'editModalUrl' => '/api/users/7',
 ]);
@@ -23,10 +23,10 @@ $filters = [];
 foreach (['bots/queue-filter-form', 'bots/post-filter-form', 'bots/run-filter-form', 'moderation/filter-form', 'scheduler/filter-form'] as $name) {
     $filters[$name] = \TinyCat\Support\Components::render($name, ['filters' => [], 'pagination' => ['per_page' => 25]]);
 }
-$filters['bots/source-filter'] = str_replace(' hidden', '', \TinyCat\Support\View::part('Social/bots/modals/source-filter', ['bots' => []]));
-$filters['bots/account-filter'] = str_replace(' hidden', '', \TinyCat\Support\View::part('Social/bots/modals/account-filter', ['prepared' => ['accounts_url' => '/api/bots/accounts', 'admin_user_statuses' => ['active' => 'Active']]]));
-$notifications = \TinyCat\Support\View::part('Notifications/menu', ['state' => [], 'notifications' => []]);
-$public = \TinyCat\Support\View::part('Ui/public-header', [
+$filters['bots/source-filter'] = \TinyCat\Support\Components::render('bots/source-filter-form', ['bots' => []]);
+$filters['bots/account-filter'] = \TinyCat\Support\Components::render('bots/account-filter-form', ['statuses' => ['active']]);
+$notifications = \TinyCat\Core\Notifications\Views::menu(['state' => [], 'notifications' => []]);
+$public = \TinyCat\Core\Ui\DocumentData::publicHeader([
     'hasGlobalSearch' => true,
     'pageUrls' => ['/' => '/', '/search' => '/search', '/login' => '/login'], 'content' => '',
     'analyticsConfigured' => false, 'appName' => 'TinyCat', 'authUser' => null, 'current' => '/',

@@ -24,26 +24,19 @@ final class Api
         $api->get('/users/{id:[0-9]+}/following', self::following(...), 'user');
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public static function actor(): array
-    {
-        return \TinyCat\Core\Identity\Api::actor();
-    }
 
     /**
      * @return array<string, mixed>
      */
     private static function follow(int $id, bool $following): array
     {
-        $actor = self::actor();
+        $actor = \TinyCat\Core\Identity\Api::actor();
         if ($id === (int) $actor['id']) { Response::error(\TinyCat\Support\Localization::t('auth.forbidden'), 403, 'forbidden'); }
         if (Repository::public_author_find($id) === null) { Response::error(\TinyCat\Support\Localization::t('public.author_not_found'), 404, 'user_not_found'); }
         $current = Following::author_is_followed((int) $actor['id'], $id);
         if ($current !== $following) { \TinyCat\Core\Security\RequestLimits::requireAllowed('follow', (int) $actor['id']); }
         if ($following) { Following::author_follow((int) $actor['id'], $id); }
-        else { Profiles::author_unfollow((int) $actor['id'], $id); }
+        else { Following::author_unfollow((int) $actor['id'], $id); }
         return ['author_id' => $id, 'following' => $following, 'followers_count' => (int) Following::author_follow_counts($id)['followers']];
     }
 

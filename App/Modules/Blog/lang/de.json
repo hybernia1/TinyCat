@@ -12,7 +12,7 @@
     "empty": "Noch keine Artikel.",
     "older": "Ältere Artikel",
     "not_found": "Artikel nicht gefunden.",
-    "invalid": "Titel (bis zu 200 Zeichen) und Text (bis zu 60.000 UTF-8-Bytes) eingeben.",
+    "invalid": "Titel (bis zu {title_max} Zeichen) und Text (bis zu {body_max} UTF-8-Bytes) eingeben.",
     "articles": "Articles",
     "scheduled": "Geplant",
     "feeds": {
@@ -27,7 +27,7 @@
       "run": "Import starten",
       "preview": "Importvorschau",
       "preview_empty": "Keine verwendbaren Einträge.",
-      "invalid": "Name, öffentliche Feed-URL, aktiven Administrator und Intervall von 5 bis 43.200 Minuten prüfen. Die URL einer gespeicherten Quelle ist unveränderlich."
+      "invalid": "Name, öffentliche Feed-URL, aktiven Administrator und Intervall von {interval_min} bis {interval_max} Minuten prüfen. Die URL einer gespeicherten Quelle ist unveränderlich."
     },
     "settings": {
       "images_enabled": "Post-Bilder zulassen",

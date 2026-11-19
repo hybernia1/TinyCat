@@ -1,3 +1,4 @@
+// @component-owned: structure is declared in owner catalogs.
 import "../../../../../assets/ui/content/comments.js";
 import "../../../../../assets/ui/content/runtime.js";
 import "../../../../../assets/ui/content-updates.js";
@@ -7,19 +8,10 @@ import "../../../../../assets/core/dom.js";
 import "../../../../../assets/ui/component-builders.js";
 (function () {
   "use strict";
-  var T = window.TinyCat, U = T.ui, e = T.dom.element;
+  var T = window.TinyCat, U = T.ui;
   function base(id) { return "/api/statuses/" + Number(id); }
-  function form(url, action, id) {
-    var root = e("form", { action: url, method: "post", "data-status-form": "", "data-status-id": id });
-    if (["update", "comment", "comment_update", "report"].indexOf(action) !== -1) {
-      root.dataset.confirmUnsaved = "true";
-      root.dataset.confirmUnsavedTitle = U.text("common.unsaved_title"); root.dataset.confirmUnsavedMessage = U.text("common.unsaved_message");
-      root.dataset.confirmUnsavedOk = U.text("common.leave"); root.dataset.confirmUnsavedCancel = U.text("common.stay");
-    }
-    root.appendChild(U.hidden("action", action)); return root;
-  }
-  function editor(name, body, placeholder) {
-    return T.components.render("publishing/editor", { name: name, comment: false, value: body || "", suggest_url: "/api/search/suggestions", max_length: 2000, placeholder: U.text(placeholder) });
+  function form(url, action, id, body, className, enctype) {
+    return T.components.render("status/dialog-form", { url: url, action: action, id: id, body: body, form_class: className || null, enctype: enctype || null });
   }
   T.status = {
     segments: function (segments) {
@@ -33,19 +25,15 @@ import "../../../../../assets/ui/component-builders.js";
       return T.components.render("status/comment", { item: item, context: context || "", viewer: viewer, show_replies: true, show_reply_form: true });
     },
     modal: function (url, response, id) {
-      var data = response.data, content = e("div", { "class": "stack" }), item = data.item;
+      var data = response.data, item = data.item;
       if (url.pathname === "/api/moderation/report-options") {
-        var report = form("/api/moderation/reports", "report", url.searchParams.get("id"));
-        report.classList.add("status-modal-form");
-        report.appendChild(U.hidden("id", url.searchParams.get("id")));
-        report.appendChild(U.select("moderation.report_reason", "reason", "spam", Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; }))));
-        report.appendChild(U.field("moderation.report_note", "note", "", "textarea", { maxlength: String(data.note_max_length || 1000) }));
-        report.appendChild(U.button("moderation.report_submit", { type: "submit", "class": "btn btn-primary" }));
+        var reportModel = Object.assign({}, data, { id: url.searchParams.get("id"), note_max_length: data.note_max_length || 1000,
+          reasons: Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; })) });
+        var report = form("/api/moderation/reports", "report", reportModel.id, T.components.render("status/report-fields", reportModel), "status-modal-form");
         return U.formDialog(id, "moderation.report_submit", report);
       }
       if (!/^\/api\/statuses\//.test(url.pathname)) { return null; }
       if (/\/embed$/.test(url.pathname)) {
-        content.appendChild(e("p", { "class": "muted" }, U.text("account.status_embed_help")));
         var previewUrl = new URL(data.frame_url, window.location.href);
         if (previewUrl.origin !== window.location.origin || !/\/status\/[1-9][0-9]*\/embed$/.test(previewUrl.pathname)) throw new TypeError("Invalid embed preview URL.");
         var preview = document.createElement("iframe");
@@ -60,11 +48,9 @@ import "../../../../../assets/ui/component-builders.js";
           if (window.ResizeObserver) { previewObserver = new window.ResizeObserver(resize); previewObserver.observe(card); }
           resize();
         });
-        content.appendChild(preview);
-        var field = U.field("account.status_embed_code", "embed_code", data.snippet, "textarea", { readonly: "", rows: "6", spellcheck: "false" });
-        var code = field.querySelector("textarea");
+        var content = T.components.render("status/embed-content", { snippet: data.snippet, preview: preview });
+        var code = content.querySelector("textarea");
         code.addEventListener("click", function () { code.select(); });
-        content.appendChild(field);
         var embedDialog = U.dialog(id, "account.status_embed", content);
         embedDialog.addEventListener("tinycat:modal-close", function () { if (previewObserver) previewObserver.disconnect(); });
         return embedDialog;
@@ -75,25 +61,18 @@ import "../../../../../assets/ui/component-builders.js";
       var panel = url.searchParams.get("panel");
       if (panel === "edit") {
         if (!item.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
-        var edit = form(base(item.id), "update", item.id); edit.dataset.confirmUnsaved = "true"; edit.enctype = "multipart/form-data";
-        edit.appendChild(T.components.render("status/composer-body", { viewer: data.viewer || item.author, value: item.editable_body, image: item.image, enabled: data.options.images_enabled, submit_label: U.text("common.save"), submit_icon: "save" }));
+        var edit = form(base(item.id), "update", item.id, T.components.render("status/edit-fields", data), null, "multipart/form-data");
         return U.formDialog(id, "account.status_edit", edit, false, { size: "wide" });
       }
       if (panel === "comment-edit") {
         var wanted = Number(url.searchParams.get("comment_id")), selected;
         data.comments.forEach(function (comment) { if (comment.id === wanted) { selected = comment; } comment.replies.forEach(function (reply) { if (reply.id === wanted) { selected = reply; } }); });
         if (!selected || !selected.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
-        var commentEdit = form(base(item.id) + "/comments/" + selected.id, "comment_update", item.id); commentEdit.dataset.confirmUnsaved = "true"; commentEdit.classList.add("status-modal-form");
-        var commentLabel = e("div", { "class": "label", id: id + "-label" }, U.text("account.status_comment_placeholder"));
-        var commentEditor = editor("comment", selected.editable_body, "account.status_comment_placeholder");
-        commentEditor.querySelector("textarea").setAttribute("aria-labelledby", id + "-label");
-        commentEditor.querySelector("textarea").required = true;
-        commentEdit.append(commentLabel, commentEditor);
-        commentEdit.appendChild(U.button("common.save", { type: "submit", "class": "btn btn-primary" })); return U.formDialog(id, "common.edit", commentEdit);
+        var commentEdit = form(base(item.id) + "/comments/" + selected.id, "comment_update", item.id,
+          T.components.render("status/comment-edit-fields", { comment: selected, constraints: data.constraints, dialog_id: id }), "status-modal-form");
+        return U.formDialog(id, "common.edit", commentEdit);
       }
-      content.className = "status-post-modal-content";
-      content.appendChild(T.status.card(item, false, false));
-      content.appendChild(T.components.render("status/thread", { item: item, comments: data.comments, viewer: data.viewer, context: "modal" }));
+      var content = T.components.render("status/thread-dialog", Object.assign({}, data, { page_path: window.location.pathname }));
       var dialog = U.dialog(id, "account.status_thread_title", content, false, null, { size: "reading", mobile: "fullscreen" });
       dialog.classList.add("status-post-modal");
       return dialog;
@@ -112,7 +91,7 @@ import "../../../../../assets/ui/component-builders.js";
       feed.id = "status-feed-" + (response.data.feed || "all");
       section.querySelectorAll("[data-status-empty], [data-status-feed-more], [data-feed-login-required]").forEach(T.content.remove);
       section.querySelectorAll(".feed-switch-link").forEach(function (link) { var following = link.getAttribute("href").indexOf("following") !== -1; if (following === (response.data.feed === "following")) { link.setAttribute("aria-current", "page"); } else { link.removeAttribute("aria-current"); } });
-      if (!response.data.items.length) { section.appendChild(e("div", { "class": "alert alert-info", "data-status-empty": "" }, U.text(response.data.login_required ? "auth.login_required" : (response.data.feed === "following" ? "public.feed_empty_following" : "public.feed_empty")))); }
+      if (!response.data.items.length) { section.appendChild(T.components.render("status/feed-empty", response.data)); }
       var pagination = U.pagination(response);
       if (pagination.next_url) {
         section.appendChild(T.components.render("status/feed-more", { target: "#" + feed.id, url: pagination.next_url }));
@@ -124,6 +103,5 @@ import "../../../../../assets/ui/component-builders.js";
     if (url.pathname !== "/api/statuses" || !target || !target.matches(".home-feed-section")) { return false; }
     T.status.feed(target, response); return [target];
   };
-  var media;
-  T.status.controllers = { get editor() { return T.publishing.controllers.editor; }, get media() { return media || (media = Object.assign({}, T.publishing.controllers.media)); }, get translation() { return T.publishing.controllers.translation; } };
+  T.status.controllers = {};
 }());

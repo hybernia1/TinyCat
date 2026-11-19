@@ -60,6 +60,22 @@ final class Execution
 
     public static function listing(): bool { return in_array('--list', $_SERVER['argv'] ?? [], true); }
 
+    /** Time a phase inside an existing test without changing its outcome or process isolation.
+     * @template T
+     * @param callable(): T $operation
+     * @return T */
+    public static function measure(string $label, callable $operation): mixed
+    {
+        self::initialize();
+        $started = hrtime(true); $error = null;
+        try { return $operation(); }
+        catch (\Throwable $failure) { $error = $failure::class; throw $failure; }
+        finally {
+            self::event(['type' => 'phase', 'id' => $label, 'parent' => self::parent(),
+                'seconds' => (hrtime(true) - $started) / 1e9, 'error' => $error]);
+        }
+    }
+
     public static function run(string $id, string $label, string $command): int
     {
         self::initialize();
@@ -93,10 +109,11 @@ final class Execution
     {
         if (!self::$owner) { return; }
         self::$owner = false;
-        $events = []; $items = []; $metadata = [];
+        $phases = []; $items = []; $metadata = [];
         foreach (file(self::$directory . '/events.jsonl', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
-            $event = json_decode($line, true, 512, JSON_THROW_ON_ERROR); $events[] = $event;
+            $event = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
             if ($event['type'] === 'run') { $metadata = $event; continue; }
+            if ($event['type'] === 'phase') { $phases[] = $event; continue; }
             $key = ($event['parent'] ?? '') . ':' . $event['id'];
             if ($event['type'] === 'planned') { $items[$key] = $event + ['status' => 'not-run']; }
             elseif ($event['type'] === 'started') { $items[$key] = array_merge($items[$key] ?? [], $event, ['status' => 'interrupted']); }
@@ -108,7 +125,8 @@ final class Execution
         $summary = [];
         foreach ($items as $item) { $summary[$item['status']] = ($summary[$item['status']] ?? 0) + 1; }
         $report = ['metadata' => $metadata, 'finished_at' => gmdate(DATE_ATOM), 'seconds' => (hrtime(true) - self::$started) / 1e9, 'summary' => $summary,
-            'end_tree_sha256' => hash('sha256', json_encode($endFiles, JSON_THROW_ON_ERROR)), 'source_changes_during_run' => $sourceChanges, 'items' => array_values($items)];
+            'end_tree_sha256' => hash('sha256', json_encode($endFiles, JSON_THROW_ON_ERROR)), 'source_changes_during_run' => $sourceChanges,
+            'phase_timings' => $phases, 'items' => array_values($items)];
         file_put_contents(self::$directory . '/report.json', json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
         echo 'Results: ' . self::$directory . "/report.json\n";
     }

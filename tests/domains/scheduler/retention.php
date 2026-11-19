@@ -24,7 +24,7 @@ if (($argv[1] ?? '') !== '--isolated') {
 
 define('TINYCAT', true);
 $root = $argv[2];
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Support\Paths;
 use TinyCat\Support\Config;
 use TinyCat\Support\FileSweep;
@@ -56,7 +56,7 @@ $file('uploads/avatars/.image-fresh', 60);
 $file('uploads/status-images/2026/10/.image-abandoned');
 $file('uploads/links/2026/10/.image-abandoned');
 for ($attempt = 0; $attempt < 20; $attempt++) {
-    $result = \TinyCat\Social\Profiles\Avatar::cleanupOrphans(2);
+    $result = \TinyCat\Core\Identity\Avatar::cleanupOrphans(2);
     $assert($result['changed'] <= 2, 'Avatar removal stays within its scan budget.');
     if (!$result['has_more']) { break; }
 }

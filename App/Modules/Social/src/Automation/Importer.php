@@ -38,11 +38,12 @@ final class Importer
                     'title' => 'cron.tasks.feeds',
                     'help' => 'cron.tasks.feeds_help',
                     'schedule' => 'cron.tasks.feeds_schedule',
+                    'cadence' => 'cron.cadence.feeds',
             ], order: 10, modeOptions: ['admin' => ['source_id']],
             normalize: self::normalizeTaskOptions(...),
             healthAge: static fn (): ?int => (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_sources WHERE enabled = 1') > 0 ? 1800 : null,
-            detail: RunDetails::present(...),
-            batchOption: 'bot_limit',
+            detail: static fn (array $run): array => RunDetails::present($run),
+            batchOption: 'bot_limit', optionLabels: ['bot_limit' => 'cron.options.bot_limit', 'source_id' => 'cron.options.source_id'],
         );
     }
 
@@ -59,18 +60,6 @@ final class Importer
         return $options;
     }
 
-    /**
-     * @return list<string>
-     */
-    public static function requiredTables(): array
-    {
-        return [
-            'bot_sources',
-            'bot_feed_history',
-            'bot_source_posts',
-            'bot_source_runs',
-        ];
-    }
 
     /**
      * @param array<string, mixed> $context
@@ -122,7 +111,7 @@ final class Importer
 
     public static function feedSourceHash(string $url): string
     {
-        $url = \TinyCat\Social\Content\FeedImport::normalizeFeedUrl($url);
+        $url = \TinyCat\Core\Feeds\SourceUrl::normalize($url);
         return $url !== '' ? hash('sha256', $url) : '';
     }
 

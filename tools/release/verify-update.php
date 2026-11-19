@@ -39,7 +39,7 @@ try {
 
 $packagePath = $directory . DIRECTORY_SEPARATOR . basename((string) ($manifest['package'] ?? ''));
 define('TINYCAT', true);
-require_once $root . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'bootstrap.php';
+require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 try {
     $verified = Manager::verifyLocalPackage($manifestPath, $signaturePath, $packagePath);

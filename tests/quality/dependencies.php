@@ -24,7 +24,7 @@ foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/
 foreach ($graph as $owner => $targets) {
     foreach (array_keys($targets) as $target) {
         $checks++;
-        if (str_starts_with($owner, 'Core\\') && str_starts_with($target, 'Social\\') && $owner !== 'Core\\Runtime\\LegacyNames') {
+        if (str_starts_with($owner, 'Core\\') && str_starts_with($target, 'Social\\')) {
             $failures[] = "Core imports Social: {$owner} -> {$target}";
         }
         if (str_starts_with($owner, 'Core\\') && str_starts_with($target, 'Blog\\')) {
@@ -34,7 +34,13 @@ foreach ($graph as $owner => $targets) {
             $failures[] = "Blog imports Social: {$owner} -> {$target}";
         }
         if (str_starts_with($owner, 'Social\\Profiles\\') && preg_match('/^Social\\\\(?:Posts|Automation)\\\\/', $target)) {
-            $failures[] = "Profiles import another internal data owner: {$owner} -> {$target}";
+            // Social is one module; these explicit integrations replace its callback registry.
+            $integrations = [
+                'Social\\Profiles\\Following' => 'Social\\Posts\\NotificationEvents',
+                'Social\\Profiles\\Registration' => 'Social\\Posts\\Syndication',
+                'Social\\Profiles\\Repository' => 'Social\\Posts\\AuthorStatistics',
+            ];
+            if (($integrations[$owner] ?? null) !== $target) { $failures[] = "Profiles import another internal data owner: {$owner} -> {$target}"; }
         }
         if (in_array($owner, ['Core\\Identity\\Lifecycle', 'Core\\Identity\\Participant', 'Core\\Identity\\Deletion', 'Core\\Identity\\Profile', 'Core\\Identity\\Administration'], true) && str_starts_with($target, 'Core\\Http\\')) {
             $failures[] = "Identity write service imports HTTP orchestration: {$owner} -> {$target}";

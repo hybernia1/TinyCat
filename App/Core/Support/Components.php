@@ -11,6 +11,7 @@ final class Components
     private static int $selection = -1;
     /** @var array<string, mixed>|null */
     private static ?array $templates = null;
+    private static bool $fresh = false;
 
     /**
      * @template T
@@ -19,10 +20,10 @@ final class Components
      */
     public static function withFreshTemplates(callable $build): mixed
     {
-        $templates = self::$templates; $selection = self::$selection;
-        self::$templates = null;
+        $templates = self::$templates; $selection = self::$selection; $fresh = self::$fresh;
+        self::$templates = null; self::$fresh = true;
         try { return $build(); }
-        finally { self::$templates = $templates; self::$selection = $selection; }
+        finally { self::$templates = $templates; self::$selection = $selection; self::$fresh = $fresh; }
     }
 
     /** @return array<string, mixed> */
@@ -31,6 +32,7 @@ final class Components
         $revision = \TinyCat\Core\Modules\Resources::revision();
         if (self::$selection !== $revision) { self::$templates = null; self::$selection = $revision; }
         if (self::$templates !== null) { return self::$templates; }
+        if (!self::$fresh && ($compiled = CompiledAssets::components()) !== null) { return self::$templates = $compiled; }
         $templates = [];
         foreach (\TinyCat\Core\Modules\Resources::files('components') as $file) {
             $definitions = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
@@ -50,8 +52,28 @@ final class Components
         }
         // Resolve selected owners once, before PHP rendering or browser delivery.
         // API responses never choose component names or ship definitions.
-        $resolve = static function (mixed $node) use (&$resolve, $extensions): mixed {
+        $lookups = [];
+        $resolve = static function (mixed $node) use (&$resolve, $extensions, &$lookups): mixed {
             if (!is_array($node)) { return $node; }
+            if (isset($node['admin_ref'])) {
+                if (!is_string($node['admin_ref']) || !is_string($node['field'] ?? null) || count($node) !== 2) { throw new InvalidArgumentException('Invalid admin definition reference.'); }
+                return \TinyCat\Core\Ui\Admin\Definitions::value($node['admin_ref'], $node['field']);
+            }
+            if (isset($node['catalog'])) {
+                if (!is_string($node['catalog']) || !is_string($node['field'] ?? null) || (!isset($node['lookup']) && !isset($node['options']))) { throw new InvalidArgumentException('Invalid component lookup catalog.'); }
+                $id = $node['catalog'];
+                if (!array_key_exists($id, $lookups)) {
+                    $lookups[$id] = [];
+                    foreach (\TinyCat\Core\Modules\Registrations::current()->entries->componentLookups as $catalog) {
+                        if ($catalog->id === $id) { $lookups[$id] = ($catalog->entries)(); break; }
+                    }
+                }
+                $node['cases'] = [];
+                foreach ($lookups[$id] as $key => $entry) {
+                    if (array_key_exists($node['field'], $entry)) { $node['cases'][(string) $key] = $entry[$node['field']]; }
+                }
+                unset($node['catalog'], $node['field']);
+            }
             if (isset($node['extensions'])) {
                 if (!is_string($node['extensions']) || count($node) !== 1) { throw new InvalidArgumentException('Invalid component extension point.'); }
                 return $extensions[$node['extensions']] ?? [];
@@ -146,7 +168,7 @@ final class Components
             $name = (string) $value['use'];
             $templates = self::templates();
             if (!isset($templates[$name])) { throw new InvalidArgumentException('Unknown presentation value: ' . $name); }
-            return self::value($templates[$name], self::bindings((array) ($value['data'] ?? []), $data));
+            return self::value($templates[$name], self::context((array) ($value['data'] ?? []), $data));
         }
         if (array_key_exists('lookup', $value)) {
             $key = Values::string(self::value($value['lookup'], $data));
@@ -190,6 +212,20 @@ final class Components
         return $result;
     }
 
+    /** @param array<mixed> $bindings
+     * @param array<mixed> $data
+     * @return array<mixed> */
+    private static function context(array $bindings, array $data): array
+    {
+        if (count($bindings) !== 1 || !is_string($bindings['get'] ?? null)) { return self::bindings($bindings, $data); }
+        $context = self::value($bindings, $data);
+        if (!is_array($context) || ($context !== [] && array_is_list($context))) { throw new InvalidArgumentException('Component context must be a named object.'); }
+        foreach (array_keys($context) as $key) {
+            if (in_array($key, ['__proto__', 'constructor', 'prototype'], true)) { throw new InvalidArgumentException('Unsupported component key.'); }
+        }
+        return $context;
+    }
+
     private static function truth(mixed $value): bool
     {
         return $value !== null && $value !== false && $value !== '' && $value !== 0 && $value !== [];
@@ -208,7 +244,7 @@ final class Components
             }
             return $output;
         }
-        if (isset($node['component'])) { return self::render((string) $node['component'], self::bindings((array) ($node['data'] ?? []), $data)); }
+        if (isset($node['component'])) { return self::render((string) $node['component'], self::context((array) ($node['data'] ?? []), $data)); }
         if (isset($node['icon'])) { return Html::icon((string) self::value($node['icon'], $data), (string) ($node['class'] ?? 'icon')); }
         if (isset($node['csrf'])) { return \TinyCat\Core\Security\Csrf::field(); }
         if (isset($node['rich'])) { return self::rich((array) self::value($node['rich'], $data)); }

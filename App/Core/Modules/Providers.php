@@ -84,9 +84,11 @@ final class Providers
                 if (preg_match('/^[a-z][a-z0-9.-]+$/D', $stream) !== 1) { throw new \InvalidArgumentException('Invalid schema stream ID.'); }
                 if (isset($schemas[$stream])) { throw new \InvalidArgumentException('Duplicate schema stream: ' . $stream); }
                 foreach ([...$schema->migrations, ...($schema->baseline !== null ? [$schema->baseline] : []), ...($schema->legacy !== null ? [$schema->legacy] : [])] as $migration) {
-                    $file = realpath($migration->file);
-                    $root = $definition->resources['migrations'] ?? null;
-                    if ($file === false || !is_file($file) || !is_readable($file) || $root === null || !ModuleAutoload::inside($file, $root) || pathinfo($file, PATHINFO_EXTENSION) !== 'php') { throw new \InvalidArgumentException('Migration is outside its declared module resources.'); }
+                    if ($migration->file !== null) {
+                        $file = realpath($migration->file);
+                        $root = $definition->resources['migrations'] ?? null;
+                        if ($file === false || !is_file($file) || !is_readable($file) || $root === null || !ModuleAutoload::inside($file, $root) || pathinfo($file, PATHINFO_EXTENSION) !== 'php') { throw new \InvalidArgumentException('Migration is outside its declared module resources.'); }
+                    }
                     if (isset($ids[$migration->id])) { throw new \InvalidArgumentException('Duplicate module migration ID: ' . $migration->id); }
                     $ids[$migration->id] = true;
                 }

@@ -35,7 +35,7 @@ if (!in_array($argv[1] ?? '', ['--isolated', '--combined'], true)) {
 }
 $workspace = $argv[2];
 define('TINYCAT', true);
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 if (($argv[1] ?? '') === '--combined') { require $sourceRoot . '/tests/fixtures/blog/coexistence.php'; exit(0); }
 use TinyCat\Blog\Articles;
 use TinyCat\Blog\Installation;
@@ -105,38 +105,34 @@ $state = ModuleSchemas::state($pdo, 'tinycat.blog');
 Installation::upgrade($pdo); Installation::upgrade($pdo);
 $assert(ModuleSchemas::state($pdo, 'tinycat.blog') === $state && Articles::find($id)['title'] === 'Changed', 'Repeated upgrade verifies history and preserves existing articles');
 try { Installation::install($pdo); $assert(false, 'Fresh installer adopted existing data'); } catch (RuntimeException) { $assert(Articles::find($id) !== null, 'Fresh install refuses an existing database'); }
-$pdo->exec("UPDATE module_migrations SET checksum = 'tampered' WHERE module_id = 'tinycat.blog' AND version = 1");
+$pdo->exec("UPDATE migrations SET checksum = 'tampered' WHERE stream = 'tinycat.blog' AND sequence = 1");
 try { Installation::upgrade($pdo); $assert(false, 'Checksum mismatch accepted'); } catch (RuntimeException) { $assert(true, 'Upgrade rejects modified history'); }
-$pdo->exec("UPDATE module_migrations SET checksum = '" . ModuleSchemas::checksum($workspace . '/App/Modules/Blog/migrations/001-articles.php') . "' WHERE module_id = 'tinycat.blog' AND version = 1");
+$pdo->exec("UPDATE migrations SET checksum = '" . ModuleSchemas::migrationChecksum(TinyCat\Blog\Module::schema()->migrations[0]) . "' WHERE stream = 'tinycat.blog' AND sequence = 1");
 Articles::delete($hidden, $admin);
 $assert(Connection::find('blog_articles', ['id' => $hidden]) === null && Connection::find('blog_articles', ['id' => $hidden]) === null, 'Publication deletion cascades article data');
 TinyCat\Core\Modules\Providers::assertDistributable(Installation::modules()->catalog);
-$assert(TinyCat\Core\Modules\Distribution::modular(TinyCat\Core\Modules\Distribution::describe($workspace, 'tinycat.blog', require $workspace . '/App/Modules/Blog/selection.php')), 'Blog distribution declares its own managed schema history');
+$assert(TinyCat\Core\Modules\Distribution::describe($workspace, 'tinycat.blog', require $workspace . '/App/Modules/Blog/selection.php')['format'] === 4, 'Blog distribution declares its archived schema history');
 $recovery = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $recovery->exec('PRAGMA foreign_keys = ON'); TinyCat\Core\Identity\Schema::install($recovery);
-foreach (['001-initial.php', '002-kinds.php'] as $migration) { (require $sourceRoot . '/App/Modules/Social/migrations/publishing/' . $migration)($recovery); }
-(require $sourceRoot . '/App/Modules/Social/migrations/publishing/interactions/001-initial.php')($recovery);
 $schema = TinyCat\Blog\Module::schema();
-$interrupted = new TinyCat\Core\Modules\ModuleSchema($schema->version, $schema->tables, static function (PDO $pdo): void { throw new RuntimeException('Interrupted before DDL'); }, $schema->migrations);
+$interrupted = new TinyCat\Core\Modules\ModuleSchema($schema->version, $schema->tables, static function (PDO $pdo): void { throw new RuntimeException('Interrupted before DDL'); }, $schema->migrations, $schema->baseline);
 try { ModuleSchemas::install($recovery, ['tinycat.blog' => $interrupted]); $assert(false, 'Injected installation should fail'); } catch (RuntimeException) { $assert(ModuleSchemas::state($recovery, 'tinycat.blog') === null, 'SQLite failed DDL transaction rolls back its state'); }
 // MySQL can retain this interrupted state after implicit DDL commits; exercise its recovery migration on SQLite too.
 $recovery->exec("INSERT INTO module_installations(module_id, version, status) VALUES ('tinycat.blog', 0, 'failed')");
 ModuleSchemas::upgrade($recovery, ['tinycat.blog' => $schema]);
 $assert(ModuleSchemas::ready($recovery, ['tinycat.blog' => $schema]), 'Actual Blog migration upgrades an interrupted version zero install');
-// Adopt the published Scheduler history without loading its adapter.
+// Current execution history remains immutable across repeated synchronization.
 $historyDb = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$oldHistory = $workspace . '/App/Core/Tasks/migrations/001-initial.php';
-$oldSchema = new TinyCat\Core\Modules\ModuleSchema(1, ['scheduler_runs'], static function (PDO $db) use ($oldHistory): void { (require $oldHistory)($db); }, [new TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.scheduler.initial', $oldHistory)]);
-ModuleSchemas::install($historyDb, ['tinycat.scheduler' => $oldSchema]);
-$historyDb->exec("INSERT INTO scheduler_runs(id, task, mode, status, started_at, options_json) VALUES (42, 'retained', 'cli', 'completed', '2026-01-01 00:00:00', '{}')");
 $coreHistory = ['tinycat.support' => TinyCat\Core\Tasks\Schema::schema($workspace)];
 ModuleSchemas::synchronize($historyDb, $coreHistory);
-$assert(ModuleSchemas::ready($historyDb, $coreHistory) && (int) $historyDb->query('SELECT id FROM scheduler_runs')->fetchColumn() === 42, 'Core adoption preserves existing execution IDs and published Scheduler history');
-$historyDb->exec("UPDATE module_migrations SET checksum = 'tampered' WHERE module_id = 'tinycat.scheduler'");
-try { ModuleSchemas::pending($historyDb, $coreHistory); $assert(false, 'Corrupt legacy migration accepted'); } catch (RuntimeException) { $assert(true, 'Core deployment rejects corrupt legacy history after adapter removal'); }
-$historyDb->exec("UPDATE module_migrations SET checksum = '" . TinyCat\Core\Tasks\Schema::LEGACY_CHECKSUM . "' WHERE module_id = 'tinycat.scheduler'");
-(require $sourceRoot . '/migrations/20261112_003_core_task_history.php')($historyDb);
-$assert((int) $historyDb->query('SELECT id FROM scheduler_runs')->fetchColumn() === 42 && ModuleSchemas::ready($historyDb, $coreHistory), 'Legacy global upgrade and standalone synchronization share the same immutable history baseline');
+$historyDb->exec("INSERT INTO scheduler_runs(id, task, mode, status, started_at, options_json) VALUES (42, 'retained', 'cli', 'completed', '2026-01-01 00:00:00', '{}')");
+$historyBefore = TinyCat\Database\Migrations::history($historyDb, 'schema', 'tinycat.support');
+ModuleSchemas::synchronize($historyDb, $coreHistory);
+$assert(ModuleSchemas::ready($historyDb, $coreHistory) && (int) $historyDb->query('SELECT id FROM scheduler_runs')->fetchColumn() === 42 && TinyCat\Database\Migrations::history($historyDb, 'schema', 'tinycat.support') === $historyBefore, 'Current synchronization preserves task IDs and exact applied checksums and timestamps');
+$historyDb->exec("UPDATE migrations SET checksum = 'tampered' WHERE stream = 'tinycat.support' AND sequence = 1");
+try { ModuleSchemas::pending($historyDb, $coreHistory); $assert(false, 'Corrupt applied migration accepted'); } catch (RuntimeException) { $assert(true, 'Core deployment rejects corrupt applied history after adapter removal'); }
+$historyDb->prepare("UPDATE migrations SET checksum = ? WHERE stream = 'tinycat.support' AND sequence = 1")->execute([array_column($historyBefore, 'checksum', 'sequence')[1]]);
+$assert(!ModuleSchemas::pending($historyDb, $coreHistory), 'Restoring the exact stored checksum makes current history verifiable again');
 $compile = require $workspace . '/tools/assets/compile-assets.php'; $files = $compile();
 $assert(count(TinyCat\Support\TranslationSources::packages()) === 12, 'Blog selection builds all twelve locales');
 foreach (TinyCat\Support\ClientAssets::scopes() as $scope) {
@@ -183,6 +179,11 @@ try {
     }
     [$status, $resource] = $request('/api/article-sources/creation', actor: 'admin');
     $assert($status === 200 && $resource['data']['item']['publication_status'] === 'hidden' && count($resource['data']['authors']) === 1, 'Source creation loads canonical current author choices on demand');
+    $assert($resource['data']['constraints'] === \TinyCat\Blog\FeedSources::constraints(), 'Source creation publishes the same rules enforced by direct writes');
+    foreach ([\TinyCat\Blog\FeedSources::INTERVAL_MIN - 1, \TinyCat\Blog\FeedSources::INTERVAL_MAX + 1] as $interval) {
+        [$status, $invalidSource] = $request('/api/article-sources', 'POST', ['name' => 'Invalid interval', 'feed_url' => 'https://93.184.216.34/invalid-' . $interval, 'author_id' => 1, 'interval_minutes' => $interval], 'admin');
+        $assert($status === 422 && isset($invalidSource['error']['details']['errors']['interval_minutes']), 'Source API returns field errors for both owner interval bounds');
+    }
     foreach (['', 'member'] as $actor) {
         [$status] = $request('/api/modules/packages/creation', actor: $actor);
         $assert(in_array($status, [401, 403], true), 'Module package editor requires an administrator');
@@ -259,6 +260,27 @@ try {
     $assert($status === 403, 'Core diagnostics mutation requires CSRF without Social');
     [$status, , $dashboard] = $request('/admin', actor: 'admin');
     $assert($status === 200 && str_contains($dashboard, 'id="dashboard-cache"') && !str_contains($dashboard, 'recent-comments'), 'Core administration hosts diagnostics without social tables');
+    preg_match('/data-settings-presentation="([^"]+)"/', $dashboard, $settingsPresentationMatch);
+    $settingsPresentation = json_decode(html_entity_decode($settingsPresentationMatch[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true, 512, JSON_THROW_ON_ERROR);
+    $assert(isset($settingsPresentation['sections']['blog'], $settingsPresentation['fields']['blog.images.enabled']) && !isset($settingsPresentation['sections']['content_images']), 'Blog-only admin derives its own settings presentation without Social client assets');
+    [$status, $editor] = $request('/api/settings/editor', actor: 'admin');
+    $unchanged = [];
+    foreach ($editor['data']['sections'] ?? [] as $section) {
+        if ($section['key'] !== 'blog') { continue; }
+        foreach ($section['fields'] as $field) { $unchanged[$field['key']] = $field['value']; }
+    }
+    $assert($status === 200 && count($unchanged) === count(TinyCat\Blog\Settings::KEYS), 'Blog settings editor supplies every owned default');
+    [$status, $saved] = $request('/api/settings', 'PATCH', ['settings' => $unchanged], 'admin');
+    $assert($status === 200 && ($saved['data']['saved'] ?? false), 'Unchanged Blog settings accept empty optional URL rules and UTM fields');
+    [$status, $editor] = $request('/api/settings/editor', actor: 'admin');
+    $roundTrip = [];
+    foreach ($editor['data']['sections'] ?? [] as $section) {
+        if ($section['key'] !== 'blog') { continue; }
+        foreach ($section['fields'] as $field) { $roundTrip[$field['key']] = $field['value']; }
+    }
+    $assert($roundTrip === $unchanged, 'Saving unchanged Blog settings preserves their canonical values');
+    [$status, $rejected] = $request('/api/settings', 'PATCH', ['settings' => ['blog.links.utm.medium' => '']], 'admin');
+    $assert($status === 422 && ($rejected['code'] ?? '') === 'settings_save_failed', 'Required Blog UTM medium still rejects an empty value');
     [$status, , $fallback] = $request('/fixture-core-maintenance');
     $assert($status === 503 && str_contains($fallback, 'noindex') && !str_contains($fallback, '/assets/build/'), 'Maintenance fallback renders without a database or external assets');
     [$status, , $fallback] = $request('/fixture-core-maintenance', 'HEAD');
@@ -291,6 +313,9 @@ try {
     [$status, $data] = $request('/api/articles/' . $id . '/comments', 'POST', ['comment' => 'Shared article comment'], 'admin');
     $commentId = (int) ($data['data']['comment_id'] ?? 0);
     $assert($status === 201 && $commentId > 0 && $data['data']['target']['kind'] === 'article', 'Blog-only HTTP creates a real shared comment');
+    $assert($data['data']['constraints'] === \TinyCat\Blog\Discussion::constraints(), 'Article discussion resources publish their owner constraints.');
+    [$status, $overflow] = $request('/api/articles/' . $id . '/comments/' . $commentId, 'PATCH', ['comment' => str_repeat("\u{1F600}", \TinyCat\Blog\Discussion::COMMENT_MAX_LENGTH + 1)], 'admin');
+    $assert($status === 422 && $overflow['error']['details']['errors']['comment'][0]['code'] === 'validation_max' && (string) $pdo->query('SELECT body FROM blog_comments WHERE id = ' . $commentId)->fetchColumn() === 'Shared article comment', 'Comment overflow returns a field issue and preserves the saved comment.');
     [$status, $data] = $request('/api/articles/' . $id . '/comments', 'POST', ['comment' => 'Reply', 'parent_id' => $commentId], 'member');
     $replyId = (int) ($data['data']['comment_id'] ?? 0);
     $assert($status === 201 && $data['data']['items'][0]['replies'][0]['id'] === $replyId, 'Replies preserve their publication and parent');
@@ -326,6 +351,9 @@ try {
     $assert($status === 200 && !str_contains($html, 'data-article-open') && !str_contains($html, '<textarea'), 'The article list contains no hidden editor trigger or eager fields');
     [$status, $data] = $request('/api/articles/' . $httpId . '/management', actor: 'admin');
     $assert($status === 200 && $data['data']['item']['title'] === 'HTTP edit', 'Admin editor loads the current article through an authorized resource');
+    $assert($data['data']['constraints'] === Articles::constraints() && $data['data']['limits']['body_bytes'] === $data['data']['constraints']['body']['max_bytes'], 'Article management publishes owner rules as data and derives existing limits');
+    [$status, $creationResource] = $request('/api/articles/creation', actor: 'admin');
+    $assert($status === 200 && $creationResource['data']['constraints'] === $data['data']['constraints'], 'Article creation and editing share identical constraints');
     foreach (['/api/articles/management', '/api/articles/creation', '/api/articles/' . $httpId . '/management'] as $path) {
         [$status] = $request($path); $assert($status === 401, 'Article management resource requires administrator identity: ' . $path);
         [$status] = $request($path, actor: 'member'); $assert($status === 403, 'Regular account cannot access article management: ' . $path);
@@ -337,6 +365,8 @@ try {
     $assert($status === 200 && str_contains($html, 'HTTP edit') && str_contains($html, 'noindex'), 'Private archive keeps hidden articles accessible to the editor');
     [$status, $data] = $request('/api/articles/' . $httpId, 'PUT', ['title' => '', 'body' => 'Preserved draft'], 'admin');
     $assert($status === 422 && isset($data['error']['details']['errors']['title']), 'Invalid editor mutation returns field-level validation');
+    [$status, $data] = $request('/api/articles/' . $httpId, 'PUT', ['title' => 'Overflow', 'body' => str_repeat("\u{11B}", intdiv(Articles::BODY_MAX_BYTES, 2)) . 'x'], 'admin');
+    $assert($status === 422 && $data['error']['details']['errors']['body'][0]['code'] === 'validation_max_bytes' && Articles::find($httpId, false)['title'] === 'HTTP edit', 'UTF-8 overflow returns a stable field issue without modifying the article');
     [$status] = $request('/api/articles/' . $httpId, 'DELETE', [], 'admin'); $assert($status === 200, 'Admin deletes through the API');
     $rawUrl = 'https://example.test/reference?original=1#part';
     $link = TinyCat\Core\Text\LinkParser::fromRaw($rawUrl);

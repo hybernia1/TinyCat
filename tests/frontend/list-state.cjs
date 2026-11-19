@@ -76,11 +76,11 @@ const response = label => ({ data: { items: [label], tasks: [], filters: {} }, m
     assert.deepEqual(s.hydrated, [root], id + " reports exactly its changed region");
   }
   s = setup(); root = s.targets.get("users-list"); const focused = new s.Node(); root.replaceChildren(focused); s.document.activeElement = focused;
-  const steps = [], render = s.T.users.list;
+  const steps = [], render = s.T.components.render;
   s.T.filters.capture = node => { assert.equal(node, focused); steps.push("filter capture"); return {}; };
   s.T.filters.restore = () => steps.push("filter restore");
   s.T.popovers = { capture: node => { assert.equal(node, focused); steps.push("menu capture"); return {}; }, restore: () => steps.push("menu restore") };
-  s.T.users.list = (...args) => { steps.push("render"); render(...args); };
+  s.T.components.render = (...args) => { steps.push("render"); return render(...args); };
   s.T.lifecycle.hydrate = node => { assert.equal(node, root); steps.push("hydrate"); };
   const preserving = s.T.lists.refresh(root); s.pending[0].resolve(response("new")); await preserving;
   assert.deepEqual(steps, ["filter capture", "menu capture", "render", "hydrate", "filter restore", "menu restore"]);

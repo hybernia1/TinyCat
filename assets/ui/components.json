@@ -1,110 +1,39 @@
 {
   "ui/field": {
     "tag": "label",
-    "attrs": {
-      "class": "field"
-    },
+    "attrs": {"class": {"or": [{"get": "field_class"}, "field"]}},
     "children": [
+      {"tag": "span", "attrs": {"class": "label"}, "children": [{"get": "label"}]},
+      {"tag": "input", "attrs": {"get": "attributes"}, "when": {"not": {"get": "textarea"}}},
+      {"tag": "textarea", "attrs": {"get": "attributes"}, "when": {"get": "textarea"}, "children": [{"get": "value"}]},
       {
         "tag": "span",
-        "attrs": {
-          "class": "label"
-        },
-        "children": [
-          {
-            "get": "label"
-          }
-        ]
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "get": "attributes"
-        },
-        "children": [],
-        "when": {
-          "not": {
-            "get": "textarea"
-          }
-        }
-      },
-      {
-        "tag": "textarea",
-        "attrs": {
-          "get": "attributes"
-        },
-        "children": [
-          {
-            "get": "value"
-          }
-        ],
-        "when": {
-          "get": "textarea"
-        }
+        "attrs": {"class": "help", "id": {"get": "help_id"}},
+        "when": {"get": "help"},
+        "children": [{"get": "help"}]
       }
     ]
   },
   "ui/select": {
     "tag": "label",
-    "attrs": {
-      "class": "field"
-    },
+    "attrs": {"class": "field"},
     "children": [
-      {
-        "tag": "span",
-        "attrs": {
-          "class": "label"
-        },
-        "children": [
-          {
-            "get": "label"
-          }
-        ]
-      },
+      {"tag": "span", "attrs": {"class": "label"}, "children": [{"get": "label"}]},
       {
         "tag": "select",
-        "attrs": {
-          "get": "attributes"
-        },
+        "attrs": {"get": "attributes"},
         "children": [
           {
-            "each": {
-              "get": "choices"
-            },
+            "each": {"get": "choices"},
             "as": "choice",
             "children": [
               {
                 "tag": "option",
                 "attrs": {
-                  "value": {
-                    "get": "_key"
-                  },
-                  "selected": {
-                    "if": [
-                      {
-                        "eq": [
-                          {
-                            "string": {
-                              "get": "_key"
-                            }
-                          },
-                          {
-                            "string": {
-                              "get": "value"
-                            }
-                          }
-                        ]
-                      },
-                      true,
-                      null
-                    ]
-                  }
+                  "value": {"get": "_key"},
+                  "selected": {"if": [{"eq": [{"string": {"get": "_key"}}, {"string": {"get": "value"}}]}, true, null]}
                 },
-                "children": [
-                  {
-                    "get": "choice"
-                  }
-                ]
+                "children": [{"get": "choice"}]
               }
             ]
           }
@@ -114,269 +43,115 @@
   },
   "ui/pagination": {
     "tag": "nav",
-    "attrs": {
-      "class": "pagination",
-      "aria-label": {
-        "t": "common.pagination"
-      }
-    },
+    "attrs": {"class": "pagination", "aria-label": {"t": "common.pagination"}},
+    "when": {"get": "navigation.visible"},
     "children": [
       {
         "tag": "div",
-        "attrs": {
-          "class": "pagination-summary"
-        },
+        "attrs": {"class": "pagination-summary"},
         "children": [
           {
             "t": "common.pagination_summary",
             "values": {
-              "from": {
-                "get": "navigation.from"
-              },
-              "to": {
-                "get": "navigation.to"
-              },
-              "total": {
-                "get": "navigation.total"
-              }
+              "from": {"get": "navigation.from"},
+              "to": {"get": "navigation.to"},
+              "total": {"get": "navigation.total"}
             }
           }
         ]
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "pagination-list"
-        },
+        "attrs": {"class": "pagination-list"},
         "children": [
           {
             "component": "ui/pagination-step",
             "data": {
-              "step": {
-                "get": "navigation.previous"
-              },
+              "step": {"get": "navigation.previous"},
               "kind": "prev",
               "icon": "chevron-left",
-              "label": {
-                "t": "common.previous"
-              },
-              "target": {
-                "get": "target"
-              }
+              "label": {"t": "common.previous"},
+              "target": {"get": "target"}
             }
           },
           {
-            "each": {
-              "get": "navigation.pages"
-            },
+            "each": {"get": "navigation.pages"},
             "as": "page",
             "children": [
               {
                 "tag": "span",
-                "attrs": {
-                  "class": "pagination-ellipsis",
-                  "aria-hidden": "true"
-                },
-                "children": [
-                  "â€¦"
-                ],
-                "when": {
-                  "get": "page.gap_before"
-                }
+                "attrs": {"class": "pagination-ellipsis", "aria-hidden": "true"},
+                "when": {"get": "page.gap_before"},
+                "children": ["â€¦"]
               },
               {
                 "tag": "span",
-                "attrs": {
-                  "class": "pagination-link is-active",
-                  "aria-current": "page"
-                },
-                "children": [
-                  {
-                    "get": "page.number"
-                  }
-                ],
-                "when": {
-                  "get": "page.current"
-                }
+                "attrs": {"class": "pagination-link is-active", "aria-current": "page"},
+                "when": {"get": "page.current"},
+                "children": [{"get": "page.number"}]
               },
               {
                 "tag": "a",
                 "attrs": {
                   "class": "pagination-link",
-                  "href": {
-                    "get": "page.url"
-                  },
+                  "href": {"get": "page.url"},
                   "data-ajax": "",
-                  "data-ajax-target": {
-                    "get": "target"
-                  },
-                  "data-history": {
-                    "get": "page.history_url"
-                  }
+                  "data-ajax-target": {"get": "target"},
+                  "data-history": {"get": "page.history_url"}
                 },
-                "children": [
-                  {
-                    "get": "page.number"
-                  }
-                ],
-                "when": {
-                  "not": {
-                    "get": "page.current"
-                  }
-                }
+                "when": {"not": {"get": "page.current"}},
+                "children": [{"get": "page.number"}]
               }
             ]
           },
           {
             "component": "ui/pagination-step",
             "data": {
-              "step": {
-                "get": "navigation.next"
-              },
+              "step": {"get": "navigation.next"},
               "kind": "next",
               "icon": "chevron-right",
-              "label": {
-                "t": "common.next"
-              },
-              "target": {
-                "get": "target"
-              }
+              "label": {"t": "common.next"},
+              "target": {"get": "target"}
             }
           }
         ]
       }
-    ],
-    "when": {
-      "get": "navigation.visible"
-    }
+    ]
   },
   "ui/api-action": {
     "tag": "form",
     "attrs": {
       "class": "inline-flex",
       "method": "post",
-      "action": {
-        "get": "url"
-      },
-      "data-api-method": {
-        "get": "method"
-      },
+      "action": {"get": "url"},
+      "data-api-method": {"get": "method"},
       "data-ajax-form": "",
-      "data-ajax-target": {
-        "get": "target"
-      },
-      "data-confirm": {
-        "get": "confirm"
-      },
-      "data-confirm-variant": {
-        "if": [
-          {
-            "get": "confirm"
-          },
-          "danger",
-          null
-        ]
-      }
+      "data-ajax-target": {"get": "target"},
+      "data-confirm": {"get": "confirm"},
+      "data-confirm-variant": {"if": [{"get": "confirm"}, "danger", null]}
     },
     "children": [
+      {"csrf": true},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "_method", "value": {"get": "method"}}},
       {
-        "csrf": true
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "_method",
-          "value": {
-            "get": "method"
-          }
-        },
-        "children": []
-      },
-      {
-        "each": {
-          "get": "fields"
-        },
+        "each": {"get": "fields"},
         "as": "value",
-        "children": [
-          {
-            "tag": "input",
-            "attrs": {
-              "type": "hidden",
-              "name": {
-                "get": "_key"
-              },
-              "value": {
-                "get": "value"
-              }
-            },
-            "children": []
-          }
-        ]
+        "children": [{"tag": "input", "attrs": {"type": "hidden", "name": {"get": "_key"}, "value": {"get": "value"}}}]
       },
       {
         "tag": "button",
         "attrs": {
-          "class": {
-            "or": [
-              {
-                "get": "button_class"
-              },
-              "btn btn-sm btn-ghost"
-            ]
-          },
+          "class": {"or": [{"get": "button_class"}, "btn btn-sm btn-ghost"]},
           "type": "submit",
-          "aria-label": {
-            "get": "label"
-          },
-          "title": {
-            "if": [
-              {
-                "get": "icon"
-              },
-              {
-                "get": "label"
-              },
-              null
-            ]
-          }
+          "aria-label": {"get": "label"},
+          "title": {"if": [{"get": "icon"}, {"get": "label"}, null]}
         },
         "children": [
-          {
-            "icon": {
-              "get": "icon"
-            },
-            "when": {
-              "get": "icon"
-            }
-          },
+          {"icon": {"get": "icon"}, "when": {"get": "icon"}},
           {
             "tag": "span",
-            "attrs": {
-              "class": {
-                "if": [
-                  {
-                    "and": [
-                      {
-                        "get": "icon"
-                      },
-                      {
-                        "not": {
-                          "get": "show_label"
-                        }
-                      }
-                    ]
-                  },
-                  "sr-only",
-                  null
-                ]
-              }
-            },
-            "children": [
-              {
-                "get": "label"
-              }
-            ]
+            "attrs": {"class": {"if": [{"and": [{"get": "icon"}, {"not": {"get": "show_label"}}]}, "sr-only", null]}},
+            "children": [{"get": "label"}]
           }
         ]
       }
@@ -384,78 +159,27 @@
   },
   "ui/modal": {
     "tag": "div",
-    "attrs": {
-      "get": "root_attributes"
-    },
+    "attrs": {"get": "root_attributes"},
     "children": [
+      {"tag": "div", "attrs": {"class": "modal-backdrop"}},
       {
-        "tag": "div",
-        "attrs": {
-          "class": "modal-backdrop"
-        },
-        "children": []
-      },
-      {
-        "tag": {
-          "if": [
-            {
-              "get": "form"
-            },
-            "form",
-            "div"
-          ]
-        },
-        "attrs": {
-          "get": "panel_attributes"
-        },
+        "tag": {"if": [{"get": "form"}, "form", "div"]},
+        "attrs": {"get": "panel_attributes"},
         "children": [
-          {
-            "csrf": true,
-            "when": {
-              "get": "csrf"
-            }
-          },
+          {"csrf": true, "when": {"get": "csrf"}},
           {
             "tag": "input",
-            "attrs": {
-              "type": "hidden",
-              "name": "_method",
-              "value": {
-                "get": "hidden_method"
-              }
-            },
-            "children": [],
-            "when": {
-              "get": "hidden_method"
-            }
+            "attrs": {"type": "hidden", "name": "_method", "value": {"get": "hidden_method"}},
+            "when": {"get": "hidden_method"}
           },
           {
             "tag": "div",
-            "attrs": {
-              "class": "modal-header"
-            },
+            "attrs": {"class": "modal-header"},
             "children": [
               {
                 "tag": "h2",
-                "attrs": {
-                  "class": "text-lg m-0 cluster gap-2",
-                  "id": {
-                    "get": "title_id"
-                  }
-                },
-                "children": [
-                  {
-                    "icon": {
-                      "get": "icon"
-                    },
-                    "when": {
-                      "get": "icon"
-                    }
-                  },
-                  {
-                    "get": "title"
-                  }
-                ]
+                "attrs": {"class": "text-lg m-0 cluster gap-2", "id": {"get": "title_id"}},
+                "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "title"}]
               },
               {
                 "tag": "button",
@@ -463,55 +187,22 @@
                   "class": "btn btn-sm btn-ghost btn-icon",
                   "type": "button",
                   "data-modal-close": "",
-                  "aria-label": {
-                    "get": "close_label"
-                  }
+                  "aria-label": {"get": "close_label"}
                 },
-                "children": [
-                  {
-                    "slot": {
-                      "get": "close_icon"
-                    }
-                  }
-                ]
+                "children": [{"slot": {"get": "close_icon"}}]
               }
             ]
           },
           {
             "tag": "div",
-            "attrs": {
-              "class": {
-                "or": [
-                  {
-                    "get": "body_class"
-                  },
-                  "modal-body"
-                ]
-              }
-            },
-            "children": [
-              {
-                "slot": {
-                  "get": "body"
-                }
-              }
-            ]
+            "attrs": {"class": {"or": [{"get": "body_class"}, "modal-body"]}},
+            "children": [{"slot": {"get": "body"}}]
           },
           {
             "tag": "div",
-            "attrs": {
-              "class": "modal-footer"
-            },
-            "children": [
-              {
-                "slot": {
-                  "get": "footer"
-                }
-              }
-            ],
-            "when": {
-              "get": "has_footer"
-            }
+            "attrs": {"class": "modal-footer"},
+            "when": {"get": "has_footer"},
+            "children": [{"slot": {"get": "footer"}}]
           }
         ]
       }
@@ -522,127 +213,55 @@
     "attrs": {
       "class": "field captcha-provider",
       "data-captcha": "",
-      "data-captcha-provider": {
-        "get": "config.provider"
-      },
-      "data-captcha-sitekey": {
-        "get": "config.site_key"
-      },
-      "data-captcha-context": {
-        "get": "config.context"
-      },
+      "data-captcha-provider": {"get": "config.provider"},
+      "data-captcha-sitekey": {"get": "config.site_key"},
+      "data-captcha-context": {"get": "config.context"},
       "data-captcha-theme": "auto"
     },
+    "when": {"get": "config.enabled"},
     "children": [
-      {
-        "tag": "span",
-        "attrs": {
-          "class": "label"
-        },
-        "children": [
-          {
-            "t": "security.captcha_label",
-            "values": {}
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "captcha-widget",
-          "data-captcha-widget": ""
-        },
-        "children": []
-      }
-    ],
-    "when": {
-      "get": "config.enabled"
-    }
+      {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "security.captcha_label"}]},
+      {"tag": "div", "attrs": {"class": "captcha-widget", "data-captcha-widget": ""}}
+    ]
   },
   "ui/search-form": {
     "tag": "form",
     "attrs": {
       "class": "admin-search-form",
       "method": "get",
-      "action": {
-        "get": "url"
-      },
+      "action": {"get": "url"},
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": {
-        "get": "target"
-      },
-      "data-history": {
-        "get": "history"
-      }
+      "data-ajax-target": {"get": "target"},
+      "data-history": {"get": "history"}
     },
     "children": [
       {
-        "each": {
-          "get": "filters"
-        },
+        "each": {"get": "filters"},
         "as": "value",
         "children": [
           {
             "tag": "input",
-            "attrs": {
-              "type": "hidden",
-              "name": {
-                "get": "_key"
-              },
-              "value": {
-                "get": "value"
-              }
-            },
-            "children": [],
-            "when": {
-              "not": {
-                "eq": [
-                  {
-                    "get": "_key"
-                  },
-                  "q"
-                ]
-              }
-            }
+            "attrs": {"type": "hidden", "name": {"get": "_key"}, "value": {"get": "value"}},
+            "when": {"not": {"eq": [{"get": "_key"}, "q"]}}
           }
         ]
       },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "per_page",
-          "value": {
-            "get": "pagination.per_page"
-          }
-        },
-        "children": []
-      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "per_page", "value": {"get": "pagination.per_page"}}},
       {
         "tag": "span",
-        "attrs": {
-          "class": "input-icon"
-        },
+        "attrs": {"class": "input-icon"},
         "children": [
-          {
-            "icon": "search"
-          },
+          {"icon": "search"},
           {
             "tag": "input",
             "attrs": {
               "class": "input",
               "type": "search",
               "name": "q",
-              "value": {
-                "get": "filters.q"
-              },
-              "aria-label": {
-                "t": "common.search",
-                "values": {}
-              }
-            },
-            "children": []
+              "value": {"get": "filters.q"},
+              "aria-label": {"t": "common.search"}
+            }
           }
         ]
       }
@@ -653,113 +272,45 @@
     "attrs": {
       "class": "admin-per-page-form",
       "method": "get",
-      "action": {
-        "get": "url"
-      },
+      "action": {"get": "url"},
       "data-api-method": "GET",
       "data-ajax-form": "",
-      "data-ajax-target": {
-        "get": "target"
-      },
-      "data-history": {
-        "get": "history"
-      }
+      "data-ajax-target": {"get": "target"},
+      "data-history": {"get": "history"}
     },
     "children": [
       {
-        "each": {
-          "get": "filters"
-        },
+        "each": {"get": "filters"},
         "as": "value",
-        "children": [
-          {
-            "tag": "input",
-            "attrs": {
-              "type": "hidden",
-              "name": {
-                "get": "_key"
-              },
-              "value": {
-                "get": "value"
-              }
-            },
-            "children": []
-          }
-        ]
+        "children": [{"tag": "input", "attrs": {"type": "hidden", "name": {"get": "_key"}, "value": {"get": "value"}}}]
       },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "page",
-          "value": "1"
-        },
-        "children": []
-      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "page", "value": "1"}},
       {
         "tag": "label",
-        "attrs": {
-          "class": "field-inline"
-        },
+        "attrs": {"class": "field-inline"},
         "children": [
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "sr-only"
-            },
-            "children": [
-              {
-                "t": "common.per_page",
-                "values": {}
-              }
-            ]
-          },
+          {"tag": "span", "attrs": {"class": "sr-only"}, "children": [{"t": "common.per_page"}]},
           {
             "tag": "select",
-            "attrs": {
-              "class": "select select-sm",
-              "name": "per_page",
-              "data-submit-on-change": ""
-            },
+            "attrs": {"class": "select select-sm", "name": "per_page", "data-submit-on-change": ""},
             "children": [
               {
-                "each": {
-                  "get": "choices"
-                },
+                "each": {"get": "choices"},
                 "as": "choice",
                 "children": [
                   {
                     "tag": "option",
                     "attrs": {
-                      "value": {
-                        "get": "_key"
-                      },
+                      "value": {"get": "_key"},
                       "selected": {
                         "if": [
-                          {
-                            "eq": [
-                              {
-                                "string": {
-                                  "get": "_key"
-                                }
-                              },
-                              {
-                                "string": {
-                                  "get": "pagination.per_page"
-                                }
-                              }
-                            ]
-                          },
+                          {"eq": [{"string": {"get": "_key"}}, {"string": {"get": "pagination.per_page"}}]},
                           true,
                           null
                         ]
                       }
                     },
-                    "children": [
-                      {
-                        "get": "choice"
-                      }
-                    ]
+                    "children": [{"get": "choice"}]
                   }
                 ]
               }
@@ -771,131 +322,59 @@
   },
   "ui/list-toolbar": {
     "tag": "div",
-    "attrs": {
-      "class": "stack stack-gap-8"
-    },
+    "attrs": {"class": "stack stack-gap-8"},
     "children": [
       {
         "tag": "div",
-        "attrs": {
-          "class": "admin-list-toolbar"
-        },
+        "attrs": {"class": "admin-list-toolbar"},
         "children": [
           {
             "component": "ui/search-form",
             "data": {
-              "url": {
-                "get": "url"
-              },
-              "target": {
-                "get": "target"
-              },
-              "history": {
-                "get": "history"
-              },
-              "filters": {
-                "get": "filters"
-              },
-              "pagination": {
-                "get": "pagination"
-              }
+              "url": {"get": "url"},
+              "target": {"get": "target"},
+              "history": {"get": "history"},
+              "filters": {"get": "filters"},
+              "pagination": {"get": "pagination"}
             }
           },
           {
             "tag": "div",
-            "attrs": {
-              "class": "admin-filter-actions"
-            },
+            "attrs": {"class": "admin-filter-actions"},
             "children": [
               {
                 "component": "ui/filter-trigger",
-                "data": {
-                  "id": {
-                    "get": "filter_modal"
-                  }
-                },
-                "when": {
-                  "get": "filter_modal"
-                }
+                "data": {"id": {"get": "filter_modal"}},
+                "when": {"get": "filter_modal"}
               },
               {
                 "component": "ui/per-page",
                 "data": {
-                  "url": {
-                    "get": "url"
-                  },
-                  "target": {
-                    "get": "target"
-                  },
-                  "history": {
-                    "get": "history"
-                  },
-                  "filters": {
-                    "get": "filters"
-                  },
-                  "pagination": {
-                    "get": "pagination"
-                  },
-                  "choices": {
-                    "10": "10",
-                    "25": "25",
-                    "50": "50",
-                    "100": "100"
-                  }
+                  "url": {"get": "url"},
+                  "target": {"get": "target"},
+                  "history": {"get": "history"},
+                  "filters": {"get": "filters"},
+                  "pagination": {"get": "pagination"},
+                  "choices": {"10": "10", "25": "25", "50": "50", "100": "100"}
                 }
               }
             ]
           }
         ]
       },
-      {
-        "component": "ui/list-summary",
-        "data": {
-          "target": {
-            "get": "target"
-          },
-          "filters": {
-            "get": "filters"
-          }
-        }
-      }
+      {"component": "ui/list-summary", "data": {"target": {"get": "target"}, "filters": {"get": "filters"}}}
     ]
   },
   "ui/avatar": {
     "tag": "span",
     "attrs": {
-      "class": {
-        "concat": [
-          "avatar",
-          {
-            "if": [
-              {
-                "get": "small"
-              },
-              " avatar-sm",
-              ""
-            ]
-          }
-        ]
-      },
-      "data-avatar-user-id": {
-        "get": "user.id"
-      }
+      "class": {"concat": ["avatar", {"if": [{"get": "small"}, " avatar-sm", ""]}]},
+      "data-avatar-user-id": {"get": "user.id"}
     },
     "children": [
       {
         "component": "ui/avatar-content",
-        "data": {
-          "user": {
-            "get": "user"
-          },
-          "alt": {
-            "get": "alt"
-          },
-          "fallback_icon": {
-            "get": "fallback_icon"
-          }
-        }
+        "data": {"user": {"get": "user"}, "alt": {"get": "alt"}, "fallback_icon": {"get": "fallback_icon"}}
       }
     ]
   },
@@ -903,280 +382,83 @@
     {
       "tag": "img",
       "attrs": {
-        "src": {
-          "get": "user.avatar_url"
-        },
-        "alt": {
-          "or": [
-            {
-              "get": "alt"
-            },
-            {
-              "get": "user.username"
-            },
-            "Avatar"
-          ]
-        },
+        "src": {"get": "user.avatar_url"},
+        "alt": {"or": [{"get": "alt"}, {"get": "user.username"}, "Avatar"]},
         "loading": "lazy",
         "data-user-avatar-image": "",
-        "data-avatar-user-id": {
-          "get": "user.id"
-        }
+        "data-avatar-user-id": {"get": "user.id"}
       },
-      "children": [],
-      "when": {
-        "get": "user.avatar_url"
-      }
+      "when": {"get": "user.avatar_url"}
     },
     {
       "tag": "span",
       "attrs": {
         "class": "avatar-fallback",
         "data-user-avatar-fallback": "",
-        "data-avatar-user-id": {
-          "get": "user.id"
-        },
-        "hidden": {
-          "if": [
-            {
-              "get": "user.avatar_url"
-            },
-            true,
-            null
-          ]
-        }
+        "data-avatar-user-id": {"get": "user.id"},
+        "hidden": {"if": [{"get": "user.avatar_url"}, true, null]}
       },
-      "children": [
-        {
-          "icon": {
-            "or": [
-              {
-                "get": "fallback_icon"
-              },
-              "user"
-            ]
-          }
-        }
-      ]
+      "children": [{"icon": {"or": [{"get": "fallback_icon"}, "user"]}}]
     }
   ],
   "ui/modal-trigger": {
     "tag": "button",
     "attrs": {
-      "class": {
-        "get": "class"
-      },
+      "class": {"get": "class"},
       "type": "button",
-      "data-modal-open": {
-        "get": "modal"
-      },
-      "data-modal-url": {
-        "get": "url"
-      },
-      "aria-label": {
-        "get": "label"
-      },
-      "title": {
-        "get": "label"
-      }
+      "data-modal-open": {"get": "modal"},
+      "data-modal-url": {"get": "url"},
+      "aria-label": {"get": "label"},
+      "title": {"get": "label"}
     },
     "children": [
-      {
-        "icon": {
-          "get": "icon"
-        }
-      },
-      {
-        "tag": "span",
-        "attrs": {},
-        "children": [
-          {
-            "get": "label"
-          }
-        ],
-        "when": {
-          "not": {
-            "get": "icon_only"
-          }
-        }
-      }
+      {"icon": {"get": "icon"}},
+      {"tag": "span", "when": {"not": {"get": "icon_only"}}, "children": [{"get": "label"}]}
     ]
   },
   "ui/admin-list": {
     "tag": "section",
-    "attrs": {
-      "class": "card",
-      "aria-label": {
-        "if": [
-          {
-            "get": "primary"
-          },
-          {
-            "get": "title"
-          },
-          null
-        ]
-      }
-    },
+    "attrs": {"class": "card", "aria-label": {"if": [{"get": "primary"}, {"get": "title"}, null]}},
     "children": [
       {
         "tag": "div",
-        "attrs": {
-          "class": "card-header split"
-        },
+        "attrs": {"class": "card-header split"},
+        "when": {"not": {"get": "primary"}},
         "children": [
           {
             "tag": "h2",
-            "attrs": {
-              "class": "text-lg m-0 cluster gap-2"
-            },
-            "children": [
-              {
-                "icon": {
-                  "get": "icon"
-                }
-              },
-              {
-                "get": "title"
-              }
-            ]
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": {"get": "icon"}}, {"get": "title"}]
           },
-          {
-            "component": "ui/filter-trigger",
-            "data": {
-              "id": {
-                "get": "filter_modal"
-              }
-            },
-            "when": {
-              "get": "filter_modal"
-            }
-          }
-        ],
-        "when": {
-          "not": {
-            "get": "primary"
-          }
-        }
+          {"component": "ui/filter-trigger", "data": {"id": {"get": "filter_modal"}}, "when": {"get": "filter_modal"}}
+        ]
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "card-body",
-          "id": {
-            "get": "target_id"
-          }
-        },
-        "children": [
-          {
-            "slot": {
-              "get": "content"
-            }
-          }
-        ]
+        "attrs": {"class": "card-body", "id": {"get": "target_id"}},
+        "children": [{"slot": {"get": "content"}}]
       }
     ]
   },
   "ui/account-status": {
     "component": "ui/status-badge",
-    "data": {
-      "tone": {
-        "if": [
-          {
-            "eq": [
-              {
-                "get": "status"
-              },
-              "active"
-            ]
-          },
-          "ok",
-          "critical"
-        ]
-      },
-      "label": {
-        "get": "label"
-      }
-    }
+    "data": {"tone": {"if": [{"eq": [{"get": "status"}, "active"]}, "ok", "critical"]}, "label": {"get": "label"}}
   },
   "ui/pagination-step": {
-    "tag": {
-      "if": [
-        {
-          "get": "step"
-        },
-        "a",
-        "span"
-      ]
-    },
+    "tag": {"if": [{"get": "step"}, "a", "span"]},
     "attrs": {
-      "class": {
-        "concat": [
-          "pagination-link pagination-",
-          {
-            "get": "kind"
-          }
-        ]
-      },
-      "href": {
-        "get": "step.url"
-      },
-      "data-history": {
-        "get": "step.history_url"
-      },
-      "data-ajax": {
-        "if": [
-          {
-            "get": "step"
-          },
-          "",
-          null
-        ]
-      },
-      "data-ajax-target": {
-        "if": [
-          {
-            "get": "step"
-          },
-          {
-            "get": "target"
-          },
-          null
-        ]
-      },
-      "aria-label": {
-        "get": "label"
-      },
-      "title": {
-        "get": "label"
-      },
-      "aria-disabled": {
-        "if": [
-          {
-            "get": "step"
-          },
-          null,
-          "true"
-        ]
-      }
+      "class": {"concat": ["pagination-link pagination-", {"get": "kind"}]},
+      "href": {"get": "step.url"},
+      "data-history": {"get": "step.history_url"},
+      "data-ajax": {"if": [{"get": "step"}, "", null]},
+      "data-ajax-target": {"if": [{"get": "step"}, {"get": "target"}, null]},
+      "aria-label": {"get": "label"},
+      "title": {"get": "label"},
+      "aria-disabled": {"if": [{"get": "step"}, null, "true"]}
     },
     "children": [
-      {
-        "icon": {
-          "get": "icon"
-        }
-      },
-      {
-        "tag": "span",
-        "attrs": {
-          "class": "sr-only"
-        },
-        "children": [
-          {
-            "get": "label"
-          }
-        ]
-      }
+      {"icon": {"get": "icon"}},
+      {"tag": "span", "attrs": {"class": "sr-only"}, "children": [{"get": "label"}]}
     ]
   },
   "ui/sort-heading": [
@@ -1184,69 +466,26 @@
       "tag": "a",
       "attrs": {
         "class": "table-sort",
-        "href": {
-          "get": "order.url"
-        },
+        "href": {"get": "order.url"},
         "data-ajax": true,
-        "data-ajax-target": {
-          "get": "order.target"
-        },
-        "data-history": {
-          "get": "order.history"
-        }
+        "data-ajax-target": {"get": "order.target"},
+        "data-history": {"get": "order.history"}
       },
+      "when": {"get": "order"},
       "children": [
-        {
-          "tag": "span",
-          "children": [
-            {
-              "get": "label"
-            }
-          ]
-        },
+        {"tag": "span", "children": [{"get": "label"}]},
         {
           "tag": "span",
           "attrs": {
             "class": "table-sort-indicator",
             "aria-hidden": "true",
-            "data-active": {
-              "or": [
-                {
-                  "get": "order.ascending"
-                },
-                {
-                  "get": "order.descending"
-                }
-              ]
-            }
+            "data-active": {"or": [{"get": "order.ascending"}, {"get": "order.descending"}]}
           },
-          "children": [
-            {
-              "icon": {
-                "if": [
-                  {
-                    "get": "order.descending"
-                  },
-                  "arrow-down",
-                  "arrow-up"
-                ]
-              }
-            }
-          ]
+          "children": [{"icon": {"if": [{"get": "order.descending"}, "arrow-down", "arrow-up"]}}]
         }
-      ],
-      "when": {
-        "get": "order"
-      }
+      ]
     },
-    {
-      "get": "label",
-      "when": {
-        "not": {
-          "get": "order"
-        }
-      }
-    }
+    {"get": "label", "when": {"not": {"get": "order"}}}
   ],
   "ui/status-badge": {
     "tag": "span",
@@ -1254,25 +493,15 @@
       "class": {
         "if": [
           {
-            "lookup": {
-              "get": "tone"
-            },
-            "cases": {
-              "ok": true,
-              "success": true,
-              "critical": true,
-              "danger": true,
-              "warning": true
-            },
+            "lookup": {"get": "tone"},
+            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
             "default": false
           },
           {
             "concat": [
               "status-indicator status-indicator-",
               {
-                "lookup": {
-                  "get": "tone"
-                },
+                "lookup": {"get": "tone"},
                 "cases": {
                   "ok": "success",
                   "success": "success",
@@ -1288,13 +517,8 @@
             "concat": [
               "badge ",
               {
-                "lookup": {
-                  "get": "tone"
-                },
-                "cases": {
-                  "primary": "badge-primary",
-                  "running": "badge-primary"
-                },
+                "lookup": {"get": "tone"},
+                "cases": {"primary": "badge-primary", "running": "badge-primary"},
                 "default": ""
               }
             ]
@@ -1304,16 +528,8 @@
       "role": {
         "if": [
           {
-            "lookup": {
-              "get": "tone"
-            },
-            "cases": {
-              "ok": true,
-              "success": true,
-              "critical": true,
-              "danger": true,
-              "warning": true
-            },
+            "lookup": {"get": "tone"},
+            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
             "default": false
           },
           "img",
@@ -1323,42 +539,22 @@
       "aria-label": {
         "if": [
           {
-            "lookup": {
-              "get": "tone"
-            },
-            "cases": {
-              "ok": true,
-              "success": true,
-              "critical": true,
-              "danger": true,
-              "warning": true
-            },
+            "lookup": {"get": "tone"},
+            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
             "default": false
           },
-          {
-            "get": "label"
-          },
+          {"get": "label"},
           null
         ]
       },
       "title": {
         "if": [
           {
-            "lookup": {
-              "get": "tone"
-            },
-            "cases": {
-              "ok": true,
-              "success": true,
-              "critical": true,
-              "danger": true,
-              "warning": true
-            },
+            "lookup": {"get": "tone"},
+            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
             "default": false
           },
-          {
-            "get": "label"
-          },
+          {"get": "label"},
           null
         ]
       }
@@ -1366,9 +562,7 @@
     "children": [
       {
         "icon": {
-          "lookup": {
-            "get": "tone"
-          },
+          "lookup": {"get": "tone"},
           "cases": {
             "ok": "check-circle",
             "success": "check-circle",
@@ -1379,16 +573,8 @@
           "default": ""
         },
         "when": {
-          "lookup": {
-            "get": "tone"
-          },
-          "cases": {
-            "ok": true,
-            "success": true,
-            "critical": true,
-            "danger": true,
-            "warning": true
-          },
+          "lookup": {"get": "tone"},
+          "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
           "default": false
         }
       },
@@ -1396,16 +582,8 @@
         "get": "label",
         "when": {
           "not": {
-            "lookup": {
-              "get": "tone"
-            },
-            "cases": {
-              "ok": true,
-              "success": true,
-              "critical": true,
-              "danger": true,
-              "warning": true
-            },
+            "lookup": {"get": "tone"},
+            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
             "default": false
           }
         }
@@ -1414,100 +592,28 @@
   },
   "ui/stat-card": {
     "tag": "article",
-    "attrs": {
-      "class": "card min-w-0"
-    },
+    "attrs": {"class": "card min-w-0"},
     "children": [
       {
         "tag": "div",
-        "attrs": {
-          "class": "card-body stack"
-        },
+        "attrs": {"class": "card-body stack"},
         "children": [
           {
-            "tag": {
-              "or": [
-                {
-                  "get": "heading"
-                },
-                "h3"
-              ]
-            },
-            "attrs": {
-              "class": "text-lg m-0 cluster gap-2"
-            },
+            "tag": {"or": [{"get": "heading"}, "h3"]},
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "label"}]
+          },
+          {
+            "tag": "p",
+            "attrs": {"class": "text-2xl m-0"},
+            "when": {"not": {"eq": [{"get": "value"}, null]}},
             "children": [
-              {
-                "icon": {
-                  "get": "icon"
-                },
-                "when": {
-                  "get": "icon"
-                }
-              },
-              {
-                "get": "label"
-              }
+              {"tag": "strong", "attrs": {"get": "value_attributes"}, "children": [{"get": "value"}]},
+              " ",
+              {"tag": "small", "attrs": {"class": "table-meta"}, "when": {"get": "unit"}, "children": [{"get": "unit"}]}
             ]
           },
-          {
-            "tag": "p",
-            "attrs": {
-              "class": "text-2xl m-0"
-            },
-            "children": [
-              {
-                "tag": "strong",
-                "children": [
-                  {
-                    "get": "value"
-                  }
-                ],
-                "attrs": {
-                  "get": "value_attributes"
-                }
-              },
-              " ",
-              {
-                "tag": "small",
-                "attrs": {
-                  "class": "table-meta"
-                },
-                "children": [
-                  {
-                    "get": "unit"
-                  }
-                ],
-                "when": {
-                  "get": "unit"
-                }
-              }
-            ],
-            "when": {
-              "not": {
-                "eq": [
-                  {
-                    "get": "value"
-                  },
-                  null
-                ]
-              }
-            }
-          },
-          {
-            "tag": "p",
-            "attrs": {
-              "class": "table-meta m-0"
-            },
-            "children": [
-              {
-                "get": "note"
-              }
-            ],
-            "when": {
-              "get": "note"
-            }
-          }
+          {"tag": "p", "attrs": {"class": "table-meta m-0"}, "when": {"get": "note"}, "children": [{"get": "note"}]}
         ]
       }
     ]
@@ -1519,9 +625,7 @@
         "concat": [
           "alert stack stack-gap-8 alert-",
           {
-            "lookup": {
-              "get": "tone"
-            },
+            "lookup": {"get": "tone"},
             "cases": {
               "danger": "danger",
               "warning": "warning",
@@ -1533,298 +637,88 @@
           }
         ]
       },
-      "role": {
-        "lookup": {
-          "get": "tone"
-        },
-        "cases": {
-          "critical": "alert",
-          "danger": "alert"
-        },
-        "default": "status"
-      }
+      "role": {"lookup": {"get": "tone"}, "cases": {"critical": "alert", "danger": "alert"}, "default": "status"}
     },
     "children": [
-      {
-        "get": "label",
-        "when": {
-          "get": "label"
-        }
-      },
-      {
-        "tag": "strong",
-        "children": [
-          {
-            "get": "title"
-          }
-        ],
-        "when": {
-          "get": "title"
-        }
-      },
-      {
-        "tag": "span",
-        "children": [
-          {
-            "get": "description"
-          }
-        ],
-        "when": {
-          "get": "description"
-        }
-      },
-      {
-        "tag": "small",
-        "children": [
-          {
-            "get": "detail"
-          }
-        ],
-        "when": {
-          "get": "detail"
-        }
-      }
+      {"get": "label", "when": {"get": "label"}},
+      {"tag": "strong", "when": {"get": "title"}, "children": [{"get": "title"}]},
+      {"tag": "span", "when": {"get": "description"}, "children": [{"get": "description"}]},
+      {"tag": "small", "when": {"get": "detail"}, "children": [{"get": "detail"}]}
     ]
   },
   "ui/empty-state": {
     "tag": "div",
     "attrs": {
-      "class": {
-        "concat": [
-          "empty-state",
-          {
-            "if": [
-              {
-                "get": "compact"
-              },
-              " empty-state-compact",
-              ""
-            ]
-          }
-        ]
-      },
+      "class": {"concat": ["empty-state", {"if": [{"get": "compact"}, " empty-state-compact", ""]}]},
       "role": "status"
     },
     "children": [
-      {
-        "icon": {
-          "or": [
-            {
-              "get": "icon"
-            },
-            "search"
-          ]
-        },
-        "class": "icon empty-state-icon"
-      },
+      {"icon": {"or": [{"get": "icon"}, "search"]}, "class": "icon empty-state-icon"},
       {
         "tag": "p",
-        "attrs": {
-          "class": "empty-state-label"
-        },
-        "children": [
-          {
-            "or": [
-              {
-                "get": "label"
-              },
-              {
-                "t": "common.no_records"
-              }
-            ]
-          }
-        ]
+        "attrs": {"class": "empty-state-label"},
+        "children": [{"or": [{"get": "label"}, {"t": "common.no_records"}]}]
       }
     ]
   },
   "ui/activation-action": {
     "component": "ui/api-action",
     "data": {
-      "url": {
-        "get": "url"
-      },
-      "method": {
-        "or": [
-          {
-            "get": "method"
-          },
-          "PUT"
-        ]
-      },
-      "target": {
-        "get": "target"
-      },
-      "fields": {
-        "enabled": {
-          "if": [
-            {
-              "get": "active"
-            },
-            "0",
-            "1"
-          ]
-        }
-      },
-      "label": {
-        "if": [
-          {
-            "get": "active"
-          },
-          {
-            "t": "common.deactivate"
-          },
-          {
-            "t": "common.activate"
-          }
-        ]
-      },
-      "icon": {
-        "if": [
-          {
-            "get": "active"
-          },
-          "pause",
-          "play"
-        ]
-      },
+      "url": {"get": "url"},
+      "method": {"or": [{"get": "method"}, "PUT"]},
+      "target": {"get": "target"},
+      "fields": {"enabled": {"if": [{"get": "active"}, "0", "1"]}},
+      "label": {"if": [{"get": "active"}, {"t": "common.deactivate"}, {"t": "common.activate"}]},
+      "icon": {"if": [{"get": "active"}, "pause", "play"]},
       "button_class": "btn btn-sm btn-ghost btn-icon"
     }
   },
   "ui/filter-trigger": {
     "tag": "details",
-    "attrs": {
-      "class": "filter-menu",
-      "data-popover": "",
-      "data-filter-menu": ""
-    },
+    "attrs": {"class": "filter-menu", "data-popover": "", "data-filter-menu": ""},
     "children": [
       {
         "tag": "summary",
-        "attrs": {
-          "class": "btn btn-ghost btn-sm",
-          "aria-label": {
-            "t": "common.filters"
-          }
-        },
-        "children": [
-          {
-            "icon": "filter"
-          },
-          {
-            "tag": "span",
-            "children": [
-              {
-                "t": "common.filters"
-              }
-            ]
-          }
-        ]
+        "attrs": {"class": "btn btn-ghost btn-sm", "aria-label": {"t": "common.filters"}},
+        "children": [{"icon": "filter"}, {"tag": "span", "children": [{"t": "common.filters"}]}]
       },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "popover-panel filter-menu-panel",
-          "data-filter-panel": {
-            "get": "id"
-          }
-        }
-      }
+      {"tag": "div", "attrs": {"class": "popover-panel filter-menu-panel", "data-filter-panel": {"get": "id"}}}
     ]
   },
-  "ui/filter-content": {
-    "tag": "form",
-    "attrs": {
-      "get": "attributes"
-    },
-    "children": [
-      {
-        "slot": {
-          "get": "body"
-        }
-      }
-    ]
-  },
+  "ui/filter-content": {"tag": "form", "attrs": {"get": "attributes"}, "children": [{"slot": {"get": "body"}}]},
   "ui/list-summary": {
     "tag": "div",
     "attrs": {
       "class": "cluster gap-2 text-sm text-muted",
       "aria-live": "polite",
       "aria-atomic": "true",
-      "data-list-summary": {
-        "get": "target"
-      }
+      "data-list-summary": {"get": "target"}
     },
     "children": [
       {
         "component": "ui/filter-chip",
-        "data": {
-          "label": {
-            "get": "filters.q"
-          },
-          "target": {
-            "get": "target"
-          },
-          "name": "q",
-          "icon": "search"
-        },
-        "when": {
-          "get": "filters.q"
-        }
+        "data": {"label": {"get": "filters.q"}, "target": {"get": "target"}, "name": "q", "icon": "search"},
+        "when": {"get": "filters.q"}
       },
-      {
-        "tag": "span",
-        "attrs": {
-          "class": "cluster gap-2",
-          "data-list-summary-filters": {
-            "get": "target"
-          }
-        }
-      }
+      {"tag": "span", "attrs": {"class": "cluster gap-2", "data-list-summary-filters": {"get": "target"}}}
     ]
   },
   "ui/editor-actions": {
     "tag": "div",
-    "attrs": {
-      "class": "cluster gap-2 modal-editor-actions"
-    },
+    "attrs": {"class": {"or": [{"get": "class"}, "cluster gap-2 modal-editor-actions"]}},
     "children": [
       {
         "tag": "div",
-        "attrs": {
-          "class": "modal-editor-destructive"
-        },
-        "when": {
-          "get": "destructive"
-        },
-        "children": [
-          {
-            "slot": {
-              "get": "destructive"
-            }
-          }
-        ]
+        "attrs": {"class": "modal-editor-destructive"},
+        "when": {"get": "destructive"},
+        "children": [{"slot": {"get": "destructive"}}]
       },
       {
         "tag": "button",
-        "attrs": {
-          "type": "button",
-          "class": "btn btn-secondary",
-          "data-modal-close": ""
-        },
-        "children": [
-          {
-            "get": "cancel_label"
-          }
-        ]
+        "attrs": {"type": "button", "class": "btn btn-secondary", "data-modal-close": ""},
+        "children": [{"get": "cancel_label"}]
       },
-      {
-        "slot": {
-          "get": "primary"
-        },
-        "when": {
-          "get": "primary"
-        }
-      }
+      {"slot": {"get": "primary"}, "when": {"get": "primary"}}
     ]
   },
   "ui/filter-chip": {
@@ -1832,284 +726,107 @@
     "attrs": {
       "type": "button",
       "class": "badge filter-chip",
-      "data-filter-remove": {
-        "get": "name"
-      },
-      "data-filter-target": {
-        "get": "target"
-      },
-      "aria-label": {
-        "concat": [
-          {
-            "t": "common.clear_filters"
-          },
-          ": ",
-          {
-            "get": "label"
-          }
-        ]
-      }
+      "data-filter-remove": {"get": "name"},
+      "data-filter-target": {"get": "target"},
+      "aria-label": {"concat": [{"t": "common.clear_filters"}, ": ", {"get": "label"}]}
     },
     "children": [
-      {
-        "icon": {
-          "get": "icon"
-        },
-        "when": {
-          "get": "icon"
-        }
-      },
-      {
-        "tag": "span",
-        "children": [
-          {
-            "get": "label"
-          }
-        ]
-      },
-      {
-        "icon": "close"
-      }
+      {"icon": {"get": "icon"}, "when": {"get": "icon"}},
+      {"tag": "span", "children": [{"get": "label"}]},
+      {"icon": "close"}
     ]
   },
   "ui/load-more": {
     "tag": "div",
-    "attrs": {
-      "get": "attributes"
-    },
+    "attrs": {"get": "attributes"},
     "children": [
       {
         "tag": "button",
-        "attrs": {
-          "get": "button_attributes"
-        },
-        "children": [
-          {
-            "icon": "plus"
-          },
-          {
-            "tag": "span",
-            "children": [
-              {
-                "get": "label"
-              }
-            ]
-          }
-        ]
+        "attrs": {"get": "button_attributes"},
+        "children": [{"icon": "plus"}, {"tag": "span", "children": [{"get": "label"}]}]
       },
       {
         "tag": "span",
-        "attrs": {
-          "class": "load-more-state",
-          "role": "status",
-          "hidden": true
-        },
-        "children": [
-          {
-            "get": "loading_label"
-          }
-        ]
+        "attrs": {"class": "load-more-state", "role": "status", "hidden": true},
+        "children": [{"get": "loading_label"}]
       }
     ]
   },
-  "ui/action-label": {
-    "t": "common.action_for",
-    "values": {
-      "action": {
-        "get": "action"
-      },
-      "context": {
-        "get": "context"
-      }
-    }
-  },
+  "ui/action-label": {"t": "common.action_for", "values": {"action": {"get": "action"}, "context": {"get": "context"}}},
   "ui/dashboard-cache": {
     "tag": "div",
-    "attrs": {
-      "class": "stack"
-    },
+    "attrs": {"class": "stack"},
     "children": [
       {
         "tag": "div",
-        "attrs": {
-          "class": "split"
-        },
+        "attrs": {"class": "split"},
         "children": [
-          {
-            "tag": "p",
-            "attrs": {
-              "class": "m-0 text-muted"
-            },
-            "children": [
-              {
-                "get": "driver"
-              }
-            ]
-          },
+          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "driver"}]},
           {
             "tag": "span",
-            "attrs": {
-              "class": {
-                "if": [
-                  {
-                    "get": "available"
-                  },
-                  "badge badge-primary",
-                  "badge badge-danger"
-                ]
-              }
-            },
-            "children": [
-              {
-                "if": [
-                  {
-                    "get": "available"
-                  },
-                  {
-                    "t": "admin.cache.available"
-                  },
-                  {
-                    "t": "admin.cache.fallback"
-                  }
-                ]
-              }
-            ]
+            "attrs": {"class": {"if": [{"get": "available"}, "badge badge-primary", "badge badge-danger"]}},
+            "children": [{"if": [{"get": "available"}, {"t": "admin.cache.available"}, {"t": "admin.cache.fallback"}]}]
           }
         ]
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "grid sm:grid-2 gap-3"
-        },
+        "attrs": {"class": "grid sm:grid-2 gap-3"},
         "children": [
           {
-            "each": {
-              "get": "services"
-            },
+            "each": {"get": "services"},
             "as": "service",
             "children": [
               {
                 "tag": "section",
-                "attrs": {
-                  "class": "stack gap-2"
-                },
+                "attrs": {"class": "stack gap-2"},
                 "children": [
                   {
                     "tag": "div",
-                    "attrs": {
-                      "class": "split"
-                    },
+                    "attrs": {"class": "split"},
                     "children": [
-                      {
-                        "tag": "h3",
-                        "attrs": {
-                          "class": "text-lg m-0"
-                        },
-                        "children": [
-                          {
-                            "get": "service.label"
-                          }
-                        ]
-                      },
+                      {"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"get": "service.label"}]},
                       {
                         "tag": "form",
                         "attrs": {
                           "method": "post",
                           "action": "/api/site/cache-resets",
                           "data-ajax-form": "",
-                          "data-confirm": {
-                            "t": "admin.cache.opcache_reset_confirm"
-                          },
-                          "data-confirm-title": {
-                            "t": "admin.cache.opcache_reset"
-                          },
-                          "data-confirm-ok": {
-                            "t": "admin.cache.opcache_reset"
-                          },
-                          "data-confirm-cancel": {
-                            "t": "common.cancel"
-                          }
+                          "data-confirm": {"t": "admin.cache.opcache_reset_confirm"},
+                          "data-confirm-title": {"t": "admin.cache.opcache_reset"},
+                          "data-confirm-ok": {"t": "admin.cache.opcache_reset"},
+                          "data-confirm-cancel": {"t": "common.cancel"}
                         },
+                        "when": {"get": "service.resettable"},
                         "children": [
-                          {
-                            "csrf": true
-                          },
-                          {
-                            "tag": "input",
-                            "attrs": {
-                              "type": "hidden",
-                              "name": "action",
-                              "value": "reset-opcache"
-                            }
-                          },
+                          {"csrf": true},
+                          {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "reset-opcache"}},
                           {
                             "tag": "button",
-                            "attrs": {
-                              "class": "btn btn-secondary btn-sm",
-                              "type": "submit"
-                            },
+                            "attrs": {"class": "btn btn-secondary btn-sm", "type": "submit"},
                             "children": [
-                              {
-                                "icon": "refresh"
-                              },
-                              {
-                                "tag": "span",
-                                "children": [
-                                  {
-                                    "t": "admin.cache.opcache_reset"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ],
-                        "when": {
-                          "get": "service.resettable"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "p",
-                    "attrs": {
-                      "class": "m-0 text-muted"
-                    },
-                    "children": [
-                      {
-                        "get": "service.status"
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "div",
-                    "attrs": {
-                      "class": "stack gap-1"
-                    },
-                    "children": [
-                      {
-                        "each": {
-                          "get": "service.details"
-                        },
-                        "as": "detail",
-                        "children": [
-                          {
-                            "tag": "p",
-                            "attrs": {
-                              "class": "m-0 table-meta"
-                            },
-                            "children": [
-                              {
-                                "get": "detail"
-                              }
+                              {"icon": "refresh"},
+                              {"tag": "span", "children": [{"t": "admin.cache.opcache_reset"}]}
                             ]
                           }
                         ]
                       }
-                    ],
-                    "when": {
-                      "get": "service.details"
-                    }
+                    ]
+                  },
+                  {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "service.status"}]},
+                  {
+                    "tag": "div",
+                    "attrs": {"class": "stack gap-1"},
+                    "when": {"get": "service.details"},
+                    "children": [
+                      {
+                        "each": {"get": "service.details"},
+                        "as": "detail",
+                        "children": [
+                          {"tag": "p", "attrs": {"class": "m-0 table-meta"}, "children": [{"get": "detail"}]}
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -2121,37 +838,20 @@
   },
   "ui/dashboard-overview": {
     "tag": "section",
-    "attrs": {
-      "class": "grid sm:grid-2 md:grid-4",
-      "aria-label": {
-        "t": "common.dashboard"
-      }
-    },
+    "attrs": {"class": "grid sm:grid-2 md:grid-4", "aria-label": {"t": "common.dashboard"}},
     "children": [
       {
-        "each": {
-          "get": "stats"
-        },
+        "each": {"get": "stats"},
         "as": "stat",
         "children": [
           {
             "component": "ui/stat-card",
             "data": {
-              "heading": {
-                "get": "stat.heading"
-              },
-              "icon": {
-                "get": "stat.icon"
-              },
-              "label": {
-                "get": "stat.label"
-              },
-              "value": {
-                "get": "stat.value"
-              },
-              "note": {
-                "get": "stat.note"
-              }
+              "heading": {"get": "stat.heading"},
+              "icon": {"get": "stat.icon"},
+              "label": {"get": "stat.label"},
+              "value": {"get": "stat.value"},
+              "note": {"get": "stat.note"}
             }
           }
         ]
@@ -2159,164 +859,35 @@
     ]
   },
   "publishing/segments": {
-    "each": {
-      "get": "segments"
-    },
+    "each": {"get": "segments"},
     "as": "segment",
     "children": [
-      {
-        "tag": "span",
-        "children": [
-          {
-            "get": "segment.text"
-          }
-        ],
-        "when": {
-          "eq": [
-            {
-              "get": "segment.type"
-            },
-            "text"
-          ]
-        }
-      },
+      {"tag": "span", "when": {"eq": [{"get": "segment.type"}, "text"]}, "children": [{"get": "segment.text"}]},
       {
         "tag": "a",
         "attrs": {
-          "href": {
-            "or": [
-              {
-                "get": "segment.outbound_url"
-              },
-              {
-                "get": "segment.url"
-              }
-            ]
-          },
+          "href": {"or": [{"get": "segment.outbound_url"}, {"get": "segment.url"}]},
           "class": {
             "if": [
-              {
-                "eq": [
-                  {
-                    "get": "segment.type"
-                  },
-                  "mention"
-                ]
-              },
+              {"eq": [{"get": "segment.type"}, "mention"]},
               "mention-link",
-              {
-                "if": [
-                  {
-                    "eq": [
-                      {
-                        "get": "segment.type"
-                      },
-                      "tag"
-                    ]
-                  },
-                  "badge tag-link",
-                  "status-inline-link"
-                ]
-              }
+              {"if": [{"eq": [{"get": "segment.type"}, "tag"]}, "badge tag-link", "status-inline-link"]}
             ]
           },
-          "target": {
-            "if": [
-              {
-                "eq": [
-                  {
-                    "get": "segment.type"
-                  },
-                  "link"
-                ]
-              },
-              "_blank",
-              null
-            ]
-          },
-          "rel": {
-            "if": [
-              {
-                "eq": [
-                  {
-                    "get": "segment.type"
-                  },
-                  "link"
-                ]
-              },
-              "nofollow noopener noreferrer ugc",
-              null
-            ]
-          },
-          "translate": {
-            "if": [
-              {
-                "eq": [
-                  {
-                    "get": "segment.type"
-                  },
-                  "tag"
-                ]
-              },
-              "no",
-              null
-            ]
-          }
+          "target": {"if": [{"eq": [{"get": "segment.type"}, "link"]}, "_blank", null]},
+          "rel": {"if": [{"eq": [{"get": "segment.type"}, "link"]}, "nofollow noopener noreferrer ugc", null]},
+          "translate": {"if": [{"eq": [{"get": "segment.type"}, "tag"]}, "no", null]}
         },
-        "children": [
-          {
-            "get": "segment.text"
-          }
-        ],
-        "when": {
-          "lookup": {
-            "get": "segment.type"
-          },
-          "cases": {
-            "text": false,
-            "tag-overflow": false
-          },
-          "default": true
-        }
+        "when": {"lookup": {"get": "segment.type"}, "cases": {"text": false, "tag-overflow": false}, "default": true},
+        "children": [{"get": "segment.text"}]
       },
       {
         "tag": "details",
-        "attrs": {
-          "class": "status-tags-overflow"
-        },
-        "when": {
-          "eq": [
-            {
-              "get": "segment.type"
-            },
-            "tag-overflow"
-          ]
-        },
+        "attrs": {"class": "status-tags-overflow"},
+        "when": {"eq": [{"get": "segment.type"}, "tag-overflow"]},
         "children": [
-          {
-            "tag": "summary",
-            "children": [
-              {
-                "concat": [
-                  "# +",
-                  {
-                    "get": "segment.count"
-                  }
-                ]
-              }
-            ],
-            "attrs": {
-              "class": "badge"
-            }
-          },
-          {
-            "component": "publishing/segments",
-            "data": {
-              "segments": {
-                "get": "segment.segments"
-              }
-            }
-          }
+          {"tag": "summary", "attrs": {"class": "badge"}, "children": [{"concat": ["# +", {"get": "segment.count"}]}]},
+          {"component": "publishing/segments", "data": {"segments": {"get": "segment.segments"}}}
         ]
       }
     ]
@@ -2328,73 +899,31 @@
         "class": {
           "concat": [
             "status-video-card",
-            {
-              "if": [
-                {
-                  "eq": [
-                    {
-                      "get": "link.card_kind"
-                    },
-                    "audio"
-                  ]
-                },
-                " status-audio-card",
-                ""
-              ]
-            }
+            {"if": [{"eq": [{"get": "link.card_kind"}, "audio"]}, " status-audio-card", ""]}
           ]
         },
         "data-status-video": "",
-        "data-embed-url": {
-          "get": "link.embed_url"
-        },
-        "data-embed-origin": {
-          "get": "link.embed_origin"
-        },
-        "data-embed-width-param": {
-          "get": "link.embed_width_param"
-        },
-        "data-embed-autoplay-param": {
-          "get": "link.embed_autoplay_param"
-        },
-        "data-embed-autoplay-value": {
-          "get": "link.embed_autoplay_value"
-        },
-        "data-embed-height": {
-          "get": "link.embed_height"
-        },
-        "data-card-kind": {
-          "get": "link.card_kind"
-        },
-        "data-provider": {
-          "get": "link.provider"
-        },
-        "data-audio-url": {
-          "get": "link.audio_url"
-        }
+        "data-embed-url": {"get": "link.embed_url"},
+        "data-embed-origin": {"get": "link.embed_origin"},
+        "data-embed-width-param": {"get": "link.embed_width_param"},
+        "data-embed-autoplay-param": {"get": "link.embed_autoplay_param"},
+        "data-embed-autoplay-value": {"get": "link.embed_autoplay_value"},
+        "data-embed-height": {"get": "link.embed_height"},
+        "data-card-kind": {"get": "link.card_kind"},
+        "data-provider": {"get": "link.provider"},
+        "data-audio-url": {"get": "link.audio_url"}
       },
+      "when": {"or": [{"get": "link.embed_allowed"}, {"eq": [{"get": "link.card_kind"}, "audio"]}]},
       "children": [
         {
           "component": "publishing/link-summary",
-          "data": {
-            "link": {
-              "get": "link"
-            }
-          },
-          "when": {
-            "eq": [
-              {
-                "get": "link.card_kind"
-              },
-              "audio"
-            ]
-          }
+          "data": {"link": {"get": "link"}},
+          "when": {"eq": [{"get": "link.card_kind"}, "audio"]}
         },
         {
           "tag": "div",
-          "attrs": {
-            "data-status-video-mount": ""
-          },
+          "attrs": {"data-status-video-mount": ""},
+          "when": {"or": [{"get": "link.embed_allowed"}, {"get": "link.audio_url"}]},
           "children": [
             {
               "tag": "button",
@@ -2402,400 +931,135 @@
                 "class": "status-video-placeholder",
                 "type": "button",
                 "data-status-video-load": "",
-                "aria-label": {
-                  "get": "link.title"
-                }
+                "aria-label": {"get": "link.title"}
               },
               "children": [
                 {
                   "tag": "span",
-                  "attrs": {
-                    "class": "status-video-provider"
-                  },
-                  "children": [
-                    {
-                      "get": "link.provider_name"
-                    }
-                  ],
+                  "attrs": {"class": "status-video-provider"},
                   "when": {
-                    "and": [
-                      {
-                        "not": {
-                          "eq": [
-                            {
-                              "get": "link.card_kind"
-                            },
-                            "audio"
-                          ]
-                        }
-                      },
-                      {
-                        "get": "link.provider_name"
-                      }
-                    ]
-                  }
+                    "and": [{"not": {"eq": [{"get": "link.card_kind"}, "audio"]}}, {"get": "link.provider_name"}]
+                  },
+                  "children": [{"get": "link.provider_name"}]
                 },
                 {
                   "tag": "picture",
-                  "attrs": {
-                    "class": "status-video-thumb"
+                  "attrs": {"class": "status-video-thumb"},
+                  "when": {
+                    "and": [{"not": {"eq": [{"get": "link.card_kind"}, "audio"]}}, {"get": "link.thumbnail_url"}]
                   },
                   "children": [
                     {
                       "tag": "source",
-                      "attrs": {
-                        "srcset": {
-                          "get": "link.thumbnail_mobile_url"
-                        },
-                        "media": "(max-width: 759px)"
-                      },
-                      "when": {
-                        "get": "link.thumbnail_mobile_url"
-                      }
+                      "attrs": {"srcset": {"get": "link.thumbnail_mobile_url"}, "media": "(max-width: 759px)"},
+                      "when": {"get": "link.thumbnail_mobile_url"}
                     },
                     {
                       "tag": "img",
                       "attrs": {
-                        "src": {
-                          "get": "link.thumbnail_url"
-                        },
-                        "alt": {
-                          "or": [
-                            {
-                              "get": "link.title"
-                            },
-                            {
-                              "get": "link.url"
-                            }
-                          ]
-                        },
+                        "src": {"get": "link.thumbnail_url"},
+                        "alt": {"or": [{"get": "link.title"}, {"get": "link.url"}]},
                         "loading": "lazy",
                         "decoding": "async",
                         "referrerpolicy": "no-referrer"
                       }
                     }
-                  ],
-                  "when": {
-                    "and": [
-                      {
-                        "not": {
-                          "eq": [
-                            {
-                              "get": "link.card_kind"
-                            },
-                            "audio"
-                          ]
-                        }
-                      },
-                      {
-                        "get": "link.thumbnail_url"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "tag": "span",
-                  "attrs": {
-                    "class": "status-video-play"
-                  },
-                  "children": [
-                    {
-                      "icon": "play"
-                    }
                   ]
                 },
+                {"tag": "span", "attrs": {"class": "status-video-play"}, "children": [{"icon": "play"}]},
                 {
                   "tag": "span",
-                  "attrs": {
-                    "class": "status-video-copy"
-                  },
+                  "attrs": {"class": "status-video-copy"},
+                  "when": {"not": {"eq": [{"get": "link.card_kind"}, "audio"]}},
                   "children": [
-                    {
-                      "tag": "strong",
-                      "children": [
-                        {
-                          "get": "link.title"
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "small",
-                      "children": [
-                        {
-                          "or": [
-                            {
-                              "get": "link.description"
-                            },
-                            {
-                              "get": "link.provider"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
-                  "when": {
-                    "not": {
-                      "eq": [
-                        {
-                          "get": "link.card_kind"
-                        },
-                        "audio"
-                      ]
-                    }
-                  }
+                    {"tag": "strong", "children": [{"get": "link.title"}]},
+                    {"tag": "small", "children": [{"or": [{"get": "link.description"}, {"get": "link.provider"}]}]}
+                  ]
                 }
               ]
-            }
-          ],
-          "when": {
-            "or": [
-              {
-                "get": "link.embed_allowed"
-              },
-              {
-                "get": "link.audio_url"
-              }
-            ]
-          }
-        },
-        {
-          "tag": "a",
-          "attrs": {
-            "class": "status-video-source",
-            "href": {
-              "or": [
-                {
-                  "get": "link.outbound_url"
-                },
-                {
-                  "get": "link.url"
-                }
-              ]
-            },
-            "target": "_blank",
-            "rel": "nofollow noopener noreferrer ugc"
-          },
-          "children": [
-            {
-              "icon": "external-link"
-            },
-            {
-              "or": [
-                {
-                  "get": "link.provider_name"
-                },
-                {
-                  "get": "link.display_url"
-                },
-                {
-                  "get": "link.url"
-                }
-              ]
-            }
-          ],
-          "when": {
-            "not": {
-              "eq": [
-                {
-                  "get": "link.card_kind"
-                },
-                "audio"
-              ]
-            }
-          }
-        }
-      ],
-      "when": {
-        "or": [
-          {
-            "get": "link.embed_allowed"
-          },
-          {
-            "eq": [
-              {
-                "get": "link.card_kind"
-              },
-              "audio"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "component": "publishing/link-summary",
-      "data": {
-        "link": {
-          "get": "link"
-        }
-      },
-      "when": {
-        "and": [
-          {
-            "not": {
-              "get": "link.embed_allowed"
-            }
-          },
-          {
-            "not": {
-              "eq": [
-                {
-                  "get": "link.card_kind"
-                },
-                "social"
-              ]
-            }
-          },
-          {
-            "not": {
-              "eq": [
-                {
-                  "get": "link.card_kind"
-                },
-                "audio"
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "tag": "div",
-      "attrs": {
-        "class": "status-social-link"
-      },
-      "children": [
-        {
-          "tag": "a",
-          "attrs": {
-            "class": "status-link-provider",
-            "href": {
-              "or": [
-                {
-                  "get": "link.outbound_url"
-                },
-                {
-                  "get": "link.url"
-                }
-              ]
-            },
-            "target": "_blank",
-            "rel": "nofollow noopener noreferrer ugc",
-            "data-card-kind": {
-              "get": "link.card_kind"
-            },
-            "data-provider": {
-              "get": "link.provider"
-            }
-          },
-          "children": [
-            {
-              "icon": {
-                "or": [
-                  {
-                    "get": "link.card_icon"
-                  },
-                  "external-link"
-                ]
-              }
-            },
-            {
-              "get": "link.provider_name"
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "class": "status-link-account"
-              },
-              "children": [
-                {
-                  "get": "link.title"
-                }
-              ],
-              "when": {
-                "eq": [
-                  {
-                    "get": "link.card_kind"
-                  },
-                  "social"
-                ]
-              }
-            }
-          ],
-          "when": {
-            "get": "link.provider_name"
-          }
-        },
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-copy"
-          },
-          "children": [
-            {
-              "tag": "span",
-              "children": [
-                {
-                  "get": "link.description"
-                }
-              ],
-              "when": {
-                "get": "link.description"
-              }
             }
           ]
         },
         {
           "tag": "a",
           "attrs": {
-            "class": {
-              "concat": [
-                "status-link-card",
-                {
-                  "if": [
-                    {
-                      "get": "link.image_url"
-                    },
-                    " has-image",
-                    ""
-                  ]
-                }
-              ]
-            },
-            "href": {
-              "or": [
-                {
-                  "get": "link.outbound_url"
-                },
-                {
-                  "get": "link.url"
-                }
-              ]
-            },
+            "class": "status-video-source",
+            "href": {"or": [{"get": "link.outbound_url"}, {"get": "link.url"}]},
+            "target": "_blank",
+            "rel": "nofollow noopener noreferrer ugc"
+          },
+          "when": {"not": {"eq": [{"get": "link.card_kind"}, "audio"]}},
+          "children": [
+            {"icon": "external-link"},
+            {"or": [{"get": "link.provider_name"}, {"get": "link.display_url"}, {"get": "link.url"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "component": "publishing/link-summary",
+      "data": {"link": {"get": "link"}},
+      "when": {
+        "and": [
+          {"not": {"get": "link.embed_allowed"}},
+          {"not": {"eq": [{"get": "link.card_kind"}, "social"]}},
+          {"not": {"eq": [{"get": "link.card_kind"}, "audio"]}}
+        ]
+      }
+    },
+    {
+      "tag": "div",
+      "attrs": {"class": "status-social-link"},
+      "when": {"and": [{"not": {"get": "link.embed_allowed"}}, {"eq": [{"get": "link.card_kind"}, "social"]}]},
+      "children": [
+        {
+          "tag": "a",
+          "attrs": {
+            "class": "status-link-provider",
+            "href": {"or": [{"get": "link.outbound_url"}, {"get": "link.url"}]},
             "target": "_blank",
             "rel": "nofollow noopener noreferrer ugc",
-            "data-card-kind": {
-              "get": "link.card_kind"
-            },
-            "data-provider": {
-              "get": "link.provider"
+            "data-card-kind": {"get": "link.card_kind"},
+            "data-provider": {"get": "link.provider"}
+          },
+          "when": {"get": "link.provider_name"},
+          "children": [
+            {"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}},
+            {"get": "link.provider_name"},
+            {
+              "tag": "span",
+              "attrs": {"class": "status-link-account"},
+              "when": {"eq": [{"get": "link.card_kind"}, "social"]},
+              "children": [{"get": "link.title"}]
             }
+          ]
+        },
+        {
+          "tag": "span",
+          "attrs": {"class": "status-link-copy"},
+          "children": [{"tag": "span", "when": {"get": "link.description"}, "children": [{"get": "link.description"}]}]
+        },
+        {
+          "tag": "a",
+          "attrs": {
+            "class": {"concat": ["status-link-card", {"if": [{"get": "link.image_url"}, " has-image", ""]}]},
+            "href": {"or": [{"get": "link.outbound_url"}, {"get": "link.url"}]},
+            "target": "_blank",
+            "rel": "nofollow noopener noreferrer ugc",
+            "data-card-kind": {"get": "link.card_kind"},
+            "data-provider": {"get": "link.provider"}
           },
           "children": [
             {
               "tag": "span",
-              "attrs": {
-                "class": "status-link-media",
-                "data-status-link-media": ""
-              },
+              "attrs": {"class": "status-link-media", "data-status-link-media": ""},
+              "when": {"get": "link.image_url"},
               "children": [
                 {
                   "tag": "img",
                   "attrs": {
                     "class": "status-link-image",
-                    "src": {
-                      "get": "link.image_url"
-                    },
+                    "src": {"get": "link.image_url"},
                     "alt": "",
                     "loading": "lazy",
                     "data-status-link-image": ""
@@ -2803,141 +1067,49 @@
                 },
                 {
                   "tag": "span",
-                  "attrs": {
-                    "class": "status-link-icon status-link-fallback-icon",
-                    "data-status-link-fallback": ""
-                  },
-                  "children": [
-                    {
-                      "icon": "image"
-                    }
-                  ]
+                  "attrs": {"class": "status-link-icon status-link-fallback-icon", "data-status-link-fallback": ""},
+                  "children": [{"icon": "image"}]
                 }
-              ],
-              "when": {
-                "get": "link.image_url"
-              }
+              ]
             },
             {
               "tag": "span",
-              "attrs": {
-                "class": "status-link-icon"
-              },
-              "children": [
-                {
-                  "icon": {
-                    "or": [
-                      {
-                        "get": "link.card_icon"
-                      },
-                      "external-link"
-                    ]
-                  }
-                }
-              ],
-              "when": {
-                "not": {
-                  "get": "link.image_url"
-                }
-              }
+              "attrs": {"class": "status-link-icon"},
+              "when": {"not": {"get": "link.image_url"}},
+              "children": [{"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}}]
             }
           ]
         }
-      ],
-      "when": {
-        "and": [
-          {
-            "not": {
-              "get": "link.embed_allowed"
-            }
-          },
-          {
-            "eq": [
-              {
-                "get": "link.card_kind"
-              },
-              "social"
-            ]
-          }
-        ]
-      }
+      ]
     }
   ],
   "publishing/link-summary": {
     "tag": "a",
     "attrs": {
-      "class": {
-        "concat": [
-          "status-link-card",
-          {
-            "if": [
-              {
-                "get": "link.image_url"
-              },
-              " has-image",
-              ""
-            ]
-          }
-        ]
-      },
-      "href": {
-        "or": [
-          {
-            "get": "link.outbound_url"
-          },
-          {
-            "get": "link.url"
-          }
-        ]
-      },
+      "class": {"concat": ["status-link-card", {"if": [{"get": "link.image_url"}, " has-image", ""]}]},
+      "href": {"or": [{"get": "link.outbound_url"}, {"get": "link.url"}]},
       "target": "_blank",
       "rel": "nofollow noopener noreferrer ugc",
-      "data-card-kind": {
-        "get": "link.card_kind"
-      },
-      "data-provider": {
-        "get": "link.provider"
-      }
+      "data-card-kind": {"get": "link.card_kind"},
+      "data-provider": {"get": "link.provider"}
     },
     "children": [
       {
         "tag": "span",
-        "attrs": {
-          "class": "status-link-provider"
-        },
-        "children": [
-          {
-            "icon": {
-              "or": [
-                {
-                  "get": "link.card_icon"
-                },
-                "external-link"
-              ]
-            }
-          },
-          {
-            "get": "link.provider_name"
-          }
-        ],
-        "when": {
-          "get": "link.provider_name"
-        }
+        "attrs": {"class": "status-link-provider"},
+        "when": {"get": "link.provider_name"},
+        "children": [{"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}}, {"get": "link.provider_name"}]
       },
       {
         "tag": "span",
-        "attrs": {
-          "class": "status-link-media",
-          "data-status-link-media": ""
-        },
+        "attrs": {"class": "status-link-media", "data-status-link-media": ""},
+        "when": {"get": "link.image_url"},
         "children": [
           {
             "tag": "img",
             "attrs": {
               "class": "status-link-image",
-              "src": {
-                "get": "link.image_url"
-              },
+              "src": {"get": "link.image_url"},
               "alt": "",
               "loading": "lazy",
               "data-status-link-image": ""
@@ -2945,91 +1117,24 @@
           },
           {
             "tag": "span",
-            "attrs": {
-              "class": "status-link-icon status-link-fallback-icon",
-              "data-status-link-fallback": ""
-            },
-            "children": [
-              {
-                "icon": "image"
-              }
-            ]
+            "attrs": {"class": "status-link-icon status-link-fallback-icon", "data-status-link-fallback": ""},
+            "children": [{"icon": "image"}]
           }
-        ],
-        "when": {
-          "get": "link.image_url"
-        }
+        ]
       },
       {
         "tag": "span",
-        "attrs": {
-          "class": "status-link-icon"
-        },
-        "children": [
-          {
-            "icon": {
-              "or": [
-                {
-                  "get": "link.card_icon"
-                },
-                "external-link"
-              ]
-            }
-          }
-        ],
-        "when": {
-          "not": {
-            "get": "link.image_url"
-          }
-        }
+        "attrs": {"class": "status-link-icon"},
+        "when": {"not": {"get": "link.image_url"}},
+        "children": [{"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}}]
       },
       {
         "tag": "span",
-        "attrs": {
-          "class": "status-link-copy"
-        },
+        "attrs": {"class": "status-link-copy"},
         "children": [
-          {
-            "tag": "strong",
-            "children": [
-              {
-                "or": [
-                  {
-                    "get": "link.title"
-                  },
-                  {
-                    "get": "link.url"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "span",
-            "children": [
-              {
-                "get": "link.description"
-              }
-            ],
-            "when": {
-              "get": "link.description"
-            }
-          },
-          {
-            "tag": "small",
-            "children": [
-              {
-                "or": [
-                  {
-                    "get": "link.display_url"
-                  },
-                  {
-                    "get": "link.url"
-                  }
-                ]
-              }
-            ]
-          }
+          {"tag": "strong", "children": [{"or": [{"get": "link.title"}, {"get": "link.url"}]}]},
+          {"tag": "span", "when": {"get": "link.description"}, "children": [{"get": "link.description"}]},
+          {"tag": "small", "children": [{"or": [{"get": "link.display_url"}, {"get": "link.url"}]}]}
         ]
       }
     ]
@@ -3037,115 +1142,36 @@
   "publishing/editor": {
     "tag": "div",
     "attrs": {
-      "class": {
-        "if": [
-          {
-            "get": "comment"
-          },
-          "status-comment-editor",
-          "field status-field"
-        ]
-      },
+      "class": {"if": [{"get": "comment"}, "status-comment-editor", "field status-field"]},
       "data-status-editor": ""
     },
     "children": [
       {
         "tag": "textarea",
         "attrs": {
-          "class": {
-            "if": [
-              {
-                "get": "comment"
-              },
-              "textarea status-comment-input",
-              "textarea status-textarea"
-            ]
-          },
-          "name": {
-            "get": "name"
-          },
-          "rows": {
-            "or": [
-              {
-                "get": "rows"
-              },
-              {
-                "if": [
-                  {
-                    "get": "comment"
-                  },
-                  "1",
-                  "4"
-                ]
-              }
-            ]
-          },
+          "class": {"if": [{"get": "comment"}, "textarea status-comment-input", "textarea status-textarea"]},
+          "name": {"get": "name"},
+          "rows": {"or": [{"get": "rows"}, {"if": [{"get": "comment"}, "1", "4"]}]},
           "maxlength": {
-            "or": [
-              {
-                "get": "max_length"
-              },
-              "2000"
-            ]
-          },
-          "required": {
             "if": [
-              {
-                "or": [
-                  {
-                    "get": "comment"
-                  },
-                  {
-                    "get": "required"
-                  }
-                ]
-              },
-              true,
-              null
+              {"or": [{"get": "max_bytes"}, {"get": "max_characters"}]},
+              null,
+              {"or": [{"get": "max_length"}, "2000"]}
             ]
           },
+          "required": {"if": [{"or": [{"get": "comment"}, {"get": "required"}]}, true, null]},
           "data-status-editor-source": "",
-          "data-status-suggest-url": {
-            "get": "suggest_url"
-          },
-          "data-status-placeholder": {
-            "get": "placeholder"
-          },
-          "placeholder": {
-            "get": "placeholder"
-          },
-          "aria-label": {
-            "get": "placeholder"
-          },
-          "data-status-editor-counter-disabled": {
-            "if": [
-              {
-                "get": "comment"
-              },
-              "true",
-              null
-            ]
-          },
-          "data-status-counter": {
-            "if": [
-              {
-                "not": {
-                  "get": "comment"
-                }
-              },
-              {
-                "t": "account.status_counter",
-                "values": {}
-              },
-              null
-            ]
-          }
+          "data-status-suggest-url": {"get": "suggest_url"},
+          "data-status-placeholder": {"get": "placeholder"},
+          "placeholder": {"get": "placeholder"},
+          "aria-label": {"get": "placeholder"},
+          "data-status-editor-counter-disabled": {"if": [{"get": "comment"}, "true", null]},
+          "data-status-counter": {"if": [{"not": {"get": "comment"}}, {"t": "account.status_counter"}, null]},
+          "data-max-bytes": {"get": "max_bytes"},
+          "data-max-length": {"get": "max_characters"},
+          "aria-labelledby": {"get": "labelledby"}
         },
-        "children": [
-          {
-            "get": "value"
-          }
-        ]
+        "children": [{"get": "value"}]
       }
     ]
   },
@@ -3154,34 +1180,12 @@
     "attrs": {
       "class": "status-image-field",
       "data-status-image": "",
-      "hidden": {
-        "if": [
-          {
-            "not": {
-              "or": [
-                {
-                  "get": "enabled"
-                },
-                {
-                  "get": "image.url"
-                }
-              ]
-            }
-          },
-          true,
-          null
-        ]
-      }
+      "hidden": {"if": [{"not": {"or": [{"get": "enabled"}, {"get": "image.url"}]}}, true, null]}
     },
     "children": [
       {
         "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "remove_image",
-          "value": "0",
-          "data-status-image-remove-input": ""
-        }
+        "attrs": {"type": "hidden", "name": "remove_image", "value": "0", "data-status-image-remove-input": ""}
       },
       {
         "tag": "button",
@@ -3190,82 +1194,31 @@
           "type": "button",
           "data-status-image-preview-wrap": "",
           "data-status-image-remove": "",
-          "aria-label": {
-            "t": "account.status_image_remove",
-            "values": {}
-          },
-          "hidden": {
-            "if": [
-              {
-                "not": {
-                  "get": "image.url"
-                }
-              },
-              true,
-              null
-            ]
-          }
+          "aria-label": {"t": "account.status_image_remove"},
+          "hidden": {"if": [{"not": {"get": "image.url"}}, true, null]}
         },
         "children": [
           {
             "tag": "img",
             "attrs": {
-              "src": {
-                "if": [
-                  {
-                    "get": "image.url"
-                  },
-                  {
-                    "get": "image.url"
-                  },
-                  null
-                ]
-              },
+              "src": {"if": [{"get": "image.url"}, {"get": "image.url"}, null]},
               "alt": {
                 "or": [
-                  {
-                    "get": "image.alt"
-                  },
+                  {"get": "image.alt"},
                   {
                     "if": [
-                      {
-                        "get": "image.description"
-                      },
+                      {"get": "image.description"},
                       {
                         "t": "public.status_image_alt",
-                        "values": {
-                          "author": {
-                            "get": "image.author"
-                          },
-                          "text": {
-                            "get": "image.description"
-                          }
-                        }
+                        "values": {"author": {"get": "image.author"}, "text": {"get": "image.description"}}
                       },
-                      {
-                        "t": "public.status_image_alt_empty",
-                        "values": {
-                          "author": {
-                            "get": "image.author"
-                          }
-                        }
-                      }
+                      {"t": "public.status_image_alt_empty", "values": {"author": {"get": "image.author"}}}
                     ]
                   }
                 ]
               },
               "data-status-image-preview": "",
-              "hidden": {
-                "if": [
-                  {
-                    "not": {
-                      "get": "image.url"
-                    }
-                  },
-                  true,
-                  null
-                ]
-              }
+              "hidden": {"if": [{"not": {"get": "image.url"}}, true, null]}
             }
           }
         ]
@@ -3275,30 +1228,8 @@
         "attrs": {
           "class": "btn btn-secondary btn-sm btn-icon status-image-picker",
           "data-status-image-picker": "",
-          "aria-label": {
-            "t": "account.status_image_add",
-            "values": {}
-          },
-          "hidden": {
-            "if": [
-              {
-                "not": {
-                  "and": [
-                    {
-                      "get": "enabled"
-                    },
-                    {
-                      "not": {
-                        "get": "image.url"
-                      }
-                    }
-                  ]
-                }
-              },
-              true,
-              null
-            ]
-          }
+          "aria-label": {"t": "account.status_image_add"},
+          "hidden": {"if": [{"not": {"and": [{"get": "enabled"}, {"not": {"get": "image.url"}}]}}, true, null]}
         },
         "children": [
           {
@@ -3313,9 +1244,7 @@
               "data-client-image-max-bytes": "26214400"
             }
           },
-          {
-            "icon": "upload"
-          }
+          {"icon": "upload"}
         ]
       }
     ]
@@ -3323,33 +1252,15 @@
   "publishing/attached-image": {
     "tag": "img",
     "attrs": {
-      "src": {
-        "get": "item.image.url"
-      },
+      "src": {"get": "item.image.url"},
       "alt": {
         "if": [
-          {
-            "get": "item.image.description"
-          },
+          {"get": "item.image.description"},
           {
             "t": "public.status_image_alt",
-            "values": {
-              "author": {
-                "get": "item.image.author"
-              },
-              "text": {
-                "get": "item.image.description"
-              }
-            }
+            "values": {"author": {"get": "item.image.author"}, "text": {"get": "item.image.description"}}
           },
-          {
-            "t": "public.status_image_alt_empty",
-            "values": {
-              "author": {
-                "get": "item.image.author"
-              }
-            }
-          }
+          {"t": "public.status_image_alt_empty", "values": {"author": {"get": "item.image.author"}}}
         ]
       },
       "loading": "lazy"
@@ -3357,194 +1268,62 @@
   },
   "publishing/body": {
     "tag": "div",
-    "attrs": {
-      "class": "stack stack-gap-16 publishing-content"
-    },
+    "attrs": {"class": "stack stack-gap-16 publishing-content"},
     "children": [
       {
         "tag": "div",
-        "attrs": {
-          "class": "status-body publishing-text"
-        },
-        "children": [
-          {
-            "component": "publishing/segments",
-            "data": {
-              "segments": {
-                "get": "item.segments"
-              }
-            }
-          }
-        ]
+        "attrs": {"class": "status-body publishing-text"},
+        "children": [{"component": "publishing/segments", "data": {"segments": {"get": "item.segments"}}}]
       },
+      {"component": "publishing/attached-image", "data": {"item": {"get": "item"}}, "when": {"get": "item.image.url"}},
       {
-        "component": "publishing/attached-image",
-        "data": {
-          "item": {
-            "get": "item"
-          }
-        },
-        "when": {
-          "get": "item.image.url"
-        }
-      },
-      {
-        "each": {
-          "get": "item.links"
-        },
+        "each": {"get": "item.links"},
         "as": "link",
-        "children": [
-          {
-            "component": "publishing/link",
-            "data": {
-              "link": {
-                "get": "link"
-              }
-            }
-          }
-        ]
+        "children": [{"component": "publishing/link", "data": {"link": {"get": "link"}}}]
       }
     ]
   },
   "publishing/comment-form": {
     "tag": "form",
     "attrs": {
-      "class": {
-        "concat": [
-          "status-comment-form",
-          {
-            "if": [
-              {
-                "get": "parent_id"
-              },
-              " is-reply",
-              ""
-            ]
-          }
-        ]
-      },
+      "class": {"concat": ["status-comment-form", {"if": [{"get": "parent_id"}, " is-reply", ""]}]},
       "method": "post",
-      "action": {
-        "concat": [
-          {
-            "get": "api_base"
-          },
-          "/comments"
-        ]
-      },
-      "data-status-form": {
-        "if": [
-          {
-            "get": "submit_controller"
-          },
-          "",
-          null
-        ]
-      },
-      "data-status-id": {
-        "get": "content_id"
-      },
+      "action": {"concat": [{"get": "api_base"}, "/comments"]},
+      "data-status-form": {"if": [{"get": "submit_controller"}, "", null]},
+      "data-status-id": {"get": "content_id"},
       "data-confirm-unsaved": "true",
-      "data-confirm-unsaved-title": {
-        "t": "common.unsaved_title",
-        "values": {}
-      },
-      "data-confirm-unsaved-message": {
-        "t": "common.unsaved_message",
-        "values": {}
-      },
-      "data-confirm-unsaved-ok": {
-        "t": "common.leave",
-        "values": {}
-      },
-      "data-confirm-unsaved-cancel": {
-        "t": "common.stay",
-        "values": {}
-      },
-      "data-discussion-form": {
-        "if": [
-          {
-            "not": {
-              "get": "submit_controller"
-            }
-          },
-          "",
-          null
-        ]
-      },
-      "data-submit-controller": {
-        "get": "submit_controller"
-      }
+      "data-confirm-unsaved-title": {"t": "common.unsaved_title"},
+      "data-confirm-unsaved-message": {"t": "common.unsaved_message"},
+      "data-confirm-unsaved-ok": {"t": "common.leave"},
+      "data-confirm-unsaved-cancel": {"t": "common.stay"},
+      "data-discussion-form": {"if": [{"not": {"get": "submit_controller"}}, "", null]},
+      "data-submit-controller": {"get": "submit_controller"}
     },
     "children": [
-      {
-        "csrf": true
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "action",
-          "value": "comment"
-        }
-      },
-      {
-        "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "parent_id",
-          "value": {
-            "or": [
-              {
-                "get": "parent_id"
-              },
-              0
-            ]
-          }
-        }
-      },
-      {
-        "component": "ui/avatar",
-        "data": {
-          "user": {
-            "get": "viewer"
-          },
-          "small": true
-        }
-      },
+      {"csrf": true},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "comment"}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "parent_id", "value": {"or": [{"get": "parent_id"}, 0]}}},
+      {"component": "ui/avatar", "data": {"user": {"get": "viewer"}, "small": true}},
       {
         "tag": "div",
-        "attrs": {
-          "class": "status-comment-input-shell"
-        },
+        "attrs": {"class": "status-comment-input-shell"},
         "children": [
           {
             "component": "publishing/editor",
             "data": {
               "name": "comment",
               "comment": true,
-              "value": {
-                "get": "mention"
-              },
+              "value": {"get": "mention"},
               "placeholder": {
                 "if": [
-                  {
-                    "get": "parent_id"
-                  },
-                  {
-                    "t": "account.status_reply_placeholder",
-                    "values": {}
-                  },
-                  {
-                    "t": "account.status_comment_placeholder",
-                    "values": {}
-                  }
+                  {"get": "parent_id"},
+                  {"t": "account.status_reply_placeholder"},
+                  {"t": "account.status_comment_placeholder"}
                 ]
               },
-              "suggest_url": {
-                "get": "suggest_url"
-              },
-              "max_length": 2000
+              "suggest_url": {"get": "suggest_url"},
+              "max_length": 2000,
+              "max_characters": {"get": "constraints.comment.max_length"}
             }
           },
           {
@@ -3553,26 +1332,10 @@
               "type": "submit",
               "class": "btn btn-primary btn-icon btn-sm status-comment-submit",
               "aria-label": {
-                "if": [
-                  {
-                    "get": "parent_id"
-                  },
-                  {
-                    "t": "account.status_reply",
-                    "values": {}
-                  },
-                  {
-                    "t": "account.status_comment",
-                    "values": {}
-                  }
-                ]
+                "if": [{"get": "parent_id"}, {"t": "account.status_reply"}, {"t": "account.status_comment"}]
               }
             },
-            "children": [
-              {
-                "icon": "send"
-              }
-            ]
+            "children": [{"icon": "send"}]
           }
         ]
       }
@@ -3581,439 +1344,174 @@
   "publishing/comment": {
     "tag": "article",
     "attrs": {
-      "class": {
-        "concat": [
-          "status-comment",
-          {
-            "if": [
-              {
-                "get": "item.parent_id"
-              },
-              " is-child",
-              ""
-            ]
-          }
-        ]
-      },
+      "class": {"concat": ["status-comment", {"if": [{"get": "item.parent_id"}, " is-child", ""]}]},
       "id": {
         "if": [
-          {
-            "not": {
-              "get": "preview"
-            }
-          },
+          {"not": {"get": "preview"}},
           {
             "concat": [
               "comment-",
-              {
-                "if": [
-                  {
-                    "get": "context"
-                  },
-                  {
-                    "concat": [
-                      {
-                        "get": "context"
-                      },
-                      "-"
-                    ]
-                  },
-                  ""
-                ]
-              },
-              {
-                "get": "item.id"
-              }
+              {"if": [{"get": "context"}, {"concat": [{"get": "context"}, "-"]}, ""]},
+              {"get": "item.id"}
             ]
           },
           null
         ]
       },
-      "data-comment-id": {
-        "get": "item.id"
-      },
-      "data-content-id": {
-        "get": "item.content_id"
-      },
-      "data-parent-id": {
-        "get": "item.parent_id"
-      }
+      "data-comment-id": {"get": "item.id"},
+      "data-content-id": {"get": "item.content_id"},
+      "data-parent-id": {"get": "item.parent_id"}
     },
     "children": [
       {
         "tag": "a",
-        "attrs": {
-          "href": {
-            "get": "item.author.url"
-          },
-          "aria-label": {
-            "get": "item.author.username"
-          }
-        },
-        "children": [
-          {
-            "component": "ui/avatar",
-            "data": {
-              "user": {
-                "get": "item.author"
-              },
-              "small": true
-            }
-          }
-        ]
+        "attrs": {"href": {"get": "item.author.url"}, "aria-label": {"get": "item.author.username"}},
+        "children": [{"component": "ui/avatar", "data": {"user": {"get": "item.author"}, "small": true}}]
       },
       {
         "tag": "div",
-        "attrs": {
-          "class": "status-comment-main"
-        },
+        "attrs": {"class": "status-comment-main"},
         "children": [
           {
             "tag": "div",
-            "attrs": {
-              "class": "status-comment-bubble"
-            },
+            "attrs": {"class": "status-comment-bubble"},
             "children": [
               {
                 "tag": "div",
-                "attrs": {
-                  "class": "status-comment-heading"
-                },
+                "attrs": {"class": "status-comment-heading"},
                 "children": [
                   {
                     "tag": "a",
-                    "attrs": {
-                      "class": "status-comment-author",
-                      "href": {
-                        "get": "item.author.url"
-                      }
-                    },
-                    "children": [
-                      {
-                        "get": "item.author.username"
-                      }
-                    ]
+                    "attrs": {"class": "status-comment-author", "href": {"get": "item.author.url"}},
+                    "children": [{"get": "item.author.username"}]
                   },
                   {
                     "tag": "time",
-                    "attrs": {
-                      "class": "status-comment-heading-time",
-                      "datetime": {
-                        "get": "item.created_at"
-                      }
-                    },
-                    "children": [
-                      {
-                        "date": {
-                          "get": "item.created_at"
-                        }
-                      }
-                    ]
+                    "attrs": {"class": "status-comment-heading-time", "datetime": {"get": "item.created_at"}},
+                    "children": [{"date": {"get": "item.created_at"}}]
                   },
-                  {
-                    "extensions": "publishing/comment-menu"
-                  },
+                  {"extensions": "publishing/comment-menu"},
                   {
                     "tag": "a",
                     "attrs": {
-                      "href": {
-                        "concat": [
-                          {
-                            "get": "api_base"
-                          },
-                          "/comments/",
-                          {
-                            "get": "item.id"
-                          }
-                        ]
-                      },
+                      "href": {"concat": [{"get": "api_base"}, "/comments/", {"get": "item.id"}]},
                       "class": "btn btn-ghost btn-sm",
-                      "data-modal-url": {
-                        "concat": [
-                          {
-                            "get": "api_base"
-                          },
-                          "/comments/",
-                          {
-                            "get": "item.id"
-                          }
-                        ]
-                      },
-                      "data-modal-open": {
-                        "concat": [
-                          "modal-comment-",
-                          {
-                            "get": "item.id"
-                          }
-                        ]
-                      }
+                      "data-modal-url": {"concat": [{"get": "api_base"}, "/comments/", {"get": "item.id"}]},
+                      "data-modal-open": {"concat": ["modal-comment-", {"get": "item.id"}]}
                     },
-                    "children": [
-                      {
-                        "t": "common.edit"
-                      }
-                    ],
                     "when": {
                       "and": [
-                        {
-                          "not": {
-                            "get": "submit_controller"
-                          }
-                        },
-                        {
-                          "or": [
-                            {
-                              "get": "item.capabilities.edit"
-                            },
-                            {
-                              "get": "item.capabilities.delete"
-                            }
-                          ]
-                        }
+                        {"not": {"get": "submit_controller"}},
+                        {"or": [{"get": "item.capabilities.edit"}, {"get": "item.capabilities.delete"}]}
                       ]
-                    }
+                    },
+                    "children": [{"t": "common.edit"}]
                   }
                 ]
               },
               {
                 "tag": "div",
-                "attrs": {
-                  "class": "status-comment-body is-resource-text"
-                },
-                "children": [
-                  {
-                    "component": "publishing/segments",
-                    "data": {
-                      "segments": {
-                        "get": "item.segments"
-                      }
-                    }
-                  }
-                ]
+                "attrs": {"class": "status-comment-body is-resource-text"},
+                "children": [{"component": "publishing/segments", "data": {"segments": {"get": "item.segments"}}}]
               }
             ]
           },
           {
             "tag": "div",
-            "attrs": {
-              "class": "status-comment-meta"
-            },
+            "attrs": {"class": "status-comment-meta"},
             "children": [
               {
                 "component": "publishing/like",
                 "data": {
-                  "item": {
-                    "get": "item"
-                  },
+                  "item": {"get": "item"},
                   "comment": true,
-                  "content_id": {
-                    "get": "item.content_id"
-                  },
-                  "url": {
-                    "concat": [
-                      {
-                        "get": "api_base"
-                      },
-                      "/comments/",
-                      {
-                        "get": "item.id"
-                      },
-                      "/likes/me"
-                    ]
-                  },
-                  "submit_controller": {
-                    "get": "submit_controller"
-                  },
-                  "api_base": {
-                    "get": "api_base"
-                  },
-                  "suggest_url": {
-                    "get": "suggest_url"
-                  }
+                  "content_id": {"get": "item.content_id"},
+                  "url": {"concat": [{"get": "api_base"}, "/comments/", {"get": "item.id"}, "/likes/me"]},
+                  "submit_controller": {"get": "submit_controller"},
+                  "api_base": {"get": "api_base"},
+                  "suggest_url": {"get": "suggest_url"}
                 },
-                "when": {
-                  "get": "item.capabilities.interact"
-                }
+                "when": {"get": "item.capabilities.interact"}
               },
               {
                 "tag": "details",
-                "attrs": {
-                  "class": "status-reply-details"
-                },
-                "children": [
-                  {
-                    "tag": "summary",
-                    "children": [
-                      {
-                        "t": "account.status_reply",
-                        "values": {}
-                      }
-                    ]
-                  }
-                ],
-                "when": {
-                  "get": "show_reply_form"
-                }
+                "attrs": {"class": "status-reply-details"},
+                "when": {"get": "show_reply_form"},
+                "children": [{"tag": "summary", "children": [{"t": "account.status_reply"}]}]
               },
               {
                 "tag": "span",
-                "attrs": {
-                  "class": "status-comment-like-button"
-                },
+                "attrs": {"class": "status-comment-like-button"},
+                "when": {"not": {"get": "item.capabilities.interact"}},
                 "children": [
-                  {
-                    "icon": "thumb-up"
-                  },
+                  {"icon": "thumb-up"},
                   {
                     "tag": "span",
-                    "attrs": {
-                      "data-comment-like-count": "",
-                      "data-comment-id": {
-                        "get": "item.id"
-                      }
-                    },
-                    "children": [
-                      {
-                        "get": "item.likes_count"
-                      }
-                    ]
+                    "attrs": {"data-comment-like-count": "", "data-comment-id": {"get": "item.id"}},
+                    "children": [{"get": "item.likes_count"}]
                   }
-                ],
-                "when": {
-                  "not": {
-                    "get": "item.capabilities.interact"
-                  }
-                }
+                ]
               }
             ]
           },
           {
             "tag": "div",
-            "attrs": {
-              "class": "status-reply-form-container"
-            },
+            "attrs": {"class": "status-reply-form-container"},
+            "when": {"and": [{"get": "item.capabilities.interact"}, {"get": "show_reply_form"}]},
             "children": [
               {
                 "component": "publishing/comment-form",
                 "data": {
-                  "content_id": {
-                    "get": "item.content_id"
-                  },
-                  "parent_id": {
-                    "get": "item.id"
-                  },
+                  "content_id": {"get": "item.content_id"},
+                  "parent_id": {"get": "item.id"},
                   "mention": {
                     "if": [
-                      {
-                        "and": [
-                          {
-                            "get": "reply_mentions"
-                          },
-                          {
-                            "get": "item.parent_id"
-                          }
-                        ]
-                      },
-                      {
-                        "concat": [
-                          "@",
-                          {
-                            "get": "item.author.username"
-                          },
-                          " "
-                        ]
-                      },
+                      {"and": [{"get": "reply_mentions"}, {"get": "item.parent_id"}]},
+                      {"concat": ["@", {"get": "item.author.username"}, " "]},
                       ""
                     ]
                   },
-                  "viewer": {
-                    "get": "viewer"
-                  },
-                  "submit_controller": {
-                    "get": "submit_controller"
-                  },
-                  "api_base": {
-                    "get": "api_base"
-                  },
-                  "suggest_url": {
-                    "get": "suggest_url"
-                  }
+                  "viewer": {"get": "viewer"},
+                  "submit_controller": {"get": "submit_controller"},
+                  "api_base": {"get": "api_base"},
+                  "suggest_url": {"get": "suggest_url"},
+                  "constraints": {"get": "constraints"}
                 }
               }
-            ],
-            "when": {
-              "and": [
-                {
-                  "get": "item.capabilities.interact"
-                },
-                {
-                  "get": "show_reply_form"
-                }
-              ]
-            }
+            ]
           },
           {
             "tag": "div",
             "attrs": {
               "class": "status-comment-replies",
               "data-comment-replies": "",
-              "data-comment-id": {
-                "get": "item.id"
-              }
+              "data-comment-id": {"get": "item.id"}
             },
+            "when": {"and": [{"get": "show_replies"}, {"get": "item.replies"}]},
             "children": [
               {
-                "each": {
-                  "get": "item.replies"
-                },
+                "each": {"get": "item.replies"},
                 "as": "reply",
                 "children": [
                   {
                     "component": "publishing/comment",
                     "data": {
-                      "item": {
-                        "get": "reply"
-                      },
-                      "viewer": {
-                        "get": "viewer"
-                      },
-                      "context": {
-                        "get": "context"
-                      },
+                      "item": {"get": "reply"},
+                      "viewer": {"get": "viewer"},
+                      "context": {"get": "context"},
                       "show_replies": true,
-                      "show_reply_form": {
-                        "get": "show_reply_form"
-                      },
-                      "preview": {
-                        "get": "preview"
-                      },
-                      "submit_controller": {
-                        "get": "submit_controller"
-                      },
-                      "api_base": {
-                        "get": "api_base"
-                      },
-                      "suggest_url": {
-                        "get": "suggest_url"
-                      },
-                      "reply_mentions": {
-                        "get": "reply_mentions"
-                      }
+                      "show_reply_form": {"get": "show_reply_form"},
+                      "preview": {"get": "preview"},
+                      "submit_controller": {"get": "submit_controller"},
+                      "api_base": {"get": "api_base"},
+                      "suggest_url": {"get": "suggest_url"},
+                      "reply_mentions": {"get": "reply_mentions"},
+                      "constraints": {"get": "constraints"}
                     }
                   }
                 ]
               }
-            ],
-            "when": {
-              "and": [
-                {
-                  "get": "show_replies"
-                },
-                {
-                  "get": "item.replies"
-                }
-              ]
-            }
+            ]
           }
         ]
       }
@@ -4023,64 +1521,18 @@
     "tag": "form",
     "attrs": {
       "method": "post",
-      "action": {
-        "get": "url"
-      },
-      "class": {
-        "if": [
-          {
-            "get": "comment"
-          },
-          "status-comment-like",
-          null
-        ]
-      },
-      "data-status-form": {
-        "if": [
-          {
-            "get": "submit_controller"
-          },
-          "",
-          null
-        ]
-      },
-      "data-status-id": {
-        "get": "content_id"
-      },
-      "data-discussion-form": {
-        "if": [
-          {
-            "not": {
-              "get": "submit_controller"
-            }
-          },
-          "",
-          null
-        ]
-      },
-      "data-submit-controller": {
-        "get": "submit_controller"
-      }
+      "action": {"get": "url"},
+      "class": {"if": [{"get": "comment"}, "status-comment-like", null]},
+      "data-status-form": {"if": [{"get": "submit_controller"}, "", null]},
+      "data-status-id": {"get": "content_id"},
+      "data-discussion-form": {"if": [{"not": {"get": "submit_controller"}}, "", null]},
+      "data-submit-controller": {"get": "submit_controller"}
     },
     "children": [
-      {
-        "csrf": true
-      },
+      {"csrf": true},
       {
         "tag": "input",
-        "attrs": {
-          "type": "hidden",
-          "name": "action",
-          "value": {
-            "if": [
-              {
-                "get": "comment"
-              },
-              "comment_like",
-              "react"
-            ]
-          }
-        }
+        "attrs": {"type": "hidden", "name": "action", "value": {"if": [{"get": "comment"}, "comment_like", "react"]}}
       },
       {
         "tag": "button",
@@ -4088,198 +1540,56 @@
           "type": "submit",
           "class": {
             "concat": [
-              {
-                "if": [
-                  {
-                    "get": "comment"
-                  },
-                  "status-comment-like-button",
-                  "btn btn-ghost btn-sm status-reaction"
-                ]
-              },
-              {
-                "if": [
-                  {
-                    "get": "item.liked"
-                  },
-                  " is-active",
-                  ""
-                ]
-              }
+              {"if": [{"get": "comment"}, "status-comment-like-button", "btn btn-ghost btn-sm status-reaction"]},
+              {"if": [{"get": "item.liked"}, " is-active", ""]}
             ]
           },
-          "data-status-like-button": {
-            "if": [
-              {
-                "not": {
-                  "get": "comment"
-                }
-              },
-              "",
-              null
-            ]
-          },
-          "data-comment-like-button": {
-            "if": [
-              {
-                "get": "comment"
-              },
-              "",
-              null
-            ]
-          },
-          "data-comment-id": {
-            "if": [
-              {
-                "get": "comment"
-              },
-              {
-                "get": "item.id"
-              },
-              null
-            ]
-          },
-          "aria-pressed": {
-            "if": [
-              {
-                "get": "item.liked"
-              },
-              "true",
-              "false"
-            ]
-          },
+          "data-status-like-button": {"if": [{"not": {"get": "comment"}}, "", null]},
+          "data-comment-like-button": {"if": [{"get": "comment"}, "", null]},
+          "data-comment-id": {"if": [{"get": "comment"}, {"get": "item.id"}, null]},
+          "aria-pressed": {"if": [{"get": "item.liked"}, "true", "false"]},
           "data-like-label": {
             "or": [
-              {
-                "t": "account.status_like_for",
-                "values": {
-                  "context": {
-                    "get": "item.author.username"
-                  }
-                }
-              },
-              {
-                "t": "account.status_like",
-                "values": {}
-              }
+              {"t": "account.status_like_for", "values": {"context": {"get": "item.author.username"}}},
+              {"t": "account.status_like"}
             ]
           },
           "data-unlike-label": {
             "or": [
-              {
-                "t": "account.status_unlike_for",
-                "values": {
-                  "context": {
-                    "get": "item.author.username"
-                  }
-                }
-              },
-              {
-                "t": "account.status_unlike_for",
-                "values": {
-                  "context": {
-                    "t": "account.status_comments",
-                    "values": {}
-                  }
-                }
-              }
+              {"t": "account.status_unlike_for", "values": {"context": {"get": "item.author.username"}}},
+              {"t": "account.status_unlike_for", "values": {"context": {"t": "account.status_comments"}}}
             ]
           },
           "aria-label": {
             "if": [
-              {
-                "get": "item.liked"
-              },
+              {"get": "item.liked"},
               {
                 "or": [
-                  {
-                    "t": "account.status_unlike_for",
-                    "values": {
-                      "context": {
-                        "get": "item.author.username"
-                      }
-                    }
-                  },
-                  {
-                    "t": "account.status_unlike_for",
-                    "values": {
-                      "context": {
-                        "t": "account.status_comments",
-                        "values": {}
-                      }
-                    }
-                  }
+                  {"t": "account.status_unlike_for", "values": {"context": {"get": "item.author.username"}}},
+                  {"t": "account.status_unlike_for", "values": {"context": {"t": "account.status_comments"}}}
                 ]
               },
               {
                 "or": [
-                  {
-                    "t": "account.status_like_for",
-                    "values": {
-                      "context": {
-                        "get": "item.author.username"
-                      }
-                    }
-                  },
-                  {
-                    "t": "account.status_like",
-                    "values": {}
-                  }
+                  {"t": "account.status_like_for", "values": {"context": {"get": "item.author.username"}}},
+                  {"t": "account.status_like"}
                 ]
               }
             ]
           }
         },
         "children": [
-          {
-            "icon": "thumb-up",
-            "class": "icon status-like-icon status-like-icon-outline"
-          },
-          {
-            "icon": "thumb-up-filled",
-            "class": "icon status-like-icon status-like-icon-filled"
-          },
+          {"icon": "thumb-up", "class": "icon status-like-icon status-like-icon-outline"},
+          {"icon": "thumb-up-filled", "class": "icon status-like-icon status-like-icon-filled"},
           {
             "tag": "span",
             "attrs": {
-              "data-status-count": {
-                "if": [
-                  {
-                    "not": {
-                      "get": "comment"
-                    }
-                  },
-                  "likes",
-                  null
-                ]
-              },
-              "data-comment-like-count": {
-                "if": [
-                  {
-                    "get": "comment"
-                  },
-                  "",
-                  null
-                ]
-              },
-              "data-comment-id": {
-                "if": [
-                  {
-                    "get": "comment"
-                  },
-                  {
-                    "get": "item.id"
-                  },
-                  null
-                ]
-              },
+              "data-status-count": {"if": [{"not": {"get": "comment"}}, "likes", null]},
+              "data-comment-like-count": {"if": [{"get": "comment"}, "", null]},
+              "data-comment-id": {"if": [{"get": "comment"}, {"get": "item.id"}, null]},
               "aria-hidden": "true"
             },
-            "children": [
-              {
-                "get": "item.likes_count"
-              }
-            ]
+            "children": [{"get": "item.likes_count"}]
           }
         ]
       }
@@ -4290,86 +1600,39 @@
     "attrs": {
       "class": "stack stack-gap-16",
       "data-discussion": "",
-      "data-discussion-id": {
-        "get": "target.id"
-      },
-      "data-discussion-api": {
-        "get": "target.api_url"
-      }
+      "data-discussion-id": {"get": "target.id"},
+      "data-discussion-api": {"get": "target.api_url"},
+      "data-discussion-constraints": {"json": {"get": "constraints"}}
     },
     "children": [
-      {
-        "tag": "h2",
-        "children": [
-          {
-            "t": "account.status_comments"
-          }
-        ]
-      },
+      {"tag": "h2", "children": [{"t": "account.status_comments"}]},
       {
         "component": "publishing/like",
         "data": {
-          "item": {
-            "id": {
-              "get": "target.id"
-            },
-            "liked": {
-              "get": "liked"
-            },
-            "likes_count": {
-              "get": "likes_count"
-            }
-          },
-          "content_id": {
-            "get": "target.id"
-          },
-          "url": {
-            "concat": [
-              {
-                "get": "target.api_url"
-              },
-              "/likes/me"
-            ]
-          }
+          "item": {"id": {"get": "target.id"}, "liked": {"get": "liked"}, "likes_count": {"get": "likes_count"}},
+          "content_id": {"get": "target.id"},
+          "url": {"concat": [{"get": "target.api_url"}, "/likes/me"]}
         },
-        "when": {
-          "get": "capabilities.react"
-        }
+        "when": {"get": "capabilities.react"}
       },
       {
         "tag": "div",
-        "attrs": {
-          "data-status-comment-list": "",
-          "data-status-id": {
-            "get": "target.id"
-          }
-        },
+        "attrs": {"data-status-comment-list": "", "data-status-id": {"get": "target.id"}},
         "children": [
           {
-            "each": {
-              "get": "items"
-            },
+            "each": {"get": "items"},
             "as": "item",
             "children": [
               {
                 "component": "publishing/comment",
                 "data": {
-                  "item": {
-                    "get": "item"
-                  },
-                  "viewer": {
-                    "get": "viewer"
-                  },
+                  "item": {"get": "item"},
+                  "viewer": {"get": "viewer"},
                   "show_replies": true,
-                  "show_reply_form": {
-                    "get": "capabilities.comment"
-                  },
-                  "api_base": {
-                    "get": "target.api_url"
-                  },
-                  "reply_mentions": {
-                    "get": "reply_mentions"
-                  }
+                  "show_reply_form": {"get": "capabilities.comment"},
+                  "api_base": {"get": "target.api_url"},
+                  "reply_mentions": {"get": "reply_mentions"},
+                  "constraints": {"get": "constraints"}
                 }
               }
             ]
@@ -4379,19 +1642,857 @@
       {
         "component": "publishing/comment-form",
         "data": {
-          "content_id": {
-            "get": "target.id"
-          },
-          "viewer": {
-            "get": "viewer"
-          },
-          "api_base": {
-            "get": "target.api_url"
-          }
+          "content_id": {"get": "target.id"},
+          "viewer": {"get": "viewer"},
+          "api_base": {"get": "target.api_url"},
+          "constraints": {"get": "constraints"}
         },
-        "when": {
-          "get": "capabilities.comment"
+        "when": {"get": "capabilities.comment"}
+      }
+    ]
+  },
+  "ui/dashboard": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-14", "data-dashboard": ""},
+    "children": [{"slot": {"get": "content"}}]
+  },
+  "publishing/comment-history": {
+    "tag": "div",
+    "attrs": {"class": "status-comment-history"},
+    "children": [
+      {
+        "each": {"get": "revisions"},
+        "as": "revision",
+        "children": {
+          "tag": "article",
+          "attrs": {"class": "status-comment-history-entry"},
+          "children": [
+            {
+              "tag": "time",
+              "attrs": {"class": "status-comment-history-meta", "datetime": {"get": "revision.at"}},
+              "children": [{"get": "revision.label"}]
+            },
+            {
+              "each": {"get": "revision.rows"},
+              "as": "row",
+              "children": {
+                "tag": "div",
+                "attrs": {"class": "status-comment-history-diff"},
+                "children": [
+                  {
+                    "tag": "span",
+                    "attrs": {"class": "status-comment-diff-marker", "aria-hidden": "true"},
+                    "children": [{"get": "row.marker"}]
+                  },
+                  {"get": "row.prefix"},
+                  {
+                    "tag": {"get": "row.tag"},
+                    "attrs": {"class": {"concat": ["status-comment-diff-", {"get": "row.kind"}]}},
+                    "children": [{"get": "row.change"}]
+                  },
+                  {"get": "row.suffix"}
+                ]
+              }
+            }
+          ]
         }
+      }
+    ]
+  },
+  "ui/account-title": [
+    {
+      "tag": "span",
+      "attrs": {"data-account-title-status": ""},
+      "children": [
+        {"component": "ui/account-status", "data": {"status": {"get": "user.status"}, "label": {"get": "status_label"}}}
+      ]
+    },
+    {"tag": "span", "children": [{"get": "user.username"}]}
+  ],
+  "publishing/comment-replies": {
+    "tag": "div",
+    "attrs": {"class": "status-comment-replies", "data-comment-replies": "true", "data-comment-id": {"get": "id"}}
+  },
+  "ui/code-block": {
+    "tag": "pre",
+    "attrs": {"class": "code-block"},
+    "children": [{"tag": "code", "attrs": {"get": "attributes"}, "children": [{"get": "text"}]}]
+  },
+  "ui/public-header": [
+    {
+      "tag": "header",
+      "attrs": {"class": "navbar"},
+      "children": [
+        {
+          "tag": "div",
+          "attrs": {"class": "container navbar-inner"},
+          "children": [
+            {
+              "tag": "a",
+              "attrs": {"class": "navbar-brand", "href": {"get": "urls.home"}},
+              "children": [
+                {
+                  "tag": "img",
+                  "attrs": {
+                    "class": "brand-logo",
+                    "src": {"get": "siteLogoUrl"},
+                    "alt": {"t": "common.site_logo_alt", "values": {"site": {"get": "appName"}}}
+                  },
+                  "when": {"get": "siteLogoUrl"}
+                },
+                {
+                  "tag": "strong",
+                  "attrs": {"aria-hidden": {"if": [{"get": "siteLogoUrl"}, "true", null]}},
+                  "children": [{"get": "appName"}]
+                }
+              ]
+            },
+            {
+              "tag": "form",
+              "attrs": {
+                "class": "global-search",
+                "action": {"get": "urls.search"},
+                "method": "get",
+                "role": "search",
+                "data-global-search": "",
+                "data-search-api": "/api/search",
+                "data-search-all": {"t": "public.search_all"},
+                "data-search-empty": {"t": "public.search_empty"},
+                "data-search-min": {"t": "public.search_min"},
+                "data-search-captcha-title": {"t": "public.search_captcha_title"},
+                "data-search-captcha-required": {"t": "public.search_captcha_required"},
+                "data-search-captcha-submit": {"t": "common.confirm"},
+                "autocomplete": "off"
+              },
+              "when": {"get": "hasGlobalSearch"},
+              "children": [
+                {
+                  "tag": "label",
+                  "attrs": {"class": "sr-only", "for": "global-search-input"},
+                  "children": [{"t": "common.search"}]
+                },
+                {
+                  "tag": "div",
+                  "attrs": {
+                    "class": "global-search-control",
+                    "data-popover": "",
+                    "data-popover-mode": "input",
+                    "data-popover-match-width": "true"
+                  },
+                  "children": [
+                    {"icon": "search"},
+                    {
+                      "tag": "input",
+                      "attrs": {
+                        "class": "input global-search-input",
+                        "id": "global-search-input",
+                        "type": "search",
+                        "name": "q",
+                        "value": {"get": "searchQuery"},
+                        "placeholder": {"t": "public.search_suggest_placeholder"},
+                        "minlength": "2",
+                        "maxlength": "80",
+                        "data-global-search-input": "",
+                        "data-popover-trigger": ""
+                      }
+                    },
+                    {
+                      "tag": "div",
+                      "attrs": {
+                        "class": "popover-panel global-search-results",
+                        "data-global-search-results": "",
+                        "hidden": true
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "nav",
+              "attrs": {"class": "nav-links", "aria-label": {"t": "common.main_navigation"}},
+              "children": [
+                {
+                  "each": {"get": "nav"},
+                  "as": "item",
+                  "children": {
+                    "tag": "a",
+                    "attrs": {
+                      "class": "nav-link nav-link-icon",
+                      "href": {"get": "item.href"},
+                      "target": {"if": [{"eq": [{"get": "item.target"}, "_blank"]}, "_blank", null]},
+                      "rel": {"if": [{"eq": [{"get": "item.target"}, "_blank"]}, "noopener", null]},
+                      "aria-current": {"if": [{"get": "item.active"}, "page", null]},
+                      "aria-label": {"or": [{"get": "item.label"}, {"get": "item.href"}]},
+                      "title": {"or": [{"get": "item.label"}, {"get": "item.href"}]}
+                    },
+                    "children": [{"icon": {"or": [{"get": "item.icon"}, "link"]}}]
+                  }
+                },
+                {
+                  "tag": "a",
+                  "attrs": {
+                    "class": "nav-link nav-link-icon",
+                    "href": "/admin",
+                    "aria-label": {"t": "common.admin"},
+                    "title": {"t": "common.admin"}
+                  },
+                  "when": {"and": [{"get": "authenticated"}, {"get": "viewerIsAdmin"}]},
+                  "children": [{"icon": "dashboard"}]
+                },
+                {"slot": {"get": "notificationMenu"}, "when": {"get": "authenticated"}},
+                {"slot": {"get": "userMenu"}, "when": {"get": "authenticated"}},
+                {
+                  "tag": "details",
+                  "attrs": {"class": "context-menu language-menu", "data-language-menu": "", "data-popover": ""},
+                  "when": {"not": {"get": "authenticated"}},
+                  "children": [
+                    {
+                      "tag": "summary",
+                      "attrs": {
+                        "class": "nav-link nav-link-icon",
+                        "aria-label": {"concat": [{"t": "common.language"}, ": ", {"get": "currentLanguageName"}]},
+                        "title": {"get": "currentLanguageName"}
+                      },
+                      "children": [
+                        {
+                          "tag": "svg",
+                          "attrs": {
+                            "class": "language-flag",
+                            "viewBox": "0 0 24 16",
+                            "aria-hidden": "true",
+                            "focusable": "false"
+                          },
+                          "children": [
+                            {
+                              "tag": "use",
+                              "attrs": {
+                                "href": {"concat": [{"get": "languageFlagSprite"}, "#", {"get": "languageFlagId"}]}
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "nav",
+                      "attrs": {"class": "popover-panel language-menu-list", "aria-label": {"t": "common.language"}},
+                      "children": [
+                        {
+                          "each": {"get": "languageLinks"},
+                          "as": "languageLink",
+                          "children": {
+                            "tag": "a",
+                            "attrs": {
+                              "class": "context-menu-action language-menu-link",
+                              "href": {"get": "languageLink.url"},
+                              "lang": {"get": "languageLink.language"},
+                              "data-popover-close": "",
+                              "data-language-link": {"get": "languageLink.language"},
+                              "aria-current": {"if": [{"get": "languageLink.active"}, "true", null]}
+                            },
+                            "children": [
+                              {
+                                "tag": "svg",
+                                "attrs": {
+                                  "class": "language-flag",
+                                  "viewBox": "0 0 24 16",
+                                  "aria-hidden": "true",
+                                  "focusable": "false"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "use",
+                                    "attrs": {
+                                      "href": {
+                                        "concat": [
+                                          {"get": "languageFlagSprite"},
+                                          "#flag-",
+                                          {"get": "languageLink.language"}
+                                        ]
+                                      }
+                                    }
+                                  }
+                                ]
+                              },
+                              {"tag": "span", "children": [{"get": "languageLink.name"}]}
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "a",
+                  "attrs": {
+                    "class": "nav-link nav-link-icon",
+                    "href": {"get": "urls.login"},
+                    "aria-current": {"if": [{"eq": [{"get": "current"}, "/login"]}, "page", null]},
+                    "data-modal-open": {"get": "loginModalId"},
+                    "data-modal-url": {"get": "loginModalUrl"},
+                    "aria-label": {"t": "common.login"},
+                    "title": {"t": "common.login"}
+                  },
+                  "when": {"not": {"get": "authenticated"}},
+                  "children": [{"icon": "user"}]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tag": "aside",
+      "attrs": {
+        "class": "language-suggestion",
+        "data-language-suggestion": {"get": "languageSuggestion.language"},
+        "lang": {"get": "languageSuggestion.language"}
+      },
+      "when": {"get": "languageSuggestion"},
+      "children": [
+        {
+          "tag": "div",
+          "attrs": {"class": "container language-suggestion-inner"},
+          "children": [
+            {"tag": "span", "children": [{"get": "languageSuggestion.message"}]},
+            {
+              "tag": "a",
+              "attrs": {
+                "class": "btn btn-secondary btn-sm",
+                "href": {"get": "languageSuggestion.url"},
+                "data-popover-close": "",
+                "data-language-link": {"get": "languageSuggestion.language"}
+              },
+              "children": [{"get": "languageSuggestion.action"}]
+            },
+            {
+              "tag": "button",
+              "attrs": {
+                "class": "language-suggestion-close nav-link nav-link-icon",
+                "type": "button",
+                "data-language-suggestion-close": "",
+                "aria-label": {"get": "languageSuggestion.close"}
+              },
+              "children": [{"icon": "close"}]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "ui/search-page": {
+    "tag": "div",
+    "attrs": {"class": "container stack stack-gap-16"},
+    "children": [
+      {
+        "tag": "form",
+        "attrs": {"action": {"get": "searchUrl"}, "method": "get", "role": "search", "class": "cluster gap-2"},
+        "children": [
+          {
+            "tag": "label",
+            "attrs": {"class": "field"},
+            "children": [
+              {"t": "common.search"},
+              {
+                "tag": "input",
+                "attrs": {
+                  "class": "input",
+                  "type": "search",
+                  "name": "q",
+                  "value": {"get": "result.query"},
+                  "maxlength": "80",
+                  "minlength": "2",
+                  "required": true
+                }
+              }
+            ]
+          },
+          {
+            "tag": "button",
+            "attrs": {"class": "btn btn-primary", "type": "submit"},
+            "children": [{"t": "common.search"}]
+          }
+        ]
+      },
+      {
+        "each": {"get": "result.collections"},
+        "as": "group",
+        "children": {
+          "tag": "section",
+          "attrs": {"class": "card"},
+          "children": [
+            {
+              "tag": "div",
+              "attrs": {"class": "card-header"},
+              "children": [
+                {"tag": "h2", "attrs": {"class": "text-lg m-0 cluster gap-2"}, "children": [{"get": "group.name"}]}
+              ]
+            },
+            {
+              "tag": "div",
+              "attrs": {"class": "card-body stack"},
+              "children": [
+                {
+                  "each": {"get": "group.items"},
+                  "as": "item",
+                  "children": {
+                    "tag": "article",
+                    "children": [
+                      {
+                        "tag": "h3",
+                        "children": [
+                          {"tag": "a", "attrs": {"href": {"get": "item.url"}}, "children": [{"get": "item.title"}]}
+                        ]
+                      },
+                      {"tag": "p", "children": [{"get": "item.excerpt"}]}
+                    ]
+                  }
+                },
+                {"tag": "p", "when": {"not": {"get": "group.items"}}, "children": [{"t": "common.search_empty"}]},
+                {
+                  "tag": "a",
+                  "attrs": {"class": "btn btn-secondary", "href": {"get": "group.next_url"}},
+                  "when": {"get": "group.next_url"},
+                  "children": [{"t": "notifications.load_more"}]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "ui/consent": {
+    "tag": "aside",
+    "attrs": {
+      "class": "cookie-consent",
+      "data-cookie-consent": "",
+      "data-google-measurement-id": {"get": "googleMeasurementId"},
+      "aria-labelledby": "cookie-consent-title"
+    },
+    "when": {"get": "show"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "cookie-consent-copy"},
+        "children": [
+          {
+            "tag": "strong",
+            "attrs": {"id": "cookie-consent-title"},
+            "children": [{"t": "privacy.cookie_consent_title"}]
+          },
+          {
+            "tag": "span",
+            "children": [
+              {
+                "if": [
+                  {"get": "captchaEnabled"},
+                  {"t": "privacy.cookie_consent_text_captcha"},
+                  {"t": "privacy.cookie_consent_text"}
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "a",
+            "attrs": {"href": {"get": "privacyUrl"}, "rel": "privacy-policy"},
+            "children": [{"t": "privacy.title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "cookie-consent-actions"},
+        "children": [
+          {
+            "tag": "button",
+            "attrs": {"class": "btn btn-primary btn-sm", "type": "button", "data-cookie-consent-choice": "granted"},
+            "children": [{"t": "privacy.cookie_consent_accept"}]
+          },
+          {
+            "tag": "button",
+            "attrs": {"class": "btn btn-secondary btn-sm", "type": "button", "data-cookie-consent-choice": "denied"},
+            "children": [{"t": "privacy.cookie_consent_necessary"}]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/privacy-page": {
+    "tag": "section",
+    "attrs": {"class": "stack information-page"},
+    "children": [
+      {
+        "tag": "article",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h1",
+                "attrs": {"class": "text-xl m-0 cluster gap-2"},
+                "children": [{"icon": "shield"}, " ", {"t": "privacy.title"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "text-muted mb-0"},
+                "children": [{"t": "privacy.intro", "values": {"site": {"get": "siteName"}}}]
+              }
+            ]
+          }
+        ]
+      },
+      {"slot": {"get": "sections"}},
+      {
+        "tag": "section",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {"tag": "h2", "attrs": {"class": "text-lg m-0 cluster gap-2"}, "children": [{"t": "privacy.data_title"}]}
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.data_account", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.data_email", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.data_technical", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.data_server_logs", "values": {"site": {"get": "siteName"}}}]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"t": "privacy.recovery_title"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.recovery_email", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.recovery_no_contact", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.recovery_lost", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.recovery_rotation", "values": {"site": {"get": "siteName"}}}]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"icon": "info"}, " ", {"t": "privacy.cookies_title"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.cookies_session", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "when": {"get": "siteCaptchaEnabled"},
+                "children": [{"t": "privacy.cookies_captcha", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.cookies_remember", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [
+                  {
+                    "if": [
+                      {"get": "siteGoogleAnalyticsConfigured"},
+                      {"t": "privacy.cookies_analytics", "values": {"site": {"get": "siteName"}}},
+                      {"t": "privacy.cookies_no_analytics", "values": {"site": {"get": "siteName"}}}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/module-activation": {
+    "tag": "form",
+    "attrs": {
+      "action": "/api/modules/activation",
+      "method": "post",
+      "data-ajax-form": "",
+      "data-confirm": {"t": "modules.confirm"}
+    },
+    "children": [
+      {"csrf": true},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "id", "value": {"get": "id"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "revision", "value": {"get": "revision"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "enabled", "value": {"get": "enabled"}}},
+      {
+        "tag": "button",
+        "attrs": {"type": "submit", "class": "btn btn-secondary btn-sm", "disabled": {"get": "disabled"}},
+        "children": [{"get": "label"}]
+      }
+    ]
+  },
+  "ui/modules-page": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-16"},
+    "children": [
+      {"tag": "p", "attrs": {"class": "text-muted m-0"}, "children": [{"t": "modules.help"}]},
+      {
+        "component": "ui/notice",
+        "data": {"label": {"t": "modules.unavailable"}, "tone": "warning"},
+        "when": {"not": {"get": "snapshot.manageable"}}
+      },
+      {
+        "each": {"get": "snapshot.problems"},
+        "as": "problem",
+        "children": {
+          "component": "ui/notice",
+          "data": {"label": {"concat": [{"get": "_key"}, ": ", {"get": "problem"}]}, "tone": "warning"}
+        }
+      },
+      {
+        "each": {"get": "snapshot.groups"},
+        "as": "group",
+        "children": {
+          "tag": "section",
+          "attrs": {"class": "card"},
+          "children": [
+            {
+              "tag": "div",
+              "attrs": {"class": "card-body cluster gap-2"},
+              "children": [
+                {
+                  "tag": "div",
+                  "attrs": {"class": "min-w-0"},
+                  "children": [
+                    {
+                      "tag": "strong",
+                      "children": [
+                        {"get": "group.name"},
+                        " ",
+                        {
+                          "tag": "span",
+                          "attrs": {"class": "text-muted"},
+                          "children": [{"get": "group.active_count"}, " / ", {"count": {"get": "group.modules"}}]
+                        }
+                      ]
+                    },
+                    {"tag": "p", "attrs": {"class": "table-meta table-text m-0"}, "children": [{"get": "group.names"}]}
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attrs": {"class": "cluster"},
+                  "children": [
+                    {
+                      "each": {"get": "group.actions"},
+                      "as": "action",
+                      "children": {"component": "ui/module-activation", "data": {"get": "action"}}
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "table-wrap min-w-0"},
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {"class": "table"},
+            "children": [
+              {
+                "tag": "thead",
+                "children": [
+                  {
+                    "tag": "tr",
+                    "children": [
+                      {"tag": "th", "children": [{"t": "modules.module"}]},
+                      {"tag": "th", "children": [{"t": "common.status"}]},
+                      {"tag": "th", "children": [{"t": "modules.dependencies"}]},
+                      {"tag": "th", "attrs": {"class": "table-actions-cell"}, "children": [{"t": "common.actions"}]}
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "children": [
+                  {
+                    "each": {"get": "rows"},
+                    "as": "item",
+                    "children": {
+                      "tag": "tr",
+                      "children": [
+                        {
+                          "tag": "td",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "attrs": {"class": "table-identity"},
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attrs": {"class": "table-identity-icon"},
+                                  "children": [{"icon": "settings"}]
+                                },
+                                {
+                                  "tag": "div",
+                                  "attrs": {"class": "table-identity-body"},
+                                  "children": [
+                                    {
+                                      "tag": "strong",
+                                      "attrs": {"class": "table-primary"},
+                                      "children": [{"get": "item.name"}]
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attrs": {"class": "table-meta"},
+                                      "children": [
+                                        {"get": "item.id"},
+                                        {
+                                          "tag": "span",
+                                          "when": {"get": "item.package_version"},
+                                          "children": [" · v", {"get": "item.package_version"}]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "children": [
+                            {
+                              "component": "ui/status-badge",
+                              "data": {"tone": {"get": "item.tone"}, "label": {"get": "item.status_label"}}
+                            },
+                            {
+                              "tag": "div",
+                              "attrs": {"class": "table-meta"},
+                              "when": {"get": "item.required"},
+                              "children": [{"t": "modules.required"}]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attrs": {"class": "table-text"},
+                              "children": [{"or": [{"get": "item.dependencies"}, "—"]}]
+                            },
+                            {
+                              "tag": "div",
+                              "attrs": {"class": "table-meta"},
+                              "when": {"get": "item.blocked"},
+                              "children": [{"t": "modules.needed_by", "values": {"modules": {"get": "item.blocked"}}}]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "attrs": {"class": "table-actions-cell"},
+                          "children": [
+                            {
+                              "tag": "div",
+                              "attrs": {"class": "table-actions"},
+                              "children": [{"component": "ui/module-activation", "data": {"get": "item.activation"}}]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }

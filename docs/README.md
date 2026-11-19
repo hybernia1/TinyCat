@@ -15,6 +15,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 
 ## Kontrakty
 
+- [Autorita core pro API, UI a validace](contracts/core-application-contract.md).
 - [Notifikace, registrace typů a vlastnictví předmětů](contracts/notifications.md).
 - [Modaly](contracts/modal-contract.md) a [popovery](contracts/popover-contract.md).
 - [UI komponenty a styly](contracts/ui-conventions.md).
@@ -27,6 +28,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 
 - [Jak vytvořit modul — vstupní manuál a příklady](development/module-authoring.md).
 - [HTTP API](reference/api.md).
+- [Zápis komponentových katalogů a editorové schéma](reference/component-catalog.md).
 - [Inventář UI](reference/ui-inventory.md) a [strojový výstup](reference/ui-inventory.json).
   Obnovují se příkazem `python tools/assets/ui-inventory.py`.
 - [Sdílené vykreslování a partialy](development/partials.md).
@@ -36,6 +38,9 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 - [Core, vlastnictví modulů a jejich inicializace](development/core-and-modules.md).
 - [Audit významových hranic core a modulů](audits/core-module-boundaries-2026-11-12.md)
   a [plán platformních služeb a kombinovatelných funkcí](plans/core-services-and-feature-modules.md).
+- [Audit aplikačního JavaScriptu po 6.1.3](audits/application-javascript-2026-11-19.md).
+- [Přesun produktové struktury do katalogů komponent](audits/presentation-ownership-2026-11-19.md).
+- [Dokončení produktových stránek a hranice prezentace 6.1.4](audits/presentation-pages-6.1.4-2026-11-19.md).
 - [Platformní služby: implementace a ověření etapy 1A](audits/core-services-stage-1a-2026-11-12.md).
 - [Identita, schránka, health a společný HTTP tok](audits/core-services-stage-1b-2026-11-12.md).
 - [Dokončení adaptérů, nastavení, šablon a nasazení Blog + Social](audits/platform-completion-2026-11-12.md).

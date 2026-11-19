@@ -41,6 +41,52 @@
       ]
     },
     {
+      "name": "health/page",
+      "source": "App/Core/Health/assets/components.json",
+      "dependencies": [
+        "health/scheduler-findings",
+        "ui/empty-state",
+        "ui/modal-trigger",
+        "ui/notice",
+        "ui/stat-card",
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "check.advice",
+        "check.detail",
+        "check.duration_ms",
+        "check.id",
+        "check.metrics",
+        "check.status",
+        "check.status_label",
+        "check.title",
+        "checked_label",
+        "checks",
+        "has_http",
+        "history",
+        "issues",
+        "metric",
+        "metrics",
+        "passed",
+        "run.health_status",
+        "run.http_status",
+        "run.id",
+        "run.incomplete",
+        "run.run_label",
+        "run.started_at",
+        "run.started_label",
+        "run.status_label",
+        "run.total",
+        "run.ttfb",
+        "snapshot.latest_failed",
+        "snapshot.report",
+        "snapshot.report.checked_at",
+        "snapshot.stale",
+        "snapshot.status",
+        "status_label"
+      ]
+    },
+    {
       "name": "users/admin-fields",
       "source": "App/Core/Identity/assets/components.json",
       "dependencies": [
@@ -96,13 +142,14 @@
         "items",
         "navigation",
         "pagination",
+        "roles",
         "sorting.role",
         "sorting.role.aria",
         "sorting.updated_at",
         "sorting.updated_at.aria",
         "sorting.username",
         "sorting.username.aria",
-        "state",
+        "statuses",
         "user"
       ]
     },
@@ -178,14 +225,318 @@
       ]
     },
     {
+      "name": "users/auth-page",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "users/auth-content"
+      ],
+      "inputs": [
+        "captcha",
+        "error",
+        "form_url",
+        "message",
+        "mode",
+        "next",
+        "old",
+        "options",
+        "register",
+        "registration_enabled",
+        "switch_modal_url",
+        "switch_url"
+      ]
+    },
+    {
+      "name": "users/recovery-page",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/captcha",
+        "ui/field"
+      ],
+      "inputs": [
+        "captcha",
+        "login_url",
+        "password_max",
+        "privacy_url",
+        "reset",
+        "token"
+      ]
+    },
+    {
+      "name": "users/logout-page",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "users/account-home",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/modal-trigger"
+      ],
+      "inputs": [
+        "account_modal",
+        "account_url",
+        "logout_url",
+        "user.username"
+      ]
+    },
+    {
+      "name": "users/account-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/field",
+        "ui/select"
+      ],
+      "inputs": [
+        "dialog_id",
+        "languages",
+        "original_locale",
+        "user.bio",
+        "user.locale",
+        "user.theme",
+        "user.username"
+      ]
+    },
+    {
+      "name": "users/email-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "dialog_id",
+        "has_password",
+        "user.bio",
+        "user.email",
+        "user.email_notifications",
+        "user.id",
+        "user.locale",
+        "user.theme"
+      ]
+    },
+    {
+      "name": "users/password-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "dialog_id",
+        "options.password_max_length"
+      ]
+    },
+    {
+      "name": "users/account-editor",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "users/avatar-control"
+      ],
+      "inputs": [
+        "account_form",
+        "email_form",
+        "has_password",
+        "password_form",
+        "user"
+      ]
+    },
+    {
+      "name": "users/avatar-upload",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "generated",
+        "user.avatar_url",
+        "user.id",
+        "user.username"
+      ]
+    },
+    {
+      "name": "users/avatar-appearance",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/select"
+      ],
+      "inputs": [
+        "appearance",
+        "parameter.choices",
+        "parameter.default",
+        "parameter.key",
+        "parameter.label",
+        "parameter.value",
+        "parameters",
+        "user.id"
+      ]
+    },
+    {
+      "name": "users/avatar-remove",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "users/avatar-save",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "form_id"
+      ]
+    },
+    {
+      "name": "users/avatar-actions",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/editor-actions"
+      ],
+      "inputs": [
+        "remove_form",
+        "save_action"
+      ]
+    },
+    {
+      "name": "users/avatar-editor",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "actions",
+        "appearance_form",
+        "generated",
+        "upload_form"
+      ]
+    },
+    {
+      "name": "users/admin-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "users/admin-fields"
+      ],
+      "inputs": [
+        "create",
+        "fields"
+      ]
+    },
+    {
+      "name": "users/menu",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "avatar",
+        "displayName",
+        "editModalId",
+        "editModalUrl",
+        "option.icon",
+        "option.label",
+        "option.value",
+        "profileNeedsEmail",
+        "profileUrl",
+        "theme"
+      ]
+    },
+    {
+      "name": "installation/steps",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "step.active",
+        "step.complete",
+        "step.label",
+        "step.number",
+        "steps"
+      ]
+    },
+    {
+      "name": "installation/language",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "language.code",
+        "language.display_code",
+        "language.label",
+        "languages",
+        "locale"
+      ]
+    },
+    {
+      "name": "installation/database",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "database.charset",
+        "database.host",
+        "database.name",
+        "database.port",
+        "database.user"
+      ]
+    },
+    {
+      "name": "installation/tables",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "table.exists",
+        "table.name",
+        "table.purpose",
+        "table_error",
+        "tables"
+      ]
+    },
+    {
+      "name": "installation/admin",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "password_max",
+        "username_hint",
+        "username_pattern"
+      ]
+    },
+    {
+      "name": "installation/done",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "locale",
+        "required_tables"
+      ]
+    },
+    {
+      "name": "installation/page",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [
+        "installation/admin",
+        "installation/database",
+        "installation/done",
+        "installation/language",
+        "installation/steps",
+        "installation/tables"
+      ],
+      "inputs": [
+        "current",
+        "database",
+        "error",
+        "languages",
+        "locale",
+        "password_max",
+        "required_tables",
+        "steps",
+        "success",
+        "table_error",
+        "tables",
+        "username_hint",
+        "username_pattern"
+      ]
+    },
+    {
       "name": "notifications/copy",
       "source": "App/Core/Notifications/assets/components.json",
       "dependencies": [],
       "inputs": [
-        "item.actor.username",
         "item.created_at",
         "item.excerpt",
-        "item.type"
+        "item.message"
       ]
     },
     {
@@ -209,8 +560,8 @@
         "item",
         "item.actor",
         "item.actor.username",
+        "item.icon",
         "item.id",
-        "item.type",
         "item.unread",
         "item.url"
       ]
@@ -226,8 +577,8 @@
         "item",
         "item.actor",
         "item.actor.username",
+        "item.icon",
         "item.id",
-        "item.type",
         "item.unread",
         "item.url"
       ]
@@ -247,6 +598,86 @@
       ]
     },
     {
+      "name": "notifications/page",
+      "source": "App/Core/Notifications/assets/components.json",
+      "dependencies": [
+        "notifications/items",
+        "ui/load-more"
+      ],
+      "inputs": [
+        "has_unread",
+        "items",
+        "next_url"
+      ]
+    },
+    {
+      "name": "notifications/menu",
+      "source": "App/Core/Notifications/assets/components.json",
+      "dependencies": [
+        "notifications/items"
+      ],
+      "inputs": [
+        "badge",
+        "current",
+        "has_unread",
+        "items",
+        "latest_id",
+        "unread"
+      ]
+    },
+    {
+      "name": "settings/sections",
+      "source": "App/Core/Settings/assets/components.json",
+      "dependencies": [
+        "settings/field"
+      ],
+      "inputs": [
+        "field",
+        "section.fields",
+        "section.icon",
+        "section.key",
+        "section.label",
+        "sections"
+      ]
+    },
+    {
+      "name": "settings/field",
+      "source": "App/Core/Settings/assets/components.json",
+      "dependencies": [
+        "settings/field"
+      ],
+      "inputs": [
+        "attributes",
+        "checked",
+        "field",
+        "fields",
+        "help",
+        "kind",
+        "label",
+        "name",
+        "option.label",
+        "option.name",
+        "option.selected",
+        "option.value",
+        "options",
+        "remove_name",
+        "root_class",
+        "root_tag",
+        "upload_name",
+        "value"
+      ]
+    },
+    {
+      "name": "settings/editor-form",
+      "source": "App/Core/Settings/assets/components.json",
+      "dependencies": [
+        "settings/sections"
+      ],
+      "inputs": [
+        "sections"
+      ]
+    },
+    {
       "name": "scheduler/status",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
@@ -260,6 +691,8 @@
       "name": "scheduler/list",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
+        "scheduler/icon",
+        "scheduler/name",
         "scheduler/status",
         "scheduler/task-card",
         "ui/empty-state",
@@ -295,7 +728,9 @@
         "sorting.task",
         "sorting.task.aria",
         "state",
-        "task"
+        "status_choices",
+        "task",
+        "task_choices"
       ]
     },
     {
@@ -317,10 +752,11 @@
       "name": "scheduler/run-detail",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
+        "scheduler/name",
+        "scheduler/option",
         "scheduler/status"
       ],
       "inputs": [
-        "",
         "_key",
         "item.actor",
         "item.actor.id",
@@ -343,6 +779,9 @@
       "name": "scheduler/task-card",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
+        "scheduler/icon",
+        "scheduler/name",
+        "scheduler/option",
         "scheduler/status",
         "ui/api-action"
       ],
@@ -356,6 +795,113 @@
         "task.name",
         "task.options",
         "task.run_url"
+      ]
+    },
+    {
+      "name": "scheduler/name",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "name"
+      ]
+    },
+    {
+      "name": "scheduler/icon",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "name"
+      ]
+    },
+    {
+      "name": "scheduler/option",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "key",
+        "name"
+      ]
+    },
+    {
+      "name": "scheduler/runs-page",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "content",
+        "target_id"
+      ]
+    },
+    {
+      "name": "scheduler/actions",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "scheduler/administration",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "cronToken",
+        "cronUrl",
+        "taskViews",
+        "view.cli_command",
+        "view.help_label",
+        "view.http_command",
+        "view.icon",
+        "view.query_url",
+        "view.schedule_label",
+        "view.title_label"
+      ]
+    },
+    {
+      "name": "updates/actions",
+      "source": "App/Core/Updates/assets/components.json",
+      "dependencies": [
+        "ui/modal-trigger"
+      ],
+      "inputs": [
+        "available",
+        "canInstall",
+        "has_notes",
+        "version"
+      ]
+    },
+    {
+      "name": "updates/page",
+      "source": "App/Core/Updates/assets/components.json",
+      "dependencies": [
+        "ui/empty-state",
+        "ui/notice",
+        "ui/stat-card",
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "_key",
+        "error",
+        "extension",
+        "extensions",
+        "has_release",
+        "history",
+        "maintenance",
+        "maintenance_from",
+        "maintenance_to",
+        "migration.applied_at",
+        "migration.applied_label",
+        "migration.migration",
+        "migration.version",
+        "migration_count",
+        "minimum_php",
+        "minimum_version",
+        "missing_extensions",
+        "releaseCompatible",
+        "result",
+        "result.backup",
+        "result.version",
+        "stat",
+        "stats",
+        "status_label",
+        "tone"
       ]
     },
     {
@@ -417,13 +963,16 @@
         "ui/select"
       ],
       "inputs": [
+        "constraints.body.max_bytes",
+        "constraints.body.required",
+        "constraints.status.values",
+        "constraints.title.max_length",
+        "constraints.title.required",
         "image",
         "images_enabled",
         "item.body",
         "item.status",
-        "item.title",
-        "limits.title",
-        "statuses"
+        "item.title"
       ]
     },
     {
@@ -437,6 +986,15 @@
         "author.id",
         "author.username",
         "authors",
+        "constraints.author_id.required",
+        "constraints.feed_url.max_bytes",
+        "constraints.feed_url.required",
+        "constraints.interval_minutes.max",
+        "constraints.interval_minutes.min",
+        "constraints.interval_minutes.required",
+        "constraints.name.max_length",
+        "constraints.name.required",
+        "constraints.publication_status.values",
         "item.author_id",
         "item.enabled",
         "item.feed_url",
@@ -444,8 +1002,7 @@
         "item.interval_minutes",
         "item.name",
         "item.publication_status",
-        "permissions.change_feed_url",
-        "statuses"
+        "permissions.change_feed_url"
       ]
     },
     {
@@ -503,6 +1060,59 @@
         "item.rejection.code",
         "item.title",
         "items"
+      ]
+    },
+    {
+      "name": "blog/embed-quote",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "excerpt",
+        "title",
+        "url"
+      ]
+    },
+    {
+      "name": "blog/public-list",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [
+        "ui/empty-state"
+      ],
+      "inputs": [
+        "article.author",
+        "article.excerpt",
+        "article.id",
+        "article.published_iso",
+        "article.published_label",
+        "article.title",
+        "articles",
+        "next_url",
+        "title"
+      ]
+    },
+    {
+      "name": "blog/article-page",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "article.author",
+        "article.id",
+        "article.published_iso",
+        "article.published_label",
+        "article.title",
+        "canEdit",
+        "content",
+        "discussion"
+      ]
+    },
+    {
+      "name": "blog/source-form",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [
+        "blog/source-fields"
+      ],
+      "inputs": [
+        "resource"
       ]
     },
     {
@@ -652,6 +1262,7 @@
         "publishing/comment-form"
       ],
       "inputs": [
+        "constraints",
         "content_id",
         "mention",
         "parent_id",
@@ -667,6 +1278,7 @@
       "inputs": [
         "context",
         "item",
+        "item.constraints",
         "item.content_id",
         "preview",
         "show_replies",
@@ -685,6 +1297,7 @@
         "comment",
         "comments",
         "context",
+        "item.constraints",
         "item.id",
         "item.login_modal_url",
         "item.login_url",
@@ -701,6 +1314,7 @@
         "ui/avatar"
       ],
       "inputs": [
+        "constraints.body.max_length",
         "enabled",
         "image",
         "submit_icon",
@@ -767,6 +1381,19 @@
         "bot.id",
         "bot.username",
         "bots",
+        "constraints.bot_user_id.required",
+        "constraints.feed_url.max_bytes",
+        "constraints.feed_url.required",
+        "constraints.interval_minutes.max",
+        "constraints.interval_minutes.min",
+        "constraints.interval_minutes.required",
+        "constraints.name.max_bytes",
+        "constraints.name.required",
+        "constraints.post_template.max_bytes",
+        "constraints.post_template.required",
+        "constraints.publication_interval_minutes.max",
+        "constraints.publication_interval_minutes.min",
+        "constraints.publication_interval_minutes.required",
         "source.bot_user_id",
         "source.feed_url",
         "source.interval_minutes",
@@ -790,6 +1417,7 @@
         "ui/sort-heading"
       ],
       "inputs": [
+        "bots",
         "filters",
         "items",
         "list_target",
@@ -851,7 +1479,8 @@
         "sorting.updated_at",
         "sorting.updated_at.aria",
         "sorting.username",
-        "sorting.username.aria"
+        "sorting.username.aria",
+        "statuses"
       ]
     },
     {
@@ -1140,8 +1769,7 @@
         "sorting.reason",
         "sorting.reason.aria",
         "sorting.status",
-        "sorting.status.aria",
-        "state"
+        "sorting.status.aria"
       ]
     },
     {
@@ -1286,6 +1914,7 @@
         "comments",
         "compact",
         "composer",
+        "constraints",
         "csrf",
         "email_missing",
         "feed",
@@ -1310,6 +1939,7 @@
         "post",
         "profile_edit_id",
         "profile_edit_url",
+        "routes",
         "rss_url",
         "search",
         "sidebar",
@@ -1402,11 +2032,260 @@
       ]
     },
     {
+      "name": "bots/account-creation-fields",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "dialog_id",
+        "options.username_pattern"
+      ]
+    },
+    {
+      "name": "bots/account-filter-form",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/select"
+      ],
+      "inputs": [
+        "filters.q",
+        "filters.status",
+        "pagination.per_page",
+        "statuses"
+      ]
+    },
+    {
+      "name": "bots/source-filter-form",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "bot.id",
+        "bot.username",
+        "bots",
+        "filters.bot",
+        "filters.q",
+        "pagination.per_page"
+      ]
+    },
+    {
+      "name": "status/rss-image",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "alt",
+        "url"
+      ]
+    },
+    {
+      "name": "status/dialog-form",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "action",
+        "body",
+        "enctype",
+        "form_class",
+        "id",
+        "url"
+      ]
+    },
+    {
+      "name": "status/report-fields",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/field",
+        "ui/select"
+      ],
+      "inputs": [
+        "id",
+        "note_max_length",
+        "reasons"
+      ]
+    },
+    {
+      "name": "status/edit-fields",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "status/composer-body"
+      ],
+      "inputs": [
+        "constraints",
+        "item.author",
+        "item.editable_body",
+        "item.image",
+        "options.images_enabled",
+        "viewer"
+      ]
+    },
+    {
+      "name": "status/comment-edit-fields",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "publishing/editor"
+      ],
+      "inputs": [
+        "comment.editable_body",
+        "constraints.comment.max_length",
+        "dialog_id"
+      ]
+    },
+    {
+      "name": "status/thread-dialog",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "status/card",
+        "status/thread"
+      ],
+      "inputs": [
+        "comments",
+        "item",
+        "page_path",
+        "viewer"
+      ]
+    },
+    {
+      "name": "status/embed-content",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/field"
+      ],
+      "inputs": [
+        "preview",
+        "snippet"
+      ]
+    },
+    {
+      "name": "status/feed-empty",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "feed",
+        "login_required"
+      ]
+    },
+    {
+      "name": "moderation/detail-preview",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "status/card",
+        "status/thread"
+      ],
+      "inputs": [
+        "content",
+        "content.status",
+        "preview",
+        "preview.comments",
+        "preview.item"
+      ]
+    },
+    {
+      "name": "bots/workspace",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "tabs"
+      ]
+    },
+    {
+      "name": "bots/workspace-account",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "bots/workspace-lists",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "posts_url",
+        "runs_url",
+        "sources_url"
+      ]
+    },
+    {
+      "name": "bots/workspace-form",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "bots/account-fields"
+      ],
+      "inputs": [
+        "resource"
+      ]
+    },
+    {
+      "name": "bots/workspace-retry",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "users/following-profiles",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "users/following-profile"
+      ],
+      "inputs": [
+        "items",
+        "user"
+      ]
+    },
+    {
+      "name": "users/following-dialog",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "ui/load-more",
+        "users/following-profiles"
+      ],
+      "inputs": [
+        "items",
+        "next_url"
+      ]
+    },
+    {
+      "name": "users/follow-label",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "following"
+      ]
+    },
+    {
+      "name": "bots/source-preview-state",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "bots/source-preview-confirm",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": []
+    },
+    {
+      "name": "site/privacy-section",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "privacyLimitRows",
+        "row.comment",
+        "row.label",
+        "row.like",
+        "row.post",
+        "row.report",
+        "row.search",
+        "siteName"
+      ]
+    },
+    {
       "name": "ui/field",
       "source": "assets/ui/components.json",
       "dependencies": [],
       "inputs": [
         "attributes",
+        "field_class",
+        "help",
+        "help_id",
         "label",
         "textarea",
         "value"
@@ -1731,6 +2610,7 @@
       "dependencies": [],
       "inputs": [
         "cancel_label",
+        "class",
         "destructive",
         "primary"
       ]
@@ -1865,6 +2745,9 @@
       "dependencies": [],
       "inputs": [
         "comment",
+        "labelledby",
+        "max_bytes",
+        "max_characters",
         "max_length",
         "name",
         "placeholder",
@@ -1921,6 +2804,7 @@
       ],
       "inputs": [
         "api_base",
+        "constraints.comment.max_length",
         "content_id",
         "mention",
         "parent_id",
@@ -1941,6 +2825,7 @@
       ],
       "inputs": [
         "api_base",
+        "constraints",
         "context",
         "item",
         "item.author",
@@ -1992,6 +2877,7 @@
       "inputs": [
         "capabilities.comment",
         "capabilities.react",
+        "constraints",
         "item",
         "items",
         "liked",
@@ -2000,6 +2886,183 @@
         "target.api_url",
         "target.id",
         "viewer"
+      ]
+    },
+    {
+      "name": "ui/dashboard",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "content"
+      ]
+    },
+    {
+      "name": "publishing/comment-history",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "revision.at",
+        "revision.label",
+        "revision.rows",
+        "revisions",
+        "row.change",
+        "row.kind",
+        "row.marker",
+        "row.prefix",
+        "row.suffix",
+        "row.tag"
+      ]
+    },
+    {
+      "name": "ui/account-title",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/account-status"
+      ],
+      "inputs": [
+        "status_label",
+        "user.status",
+        "user.username"
+      ]
+    },
+    {
+      "name": "publishing/comment-replies",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "id"
+      ]
+    },
+    {
+      "name": "ui/code-block",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "attributes",
+        "text"
+      ]
+    },
+    {
+      "name": "ui/public-header",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "appName",
+        "authenticated",
+        "current",
+        "currentLanguageName",
+        "hasGlobalSearch",
+        "item.active",
+        "item.href",
+        "item.icon",
+        "item.label",
+        "item.target",
+        "languageFlagId",
+        "languageFlagSprite",
+        "languageLink.active",
+        "languageLink.language",
+        "languageLink.name",
+        "languageLink.url",
+        "languageLinks",
+        "languageSuggestion",
+        "languageSuggestion.action",
+        "languageSuggestion.close",
+        "languageSuggestion.language",
+        "languageSuggestion.message",
+        "languageSuggestion.url",
+        "loginModalId",
+        "loginModalUrl",
+        "nav",
+        "notificationMenu",
+        "searchQuery",
+        "siteLogoUrl",
+        "urls.home",
+        "urls.login",
+        "urls.search",
+        "userMenu",
+        "viewerIsAdmin"
+      ]
+    },
+    {
+      "name": "ui/search-page",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "group.items",
+        "group.name",
+        "group.next_url",
+        "item.excerpt",
+        "item.title",
+        "item.url",
+        "result.collections",
+        "result.query",
+        "searchUrl"
+      ]
+    },
+    {
+      "name": "ui/consent",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "captchaEnabled",
+        "googleMeasurementId",
+        "privacyUrl",
+        "show"
+      ]
+    },
+    {
+      "name": "ui/privacy-page",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "sections",
+        "siteCaptchaEnabled",
+        "siteGoogleAnalyticsConfigured",
+        "siteName"
+      ]
+    },
+    {
+      "name": "ui/module-activation",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "disabled",
+        "enabled",
+        "id",
+        "label",
+        "revision"
+      ]
+    },
+    {
+      "name": "ui/modules-page",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/module-activation",
+        "ui/notice",
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "_key",
+        "action",
+        "group.actions",
+        "group.active_count",
+        "group.modules",
+        "group.name",
+        "group.names",
+        "item.activation",
+        "item.blocked",
+        "item.dependencies",
+        "item.id",
+        "item.name",
+        "item.package_version",
+        "item.required",
+        "item.status_label",
+        "item.tone",
+        "problem",
+        "rows",
+        "snapshot.groups",
+        "snapshot.manageable",
+        "snapshot.problems"
       ]
     }
   ],
@@ -2072,8 +3135,6 @@
     "App/Modules/Social/assets/status/styles/status-avatars.css",
     "assets/ui/styles/avatar-sizes.css",
     "App/Modules/Social/assets/users/styles/profile-avatar.css",
-    "App/Core/Identity/assets/styles/account-security-page.css",
-    "App/Core/Identity/assets/styles/account-security-card.css",
     "App/Modules/Social/assets/users/styles/profile.css",
     "assets/ui/styles/code-block.css",
     "App/Modules/Social/assets/users/styles/profile-details.css",
@@ -2091,8 +3152,6 @@
     "assets/ui/styles/modal-layout.css",
     "assets/ui/styles/input-icon.css",
     "assets/ui/styles/modal-confirm-buttons.css",
-    "App/Core/Installation/assets/styles/install-steps.css",
-    "App/Core/Installation/assets/styles/install-choices.css",
     "assets/ui/styles/result-list.css",
     "assets/ui/styles/cookie-consent.css",
     "assets/ui/styles/toasts.css",
@@ -2119,7 +3178,6 @@
     "App/Modules/Social/assets/status/styles/feedback-mobile.css",
     "assets/ui/styles/section-desktop.css",
     "assets/ui/styles/pagination-desktop.css",
-    "App/Core/Installation/assets/styles/install-steps-desktop.css",
     "assets/ui/styles/split-desktop.css",
     "assets/modules/admin/styles/admin-lists-desktop.css",
     "assets/ui/styles/field-inline-desktop.css",
@@ -2138,27 +3196,10 @@
     "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
     "assets/ui/styles/tooltip.css",
     "assets/ui/styles/identity-rows.css",
-    "assets/ui/styles/load-more.css"
+    "assets/ui/styles/load-more.css",
+    "assets/ui/styles/information-pages.css"
   ],
   "css_classes": {
-    "account-security-card": [
-      {
-        "source": "App/Core/Identity/assets/styles/account-security-card.css",
-        "line": 2,
-        "context": [
-          "@media (min-width: 980px)"
-        ],
-        "selector": ".account-security-card"
-      }
-    ],
-    "account-security-page": [
-      {
-        "source": "App/Core/Identity/assets/styles/account-security-page.css",
-        "line": 1,
-        "context": [],
-        "selector": ".account-security-page"
-      }
-    ],
     "admin-backdrop": [
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
@@ -2792,25 +3833,25 @@
     "avatar-creator-toggle": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 80,
+        "line": 55,
         "context": [],
         "selector": ".avatar-creator-toggle"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 81,
+        "line": 56,
         "context": [],
         "selector": ".avatar-creator-toggle[hidden]"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 82,
+        "line": 57,
         "context": [],
         "selector": ".avatar-creator-toggle .icon"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 83,
+        "line": 58,
         "context": [],
         "selector": ".avatar-creator-toggle[aria-expanded=\"true\"] .icon"
       }
@@ -2818,25 +3859,25 @@
     "avatar-editor": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 65,
+        "line": 41,
         "context": [],
         "selector": ".avatar-editor"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 66,
+        "line": 42,
         "context": [],
         "selector": ".avatar-editor .avatar-upload"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 68,
+        "line": 44,
         "context": [],
         "selector": ".avatar-editor .avatar-upload-drop"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 72,
+        "line": 48,
         "context": [
           "@media (max-width: 380px)"
         ],
@@ -2846,25 +3887,25 @@
     "avatar-editor-appearance": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 76,
+        "line": 52,
         "context": [],
         "selector": ".avatar-editor-appearance[hidden]"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 77,
+        "line": 53,
         "context": [],
         "selector": ".avatar-editor-appearance .field"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 84,
+        "line": 59,
         "context": [],
         "selector": ".avatar-editor-appearance"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 85,
+        "line": 60,
         "context": [
           "@media (max-width: 380px)"
         ],
@@ -2874,37 +3915,29 @@
     "avatar-editor-controls": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 67,
+        "line": 43,
         "context": [],
         "selector": ".avatar-editor-controls"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 73,
+        "line": 49,
         "context": [
           "@media (max-width: 380px)"
         ],
         "selector": ".avatar-editor-controls"
       }
     ],
-    "avatar-editor-preview": [
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 79,
-        "context": [],
-        "selector": ".avatar-editor-preview"
-      }
-    ],
     "avatar-editor-remove": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 69,
+        "line": 45,
         "context": [],
         "selector": ".avatar-editor-remove"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 70,
+        "line": 46,
         "context": [],
         "selector": ".avatar-editor-remove:hover"
       }
@@ -2940,13 +3973,13 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 66,
+        "line": 42,
         "context": [],
         "selector": ".avatar-editor .avatar-upload"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 72,
+        "line": 48,
         "context": [
           "@media (max-width: 380px)"
         ],
@@ -2956,25 +3989,25 @@
     "avatar-upload-drop": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 40,
+        "line": 21,
         "context": [],
         "selector": ".avatar-upload-drop"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 54,
+        "line": 35,
         "context": [],
         "selector": ".avatar-upload-drop:hover"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 54,
+        "line": 35,
         "context": [],
         "selector": ".avatar-upload-drop:focus-within"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 68,
+        "line": 44,
         "context": [],
         "selector": ".avatar-editor .avatar-upload-drop"
       }
@@ -2982,33 +4015,21 @@
     "avatar-upload-empty": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 17,
-        "context": [],
-        "selector": ".avatar-upload-empty"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 24,
+        "line": 6,
         "context": [],
         "selector": ".avatar-upload-empty .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 34,
-        "context": [],
-        "selector": ".avatar-upload-empty[hidden]"
       }
     ],
     "avatar-upload-empty-note": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 29,
+        "line": 11,
         "context": [],
         "selector": ".avatar-upload-empty-note"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 34,
+        "line": 16,
         "context": [],
         "selector": ".avatar-upload-empty-note[hidden]"
       }
@@ -3016,19 +4037,7 @@
     "avatar-upload-preview": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 6,
-        "context": [],
-        "selector": ".avatar-upload-preview"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 11,
-        "context": [],
-        "selector": ".avatar-upload-preview img"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 34,
+        "line": 16,
         "context": [],
         "selector": ".avatar-upload-preview img[hidden]"
       }
@@ -3513,66 +4522,6 @@
         "selector": ".check-line input"
       }
     ],
-    "choice-card": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 14,
-        "context": [],
-        "selector": ".choice-card"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 27,
-        "context": [],
-        "selector": ".choice-card:hover"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 27,
-        "context": [],
-        "selector": ".choice-card:focus-within"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 33,
-        "context": [],
-        "selector": ".choice-card:has(input:checked)"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 39,
-        "context": [],
-        "selector": ".choice-card input"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 46,
-        "context": [],
-        "selector": ".choice-card span"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 51,
-        "context": [],
-        "selector": ".choice-card small"
-      }
-    ],
-    "choice-list": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 9,
-        "context": [],
-        "selector": ".choice-list"
-      }
-    ],
-    "choice-row": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 1,
-        "context": [],
-        "selector": ".choice-row"
-      }
-    ],
     "cluster": [
       {
         "source": "assets/ui/styles/buttons.css",
@@ -4018,7 +4967,7 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 77,
+        "line": 53,
         "context": [],
         "selector": ".avatar-editor-appearance .field"
       }
@@ -4361,8 +5310,8 @@
     ],
     "home-feed-section": [
       {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
+        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
+        "line": 10,
         "context": [],
         "selector": ".home-feed-section .status-feed"
       },
@@ -4584,19 +5533,19 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 24,
+        "line": 6,
         "context": [],
         "selector": ".avatar-upload-empty .icon"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 82,
+        "line": 57,
         "context": [],
         "selector": ".avatar-creator-toggle .icon"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 83,
+        "line": 58,
         "context": [],
         "selector": ".avatar-creator-toggle[aria-expanded=\"true\"] .icon"
       },
@@ -4723,6 +5672,14 @@
         "line": 1,
         "context": [],
         "selector": ".image-preview-contain img"
+      }
+    ],
+    "information-page": [
+      {
+        "source": "assets/ui/styles/information-pages.css",
+        "line": 1,
+        "context": [],
+        "selector": ".information-page"
       }
     ],
     "inline-flex": [
@@ -4857,18 +5814,6 @@
         "line": 49,
         "context": [],
         "selector": ".pagination-link.is-active"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 36,
-        "context": [],
-        "selector": ".step.is-active"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-active .step-marker"
       }
     ],
     "is-child": [
@@ -4885,20 +5830,6 @@
           "@media (max-width: 759px)"
         ],
         "selector": ".status-comment.is-child"
-      }
-    ],
-    "is-complete": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-complete .step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 48,
-        "context": [],
-        "selector": ".step.is-complete"
       }
     ],
     "is-danger": [
@@ -6295,16 +7226,16 @@
     ],
     "profile-main": [
       {
+        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
+        "line": 10,
+        "context": [],
+        "selector": ".profile-main .status-feed"
+      },
+      {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
         "line": 12,
         "context": [],
         "selector": ".profile-main"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
-        "context": [],
-        "selector": ".profile-main .status-feed"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile-main-desktop.css",
@@ -7627,22 +8558,22 @@
     ],
     "status-feed": [
       {
-        "source": "App/Modules/Social/assets/status/styles/status-feed.css",
-        "line": 1,
-        "context": [],
-        "selector": ".status-feed"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
+        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
+        "line": 10,
         "context": [],
         "selector": ".home-feed-section .status-feed"
       },
       {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
+        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
+        "line": 10,
         "context": [],
         "selector": ".profile-main .status-feed"
+      },
+      {
+        "source": "App/Modules/Social/assets/status/styles/status-feed.css",
+        "line": 1,
+        "context": [],
+        "selector": ".status-feed"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-feed-mobile.css",
@@ -8689,74 +9620,6 @@
         "selector": ".status-video-thumb + .status-video-play"
       }
     ],
-    "step": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 9,
-        "context": [],
-        "selector": ".step"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 36,
-        "context": [],
-        "selector": ".step.is-active"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-active .step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-complete .step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 48,
-        "context": [],
-        "selector": ".step.is-complete"
-      }
-    ],
-    "step-marker": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 23,
-        "context": [],
-        "selector": ".step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-active .step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-complete .step-marker"
-      }
-    ],
-    "steps": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 1,
-        "context": [],
-        "selector": ".steps"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps-desktop.css",
-        "line": 1,
-        "context": [
-          "@media (min-width: 760px)"
-        ],
-        "selector": ".steps"
-      }
-    ],
     "tab": [
       {
         "source": "assets/ui/styles/tabs.css",
@@ -9195,8 +10058,8 @@
         "selector": ".toast"
       },
       {
-        "source": "App/Modules/Social/assets/status/styles/feedback-mobile.css",
-        "line": 13,
+        "source": "assets/ui/styles/toasts.css",
+        "line": 117,
         "context": [
           "@media (max-width: 759px)"
         ],
@@ -9359,8 +10222,8 @@
         "selector": ".toast-stack"
       },
       {
-        "source": "App/Modules/Social/assets/status/styles/feedback-mobile.css",
-        "line": 7,
+        "source": "assets/ui/styles/toasts.css",
+        "line": 111,
         "context": [
           "@media (max-width: 759px)"
         ],
@@ -11078,11 +11941,36 @@
   ],
   "ui_services": [
     {
+      "source": "assets/ui/admin-resources.js",
+      "methods": [
+        {
+          "name": "url",
+          "line": 13
+        },
+        {
+          "name": "apply",
+          "line": 14
+        },
+        {
+          "name": "modal",
+          "line": 21
+        },
+        {
+          "name": "result",
+          "line": 37
+        },
+        {
+          "name": "hydrate",
+          "line": 46
+        }
+      ]
+    },
+    {
       "source": "assets/ui/ajax-bindings.js",
       "methods": [
         {
           "name": "current",
-          "line": 101
+          "line": 95
         }
       ]
     },
@@ -11128,47 +12016,47 @@
         },
         {
           "name": "dialog",
-          "line": 41
+          "line": 48
         },
         {
           "name": "editorActions",
-          "line": 46
+          "line": 53
         },
         {
           "name": "accountDialogTitle",
-          "line": 50
+          "line": 57
         },
         {
           "name": "formDialog",
-          "line": 59
+          "line": 66
         },
         {
           "name": "tabbedContent",
-          "line": 74
+          "line": 81
         },
         {
           "name": "pinDialogTabs",
-          "line": 94
+          "line": 101
         },
         {
           "name": "sectionedDialog",
-          "line": 114
+          "line": 121
         },
         {
           "name": "adminDialog",
-          "line": 141
+          "line": 148
         },
         {
           "name": "editorFrame",
-          "line": 146
+          "line": 153
         },
         {
           "name": "pagination",
-          "line": 152
+          "line": 159
         },
         {
           "name": "captcha",
-          "line": 154
+          "line": 161
         }
       ]
     },
@@ -11239,45 +12127,65 @@
       "source": "assets/ui/filters.js",
       "methods": [
         {
-          "name": "get",
+          "name": "defaults",
           "line": 64
         },
         {
+          "name": "get",
+          "line": 72
+        },
+        {
           "name": "capture",
-          "line": 65
+          "line": 73
         },
         {
           "name": "restore",
-          "line": 76
+          "line": 84
         },
         {
           "name": "remove",
-          "line": 94
+          "line": 102
         },
         {
           "name": "init",
-          "line": 100
+          "line": 108
         }
       ]
+    },
+    {
+      "source": "assets/ui/form-constraints.js",
+      "methods": []
     },
     {
       "source": "assets/ui/form-requests.js",
       "methods": [
         {
-          "name": "request",
+          "name": "validate",
           "line": 37
         },
         {
+          "name": "setSubmitGuard",
+          "line": 41
+        },
+        {
+          "name": "canSubmit",
+          "line": 42
+        },
+        {
+          "name": "request",
+          "line": 44
+        },
+        {
           "name": "cancel",
-          "line": 65
+          "line": 72
         },
         {
           "name": "dispose",
-          "line": 66
+          "line": 73
         },
         {
           "name": "bind",
-          "line": 67
+          "line": 74
         }
       ]
     },
@@ -11313,8 +12221,12 @@
           "line": 17
         },
         {
-          "name": "url",
+          "name": "result",
           "line": 20
+        },
+        {
+          "name": "url",
+          "line": 31
         }
       ]
     },
@@ -11348,10 +12260,6 @@
       "methods": []
     },
     {
-      "source": "assets/ui/settings-presentation.js",
-      "methods": []
-    },
-    {
       "source": "assets/ui/tabs.js",
       "methods": []
     },
@@ -11374,78 +12282,40 @@
     }
   ],
   "php_partials": [
-    "App/Core/Identity/templates/parts/user-menu.php",
-    "App/Core/Installation/templates/parts/install/steps.php",
-    "App/Core/Notifications/templates/parts/menu.php",
-    "App/Core/Notifications/templates/parts/page.php",
-    "App/Core/Support/templates/parts/filter.php",
-    "App/Core/Ui/templates/parts/consent.php",
     "App/Core/Ui/templates/parts/flashes.php",
-    "App/Core/Ui/templates/parts/public-header.php",
-    "App/Modules/Social/templates/parts/bots/modals/account-filter.php",
-    "App/Modules/Social/templates/parts/bots/modals/source-filter.php",
-    "App/Modules/Social/templates/parts/site/sidebar-slot.php",
-    "App/Modules/Social/templates/parts/status/composer.php",
-    "App/Modules/Social/templates/parts/status/feed.php",
-    "App/Modules/Social/templates/parts/status/home-feed.php",
-    "App/Modules/Social/templates/parts/users/follow-button.php"
+    "App/Modules/Social/templates/parts/site/sidebar-slot.php"
   ],
   "php_templates": [
-    "App/Core/Health/templates/page.php",
-    "App/Core/Identity/templates/login.php",
-    "App/Core/Identity/templates/logout.php",
-    "App/Core/Identity/templates/parts/user-menu.php",
-    "App/Core/Identity/templates/recovery.php",
-    "App/Core/Identity/templates/register.php",
-    "App/Core/Installation/templates/parts/install/steps.php",
-    "App/Core/Notifications/templates/page.php",
-    "App/Core/Notifications/templates/parts/menu.php",
-    "App/Core/Notifications/templates/parts/page.php",
-    "App/Core/Support/templates/parts/filter.php",
-    "App/Core/Tasks/templates/actions.php",
-    "App/Core/Tasks/templates/administration.php",
-    "App/Core/Ui/Admin/templates/document.php",
     "App/Core/Ui/Admin/templates/shell.php",
     "App/Core/Ui/templates/document.php",
     "App/Core/Ui/templates/errorFallback.php",
     "App/Core/Ui/templates/head.php",
-    "App/Core/Ui/templates/modules.php",
     "App/Core/Ui/templates/notFound.php",
-    "App/Core/Ui/templates/parts/consent.php",
     "App/Core/Ui/templates/parts/flashes.php",
-    "App/Core/Ui/templates/parts/public-header.php",
-    "App/Core/Ui/templates/privacy.php",
     "App/Core/Ui/templates/public-shell.php",
-    "App/Core/Ui/templates/search.php",
-    "App/Core/Updates/templates/actions.php",
-    "App/Core/Updates/templates/administration.php",
-    "App/Modules/Blog/templates/article.php",
-    "App/Modules/Blog/templates/listing.php",
-    "App/Modules/Social/templates/parts/bots/modals/account-filter.php",
-    "App/Modules/Social/templates/parts/bots/modals/source-filter.php",
     "App/Modules/Social/templates/parts/site/sidebar-slot.php",
-    "App/Modules/Social/templates/parts/status/composer.php",
-    "App/Modules/Social/templates/parts/status/feed.php",
-    "App/Modules/Social/templates/parts/status/home-feed.php",
-    "App/Modules/Social/templates/parts/users/follow-button.php",
-    "App/Modules/Social/templates/site/privacy-section.php",
     "App/Modules/Social/templates/site/public.php",
     "App/Modules/Social/templates/status/embed.php"
   ],
   "php_renderers": [
     {
+      "source": "App/Core/Health/Views.php",
+      "methods": [
+        "page"
+      ]
+    },
+    {
       "source": "App/Core/Identity/Views.php",
       "methods": [
+        "userMenu",
         "adminFormFields",
-        "adminList",
-        "authContent",
-        "authForm",
         "avatar"
       ]
     },
     {
       "source": "App/Core/Notifications/Views.php",
       "methods": [
+        "menu",
         "items"
       ]
     },
@@ -11470,31 +12340,9 @@
       ]
     },
     {
-      "source": "App/Modules/Social/src/Automation/Views.php",
+      "source": "App/Core/Updates/Views.php",
       "methods": [
-        "accountFilter",
-        "accounts",
-        "sources"
-      ]
-    },
-    {
-      "source": "App/Modules/Social/src/Moderation/Views.php",
-      "methods": [
-        "reports"
-      ]
-    },
-    {
-      "source": "App/Modules/Social/src/Posts/Views.php",
-      "methods": [
-        "feedMore",
-        "card",
-        "actions",
-        "commentForm",
-        "commentItem",
-        "commentsThread",
-        "composerBody",
-        "composer",
-        "homeFeed"
+        "model"
       ]
     },
     {
@@ -11507,13 +12355,7 @@
     {
       "source": "App/Modules/Social/src/Profiles/Views.php",
       "methods": [
-        "adminFormFields",
-        "adminList",
-        "authContent",
-        "authForm",
-        "followButton",
-        "followingProfile",
-        "avatar"
+        "followingProfile"
       ]
     }
   ],
@@ -11555,24 +12397,6 @@
     }
   ],
   "stylesheet_ownership": {
-    "App/Core/Identity/assets/styles/account-security-card.css": [
-      {
-        "manifest": "App/Core/Identity/assets/module.json",
-        "routes": [
-          "public",
-          "admin"
-        ]
-      }
-    ],
-    "App/Core/Identity/assets/styles/account-security-page.css": [
-      {
-        "manifest": "App/Core/Identity/assets/module.json",
-        "routes": [
-          "public",
-          "admin"
-        ]
-      }
-    ],
     "App/Core/Identity/assets/styles/avatar-upload.css": [
       {
         "manifest": "App/Core/Identity/assets/module.json",
@@ -11588,30 +12412,6 @@
         "routes": [
           "public",
           "admin"
-        ]
-      }
-    ],
-    "App/Core/Installation/assets/styles/install-choices.css": [
-      {
-        "manifest": "App/Core/Installation/assets/module.json",
-        "routes": [
-          "/install"
-        ]
-      }
-    ],
-    "App/Core/Installation/assets/styles/install-steps-desktop.css": [
-      {
-        "manifest": "App/Core/Installation/assets/module.json",
-        "routes": [
-          "/install"
-        ]
-      }
-    ],
-    "App/Core/Installation/assets/styles/install-steps.css": [
-      {
-        "manifest": "App/Core/Installation/assets/module.json",
-        "routes": [
-          "/install"
         ]
       }
     ],
@@ -11667,8 +12467,11 @@
       {
         "manifest": "App/Modules/Blog/assets/module.json",
         "routes": [
-          "public",
-          "admin"
+          "/",
+          "/blog",
+          "/articles",
+          "/admin/articles",
+          "/admin/article-sources"
         ]
       }
     ],
@@ -12424,6 +13227,14 @@
         ]
       }
     ],
+    "assets/ui/styles/information-pages.css": [
+      {
+        "manifest": "assets/ui/module.json",
+        "routes": [
+          "public"
+        ]
+      }
+    ],
     "assets/ui/styles/inline-link-states.css": [
       {
         "manifest": "assets/ui/module.json",
@@ -12693,13 +13504,14 @@
     {
       "source": "App/Core/Identity/assets/admin.js",
       "imports": [
-        "App/Core/Identity/assets/index.js"
+        "App/Core/Identity/assets/index.js",
+        "assets/ui/list-navigation.js"
       ],
       "entries": [
         {
           "manifest": "App/Core/Identity/assets/module.json",
           "routes": [
-            "/admin/users"
+            "admin"
           ]
         }
       ],
@@ -12720,7 +13532,6 @@
     {
       "source": "App/Core/Identity/assets/controller.js",
       "imports": [
-        "assets/ui/list-navigation.js",
         "assets/ui/content-updates.js",
         "assets/core/dates.js",
         "assets/core/component-renderer.js",
@@ -12752,7 +13563,6 @@
       "imports": [
         "App/Core/Identity/assets/user-menu.js",
         "assets/core/modules.js",
-        "assets/ui/list-navigation.js",
         "App/Core/Identity/assets/avatar-editor.js",
         "App/Core/Identity/assets/controller.js",
         "App/Core/Identity/assets/email-availability.js"
@@ -12778,21 +13588,6 @@
           "manifest": "App/Core/Identity/assets/module.json",
           "routes": [
             "public"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
-      "source": "App/Core/Identity/assets/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Core/Identity/assets/module.json",
-          "routes": [
-            "admin"
           ]
         }
       ],
@@ -12827,21 +13622,6 @@
       "standalone": false
     },
     {
-      "source": "App/Core/Mail/assets/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Core/Mail/assets/module.json",
-          "routes": [
-            "admin"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
       "source": "App/Core/Notifications/assets/controller.js",
       "imports": [
         "assets/core/dates.js",
@@ -12859,7 +13639,8 @@
       "source": "App/Core/Notifications/assets/index.js",
       "imports": [
         "assets/core/modules.js",
-        "App/Core/Notifications/assets/controller.js"
+        "App/Core/Notifications/assets/controller.js",
+        "assets/ui/ajax-bindings.js"
       ],
       "entries": [
         {
@@ -12896,35 +13677,11 @@
       "standalone": false
     },
     {
-      "source": "App/Core/Security/assets/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Core/Security/assets/module.json",
-          "routes": [
-            "admin"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
       "source": "App/Core/Settings/assets/controller.js",
       "imports": [
         "assets/ui/image-uploads.js",
         "assets/ui/component-builders.js",
-        "assets/core/modules.js",
-        "App/Core/Settings/assets/field-presentation.js"
-      ],
-      "entries": [],
-      "standalone": false
-    },
-    {
-      "source": "App/Core/Settings/assets/field-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
+        "assets/core/modules.js"
       ],
       "entries": [],
       "standalone": false
@@ -12989,25 +13746,6 @@
           "manifest": "App/Core/Updates/assets/module.json",
           "routes": [
             "/admin/updates"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
-      "source": "App/Modules/Blog/assets/index.js",
-      "imports": [
-        "assets/core/modules.js",
-        "assets/core/dates.js",
-        "assets/ui/content-updates.js",
-        "assets/ui/list-navigation.js",
-        "assets/ui/component-builders.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Modules/Blog/assets/module.json",
-          "routes": [
-            "/admin/articles"
           ]
         }
       ],
@@ -13095,21 +13833,6 @@
       "standalone": false
     },
     {
-      "source": "App/Modules/Social/assets/content/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Modules/Social/assets/module.json",
-          "routes": [
-            "admin"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
       "source": "App/Modules/Social/assets/moderation/controller.js",
       "imports": [
         "assets/ui/content-updates.js",
@@ -13140,21 +13863,6 @@
       "standalone": false
     },
     {
-      "source": "App/Modules/Social/assets/moderation/settings-presentation.js",
-      "imports": [
-        "assets/ui/settings-presentation.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Modules/Social/assets/module.json",
-          "routes": [
-            "admin"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
       "source": "App/Modules/Social/assets/site/index.js",
       "imports": [
         "assets/core/modules.js",
@@ -13179,7 +13887,7 @@
       "source": "App/Modules/Social/assets/site/page-navigation.js",
       "imports": [
         "assets/ui/document-navigation.js",
-        "assets/core/navigation.js",
+        "assets/core/page-navigation.js",
         "assets/core/api-client.js",
         "assets/core/component-renderer.js",
         "assets/core/lifecycle.js",
@@ -13249,7 +13957,6 @@
         "assets/core/i18n.js",
         "assets/core/lifecycle.js",
         "assets/core/navigation.js",
-        "App/Core/Notifications/assets/controller.js",
         "App/Modules/Social/assets/status/controller.js",
         "assets/ui/dialogs.js",
         "assets/ui/component-builders.js",
@@ -13335,7 +14042,9 @@
     {
       "source": "App/Modules/Social/assets/users/controller.js",
       "imports": [
-        "App/Core/Identity/assets/controller.js"
+        "assets/core/dom.js",
+        "assets/core/component-renderer.js",
+        "assets/ui/component-builders.js"
       ],
       "entries": [],
       "standalone": false
@@ -13345,6 +14054,7 @@
       "imports": [
         "assets/core/dom.js",
         "assets/core/api-client.js",
+        "assets/core/request-lifecycle.js",
         "assets/core/i18n.js",
         "App/Modules/Social/assets/users/controller.js",
         "assets/ui/component-builders.js",
@@ -13360,14 +14070,7 @@
         "App/Core/Identity/assets/index.js",
         "App/Modules/Social/assets/users/controller.js"
       ],
-      "entries": [
-        {
-          "manifest": "App/Modules/Social/assets/module.json",
-          "routes": [
-            "public"
-          ]
-        }
-      ],
+      "entries": [],
       "standalone": false
     },
     {
@@ -13476,6 +14179,15 @@
       "standalone": false
     },
     {
+      "source": "assets/core/page-navigation.js",
+      "imports": [
+        "assets/core/navigation.js",
+        "assets/core/lifecycle.js"
+      ],
+      "entries": [],
+      "standalone": false
+    },
+    {
       "source": "assets/core/request-lifecycle.js",
       "imports": [
         "assets/core/lifecycle.js"
@@ -13504,7 +14216,8 @@
     {
       "source": "assets/modules/admin/index.js",
       "imports": [
-        "assets/modules/admin/navigation.js"
+        "assets/modules/admin/navigation.js",
+        "assets/ui/admin-resources.js"
       ],
       "entries": [
         {
@@ -13537,6 +14250,17 @@
       "imports": [
         "assets/core/dom.js",
         "assets/core/lifecycle.js"
+      ],
+      "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "assets/ui/admin-resources.js",
+      "imports": [
+        "assets/ui/component-builders.js",
+        "assets/ui/content-updates.js",
+        "assets/ui/list-navigation.js",
+        "assets/core/modules.js"
       ],
       "entries": [],
       "standalone": false
@@ -13816,6 +14540,21 @@
       "standalone": false
     },
     {
+      "source": "assets/ui/form-constraints.js",
+      "imports": [
+        "assets/core/dom.js",
+        "assets/core/lifecycle.js",
+        "assets/ui/form-state.js"
+      ],
+      "entries": [
+        {
+          "manifest": "assets/ui/module.json",
+          "routes": []
+        }
+      ],
+      "standalone": false
+    },
+    {
       "source": "assets/ui/form-requests.js",
       "imports": [
         "assets/core/dom.js",
@@ -13931,12 +14670,6 @@
           ]
         }
       ],
-      "standalone": false
-    },
-    {
-      "source": "assets/ui/settings-presentation.js",
-      "imports": [],
-      "entries": [],
       "standalone": false
     },
     {

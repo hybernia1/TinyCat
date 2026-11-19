@@ -29,49 +29,43 @@ import "./toasts.js";
   var pushHistory = TinyCat.navigation.push;
   var currentAjaxUrl = TinyCat.navigation.currentAjaxUrl;
   var uiText = TinyCat.i18n.label;
-  var unwrapResult = TinyCat.api.unwrap;
   var resultErrors = TinyCat.api.errors;
   var confirmAction = TinyCat.actions.confirm;
   function refreshFormCaptcha(form, data) {
     var details = resultErrorDetails(data);
     if (details.captcha) { TinyCat.ui.captcha(form, details.captcha); }
   }
-  function handleResult(source, data, target) {
-    var payload = unwrapResult(data);
+  async function handleResult(source, data, target) {
+    var payload = data.data;
     var filterState = TinyCat.filters ? TinyCat.filters.capture(source) : null;
     var menuState = TinyCat.popovers && TinyCat.popovers.capture ? TinyCat.popovers.capture(source) : null;
     var modalToClose = source && source.dataset && source.dataset.modalCloseOnSuccess === "true"
       ? source.closest(".modal")
       : null;
 
-    if (data && typeof data === "object") {
-      var redirect = data.redirect || (payload && typeof payload === "object" ? payload.redirect : "");
+    var redirect = payload && payload.redirect;
 
-      if (redirect) {
-        // A successful form submission may intentionally navigate to its
-        // canonical page. It is no longer an unsaved draft, so let the
-        // global beforeunload guard allow that redirect.
-        markFormClean(source);
-        window.location.assign(TinyCat.urls.local(redirect));
-        return;
-      }
-
-      var message = data.message || (payload && typeof payload === "object" ? payload.message : "");
-      var type = data.type
-        || (data.meta && data.meta.type)
-        || (payload && typeof payload === "object" ? (payload.type || (payload.meta && payload.meta.type)) : "")
-        || (data.ok === false ? "danger" : "success");
-
-      if (message) {
-        TinyCat.toasts.show(message, type);
-      }
+    if (redirect) {
+      // A successful form submission may intentionally navigate to its
+      // canonical page. It is no longer an unsaved draft, so let the
+      // global beforeunload guard allow that redirect.
+      markFormClean(source);
+      window.location.assign(TinyCat.urls.local(redirect));
+      return;
     }
 
-    var roots = TinyCat.modules.result(source, data, target);
+    var message = data.message;
+    var type = (data.meta && data.meta.type) || (data.ok === false ? "danger" : "success");
+
+    if (message) {
+      TinyCat.toasts.show(message, type);
+    }
+
+    var roots = await TinyCat.modules.result(source, data, target);
     if (Array.isArray(roots)) {
       roots = Array.from(new Set(roots)).filter(function (root) { return root && root.isConnected !== false; });
       roots.filter(function (root) { return !roots.some(function (parent) { return parent !== root && parent.contains(root); }); }).forEach(hydrateDynamic);
-    } else { hydrateDynamic(target || document); }
+    } else if (roots === true) { hydrateDynamic(target || document); }
     if (filterState) { TinyCat.filters.restore(filterState); }
     if (menuState) { TinyCat.popovers.restore(menuState); }
     resetForm(source);
@@ -107,15 +101,18 @@ import "./toasts.js";
       var form = event.target.closest && event.target.closest("form[data-ajax-form]");
       if (!form) { return; }
       event.preventDefault();
+      if (!TinyCat.forms.validate(form)) { return; }
       if (form.dataset.apiBusy === "true") { return; }
       form.dataset.apiBusy = "true";
       var target = form.dataset.ajaxTarget ? qs(form.dataset.ajaxTarget) : null;
       var request = null, invalidField = null;
       try {
         if ((form.dataset.ajaxTarget && !target) || !connected(form, target)) { return; }
+        if (!await TinyCat.forms.canSubmit(form)) { return; }
         var method = (form.dataset.apiMethod || form.getAttribute("method") || "POST").toUpperCase();
         var action = form.dataset.ajaxAction || form.getAttribute("action") || window.location.href;
         var body = new FormData(form);
+        if (event.submitter && event.submitter.name) { body.append(event.submitter.name, event.submitter.value || ""); }
         method = String(form.dataset.apiMethod || body.get("_method") || method).toUpperCase();
         body.delete("_method");
         var url = action, nextHistory = "";
@@ -137,7 +134,7 @@ import "./toasts.js";
         emit(form, "tinycat:before", { target: target });
         var data = await TinyCat.forms.request(form, url, options);
         if (!request.current()) { return; }
-        handleResult(form, data, target);
+        await handleResult(form, data, target);
         pushHistory(nextHistory);
       } catch (error) {
         if (error.name === "AbortError" || !connected(form, target) || (request && !request.current())) { return; }
@@ -183,7 +180,7 @@ import "./toasts.js";
         if (request.signal) { options.signal = request.signal; }
         var data = await TinyCat.api.request(url, options);
         if (!request.current()) { return; }
-        handleResult(link, data, target);
+        await handleResult(link, data, target);
         pushHistory(nextHistory);
       } catch (error) {
         if (error.name === "AbortError" || !connected(link, target) || (request && !request.current())) { return; }

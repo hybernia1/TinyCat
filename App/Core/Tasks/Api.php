@@ -43,7 +43,7 @@ final class Api
             if (!$result['ok']) { \TinyCat\Http\Response::error('Scheduled execution failed.', 500, 'scheduler_run_failed', ['execution' => $result]); }
             return new Result($result, null, [], 'scheduler_run_finished');
         }, 'scheduler', 200);
-        $api->get('/scheduler/tasks', Actions::listing(...), 'admin');
+        $api->get(substr(\TinyCat\Core\Ui\Admin\Definitions::route('core.scheduler-runs', 'endpoint'), 4), Actions::listing(...), 'admin');
         $api->get('/scheduler/runs/{id:[0-9]+}', static fn (Request $request, array $params): array => Actions::detail((int) $params['id']), 'admin');
         $api->post('/scheduler/tasks/{task:' . \TinyCat\Core\Modules\ScheduledTask::ID_PATTERN . '}/runs', static fn (Request $request, array $params): Result => Actions::run((string) $params['task']), 'admin');
         $api->post('/scheduler/tokens', Actions::rotateToken(...), 'admin');

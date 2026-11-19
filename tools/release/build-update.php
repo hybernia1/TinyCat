@@ -24,8 +24,7 @@ $keyPath = trim((string) ($options['key'] ?? (\TinyCat\Tools\Workspace::director
 $allowDirty = array_key_exists('allow-dirty', $options);
 $freshInstall = array_key_exists('fresh-install', $options);
 $both = array_key_exists('both', $options);
-$legacyUpgrade = array_key_exists('legacy-upgrade', $options);
-if ($legacyUpgrade && ($freshInstall || array_key_exists('without-migrations', $options) || array_key_exists('minimum-version', $options))) { throw new InvalidArgumentException('Legacy upgrade chooses its supported minimum and requires migration execution.'); }
+if (array_key_exists('legacy-upgrade', $options)) { throw new InvalidArgumentException('Legacy upgrades are no longer supported. Update the installation to TinyCat ' . \TinyCat\Support\Version::MINIMUM_UPDATE . ' first.'); }
 if ($both && $freshInstall) { throw new InvalidArgumentException('Use --both or --fresh-install, not both.'); }
 $withoutMigrations = $freshInstall || array_key_exists('without-migrations', $options);
 
@@ -78,24 +77,25 @@ if (!is_string($secretKey) || strlen($secretKey) !== SODIUM_CRYPTO_SIGN_SECRETKE
     exit(1);
 }
 
-$allowedRoots = ['App', 'Public', 'assets', 'docs', 'lang', 'migrations'];
+$allowedRoots = ['App', 'Public', 'assets', 'docs', 'lang'];
 if (!defined('TINYCAT')) { define('TINYCAT', true); }
-require_once $root . '/App/autoload.php';
+require_once $root . '/App/Core/Runtime/autoload.php';
 $assembly = (string) ($options['assembly'] ?? 'source');
 $selection = match ($assembly) {
     'core' => [],
     'source' => require $root . '/App/modules.php',
-    'platform' => require $root . '/App/available-modules.php',
+    'platform' => \TinyCat\Core\Modules\SourceModules::production($root),
+    'development' => \TinyCat\Core\Modules\SourceModules::selection($root),
     'blog' => require $root . '/App/Modules/Blog/selection.php',
-    default => throw new InvalidArgumentException('Unknown assembly; use source, platform, blog or core.'),
+    default => throw new InvalidArgumentException('Unknown assembly; use source, platform, development, blog or core.'),
 };
 $product = (string) ($options['product'] ?? match ($assembly) { 'core' => 'tinycat.core', 'blog' => 'tinycat.blog', default => 'tinycat.social' });
 $active = isset($options['active']) ? ((string) $options['active'] === '' ? [] : explode(',', (string) $options['active'])) : null;
 $distribution = \TinyCat\Core\Modules\Distribution::describe($root, $product, $selection, $active);
-if (\TinyCat\Core\Modules\Distribution::modular($distribution)) {
-    $moduleBaseline = $distribution['format'] === 3 ? \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME : ($distribution['format'] === 2 ? \TinyCat\Core\Modules\Distribution::FRAMEWORK_RUNTIME : (isset($distribution['schemas']['tinycat.support']) ? \TinyCat\Core\Modules\Distribution::CORE_SCHEMA_RUNTIME : \TinyCat\Core\Modules\Distribution::RUNTIME));
-    if (!array_key_exists('minimum-version', $options)) { $minimumVersion = $moduleBaseline; }
-    if (version_compare($minimumVersion, $moduleBaseline, '<') || version_compare($version, $minimumVersion, '<')) { throw new InvalidArgumentException('Modular packages require the module-aware runtime baseline.'); }
+if ($distribution['format'] === 4) {
+    $checkpointRuntime = \TinyCat\Core\Modules\SchemaMigration::ARCHIVE_RUNTIME;
+    if (!array_key_exists('minimum-version', $options) && version_compare($minimumVersion, $checkpointRuntime, '<')) { $minimumVersion = $checkpointRuntime; }
+    if (version_compare($minimumVersion, $checkpointRuntime, '<') || version_compare($version, $minimumVersion, '<')) { throw new InvalidArgumentException('Archived migration packages require the checkpoint-aware updater.'); }
 }
 \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, \TinyCat\Core\Modules\Distribution::selection($distribution, $distribution['active']))->catalog);
 $rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
@@ -147,18 +147,24 @@ foreach ($allowedRoots as $directory) {
 }
 
 ksort($files, SORT_STRING);
-if (!defined('TINYCAT')) { define('TINYCAT', true); }
-require_once $root . '/App/autoload.php';
 $hashes = [];
 $normalizedContents = [];
 $moduleMigrationFiles = [];
 foreach ($distribution['schemas'] as $schema) {
-    foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) { $moduleMigrationFiles[$migration['file']] = true; }
+    foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) { if ($migration['file'] !== null) { $moduleMigrationFiles[$migration['file']] = true; } }
 }
 
 foreach ($files as $relative => $path) {
     $content = file_get_contents($path);
     if (!is_string($content)) { throw new RuntimeException('Unable to read ' . $relative); }
+    // Build-only hints must remain readable by an already-loaded supported updater.
+    if (preg_match('~^App/Modules/[^/]+/module\.json$~D', $relative) === 1) {
+        $metadata = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        if (is_array($metadata) && array_key_exists('development', $metadata)) {
+            unset($metadata['development']);
+            $content = json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
+        }
+    }
     if ((str_starts_with($relative, 'migrations/') && str_ends_with($relative, '.php')) || isset($moduleMigrationFiles[$relative])) {
         $content = str_replace(["\r\n", "\r"], "\n", $content);
     }
@@ -185,41 +191,7 @@ ksort($hashes, SORT_STRING);
 $baseFiles = $files; $baseContents = $normalizedContents; $baseHashes = $hashes;
 foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
     $files = $baseFiles; $normalizedContents = $baseContents; $hashes = $baseHashes;
-    $variantDistribution = $distribution; $variantMinimum = $minimumVersion; $compatibilityMigration = null;
-    if ($legacyUpgrade && !$freshInstall) {
-        $owners = \TinyCat\Core\Modules\Loader::fromSelection($root, $selection)->providers(\TinyCat\Core\Modules\ProvidesLegacyUpgrade::class);
-        if ($owners === []) { throw new RuntimeException('This product has no declared legacy upgrade owner.'); }
-        $targetPath = 'App/distribution-target.json';
-        $targetSource = $normalizedContents['App/distribution.json'];
-        $files[$targetPath] = ''; $normalizedContents[$targetPath] = $targetSource; $hashes[$targetPath] = hash('sha256', $targetSource);
-        $variantDistribution = $distribution;
-        $variantDistribution['format'] = 1; $variantDistribution['legacy'] = true; $variantDistribution['schemas'] = [];
-        unset($variantDistribution['framework'], $variantDistribution['schemaOwners']);
-        $variantDistribution = \TinyCat\Core\Modules\Distribution::validate($variantDistribution);
-        $transportSource = json_encode($variantDistribution, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
-        $normalizedContents['App/distribution.json'] = $transportSource; $hashes['App/distribution.json'] = hash('sha256', $transportSource);
-        $history = [];
-        foreach (glob($root . '/migrations/*.php') ?: [] as $legacyFile) {
-            $relative = 'migrations/' . basename($legacyFile);
-            $content = str_replace(["\r\n", "\r"], "\n", (string) file_get_contents($legacyFile));
-            $files[$relative] = ''; $normalizedContents[$relative] = $content; $hashes[$relative] = hash('sha256', $content); $history[$relative] = $hashes[$relative];
-        }
-        ksort($history, SORT_STRING);
-        $compatibilityMigration = 'migrations/20261114_900_legacy_to_' . strtolower((string) preg_replace('/[^a-z0-9_]/i', '_', $version)) . '.php';
-        $callback = "<?php\ndeclare(strict_types=1);\nif (!defined('TINYCAT')) { return null; }\nreturn static function (\\PDO \$pdo): void {\n    \$root = \\TinyCat\\Support\\Paths::basePath();\n    require \$root . '/App/Core/Runtime/autoload.php';\n    \\TinyCat\\Core\\Updates\\LegacyUpdate::apply(\$pdo, \$root, " . var_export($version, true) . ', ' . var_export($hashes[$targetPath], true) . ', ' . var_export($history, true) . ", \\TinyCat\\Support\\Version::CURRENT, " . var_export(array_keys($owners), true) . ");\n};\n";
-        $files[$compatibilityMigration] = ''; $normalizedContents[$compatibilityMigration] = $callback; $hashes[$compatibilityMigration] = hash('sha256', $callback);
-        $variantMinimum = \TinyCat\Support\Version::MINIMUM_UPDATE;
-    }
-    // A running pre-6 updater still resolves Cache through its already-loaded autoloader.
-    // Ship only a loader at the former path; the implementation stays in Core.
-    if (!$freshInstall && ($distribution['legacy'] || $legacyUpgrade) && version_compare($variantMinimum, '6.0.0-dev.1', '<')) {
-        $bridgePath = 'App/Support/Cache.php';
-        $bridge = "<?php\ndeclare(strict_types=1);\nrequire_once dirname(__DIR__) . '/autoload.php';\nrequire_once dirname(__DIR__) . '/Core/Support/Cache.php';\n";
-        $files[$bridgePath] = '';
-        $normalizedContents[$bridgePath] = $bridge;
-        $hashes[$bridgePath] = hash('sha256', $bridge);
-        ksort($files, SORT_STRING); ksort($hashes, SORT_STRING);
-    }
+    $variantDistribution = $distribution; $variantMinimum = $minimumVersion;
     $withoutMigrations = $freshInstall || array_key_exists('without-migrations', $options);
     if ($freshInstall) {
         foreach (array_keys($files) as $relative) {
@@ -230,7 +202,7 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
     $deletionsFile = __DIR__ . '/update-deletions.json';
     $deletions = [];
 
-    if (!$freshInstall && ($distribution['legacy'] || $distribution['format'] === 3) && is_file($deletionsFile)) {
+    if (!$freshInstall && is_file($deletionsFile)) {
         try {
             $allDeletions = json_decode((string) file_get_contents($deletionsFile), true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
@@ -248,7 +220,6 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
     }
 
     $deletions = array_values(array_unique($deletions));
-    if ($legacyUpgrade && !$freshInstall) { $deletions = array_values(array_filter($deletions, static fn (string $path): bool => $path !== 'App/Support/Cache.php')); }
     sort($deletions, SORT_STRING);
     $migrations = ($withoutMigrations || !$distribution['legacy'])
         ? []
@@ -256,7 +227,6 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
             array_keys($files),
             static fn (string $path): bool => str_starts_with($path, 'migrations/') && str_ends_with($path, '.php')
         ));
-    if ($compatibilityMigration !== null) { $migrations = [$compatibilityMigration]; }
     ksort($files, SORT_STRING); ksort($hashes, SORT_STRING);
 
     if (!is_dir($variantOutput) && !mkdir($variantOutput, 0775, true) && !is_dir($variantOutput)) {
@@ -362,7 +332,7 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
         'kind' => $freshInstall ? 'install' : 'update',
         'distribution' => $variantDistribution,
         'version' => $version,
-        'minimum_version' => $freshInstall && version_compare($variantMinimum, \TinyCat\Core\Modules\Distribution::RUNTIME, '<') ? \TinyCat\Core\Modules\Distribution::RUNTIME : $variantMinimum,
+        'minimum_version' => $variantMinimum,
         'minimum_php' => $minimumPhp,
         'package' => $packageName,
         'sha256' => $packageHash,

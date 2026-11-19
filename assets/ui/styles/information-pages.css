@@ -1,0 +1,5 @@
+.information-page {
+  width: min(100%, 920px);
+  min-width: 0;
+  margin-inline: auto;
+}

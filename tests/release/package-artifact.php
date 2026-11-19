@@ -7,7 +7,7 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require_once $root . '/App/bootstrap.php';
+require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/package-artifact-' . bin2hex(random_bytes(6));
 $output = $temporaryRoot . '/dist-a';
@@ -73,9 +73,13 @@ try {
     }
 
     $unsupportedOutput = [];
-    exec($command . ' --minimum-version=5.15.0 2>&1', $unsupportedOutput, $unsupportedExit);
+    exec($command . ' --minimum-version=6.0.3 2>&1', $unsupportedOutput, $unsupportedExit);
     if ($unsupportedExit === 0 || !str_contains(implode(' ', $unsupportedOutput), 'Minimum update version must be between')) {
         throw new RuntimeException('Package builder must reject unsupported update baselines.');
+    }
+    exec($command . ' --legacy-upgrade 2>&1', $legacyOutput, $legacyExit);
+    if ($legacyExit === 0 || !str_contains(implode(' ', $legacyOutput), 'Legacy upgrades are no longer supported')) {
+        throw new RuntimeException('Package builder must reject the retired compatibility transport.');
     }
 
     $freshInstall = in_array('--fresh-install', $argv, true);
@@ -136,9 +140,14 @@ try {
     }
     $manifestJson = (string) file_get_contents($manifestPath);
     $manifest = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
-    $expectedMinimum = \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME;
+    $expectedMinimum = \TinyCat\Support\Version::MINIMUM_UPDATE;
     if (($manifest['minimum_version'] ?? null) !== $expectedMinimum) {
         throw new RuntimeException('Package builder must default to the supported update baseline.');
+    }
+    foreach (array_keys($manifest['files']) as $path) {
+        if (str_starts_with($path, 'migrations/') || in_array($path, ['App/Core/Updates/LegacyUpdate.php', 'App/Core/Modules/ProvidesLegacyUpgrade.php', 'App/Support/Cache.php'], true)) {
+            throw new RuntimeException('Retired pre-6.0.4 migration transport must not be packaged: ' . $path);
+        }
     }
     $signature = base64_decode(trim((string) file_get_contents($signaturePath)), true);
 
@@ -216,9 +225,13 @@ try {
     ) {
         $failures[] = 'Updater bridge must retain authenticated migration files.';
     }
-    if ($manifest['distribution']['format'] === 3) {
+    if (in_array($manifest['distribution']['format'], [3, 4], true)) {
         foreach ($manifest['distribution']['schemas'] as $schema) {
             foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) {
+                if ($migration['file'] === null) {
+                    if ($manifest['distribution']['format'] !== 4 || preg_match('/^[a-f0-9]{64}$/D', $migration['checksum']) !== 1) { $failures[] = 'Archived history requires format 4 and its original checksum.'; }
+                    continue;
+                }
                 if (!in_array($migration['file'], $names, true) || ($manifest['files'][$migration['file']] ?? '') !== $migration['checksum']) { $failures[] = 'Owner migration or schema operation is missing from the signed artifact: ' . $migration['file']; }
             }
         }
@@ -253,6 +266,9 @@ try {
             $failures[] = 'Retired extension support in artifact: ' . $name;
         }
     }
+    foreach (['App/AssetOptimizer.php', 'App/Support/Cache.php', 'App/distribution-target.json', 'App/bootstrap.php'] as $retired) {
+        if (in_array($retired, $names, true)) { $failures[] = 'Retired updater bridge or asset optimizer in artifact: ' . $retired; }
+    }
 
     foreach (['App/Core/Http/Api.php', 'App/Core/Http/Request.php', 'App/Core/Http/Response.php', 'App/Core/Http/Validator.php', 'App/Core/Database/Connection.php', 'App/Core/Support/Config.php', 'App/Core/Modules/Module.php', 'App/modules.php', 'assets/core/api-client.js', 'assets/core/dom.js', 'assets/ui/form-requests.js', 'assets/ui/dialogs.js'] as $required) {
         if (!in_array($required, $names, true)) {
@@ -260,7 +276,7 @@ try {
         }
     }
 
-    foreach (['App/Modules/Social/src/Profiles/Registration.php', 'App/Modules/Social/src/Profiles/Api.php', 'App/Modules/Social/src/Profiles/Avatar.php', 'App/Modules/Social/src/Profiles/Roles.php', 'App/Core/Notifications/ServiceProvider.php', 'App/Core/Notifications/Api.php', 'App/Modules/Social/src/Posts/Registration.php', 'App/Modules/Social/src/Posts/Api.php', 'App/Modules/Social/src/Content/ImageStorage.php', 'App/Core/Text/LinkParser.php', 'App/Core/Links/Metadata.php', 'assets/ui/component-builders.js', 'App/Modules/Social/assets/users/controller.js', 'App/Modules/Social/assets/status/controller.js', 'App/Core/Notifications/assets/controller.js'] as $required) {
+    foreach (['App/Modules/Social/src/Profiles/Registration.php', 'App/Modules/Social/src/Profiles/Api.php', 'App/Core/Identity/Avatar.php', 'App/Modules/Social/src/Profiles/Roles.php', 'App/Core/Notifications/ServiceProvider.php', 'App/Core/Notifications/Api.php', 'App/Modules/Social/src/Posts/Registration.php', 'App/Modules/Social/src/Posts/Api.php', 'App/Modules/Social/src/Content/ImageStorage.php', 'App/Core/Text/LinkParser.php', 'App/Core/Links/Metadata.php', 'assets/ui/component-builders.js', 'App/Modules/Social/assets/users/controller.js', 'App/Modules/Social/assets/status/controller.js', 'App/Core/Notifications/assets/controller.js'] as $required) {
         if (!in_array($required, $names, true)) { $failures[] = 'Required domain runtime missing: ' . $required; }
     }
     foreach (['App/Core.php', 'App/functions.php', 'App/Api.php', 'App/Bots.php', 'App/BotAdmin.php', 'App/Captcha.php', 'App/Cache.php', 'App/Minifier.php', 'App/SiteIdentity.php', 'App/Sitemap.php', 'App/PackageManager.php', 'App/Notifications.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $retired) {

@@ -10,7 +10,7 @@ Samotné core má osm tabulek:
 
 ```text
 users, password_reset_tokens, ip_action_limits, settings,
-notifications, scheduler_runs, module_installations, module_migrations
+notifications, scheduler_runs, module_installations, migrations
 ```
 
 Social přidává šestnáct tabulek:
@@ -32,9 +32,14 @@ blog_comments, blog_article_likes, blog_comment_likes,
 blog_sources, blog_feed_history, blog_source_articles
 ```
 
-Core s Blogem má 21 tabulek, se Socialem 24 a s oběma moduly 37. Historická
-instalace může navíc zachovat globální `schema_migrations` a nepoužívané staré
-tabulky; nejde o požadavky čerstvého core ani souhlas k odstranění jejich dat.
+Core s Blogem má 21 tabulek, se Socialem 24 a s oběma moduly 37.
+Společný journal `migrations` rozlišuje `kind = global` a `kind = schema`;
+`stream` zachovává původní ID migračního streamu. Globální verze vydání je
+v `release_version`, číselné pořadí schématu v `sequence`. Při ověřeném převodu
+z v6.0.4 nahrazuje `schema_migrations` a `module_migrations` bez opětovného
+spuštění jejich migrací. Staré modulové záznamy mají neznámý `applied_at`;
+nové zápisy obsahují skutečný čas. Stav schémat zůstává v `module_installations`.
+Jiné historické tabulky nejsou automaticky určené k odstranění.
 
 `blog_articles` obsahuje celého autora, název, text, náhled, stav a časové údaje.
 Neobsahuje `content_id` ani `kind`. `blog_source_articles.article_id` i ostatní
@@ -70,6 +75,42 @@ Core Notifications nečte žádnou publikační tabulku. Historická pole
 Social vlastní jejich význam, hydrataci i úklid. Blog diskuse jeho události
 nevyvolává. Smazání účtu zapojuje i nainstalované vypnuté vlastníky.
 
+## Archivace migrační historie
+
+Současný zdrojový baseline vyžaduje dokončenou 6.0.8. Neměnný release 6.0.8
+zavedl čtení archivní historie a ponechal publikované soubory pro updater 6.0.7.
+Navazující zdroje archivují všech 24 dosavadních vestavěných migrací ve formátu 4;
+každý vlastník má samostatný aktuální fresh snapshot. Původní migrační PHP,
+vedlejší historické DDL a datové převodníky již nejsou v runtime ani balíčku.
+Další změna schématu přidá novou spustitelnou migraci za archivní prefix.
+
+`SchemaMigration` rozlišuje spustitelný soubor a archivní záznam s původním
+checksumem. Archiv tvoří souvislý prefix od verze 1; za ním zůstávají pouze
+spustitelné změny. Prefix určuje minimální podporované **schéma vlastníka**,
+nezávisle na verzi core nebo zapnutí modulu. Schéma s archivním prefixem musí
+mít samostatnou spustitelnou aktuální `fresh` baseline a nesmí používat staré
+přebírání nepřiřazených tabulek. Nová instalace nadále zaznamená pokrytí
+původní historie fresh schématem; nepředstírá spuštění chybějících souborů.
+
+Podepsaný descriptor formátu 4 používá pro archivní položku explicitní
+`file: null` spolu s původním `version`, `id` a `checksum`. Archivní soubor
+není ve file inventory a nikdy se nespouští. Instalovaná historie se porovná
+s těmito metadaty; původní záznamy a časy se nepřepisují. Formát 3 archivní
+položky odmítá. Zbývající PHP a fresh baseline stále podléhají kontrolám
+checksumů a vlastnictví. ZIP nezávislého modulu používá pro stejný kontrakt
+formát 2 a vyžaduje minimálně checkpoint-aware runtime 6.0.8.
+
+V prvním vydání se publikuje nový čtenář s původními soubory ve formátu 3.
+Následující vydání smí odstranit PHP pouze pro ověřený prefix, zvýší minimum
+na checkpoint-aware runtime a použije formát 4. Původní podepsané releasy
+zůstávají neměnné. Podporované mezikroky jsou výslovné; chybějící převod se
+nepřeskočí ani nepřevezme pouze podle existence tabulek. Stejné pravidlo
+platí pro nainstalované vypnuté vlastníky a nezávislé modulové ZIPy.
+
+Rollback nadále obnovuje standardní snapshot databáze, zdrojů a aktivace,
+včetně PHP souborů odstraněných při archivaci. Nevyžaduje jejich opětovné
+spuštění ani změnu původních checksumů.
+
 ## Převod historické instalace
 
 Descriptor formátu 3 zachovává seznam povinného frameworku bez Publishingu.
@@ -91,17 +132,11 @@ historie označí jako `retired`, nemaže ji; později přidaný Social vytvoř�
 prázdné tabulky. Neznámé vazby, jiný druh obsahu či nedoložená původní instalace
 konverzi zastaví. Historické globální převzetí vyžaduje ověřený checkpoint.
 
-Runtime dev.9 nový descriptor nepřijímá. Přechod vyžaduje nejprve kompatibilní
-runtime dev.9.1, následně dev.9.2 s dokončením odložených globálních migrací
-a potom 6.0.0; před datovou konverzí updater pořizuje snapshot. Samotný
-souborový bridge dev.9.1 nedokládá dokončení databázového checkpointu.
+Historický převod používal bridge dev.9.1 a checkpoint dev.9.2. Tehdejší balíčky
+podporovaly dokončenou instalaci TinyCat 6.0.4 a novější; současnou podporu
+určuje výše uvedený baseline a provozní návod. Publikované migrace a jejich checksumy
+zůstávají neměnné.
 
-Stabilní 6.0.1 poskytuje také přímou cestu z publikované 5.x: `--legacy-upgrade`
-exportuje ověřený root migrační vstup a cílový descriptor do kompatibilního
-transportu pro původní updater. `ProvidesLegacyUpgrade` nechává vlastníka
-rozhodnout, zda potřebuje historický globální stream; core neodvozuje doménu
-z názvů tabulek. Core framework se vždy seřadí před funkční manifesty,
-takže jejich `requires` popisuje funkční závislosti a `coreApi` kontrakt frameworku.
 Rollback obnovuje schéma, data, soubory i aktivaci společně. Nepřepisuj descriptor
 nebo schéma ručně na živé instalaci. Stav konkrétního nasazení a výsledky kontrol
 patří do auditu etapy, nikoli do předpokladu, že změna zdrojů aktualizovala web.

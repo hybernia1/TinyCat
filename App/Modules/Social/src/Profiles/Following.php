@@ -5,6 +5,18 @@ namespace TinyCat\Social\Profiles;
 
 final class Following
 {
+    public static function author_unfollow(int $followerId, int $authorId): void
+    {
+        if ($followerId < 1 || $authorId < 1 || $followerId === $authorId) {
+            return;
+        }
+
+        \TinyCat\Database\Connection::delete('user_followers', [
+            'user_id' => $authorId,
+            'follower_id' => $followerId,
+        ]);
+    }
+
     public static function author_is_followed(int $followerId, int $authorId): bool
     {
         if ($followerId < 1 || $authorId < 1 || $followerId === $authorId) {
@@ -36,7 +48,7 @@ final class Following
             if (!\TinyCat\Database\Connection::uniqueViolation($exception)) { throw $exception; }
             return;
         }
-        Integration::followed($authorId, ['id' => $followerId]);
+        \TinyCat\Social\Posts\NotificationEvents::notifyFollowedUser($authorId, ['id' => $followerId]);
     }
 
     /**
@@ -130,23 +142,6 @@ final class Following
             : [];
     }
 
-    /**
-     * @param array<mixed> $profile
-     * @return array<mixed>
-     */
-    public static function author_following_profile_payload(array $profile): array
-    {
-        $id = (int) ($profile['id'] ?? 0);
-
-        return [
-            'id' => $id,
-            'username' => (string) ($profile['username'] ?? ''),
-            'name' => \TinyCat\Social\Profiles\Profiles::user_display_name($profile),
-            'url' => \TinyCat\Social\Profiles\Profiles::author_url($id),
-            'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($profile),
-            'followed_at' => (string) ($profile['followed_at'] ?? ''),
-        ];
-    }
 
     /**
      * @return array<mixed>
@@ -180,10 +175,10 @@ final class Following
 
     public static function author_following_modal_url(int $authorId, string $cursorAt = '', int $cursorId = 0): string
     {
-        return \TinyCat\Social\Profiles\Following::author_following_api_url($authorId, $cursorAt, $cursorId, true);
+        return \TinyCat\Social\Profiles\Following::author_following_api_url($authorId, $cursorAt, $cursorId);
     }
 
-    public static function author_following_api_url(int $authorId, string $cursorAt = '', int $cursorId = 0, bool $html = false): string
+    public static function author_following_api_url(int $authorId, string $cursorAt = '', int $cursorId = 0): string
     {
         return '/api/users/' . $authorId . '/following?' . http_build_query(['cursor_at' => $cursorAt, 'cursor_id' => $cursorId]);
     }

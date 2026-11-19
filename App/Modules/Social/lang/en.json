@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Maximum image size (KB)",
       "content_images_enabled_help": "Existing images remain visible when uploads are disabled.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
+    },
+    "sections": {
+      "content_images": "Post images"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "Your report was resolved.",
       "report_dismissed": "Your report was dismissed."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Public user posts.",
+    "purpose_social_post_images": "Compressed images attached to posts.",
+    "purpose_social_terms": "Terms for tags.",
+    "purpose_social_post_tags": "Relations between posts and terms.",
+    "purpose_social_links": "Unique stored link metadata.",
+    "purpose_social_post_links": "Relations between posts and links.",
+    "purpose_social_post_likes": "Likes on posts.",
+    "purpose_social_comments": "Nested comments on posts.",
+    "purpose_social_comment_likes": "Likes on comments.",
+    "purpose_user_followers": "Profile follows between users.",
+    "purpose_content_reports": "User reports for moderation.",
+    "purpose_bot_sources": "RSS and Atom publishing rules for bot accounts.",
+    "purpose_bot_feed_history": "Recent feed item hashes used to prevent duplicate bot posts.",
+    "purpose_bot_source_runs": "Compact diagnostic history of bot source checks and imports."
   }
 }

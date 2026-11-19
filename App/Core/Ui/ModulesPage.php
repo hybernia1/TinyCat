@@ -4,7 +4,7 @@ namespace TinyCat\Core\Ui;
 
 use TinyCat\Core\Modules\Administration;
 use TinyCat\Http\{Api, Request, Response, Router};
-use TinyCat\Support\{AdminViews, Localization, Markup, View};
+use TinyCat\Support\{AdminViews, Components, Localization, Markup};
 
 /** Always available to administrators, independently of optional feature adapters. */
 final class ModulesPage
@@ -38,11 +38,24 @@ final class ModulesPage
         foreach ($snapshot['items'] as $item) {
             $item['dependencies'] = implode(', ', array_map(Administration::name(...), $item['requires']));
             $item['blocked'] = implode(', ', array_map(Administration::name(...), $item['dependents']));
+            $item['status_label'] = Localization::t(!$item['available'] ? 'modules.missing' : ($item['active'] && !$item['running'] ? 'modules.dependencies_error' : ($item['active'] ? 'modules.active' : 'modules.inactive')));
+            $item['tone'] = !$item['available'] ? 'warning' : ($item['active'] ? ($item['running'] ? 'ok' : 'warning') : 'neutral');
+            $item['activation'] = [
+                'id' => $item['id'], 'revision' => $snapshot['revision'], 'enabled' => $item['active'] ? '0' : '1',
+                'disabled' => !$snapshot['manageable'] || (!$item['available'] && !$item['active']) || ($item['active'] && ($item['required'] || $item['dependents'] !== [])),
+                'label' => Localization::t($item['active'] ? 'modules.disable' : 'modules.enable'),
+            ];
             $rows[] = $item;
         }
-        foreach ($snapshot['groups'] as &$group) { $group['names'] = implode(', ', array_map(Administration::name(...), $group['modules'])); }
+        foreach ($snapshot['groups'] as &$group) {
+            $group['names'] = implode(', ', array_map(Administration::name(...), $group['modules']));
+            $group['actions'] = [];
+            foreach ($group['active'] ? [false] : ($group['partial'] ? [true, false] : [true]) as $enable) {
+                $group['actions'][] = ['id' => $group['id'], 'revision' => $snapshot['revision'], 'enabled' => $enable ? '1' : '0', 'disabled' => !$snapshot['manageable'], 'label' => Localization::t($enable ? 'modules.enable_group' : 'modules.disable_group')];
+            }
+        }
         unset($group);
-        $content = View::render('modules', ['snapshot' => $snapshot, 'rows' => $rows], __DIR__ . '/templates');
+        $content = Components::render('ui/modules-page', ['snapshot' => $snapshot, 'rows' => $rows]);
         Page::render(['title' => Localization::t('modules.title'), 'current' => '/admin/modules', 'actions' => $snapshot['manageable'] ? AdminViews::modalAction('modal-modules-packages-creation', Localization::t('modules.packages.upload'), 'plus', '/api/modules/packages/creation') : ''], AdminViews::listCard(Localization::t('modules.title'), 'settings', 'modules-list', '', new Markup($content), primary: true));
     }
 }

@@ -5,7 +5,6 @@ namespace TinyCat\Core\Runtime;
 /** Technical runtime inputs supplied by selected owners, never product-ID switches. */
 final class Startup
 {
-    public static bool $legacySchemas = false;
     /** @var \Closure(): (array<string, mixed>|null)|null */
     public static ?\Closure $identity = null;
     /** @var list<\Closure(): bool> */
@@ -20,8 +19,6 @@ final class Startup
     private static ?string $httpOwner = null;
     /** @var \Closure(\Throwable): void|null */
     public static ?\Closure $exception = null;
-    /** @var list<string> */
-    public static array $frameOrigins = [];
 
     public static function provideHttp(string $owner, HttpPolicy $policy): void
     {

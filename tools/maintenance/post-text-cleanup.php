@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 if (!defined('TINYCAT')) { define('TINYCAT', true); }
-require_once __DIR__ . '/../../App/autoload.php';
+require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Database\Connection;
 use TinyCat\Core\Text\LinkParser;
 use TinyCat\Core\Text\PostText;
-use TinyCat\Social\Content\Tags;
+use TinyCat\Social\Posts\Tags;
 
 /** A saved plan is also the exact before/after backup. No metadata is rewritten. */
 final class PostTextCleanup

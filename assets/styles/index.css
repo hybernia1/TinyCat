@@ -63,8 +63,6 @@
 @import "../../App/Modules/Social/assets/status/styles/status-avatars.css";
 @import "../ui/styles/avatar-sizes.css";
 @import "../../App/Modules/Social/assets/users/styles/profile-avatar.css";
-@import "../../App/Core/Identity/assets/styles/account-security-page.css";
-@import "../../App/Core/Identity/assets/styles/account-security-card.css";
 @import "../../App/Modules/Social/assets/users/styles/profile.css";
 @import "../ui/styles/code-block.css";
 @import "../../App/Modules/Social/assets/users/styles/profile-details.css";
@@ -82,8 +80,6 @@
 @import "../ui/styles/modal-layout.css";
 @import "../ui/styles/input-icon.css";
 @import "../ui/styles/modal-confirm-buttons.css";
-@import "../../App/Core/Installation/assets/styles/install-steps.css";
-@import "../../App/Core/Installation/assets/styles/install-choices.css";
 @import "../ui/styles/result-list.css";
 @import "../../assets/ui/styles/cookie-consent.css";
 @import "../ui/styles/toasts.css";
@@ -110,7 +106,6 @@
 @import "../../App/Modules/Social/assets/status/styles/feedback-mobile.css";
 @import "../ui/styles/section-desktop.css";
 @import "../ui/styles/pagination-desktop.css";
-@import "../../App/Core/Installation/assets/styles/install-steps-desktop.css";
 @import "../ui/styles/split-desktop.css";
 @import "../modules/admin/styles/admin-lists-desktop.css";
 @import "../ui/styles/field-inline-desktop.css";
@@ -130,3 +125,4 @@
 @import "../ui/styles/tooltip.css";
 @import "../ui/styles/identity-rows.css";
 @import "../ui/styles/load-more.css";
+@import "../ui/styles/information-pages.css";

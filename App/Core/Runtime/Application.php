@@ -32,7 +32,7 @@ final class Application
             Resources::configure($modules->catalog);
             if ($modules->catalog->has('tinycat.ui')) { \TinyCat\Core\Ui\Platform::initialize(); }
             $modules->initialize(); self::$initialized = true;
-            Startup::$readiness[] = static fn (): bool => Lifecycle::ready($modules, Startup::$legacySchemas);
+            Startup::$readiness[] = static fn (): bool => Lifecycle::ready($modules);
             \TinyCat\Support\ClientAssets::configure(static fn (string $key): bool => (bool) Startup::option($key, false));
             return self::boot(Startup::context(Config::snapshot()), $modules);
         });

@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 use \TinyCat\Core\Updates\MigrationRegistry;
 
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/bootstrap.php';
+require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $config = (array) \TinyCat\Core\Settings\Store::config('database', []);
 
@@ -53,6 +53,12 @@ try {
         $options
     );
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    $journalChecks = 0;
+    (require __DIR__ . '/../../fixtures/modules/migration-journal.php')($database, static function (bool $condition, string $message) use (&$journalChecks): void {
+        $journalChecks++;
+        if (!$condition) { throw new RuntimeException($message); }
+    });
+    echo "PASS MySQL current journal preservation and retirement ({$journalChecks} checks).\n";
     $database->exec('CREATE TABLE user_profile_links (id INT UNSIGNED NOT NULL PRIMARY KEY) ENGINE=InnoDB');
     $removeProfileLinks = require __DIR__ . '/../../../migrations/20260809_001_remove_user_profile_links.php';
 
@@ -104,20 +110,8 @@ try {
         || $database->query('SELECT provider FROM links WHERE id = 2')->fetchColumn() !== 'youtube') {
         throw new RuntimeException('Link classification migration must normalize defaults and preserve specific providers.');
     }
-    $database->exec("ALTER TABLE links ADD COLUMN normalized_url VARCHAR(2048) NOT NULL DEFAULT '', ADD COLUMN url_hash CHAR(64) NULL UNIQUE, ADD COLUMN title TEXT, ADD COLUMN description TEXT, ADD COLUMN image_url TEXT, ADD COLUMN video_id TEXT");
-    $database->exec("UPDATE links SET normalized_url = 'https://twitter.com/account/status/123?s=20', url_hash = 'old-x' WHERE id = 1");
-    $database->exec("UPDATE links SET normalized_url = 'https://youtube.com/watch?v=abc123', url_hash = 'old-video' WHERE id = 2");
-    $database->exec("INSERT INTO links (id, normalized_url, url_hash, description) VALUES (3, 'https://x.com/account/status/123/photo/1', 'old-photo', 'Caption')");
-    $database->exec('CREATE TABLE content_links (content_id BIGINT UNSIGNED NOT NULL, link_id BIGINT UNSIGNED NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (content_id, link_id), FOREIGN KEY (link_id) REFERENCES links(id) ON DELETE CASCADE) ENGINE=InnoDB');
-    $database->exec('INSERT INTO content_links (content_id, link_id) VALUES (10, 1), (10, 3), (20, 3)');
-    $normalizeStored = require __DIR__ . '/../../../migrations/20261027_002_link_normalization.php';
-    $audit = $normalizeStored($database, false);
-    if ($audit['merged'] !== 1 || (int) $database->query('SELECT COUNT(*) FROM links')->fetchColumn() !== 3) { throw new RuntimeException('MySQL link audit must be read-only.'); }
-    $normalizeStored($database);
-    $again = $normalizeStored($database);
-    if ($again['changed'] !== 0 || $again['merged'] !== 0
-        || (int) $database->query('SELECT COUNT(*) FROM content_links WHERE link_id = 1')->fetchColumn() !== 2
-        || $database->query('SELECT description FROM links WHERE id = 1')->fetchColumn() !== 'Caption') { throw new RuntimeException('MySQL normalization must preserve relations, metadata and repeatability.'); }
+    // Current Social link normalization and transactional recovery run in
+    // tests/tools/link-optimizer.php; the pre-6.0.4 parser alias is no longer shipped.
     $database->exec(
         'CREATE TABLE settings (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -262,8 +256,8 @@ try {
     try {
         MigrationRegistry::ensure();
     } catch (RuntimeException $exception) {
-        if (str_contains($exception->getMessage(), 'Update TinyCat to 1.0.14')) {
-            echo "PASS MySQL outdated migration registry rejected by 2.x baseline.\n";
+        if (str_contains($exception->getMessage(), 'A completed TinyCat 6.0.6 migration journal is required.')) {
+            echo "PASS MySQL outdated migration registry rejected by 6.0.6 baseline.\n";
             return;
         }
         throw $exception;

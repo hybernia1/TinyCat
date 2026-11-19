@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Content;
 
+use TinyCat\Social\Posts\Tags;
+
 use TinyCat\Core\Identity\Deletion;
 
 /** Publishing data and files remain owned by their domain. */

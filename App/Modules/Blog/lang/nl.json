@@ -12,7 +12,7 @@
     "empty": "Nog geen artikelen.",
     "older": "Oudere artikelen",
     "not_found": "Artikel niet gevonden.",
-    "invalid": "Voer een titel (maximaal 200 tekens) en tekst (maximaal 60.000 UTF-8-bytes) in.",
+    "invalid": "Voer een titel (maximaal {title_max} tekens) en tekst (maximaal {body_max} UTF-8-bytes) in.",
     "articles": "Articles",
     "scheduled": "Gepland",
     "feeds": {
@@ -27,7 +27,7 @@
       "run": "Import starten",
       "preview": "Importvoorbeeld",
       "preview_empty": "Geen bruikbare items.",
-      "invalid": "Controleer de naam, openbare feed-URL, actieve beheerder en het interval van 5 tot 43.200 minuten. De URL van een opgeslagen bron kan niet worden gewijzigd."
+      "invalid": "Controleer de naam, openbare feed-URL, actieve beheerder en het interval van {interval_min} tot {interval_max} minuten. De URL van een opgeslagen bron kan niet worden gewijzigd."
     },
     "settings": {
       "images_enabled": "Postafbeeldingen toestaan",

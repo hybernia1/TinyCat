@@ -14,15 +14,20 @@ import "../../../../../assets/ui/content/translation.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;
-  var C = TinyCat.status.controllers, qsa = TinyCat.dom.all;
-  TinyCat.status.navigationUrl = C.media.mobileStatusUrl;
+  var C = TinyCat.status.controllers;
+  TinyCat.status.navigationUrl = TinyCat.status.navigation.mobileStatusUrl;
   TinyCat.status.hydrate = function (root) {
-    TinyCat.publishing.hydrate(root); C.feed.initStatusFeedLazy(root);
+    C.feed.initStatusFeedLazy(root); C.actions.prepareForms(root);
   };
-  TinyCat.status.dispose = function (root) { C.feed.dispose(root); TinyCat.publishing.dispose(root); };
+  TinyCat.status.dispose = function (root) { C.feed.dispose(root); };
 
   TinyCat.status.init = function () {
     C.comments.initCommentReplies(); C.actions.initStatusForms();
+  };
+  var feedResult = TinyCat.status.result;
+  TinyCat.status.result = function (source, response, target) {
+    if (!source.matches("form[data-status-form]")) { return feedResult(source, response, target); }
+    return C.actions.handleStatusJsonResponse(source, response).then(function () { C.actions.prepareForms(document); return []; });
   };
   TinyCat.modules.register("status", TinyCat.status);
   TinyCat.navigation.register("/", {

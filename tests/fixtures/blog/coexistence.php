@@ -11,7 +11,7 @@ register_shutdown_function(static function () use (&$completed): void { if (!$co
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $pdo = new PDO('sqlite:' . $workspace . '/blog.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('PRAGMA foreign_keys = ON'); Connection::set($pdo);
-$selection = require $workspace . '/App/available-modules.php'; unset($selection['tinycat.installation']);
+$selection = \TinyCat\Core\Modules\SourceModules::selection($workspace); unset($selection['tinycat.installation']);
 $base = array_keys(require $workspace . '/App/Modules/Blog/selection.php');
 $plan = Distribution::describe($workspace, 'fixture.platform', $selection, $base);
 file_put_contents($workspace . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
@@ -24,11 +24,11 @@ $run = static function (array $arguments) use ($workspace): void {
 };
 $run(['activate', 'tinycat.social']);
 $modules = Loader::load($workspace); Resources::configure($modules->catalog);
-$assert(ModuleSchemas::ready($pdo, Distribution::definitions($modules, false)), 'All selected owners have standalone schema histories');
+$assert(ModuleSchemas::ready($pdo, Distribution::definitions($modules)), 'All selected owners have standalone schema histories');
 $administrator = Connection::find('users', ['id' => 1]);
 $article = TinyCat\Blog\Articles::save(['title' => 'Combined article', 'body' => 'Coexistence marker #combined'], $administrator);
-TinyCat\Database\SchemaInspection::reserveIds($pdo, 'social_posts', $article);
-$post = TinyCat\Social\Content\PostCreation::create(1, TinyCat\Social\Content\PostCreation::fromText('Coexistence status #combined'), []);
+TinyCat\Database\Schema::reserveIds($pdo, 'social_posts', $article);
+$post = TinyCat\Social\Posts\PostCreation::create(1, TinyCat\Social\Posts\PostCreation::fromText('Coexistence status #combined'), []);
 $assert($post === $article && TinyCat\Social\Posts\Posts::status_find($post)['body'] !== TinyCat\Blog\Articles::find($article)['body'], 'Equal numeric IDs resolve independently through owner repositories');
 $assert(array_column(TinyCat\Social\Posts\Feed::public_status_items_cursor(30), 'id') === [$post], 'Social feed excludes existing and new articles');
 $assert(array_column(TinyCat\Social\Search\Queries::public_search_content_rows('Coexistence', 20), 'id') === [$post], 'Social search keeps canonical status ownership');
@@ -37,11 +37,11 @@ $searchGroups = array_column($combinedSearch['collections'], null, 'id');
 $assert(array_column($searchGroups['content']['items'], 'id') === [$post] && array_column($searchGroups['articles']['items'], 'id') === [$article], 'Generic search combines active owners with separate canonical resources');
 $assert(TinyCat\Http\LocaleRouting::url('/search/all?q=Coexistence', 'cs') === '/cs/search/all?q=Coexistence' && TinyCat\Http\LocaleRouting::split('/cs/search/all')['path'] === '/search/all', 'Generic search preserves explicit interface languages without the social AJAX route');
 $assert(TinyCat\Core\Discovery\Sitemap::count('articles') > 1 && TinyCat\Core\Discovery\Sitemap::hasSection('status'), 'Combined sitemap retains both article and status sources');
-$assert(TinyCat\Social\Presentation\Sitemap::count('status') === 1 && TinyCat\Social\Posts\AuthorStatistics::author_activity_stats(1)['posts'] === 1, 'Sitemap and social statistics exclude articles');
+$assert(TinyCat\Core\Discovery\Sitemap::count('status') === 1 && TinyCat\Social\Posts\AuthorStatistics::author_activity_stats(1)['posts'] === 1, 'Sitemap and social statistics exclude articles');
 $text = 'Shared @Editor #combined';
-$beforeSocial = TinyCat\Social\Content\PostCreation::fromText($text, 'article')->body;
+$beforeSocial = TinyCat\Social\Posts\PostCreation::fromText($text, 'article')->body;
 TinyCat\Social\Posts\Registration::initialize();
-$assert(TinyCat\Social\Content\PostCreation::fromText($text, 'article')->body === $beforeSocial, 'Loading Social cannot alter article mention preparation');
+$assert(TinyCat\Social\Posts\PostCreation::fromText($text, 'article')->body === $beforeSocial, 'Loading Social cannot alter article mention preparation');
 $assert(TinyCat\Social\Moderation\Restrictions::moderation_user_post_count(1) === 1 && TinyCat\Social\Moderation\Restrictions::moderation_user_reputation(['id' => 1, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s', time() - 8 * 86400)]) === 'normal', 'Articles do not increase social publication counts or reputation');
 TinyCat\Blog\Module::initialize();
 $socialTables = TinyCat\Social\Module::tables();
@@ -127,14 +127,15 @@ try {
     $assert($status === 200 && (json_decode($json, true)['title'] ?? '') === 'Combined article', 'Combined oEmbed chooses Blog by canonical path');
     [$status, $json] = $request('/oembed?url=' . rawurlencode('http://' . $address . '/status/' . $post));
     $assert($status === 200 && str_contains(json_decode($json, true)['html'] ?? '', '/status/' . $post . '/embed'), 'Combined oEmbed retains the Social provider');
-    foreach (['/admin', '/admin/modules', '/admin/articles', '/admin/cron', '/admin/users'] as $path) { [$status] = $request($path, true); $assert($status === 200, 'Combined administration route: ' . $path); }
+    foreach (['/admin', '/admin/modules', '/admin/articles', '/admin/cron', '/admin/cron/list', '/admin/users'] as $path) { [$status] = $request($path, true); $assert($status === 200, 'Combined administration route: ' . $path); }
     [$status] = $request('/api/modules'); $assert($status === 401, 'Module inventory is private');
     [$status, $moduleHtml] = $request('/admin/modules', true);
     $assert($status === 200 && str_contains($moduleHtml, '/api/modules/activation') && str_contains($moduleHtml, 'tinycat.blog'), 'Module administration is in the common navigation and renders controls');
     [$status] = $request('/api/modules/activation', true, ['id' => 'tinycat.blog', 'enabled' => false, 'revision' => 'stale'], false); $assert($status === 403, 'Module changes require CSRF');
     [$status] = $request('/api/modules/activation', true, ['id' => 'tinycat.blog', 'enabled' => false, 'revision' => 'stale']); $assert($status === 409, 'Stale selections cannot overwrite newer activation state');
     [, $json] = $request('/api/modules', true); $moduleState = json_decode($json, true)['data'];
-    $assert(array_column($moduleState['items'], 'id') === ['tinycat.social', 'tinycat.blog'] && $moduleState['groups'] === [], 'Manager exposes two real modules without framework entries or virtual Social groups');
+    $moduleIds = array_column($moduleState['items'], 'id'); sort($moduleIds, SORT_STRING);
+    $assert($moduleIds === ['tinycat.blog', 'tinycat.social'] && $moduleState['groups'] === [], 'Manager exposes two real modules without framework entries or virtual Social groups');
     $assert(array_merge(...array_column($moduleState['items'], 'requires')) === [], 'Mandatory framework capabilities are not presented as selectable module dependencies');
     [$status] = $request('/api/modules/activation', true, ['id' => 'tinycat.accounts', 'enabled' => false, 'revision' => $moduleState['revision']]); $assert($status === 422, 'Core is not an activatable module');
     [$status] = $request('/api/modules/activation', true, ['id' => 'tinycat.site', 'enabled' => false, 'revision' => $moduleState['revision']]); $assert($status === 422, 'An internal Social fragment has no separate activation');
@@ -160,7 +161,7 @@ try {
     [$status, $xml] = $request('/sitemap.xml');
     $assert($status === 200 && str_contains($xml, 'sitemap-articles') && !str_contains($xml, 'sitemap-status'), 'Social deactivation changes the sitemap directory immediately');
     foreach (['/', '/blog', '/articles/' . $article, '/login'] as $path) { [$status] = $request($path); $assert($status === 200, 'Platform route without Social: ' . $path); }
-    foreach (['/admin', '/admin/modules', '/admin/articles', '/admin/cron', '/admin/users'] as $path) { [$status] = $request($path, true); $assert($status === 200, 'Administration without Social: ' . $path); }
+    foreach (['/admin', '/admin/modules', '/admin/articles', '/admin/cron', '/admin/cron/list', '/admin/users'] as $path) { [$status] = $request($path, true); $assert($status === 200, 'Administration without Social: ' . $path); }
     [$status] = $request('/api/articles/' . $article . '/discussion'); $assert($status === 200, 'Article discussion remains available without Social');
     foreach (['/social', '/api/statuses/' . $post, '/api/statuses/' . $post . '/comments'] as $path) { [$status] = $request($path); $assert($status === 404, 'Disabled Social exposes no route: ' . $path); }
     Resources::configure(Loader::load($workspace)->catalog);

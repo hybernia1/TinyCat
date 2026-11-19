@@ -8,8 +8,8 @@
     "stylesheets": 1
   },
   "/admin/site-health": {
-    "raw_js": 226304,
-    "gzip_js": 51200,
+    "raw_js": 227328,
+    "gzip_js": 51456,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
@@ -40,7 +40,7 @@
     "stylesheets": 1
   },
   "/admin/updates": {
-    "raw_js": 204800,
+    "raw_js": 205056,
     "gzip_js": 48128,
     "raw_css": 47104,
     "gzip_css": 10240,
@@ -64,7 +64,7 @@
     "stylesheets": 1
   },
   "/admin/cron": {
-    "raw_js": 243712,
+    "raw_js": 244736,
     "gzip_js": 54272,
     "raw_css": 47104,
     "gzip_css": 10240,

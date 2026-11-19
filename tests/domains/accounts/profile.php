@@ -9,7 +9,7 @@ use TinyCat\Database\Connection;
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(locale: static fn (): string => 'en'));
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($root, [
 ])->catalog);
@@ -86,9 +86,5 @@ foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Settings\\Store
     $assert(!class_exists($class, false), 'Domain profile writes did not load ' . $class);
 }
 $assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table'"), 'name') === ['users'], 'Profile management needs only account storage');
-TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $member, $admin) : void {
-$assert(TinyCat\Social\Profiles\Profiles::user_can_edit_profile($member, $admin) === Profile::canEdit($member, $admin), 'Legacy profile permission delegates to Accounts');
-$assert(TinyCat\Social\Profiles\Profiles::theme_normalize('DARK') === Profile::theme('DARK') && TinyCat\Social\Profiles\Profiles::user_theme(['theme' => 'unknown']) === 'system', 'Legacy theme helpers retain canonical normalization');
-});
 
 echo "PASS standalone account profile, permissions, field selection and credential races ({$checks} checks)\n";

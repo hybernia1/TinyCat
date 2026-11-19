@@ -74,7 +74,7 @@ final class Syndication
 
         $siteName = \TinyCat\Core\Ui\Site::site_name();
         $selfUrl = \TinyCat\Core\Ui\Site::absolute_url($rssSelfLink);
-        $locale = \TinyCat\Social\Presentation\Discovery::locale();
+        $locale = \TinyCat\Support\Localization::defaultLocale();
         $items = [];
         // Load all preview candidates once; exporting a feed must not fetch remote metadata.
         Links::status_links_cache(array_column($rssItems, 'id'));
@@ -91,8 +91,7 @@ final class Syndication
             $imageBytes = max(0, (int) ($item['image_bytes'] ?? 0));
             $rssBody = \TinyCat\Core\Feeds\Rss::html($body);
             if ($imageUrl !== '') {
-                $rssBody .= '<p><img src="' . \TinyCat\Support\Html::e(\TinyCat\Core\Ui\Site::absolute_url($imageUrl))
-                    . '" alt="' . \TinyCat\Support\Html::e($imageAlt) . '"></p>';
+                $rssBody .= \TinyCat\Support\Components::render('status/rss-image', ['url' => \TinyCat\Core\Ui\Site::absolute_url($imageUrl), 'alt' => $imageAlt]);
             }
             $categories = array_map(static fn (string $tag): array => ['name' => $tag, 'url' => Tags::tag_url($tag)], Tags::status_tags_from_text($body));
             $creator = (string) ($item['author_name'] ?? '');

@@ -6,6 +6,15 @@ namespace TinyCat\Http;
 /** Public machine-readable representations, independent of visitor sessions. */
 final class Document
 {
+    /** Protocol errors for machine-readable documents; application APIs use Response. */
+    public static function jsonError(int $status, string $message): void
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Cache-Control: no-store');
+        if (Request::current()->method() !== 'HEAD') { echo json_encode(['error' => $message], JSON_THROW_ON_ERROR); }
+    }
+
     public static function respond(string $body, string $type, int $maxAge, bool $immutable = false): void
     {
         header_remove('Expires');

@@ -72,14 +72,14 @@
     const more = T.components.render('ui/load-more', { attributes: { class: 'load-more' }, button_attributes: { class: 'btn btn-secondary', type: 'button', 'data-following-more': '', 'data-following-url': '/api/following' }, label: 'More', loading_label: 'Loading' }); modal.append(more); document.body.append(modal);
     const button = more.querySelector('button'), state = more.querySelector('.load-more-state');
     let finish; T.api.request = () => new Promise(resolve => { finish = resolve; });
-    const pending = T.users.following.loadMore(button);
+    const pending = T.socialUsers.following.loadMore(button);
     check(button.disabled && more.classList.contains('is-loading') && more.getAttribute('aria-busy') === 'true' && !state.hidden, 'Following pagination uses the shared loading frame and live status');
     finish({ data: { items: [], done: true }, meta: { pagination: { page: 1, per_page: 25, total: 0 } } }); await pending;
     check(!more.isConnected, 'Exhausted following pagination removes its entire frame');
     modal.remove(); sidebar.remove(); row.remove(); form.remove();
     const draft = document.createElement('form'); draft.style.cssText = 'position:fixed;top:100px;left:12px;right:12px';
     draft.append(T.components.render('publishing/editor', {name:'body',value:'',placeholder:'Text',comment:false,suggest_url:'/api/search/suggestions'})); document.body.append(draft);
-    const E = T.status.controllers.editor, pendingSuggestions = [];
+    const E = T.publishing.controllers.editor, pendingSuggestions = [];
     T.api.request = (url, options) => new Promise(resolve => pendingSuggestions.push({url,options,resolve}));
     E.hydrate(draft);
     const editorRoot = draft.querySelector('[data-status-editor]'), editorInput = E.getInput(editorRoot), suggestions = E.getBox(editorRoot);
@@ -104,6 +104,95 @@
     }
     typeDraft('Ahoj,@jana'); check(E.activeToken(editorRoot).query === 'jana', 'Autocomplete recognizes the same punctuation boundary as the server');
     E.hideSuggestions(editorRoot); draft.remove();
+    const installation = document.createElement('main');
+    installation.className = 'container-sm stack stack-gap-24';
+    installation.innerHTML = window.installationFixture;
+    document.body.append(installation);
+    for (const theme of ['light', 'dark']) {
+      document.documentElement.dataset.theme = theme;
+      const steps = installation.querySelector('ol');
+      check(steps.children.length === 5 && steps.querySelectorAll('[aria-current="step"]').length === 1, 'Installation exposes five steps and one current step: '+theme);
+      check(steps.children[2].getAttribute('aria-current') === 'step' && steps.children[0].querySelector('svg'), 'Installation distinguishes current and completed steps: '+theme);
+      const choices = installation.querySelectorAll('label.check-card');
+      check(choices.length >= 2 && installation.querySelector('input[value="cs"]').checked, 'Installation retains its selected native language: '+theme);
+      choices[1].click();
+      check(choices[1].querySelector('input').checked && installation.querySelectorAll('input[name="locale"]:checked').length === 1, 'Clicking the shared card selects exactly one language: '+theme);
+      choices[1].querySelector('input').focus();
+      check(choices[1].matches(':focus-within'), 'Native language focus stays inside its shared card: '+theme);
+      for (const node of installation.querySelectorAll('.result-item, .check-card, .btn')) {
+        const bounds = node.getBoundingClientRect();
+        check(bounds.width > 0 && bounds.left >= 0 && bounds.right <= innerWidth + 1, 'Installation control fits the viewport: '+theme);
+      }
+      installation.querySelector('input[value="cs"]').click();
+    }
+    installation.remove();
+    const avatarImage = '/avatar-fixture.svg';
+    for (const state of ['empty', 'uploaded', 'generated']) {
+      const user = { id: 2, username: 'Avatar fixture', avatar_url: state === 'empty' ? null : avatarImage, avatar_custom: state !== 'generated' };
+      const dialog = T.accounts.modal(new URL('/api/users/2/avatar', location.href), { data: { user, appearance_options: window.avatarFixtureOptions } }, 'avatar-layout-'+state);
+      dialog.dataset.open = 'true'; document.body.append(dialog);
+      for (const theme of ['light', 'dark']) {
+        document.documentElement.dataset.theme = theme;
+        const preview = dialog.querySelector('.avatar-upload-preview'), bounds = preview.getBoundingClientRect();
+        check(bounds.width === 96 && bounds.height === 96, 'Avatar preview retains shared XL dimensions: '+state+' '+theme);
+        const image = preview.querySelector('img'), fallback = preview.querySelector('.avatar-fallback');
+        check((getComputedStyle(image).display === 'none') === (state === 'empty') && (getComputedStyle(fallback).display === 'none') === (state !== 'empty'), 'Shared avatar styles show exactly one preview state: '+state+' '+theme);
+        const icon = fallback.querySelector('svg').getBoundingClientRect();
+        if (state === 'empty') { check(Math.abs(icon.left+icon.width/2-bounds.left-bounds.width/2) < 1 && Math.abs(icon.top+icon.height/2-bounds.top-bounds.height/2) < 1, 'Shared avatar fallback stays centered: '+theme); }
+        for (const node of dialog.querySelectorAll('.avatar-editor-preview, .avatar-upload-drop, .modal-footer .btn')) {
+          const rect = node.getBoundingClientRect();
+          check(rect.width > 0 && rect.left >= 0 && rect.right <= innerWidth+1, 'Avatar controls fit the viewport: '+state+' '+theme);
+        }
+      }
+      dialog.remove();
+    }
+    for (const [assembly, assets] of Object.entries(window.notificationAssemblySources)) {
+      check(!assets.some(asset => asset.path.startsWith('App/Modules/Social/')), 'Notification assembly excludes Social: ' + assembly);
+      const frame = document.createElement('iframe'); frame.src = '/notification-frame';
+      await new Promise(resolve => { frame.onload = resolve; document.body.append(frame); });
+      const w = frame.contentWindow, d = frame.contentDocument;
+      w.eval(assets.filter(asset => asset.path !== 'assets/bootstrap.js').map(asset => asset.source).join('\n'));
+      const N = w.TinyCat;
+      N.components.register(window.notificationTemplates); N.i18n.register('en', window.notificationLabels);
+      const list = d.createElement('div'); list.id = 'notifications-list';
+      const item = id => ({id, type:'generic', message:'Notice '+id, icon:'bell', actor:{}, excerpt:'', url:'/notifications/'+id, unread:true, created_at:'2026-01-01T12:00:00+00:00'});
+      list.append(N.notifications.items(Array.from({length:40}, (_, i) => item(i + 1)), false)); d.body.append(list);
+      const more = N.components.render('ui/load-more', {attributes:{class:'load-more','data-notification-more':''}, button_attributes:{type:'button',class:'btn','data-ajax':'','data-url':'/api/notifications?cursor_id=1','data-method':'GET','data-ajax-target':'#notifications-list'},label:'More',loading_label:'Loading'});
+      d.body.append(more); N.lifecycle.start();
+      const button = more.querySelector('[data-ajax]'); let finish, options, calls = 0;
+      N.api.request = (_url, settings) => { calls++; options = settings; return new Promise(resolve => {finish = resolve;}); };
+      button.click(); await tick();
+      check(calls === 1 && button.getAttribute('aria-busy') === 'true' && options.signal, 'Core AJAX owns pagination request and loading: '+assembly);
+      finish({data:{items:[item(40),item(41)],unread_count:41,latest_id:41},meta:{pagination:{next_url:'/api/notifications?cursor_id=41'}}}); await tick();
+      check(list.querySelectorAll('[data-notification-id]').length === 41 && button.dataset.url.endsWith('cursor_id=41'), 'Notifications deduplicate a second page and retain cursor without Social: '+assembly);
+      button.click(); await tick();
+      finish({data:{items:[item(42)],unread_count:42,latest_id:42},meta:{pagination:{next_url:'',done:true}}}); await tick();
+      check(list.querySelectorAll('[data-notification-id]').length === 42 && !more.isConnected, 'Final notification page removes the whole loading control: '+assembly);
+      const pendingMore = N.components.render('ui/load-more', {attributes:{'data-notification-more':''},button_attributes:{type:'button','data-ajax':'','data-url':'/api/notifications','data-method':'GET','data-ajax-target':'#notifications-list'},label:'More'});
+      d.body.append(pendingMore); pendingMore.querySelector('button').click(); await tick();
+      N.content.remove(list);
+      check(options.signal.aborted, 'Removing the inbox cancels the pending cursor request: '+assembly);
+      finish({data:{items:[item(43)]},meta:{pagination:{done:true}}}); await tick();
+      check(list.querySelectorAll('[data-notification-id]').length === 42, 'Late notification response cannot update a disposed inbox: '+assembly);
+      frame.remove();
+    }
+    const socialFeed = document.createElement('div'); socialFeed.className = 'container profile-main';
+    const feed = document.createElement('div'); feed.className = 'status-feed'; socialFeed.append(feed); document.body.append(socialFeed);
+    check(Math.abs(feed.getBoundingClientRect().width-socialFeed.getBoundingClientRect().width) < 1, 'Social owns its full-width profile feed layout');
+    socialFeed.remove();
+    const informationHost = document.createElement('div');
+    informationHost.className = 'container stack stack-gap-16';
+    const privacySection = T.components.render('site/privacy-section', {siteName:'TinyCat',privacyLimitRows:[{label:'Trusted account',post:'60 / hour',comment:'200 / hour',like:'1000 / hour',report:'30 / hour',search:'3000 / hour'}]});
+    const information = T.components.render('ui/privacy-page', {siteName:'TinyCat',siteCaptchaEnabled:false,siteGoogleAnalyticsConfigured:false,sections:privacySection});
+    informationHost.append(information); document.body.append(informationHost);
+    check(information.getBoundingClientRect().width <= informationHost.getBoundingClientRect().width + 1, 'Privacy content and action limits remain within the page container');
+    const limits = information.querySelector('.table-wrap');
+    if (limits.scrollWidth > limits.clientWidth) {
+      limits.scrollLeft = 40;
+      check(limits.scrollLeft > 0, 'Wide action limits scroll inside their table instead of expanding the page');
+    }
+    informationHost.remove();
+    delete document.documentElement.dataset.theme;
     document.getElementById('results').textContent = JSON.stringify({ ok: true, checks });
   } catch (error) { document.getElementById('results').textContent = JSON.stringify({ ok: false, error: String(error.stack || error), checks }); }
 }());

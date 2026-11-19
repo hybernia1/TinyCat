@@ -13,6 +13,9 @@ if (!defined('TINYCAT')) {
 
 final class Response
 {
+    /** @var array<string, true> */
+    private static array $validatedKeys = [];
+
     /** CLI uses the same resource envelope and explicit process exit codes. */
     public static function cli(mixed $data, string $code = 'ok', int $status = 200, int $exitCode = 0): never
     {
@@ -98,6 +101,7 @@ final class Response
      */
     public static function issue(string $code, string $message, array $params = []): array
     {
+        self::assertCode($code);
         return ['code' => $code, 'params' => $params, 'message' => $message];
     }
 
@@ -107,12 +111,15 @@ final class Response
     private static function issues(array $errors): array
     {
         foreach ($errors as $field => &$issues) {
-            $issues = array_map(static function (mixed $issue) use ($field): array {
+            if (!is_array($issues) && !is_string($issues)) { throw new \LogicException('Validation fields must contain issue lists.'); }
+            $issues = array_values(array_map(static function (mixed $issue) use ($field): array {
                 if (is_array($issue) && isset($issue['code'], $issue['message'])) {
-                    return ['code' => (string) $issue['code'], 'params' => (array) ($issue['params'] ?? []) + ['field' => (string) $field], 'message' => (string) $issue['message']];
+                    if (!is_string($issue['code']) || !is_string($issue['message']) || (isset($issue['params']) && !is_array($issue['params']))) { throw new \LogicException('Validation issues must contain a code, message and parameter map.'); }
+                    return self::issue($issue['code'], $issue['message'], array_replace($issue['params'] ?? [], ['field' => (string) $field]));
                 }
+                if (!is_string($issue)) { throw new \LogicException('Invalid validation issue.'); }
                 return ['code' => 'invalid_value', 'params' => ['field' => (string) $field], 'message' => (string) $issue];
-            }, (array) $issues);
+            }, (array) $issues));
         }
         unset($issues);
         return $errors;
@@ -157,7 +164,7 @@ final class Response
         string $code = 'ok',
         array $params = []
     ): array {
-        if (!preg_match('/^[a-z][a-z0-9_]*$/D', $code)) { throw new \LogicException('API outcome codes must be stable identifiers.'); }
+        self::assertCode($code);
         $payload = [
             'ok' => $ok,
             'status' => $status,
@@ -179,6 +186,11 @@ final class Response
         return $payload;
     }
 
+    private static function assertCode(string $code): void
+    {
+        if (preg_match('/^[a-z][a-z0-9_]*$/D', $code) !== 1) { throw new \LogicException('API outcome codes must be stable identifiers.'); }
+    }
+
     private static function assertData(mixed $data): void
     {
         if (is_object($data) || is_resource($data)) {
@@ -188,13 +200,17 @@ final class Response
             return;
         }
         foreach ($data as $key => $value) {
-            if (is_string($key) && preg_match('/(?:^|_)html(?:$|_)/i', $key) === 1) {
-                throw new \LogicException('HTML presentation fields are not allowed in module API resources.');
+            if (is_string($key) && !isset(self::$validatedKeys[$key])) {
+                if (preg_match('/(?:^|_)html(?:$|_)/i', $key) === 1) {
+                    throw new \LogicException('HTML presentation fields are not allowed in module API resources.');
+                }
+                if (preg_match('/(?:^|_)(?:label|formatted)$|^(?:ui|components|translations|role_options|status_options|username_hint)$/i', $key) === 1) {
+                    throw new \LogicException('UI presentation fields are not allowed in module API resources: ' . $key);
+                }
+                if (count(self::$validatedKeys) < 256) { self::$validatedKeys[$key] = true; }
             }
-            if (is_string($key) && preg_match('/(?:^|_)(?:label|formatted)$|^(?:ui|components|translations|role_options|status_options|username_hint)$/i', $key) === 1) {
-                throw new \LogicException('UI presentation fields are not allowed in module API resources: ' . $key);
-            }
-            self::assertData($value);
+            if (is_array($value)) { self::assertData($value); }
+            elseif (is_object($value) || is_resource($value)) { throw new \LogicException('API resources must contain JSON data values.'); }
         }
     }
 }

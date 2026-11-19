@@ -122,7 +122,7 @@ function fingerprint() {
     if (fixedCritical) { critical = fs.readFileSync(path.resolve(fixedCritical), "utf8"); }
     else {
       const extracted = path.join(directory, "critical-extracted.css"); fs.writeFileSync(extracted, critical);
-      critical = execFileSync(process.env.TINYCAT_TEST_PHP || "php", ["-r", "define('TINYCAT',true);require $argv[1];echo TinyCat\\Support\\Minifier::minifyCss(file_get_contents($argv[2]));", path.join(root, "App/autoload.php"), extracted], { encoding: "utf8" });
+      critical = execFileSync(process.env.TINYCAT_TEST_PHP || "php", ["-r", "define('TINYCAT',true);require $argv[1];echo TinyCat\\Support\\Minifier::minifyCss(file_get_contents($argv[2]));", path.join(root, "App/Core/Runtime/autoload.php"), extracted], { encoding: "utf8" });
     }
     fs.writeFileSync(path.join(directory, "critical.css"), critical); report.critical = { raw: Buffer.byteLength(critical), gzip: gzip(critical).length, sha256: hash(critical), selected_rules: fixedCritical ? null : selected.size, top_level_rules: rules, fixed_source: fixedCritical || null };
     console.log("EXTRACTED", JSON.stringify(report.critical));

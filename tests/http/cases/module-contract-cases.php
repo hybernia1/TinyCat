@@ -11,6 +11,22 @@ foreach (['GET', 'POST'] as $retiredSettingsMethod) {
 $settingsHostPage = file_get_contents('http://' . $address . '/admin', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $assert(is_string($settingsHostPage) && str_contains($settingsHostPage, 'data-modal-open="modal-settings-editor"') && str_contains($settingsHostPage, 'data-modal-url="/api/settings/editor"') && !str_contains($settingsHostPage, 'data-settings-editor') && !str_contains($settingsHostPage, 'href="/admin/settings"'), 'Admin navigation opens the shared settings modal without a standalone page.');
 $assert(!str_contains($settingsHostPage, 'name="settings[') && !str_contains($settingsHostPage, 'id="modal-settings-editor"') && !str_contains($settingsHostPage, 'href="/admin/moderation/blocking"'), 'Settings fields and editor DOM are absent from the initial page and blocked websites have no separate navigation page.');
+preg_match('/data-settings-presentation="([^"]+)"/', $settingsHostPage, $settingsPresentationMatch);
+$settingsPresentation = json_decode(html_entity_decode($settingsPresentationMatch[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true, 512, JSON_THROW_ON_ERROR);
+$assert(isset($settingsPresentation['sections']['content_images'], $settingsPresentation['fields']['moderation.blocked_urls']), 'The admin document derives Social presentation from the registered PHP settings owners.');
+$checkSettingsPresentation = static function (array $fieldPresentation) use (&$checkSettingsPresentation, $assert): void {
+    $assert(array_diff(array_keys($fieldPresentation), ['label', 'help', 'placeholder', 'span', 'fields']) === [], 'Settings presentation contains no values, defaults, credentials or callbacks.');
+    $assert(is_string($fieldPresentation['label'] ?? null), 'Every nested field has an owner-provided presentation label.');
+    foreach ($fieldPresentation['fields'] ?? [] as $child) { $checkSettingsPresentation($child); }
+};
+foreach ($settingsPresentation['fields'] as $fieldPresentation) { $checkSettingsPresentation($fieldPresentation); }
+$assert(isset($settingsPresentation['fields']['email.smtp']['fields']['host'], $settingsPresentation['fields']['email.smtp']['fields']['password']), 'Mail contributes nested SMTP presentation without JavaScript field declarations.');
+$moderationPage = file_get_contents('http://' . $address . '/admin/moderation/reports?status=open&reason=spam', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$moderationDocument = new DOMDocument();
+@$moderationDocument->loadHTML((string) $moderationPage);
+$moderationList = (new DOMXPath($moderationDocument))->query('//*[@data-admin-list="social.moderation-reports"]')->item(0);
+$moderationState = json_decode($moderationList?->getAttribute('data-admin-state') ?? '{}', true, 512, JSON_THROW_ON_ERROR);
+$assert(($moderationState['filters']['status'] ?? null) === 'open' && ($moderationState['filters']['reason'] ?? null) === 'spam' && array_keys($moderationState) === ['filters', 'pagination'], 'Initial moderation HTML preserves canonical filter state without duplicating report rows or creating a detail dialog.');
 file_get_contents('http://' . $address . '/admin/moderation/blocking', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $blockingHeaders = http_get_last_response_headers() ?? [];
 $assert(preg_match('/\s404\s/', (string) ($blockingHeaders[0] ?? '')) === 1, 'The standalone URL blocking page is retired.');
@@ -41,6 +57,12 @@ $pure($payload);
 $assert($status === 200 && count($schema['data']['sections']) >= 2 && !str_contains(json_encode($schema), 'fixture-secret'), 'Deferred settings editor is authorized, complete and never exposes saved passwords.');
 $pure($schema);
 $fields = array_merge(...array_column($schema['data']['sections'], 'fields'));
+$smtpField = array_values(array_filter($fields, static fn (array $field): bool => $field['key'] === 'email.smtp'))[0];
+$assert($smtpField['value']['password'] === '' && count($smtpField['fields']) === 7, 'The SMTP group supplies its complete child schema and blank password.');
+foreach ($smtpField['fields'] as $child) {
+    $assert(array_intersect(['label', 'help', 'placeholder', 'span', 'default', 'normalize'], array_keys($child)) === [], 'Nested editor API fields exclude presentation, defaults and callbacks.');
+    if ($child['key'] === 'password') { $assert($child['value'] === '', 'Nested SMTP password values are write-only.'); }
+}
 $assert(in_array('moderation.blocked_urls', array_column($fields, 'key'), true), 'Remote settings include URL blocking.');
 [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Modular fixture', 'auth.registration.enabled' => false]], 'admin', $csrf);
 $assert($status === 200 && $payload['data']['saved'] && array_keys($payload['data']['images']) === ['site.logo_url', 'site.favicon_url'], 'Settings PATCH returns confirmation and saved public image paths for repeated AJAX saves.');
@@ -71,6 +93,18 @@ $assert($status === 422 && $payload['code'] === 'blocked_url' && $payload['param
 $assert($payload['error']['details']['host'] === 'example.org', 'Blocked URL responses retain their existing error details.');
 [$status, $payload] = $request('POST', '/api/statuses', ['body' => '#' . str_repeat('a', 33)], 'admin', $csrf);
 $assert($status === 422 && $payload['code'] === 'status_tag_too_long' && $payload['params'] === ['max' => '32'], 'Post creation maps shared tag rejection to the existing HTTP contract.');
+// Social uses the shared validator before coercion or persistence.
+$originalBody = $seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn();
+$originalComments = (int) $seed->query('SELECT COUNT(*) FROM social_comments WHERE content_id = 10')->fetchColumn();
+foreach ([['not text'], null, true, 42, str_repeat("\u{1F642}", 2001)] as $invalidText) {
+    foreach ([['POST', '/api/statuses', 'body'], ['PATCH', '/api/statuses/10', 'body'], ['POST', '/api/statuses/10/comments', 'comment'], ['PATCH', '/api/statuses/10/comments/10', 'comment']] as [$method, $endpoint, $field]) {
+        [$status, $invalidResource] = $request($method, $endpoint, [$field => $invalidText], 'admin', $csrf);
+        $assert($status === 422 && isset($invalidResource['error']['details']['errors'][$field]), 'Social rejects malformed or oversized ' . $field . ' through shared field validation: ' . $method);
+    }
+}
+$assert($seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn() === $originalBody && (int) $seed->query('SELECT COUNT(*) FROM social_comments WHERE content_id = 10')->fetchColumn() === $originalComments, 'Rejected social text never overwrites posts or creates comments.');
+[$status, $editorConstraints] = $request('GET', '/api/statuses/10?panel=edit', null, 'admin');
+$assert($status === 200 && $editorConstraints['data']['constraints']['body']['max_length'] === 2000 && $editorConstraints['data']['constraints']['comment']['max_length'] === 2000, 'Social editor metadata derives post and comment limits from server rules.');
 [$status, $payload] = $request('PATCH', '/api/statuses/10', ['body' => 'https://example.org/blocked'], 'admin', $csrf);
 $assert($status === 422 && $payload['code'] === 'blocked_url', 'Post edits use the same shared content validation.');
 $assert($seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn() !== 'https://example.org/blocked', 'Rejected edits do not modify stored posts.');

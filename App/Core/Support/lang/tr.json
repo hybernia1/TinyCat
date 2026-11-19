@@ -208,6 +208,7 @@
     "login_required": "Devam etmek için giriş yapın."
   },
   "modules": {
+    "missing": "Modül dosyaları eksik",
     "title": "Modüller",
     "help": "Mevcut modülleri yönetin. Devre dışı bırakmak verileri korur.",
     "required": "Gerekli",

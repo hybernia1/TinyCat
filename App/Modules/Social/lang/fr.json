@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Taille maximale de l'image (Ko)",
       "content_images_enabled_help": "Les images existantes restent visibles lorsque les téléchargements sont désactivés.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
+    },
+    "sections": {
+      "content_images": "Publier des images"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "Votre rapport a été résolu.",
       "report_dismissed": "Votre rapport a été rejeté."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Messages d'utilisateurs publics.",
+    "purpose_social_post_images": "Images compressées jointes aux publications.",
+    "purpose_social_terms": "Termes pour les balises.",
+    "purpose_social_post_tags": "Relations entre les postes et les termes.",
+    "purpose_social_links": "Métadonnées de lien stockées uniques.",
+    "purpose_social_post_links": "Relations entre les articles et les liens.",
+    "purpose_social_post_likes": "J'aime sur les publications.",
+    "purpose_social_comments": "Commentaires imbriqués sur les publications.",
+    "purpose_social_comment_likes": "J'aime sur les commentaires.",
+    "purpose_user_followers": "Le profil suit entre les utilisateurs.",
+    "purpose_content_reports": "Les utilisateurs signalent pour modération.",
+    "purpose_bot_sources": "Règles de publication RSS et Atom pour les comptes de robots.",
+    "purpose_bot_feed_history": "Hachages d'éléments de fil récents utilisés pour éviter les publications de robots en double.",
+    "purpose_bot_source_runs": "Historique de diagnostic compact des vérifications et des importations de sources de robots."
   }
 }

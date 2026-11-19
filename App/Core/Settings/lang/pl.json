@@ -8,7 +8,6 @@
       "security": "Bezpieczeństwo",
       "site": "Witryna",
       "performance": "Wydajność",
-      "content_images": "Publikuj obrazy",
       "email": "E-mail",
       "analytics": "Analityka"
     },
@@ -53,6 +52,7 @@
     "image_remove": "Usuń obraz"
   },
   "install": {
+    "purpose_migrations": "Historia migracji, kolejność i sumy kontrolne.",
     "language_label": "Polski",
     "title": "Zainstaluj TinyCat CMS",
     "step_language": "Język",
@@ -70,7 +70,7 @@
     "db_charset": "Kodowanie znaków",
     "db_test": "Sprawdź i kontynuuj",
     "tables_title": "Utwórz tabele",
-    "tables_intro": "TinyCat utworzy podstawowe tabele dla kont, treści, powiadomień, moderacji, limitów stawek, odzyskiwania hasła i ustawień.",
+    "tables_intro": "TinyCat utworzy tabele rdzenia i wybranych modułów.",
     "create_tables": "Utwórz tabele",
     "table_name": "Tabela",
     "table_purpose": "Przeznaczenie",
@@ -79,18 +79,7 @@
     "state_missing": "Brak",
     "state_exists": "Istnieje",
     "purpose_users": "Konta administratorów i użytkownicy.",
-    "purpose_content": "Publiczne posty użytkowników.",
-    "purpose_content_images": "Skompresowane obrazy dołączone do postów.",
-    "purpose_terms": "Warunki dotyczące tagów.",
-    "purpose_content_tags": "Relacje pomiędzy wpisami i terminami.",
-    "purpose_links": "Unikalne przechowywane metadane łącza.",
-    "purpose_content_links": "Relacje pomiędzy wpisami i linkami.",
-    "purpose_content_likes": "Polubienia postów.",
-    "purpose_content_comments": "Zagnieżdżone komentarze do postów.",
-    "purpose_comment_likes": "Polubienia komentarzy.",
-    "purpose_user_followers": "następuje pomiędzy użytkownikami.",
-    "purpose_notifications": "Alerty dotyczące polubień, komentarzy, wzmianek i obserwujących.",
-    "purpose_content_reports": "Raporty użytkowników do moderacji.",
+    "purpose_notifications": "Powiadomienia kont z obiektami zarządzanymi przez ich właścicieli.",
     "purpose_ip_action_limits": "Liczniki limitów według konta lub adresu IP dla wybranych działań.",
     "purpose_password_reset_tokens": "Krótkotrwałe tokeny resetowania hasła wysyłane e-mailem.",
     "purpose_settings": "Ustawienia aplikacji opartej na bazie danych.",
@@ -116,9 +105,6 @@
       "password_mismatch": "Hasła nie są zgodne.",
       "config_write_failed": "Nie można zapisać pliku config.php.",
       "db_failed": "Połączenie z bazą danych nie powiodło się: {message}"
-    },
-    "purpose_bot_sources": "RSS i reguły publikowania Atom dla kont botów.",
-    "purpose_bot_feed_history": "Skróty ostatnich elementów kanału używane do zapobiegania duplikowaniu postów botów.",
-    "purpose_bot_source_runs": "Kompaktowa historia diagnostyczna kontroli i importu źródeł botów."
+    }
   }
 }

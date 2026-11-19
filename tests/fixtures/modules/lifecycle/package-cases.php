@@ -5,7 +5,7 @@ declare(strict_types=1);
 if ($packagePhase === 'install') {
     $makeModule('addon', 1, ['tinycat.accounts']);
     $moduleZip = $workspace . '/module-v1/fixture.addon-1.0.0.zip';
-    [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=1.0.0', '--minimum-core=6.0.0-dev.10', '--output=' . $workspace . '/module-v1'], $candidate);
+    [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=1.0.0', '--minimum-core=' . $versions[0], '--output=' . $workspace . '/module-v1'], $candidate);
     $assert($exit === 0 && is_file($moduleZip), 'Author builds a standalone module artifact: ' . $text . $error);
     [$exit, $text, $error] = $console(['module-install', $moduleZip]);
     $assert($exit === 0, 'Existing installation accepts an independent module ZIP: ' . $text . $error);
@@ -36,10 +36,10 @@ if ($packagePhase === 'install') {
     // A clean core-only deployment can later receive exactly the same package.
     $coreHost = $workspace . '/core-only'; mkdir($coreHost, 0700);
     foreach (['App/Core', 'assets'] as $path) { $copy($root . '/' . $path, $coreHost . '/' . $path); }
-    foreach (['App/autoload.php', 'App/Console.php'] as $path) { $copy($root . '/' . $path, $coreHost . '/' . $path); }
+    $copy($root . '/App/Console.php', $coreHost . '/App/Console.php');
     file_put_contents($coreHost . '/App/modules.php', '<?php return [];');
     file_put_contents($coreHost . '/config.php', '<?php return ' . var_export(['database' => ['dsn' => 'sqlite:' . $coreHost . '/core.sqlite'], 'i18n' => ['locale' => 'en']], true) . ';');
-    $prepare = 'define("TINYCAT", true); require "App/autoload.php"; $p=TinyCat\\Core\\Modules\\Distribution::describe(getcwd(), "fixture.core", []); file_put_contents("App/distribution.json", json_encode($p));';
+    $prepare = 'define("TINYCAT", true); require "App/Core/Runtime/autoload.php"; $p=TinyCat\\Core\\Modules\\Distribution::describe(getcwd(), "fixture.core", []); file_put_contents("App/distribution.json", json_encode($p));';
     [$exit, $text, $error] = $run([PHP_BINARY, '-r', $prepare], $coreHost); $assert($exit === 0, 'Create core-only descriptor: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $coreHost . '/App/Console.php', 'install'], $coreHost, $administrator); $assert($exit === 0, 'Core-only CLI install creates its administrator: ' . $text . $error);
     $coreDb = new PDO('sqlite:' . $coreHost . '/core.sqlite');
@@ -54,15 +54,16 @@ if ($packagePhase === 'after-core-update') {
     $assert(file_get_contents($root . '/App/module-packages.json') === $registryBytes && hash_file('sha256', $root . '/App/Modules/Addon/src/Module.php') === $addonHash && $pdo->query('SELECT body FROM lifecycle_addon')->fetchColumn() === 'Retained addon data', 'Core update preserves independent module code, catalog and data');
     $makeModule('addon', 2, ['tinycat.accounts']);
     $moduleV2 = $workspace . '/module-v2/fixture.addon-2.0.0.zip';
-    [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=2.0.0', '--minimum-core=6.0.0-dev.10', '--output=' . $workspace . '/module-v2'], $candidate); $assert($exit === 0, 'Build module upgrade: ' . $text . $error);
+    [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=2.0.0', '--minimum-core=' . $versions[0], '--output=' . $workspace . '/module-v2'], $candidate); $assert($exit === 0, 'Build module upgrade: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/module-update-worker.php', $root, $moduleV2], $root);
     $assert($exit === 0 && (json_decode($text, true)['cached_version'] ?? null) === 1 && (int) $pdo->query('SELECT revision FROM lifecycle_addon')->fetchColumn() === 2, 'Module upgrade uses immutable migration files despite a cached old provider: ' . $text . $error);
     $operation = json_decode(file_get_contents($root . '/storage/updates/operation.json'), true);
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]);
     $assert($exit === 0 && file_get_contents($root . '/App/module-packages.json') === $registryBytes && hash_file('sha256', $root . '/App/Modules/Addon/src/Module.php') === $addonHash, 'Shared rollback restores exact module files and catalog bytes: ' . $text . $error);
     $assert((int) $pdo->query("SELECT version FROM module_installations WHERE module_id='fixture.addon'")->fetchColumn() === 1 && $pdo->query('SELECT body FROM lifecycle_addon')->fetchColumn() === 'Retained addon data', 'Module rollback restores DB schema, history and retained data');
+    require $fixture . '/archive-cases.php';
     $makeModule('addon', 4, ['tinycat.accounts']);
-    [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=4.0.0', '--minimum-core=6.0.0-dev.10', '--output=' . $workspace . '/module-v4'], $candidate); $assert($exit === 0, 'Build a module with a reproducible failing migration: ' . $text . $error);
+    [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=4.0.0', '--minimum-core=' . $versions[0], '--output=' . $workspace . '/module-v4'], $candidate); $assert($exit === 0, 'Build a module with a reproducible failing migration: ' . $text . $error);
     [$exit] = $console(['module-install', $workspace . '/module-v4/fixture.addon-4.0.0.zip']);
     $assert($exit !== 0 && is_file($root . '/storage/maintenance.json'), 'A failed module migration retains the common maintenance and recovery journal');
     $operation = json_decode(file_get_contents($root . '/storage/updates/operation.json'), true);

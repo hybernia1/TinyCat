@@ -213,7 +213,16 @@ try {
     [$status] = $request('GET', '/api/foundation/private', null, 'user');
     $assert($status === 403, 'Module API enforces administrator access.');
     [$status, $payload] = $request('POST', '/api/foundation/validation', [], '', $csrf);
-    $assert($status === 422 && isset($payload['error']['details']['errors']['name']) && !array_key_exists('errors', $payload), 'Module API has one validation-error representation without legacy aliases.');
+    $assert($status === 422 && isset($payload['error']['details']['errors']['name']) && array_is_list($payload['error']['details']['errors']['name']) && !array_key_exists('errors', $payload), 'Module API has one validation-error representation with canonical issue lists and without legacy aliases.');
+    foreach ([['status' => ['published'], 'count' => 1], ['status' => 'published', 'count' => true], ['status' => 'published', 'count' => 1.5]] as $invalidInput) {
+        [$status, $payload] = $request('POST', '/api/foundation/validated-input', $invalidInput, '', $csrf);
+        $field = is_array($invalidInput['status']) ? 'status' : 'count';
+        $assert($status === 422 && $payload['code'] === 'validation_error' && isset($payload['error']['details']['errors'][$field]), 'Malformed field types stay inside the common 422 envelope without PHP warnings.');
+    }
+    [$status, $payload] = $request('POST', '/api/foundation/validated-input', ['status' => 'published', 'count' => '0'], '', $csrf);
+    $assert($status === 201 && $payload['data']['count'] === '0', 'Valid form-style numbers remain unchanged in validated resources.');
+    [$status, $payload] = $request('POST', '/api/foundation/invalid-validation-definition', [], '', $csrf);
+    $assert($status === 500 && $payload['code'] === 'server_error' && $payload['message'] === 'Server error.', 'A broken module validation definition is a server contract violation, including for an absent optional field.');
     [$status, $payload] = $request('POST', '/api/bots/sources', ['_method' => []], 'admin', $csrf);
     $assert($status === 400, 'Malformed method overrides must not produce PHP diagnostics.');
     [$status, $payload] = $request('POST', '/api/bots/sources', ['_csrf' => []], 'admin');
@@ -269,12 +278,23 @@ try {
     [$status, $activatedBot] = $request('PUT', '/api/bots/accounts/' . $editableBotId . '/activation', ['enabled' => true], 'admin', $csrf);
     $assert($status === 200 && $activatedBot['data']['item']['bio'] === 'Still inactive', 'Activation preserves the bot biography.');
     $assert($activatedBot['code'] === 'record_activated' && $activatedBot['params']['entity'] === '@' . $activatedBot['data']['item']['username'] && str_contains($activatedBot['message'], $activatedBot['params']['entity']), 'Bot activation names the concrete account through the shared entity parameter.');
+    foreach (['/api/users/2/activation', '/api/bots/accounts/' . $editableBotId . '/activation'] as $activationEndpoint) {
+        foreach ([['true', 'active'], ['on', 'active'], ['yes', 'active'], ['false', 'ban'], ['off', 'ban'], ['no', 'ban'], [true, 'active']] as [$enabled, $expectedState]) {
+            [$status, $activation] = $request('PUT', $activationEndpoint, ['enabled' => $enabled], 'admin', $csrf);
+            $assert($status === 200 && $activation['data']['item']['status'] === $expectedState, 'Account activation honors every accepted boolean spelling for ' . $activationEndpoint);
+        }
+    }
 
     [$status, $sourceDefaults] = $request('GET', '/api/bots/sources/management?bot=3', null, 'admin');
     $assert($status === 200 && $sourceDefaults['data']['item']['bot_user_id'] === 3 && $sourceDefaults['data']['item']['enabled'] && $sourceDefaults['data']['item']['post_template'] !== '', 'Source creation loads defaults for the same sectioned editor as existing sources.');
     [$status] = $request('GET', '/api/bots/sources/management', null, 'user');
     $assert($status === 403, 'Source creation options remain administrator-only.');
     $source = ['bot_user_id' => 3, 'name' => 'Contract feed', 'feed_url' => 'https://93.184.216.34/feed', 'interval_minutes' => 60, 'post_template' => '{{title}}', 'enabled' => '1'];
+    $assert($sourceDefaults['data']['constraints']['name']['max_bytes'] === 120 && $sourceDefaults['data']['constraints']['post_template']['max_bytes'] === 2000, 'Social source editors publish their actual byte limits.');
+    foreach (['name' => str_repeat("\u{11B}", 61), 'post_template' => str_repeat("\u{11B}", 1001)] as $field => $value) {
+        [$status, $overflow] = $request('POST', '/api/bots/sources', array_replace($source, [$field => $value]), 'admin', $csrf);
+        $assert($status === 422 && $overflow['error']['details']['errors'][$field][0]['code'] === 'validation_max_bytes', 'Direct Social source input cannot bypass the byte limits advertised to the editor.');
+    }
     [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);
     $assert($status === 201 && $payload['data']['item']['name'] === 'Contract feed', 'Bot source creation must return the same 201 contract.');
     $sourceId = $payload['data']['id'];

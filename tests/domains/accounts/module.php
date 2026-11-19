@@ -31,7 +31,7 @@ if (($argv[1] ?? '') !== '--isolated') {
 
 define('TINYCAT', true);
 $workspace = $argv[2];
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 foreach (['Users', 'Status', 'Bots'] as $domain) { $assert(!is_dir($workspace . '/App/Modules/' . $domain) && !is_dir($workspace . '/App/Modules/' . $domain . '/assets'), 'Excluded physical domain: ' . $domain); }
@@ -51,7 +51,7 @@ $assert($tables === ['ip_action_limits', 'password_reset_tokens', 'users'], 'Fre
 $pdo = new PDO('sqlite:' . $workspace . '/accounts.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('PRAGMA foreign_keys = ON');
 TinyCat\Database\Connection::set($pdo);
-TinyCat\Database\ModuleSchemas::install($pdo, TinyCat\Core\Modules\Distribution::definitions($modules, false));
+TinyCat\Database\ModuleSchemas::install($pdo, TinyCat\Core\Modules\Distribution::definitions($modules));
 $insert = $pdo->prepare('INSERT INTO users(username, email, password, role, locale) VALUES (?, ?, ?, ?, ?)');
 foreach ([['Admin', 'admin@example.test', 'admin'], ['Member', 'member@example.test', 'user']] as [$name, $email, $role]) { $insert->execute([$name, $email, password_hash('Secret-123456', PASSWORD_DEFAULT), $role, 'en']); }
 $insert = null;
@@ -81,19 +81,20 @@ try {
         [0 => ['pipe', 'r'], 1 => ['file', $workspace . '/server.log', 'a'], 2 => ['file', $workspace . '/server.log', 'a']], $pipes, $workspace, array_merge(getenv(), ['TINYCAT_ACCOUNTS_WORKSPACE' => $workspace]));
     if (!is_resource($server)) { throw new RuntimeException('Cannot start Accounts HTTP fixture.'); }
     fclose($pipes[0]); $cookies = []; $csrf = '';
-    $request = static function (string $path, string $method = 'GET', ?array $payload = null, string $actor = '', bool $withCsrf = true) use ($address, &$cookies, &$csrf): array {
-        $handle = curl_init('http://' . $address . $path); $headers = [];
+    $request = static function (string $path, string $method = 'GET', ?array $payload = null, string $actor = '', bool $withCsrf = true, array $extraHeaders = []) use ($address, &$cookies, &$csrf): array {
+        $handle = curl_init('http://' . $address . $path); $headers = $extraHeaders; $responseHeaders = [];
         if ($actor !== '') { $headers[] = 'Authorization: Bearer ' . $actor; }
         if ($withCsrf && $csrf !== '') { $headers[] = 'X-CSRF-Token: ' . $csrf; }
         if ($cookies !== []) { $headers[] = 'Cookie: ' . implode('; ', $cookies); }
         if ($payload !== null) { $headers[] = 'Content-Type: application/json'; curl_setopt($handle, CURLOPT_POSTFIELDS, json_encode($payload)); }
         curl_setopt_array($handle, [CURLOPT_CUSTOMREQUEST => $method, CURLOPT_HTTPHEADER => $headers, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20,
-            CURLOPT_HEADERFUNCTION => static function ($handle, string $header) use (&$cookies): int {
+            CURLOPT_HEADERFUNCTION => static function ($handle, string $header) use (&$cookies, &$responseHeaders): int {
                 if (preg_match('/^Set-Cookie:\s*([^=]+=[^;]*)/i', $header, $match)) { $cookies[explode('=', $match[1], 2)[0]] = $match[1]; }
+                if (str_contains($header, ':')) { [$key, $value] = explode(':', $header, 2); $responseHeaders[strtolower($key)] = trim($value); }
                 return strlen($header);
             }]);
         $body = curl_exec($handle); $status = (int) curl_getinfo($handle, CURLINFO_HTTP_CODE); curl_close($handle);
-        return [$status, is_string($body) ? (json_decode($body, true) ?? []) : [], (string) $body];
+        return [$status, is_string($body) ? (json_decode($body, true) ?? []) : [], (string) $body, $responseHeaders];
     };
     for ($attempt = 0; $attempt < 50; $attempt++) { [$status, $data] = $request('/api/_accounts'); if ($status === 200) { break; } usleep(100_000); }
     $assert($status === 200, 'Selected Accounts module starts over HTTP'); $csrf = $data['data']['csrf'];
@@ -122,6 +123,28 @@ try {
     [$status] = $request('/api/users/sessions', 'POST', ['username' => 'Member', 'password' => 'wrong']); $assert($status === 422, 'Login rejects invalid credentials');
     [$status, $data] = $request('/api/users/sessions', 'POST', ['username' => 'Member', 'password' => 'Changed-123456']);
     $assert($status === 200 && $data['data']['user']['id'] === 2 && $data['data']['redirect'] === '/', 'Login uses account identity and generic landing');
+    [$status, , $body, $headers] = $request('/');
+    $assert($status === 200 && !isset($headers['location']) && str_contains($body, 'name="username"'), 'Core-only homepage renders login directly for guests');
+    [$status, , $body, $headers] = $request('/', actor: 'member');
+    $assert($status === 200 && !isset($headers['location']) && str_contains($body, 'My account') && str_contains($body, '/api/users/2/management?panel=account') && !str_contains($body, 'name="password"'), 'Authenticated core-only homepage renders account actions without a redirect or eager editor');
+    [$status, , , $headers] = $request('/', actor: 'admin');
+    $assert($status === 302 && $headers['location'] === '/admin', 'Login homepage sends administrators to their normal landing');
+    [$status, , , $headers] = $request('/?next=%2F', actor: 'admin', extraHeaders: ['Referer: http://' . $address . '/']);
+    $assert($status === 302 && $headers['location'] === '/admin', 'A return to the login homepage resolves to the administrator landing instead of another authentication page');
+    foreach (['/', '/login', '/register', '/admin', 'https://example.test/'] as $landing) {
+        [$status, , , $headers] = $request('/login?next=%2F', actor: 'member', extraHeaders: ['X-Test-Landing: ' . $landing]);
+        $assert($status === 302 && $headers['location'] === '/', 'Login normalizes root, authentication and external landing targets: ' . $landing);
+        [$status, , $body, $headers] = $request('/', actor: 'member', extraHeaders: ['X-Test-Landing: ' . $landing]);
+        $assert($status === 200 && !isset($headers['location']) && str_contains($body, 'My account'), 'Redirect chain terminates at the authenticated homepage: ' . $landing);
+    }
+    [$status, , , $headers] = $request('/', actor: 'member', extraHeaders: ['X-Test-Landing: /crm']);
+    $assert($status === 302 && $headers['location'] === '/crm', 'A module-provided CRM landing remains supported');
+    [$status, , , $headers] = $request('/?next=%2Frecovery', actor: 'member');
+    $assert($status === 302 && $headers['location'] === '/recovery', 'Homepage login preserves a valid explicit next destination');
+    foreach (['/login', '/register', '/admin'] as $next) {
+        [$status, , $body, $headers] = $request('/?next=' . rawurlencode($next), actor: 'member');
+        $assert($status === 200 && !isset($headers['location']) && str_contains($body, 'My account'), 'Authentication and unauthorized next destinations cannot create a homepage loop: ' . $next);
+    }
     // Use the same physical copy (without Social) to exercise shared inbox/health services.
     \TinyCat\Core\Notifications\Schema::install($pdo);
     $foreignTables = array_column($pdo->query('PRAGMA foreign_key_list(notifications)')->fetchAll(PDO::FETCH_ASSOC), 'table');

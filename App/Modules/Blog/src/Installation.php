@@ -36,11 +36,11 @@ final class Installation
         $tables = $query->fetchAll(\PDO::FETCH_COLUMN);
         if ($tables !== []) { throw new \RuntimeException('Blog fresh installation requires an empty database.'); }
         if ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') { $pdo->exec('PRAGMA foreign_keys = ON'); }
-        ModuleSchemas::install($pdo, Distribution::definitions(self::modules(), false));
+        ModuleSchemas::install($pdo, Distribution::definitions(self::modules()));
     }
 
     /** Existing Blog-owned migrations only. Product conversion and package updates belong to lifecycle. */
-    public static function upgrade(\PDO $pdo): void { ModuleSchemas::synchronize($pdo, Distribution::definitions(self::modules(), false)); }
+    public static function upgrade(\PDO $pdo): void { ModuleSchemas::synchronize($pdo, Distribution::definitions(self::modules())); }
 
     public static function respond(): void
     {

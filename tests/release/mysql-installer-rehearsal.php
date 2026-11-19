@@ -8,13 +8,13 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 $workspaceRoot = dirname(__DIR__, 2);
 $options = getopt('', ['root::']);
 $requestedRoot = trim((string) ($options['root'] ?? $workspaceRoot));
+$migrationRoot = is_dir($requestedRoot . '/migrations') ? $requestedRoot : $workspaceRoot;
 $root = realpath($requestedRoot);
 // Fresh-install artifacts omit historical migrations; keep those checks as harness fixtures.
-$migrationRoot = is_dir($requestedRoot . '/migrations') ? $requestedRoot : $workspaceRoot;
 $configPath = $workspaceRoot . '/config.php';
 
 if (!is_string($root)
-    || !is_file($root . '/App/bootstrap.php')
+    || !is_file($root . '/App/Core/Runtime/autoload.php')
     || !is_file($root . '/App/Core/Installation/Installer.php')
 ) {
     fwrite(STDERR, "MySQL installer rehearsal root is invalid.\n");
@@ -92,7 +92,7 @@ try {
         $options
     );
     define('TINYCAT', true);
-    require_once $root . '/App/bootstrap.php';
+    require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     \TinyCat\Core\Installation\Installer::create_tables();
@@ -190,7 +190,7 @@ try {
 
     $mixedName = '2Pac.Žaneta';
     $mixedUserId = (int) \TinyCat\Database\Connection::insert('users', [
-        'username' => \TinyCat\Social\Profiles\Usernames::username_normalize($mixedName),
+        'username' => \TinyCat\Core\Identity\Usernames::normalize($mixedName),
         'password' => \TinyCat\Core\Identity\Authentication::authPassword($password),
         'role' => 'user',
         'status' => 'active',
@@ -198,7 +198,7 @@ try {
         'bio' => '',
     ]);
     $assert((string) \TinyCat\Database\Connection::value('SELECT username FROM users WHERE id = ?', [$mixedUserId]) === $mixedName, 'MySQL preserves the requested username case and diacritics.');
-    $assert(\TinyCat\Social\Profiles\Usernames::user_username_taken('2PAC.ŽANETA'), 'MySQL rejects case variants as duplicate usernames.');
+    $assert(\TinyCat\Core\Identity\Usernames::taken('2PAC.ŽANETA'), 'MySQL rejects case variants as duplicate usernames.');
     $assert(\TinyCat\Core\Identity\Login::auth_attempt(['username' => '2pac.žaneta', 'password' => $password]), 'Case-insensitive login works with a digit prefix and Unicode letters.');
     $assert((string) \TinyCat\Core\Identity\Authentication::auth('username') === $mixedName, 'Login preserves the account display spelling.');
     $assert(\TinyCat\Core\Identity\Login::auth_attempt(['username' => 'INSTALLER_STAGE1', 'password' => $password]), 'Existing lowercase accounts still accept differently cased login input.');
@@ -232,7 +232,7 @@ try {
     $assert($searchIndex() === ['status', 'username', 'id'], 'User-search migration is repeatable on existing installations.');
 
     $botId = (int) \TinyCat\Database\Connection::insert('users', [
-        'username' => 'adopted_feedbot',
+        'username' => 'preserved_feedbot',
         'role' => 'bot',
         'status' => 'active',
         'locale' => 'en',
@@ -251,20 +251,13 @@ try {
     \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => $botId, 'feed_hash' => $feedHash, 'item_hash' => $historyHash]);
     \TinyCat\Database\Connection::insert('bot_source_runs', ['source_id' => $sourceId, 'status' => 'imported', 'started_at' => \TinyCat\Support\Dates::dateDb(), 'items_seen' => 1]);
 
-    // Simulate an older installed Bots package with per-source duplicate history.
-    \TinyCat\Database\Connection::exec('CREATE TABLE bot_feed_items (source_id BIGINT UNSIGNED NOT NULL, item_hash CHAR(64) NOT NULL, PRIMARY KEY (source_id, item_hash)) ENGINE=InnoDB');
-    $legacyHash = hash('sha256', 'legacy-item');
-    \TinyCat\Database\Connection::insert('bot_feed_items', ['source_id' => $sourceId, 'item_hash' => $legacyHash]);
-    \TinyCat\Database\Connection::exec('ALTER TABLE bot_sources ADD COLUMN updated_at DATETIME NULL');
-    $adoptBots = require $migrationRoot . '/migrations/20261025_001_core_bots.php';
-    $adoptBots(\TinyCat\Database\Connection::get());
-    $adoptBots(\TinyCat\Database\Connection::get());
-    $assert(\TinyCat\Social\Automation\Administration::accountById($botId)['username'] === 'adopted_feedbot', 'Core adoption preserves the bot account and ID.');
-    $assert(\TinyCat\Social\Automation\Importer::findSource($sourceId)['feed_hash'] === $feedHash, 'Core adoption preserves source identity and scheduling.');
-    $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_source_runs WHERE source_id = ?', [$sourceId]) === 1, 'Core adoption preserves run history.');
-    $knownHashes = (new ReflectionMethod(\TinyCat\Social\Automation\FeedStore::class, 'feedHistoryHashes'))->invoke(null, $botId, $feedHash, [$historyHash, $legacyHash]);
-    $assert(isset($knownHashes[$historyHash], $knownHashes[$legacyHash]), 'Repeated core adoption retains current and legacy duplicate protection.');
-    $assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'bot_feed_items'") === 0, 'Core adoption finishes legacy history consolidation.');
+    // Re-running the current installer must preserve live owner data.
+    \TinyCat\Core\Installation\Installer::create_tables();
+    $assert(\TinyCat\Social\Automation\Administration::accountById($botId)['username'] === 'preserved_feedbot', 'Current schema synchronization preserves the bot account and ID.');
+    $assert(\TinyCat\Social\Automation\Importer::findSource($sourceId)['feed_hash'] === $feedHash, 'Current schema synchronization preserves source identity and scheduling.');
+    $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_source_runs WHERE source_id = ?', [$sourceId]) === 1, 'Current schema synchronization preserves run history.');
+    $knownHashes = (new ReflectionMethod(\TinyCat\Social\Automation\FeedStore::class, 'feedHistoryHashes'))->invoke(null, $botId, $feedHash, [$historyHash]);
+    $assert(isset($knownHashes[$historyHash]), 'Current schema synchronization preserves duplicate protection.');
     $feedTask = \TinyCat\Social\Automation\Importer::scheduledTasks()['feeds']['runner'];
     $feedResult = $feedTask(['options' => ['bot_limit' => 20]]);
     $assert($feedResult['ok'] && $feedResult['count'] === 0, 'Built-in scheduler respects a future source schedule.');
@@ -272,7 +265,8 @@ try {
     $_SERVER['REQUEST_METHOD'] = 'GET';
     $_SERVER['HTTP_HOST'] = 'localhost';
     \TinyCat\Core\Identity\Authentication::authLogin($firstAdmin);
-    foreach (['accounts-page.php', 'sources-page.php', 'detail.php'] as $botPage) {
+    // Detail URLs redirect and are covered by the HTTP contract scenarios.
+    foreach (['accounts-page.php', 'sources-page.php'] as $botPage) {
         $_GET = ['id' => $botId];
         $_SERVER['REQUEST_URI'] = '/admin/bots/' . $botId;
         ob_start();
@@ -280,26 +274,15 @@ try {
             match ($botPage) {
                 'accounts-page.php' => \TinyCat\Social\Automation\Pages::accounts(),
                 'sources-page.php' => \TinyCat\Social\Automation\Pages::sources(),
-                default => \TinyCat\Social\Automation\Pages::detail($botId),
             };
             $botHtml = (string) ob_get_contents();
         } finally {
             ob_end_clean();
         }
-        $assert(str_contains($botHtml, 'adopted_feedbot'), 'Built-in bot admin renders adopted data: ' . $botPage);
+        $assert(str_contains($botHtml, 'preserved_feedbot'), 'Built-in bot admin renders current data: ' . $botPage);
         $assert(!str_contains($botHtml, '/admin/extensions'), 'Built-in bot navigation omits the extension store: ' . $botPage);
     }
 
-    \TinyCat\Core\Settings\Store::setSetting('extensions.states', ['bots' => true], 'json', 'extensions');
-    \TinyCat\Core\Settings\Store::setSetting('extensions.installed_versions', ['bots' => '1.4.3'], 'json', 'extensions');
-    \TinyCat\Database\Connection::insert('schema_migrations', ['migration' => 'extension:bots:fixture', 'version' => '1.4.3', 'checksum' => str_repeat('a', 64), 'applied_at' => \TinyCat\Support\Dates::dateDb()]);
-    $removeExtensionMetadata = require $migrationRoot . '/migrations/20261025_002_remove_extension_metadata.php';
-    $removeExtensionMetadata(\TinyCat\Database\Connection::get());
-    $removeExtensionMetadata(\TinyCat\Database\Connection::get());
-    $assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM settings WHERE setting_key LIKE 'extensions.%'") === 0, 'Retired extension configuration is removed idempotently.');
-    $assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM schema_migrations WHERE migration LIKE 'extension:%'") === 0, 'Retired extension migration metadata is removed.');
-    $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_feed_history WHERE bot_user_id = ?', [$botId]) === 2, 'Metadata cleanup preserves built-in bot import history.');
-    $assert((string) \TinyCat\Database\Connection::value("SELECT setting_value FROM settings WHERE setting_key = 'i18n.locale'") === 'cs', 'Metadata cleanup preserves application settings.');
     $assert(is_string($configHash) && hash_file('sha256', $configPath) === $configHash, 'Schema rehearsal does not replace application configuration.');
 
     // Run the real importer against the current fresh schema, including interrupted resume.

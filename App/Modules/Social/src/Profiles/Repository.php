@@ -16,7 +16,7 @@ final class Repository
             return null;
         }
 
-        return \TinyCat\Database\Queries::db_select(
+        return \TinyCat\Database\Query::select(
             'SELECT id,
                     username,
                     username AS name,
@@ -46,7 +46,7 @@ final class Repository
      */
     public static function author_activity_stats(int $authorId): array
     {
-        return Integration::activity($authorId);
+        return \TinyCat\Social\Posts\AuthorStatistics::author_activity_stats($authorId);
     }
 
     /**
@@ -76,7 +76,7 @@ final class Repository
                 : '';
             $rankedRoles = \TinyCat\Social\Profiles\Roles::rolesWith('appears_in_people_rankings');
             $rolePlaceholders = implode(', ', array_fill(0, count($rankedRoles), '?'));
-            $authors = \TinyCat\Database\Queries::db_select(
+            $authors = \TinyCat\Database\Query::select(
                 'SELECT u.id,
                         u.username,
                         u.username AS name,

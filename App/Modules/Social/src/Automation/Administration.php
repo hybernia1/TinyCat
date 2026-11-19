@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Automation;
 
-
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -11,6 +10,34 @@ if (!defined('TINYCAT')) {
 
 final class Administration
 {
+    public const int SOURCE_NAME_MAX_BYTES = 120;
+    public const int SOURCE_URL_MAX_BYTES = 2048;
+    public const int SOURCE_TEMPLATE_MAX_BYTES = 2000;
+    public const int SOURCE_INTERVAL_MIN = 5;
+    public const int SOURCE_INTERVAL_MAX = 43200;
+    public const int SOURCE_FETCH_DEFAULT = 60;
+    public const int SOURCE_PUBLICATION_DEFAULT = 30;
+
+    /** @return array<string, string> */
+    public static function sourceRules(): array
+    {
+        return ['bot_user_id' => 'required|integer|min:1', 'name' => 'required|string|max_bytes:' . self::SOURCE_NAME_MAX_BYTES, 'feed_url' => 'required|string|max_bytes:' . self::SOURCE_URL_MAX_BYTES,
+            'interval_minutes' => 'required|integer|between:' . self::SOURCE_INTERVAL_MIN . ',' . self::SOURCE_INTERVAL_MAX, 'publication_interval_minutes' => 'required|integer|between:' . self::SOURCE_INTERVAL_MIN . ',' . self::SOURCE_INTERVAL_MAX,
+            'post_template' => 'required|string|max_bytes:' . self::SOURCE_TEMPLATE_MAX_BYTES, 'enabled' => 'boolean'];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    public static function sourceConstraints(): array { return \TinyCat\Http\Validator::constraints(self::sourceRules()); }
+
+    /** @param array<mixed> $input
+     * @param array<mixed> $existing
+     * @return array<mixed> */
+    public static function prepareSourceInput(array $input, array $existing = []): array
+    {
+        foreach (['name', 'feed_url', 'post_template'] as $field) { if (is_string($input[$field] ?? null)) { $input[$field] = trim($input[$field]); } }
+        return $input + ['interval_minutes' => self::SOURCE_FETCH_DEFAULT, 'publication_interval_minutes' => $existing !== [] ? Importer::publicationInterval($existing) : self::SOURCE_PUBLICATION_DEFAULT];
+    }
+
     public static function sourceFilter(mixed $value): string
     {
         if ($value === 'unknown') { return 'unknown'; }
@@ -297,7 +324,7 @@ final class Administration
             'has_filters' => $filters['q'] !== '' || $filters['status'] !== '',
             'per_page' => (int) $pagination['per_page'],
             'clear_api_url' => self::accountsApiUrl(['per_page' => (int) $pagination['per_page'], 'page' => 1], false),
-            'clear_history_url' => \TinyCat\Support\AdminViews::admin_list_url('/admin/bots/accounts', ['per_page' => (int) $pagination['per_page'], 'page' => 1]),
+            'clear_history_url' => \TinyCat\Support\AdminViews::admin_list_url(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation'), ['per_page' => (int) $pagination['per_page'], 'page' => 1]),
         ];
     }
 
@@ -322,7 +349,7 @@ final class Administration
             }
         }
 
-        return \TinyCat\Support\AdminViews::admin_list_url('/api/bots/accounts', $query);
+        return \TinyCat\Support\AdminViews::admin_list_url(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'endpoint'), $query);
     }
 
     /**
@@ -361,7 +388,7 @@ final class Administration
         return [
             'q' => $query,
             'status' => array_key_exists($status, \TinyCat\Support\AdminViews::admin_user_statuses()) ? $status : '',
-        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Automation\Sorting::LISTS['accounts']);
+        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Automation\Sorting::accounts());
     }
 
     /**
@@ -399,7 +426,7 @@ final class Administration
             \TinyCat\Support\AdminViews::admin_page(),
             \TinyCat\Support\AdminViews::admin_per_page()
         );
-        $items = $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Automation\Sorting::LISTS['accounts'], $filters))
+        $items = $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Automation\Sorting::accounts(), $filters))
             ->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
 
         return [
@@ -416,40 +443,29 @@ final class Administration
     public static function sourcePayload(?int $sourceId = null): array
     {
         $request = \TinyCat\Http\Request::current();
-        $request->validated(['bot_user_id' => 'required|integer', 'name' => 'required|string', 'feed_url' => 'required|string', 'interval_minutes' => 'integer', 'publication_interval_minutes' => 'integer', 'post_template' => 'required|string', 'enabled' => 'boolean']);
-        $botUserId = max(0, (int) $request->input('bot_user_id', 0));
+        $existing = $sourceId !== null ? Importer::findSource($sourceId) : [];
+        $input = self::prepareSourceInput($request->payload(), $existing ?? []);
+        \TinyCat\Http\Validator::validated(self::sourceRules(), $input);
+        $botUserId = max(0, (int) ($input['bot_user_id'] ?? 0));
         $bot = $botUserId > 0
             ? \TinyCat\Database\Connection::one('SELECT id, status FROM users WHERE id = ? AND role = ? LIMIT 1', [$botUserId, 'bot'])
             : null;
-        $name = trim((string) $request->input('name', ''));
-        $feedUrl = trim((string) $request->input('feed_url', ''));
-        $interval = (int) $request->input('interval_minutes', 60);
-        $existing = $sourceId !== null ? Importer::findSource($sourceId) : [];
-        $publicationInterval = (int) $request->input('publication_interval_minutes', Importer::publicationInterval($existing ?? []));
-        $template = trim((string) $request->input('post_template', ''));
+        $name = (string) $input['name'];
+        $feedUrl = (string) $input['feed_url'];
+        $interval = (int) $input['interval_minutes'];
+        $publicationInterval = (int) $input['publication_interval_minutes'];
+        $template = (string) $input['post_template'];
         $errors = [];
 
         if ($bot === null) {
             $errors['bot_user_id'][] = \TinyCat\Http\Response::issue('bot_bot', \TinyCat\Support\Localization::t('bots.validation.bot'));
         }
-        if ($name === '' || strlen($name) > 120) {
-            $errors['name'][] = \TinyCat\Http\Response::issue('bot_name', \TinyCat\Support\Localization::t('bots.validation.name'));
-        }
 
         $feedHash = \TinyCat\Social\Automation\Importer::feedSourceHash($feedUrl);
-        if (!\TinyCat\Core\Links\Metadata::isSafeRemoteUrl($feedUrl) || strlen($feedUrl) > 2048 || $feedHash === '') {
+        if (!\TinyCat\Core\Links\Metadata::isSafeRemoteUrl($feedUrl) || $feedHash === '') {
             $errors['feed_url'][] = \TinyCat\Http\Response::issue('bot_feed_url', \TinyCat\Support\Localization::t('bots.validation.feed_url'));
         } elseif (\TinyCat\Social\Automation\Importer::sourceDuplicateExists($feedUrl, max(0, (int) $sourceId))) {
             $errors['feed_url'][] = \TinyCat\Http\Response::issue('bot_feed_duplicate', \TinyCat\Support\Localization::t('bots.validation.feed_duplicate'));
-        }
-        if ($interval < 5 || $interval > 43200) {
-            $errors['interval_minutes'][] = \TinyCat\Http\Response::issue('bot_interval', \TinyCat\Support\Localization::t('bots.validation.interval'));
-        }
-        if ($publicationInterval < 5 || $publicationInterval > 43200) {
-            $errors['publication_interval_minutes'][] = \TinyCat\Http\Response::issue('bot_interval', \TinyCat\Support\Localization::t('bots.validation.interval'));
-        }
-        if ($template === '' || strlen($template) > 2000) {
-            $errors['post_template'][] = \TinyCat\Http\Response::issue('bot_template', \TinyCat\Support\Localization::t('bots.validation.template'));
         }
         if ($errors !== []) {
             \TinyCat\Http\Response::validation($errors);
@@ -549,12 +565,13 @@ final class Administration
             $query->where("(bs.name LIKE ? ESCAPE '!' OR bs.feed_url LIKE ? ESCAPE '!' OR u.username LIKE ? ESCAPE '!')", $search, $search, $search);
         }
         $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
-        $filters = ['q' => $q, 'bot' => $filterBotId > 0 ? (string) $filterBotId : '', 'per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Automation\Sorting::LISTS['sources']);
+        $definition = \TinyCat\Core\Ui\Admin\Definitions::get('social.bot-sources');
+        $filters = ['q' => $q, 'bot' => $filterBotId > 0 ? (string) $filterBotId : '', 'per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Automation\Sorting::sources());
         return [
             'bots' => self::bots(), 'filter_bot_id' => $filterBotId, 'filters' => $filters, 'pagination' => $pagination,
-            'sources' => $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Automation\Sorting::LISTS['sources']))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all(),
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::LISTS['sources'], $filters),
-            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, '/api/bots/sources', '#bots-list', $filters, historyPath: '/admin/bots/list'),
+            'sources' => $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Automation\Sorting::sources()))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all(),
+            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::sources(), $filters),
+            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $filters, historyPath: $definition['path']),
         ];
     }
 
@@ -572,21 +589,11 @@ final class Administration
         }
 
         return [
-            'source' => $source,
+            'source' => self::prepareSourceInput($source),
+            'constraints' => self::sourceConstraints(),
             'bots' => self::bots(),
             'create' => $create,
             'action' => self::apiUrl($create ? null : (int) $source['id']),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public static function sourceFilterData(): array
-    {
-        return [
-            'bots' => self::bots(),
-            'filter_bot_id' => self::filterId(),
         ];
     }
 

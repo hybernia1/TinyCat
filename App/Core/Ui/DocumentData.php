@@ -4,6 +4,26 @@ namespace TinyCat\Core\Ui;
 
 final class DocumentData
 {
+    /** @param array<mixed> $data */
+    public static function publicHeader(array $data): string
+    {
+        $authenticated = ($data['authUser'] ?? null) !== null;
+        $data['authenticated'] = $authenticated;
+        $data['urls'] = [
+            'home' => $data['pageUrls']['/'] ?? '/',
+            'search' => $data['pageUrls']['/search/all'] ?? '/search/all',
+            'login' => $data['pageUrls']['/login'] ?? '/login',
+        ];
+        $data['userMenu'] = new \TinyCat\Support\Markup((string) ($data['userMenu'] ?? ''));
+        $data['notificationMenu'] = new \TinyCat\Support\Markup($authenticated
+            ? \TinyCat\Core\Notifications\Views::menu([
+                'current' => $data['current'] ?? '',
+                'state' => $data['notificationState'] ?? [],
+                'notifications' => $data['notificationItems'] ?? [],
+            ]) : '');
+        return \TinyCat\Support\Components::render('ui/public-header', $data);
+    }
+
     /** @param array<mixed> $data
      * @return array<mixed>
      */
@@ -45,7 +65,8 @@ final class DocumentData
 
         $authUser = \TinyCat\Core\Identity\Authentication::auth();
         $hasGlobalSearch = \TinyCat\Core\Discovery\Search::sources() !== [];
-        $isAdminShell = $authUser !== null && (bool) ($adminShell ?? str_starts_with($current, '/admin'));
+        $isAdminShell = empty($public) && \TinyCat\Core\Identity\Roles::isAdmin($authUser)
+            && (bool) ($adminShell ?? ($current === '/admin' || str_starts_with($current, '/admin/')));
         $nav = $isAdminShell ? (array) ($nav ?? \TinyCat\Core\Ui\Admin\Navigation::administration()) : (array) ($frontendNav ?? \TinyCat\Core\Runtime\EntryPages::navigation());
         $nav = \TinyCat\Core\Ui\Admin\Navigation::prepare($nav, $current, $isAdminShell);
         $titleIcon = $isAdminShell ? (string) ($title_icon ?? \TinyCat\Core\Ui\Admin\Navigation::activeIcon($nav)) : '';
@@ -87,7 +108,6 @@ final class DocumentData
         $meta['author'] = $document['author'];
         $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
         $theme = \TinyCat\Core\Identity\Profile::theme((string) ($authUser['theme'] ?? 'system'));
-        $themeAttribute = $theme !== 'system' ? ' data-theme="' . \TinyCat\Support\Html::e($theme) . '"' : '';
         $googleMeasurementId = trim((string) \TinyCat\Core\Settings\Store::config('analytics.google_measurement_id', ''));
         $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? '');
         $analyticsConfigured = \TinyCat\Core\Ui\Site::site_google_analytics_configured();
@@ -99,11 +119,8 @@ final class DocumentData
         $adminIdentity = $adminIdentity !== '' ? '@' . $adminIdentity : $appName;
         $profileUrl = $authUser !== null ? (\TinyCat\Core\Identity\Integration::profileUrl((int) $authUser['id']) ?? '') : '';
         $profileNeedsEmail = $authUser !== null && trim((string) ($authUser['email'] ?? '')) === '';
-        $userMenu = $authUser !== null ? \TinyCat\Support\View::part('Identity/user-menu', [
+        $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([
             'authUser' => $authUser, 'profileUrl' => $profileUrl, 'profileNeedsEmail' => $profileNeedsEmail, 'theme' => $theme,
-            'displayName' => trim((string) ($authUser['username'] ?? '')),
-            'editModalId' => 'account-editor-modal-' . (int) $authUser['id'],
-            'editModalUrl' => '/api/users/' . (int) $authUser['id'] . '/management?panel=account' . ($profileNeedsEmail ? '&focus=email' : ''),
         ]) : '';
         $viewerIsAdmin = \TinyCat\Core\Identity\Roles::isAdmin($authUser);
         $loginModalId = \TinyCat\Core\Identity\Login::auth_modal_id();
@@ -115,6 +132,12 @@ final class DocumentData
             $notificationState = \TinyCat\Core\Notifications\Inbox::state($notificationUserId);
             $notificationItems = \TinyCat\Core\Notifications\Inbox::items($notificationUserId, \TinyCat\Core\Notifications\Inbox::PREVIEW_LIMIT);
         }
-        return compact('hasGlobalSearch', 'titleIcon', 'userMenu', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'interfaceRoutes', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
+        $publicHeader = self::publicHeader(compact('pageUrls', 'appName', 'authUser', 'current', 'loginModalId', 'loginModalUrl', 'nav', 'notificationItems', 'notificationState', 'searchQuery', 'siteLogoUrl', 'viewerIsAdmin', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageLinks', 'languageSuggestion', 'userMenu', 'hasGlobalSearch'));
+        $consent = \TinyCat\Support\Components::render('ui/consent', [
+            'show' => $analyticsConfigured && !in_array($analyticsConsent, ['granted', 'denied'], true),
+            'googleMeasurementId' => $googleMeasurementId, 'privacyUrl' => $pageUrls['/privacy'],
+            'captchaEnabled' => $cookieConsentTextKey === 'privacy.cookie_consent_text_captcha',
+        ]);
+        return compact('publicHeader', 'consent', 'hasGlobalSearch', 'titleIcon', 'userMenu', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'interfaceRoutes', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'title', 'viewerIsAdmin');
     }
 }

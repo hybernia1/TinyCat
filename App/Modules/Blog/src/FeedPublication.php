@@ -4,17 +4,16 @@ namespace TinyCat\Blog;
 
 use TinyCat\Core\Feeds\{FeedEntry, FeedTarget, WordPressFeed};
 use TinyCat\Core\Text\LinkParser;
-use TinyCat\Support\Text;
 
 final class FeedPublication implements FeedTarget
 {
     public function prepare(array $source, array $item): FeedEntry
     {
-        $title = trim(Text::strip_html_tags_preserving_text((string) ($item['title'] ?? '')));
-        $body = trim(Text::strip_html_tags_preserving_text((string) ($item['content'] ?? $item['description'] ?? '')));
+        $prepared = Articles::prepareInput(['title' => (string) ($item['title'] ?? ''), 'body' => (string) ($item['content'] ?? $item['description'] ?? '')]);
+        $title = (string) $prepared['title']; $body = (string) $prepared['body'];
         $url = trim((string) ($item['url'] ?? '')); if ($url !== '' && !str_contains($body, $url)) { $body .= ($body !== '' ? "\n\n" : '') . $url; }
         $rejection = null;
-        try { Articles::validateText($title, $body); } catch (\InvalidArgumentException) { $rejection = ['code' => 'article_invalid', 'params' => []]; }
+        try { Articles::validateText($title, $body); } catch (\InvalidArgumentException) { $rejection = ['code' => 'article_invalid', 'params' => Articles::messageParams()]; }
         $links = Links::status_links_from_text($body); $origin = LinkParser::fromRaw($url);
         if ($origin !== null) { $links = [$origin, ...array_filter($links, static fn (array $link): bool => $link['url_hash'] !== $origin['url_hash'])]; }
         return new FeedEntry($body, array_slice($links, 0, 3), compact('title', 'body'), $rejection);

@@ -48,8 +48,8 @@ echo "PASS nested call profiling separates inclusive and self time\n";
 
 $root = dirname(__DIR__, 2);
 $temporary = \TinyCat\Tools\Workspace::directory('performance') . '/profiler-empty-' . bin2hex(random_bytes(6));
-mkdir($temporary . '/source/App', 0700, true);
-file_put_contents($temporary . '/source/App/autoload.php', "<?php\n");
+mkdir($temporary . '/source/App/Core/Runtime', 0700, true);
+file_put_contents($temporary . '/source/App/Core/Runtime/autoload.php', "<?php\n");
 copy($root . '/tests/fixtures/performance/profiler-empty.php', $temporary . '/source/App/Fixture.php');
 try {
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/performance/instrument-performance.php')
@@ -65,11 +65,13 @@ try {
     }
 } finally {
     foreach (['instrumented', 'source'] as $directory) {
-        foreach (['Fixture.php', 'autoload.php'] as $file) {
+        foreach (['Fixture.php', 'Core/Runtime/autoload.php'] as $file) {
             $path = $temporary . '/' . $directory . '/App/' . $file;
             if (is_file($path)) { unlink($path); }
         }
-        if (is_dir($temporary . '/' . $directory . '/App')) { rmdir($temporary . '/' . $directory . '/App'); }
+        foreach (['App/Core/Runtime', 'App/Core', 'App'] as $relative) {
+            if (is_dir($temporary . '/' . $directory . '/' . $relative)) { rmdir($temporary . '/' . $directory . '/' . $relative); }
+        }
         if (is_dir($temporary . '/' . $directory)) { rmdir($temporary . '/' . $directory); }
     }
     rmdir($temporary);

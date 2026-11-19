@@ -13,6 +13,11 @@ UI služby, CSS třídy i manifesty a trasy jednotlivých stylů.
 
 ## Jeden zdroj struktury
 
+Zápis katalogů, editorové schéma a hranice mezi handlerem, resource a komponentou
+popisuje [reference komponent](../reference/component-catalog.md). Build odmítá
+neznámé instrukce uzlů, neplatné kombinace a chybné operandy s přesnou cestou
+ke zdroji. Jedna komponenta nevyžaduje jeden soubor.
+
 Opakované odkazy na konkrétní obsah mají přístupný název složený z účelu
 a kontextu cíle. Pro akce používat `ui/action-label` a společný kontext
 příspěvku; ten obsahuje také ID, aby odlišil shodné autory a úryvky.
@@ -63,6 +68,24 @@ nebo `use`. U shodné struktury použít existující komponentu nebo wrapper,
 který ji skládá s vlastními vstupy. Rekurzivní struktury jako strom komentářů
 jsou přípustné; jejich ukončení závisí na vstupních datech.
 
+## Registrovaná prezentační metadata
+
+Pojmenovaný `ComponentLookup` v `Contributions.componentLookups` dodává lazy
+mapu z identifikátorů na prezentační pole. Definice komponenty použije
+`catalog` a `field` spolu s `lookup` nebo `options`; společný loader tyto
+odkazy rozvine do běžných `cases` před PHP vykreslením i doručením klientovi.
+Překladové uzly z katalogu tím vstupují také do klientských překladových závislostí.
+Katalog vzniká jen z aktuálně vybraných registrací. Neznámé historické ID
+používá deklarovaný `default`.
+
+Plánovač odvozuje ikonu, název a plán ze `ScheduledTask.admin`; volitelný
+`cadence` je krátký popis plánu a `optionLabels` vlastní překladové klíče
+parametrů. V core komponentách nesmí být seznam konkrétních modulových úloh
+ani jejich parametrů. Přidání nebo odebrání modulu mění registrace, nikoli
+šablonu plánovače. Sestavení metadat nesmí spouštět SQL, runner, normalizaci,
+health callback ani hydrataci detailu úlohy. Doménové API nadále vrací pouze
+kanonická data bez ikon, komponent a překladových identifikátorů.
+
 ## Vlastnictví CSS
 
 | Vlastník | Obsah |
@@ -73,7 +96,6 @@ jsou přípustné; jejich ukončení závisí na vstupních datech.
 | `assets/modules/site/styles` | Veřejná navigace, sidebar a layout stránky |
 | `assets/modules/search/styles` | Globální vyhledávání a jeho nabídka |
 | `assets/modules/notifications/styles` | Stránka notifikací a notifikační menu |
-| `assets/modules/installation/styles` | Kroky instalace a volby instalačního průvodce |
 
 Zbývající moduly vlastní své dosavadní styly stejným způsobem.
 Každý styl deklaruje manifest ve svém adresáři. Kontrola
@@ -83,6 +105,10 @@ Sdílený `result-list.css` používá instalace, diagnostika i aktualizace;
 proto zůstává v UI. Metadata autora statusu potřebuje veřejný feed i náhled
 v moderaci. Editor účtu a avatar jsou dosažitelné z veřejné části i administrace;
 jejich styly se nesmějí omezit pouze podle adresy veřejného profilu.
+
+Instalační průvodce používá společné `result-list`, `result-item`, `badge`,
+`check-card` a layout utility. Aktuální krok označuje `aria-current="step"`;
+volby jazyků zachovávají nativní radio tlačítka. Instalace nemá vlastní CSS.
 
 Veřejné moduly ponechávají své veřejné styly na celém veřejném povrchu:
 sdílená navigace a dynamicky otevřené dialogy je mohou potřebovat také mimo

@@ -8,6 +8,11 @@ const root = path.resolve(__dirname, "../..");
 let checks = 0;
 function check(condition, message) { checks++; assert.ok(condition, message); }
 class Node {
+  reportValidity() { return true; }
+  matches(selector) {
+    const match = /^(\w+)?(?:\[([\w-]+)(?:="([^"]*)")?\])?$/.exec(selector);
+    return !!match && (!match[1] || this.tag === match[1]) && (!match[2] || this.getAttribute(match[2]) !== null && (match[3] === undefined || this.getAttribute(match[2]) === match[3]));
+  }
   constructor(tag, text = "") {
     this.style = { setProperty() {}, removeProperty() {} };
     this.tag = tag; this.attributes = {}; this.children = []; this.value = ""; this._text = text;
@@ -17,6 +22,8 @@ class Node {
   set className(value) { this.setAttribute("class", value); }
   set id(value) { this.setAttribute("id", value); }
   get id() { return this.getAttribute("id") || ""; }
+  set hidden(value) { if (value) this.setAttribute("hidden", ""); else this.removeAttribute("hidden"); }
+  get hidden() { return this.getAttribute("hidden") !== null; }
   get className() { return this.getAttribute("class") || ""; }
   set value(value) { this._value = String(value); if (this.tag === "select") this.children.forEach(child => { child.selected = child.getAttribute("value") === this._value; }); }
   get value() { if (this.tag === "select") { const option = this.children.find(child => child.selected) || this.children[0]; return option ? option.getAttribute("value") : ""; } return this._value; }
@@ -38,6 +45,7 @@ class Node {
   querySelectorAll(selector) {
     const match = node => {
       if (selector.includes(",")) return selector.split(",").some(tag => node.tag === tag.trim());
+      if (selector.startsWith("#")) return node.id === selector.slice(1);
       const attr = selector.match(/^\[([^=\]]+)(?:="([^"]*)")?\]$/);
       if (attr) return node.getAttribute(attr[1]) !== null && (attr[2] === undefined || node.getAttribute(attr[1]) === attr[2]);
       return selector[0] === "." ? node.className.split(/\s+/).includes(selector.slice(1)) : node.tag === selector;
@@ -54,16 +62,32 @@ class Node {
 const labels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--catalog"], { encoding: "utf8" }));
 const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--templates"], { encoding: "utf8" }));
 const document = { addEventListener() {}, querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
+document.body.dataset.settingsPresentation = require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--settings-presentation"], { encoding: "utf8" }).trim();
+document.body.dataset.adminDefinitions = require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--admin-definitions"], { encoding: "utf8" }).trim();
 document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--dates"], { encoding: "utf8" })) };
 document.documentElement.dataset.interfaceRoutes = require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--locale-routes"], { encoding: "utf8" }).trim();
-const window = { innerHeight: 812, innerWidth: 390, clearTimeout() {}, setTimeout() { return 0; }, setInterval() { return 0; }, TinyCat: {}, history: { state: null }, location: new URL("https://tinycat.test/") };
+const window = { addEventListener() {}, removeEventListener() {}, innerHeight: 812, innerWidth: 390, clearTimeout() {}, setTimeout() { return 0; }, setInterval() { return 0; }, TinyCat: {adminDefinitions: JSON.parse(document.body.dataset.adminDefinitions)}, history: { state: null }, location: new URL("https://tinycat.test/") };
 const context = vm.createContext({ window, document, Node, AbortController, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
 const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
 for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filename: asset.path });
 const T = window.TinyCat;
+const contextFixture = JSON.parse(fs.readFileSync(path.join(root, 'tests/fixtures/component-contexts.json'), 'utf8'));
+const contextPhp = JSON.parse(require('node:child_process').execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root, 'tests/presentation/fixtures/component-parity.php'), '--contexts'], {encoding:'utf8'}));
+T.components.register(contextFixture.definitions);
+contextFixture.cases.forEach((item, index) => {
+  if (item.error) {
+    assert.throws(() => T.components.render(item.component, item.data), error => error.message === item.error); checks++;
+    check(contextPhp[index].error === item.error, 'PHP and JS reject the same invalid object context');
+  } else {
+    const rendered = T.components.render(item.component, item.data);
+    check(rendered.textContent === item.text, 'Forwarded context is explicit, literal and recursion-safe');
+    const escaped = item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    check(contextPhp[index].html.replace(/<[^>]*>/g,'') === escaped, 'PHP preserves the same escaped context text');
+  }
+});
 // Minimal DOM fixture covers filter data; native popover interaction has its own browser suite.
 T.popovers.open = menu => { menu.open = true; };
-const mediaController = T.status.controllers.media;
+const mediaController = T.publishing.controllers.media;
 check(mediaController.allowedStatusVideoUrl("https://www.youtube.com/embed/abc123", "https://www.youtube.com") !== "", "Players use the origin supplied by central provider rules.");
 check(mediaController.allowedStatusVideoUrl("https://evil.example/embed/abc123", "https://www.youtube.com") === "", "A player cannot change the server-approved origin.");
 check(mediaController.allowedStatusVideoUrl("http://www.youtube.com/embed/abc123", "https://www.youtube.com") === "", "Players require HTTPS.");
@@ -259,14 +283,19 @@ const followForm = new Node("form"), followButton = new Node("button"), followAc
 followForm.appendChild(followButton);
 followForm.elements = { namedItem: () => followAction };
 [true, false, true].forEach(following => {
-  T.users.follow(followForm, { following });
+  T.socialUsers.follow(followForm, { following });
   check(followButton.querySelectorAll("svg").length === 1 && followButton.querySelector("use").getAttribute("href").endsWith(following ? "#check" : "#plus"), "Follow toggles retain exactly one icon matching the current state.");
   check(followAction.value === (following ? "unfollow" : "follow") && followButton.querySelector("span").textContent === T.ui.text(following ? "public.unfollow" : "public.follow"), "Follow label and next action stay synchronized.");
 });
 const schedulerModel = { items: [{ name: "cleanup", options: { cleanup_batch: 500 }, latest: null, run_url: "/api/scheduler/tasks/cleanup/runs" }], runs: [{ id: 1, detail_url: "/api/scheduler/runs/1", task: "cleanup", started_at: "2026-10-26T12:00:00Z", status: "failed", mode: "admin", duration_ms: 25, summary: { changed: 0 }, options: { cleanup_batch: 500 }, error: "<img src=x onerror=bad>" }], task_choices: ["feeds", "cleanup"], status_choices: ["failed"], page_choices: { 25: 25 }, filters: { task: "", status: "" }, navigation: { visible: false } };
+const additionalTasks = T.components.render('scheduler/list', Object.assign({}, schedulerModel, { items: [{ name: 'article_feeds', options: { source_limit: 20 }, latest: null, run_url: '/api/scheduler/tasks/article_feeds/runs' }], runs: [Object.assign({}, schedulerModel.runs[0], { task: 'future.task' })] }));
+check(additionalTasks.textContent.includes('article_feeds') && additionalTasks.textContent.includes('future.task'), 'Additional module tasks retain readable identifiers in AJAX cards and history without core presentation mappings.');
 const schedulerRoot = new Node("div"), schedulerSource = new Node("form");
 schedulerSource.setAttribute("action", "/api/scheduler/tasks/cleanup/runs");
+const originalSchedulerQuery = document.querySelector;
+document.querySelector = selector => selector === "#scheduler-list" ? schedulerRoot : originalSchedulerQuery(selector);
 check(T.scheduler.result(schedulerSource, { data: schedulerModel, meta: { pagination: { page: 1, per_page: 50 } } }, schedulerRoot), "Scheduler actions refresh the normalized list through the registered client module.");
+T.modules.hydrate(schedulerRoot);
 check(schedulerRoot.querySelectorAll("button").some(button => button.getAttribute("aria-label") === T.ui.text("cron.run_now") && button.className.includes("btn-icon") && button.querySelector(".sr-only")), "Run-now actions use the standard icon button with an accessible hidden label.");
 check(schedulerRoot.querySelectorAll("select").find(field => field.getAttribute("name") === "per_page").value === "50", "Scheduler controls read pagination from the shared API metadata.");
 check(document.getElementById("scheduler-filter-modal").querySelectorAll("input").find(field => field.getAttribute("name") === "per_page").value === "50", "The filter modal preserves the API's page-size setting.");
@@ -298,13 +327,14 @@ const schedulerPageLink = new Node("a");
 schedulerPageLink.setAttribute("href", "/api/scheduler/tasks?page=2&status=failed");
 check(T.scheduler.result(schedulerPageLink, { data: schedulerModel, meta: { pagination: { page: 2, per_page: 50 } } }, schedulerRoot), "Scheduler pagination links are recognized through their href.");
 check(schedulerRoot.querySelectorAll("use").some(icon => icon.getAttribute("href").endsWith("#play")), "Run-now actions retain the sprite icon after rerendering.");
+document.querySelector = originalSchedulerQuery;
 const sharedPagination = T.components.render("ui/pagination", { target: "#users-list", navigation: { visible: true, from: 1, to: 25, total: 50, previous: null, next: { url: "/api/users?page=2", history_url: "/admin/users?page=2" }, pages: [{ number: 1, current: true, gap_before: false }, { number: 2, current: false, gap_before: false, url: "/api/users?page=2", history_url: "/admin/users?page=2" }] } });
 check(sharedPagination.querySelector(".pagination-list") && sharedPagination.querySelector(".is-active").getAttribute("aria-current") === "page", "Shared pagination groups controls and visibly marks the current page.");
 check(sharedPagination.querySelector(".pagination-prev").getAttribute("aria-disabled") === "true" && sharedPagination.querySelector(".pagination-prev").getAttribute("href") === null, "Pagination cannot navigate before the first page.");
 check(sharedPagination.querySelector(".pagination-next").getAttribute("data-ajax-target") === "#users-list", "Pagination next links retain the standard AJAX target.");
 const unsafe = '<img src=x onerror="window.pwned=true">';
 const user = { id: 2, username: unsafe, url: "/author/2", avatar_url: "", email: "test@example.test", bio: unsafe, locale: "en", theme: "system" };
-let node = T.users.profiles([user]);
+let node = T.socialUsers.profiles([user]);
 check(node.textContent.endsWith(unsafe), "Following profiles preserve literal names without inserting markup.");
 check(node.querySelectorAll("img").length === 0, "Malicious names cannot create images or event handlers.");
 node = T.status.segments([{ type: "text", text: unsafe }, { type: "mention", text: "@2", url: "/author/2" }]);
@@ -319,7 +349,7 @@ check(node.querySelector('[data-status-count="likes"]').textContent === "2", "Re
 check(node.querySelector(".public-content-meta") !== null && node.querySelector(".status-manage").querySelector("a").getAttribute("href") === post.url, "API cards retain the server card's small timestamp and permalink control.");
 check(T.ui.avatar(user).querySelector("use").getAttribute("href").endsWith("#user"), "Missing avatars use the same SVG user icon as server-rendered cards.");
 const modalPost = Object.assign({}, post, { capabilities: { edit: true, delete: true, report: false, interact: true }, image: { url: "/uploads/statuses/fixture.webp", alt: "Fixture" } });
-const detailData = { item: modalPost, viewer: user, comments: [], options: { images_enabled: true } };
+const detailData = { constraints: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--social-constraints"], {encoding:"utf8"})), item: modalPost, viewer: user, comments: [], options: { images_enabled: true } };
 const commentEditDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10?panel=comment-edit&comment_id=20"), { data: { ...detailData, comments: [{ id: 20, editable_body: unsafe, capabilities: { edit: true }, replies: [] }] } }, "comment-edit-fixture");
 check(commentEditDialog.querySelector(".status-modal-form") && commentEditDialog.querySelector("textarea").textContent === unsafe, "Comment editing renders a spaced form with literal editable text.");
 check(commentEditDialog.querySelector("textarea").getAttribute("aria-labelledby") === "comment-edit-fixture-label", "Comment editor has an explicit visible label.");
@@ -334,7 +364,7 @@ const editDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10?
 check(editDialog.querySelector(".status-compose-main") && editDialog.querySelector('[data-status-image-input]') && editDialog.querySelector('[data-status-image-remove-input]').getAttribute("value") === "0", "Status editing preserves the composer layout, image picker and explicit removal state.");
 check(editDialog.querySelector(".modal-footer").querySelector('[type="submit"]').getAttribute("form") === editDialog.querySelector("form").id && !editDialog.querySelector(".modal-body").querySelector('[type="submit"]'), "Post editors keep the image picker in the body and save in the shared footer.");
 check(editDialog.querySelector('[name="body"]').value === post.editable_body, "Opening the status editor preserves the exact editable text.");
-const profileDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?panel=account&focus=email"), { data: { user, options: { languages: { en: "English" }, password_max_length: 72 }, capabilities: { password: true } } }, "profile-layout-fixture");
+const profileDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/management?panel=account&focus=email"), { data: { user, options: { languages: { en: "English" }, password_max_length: 72 }, capabilities: { password: true } } }, "profile-layout-fixture");
 check(profileDialog.querySelector('[data-editor-sections]') && profileDialog.querySelector('[data-editor-section="account"]'), 'The account-menu target uses the shared sectioned editor instead of a separate profile modal.');
 check(profileDialog.querySelector('.modal-tabs').parent === profileDialog.querySelector('.modal-panel') && !profileDialog.querySelector('.modal-header').querySelector('.tabs') && !profileDialog.querySelector('.modal-body').querySelector('.tabs') && profileDialog.querySelector('.modal-body').querySelectorAll('form').length === 3, 'Fixed account tabs do not overlay the body or move its independent forms.');
 check(profileDialog.querySelector('[data-tab-panel="email"]').hidden === false && profileDialog.querySelector('[data-tab-panel="account"]').hidden === true, "Profile focus selects the requested tab without mixing all settings into one form.");
@@ -349,17 +379,17 @@ check(profileDialog.querySelector('[data-tab-select]').value === 'account' && pr
 check(profileDialog.querySelector('[data-tab-panel="email"]').querySelector("form").getAttribute("action") === "/api/users/me/email", "The email panel submits to its own endpoint.");
 check(profileDialog.dataset.modalKind === 'editor' && profileDialog.dataset.modalSize === 'workspace' && profileTabs.querySelectorAll('[data-tab]').length === 4 && profileTabs.querySelectorAll('[role="tab"]').every(tab => tab.querySelector('svg')), 'Frontend profile editing shares the administration frame and icon tabs.');
 check(profileDialog.querySelector('[name="username"]').getAttribute('disabled') !== null && !profileDialog.querySelector('[name="scope"]') && !profileDialog.querySelector('[name="role"]') && !profileDialog.querySelector('[name="status"]'), 'The shared appearance keeps the username immutable and does not expose administration controls.');
-const avatarTabProfile = T.users.modal(new URL('https://tinycat.test/api/users/2/management?focus=avatar'), { data: { user, options: { languages: { en: 'English' } }, capabilities: { password: false } } }, 'profile-avatar-tab-fixture');
+const avatarTabProfile = T.accounts.modal(new URL('https://tinycat.test/api/users/2/management?focus=avatar'), { data: { user, options: { languages: { en: 'English' } }, capabilities: { password: false } } }, 'profile-avatar-tab-fixture');
 check(!avatarTabProfile.querySelector('[data-tab-panel="avatar"]').hidden && avatarTabProfile.querySelector('.modal-footer').hidden && avatarTabProfile.querySelector('[data-modal-url="/api/users/2/avatar"]') && !avatarTabProfile.querySelector('[data-tab="security"]'), 'The avatar tab opens the shared avatar editor, hides unrelated saves and respects security capabilities.');
-const avatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user } }, "avatar-layout-fixture");
+const avatarDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user } }, "avatar-layout-fixture");
 check(avatarDialog.querySelector('[data-avatar-upload-input]') && avatarDialog.querySelector('[data-avatar-upload-preview]'), "The avatar dialog provides the existing upload and preview lifecycle hooks.");
 check(avatarDialog.querySelector('.avatar-upload-preview').className.split(/\s+/).includes('avatar'), "The avatar preview retains the shared avatar layout and fallback alignment.");
 check(avatarDialog.querySelector('.avatar-editor-controls') && avatarDialog.querySelector('.avatar-editor-actions'), "Avatar selection and footer actions have separate layout groups.");
 const avatarSave = avatarDialog.querySelector('[data-avatar-save]');
 check(avatarSave.getAttribute("form") === avatarDialog.querySelector('form').id && avatarSave.getAttribute("disabled") !== null, "Avatar save belongs to the upload form and starts disabled until a file is ready.");
-const existingAvatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar.webp" } } }, "avatar-existing-fixture");
+const existingAvatarDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar.webp" } } }, "avatar-existing-fixture");
 check(existingAvatarDialog.querySelector('.avatar-editor-remove') && !existingAvatarDialog.querySelector('.avatar-editor-remove').className.split(/\s+/).includes('btn-primary'), "Avatar removal is a secondary action in the common footer.");
-const generatedAvatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar/generated/v1/2.svg", avatar_custom: false }, appearance_options: JSON.parse(fs.readFileSync(path.join(root, "App/Core/Identity/avatar-options.json"), "utf8")) } }, "avatar-generated-fixture");
+const generatedAvatarDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar/generated/v1/2.svg", avatar_custom: false }, appearance_options: JSON.parse(fs.readFileSync(path.join(root, "App/Core/Identity/avatar-options.json"), "utf8")) } }, "avatar-generated-fixture");
 check(generatedAvatarDialog.querySelector('[data-avatar-upload-preview]').getAttribute('src') === '/avatar/generated/v1/2.svg' && !generatedAvatarDialog.querySelector('.avatar-editor-remove'), "Generated avatars appear in the preview and cannot be removed as custom uploads.");
 check(generatedAvatarDialog.querySelector('[data-avatar-appearance-form]') && !existingAvatarDialog.querySelector('[data-avatar-appearance-form]'), "Only generated avatars offer the appearance editor.");
 check(generatedAvatarDialog.querySelector('[data-avatar-gender]') && generatedAvatarDialog.querySelector('[name="appearance"]'), "Gender edits submit a versioned appearance JSON object.");
@@ -376,7 +406,7 @@ function bindCreatorEvents(node) {
   node.children.forEach(bindCreatorEvents);
 }
 bindCreatorEvents(creatorEditor);
-T.users.avatarUpload.hydrate(generatedAvatarDialog);
+T.accounts.avatarUpload.hydrate(generatedAvatarDialog);
 const creatorToggle = creatorEditor.querySelector('[data-avatar-creator-toggle]');
 const creatorSettings = creatorEditor.querySelector('[data-avatar-appearance-form]');
 creatorToggle.events.click();
@@ -416,7 +446,7 @@ for (const active of [true, false]) {
 const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-account-edit-fixture");
 const botTitle = botAccountDialog.querySelector('[id="bot-account-edit-fixture-title"]');
 check(botTitle.children[0].querySelector('.status-indicator-success') && botTitle.children[1].textContent === 'FixtureBot' && !botAccountDialog.querySelector('[href="/author/3"]'), "Bot dialogs put status before the nickname in the header and omit the public profile link.");
-const adminUserDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?panel=administration"), { data: { user: { ...user, status: "ban" }, administration: { roles: ["user"], statuses: ["active", "ban"] }, options: {} } }, "admin-user-title-fixture");
+const adminUserDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/management?panel=administration"), { data: { user: { ...user, status: "ban" }, administration: { roles: ["user"], statuses: ["active", "ban"] }, options: {} } }, "admin-user-title-fixture");
 const adminUserTitle = adminUserDialog.querySelector('[id="admin-user-title-fixture-title"]');
 check(adminUserTitle.children[0].querySelector('.status-indicator-danger') && adminUserTitle.children[1].textContent === user.username, "User administration shares the header status and nickname layout, including inactive accounts.");
 check(botAccountDialog.querySelector("form").dataset.apiMethod === "PATCH" && botAccountDialog.querySelector("form").dataset.ajaxTarget === "#bot-detail-account" && !botAccountDialog.querySelector("form").dataset.modalCloseOnSuccess, "The unified bot account tab saves through PATCH and stays open for the other tabs.");
@@ -434,16 +464,21 @@ node = T.notifications.items([{ id: 1, type: "follow", message: unsafe, icon: "u
 check(node.querySelector("strong").textContent === unsafe && node.querySelectorAll("img").length === 0, "Notifications render owner-provided messages and excerpts as literal text.");
 check(node.querySelector('[data-api-method="PATCH"]').getAttribute("action") === "/api/notifications/1", "Notification actions address the individual resource.");
 const response = { data: { user, options: { languages: { en: "English" }, password_max_length: 1024 }, capabilities: { password: false } }, meta: {} };
-node = T.users.modal(new URL("https://tinycat.test/api/users/2/management"), response, "profile-test");
+node = T.accounts.modal(new URL("https://tinycat.test/api/users/2/management"), response, "profile-test");
 check(node.getAttribute("role") === "dialog" && node.getAttribute("aria-labelledby") === "profile-test-title", "Profile dialogs retain accessible names.");
 check(!node.querySelector('[name="current_password"]'), "Other account profiles never show a password change form.");
 check(node.querySelector('[name="bio"]').value === unsafe, "Profile editors retain literal draft data.");
 const disposedListViews = [];
 T.lifecycle.register("list-content-test", { dispose: root => disposedListViews.push(root) });
 const target = new Node("div"), oldUsersView = new Node("section"); target.appendChild(oldUsersView);
-const oldCreateDialog = T.users.modal(new URL('/api/users/creation',window.location.href), {data:{user:{},options:{roles:['admin','user'],statuses:['active','ban'],password_max_length:1024,username_pattern:'[A-Za-z0-9]+'}}}, 'modal-users-creation');
+const oldCreateDialog = T.accounts.modal(new URL('/api/users/creation',window.location.href), {data:{user:{},options:{roles:['admin','user'],statuses:['active','ban'],password_max_length:1024,username_pattern:'[A-Za-z0-9]+'}}}, 'modal-users-creation');
 oldCreateDialog.querySelector('[name="username"]').value = 'UnsavedAccount';
-T.users.list(target, { data: { items: [{ ...user, role: "admin", status: "active", updated_at_formatted: "Today", can_delete: false }], filters: { q: "admin", role: "admin", status: "active", updated_from: "", updated_to: "" }, roles: { admin: "Admin", user: "User" }, statuses: { active: "Active" }, role_options: { "": "All", admin: "Admin", user: "User" }, status_options: { "": "All", active: "Active" }, options: { password_max_length: 1024, username_pattern: "[A-Za-z0-9]+", username_hint: "Letters" } }, meta: { pagination: { page: 1, last_page: 1, per_page: 25 } } });
+target.id = "users-list";
+const userQuery = document.querySelector;
+document.querySelector = selector => selector === "#users-list" ? target : userQuery(selector);
+T.modules.result({dataset:{apiMethod:"GET"},getAttribute: name => name === "href" ? "/api/users" : null}, { data: { items: [{ ...user, role: "admin", status: "active", updated_at_formatted: "Today", can_delete: false }], filters: { q: "admin", role: "admin", status: "active", updated_from: "", updated_to: "" }, roles: { admin: "Admin", user: "User" }, statuses: { active: "Active" }, role_options: { "": "All", admin: "Admin", user: "User" }, status_options: { "": "All", active: "Active" }, options: { password_max_length: 1024, username_pattern: "[A-Za-z0-9]+", username_hint: "Letters" } }, meta: { pagination: { page: 1, last_page: 1, per_page: 25 } } }, target);
+T.modules.hydrate(target);
+document.querySelector = userQuery;
 check(target.querySelector(".admin-filter-actions").querySelector('[data-filter-panel="users-filter-modal"]') && target.querySelector(".admin-filter-actions").querySelector('[name="per_page"]'), "AJAX user lists keep filters and page size together in the compact toolbar.");
 const filterDialog = document.getElementById("users-filter-modal");
 check(!filterDialog.querySelector('[type="submit"]') && filterDialog.querySelector('[name="role"]').getAttribute('data-submit-on-change') !== null && filterDialog.querySelector('[name="q"]').getAttribute('data-submit-on-change') === null, 'Filters apply immediately without an Apply button while hidden search state remains passive.');
@@ -475,32 +510,33 @@ check(!target.querySelector('[data-api-method="DELETE"]'), "Protected-account ca
 const existingBio = new Node("p", "Retained profile bio");
 document.querySelectorAll = selector => selector.includes("data-author-bio") ? [existingBio] : [];
 const avatarForm = new Node("form"); avatarForm.setAttribute("action", "/api/users/2/avatar"); avatarForm.setAttribute("method", "post"); avatarForm.closest = () => null;
-T.users.result(avatarForm, { data: { user: { id: 2, username: "Member", avatar_url: "" } } }, null);
+const avatarResultRoots = T.accounts.result(avatarForm, { data: { user: { id: 2, username: "Member", avatar_url: "" } } }, null);
+check(Array.isArray(avatarResultRoots) && !avatarResultRoots.length, "Account results without replaced avatars do not hydrate the document.");
 check(existingBio.textContent === "Retained profile bio", "Partial avatar resources never erase profile fields they do not contain.");
 let localeReloads = 0;
 document.body.dataset.currentUserId = "2";
 window.setTimeout = callback => callback();
 window.location.reload = () => { localeReloads++; };
-T.users.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
 await Promise.resolve();
 check(localeReloads === 1, "Changing the current user's locale reloads the document and its hashed catalog.");
-T.users.result(avatarForm, { data: { user: { id: 3, locale: "cs" } } }, null);
-T.users.result(avatarForm, { data: { user: { id: 2, locale: "en" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 3, locale: "cs" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: "en" } } }, null);
 check(localeReloads === 1, "Other accounts and unchanged locales do not reload the current catalog.");
 const localeNavigations = [];
 document.documentElement.dataset.interfacePrefix = "pl";
 document.documentElement.dataset.interfaceLocales = "cs,en,pl,fr";
 window.location.assign = url => localeNavigations.push(url);
 avatarForm.dataset.originalLocale = "cs";
-T.users.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
 await Promise.resolve();
 check(localeNavigations.length === 0 && localeReloads === 1, "Saving an unchanged profile language preserves an explicit URL language.");
-T.users.result(avatarForm, { data: { user: { id: 2, locale: "fr" } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: "fr" } } }, null);
 await Promise.resolve();
 check(localeNavigations[0] === "/fr/", "Changing the profile language explicitly switches the URL and catalog together.");
 const savedLeaveGuard = T.navigation.canLeave;
 T.navigation.canLeave = () => Promise.resolve(false);
-T.users.result(avatarForm, { data: { user: { id: 2, locale: 'fr' } } }, null);
+T.accounts.result(avatarForm, { data: { user: { id: 2, locale: 'fr' } } }, null);
 await Promise.resolve(); await Promise.resolve();
 check(localeNavigations.length === 1, 'A locale save cannot navigate away when another draft blocks leaving.');
 T.navigation.canLeave = savedLeaveGuard;
@@ -531,7 +567,7 @@ for (const editor of [createDialog, sourceEditor, botAccountDialog]) {
 }
 const sourceCreateEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/management"), { data: { item: { enabled: true, post_template: '{{title}}', bot_user_id: 2 }, bots: [user] } }, "source-create-test");
 const reportEditor = T.status.modal(new URL('https://tinycat.test/api/moderation/report-options?id=10'), { data: { reasons: ['spam'] } }, 'report-contract-fixture');
-const authEditor = T.users.modal(new URL('https://tinycat.test/api/users/authentication'), { data: { mode: 'login', registration_enabled: true, captcha: { enabled: false }, options: {}, old: {} } }, 'auth-contract-fixture');
+const authEditor = T.accounts.modal(new URL('https://tinycat.test/api/users/authentication'), { data: { mode: 'login', registration_enabled: true, captcha: { enabled: false }, options: {}, old: {} } }, 'auth-contract-fixture');
 for (const dialog of [commentEditDialog, editDialog, profileDialog, avatarDialog, createDialog, sourceEditor, sourceCreateEditor, botAccountDialog, reportEditor, authEditor]) {
   check(dialog.dataset.modalKind === 'editor', 'Every editable surface opts into the common mobile and keyboard contract.');
   check(dialog.querySelector('.modal-footer') && !dialog.querySelector('.modal-body').querySelector('[type="submit"]'), 'Editor primary actions stay in the shared footer, outside the scrollable body.');
@@ -546,14 +582,21 @@ T.dialog.close = () => { unexpectedAccountClose = true; };
 const accountDraft = profileDialog.querySelector('[name="bio"]'); accountDraft.value = 'Draft in another tab';
 const savedEmailForm = profileDialog.querySelector('[data-editor-section="email"]');
 savedEmailForm.closest = () => profileDialog;
-T.users.result(savedEmailForm, { data: { user: { id: 2, email: 'saved@example.test' } } }, null);
+T.accounts.result(savedEmailForm, { data: { user: { id: 2, email: 'saved@example.test' } } }, null);
 check(!unexpectedAccountClose && accountDraft.value === 'Draft in another tab', 'Saving one account tab leaves the editor and other tab drafts intact.');
 check(!profileDialog.querySelector('[name="current_password"]').parent.parent.dataset.modalCloseOnSuccess, 'A password change cannot implicitly close the other account forms.');
 T.dialog.close = savedAccountClose;
 check(sourceEditor.querySelectorAll('[data-tab]').length === 3 && sourceCreateEditor.querySelectorAll('[data-tab]').length === 3 && sourceCreateEditor.querySelector('form').dataset.apiMethod === 'POST', "Source create and edit share the same three-section modal.");
 check(sourceEditor.querySelector('[name="name"]').value === "Fresh source" && sourceEditor.querySelector('[data-bot-source-preview]'), "Remote source editors use fetched values and retain the preview workflow.");
 const reportRoot = new Node("div"), oldReportView = new Node("section"); reportRoot.appendChild(oldReportView);
-T.moderation.reports(reportRoot, [{ id: 12, content_id: 9, author_name: unsafe, excerpt: unsafe, open_count: 1, report_count: 1, status: "open" }]);
+T.content.replaceChildren(reportRoot, T.components.render("moderation/reports", {items:[{ id: 12, content_id: 9, author_name: unsafe, excerpt: unsafe, open_count: 1, report_count: 1, status: "open" }]}));
+const moderationFilters = {status:'open',reason:'spam',q:'review search',per_page:25};
+const filteredReports = T.components.render('moderation/reports', {items:[],filters:moderationFilters,pagination:{per_page:25}});
+const reportFilterRoot = new Node('div'); reportFilterRoot.appendChild(filteredReports);
+T.modules.hydrate(reportFilterRoot);
+const reportFilter = document.getElementById('moderation-filter-modal');
+check(reportFilter.querySelector('[name="status"]').value === 'open' && reportFilter.querySelector('[name="reason"]').value === 'spam' && reportFilter.querySelector('[name="q"]').value === 'review search', 'Declared moderation filters retain status, reason and search state without initializing a report dialog.');
+
 check(disposedListViews.includes(oldReportView) && !disposedListViews.includes(reportRoot), "Moderation replacement uses child-scoped lifecycle cleanup.");
 check(reportRoot.querySelector('[data-modal-url]').dataset.modalUrl === "/api/moderation/reports/12" && reportRoot.querySelectorAll("form").length === 0, "Moderation rows open a review detail before exposing decisions.");
 const moderationData = { content: { id: 9, author_name: unsafe, body: unsafe, image_url: "", status: "published" }, reports: [{ id: 12, status: "open", reason: "spam", reporter_name: unsafe, note: unsafe, created_at: "2026-01-01", reviewed_at: null }] };
@@ -619,7 +662,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const schedulerLocation = window.location, schedulerQuery = document.querySelector, schedulerRequest = T.api.request;
   let restoredSchedulerUrl = "";
   const schedulerHydrate = T.lifecycle.hydrate;
-  T.lifecycle.hydrate = () => {};
+  T.lifecycle.hydrate = root => T.modules.hydrate(root);
   try {
     window.location = new URL("https://tinycat.test/admin/cron/list?page=2&status=failed");
     document.querySelector = selector => selector === "#scheduler-list" ? schedulerRoot : schedulerQuery(selector);
@@ -653,26 +696,29 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.api = { request: async (url, options) => { sent = { url, options }; return { ok: true, data: { action: "react" }, meta: {} }; }, errors: canonicalFieldErrors };
   const bootAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--bootstrap"], { encoding: "utf8" }));
   for (const asset of bootAssets) vm.runInContext(asset.source, context);
-  T.status.controllers.actions.initStatusForms();
+  T.lifecycle.start();
+  async function submitStatus(event) { for (const callback of handlers.submit) { await callback(event); } }
   const statusForm = new Node("form");
   statusForm.setAttribute("action", "/api/statuses/10/likes/me"); statusForm.setAttribute("method", "POST");
   statusForm.fields = [{ name: "action", value: "react", disabled: false }, { name: "body", value: "Retained draft", disabled: false }];
   statusForm.querySelectorAll = selector => selector === "button, input, select, textarea" ? statusForm.fields : [];
-  statusForm.closest = selector => selector === "form[data-status-form]" ? statusForm : null;
+  statusForm.setAttribute("data-status-form", "");
+  statusForm.closest = selector => selector === "form[data-status-form]" || selector === "form[data-ajax-form]" ? statusForm : null;
   statusForm.elements = { namedItem: name => statusForm.fields.find(field => field.name === name) || null };
   statusForm.fields.forEach(field => { field.dataset = {}; });
-  await handlers.submit[0]({ target: statusForm, preventDefault() {}, submitter: { name: "submit_action", value: "publish" } });
+  T.status.controllers.actions.prepareForms({querySelectorAll:()=>[statusForm]});
+  await submitStatus({ target: statusForm, preventDefault() {}, submitter: { name: "submit_action", value: "publish" } });
   check(sent.options.body.get("body") === "Retained draft" && sent.options.body.get("submit_action") === "publish", "Actual status submit captures fields and the submitter before controls become disabled.");
-  check(statusForm.fields.every(field => !field.disabled) && !statusForm.dataset.statusBusy, "Actual status submit restores controls after the JSON result.");
+  check(statusForm.fields.every(field => !field.disabled) && !statusForm.dataset.apiBusy, "Actual status submit restores controls after the JSON result.");
   let notify = 0;
   T.toasts.show = () => { notify++; };
   T.api.request = async () => { throw new Error("Offline"); };
-  await handlers.submit[0]({ target: statusForm, preventDefault() {} });
+  await submitStatus({ target: statusForm, preventDefault() {} });
   check(notify === 1 && statusForm.fields[1].value === "Retained draft" && statusForm.fields.every(field => !field.disabled), "Transport failures retain the actual editor draft and restore its controls.");
   let finish, submitted = 0;
   T.api.request = () => { submitted++; return new Promise(resolve => { finish = resolve; }); };
-  const pending = handlers.submit[0]({ target: statusForm, preventDefault() {} });
-  await handlers.submit[0]({ target: statusForm, preventDefault() {} });
+  const pending = submitStatus({ target: statusForm, preventDefault() {} });
+  await submitStatus({ target: statusForm, preventDefault() {} });
   check(submitted === 1, "Actual status forms block a second submit while pending.");
   finish({ ok: true, data: { action: "react" }, meta: {} }); await pending;
   const invalidBody = new Node("textarea"), fieldContainer = new Node("label");
@@ -681,7 +727,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   let focused = false; invalidBody.focus = () => { focused = true; };
   statusForm.fields[1] = invalidBody;
   T.api.request = async () => { const error = new Error("Validation failed."); error.data = { error: { details: { errors: { body: ["Too long."] } } } }; throw error; };
-  await handlers.submit[0]({ target: statusForm, preventDefault() {} });
+  await submitStatus({ target: statusForm, preventDefault() {} });
   check(invalidBody.getAttribute("aria-invalid") === "true" && fieldContainer.textContent === "Too long." && focused, "Canonical validation errors reach the actual editor field and move focus to it.");
   context.File = File;
   let emptyFileClock = 100;
@@ -728,7 +774,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   queueModel.items[0].edit_url = "/api/bots/accounts/7/posts/41/management?panel=edit";
   queueModel.items[0].source = { id: 12, name: "RSS fixture", url: "/admin/bots/7?source=12" };
   T.bots.queue(queueRoot, { data: queueModel, meta: { pagination: { page: 1, per_page: 10 } } });
-  T.bots.hydrate(queueRoot);
+  T.modules.hydrate(queueRoot);
   check(queueRoot.querySelector('[data-modal-url="/api/bots/accounts/7/posts/41/management?panel=edit"]'), "Queue rows expose the same editor as bot detail posts.");
   const queuePublish = queueRoot.querySelectorAll("form").find(form => (form.getAttribute("action") || "").includes("/publication"));
   check(queuePublish && queuePublish.dataset.ajaxTarget === "#bot-queue-list" && queuePublish.querySelectorAll("input").some(field => field.getAttribute("name") === "_csrf"), "Queued posts publish through the shared CSRF-protected AJAX form.");
@@ -754,7 +800,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const detailPosts = workspace.querySelector('[id="bot-detail-posts-list"]');
   const detailRuns = workspace.querySelector('[id="bot-detail-runs-list"]');
   document.querySelector = selector => selector === '[data-bot-workspace-id]' ? workspace : selector.startsWith('#bot-detail-') ? workspace.querySelector('[id="' + selector.slice(1) + '"]') : savedQuery(selector);
-  T.lifecycle.hydrate = () => {};
+  T.lifecycle.hydrate = root => T.modules.hydrate(root);
   const parentFilter = new Node('div'); parentFilter.id = 'bots-filter-modal';
   const parentQuery = new Node('input'); parentQuery.name = 'q'; parentQuery.value = 'parent search'; parentFilter.appendChild(parentQuery); document.body.appendChild(parentFilter);
   check(workspaceTabs.querySelectorAll('[data-tab]').length === 4 && !workspace.querySelector('.modal-footer').hidden, "The bot workspace starts on its editable account tab with one footer save.");
@@ -774,6 +820,8 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   await new Promise(resolve => setImmediate(resolve));
   check(workspaceCalls[0] === '/api/bots/sources?bot=3' && detailSources.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-sources-list', "Source tabs load and submit to a dedicated list target.");
   check(parentQuery.value === 'parent search' && !detailSources.querySelector('.admin-search-form').dataset.history, "Workspace filters do not modify the parent list or browser history.");
+  T.modules.hydrate(detailSources);
+  check(!detailSources.querySelector('[data-admin-list]') && parentQuery.value === 'parent search', 'A scoped source workspace cannot register or replace the parent list filter.');
   const workspaceFooter = workspace.querySelector('.modal-footer'), sourcePager = workspaceFooter.querySelector('.pagination');
   check(sourcePager && !detailSources.querySelector('.pagination') && !workspaceFooter.querySelector('[type="submit"]'), 'Source pagination appears once in the fixed footer and replaces account save actions.');
   const sourcePageLink = sourcePager.querySelector('a');
@@ -843,15 +891,19 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.dialog.openResource = savedResourceOpen;
   const savedSettingsListener = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
+  const settingsSchema = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--settings"], { encoding: "utf8" }));
+  const smtpFields = settingsSchema.sections.find(section => section.key === 'email').fields.find(field => field.key === 'email.smtp').fields;
   const settingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:{sections:[
     {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current name'}, {key:'site.meta_description',label:'Description',type:'textarea',value:'Draft'}]},
-    {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',value:{host:'smtp.example.test',password:''}}]}
+    {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',fields:smtpFields,value:{host:'smtp.example.test',password:'fixture-server-secret'}}]}
   ]}}, 'modal-settings-editor');
   const settingsForm = settingsDialog.querySelector('form');
   check(settingsDialog.dataset.modalDisposeOnClose === 'true' && settingsDialog.querySelectorAll('[data-tab]').length === 2, 'Settings are disposable resource editors using shared sections.');
   check(settingsDialog.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === settingsForm.id && settingsForm.getAttribute('enctype') === 'multipart/form-data', 'Deferred settings keep a shared footer and multipart uploads.');
   check(settingsForm.querySelector('textarea').textContent === 'Draft' && settingsForm.querySelectorAll('input').some(input => input.getAttribute('name') === 'settings[email.smtp][host]' && input.getAttribute('value') === 'smtp.example.test'), 'Deferred settings retain textareas and nested SMTP field names.');
   check(settingsForm.dataset.confirmUnsaved === 'true', 'Deferred settings protect unsaved changes.');
+  const smtpPassword = settingsForm.querySelector('[name="settings[email.smtp][password]"]');
+  check(smtpPassword.getAttribute('value') === '' && smtpFields.every(field => settingsForm.querySelector('[name="settings[email.smtp]['+field.key+']"]')), 'All owner-declared SMTP fields render and the password stays blank.');
   const savedLogo = new Node('input'); savedLogo.setAttribute('name', 'settings[site.logo_url]'); savedLogo.value = '/old.webp';
   const pendingLogo = new Node('input'); pendingLogo.type = 'file'; pendingLogo.value = 'selected.webp';
   const savedPassword = new Node('input'); savedPassword.type = 'password'; savedPassword.value = 'submitted secret';
@@ -860,6 +912,19 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   check(T.settings.result(settingsForm, {data:{saved:true,images:{'site.logo_url':'/new.webp'}}}).length === 0 && savedLogo.value === '/new.webp' && !pendingLogo.value && !savedPassword.value && !removeLogo.checked, 'Repeated settings saves retain image paths and clear submitted uploads and secrets.');
   Node.prototype.addEventListener = savedSettingsListener;
   settingsDialog.remove();
+  const socialSettings = settingsSchema;
+  const socialSettingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:socialSettings}, 'modal-social-settings');
+  check(socialSettingsDialog.querySelector('[name="settings[content_images.enabled]"]') && socialSettingsDialog.querySelector('[name="settings[moderation.blocked_urls]"]'), 'Social image and moderation settings use the common PHP-derived presentation.');
+  socialSettingsDialog.remove();
+  const blogSettings = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--blog-settings"], { encoding: "utf8" }));
+  const socialPresentation = document.body.dataset.settingsPresentation;
+  document.body.dataset.settingsPresentation = JSON.stringify(blogSettings.presentation);
+  const blogSettingKeys = ['blog.images.enabled', 'blog.images.max_upload_kb', 'blog.blocked_urls', 'blog.links.utm.enabled', 'blog.links.utm.source', 'blog.links.utm.medium', 'blog.links.utm.campaign'];
+  check(blogSettingKeys.every(key => blogSettings.presentation.fields[key]?.label), 'Blog field labels are derived from its PHP settings contribution without module JavaScript.');
+  const blogSettingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:{sections:blogSettings.sections}}, 'modal-blog-settings');
+  check(blogSettingsDialog.querySelector('[data-tab="blog"]') && blogSettingsDialog.querySelector('[name="settings[blog.links.utm.campaign]"]'), 'Blog-only settings render alongside core settings without Social or a missing section label.');
+  blogSettingsDialog.remove();
+  document.body.dataset.settingsPresentation = socialPresentation;
   const savedCaptchaRequest = T.api.request, savedCaptcha = T.ui.captcha, savedCaptchaListener = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
   const searchRoot = new Node('form'), searchInput = new Node('input'), searchResults = new Node('div');

@@ -5,7 +5,7 @@ namespace TinyCat\Social\Automation;
 use TinyCat\Core\Feeds\FeedEntry;
 use TinyCat\Social\Content\FeedImport;
 use TinyCat\Core\Feeds\FeedTarget;
-use TinyCat\Social\Content\PostCreation;
+use TinyCat\Social\Posts\PostCreation;
 
 final class FeedPublication implements FeedTarget
 {
@@ -18,7 +18,7 @@ final class FeedPublication implements FeedTarget
     public function enrich(array $source, array $items): array
     {
         return str_contains((string) ($source['post_template'] ?? ''), '{{image}}') && \TinyCat\Social\Content\Images::status_images_enabled()
-            ? \TinyCat\Core\Feeds\WordPressFeed::images($items, static fn (string $url): bool => \TinyCat\Social\Content\Integration::blockedHost($url) === '') : $items;
+            ? \TinyCat\Core\Feeds\WordPressFeed::images($items, static fn (string $url): bool => \TinyCat\Social\Content\Policy::blockedHost($url) === '') : $items;
     }
 
     public function attachments(array $source, array $item, FeedEntry $entry): array

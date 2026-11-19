@@ -15,20 +15,21 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
     public static function validate(array $data): array
     {
         if (array_diff(array_keys($data), ['format', 'kind', 'id', 'directory', 'version', 'minimum_core', 'minimum_php', 'manifest', 'schemas', 'files']) !== []
-            || ($data['format'] ?? null) !== 1 || ($data['kind'] ?? null) !== 'tinycat-module'
+            || !in_array($data['format'] ?? null, [1, 2], true) || ($data['kind'] ?? null) !== 'tinycat-module'
             || !is_string($data['id'] ?? null) || preg_match('/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/D', $data['id']) !== 1
             || !is_string($data['directory'] ?? null) || preg_match('/^[A-Za-z][A-Za-z0-9]*$/D', $data['directory']) !== 1
             || !is_array($data['manifest'] ?? null) || ($data['manifest']['id'] ?? null) !== $data['id'] || ($data['manifest']['coreApi'] ?? null) !== 1
             || !is_array($data['files'] ?? null) || $data['files'] === [] || count($data['files']) > 4999 || !is_array($data['schemas'] ?? null)) { throw new \RuntimeException('Invalid module package metadata.'); }
         foreach (['version', 'minimum_core', 'minimum_php'] as $key) { if (!is_string($data[$key] ?? null) || !self::validVersion($data[$key])) { throw new \RuntimeException('Invalid module package version.'); } }
         self::path($data['directory']);
-        foreach ($data['schemas'] as $stream => $schema) {
-            if (!is_string($stream) || !is_array($schema) || !is_int($schema['version'] ?? null) || !is_array($schema['tables'] ?? null) || !is_array($schema['migrations'] ?? null)) { throw new \RuntimeException('Invalid module schema metadata.'); }
-            foreach ($schema['tables'] as $table) { if (!is_string($table)) { throw new \RuntimeException('Invalid module table.'); } }
-            foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) {
-                if (!is_array($migration) || !is_int($migration['version'] ?? null) || !is_string($migration['id'] ?? null) || !is_string($migration['file'] ?? null) || !is_string($migration['checksum'] ?? null)) { throw new \RuntimeException('Invalid module migration metadata.'); }
-            }
-        }
+        if ($data['format'] === 2 && version_compare($data['minimum_core'], SchemaMigration::ARCHIVE_RUNTIME, '<')) { throw new \RuntimeException('Archived module history requires the checkpoint-aware runtime.'); }
+        try {
+            Distribution::validate(['format' => $data['format'] === 2 ? 4 : 3, 'product' => 'tinycat.package',
+                'selection' => [$data['id'] => 'App/Modules/' . $data['directory'] . '/module.json'], 'active' => [], 'required' => [],
+                'requires' => [$data['id'] => []], 'schemas' => $data['schemas'], 'legacy' => false,
+                'framework' => \TinyCat\Core\Runtime\Framework::CAPABILITIES,
+                'schemaOwners' => array_fill_keys(array_keys($data['schemas']), $data['id'])]);
+        } catch (\InvalidArgumentException $error) { throw new \RuntimeException('Invalid module schema metadata.', 0, $error); }
         if (version_compare(\TinyCat\Support\Version::CURRENT, $data['minimum_core'], '<') || version_compare(PHP_VERSION, $data['minimum_php'], '<')) { throw new \RuntimeException('Module requires a newer TinyCat or PHP runtime.'); }
         foreach ($data['files'] as $path => $hash) { if (!is_string($path) || self::path($path) === 'package.json' || !is_string($hash) || preg_match('/^[a-f0-9]{64}$/D', $hash) !== 1) { throw new \RuntimeException('Invalid module file inventory.'); } }
         self::assertDistinctPackagePaths(array_keys($data['files']), 'Conflicting module paths');
@@ -87,6 +88,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
             }
             foreach ($package['schemas'] as $schema) {
                 foreach ([...($schema['migrations'] ?? []), ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) {
+                    if ($migration['file'] === null) { continue; }
                     $prefix = 'App/Modules/' . $package['directory'] . '/';
                     if (!is_string($migration['file'] ?? null) || !str_starts_with($migration['file'], $prefix)) { throw new \RuntimeException('Module migration escapes its owner.'); }
                     $relative = substr($migration['file'], strlen($prefix));
@@ -105,7 +107,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
         if (!is_file($baseFile)) { throw new \RuntimeException('Module installation requires an installed distribution.'); }
         $base = Distribution::validate(self::decodeJson((string) file_get_contents($baseFile), 'distribution'));
         $state = Deployment::read($root);
-        if (!in_array($base['format'] ?? 0, [2, 3], true) || $state === null) { throw new \RuntimeException('Install the current framework before adding module packages.'); }
+        if (!in_array($base['format'] ?? null, [3, 4], true) || $state === null) { throw new \RuntimeException('Install the current framework before adding module packages.'); }
         $prepared = self::prepare($archive); $package = $prepared['package']; $stage = $prepared['stage'];
         try {
             $id = $package['id']; $prefix = 'App/Modules/' . $package['directory'] . '/';
@@ -116,7 +118,8 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
                 if ($old['directory'] !== $package['directory'] || $old['manifest']['namespace'] !== $package['manifest']['namespace'] || version_compare($package['version'], $old['version'], '<=')) { throw new \RuntimeException('Select a newer package with the same module identity.'); }
                 foreach ($old['schemas'] as $stream => $schema) {
                     foreach ($schema['migrations'] as $index => $migration) {
-                        if (($package['schemas'][$stream]['migrations'][$index] ?? null) !== $migration) { throw new \RuntimeException('Published module migration history cannot be changed.'); }
+                        $nextMigration = $package['schemas'][$stream]['migrations'][$index] ?? null;
+                        if (!is_array($nextMigration) || $nextMigration['version'] !== $migration['version'] || $nextMigration['id'] !== $migration['id'] || $nextMigration['checksum'] !== $migration['checksum'] || ($nextMigration['file'] !== $migration['file'] && $nextMigration['file'] !== null)) { throw new \RuntimeException('Published module migration history cannot be changed.'); }
                     }
                 }
             }
@@ -141,13 +144,17 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
             $files[PackageRegistry::FILE] = hash('sha256', $record);
             $deleted = array_map(static fn (string $path): string => $prefix . $path, array_keys(array_diff_key($old['files'] ?? [], $package['files'])));
             $installed = in_array($id, $state['installed'], true);
+            $stagedPlan = $effective;
+            $stagedPlan['schemas'] = array_filter($effective['schemas'], static fn (string $stream): bool => $effective['schemaOwners'][$stream] === $id, ARRAY_FILTER_USE_KEY);
+            $stagedPlan['schemaOwners'] = array_intersect_key($effective['schemaOwners'], $stagedPlan['schemas']);
             return \TinyCat\Core\Updates\Manager::runLifecycle(static function () use ($root, $effective, $state, $installed, $id, $package): array {
                 if ($installed) { ModuleSchemas::synchronize(Connection::get(), Distribution::schemas($effective, $root, $state['installed'])); }
                 Deployment::write($root, $effective, $state['active'], $state['installed'], \TinyCat\Support\Version::CURRENT);
                 return ['id' => $id, 'version' => $package['version'], 'active' => in_array($id, $state['active'], true)];
-            }, $installed && $package['schemas'] !== [], static function () use ($root, $fingerprint, $baseFile): void {
+            }, $installed && $package['schemas'] !== [], static function () use ($root, $fingerprint, $baseFile, $installed, $stagedPlan, $mapped, $id): void {
                 $now = [PackageRegistry::read($root), Deployment::read($root), self::decodeJson((string) file_get_contents($baseFile), 'distribution')];
                 if (!hash_equals($fingerprint, hash('sha256', json_encode($now, JSON_THROW_ON_ERROR)))) { throw new \RuntimeException('Module catalog changed; retry installation.'); }
+                if ($installed && $stagedPlan['schemas'] !== []) { ModuleSchemas::pending(Connection::get(), Distribution::schemas($stagedPlan, $mapped, [$id])); }
             }, ['stage' => $mapped, 'files' => $files, 'delete' => $deleted]);
         } finally { self::cleanup($stage); }
     }

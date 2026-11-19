@@ -7,11 +7,6 @@ use TinyCat\Core\Ui\InteractionTarget;
 /** Social authorization, quotas and notification semantics remain owned by Social. */
 final class InteractionPolicy
 {
-    public static function register(): void
-    {
-        \TinyCat\Social\Content\Interactions::provide(new \TinyCat\Social\Content\InteractionPolicy('tinycat.social', 'post', self::resolve(...), self::before(...), self::event(...)));
-    }
-
     /**
      * @param array<string, mixed>|null $actor */
     public static function resolve(int $id, ?array $actor): ?InteractionTarget
@@ -43,20 +38,20 @@ final class InteractionPolicy
             [$key, $interval] = Posts::status_session_interval_rule($action);
             \TinyCat\Database\Transactions::afterCommit(static function () use ($key, $interval): void { \TinyCat\Core\Security\RateLimiter::session_action_retry_after('status_' . $key, $interval); });
         }
-        if ($action === 'comment_removed') { NotificationHooks::removeForComment($commentId); return; }
+        if ($action === 'comment_removed') { NotificationHistory::removeForComment($commentId); return; }
         if ($action === 'comment') {
             \TinyCat\Social\Moderation\Restrictions::moderation_record_action($actor, 'comment');
-            NotificationHooks::notifyContentOwner('content_comment', $target->id, $actor, $commentId);
+            NotificationEvents::notifyContentOwner('content_comment', $target->id, $actor, $commentId);
             $post = Posts::status_find($target->id);
-            NotificationHooks::notifyMentions((string) $data['body'], $actor, $target->id, $commentId, [(int) ($post['author_id'] ?? 0)]);
+            NotificationEvents::notifyMentions((string) $data['body'], $actor, $target->id, $commentId, [(int) ($post['author_id'] ?? 0)]);
         } elseif (in_array($action, ['react', 'comment_like'], true) && $data['liked']) {
             \TinyCat\Social\Moderation\Restrictions::moderation_record_action($actor, 'like');
-            if ($action === 'react') { NotificationHooks::notifyContentOwner('content_like', $target->id, $actor); }
-            else { NotificationHooks::notifyCommentOwner($commentId, $actor); }
+            if ($action === 'react') { NotificationEvents::notifyContentOwner('content_like', $target->id, $actor); }
+            else { NotificationEvents::notifyCommentOwner($commentId, $actor); }
         } elseif ($action === 'comment_update') {
             $post = Posts::status_find($target->id);
-            $skip = array_merge(NotificationHooks::mentionedUserIds((string) ($data['before']['body'] ?? '')), [(int) ($post['author_id'] ?? 0)]);
-            NotificationHooks::notifyMentions((string) $data['body'], $actor, $target->id, $commentId, $skip);
+            $skip = array_merge(NotificationEvents::mentionedUserIds((string) ($data['before']['body'] ?? '')), [(int) ($post['author_id'] ?? 0)]);
+            NotificationEvents::notifyMentions((string) $data['body'], $actor, $target->id, $commentId, $skip);
         }
     }
 }

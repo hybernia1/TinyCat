@@ -6,8 +6,8 @@ $options = getopt('', ['config:', 'output:', 'root:']);
 require_once __DIR__ . '/../../../tests/support/cache-isolation.php';
 define('TINYCAT', true);
 $root = realpath((string) ($options['root'] ?? dirname(__DIR__, 3)));
-if (!$root || !is_file($root . '/App/autoload.php')) { throw new RuntimeException('Expected application root.'); }
-require_once $root . '/App/autoload.php';
+if (!$root || !is_file($root . '/App/Core/Runtime/autoload.php')) { throw new RuntimeException('Expected application root.'); }
+require_once $root . '/App/Core/Runtime/autoload.php';
 $config = require (string) ($options['config'] ?? '');
 $settings = $config['database'];
 if (preg_match('/^tinycat_perf_[a-z0-9_]+$/D', $settings['name']) !== 1) { throw new RuntimeException('Isolated performance database required.'); }
@@ -53,8 +53,8 @@ $cases = [
     'search-absent' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('zzunmatchedprobe', 50),
     'search-links' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('https', 50),
     'search-literal' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('10%', 50),
-    'notifications' => static fn () => \TinyCat\Social\Posts\LegacyInbox::items(2, 50),
-    'admin-users' => static fn () => \TinyCat\Social\Profiles\Actions::tc_admin_users_page(\TinyCat\Social\Profiles\Actions::tc_admin_users_filters()),
+    'notifications' => static fn () => \TinyCat\Core\Notifications\Inbox::items(2, 50),
+    'admin-users' => static fn () => \TinyCat\Core\Identity\Actions::tc_admin_users_page(\TinyCat\Core\Identity\Actions::tc_admin_users_filters()),
     'admin-reports' => static fn () => \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload(),
 ];
 $report = ['mysql' => $plans->query('SELECT VERSION()')->fetchColumn(), 'root' => $root,

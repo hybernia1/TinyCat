@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 return static function (): array {
     if (!defined('TINYCAT')) { define('TINYCAT', true); }
-    require_once __DIR__ . '/../../App/autoload.php';
+    require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
     return \TinyCat\Support\AssetGraph::withSnapshot(static fn (): array => \TinyCat\Support\ClientAssets::withBuildCache(static function (): array {
         $validateModals = require __DIR__ . '/../quality/modal-contracts.php';
         $validateModals();
@@ -25,6 +25,12 @@ return static function (): array {
         }
         $files['App/Core/Support/compiled/translations.php'] = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export($server, true) . ";\n";
         $manifest = ['selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'assets' => [], 'clients' => []];
+        $components = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export(\TinyCat\Support\Components::templates(), true) . ";\n";
+        $componentName = 'components.' . substr(hash('sha256', $components), 0, 24) . '.php';
+        $files['App/Core/Support/compiled/' . $componentName] = $components;
+        $manifest['server_components'] = $componentName;
+        $packages = \TinyCat\Support\Paths::basePath('App/module-packages.json');
+        $manifest['server_components_packages'] = is_file($packages) ? hash_file('sha256', $packages) : null;
         $emit = static function (string $prefix, string $source, string $type = 'js') use (&$files): string {
             $relative = 'assets/build/' . $prefix . '.' . substr(hash('sha256', $source), 0, 24) . '.' . $type;
             $files[$relative] = $source;

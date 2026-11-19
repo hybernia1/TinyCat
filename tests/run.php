@@ -12,6 +12,7 @@ $root = dirname(__DIR__);
 require_once __DIR__ . '/support/execution.php';
 $tests = [
     'Module catalog and legacy composition' => 'tests/quality/module-catalog.php',
+    'File-based module availability and activation' => 'tests/quality/module-availability.php',
     'Unified module resources and selection' => 'tests/quality/module-resources.php',
     'Offline registries and technical startup' => 'tests/quality/runtime-registries.php',
     'Manifest module vertical pilot' => 'tests/quality/module-pilot.php',
@@ -20,6 +21,7 @@ $tests = [
     'UI component and stylesheet contracts' => 'tests/quality/ui-contracts.php',
     'Filesystem storage' => 'tests/infrastructure/storage.php',
     'Shared infrastructure' => 'tests/infrastructure/run.php',
+    'Unified migration journal' => 'tests/infrastructure/migrations.php',
     'Admin list sorting' => 'tests/presentation/admin-sorting.php',
     'JSON AJAX client' => 'tests/frontend/run.php',
     'Monolith API inventory' => 'tests/quality/monolith-inventory.php',
@@ -53,6 +55,7 @@ $tests = [
     'MySQL Blog product installation' => 'tests/domains/blog/mysql.php',
     'Social data ownership and optional composition' => 'tests/domains/publishing/social-boundaries.php',
     'Render-only partials' => 'tests/quality/render-only-partials.php',
+    'Installation component presentation' => 'tests/presentation/installation.php',
     'HTML sanitizer' => 'tests/domains/security/html-sanitizer.php',
     'Presentation templates' => 'tests/presentation/view-templates.php',
     'Module presentation components' => 'tests/presentation/components.php',
@@ -62,7 +65,6 @@ $tests = [
     'MySQL archive media filters' => 'tests/domains/status/archive-filters-mysql.php',
     'Public route smoke' => 'tests/http/public-route-smoke.php',
     'API HTTP contract' => 'tests/http/api-contract.php',
-    'Performance query baseline' => 'tests/performance/performance-baseline.php',
     'Hot-read query budgets' => 'tests/performance/hot-read-query-budgets.php',
     'SQL execution profiler' => 'tests/tools/performance-profiler.php',
     'Cache' => 'tests/infrastructure/cache/run.php',
@@ -102,15 +104,19 @@ $tests = [
     'MySQL installer rehearsal' => 'tests/release/mysql-installer-rehearsal.php',
 ];
 
+$manualTests = [
+    'Archived 2.0.25 report integrity (manual)' => 'tests/performance/performance-baseline.php',
+];
+$allTests = [...$tests, ...$manualTests];
 $passed = 0;
 
-$items = array_flip($tests);
-if (\TinyCatTests\Execution::listing()) { foreach ($items as $id => $label) { echo $id . ' ' . $label . "\n"; } exit(0); }
-$allItems = $items;
-$items = \TinyCatTests\Execution::select($items);
+$allItems = array_flip($allTests);
+if (\TinyCatTests\Execution::listing()) { foreach ($allItems as $id => $label) { echo $id . ' ' . $label . "\n"; } exit(0); }
+$explicit = array_any($_SERVER['argv'] ?? [], static fn (string $argument): bool => str_starts_with($argument, '--only='));
+$items = $explicit ? \TinyCatTests\Execution::select($allItems) : array_flip($tests);
 \TinyCatTests\Execution::plan($allItems, array_keys($items));
 
-foreach ($tests as $label => $relative) {
+foreach ($allTests as $label => $relative) {
     if (!isset($items[$relative])) { continue; }
     echo "\n=== {$label} ===\n";
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative));
