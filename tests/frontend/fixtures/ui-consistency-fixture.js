@@ -5,12 +5,10 @@
   function key(node, value) { return node.dispatchEvent(new KeyboardEvent('keydown', { key: value, bubbles: true, cancelable: true })); }
   function empty(preview) { const node = document.createElement('div'); node.append(T.notifications.items([], preview)); return node; }
   try {
-    const form = document.createElement('form'); form.className = 'global-search'; form.style.cssText = 'position:fixed;top:12px;left:12px;width:calc(100% - 24px)'; form.dataset.globalSearch = '';
-    const anchor = document.createElement('div'); anchor.className = 'global-search-control'; anchor.dataset.popover = ''; anchor.dataset.popoverMode = 'input'; anchor.dataset.popoverMatchWidth = 'true';
-    const input = document.createElement('input'); input.className = 'input global-search-input'; input.type = 'search'; input.dataset.globalSearchInput = ''; input.dataset.popoverTrigger = '';
-    const box = document.createElement('div'); box.className = 'popover-panel global-search-results'; box.dataset.globalSearchResults = ''; box.hidden = true;
-    const searchIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); searchIcon.classList.add('icon'); searchIcon.setAttribute('aria-hidden', 'true');
-    anchor.append(searchIcon, input, box); form.append(anchor); document.body.append(form);
+    const header = T.components.render('ui/public-header', {hasGlobalSearch:true, urls:{home:'/',search:'/search/all'}, nav:[], languages:[]});
+    const form = header.querySelector('[data-global-search]'); form.style.cssText = 'position:fixed;top:12px;left:12px;width:calc(100% - 24px)';
+    const anchor = form.querySelector('[data-popover]'), input = form.querySelector('[data-global-search-input]'), box = form.querySelector('[data-global-search-results]'), searchIcon = anchor.querySelector(':scope > .icon');
+    document.body.append(form);
     T.api.request = (url, options) => new Promise((resolve, reject) => reads.push({ url, options, resolve, reject }));
     input.setAttribute('aria-expanded', 'false');
     T.popovers.init(); T.search.hydrate(document);
