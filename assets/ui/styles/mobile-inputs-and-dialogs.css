@@ -1,14 +1,15 @@
-@media (max-width: 759px), (hover: none) and (pointer: coarse) {
+@media (max-width: 899px) {
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
   select,
   textarea,
   [contenteditable="true"],
   [contenteditable="plaintext-only"] {
-    font-size: 16px;
+    font-size: max(16px, 1rem);
   }
 
 .modal[data-modal-mobile="fullscreen"][data-open="true"],
-  .modal[data-modal-kind="editor"][data-open="true"] {
+  .modal[data-modal-kind="editor"][data-open="true"],
+  .modal[data-modal-size="workspace"][data-open="true"] {
     top: var(--tinycat-modal-viewport-top, 0px);
     right: auto;
     bottom: auto;
@@ -20,7 +21,8 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
   }
 
 .modal[data-modal-mobile="fullscreen"] > .modal-panel,
-  .modal[data-modal-kind="editor"] > .modal-panel {
+  .modal[data-modal-kind="editor"] > .modal-panel,
+  .modal[data-modal-size="workspace"] > .modal-panel {
     display: grid;
     width: 100%;
     height: 100%;
@@ -31,7 +33,8 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
   }
 
 .modal[data-modal-mobile="fullscreen"] > .modal-panel > .modal-body,
-  .modal[data-modal-kind="editor"] > .modal-panel > .modal-body {
+  .modal[data-modal-kind="editor"] > .modal-panel > .modal-body,
+  .modal[data-modal-size="workspace"] > .modal-panel > .modal-body {
     min-height: 0;
     overflow: auto;
   }

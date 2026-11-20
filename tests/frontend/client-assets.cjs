@@ -30,6 +30,18 @@ function load(route, locale = "en", compiled = false) {
   return { ...bundle, T: window.TinyCat };
 }
 const publicPage = load("/");
+for (const mode of [false, true, "min"]) {
+  const queue = load("/admin/bots/queue", "en", mode);
+  check(["status/edit-fields", "status/dialog-form"].every(name => queue.definitions.includes(name)), "Bot queue delivers its complete status editor dependency in every asset variant");
+  const profile = load("/author/2", "cs", mode);
+  const followForm = { dataset: {}, getAttribute: name => name === "action" ? "/api/users/2/followers/me" : null };
+  const response = { data: { author_id: 2, following: true, followers_count: 1, following_count: 0 } };
+  check(profile.T.accounts.result(followForm, response, null) === false, "Core accounts leave relationship responses to their owner in every public asset variant");
+  let handled = false;
+  profile.T.socialUsers.result = (source, result) => { handled = source === followForm && result === response; return []; };
+  profile.T.modules.result(followForm, response, null);
+  check(handled, "The actual public module chain delivers follow results to Social");
+}
 check(publicPage.T.accounts !== publicPage.T.socialUsers && typeof publicPage.T.accounts.follow === "undefined" && typeof publicPage.T.socialUsers.profiles === "function", "Social relationships never mutate the core account service");
 check(typeof publicPage.T.accounts.list === "undefined" && publicPage.T.accounts.avatarUpload, "Public account controls keep avatar editing without the administrative list adapter");
 const login = load("/login");

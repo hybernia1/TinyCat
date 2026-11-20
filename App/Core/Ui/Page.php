@@ -18,6 +18,9 @@ final class Page
     public static function render(array $page, string $content): void
     {
         if (Admin\Layout::handles($page)) { Admin\Layout::render($page, $content); return; }
+        if (isset($page['navigation'])) {
+            $content = \TinyCat\Support\Components::render('ui/public-workspace', ['title' => $page['title'] ?? '', 'navigation' => $page['navigation'], 'content' => new \TinyCat\Support\Markup($content)]);
+        }
         if (self::$renderer !== null) { (self::$renderer)($page, $content); return; }
         $themes = \TinyCat\Core\Modules\Registrations::current()->entries->themes;
         $selected = (string) \TinyCat\Core\Runtime\Startup::option('site.theme', '');

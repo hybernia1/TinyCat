@@ -7,6 +7,10 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale('en');
 if (($argv[1] ?? '') === '--page-routes') { echo json_encode(\TinyCat\Http\Router::pageDefinitions('tinycat.social'), JSON_THROW_ON_ERROR); exit(0); }
+if (($argv[1] ?? '') === '--settings-templates') {
+    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json', 'tinycat.blog' => 'App/Modules/Blog/module.json'])->catalog);
+    echo json_encode(array_filter(\TinyCat\Support\Components::templates(), static fn (string $key): bool => str_starts_with($key, 'settings/'), ARRAY_FILTER_USE_KEY), JSON_THROW_ON_ERROR); exit(0);
+}
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
 if (($argv[1] ?? '') === '--contexts') {
     $fixture = json_decode((string) file_get_contents(__DIR__ . '/../../fixtures/component-contexts.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -23,7 +27,6 @@ if (($argv[1] ?? '') === '--contexts') {
     echo json_encode($results, JSON_THROW_ON_ERROR); exit(0);
 }
 if (($argv[1] ?? '') === '--settings') { echo json_encode(\TinyCat\Core\Settings\Resource::editor(), JSON_THROW_ON_ERROR); exit(0); }
-if (($argv[1] ?? '') === '--settings-presentation') { echo json_encode(\TinyCat\Core\Settings\Sections::presentation(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--admin-definitions') { echo json_encode(\TinyCat\Core\Ui\Admin\Definitions::all(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--social-constraints') { echo json_encode(\TinyCat\Social\Posts\Resource::constraints(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--constraints') { echo json_encode(\TinyCat\Http\Validator::constraints(['title' => 'required|string|max:2', 'body' => 'required|string|max_bytes:6', 'interval' => 'required|integer|between:5,10', 'comment' => 'required|string|max:2']), JSON_THROW_ON_ERROR); exit(0); }

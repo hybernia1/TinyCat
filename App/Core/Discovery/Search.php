@@ -62,11 +62,19 @@ final class Search
         $r = Request::current(); $r->validated(['q' => 'string|max:80', 'collection' => 'string|max:80']); $cursor = $r->input('cursor', []);
         if (!is_array($cursor)) { throw new \InvalidArgumentException('Invalid search cursor.', 400); }
         $data = self::query((string) $r->input('q', ''), (string) $r->input('collection', ''), $cursor);
-        $searchUrl = \TinyCat\Support\LocalUrls::resolve('/search/all');
+        $selected = (string) $r->input('collection', '');
+        $navigation = [['label' => Localization::t('common.all'), 'icon' => 'search', 'url' => \TinyCat\Support\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query']])), 'active' => $selected === '']];
+        foreach (self::sources() as $source) {
+            $navigation[] = ['label' => ($source->label)(), 'icon' => $source->icon, 'url' => \TinyCat\Support\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query'], 'collection' => $source->id])), 'active' => $selected === $source->id];
+            foreach ($data['collections'] as &$group) {
+                if ($group['id'] === $source->id && $group['items'] !== [] && $source->render !== null) { $group['content'] = new \TinyCat\Support\Markup(($source->render)($group['items'])); }
+            }
+            unset($group);
+        }
         foreach ($data['collections'] as &$group) { $group['next_url'] = \TinyCat\Support\LocalUrls::resolve($group['next_url']); }
         unset($group);
         $title = Localization::t('common.search');
-        $content = Components::render('ui/search-page', ['result' => $data, 'searchUrl' => $searchUrl]);
-        \TinyCat\Core\Ui\Page::render(['title' => $title, 'current' => '/search/all', 'meta' => ['robots' => 'noindex,nofollow']], $content);
+        $content = Components::render('ui/search-page', ['result' => $data]);
+        \TinyCat\Core\Ui\Page::render(['title' => $title, 'navigation' => $navigation, 'current' => '/search/all', 'public' => true, 'search_query' => $data['query'], 'meta' => ['robots' => 'noindex,nofollow']], $content);
     }
 }

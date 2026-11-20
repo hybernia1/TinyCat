@@ -29,7 +29,7 @@ if ($context === 'modal') {
     $html .= TinyCat\Support\Components::render('bots/run-filter-form', $model);
 }
 $css = TinyCat\Support\AssetGraph::stylesheet(TinyCat\Support\ClientAssets::sourceStyles('/admin/bots/list'));
-echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $html;
+echo '<!doctype html><html data-ui-density="compact"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $html;
 ?>
 <script>
 window.TinyCat = { lifecycle: { register: function (name, hooks) { if (hooks.init) hooks.init(); if (name === 'tooltips') { window.tooltipService = hooks; hooks.hydrate(document); } } } };
@@ -163,7 +163,7 @@ for (const long of [false, true]) {
     const tooltipClosed = tooltip.hidden && primary.getAttribute('aria-describedby') === 'fixture-description' && escapedToModal === 0;
     primary.blur();
     const actionsAligned = [...wrap.querySelectorAll('.table-actions-cell')].every(cell => getComputedStyle(cell).textAlign === 'right') && [...wrap.querySelectorAll('.table-actions')].every(actions => getComputedStyle(actions).flexWrap === 'nowrap' && actions.getBoundingClientRect().right <= actions.parentElement.getBoundingClientRect().right);
-    const table = wrap.querySelector('table'), mobile = innerWidth < 600;
+    const table = wrap.querySelector('table'), mobile = innerWidth < 900;
     let navigationFits = true;
     if (context === 'modal') {
       const row = document.querySelector('.modal-tabs'), select = row.querySelector('[data-tab-select]'), tabs = row.querySelector('.tabs');
@@ -250,7 +250,50 @@ let lazyHintsReady = initiallyUnfocusable && lazyText.getAttribute('tabindex') =
 lazy.hidden = true; window.tooltipService.hydrate(lazy); lazy.hidden = false;
 lazy.dispatchEvent(new CustomEvent('tinycat:tab', {bubbles:true}));
 lazyHintsReady = lazyHintsReady && lazyText.getAttribute('tabindex') === '0'; lazy.remove();
-results.forEach(result => Object.assign(result, {sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
+let pinnedList = true, paginationCompact = true, pinnedDiagnostics = {};
+if (context !== 'modal') {
+  const wrap = document.querySelector('.table-wrap'), body = wrap.querySelector('tbody');
+  const clones = Array.from({length:40}, () => body.rows[0].cloneNode(true));
+  body.append(...clones);
+  const paginationHost = document.createElement('div');
+  paginationHost.innerHTML = <?= json_encode(TinyCat\Support\Components::render('ui/pagination', ['navigation' => ['visible' => true, 'from' => 1, 'to' => 25, 'total' => 100, 'pages' => [['number' => 1, 'current' => true], ['number' => 2, 'current' => false, 'url' => '?page=2']], 'previous' => [], 'next' => ['url' => '?page=2']]]), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>;
+  const pagination = paginationHost.firstElementChild;
+  wrap.parentElement.append(pagination);
+  document.scrollingElement.scrollTop = 0;
+  const heading = wrap.querySelector('th'), toolbar = document.querySelector('.admin-list-toolbar');
+  const before = [heading.getBoundingClientRect().top, pagination.getBoundingClientRect().top, toolbar.getBoundingClientRect().top];
+  wrap.scrollTop = 500;
+  pagination.querySelector('a').focus({preventScroll:true});
+  const after = [heading.getBoundingClientRect().top, pagination.getBoundingClientRect().top, toolbar.getBoundingClientRect().top];
+  pinnedList = innerWidth >= 900
+    ? wrap.scrollTop > 0 && before.every((top,index) => Math.abs(top-after[index]) < 1)
+      && pagination.getBoundingClientRect().bottom <= innerHeight + 1
+      && document.documentElement.scrollHeight <= innerHeight + 1
+      && document.activeElement.closest('.pagination') === pagination
+    : wrap.scrollTop === 0 && document.documentElement.scrollHeight > innerHeight && getComputedStyle(heading).position !== 'sticky';
+  pinnedDiagnostics = {before, after, scroll:wrap.scrollTop, documentHeight:document.documentElement.scrollHeight, paginationBottom:pagination.getBoundingClientRect().bottom, focused:document.activeElement.closest('.pagination') === pagination};
+  paginationCompact = pagination.getBoundingClientRect().height <= 55
+    && pagination.scrollWidth <= pagination.clientWidth
+    && [...pagination.querySelectorAll('.pagination-prev,.pagination-next,.is-active')].every(link => link.getBoundingClientRect().width > 0)
+    && [...pagination.querySelectorAll('.pagination-list > a:not(.pagination-prev):not(.pagination-next)')].every(link => innerWidth >= 900 ? link.getBoundingClientRect().width > 0 : !link.getBoundingClientRect().width);
+  clones.forEach(row => row.remove()); pagination.remove(); wrap.scrollTop = 0;
+}
+const scalableControl = [...document.querySelectorAll('.input,.select')].find(field => field.getBoundingClientRect().height > 0 && !field.hasAttribute('data-tab-select'));
+const scalableButton = [...document.querySelectorAll('.btn')].find(button => button.getBoundingClientRect().height > 0);
+const scalableRow = document.querySelector('.table tbody tr');
+const scalableNodes = [scalableControl, scalableButton, scalableRow];
+const originalHeights = scalableNodes.map(node => node.getBoundingClientRect().height);
+const previousScale = document.documentElement.style.getPropertyValue('--ui-scale');
+const originalScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale'));
+let controlsScale = true;
+for (const multiplier of [1.25,1.5,2]) {
+  document.documentElement.style.setProperty('--ui-scale', originalScale * multiplier);
+  controlsScale = controlsScale && scalableNodes.every((node,index) => node.getBoundingClientRect().height > originalHeights[index])
+    && document.documentElement.scrollWidth <= innerWidth;
+}
+if (previousScale) document.documentElement.style.setProperty('--ui-scale',previousScale);
+else document.documentElement.style.removeProperty('--ui-scale');
+results.forEach(result => Object.assign(result, {controlsScale, pinnedList, pinnedDiagnostics, paginationCompact, sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
 const output = document.createElement('pre'); output.id = 'layout-metrics'; output.textContent = JSON.stringify(results); document.body.append(output);
 }());
 </script></body></html>

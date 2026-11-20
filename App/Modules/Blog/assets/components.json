@@ -308,6 +308,13 @@
             "value": {"get": "item.title"},
             "required": {"get": "constraints.title.required"},
             "data-max-length": {"get": "constraints.title.max_length"}
+          },
+          "help": {
+            "t": "blog.invalid",
+            "values": {
+              "title_max": {"get": "constraints.title.max_length"},
+              "body_max": {"get": "constraints.body.max_bytes"}
+            }
           }
         }
       },
@@ -323,19 +330,6 @@
         }
       },
       {"component": "publishing/image-field", "data": {"image": {"get": "image"}, "enabled": {"get": "images_enabled"}}},
-      {
-        "tag": "p",
-        "attrs": {"class": "help m-0"},
-        "children": [
-          {
-            "t": "blog.invalid",
-            "values": {
-              "title_max": {"get": "constraints.title.max_length"},
-              "body_max": {"get": "constraints.body.max_bytes"}
-            }
-          }
-        ]
-      },
       {
         "component": "ui/select",
         "data": {
@@ -385,7 +379,8 @@
             "type": "url",
             "readonly": {"not": {"get": "permissions.change_feed_url"}},
             "data-max-bytes": {"get": "constraints.feed_url.max_bytes"}
-          }
+          },
+          "help": {"t": "blog.feeds.help"}
         }
       },
       {
@@ -469,8 +464,7 @@
           },
           "attributes": {"class": "select", "name": "import_images"}
         }
-      },
-      {"tag": "p", "attrs": {"class": "help m-0"}, "children": [{"t": "blog.feeds.help"}]}
+      }
     ]
   },
   "blog/sources": {
@@ -783,61 +777,7 @@
       {
         "each": {"get": "articles"},
         "as": "article",
-        "children": {
-          "tag": "article",
-          "attrs": {"class": "card blog-article"},
-          "children": [
-            {
-              "tag": "div",
-              "attrs": {"class": "card-body stack stack-gap-16"},
-              "children": [
-                {
-                  "tag": "header",
-                  "attrs": {"class": "stack"},
-                  "children": [
-                    {
-                      "tag": "p",
-                      "attrs": {"class": "text-muted m-0"},
-                      "children": [
-                        {"get": "article.author"},
-                        " · ",
-                        {
-                          "tag": "time",
-                          "attrs": {"datetime": {"get": "article.published_iso"}},
-                          "children": [{"get": "article.published_label"}]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
-                      "attrs": {"class": "m-0"},
-                      "children": [
-                        {
-                          "tag": "a",
-                          "attrs": {"href": {"concat": ["/articles/", {"get": "article.id"}]}},
-                          "children": [{"get": "article.title"}]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {"tag": "p", "attrs": {"class": "blog-excerpt m-0"}, "children": [{"get": "article.excerpt"}]},
-                {
-                  "tag": "a",
-                  "attrs": {"href": {"concat": ["/articles/", {"get": "article.id"}]}},
-                  "children": [
-                    {"t": "blog.view"},
-                    {
-                      "tag": "span",
-                      "attrs": {"class": "sr-only"},
-                      "children": [": ", {"get": "article.title"}, " #", {"get": "article.id"}]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+        "children": {"component": "blog/article-summary", "data": {"article": {"get": "article"}}}
       },
       {
         "tag": "nav",
@@ -905,6 +845,72 @@
       },
       {"tag": "div", "attrs": {"aria-live": "polite", "class": "stack", "data-article-source-output": ""}},
       {"tag": "button", "attrs": {"type": "submit", "class": "btn btn-secondary"}, "children": [{"t": "common.save"}]}
+    ]
+  },
+  "blog/article-summary": {
+    "tag": "article",
+    "attrs": {"class": "card blog-article"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body stack stack-gap-16"},
+        "children": [
+          {
+            "tag": "header",
+            "attrs": {"class": "stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "text-muted m-0"},
+                "children": [
+                  {"get": "article.author"},
+                  " · ",
+                  {
+                    "tag": "time",
+                    "attrs": {"datetime": {"get": "article.published_iso"}},
+                    "children": [{"get": "article.published_label"}]
+                  }
+                ]
+              },
+              {
+                "tag": "h2",
+                "attrs": {"class": "m-0"},
+                "children": [
+                  {
+                    "tag": "a",
+                    "attrs": {"href": {"concat": ["/articles/", {"get": "article.id"}]}},
+                    "children": [{"get": "article.title"}]
+                  }
+                ]
+              }
+            ]
+          },
+          {"tag": "p", "attrs": {"class": "blog-excerpt m-0"}, "children": [{"get": "article.excerpt"}]},
+          {
+            "tag": "a",
+            "attrs": {"href": {"concat": ["/articles/", {"get": "article.id"}]}},
+            "children": [
+              {"t": "blog.view"},
+              {
+                "tag": "span",
+                "attrs": {"class": "sr-only"},
+                "children": [": ", {"get": "article.title"}, " #", {"get": "article.id"}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "blog/search-results": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-16"},
+    "children": [
+      {
+        "each": {"get": "articles"},
+        "as": "article",
+        "children": {"component": "blog/article-summary", "data": {"article": {"get": "article"}}}
+      }
     ]
   }
 }

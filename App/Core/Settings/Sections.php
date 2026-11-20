@@ -12,7 +12,7 @@ final class Sections
     {
         $result = ['sections' => [], 'fields' => [], 'examples' => []];
         foreach ($sections ?? self::current() as $group => $section) {
-            if (!is_string($section['label'] ?? null) || !is_string($section['icon'] ?? null)) {
+            if ((!is_string($section['label'] ?? null) && !is_array($section['label'] ?? null)) || !is_string($section['icon'] ?? null)) {
                 throw new \LogicException('Missing settings section presentation: ' . $group);
             }
             $result['sections'][$group] = array_intersect_key($section, array_flip(['label', 'icon']));
@@ -31,7 +31,7 @@ final class Sections
      * @return array<string, mixed> */
     private static function fieldPresentation(array $field): array
     {
-        if (!is_string($field['label'] ?? null)) { throw new \LogicException('Missing settings field label: ' . $field['key']); }
+        if (!is_string($field['label'] ?? null) && !is_array($field['label'] ?? null)) { throw new \LogicException('Missing settings field label: ' . $field['key']); }
         $result = array_intersect_key($field, array_flip(['label', 'help', 'placeholder', 'span']));
         if (isset($field['fields'])) {
             $result['fields'] = [];
@@ -56,7 +56,7 @@ final class Sections
     }
 
     /** @return array<mixed> */
-    public static function current(): array
+    public static function current(bool $translate = true): array
     {
         $result = []; $keys = [];
         foreach (\TinyCat\Core\Modules\Registrations::current()->entries->settings as $entry) {
@@ -68,6 +68,44 @@ final class Sections
             if (isset($result[$entry->group])) { $result[$entry->group]['fields'] = [...$result[$entry->group]['fields'], ...$section['fields']]; }
             else { $result[$entry->group] = $section; }
         }
+        return $translate ? self::translate($result) : $result;
+    }
+
+    /** @param array<mixed> $value
+     * @return array<mixed> */
+    private static function translate(array $value): array
+    {
+        foreach ($value as &$definition) {
+            foreach (['label', 'help', 'placeholder'] as $key) {
+                $entry = $definition[$key] ?? null;
+                if (is_array($entry) && count($entry) === 1 && is_string($entry['t'] ?? null)) { $definition[$key] = \TinyCat\Support\Localization::t($entry['t']); }
+            }
+            if (isset($definition['fields'])) { $definition['fields'] = self::translate($definition['fields']); }
+        }
+        unset($definition);
+        return $value;
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    public static function sectionLookup(): array { return self::presentation(self::current(false))['sections']; }
+
+    /** @return array<string, array<string, mixed>> */
+    public static function fieldLookup(): array
+    {
+        $result = [];
+        $append = static function (string $key, array $field) use (&$append, &$result): void {
+            $children = $field['fields'] ?? [];
+            unset($field['fields']);
+            $result[$key] = ['views' => [$field]];
+            foreach ($children as $name => $child) { $append($key . '.' . $name, $child); }
+        };
+        foreach (self::presentation(self::current(false))['fields'] as $key => $field) { $append($key, $field); }
         return $result;
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    public static function formatLookup(): array
+    {
+        return array_map(static fn (string $example): array => ['example' => $example], self::presentation([])['examples']);
     }
 }

@@ -92,6 +92,11 @@ $assert($status === 200 && $payload['data']['status']['liked'] && $payload['data
 $assert($status === 200 && !$payload['data']['status']['liked'], 'DELETE requests the unliked state.');
 [$status, $payload] = $request('PUT', '/api/statuses/11/comments/10/likes/me', [], 'user', $csrf);
 $assert($status === 404, 'Nested comment IDs must belong to the status in the path.');
+[$status, $payload] = $request('POST', '/api/statuses/10/comments', ['comment' => 'Root comment from a numeric form value', 'parent_id' => '0'], 'user', $csrf);
+$assert($status === 201 && $payload['data']['comment']['parent_id'] === 0, 'Root comments accept the numeric zero submitted by the shared form.');
+$rootCommentId = $payload['data']['comment']['id'];
+[$status] = $request('DELETE', '/api/statuses/10/comments/' . $rootCommentId, [], 'user', $csrf);
+$assert($status === 200, 'The created root comment remains independently removable.');
 [$status, $payload] = $request('POST', '/api/statuses/10/comments', ['comment' => 'JSON reply <b>literal</b>', 'parent_id' => 10], 'user', $csrf);
 $assert($status === 201 && $payload['data']['comment']['parent_id'] === 10 && !isset($payload['data']['comment']['html']), 'AJAX replies return a complete comment resource instead of rendered markup.');
 $commentId = $payload['data']['comment']['id'];

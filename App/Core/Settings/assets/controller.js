@@ -5,21 +5,19 @@ import "../../../../assets/core/modules.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
-  function prepareField(spec, display, name, examples) {
-    if (!display) { throw new Error("Missing settings field presentation: " + spec.key); }
+  function prepareField(spec, name, key) {
     name = name || "settings[" + spec.key + "]";
-    examples = examples || {};
+    key = key || spec.key;
     var value = spec.value == null ? "" : spec.value, type = spec.type;
     var grouped = Array.isArray(spec.fields), kind = grouped ? "group" : ({ bool: "bool", email_templates: "templates", site_image: "image", textarea: "textarea" }[type] || "input");
     var model = { root_tag: grouped || ["templates", "image"].includes(kind) ? "div" : "label",
-      root_class: "field min-w-0" + (display.span ? " grid-span-full" : ""), kind: kind, label: display.label,
-      help: display.help || "", name: name, value: type === "password" ? "" : value,
+      key: key, kind: kind, name: name, value: type === "password" ? "" : value,
       checked: Boolean(value), fields: [], options: [], attributes: {},
       upload_name: "settings_files[" + spec.key + "]", remove_name: "settings_remove[" + spec.key + "]" };
     if (grouped) {
       model.fields = spec.fields.map(function (child) {
         var childValue = child.type === "password" ? "" : value[child.key] == null ? child.value : value[child.key];
-        return prepareField(Object.assign({}, child, { value: childValue }), (display.fields || {})[child.key], name + "[" + child.key + "]", examples);
+        return prepareField(Object.assign({}, child, { value: childValue }), name + "[" + child.key + "]", key + "." + child.key);
       });
     } else if (type === "email_smtp") {
       throw new Error("Missing settings group fields: " + spec.key);
@@ -35,12 +33,11 @@ import "../../../../assets/core/modules.js";
         var text = option.name || option.value;
         if (type === "language") { text = option.value.toUpperCase() + " - " + text; }
         if (type === "timezone") { text = "(UTC" + (option.offset === "+00:00" ? "" : option.offset) + ") " + option.value; }
-        if (examples[option.value]) { text = option.value + " - " + examples[option.value]; }
         return { value: option.value, label: text, selected: String(value) === String(option.value) };
       });
     } else if (kind === "textarea") {
       model.value = String(value);
-      model.attributes = { "class": "textarea", name: name, rows: "8", maxlength: spec.max || 5000, placeholder: display.placeholder || U.text("settings.footer_placeholder") };
+      model.attributes = { "class": "textarea", name: name, rows: "8", maxlength: spec.max || 5000, placeholder: U.text("settings.footer_placeholder") };
     } else if (kind === "input") {
       var inputType = { int: "number", email: "email", site_url: "url", password: "password" }[type] || "text";
       model.attributes = { "class": "input", name: name, type: inputType, value: model.value,
@@ -56,12 +53,9 @@ import "../../../../assets/core/modules.js";
     },
     modal: function (url, response, id) {
       if (url.pathname !== "/api/settings/editor") { return null; }
-      var presentation = JSON.parse(document.body.dataset.settingsPresentation || "{}");
       var sections = (response.data.sections || []).map(function (section) {
-        var view = (presentation.sections || {})[section.key];
-        if (!view) { throw new Error("Missing settings section presentation: " + section.key); }
-        return { key: section.key, label: view.label, icon: view.icon, fields: section.fields.map(function (spec) {
-          return prepareField(spec, (presentation.fields || {})[spec.key], null, presentation.examples);
+        return { key: section.key, fields: section.fields.map(function (spec) {
+          return prepareField(spec);
         }) };
       });
       var form = U.form("/api/settings", "PATCH", T.components.render("settings/editor-form", { sections: sections }));

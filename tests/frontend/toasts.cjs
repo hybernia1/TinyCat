@@ -4,11 +4,12 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 let stack, nextTimer = 0;
+let flashNodes = [];
 const timers = new Map(), viewportEvents = {}, documentEvents = {};
 function element() {
   return {
     style: {}, children: [], events: {}, dataset: {},
-    setAttribute() {},
+    setAttribute(name, value) { (this.attributes ||= {})[name] = value; },
     appendChild(child) { this.children.push(child); child.parent = this; },
     addEventListener(name, handler) { this.events[name] = handler; },
     remove() { this.removed = true; }
@@ -21,7 +22,7 @@ const document = {
 const viewport = {width: 375, height: 812, offsetTop: 0, offsetLeft: 0,
   addEventListener(name, handler) { viewportEvents[name] = handler; }};
 const T = {
-  dom: {find: () => stack, all: () => []}, i18n: {label: () => "Close"},
+  dom: {find: () => stack, all: () => flashNodes}, i18n: {label: () => "Close"},
   icons: {create: element}, lifecycle: {register(_name, hooks) { this.hooks = hooks; }}
 };
 const window = {TinyCat: T, visualViewport: viewport, innerWidth: 375, innerHeight: 812,
@@ -31,6 +32,8 @@ const window = {TinyCat: T, visualViewport: viewport, innerWidth: 375, innerHeig
 };
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/ui/toasts.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), {window, document});
 T.lifecycle.hooks.init();
+assert.equal(T.toasts.show('   ', 'success'), null);
+assert.equal(stack, undefined, 'Empty messages create no toast stack');
 const toast = T.toasts.show("Saved", "success");
 assert.equal(timers.size, 1);
 assert.equal([...timers.values()][0].delay, 4200);
@@ -60,7 +63,7 @@ assert.equal(stack.style.transform, "translate(0px, 0px)");
 viewport.width = 300; viewport.offsetLeft = 20;
 viewportEvents.resize();
 assert.equal(stack.style.transform, "translate(-55px, 0px)");
-assert.equal(stack.style.maxWidth, "280px");
+assert.equal(stack.style.maxWidth, "calc(300px - var(--toast-inset) * 2)");
 toast.children[2].events.click();
 assert.equal(toast.removed, true);
 assert.equal(timers.size, 0);
@@ -71,4 +74,20 @@ assert.equal(stack.style.maxWidth, "");
 assert.equal([...timers.values()][0].delay, 5600);
 [...timers.values()][0].handler();
 assert.equal(fallback.removed, true);
+const flash = element();
+flash.textContent = '';
+flash.content = {textContent: JSON.stringify([{message: 'Blog activated.', type: 'success'}])};
+flashNodes = [flash];
+T.toasts.init();
+assert.equal(stack.children.at(-1).children[1].textContent, 'Blog activated.');
+assert.equal(flash.removed, true);
+const renderedCount = stack.children.length;
+T.toasts.init();
+assert.equal(stack.children.length, renderedCount, 'A consumed flash renders only once');
+for (const [tone,expected] of [['success','success'],['danger','danger'],['warning','warning'],['info','info'],['error','danger'],['unknown','info']]) {
+  const notice=T.toasts.show('<b>Literal notice</b>',tone);
+  assert.equal(notice.className,'toast toast-'+expected);
+  assert.equal(notice.attributes.role,['danger','warning'].includes(expected)?'alert':'status');
+  assert.equal(notice.children[1].textContent,'<b>Literal notice</b>');
+}
 console.log("PASS toast mobile viewport, modal opening, touch duration, mouse pause and dismissal");

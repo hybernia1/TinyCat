@@ -1,15 +1,15 @@
 .status-comment-history {
   display: grid;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 
 .status-comment-history-entry {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 10px;
+  padding: 0.625rem;
 }
 
 
@@ -23,14 +23,14 @@
   overflow-wrap: anywhere;
   border-radius: var(--radius-sm);
   background: var(--surface-soft);
-  padding: 7px 9px;
+  padding: 0.4375rem 0.5625rem;
 }
 
 
 .status-comment-diff-removed,
 .status-comment-diff-added {
   border-radius: 3px;
-  padding: 1px 2px;
+  padding: 1px 0.125rem;
   text-decoration-thickness: 1px;
 }
 
@@ -59,8 +59,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0 0 10px;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0 0.625rem;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
@@ -85,8 +85,8 @@
 
 .status-reply-form-container {
   display: none;
-  margin-top: 6px;
-  padding-left: 10px;
+  margin-top: 0.375rem;
+  padding-left: 0.625rem;
 }
 
 
@@ -97,22 +97,22 @@
 
 .status-comment-replies {
   display: grid;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 0.625rem;
+  margin-top: 0.625rem;
 }
 
 
 .status-comment-form {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 2.125rem minmax(0, 1fr);
+  gap: 0.5rem;
   align-items: start;
 }
 
 
 .status-comment-form.is-reply {
-  grid-template-columns: 30px minmax(0, 1fr);
-  margin-top: 2px;
+  grid-template-columns: 1.875rem minmax(0, 1fr);
+  margin-top: 0.125rem;
 }
 
 
@@ -121,11 +121,11 @@
   display: grid;
   align-items: end;
   min-width: 0;
-  min-height: 38px;
+  min-height: 2.375rem;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: var(--surface-soft);
-  padding: 2px 40px 2px 13px;
+  padding: 0.125rem 2.5rem 0.125rem 0.8125rem;
   transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
 }
 
@@ -138,10 +138,10 @@
 
 
 .status-comment-input {
-  min-height: 34px;
+  min-height: 2.125rem;
   border: 0;
   background: transparent;
-  padding: 8px 0 7px;
+  padding: 0.5rem 0 0.4375rem;
   line-height: 1.35;
   resize: vertical;
 }
@@ -158,11 +158,11 @@
 
 
 .status-comment-editor .status-editor-input {
-  min-height: 34px;
-  max-height: 160px;
+  min-height: 2.125rem;
+  max-height: 10rem;
   border: 0;
   background: transparent;
-  padding: 8px 0 7px;
+  padding: 0.5rem 0 0.4375rem;
   line-height: 1.35;
   box-shadow: none;
 }
@@ -176,10 +176,10 @@
 
 .status-comment-submit {
   position: absolute;
-  right: 5px;
-  bottom: 4px;
-  width: 30px;
-  min-height: 30px;
+  right: 0.3125rem;
+  bottom: 0.25rem;
+  width: 1.875rem;
+  min-height: 1.875rem;
   border-radius: var(--radius-sm);
   padding: 0;
 }
@@ -193,15 +193,15 @@
 .status-comment-like-button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   color: var(--muted);
   font-weight: 800;
 }
 
 
 .status-comment-like-button .icon {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 
@@ -214,7 +214,7 @@
   appearance: none;
   border: 0;
   background: transparent;
-  padding: 2px 0;
+  padding: 0.125rem 0;
   font: inherit;
   font-weight: 800;
   cursor: pointer;

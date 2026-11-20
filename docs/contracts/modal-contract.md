@@ -21,6 +21,29 @@ vykreslení běžného obsahu, composeru ani inline formulářů.
 
 ## Resource modaly
 
+### Významový typ a rozměr
+
+`data-modal-kind` určuje účel a chování, `data-modal-size` pouze rozměrovou variantu.
+Nejsou to další implementace dialogu; všechny používají `dialog.create` a `ui/modal`.
+
+| Typ | Účel | Společná pravidla |
+| --- | --- | --- |
+| `content` | Čtecí detail, historie, náhled nebo informace; může mít explicitní akce | Výchozí typ, společný fokus, Escape, backdrop a odstranění při zavření |
+| `editor` | Formulář včetně přihlášení, CAPTCHA nebo editace účtu | Form factory označí koncept, primární akci umístí do patičky; mobilní režim je fullscreen |
+| `confirm` | Krátké lokální potvrzení právě vyvolané akce | Společná confirm factory, žádná vlastní resource historie, potvrzení či zrušení |
+
+Rozměry jsou `default`, `compact`, `wide`, `reading` a `workspace`; potvrzení
+používá kombinaci `kind=confirm`, `size=confirm` a vlastní existující token šířky.
+`workspace` slouží pracovnímu editoru nebo rozsáhlému detailu, `reading` delšímu
+čtení. `data-modal-mobile=fullscreen` může explicitně rozšířit čtecí detail na
+mobilu. Neodvozovat významový typ z velikosti ani přidávat lokální modal rám.
+
+Pro celý modal platí jediná hranice: mobile do 899 px, desktop od 900 px.
+Záložky, fullscreen, potvrzovací tlačítka i JS zámek stránky používají stejnou
+hranici; hover ani typ ukazatele layout nepřepíná. Změna šířky za otevřeného
+dialogu synchronizuje viewport i zámek stránky, také u vnořených dialogů.
+Factory odmítá neznámý typ, velikost či mobilní režim před vytvořením DOM.
+
 1. Stránka obsahuje pouze spouštěč. Nevkládat dopředu modal, jeho formulář,
    hodnoty ani `<template>` s formulářem. Nevytvářet jej v `init`, `hydrate`
    ani při obnovení seznamu.

@@ -23,11 +23,12 @@ try {
             clearInterval(timer); resolve();
           }, 10);
         });
-        const doc = frame.contentDocument, win = frame.contentWindow, table = doc.querySelector('table');
+        const doc = frame.contentDocument, win = frame.contentWindow, table = doc.querySelector('#dashboard-comments-table');
         const rows = [...table.tBodies[0].rows], mobile = width < 600;
         results.push({width, documentWidth:doc.documentElement.scrollWidth,
           rows:rows.length, cards:table.hasAttribute('data-mobile-cards'),
-          stats:doc.querySelectorAll('article h2').length,
+          stats:doc.querySelectorAll('table:not(:has(thead)) th[scope="row"]').length,
+          summaryFits:[...doc.querySelectorAll('table:not(:has(thead))')].every(summary=>summary.scrollWidth<=summary.closest('.table-wrap').clientWidth+1),
           display:win.getComputedStyle(table).display,
           headers:table.tHead.rows[0].cells.length > 0 && win.getComputedStyle(table.tHead).display === 'table-header-group',
           fits:table.closest('.table-wrap').getBoundingClientRect().right <= width, scrollable:['auto','scroll'].includes(win.getComputedStyle(table.closest('.table-wrap')).overflowX),
@@ -46,7 +47,7 @@ try {
   const results = JSON.parse(match[1].replace(/&quot;/g,'"').replace(/&amp;/g,'&'));
   assert.equal(results.length,7);
   for (const item of results) {
-    assert.ok(item.documentWidth <= item.width && item.fits && item.resetFits, "Dashboard overflow: "+JSON.stringify(item));
+    assert.ok(item.documentWidth <= item.width && item.fits && item.resetFits && item.summaryFits, "Dashboard overflow: "+JSON.stringify(item));
     assert.ok(item.rows === 8 && item.stats === 8 && !item.cards && item.headers && item.scrollable && item.clipped && item.noUnrelatedSort, "Social widget content and shared table behavior: "+JSON.stringify(item));
     assert.equal(item.display, "table");
   }

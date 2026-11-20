@@ -16,7 +16,11 @@ final class ServiceProvider implements \TinyCat\Core\Modules\ProvidesManagedSche
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
-        return new \TinyCat\Core\Modules\Contributions(settings: Settings::sections(), temporaryDirectories: [new \TinyCat\Core\Modules\TemporaryDirectory('branding', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/site'), 40)], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.settings.admin', static fn (): array => [
+        return new \TinyCat\Core\Modules\Contributions(componentLookups: [
+            new \TinyCat\Core\Modules\ComponentLookup('settings.sections', Sections::sectionLookup(...)),
+            new \TinyCat\Core\Modules\ComponentLookup('settings.fields', Sections::fieldLookup(...)),
+            new \TinyCat\Core\Modules\ComponentLookup('settings.formats', Sections::formatLookup(...)),
+        ], settings: Settings::sections(), temporaryDirectories: [new \TinyCat\Core\Modules\TemporaryDirectory('branding', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/site'), 40)], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.settings.admin', static fn (): array => [
             'modal' => 'modal-settings-editor', 'modal_url' => '/api/settings/editor', 'icon' => 'settings', 'label' => \TinyCat\Support\Localization::t('settings.title'),
         ], 80)]);
     }

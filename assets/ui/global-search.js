@@ -54,25 +54,23 @@ import "./popovers.js";
     var link = createElement("a", "identity-row identity-row-compact");
     var title = createElement("strong", "", item.title || "");
     var metaText = item.summary || TinyCat.dates.format(item.published_at) || "";
-    var meta = createElement("span", "", metaText);
-    var excerpt = createElement("span", "", item.excerpt || "");
     var avatar = createElement("span", "avatar");
     var text = createElement("span", "identity-copy identity-copy-truncate");
 
     link.href = item.url || "#";
     link.dataset.globalSearchLink = "true";
-    link.setAttribute("data-popover-close", "");
+    link.dataset.popoverClose = "";
 
     if (item.avatar_url) { appendUserAvatar(avatar, item.avatar_url, item.title || "", "", "U"); }
     else { avatar.textContent = (item.title || "").slice(0, 1); }
 
     text.appendChild(title);
     if (metaText) {
-      text.appendChild(meta);
+      text.appendChild(createElement("span", "", metaText));
     }
 
     if (item.excerpt) {
-      text.appendChild(excerpt);
+      text.appendChild(createElement("span", "", item.excerpt));
     }
 
     link.appendChild(avatar);
@@ -105,13 +103,12 @@ import "./popovers.js";
       return;
     }
 
-    link = globalSearchItem({
-      type: "search",
-      title: (root.dataset.searchAll || TinyCat.i18n.t("public.search_all")) + ": " + query,
-      excerpt: "",
-      url: (root.getAttribute("action") || "/search/all") + "?q=" + encodeURIComponent(query)
-    });
-    link.classList.add("global-search-all");
+    link = createElement("a", "btn btn-ghost global-search-all");
+    link.href = (root.getAttribute("action") || "/search/all") + "?q=" + encodeURIComponent(query);
+    link.dataset.globalSearchLink = "true";
+    link.dataset.popoverClose = "";
+    link.appendChild(TinyCat.ui.icon("search"));
+    link.appendChild(createElement("span", "is-resource-text", (root.dataset.searchAll || TinyCat.i18n.t("public.search_all")) + ": " + query));
     box.appendChild(link);
   }
   function renderGlobalSearch(root, data) {

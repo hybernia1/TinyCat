@@ -1,55 +1,51 @@
-.btn {
-  align-self: flex-start;
-}
-
 .stack > * {
   margin-block: 0;
 }
 
 .stack > * + * {
-  margin-block-start: var(--stack-gap, 16px);
+  margin-block-start: var(--stack-gap, 1rem);
 }
 
 .stack-gap-4 {
-  --stack-gap: 4px;
+  --stack-gap: 0.25rem;
 }
 
 .stack-gap-8 {
-  --stack-gap: 8px;
+  --stack-gap: 0.5rem;
 }
 
 .stack-gap-12 {
-  --stack-gap: 12px;
+  --stack-gap: 0.75rem;
 }
 
 .stack-gap-14 {
-  --stack-gap: 14px;
+  --stack-gap: 0.875rem;
 }
 
 .stack-gap-16 {
-  --stack-gap: 16px;
+  --stack-gap: 1rem;
 }
 
 .stack-gap-24 {
-  --stack-gap: 24px;
+  --stack-gap: 1.5rem;
 }
 
 .cluster {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--cluster-gap, 10px);
+  gap: var(--cluster-gap, 0.625rem);
 }
 
 .split {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .grid {
   display: grid;
-  gap: var(--grid-gap, 16px);
+  gap: var(--grid-gap, 1rem);
 }
 
 .grid-span-full {
@@ -83,11 +79,11 @@
 }
 
 .gap-1 {
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .gap-2 {
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .m-0 {
@@ -103,15 +99,15 @@
 }
 
 .max-w-auth-sm {
-  max-width: 520px;
+  max-width: 32.5rem;
 }
 
 .max-w-auth {
-  max-width: 560px;
+  max-width: 35rem;
 }
 
 .max-w-prose {
-  max-width: 920px;
+  max-width: 57.5rem;
 }
 
 .text-base {
@@ -144,14 +140,15 @@
 }
 
 .btn {
+  align-self: flex-start;
   display: inline-flex;
-  min-height: 40px;
+  min-height: var(--control-height);
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--control-padding-block);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  padding: 8px 14px;
+  padding: var(--control-padding-block) calc(var(--control-padding-inline) + var(--control-padding-block) / 2);
   background: var(--surface);
   color: var(--text);
   font-weight: 650;
@@ -215,13 +212,13 @@
 }
 
 .btn-sm {
-  min-height: 34px;
-  padding: 6px 10px;
+  min-height: var(--control-height-compact);
+  padding: calc(var(--control-padding-block) * 0.75) var(--control-padding-inline);
   font-size: 0.875rem;
 }
 
 .btn-icon {
-  width: 40px;
+  width: var(--control-height);
   padding-inline: 0;
 }
 
@@ -245,6 +242,6 @@
 .btn-group {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--control-padding-block);
 }
 

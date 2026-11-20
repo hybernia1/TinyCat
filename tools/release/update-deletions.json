@@ -2068,5 +2068,8 @@
     "App/Core/Updates/templates/administration.php",
     "App/Core/Updates/templates/actions.php",
     "App/Modules/Social/templates/site/privacy-section.php"
+  ],
+  "6.2.0": [
+    "assets/ui/styles/modal-confirm-mobile.css"
   ]
 }

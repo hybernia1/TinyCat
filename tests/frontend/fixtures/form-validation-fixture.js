@@ -4,6 +4,156 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
+  if (mode === 'code-copy') {
+    const value='  echo "žluťoučký <b>& test";\n\tsecond line\n';
+    const form=T.ui.form('/api/copy-fixture','POST'),pre=document.createElement('pre'),code=document.createElement('code'),inline=document.createElement('code'),editor=document.createElement('div'),link=document.createElement('a');
+    code.textContent=value;pre.append(code);inline.textContent='inline <value>';
+    editor.contentEditable='true';editor.innerHTML='<code>draft</code>';link.href='#';link.innerHTML='<code>linked</code>';
+    const draft=T.dom.element('input',{class:'input',name:'draft',value:'clean'});
+    form.append(pre,inline,editor,link,draft,T.ui.button('common.save',{type:'submit'}));document.body.append(form);
+    const writes=[];Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{writes.push(text);}}});
+    T.lifecycle.start();T.lifecycle.hydrate(form);T.lifecycle.hydrate(form);
+    const button=pre.querySelector('[data-copy-code]');
+    check(button&&pre.querySelectorAll('[data-copy-code]').length===1&&form.querySelectorAll('[data-copy-code]').length===2,'Hydration adds exactly one copy action per readonly code');
+    check(!editor.querySelector('button')&&!link.querySelector('button'),'Editable and linked code remain untouched');
+    check(code.textContent===value&&pre.textContent===value,'Copy controls never enter the code text');
+    let submits=0;form.addEventListener('submit',event=>{event.preventDefault();submits++;});
+    button.click();await wait(()=>writes.length===1,'Clipboard API receives a write');
+    check(writes[0]===value&&submits===0,'Copy preserves Unicode, markup literals and exact whitespace without submitting');
+    const updated=document.createElement('code');updated.textContent='new\ncontent';code.replaceWith(updated);T.lifecycle.hydrate(pre);
+    check(pre.querySelectorAll('[data-copy-code]').length===1,'Replacing code retargets its existing control');
+    button.click();await wait(()=>writes.length===2,'Retargeted control writes');check(writes[1]===updated.textContent,'Copy reads current content instead of a cached value');
+    const dialog=T.ui.adminDialog('code-copy-fixture','common.edit',form,false);document.body.append(dialog);T.dialog.open(dialog);T.lifecycle.hydrate(dialog);
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('denied');}}});
+    const previousCommand=document.execCommand;let fallbackText='',inside=false;
+    document.execCommand=name=>{fallbackText=document.activeElement.value;inside=dialog.contains(document.activeElement);return name==='copy';};
+    button.focus();button.click();await wait(()=>fallbackText.length>0,'Denied Clipboard API falls back to local selection');
+    check(fallbackText===updated.textContent&&inside&&document.activeElement===button&&!dialog.querySelector('textarea.sr-only'),'Fallback stays in the dialog, cleans up and restores focus');
+    check(!T.forms.dirty(dialog).length&&submits===0,'Copy does not dirty or submit the editor');
+    draft.value='unsaved';draft.dispatchEvent(new Event('input',{bubbles:true}));
+    document.execCommand=()=>false;document.querySelector('.toast-stack')?.remove();button.click();await wait(()=>!!document.querySelector('.toast-danger'),'Failed copying is reported as an error');
+    check(!button.hasAttribute('aria-busy')&&document.activeElement===button,'Failure restores action state and focus');
+    check(draft.value==='unsaved'&&T.forms.dirty(dialog).length===1,'Copy failure preserves an existing unsaved draft');
+    let rejectPending,unexpectedFallback=false;
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>new Promise((_resolve,reject)=>{rejectPending=reject;})}});
+    document.execCommand=()=>{unexpectedFallback=true;return true;};button.click();await wait(()=>!!rejectPending,'Clipboard request can remain pending');
+    T.dialog.close(dialog,{history:false});const focusAfterClose=document.activeElement;rejectPending(Error('denied'));await pause();
+    check(!unexpectedFallback&&document.activeElement===focusAfterClose,'Disposing the source prevents late fallback and focus stealing');
+    document.execCommand=previousCommand;
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,checks});return;
+  }
+  if (mode === 'scheduler-help') {
+    T.lifecycle.start();
+    const input=document.querySelector('[value="/api/scheduler/triggers/fixture"]'),details=input.closest('details'),summary=details.querySelector('summary');
+    check(!details.open&&!details.querySelector('.disclosure-body > [data-help]'),'Task details contain no floating help rows');
+    const titleHint=summary.querySelector('strong [data-help]'),scheduleHint=summary.querySelector('small [data-help]');
+    check(titleHint&&scheduleHint,'Hints are attached to the task and cadence captions');
+    titleHint.click();check(titleHint.getAttribute('aria-expanded')==='true'&&!details.open,'Clicking task help does not toggle its disclosure');
+    titleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+    scheduleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+    check(scheduleHint.getAttribute('aria-expanded')==='true'&&!details.open,'Keyboard help preserves the disclosure state');
+    scheduleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+    const queryHint=input.closest('label').querySelector('.label [data-help]');
+    check(queryHint&&input.getAttribute('aria-describedby').includes(queryHint.querySelector('[data-help-text]').id),'URL help describes its input beside the field caption');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,checks});return;
+  }
+  if (mode === 'field-types') {
+    const form=T.ui.form('/api/fields','POST');document.body.append(form);
+    const types={search:'search',password:'lock',email:'mail',url:'link',tel:'phone',date:'calendar',month:'calendar',week:'calendar',time:'clock','datetime-local':'calendar',text:null,number:null,checkbox:null};
+    for(const [type,icon] of Object.entries(types)) {
+      form.append(T.components.render('ui/field',{label:type,attributes:{class:type==='checkbox'?null:'input',name:type,type}}));
+      const input=form.elements.namedItem(type),field=input.closest('.field'),svg=field.querySelector('.input-icon svg');
+      check(icon ? svg&&svg.querySelector('use').getAttribute('href').endsWith('#'+icon) : !svg,'Semantic icon for '+type);
+      check(input.labels.length===1&&input.labels[0]===field,'Label association retained for '+type);
+    }
+    const input=form.elements.namedItem('email');input.value='fixture@example.test';
+    T.forms.applyErrors(form,{email:['Invalid address']});input.focus();
+    check(getComputedStyle(input).backgroundImage.includes('linear-gradient')&&getComputedStyle(input).boxShadow!=='none','Invalid input has underline and danger focus');
+    check(input.getAttribute('aria-describedby').includes(input.dataset.tinycatFieldErrorId),'Error remains described');
+    T.forms.clearErrors(form);
+    check(getComputedStyle(input).backgroundImage==='none'&&!input.hasAttribute('aria-invalid'),'Clearing validation restores normal input');
+    check(new FormData(form).get('email')==='fixture@example.test','Icon preserves submitted values');
+    const proxy=document.createElement('div');proxy.className='status-editor-input';proxy.contentEditable='true';proxy.dataset.validationFor='body';proxy.tabIndex=0;form.append(proxy);proxy.setAttribute('aria-invalid','true');proxy.focus();
+    check(getComputedStyle(proxy).backgroundImage.includes('linear-gradient')&&getComputedStyle(proxy).boxShadow!=='none','Rich text uses the same error treatment');
+    for(const density of ['regular','compact']) {
+      document.documentElement.dataset.uiDensity=density;document.documentElement.style.setProperty('--ui-scale','1');const initial=input.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--ui-scale','1.5');
+      check(input.getBoundingClientRect().height>initial*1.35,'Field scales in '+density+' profile');
+      check(document.documentElement.scrollWidth<=innerWidth,'No overflow in '+density+' profile: '+JSON.stringify([...form.querySelectorAll('*')].filter(e=>e.getBoundingClientRect().right>innerWidth).map(e=>[e.tagName,e.type,e.className,e.getBoundingClientRect().width])));
+    }
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,checks});return;
+  }
+  if (mode === 'help-info' || mode === 'help-info-cs') {
+    document.documentElement.dataset.uiDensity='compact';
+    const requests=[];
+    window.fetch=async(url,options)=>{
+      requests.push(options.method);
+      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:window.settingsSchema,meta:{}}),{headers:{'Content-Type':'application/json'}});
+    };
+    T.lifecycle.start();
+    const settings=await T.settings.open('site');
+    const siteLabel=settings.querySelector('[name="settings[site.name]"]').closest('.field').querySelector('.label').textContent.trim();
+    check(siteLabel === (mode === 'help-info-cs' ? 'N\u00e1zev webu' : 'Site name'), 'Compiled settings metadata translates at render time');
+    const smtpLabel=settings.querySelector('[name="settings[email.smtp][password]"]').closest('.field').querySelector('.label').textContent.trim();
+    check(smtpLabel === T.i18n.t('settings.fields.smtp_password'), 'Nested SMTP metadata uses the current client locale');
+    const hints=[...settings.querySelectorAll('[data-help]')];
+    check(hints.length>0&&hints.every(hint=>hint.closest('.label')), 'Actual settings bundle places hints beside field labels');
+    check(!settings.querySelector('.field > span.help'), 'Settings no longer render blocks of help below controls');
+    const text='Literal <img src=x> '+('Long explanatory text with details. '.repeat(160));
+    const form=T.ui.form('/api/help-fixture','POST');
+    form.append(T.components.render('ui/field',{label:'Flag',help:text,help_id:'flag-help',attributes:{class:'input',name:'flag',type:'checkbox','aria-describedby':'kept-hint'}}));
+    const kept=T.dom.element('span',{id:'kept-hint',hidden:true},'Existing description');form.append(kept,T.ui.button('common.save',{type:'submit'}));
+    const dialog=T.ui.adminDialog('help-info-fixture','common.edit',form,false);document.body.append(dialog);T.dialog.open(dialog);
+    T.lifecycle.hydrate(dialog);T.lifecycle.hydrate(dialog);
+    const hint=dialog.querySelector('[data-help]'), control=form.elements.namedItem('flag');
+    check(control.getAttribute('aria-label')==='Flag'&&control.getAttribute('aria-describedby').split(/\s+/).filter(id=>id==='flag-help').length===1&&control.getAttribute('aria-describedby').includes('kept-hint'), 'Hints preserve a clean field name and stable screen-reader descriptions across hydration');
+    hint.click();
+    let tip=document.getElementById(hint.getAttribute('aria-controls'));
+    check(hint.getAttribute('aria-expanded')==='true'&&!tip.hidden&&tip.textContent===text&&!tip.querySelector('img'), 'Help opens as literal escaped text through the shared tooltip');
+    check(!control.checked&&requests.every(method=>method==='GET'), 'Opening help neither toggles its checkbox nor submits a form');
+    hint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+    check(tip.hidden&&dialog.isConnected&&dialog.dataset.open==='true', 'Escape closes help without closing its modal');
+    hint.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+    check(!tip.hidden,'Enter opens help');
+    hint.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));
+    check(tip.hidden,'Space closes help without submitting');
+    function tap() { hint.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true,cancelable:true}));hint.dispatchEvent(new MouseEvent('click',{detail:1,bubbles:true,cancelable:true})); }
+    tap();check(!tip.hidden&&!control.checked,'Touch opens help without label activation');
+    tip.scrollTop=30;tip.dispatchEvent(new Event('scroll'));
+    check(!tip.hidden&&tip.scrollHeight>tip.clientHeight&&tip.getBoundingClientRect().right<=innerWidth&&tip.getBoundingClientRect().bottom<=innerHeight,'Long help remains readable and scrolls locally within the viewport');
+    tap();check(tip.hidden&&!control.checked,'A second touch closes help');
+    T.forms.applyErrors(form,{flag:['Fixture error']});T.forms.clearErrors(form);
+    check(control.getAttribute('aria-describedby').includes('flag-help')&&control.getAttribute('aria-describedby').includes('kept-hint'),'Validation feedback preserves help and other descriptions');
+    hint.click();T.dialog.close(dialog,{history:false});
+    check(!document.querySelector('.tooltip:not([hidden])')&&settings.isConnected,'Disposing a nested editor removes its help without disturbing its parent');
+    T.dialog.close(settings,{history:false});
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks});return;
+  }
+  if (mode === 'queue-edit') {
+    document.body.classList.add('admin-shell-page');
+    document.documentElement.dataset.uiDensity = 'compact';
+    const data = {item:{id:7,editable_body:'Scheduled post draft',author:{id:2,username:'bot'},capabilities:{edit:true}},constraints:window.socialConstraints,options:{images_enabled:true}};
+    const dialog = T.modules.modal(new URL('/api/bots/accounts/2/posts/7/management',location.href),{data},'queue-edit-fixture');
+    check(dialog && dialog.querySelector('form'), 'The delivered queue bundle opens the bot post editor');
+    document.body.append(dialog); T.lifecycle.start(); T.dialog.open(dialog);
+    const form = dialog.querySelector('form'), body = form.elements.namedItem('body');
+    check(body.value === data.item.editable_body && form.getAttribute('action') === '/api/statuses/7', 'Queue editing retains the existing draft and canonical write endpoint');
+    check(T.api.csrfToken() === 'test' && T.status.method(form,'update') === 'PATCH', 'Queue editing retains CSRF and its update method');
+    check(dialog.querySelector('[data-status-editor-input]') && dialog.querySelector('input[type="file"]'), 'The delivered editor contains its rich text and image controls');
+    const editor = dialog.querySelector('[data-status-editor-input]'), button = dialog.querySelector('button[type="submit"]'), panel = dialog.querySelector('.modal-panel'), modalBody = dialog.querySelector('.modal-body');
+    const before = [editor.getBoundingClientRect().height,button.getBoundingClientRect().height,parseFloat(getComputedStyle(modalBody).paddingTop)];
+    for (const scale of ['1.25','1.5','2']) {
+      document.documentElement.style.setProperty('--ui-scale',scale);
+      const after = [editor.getBoundingClientRect().height,button.getBoundingClientRect().height,parseFloat(getComputedStyle(modalBody).paddingTop)];
+      check(after.every((size,index)=>size>before[index]), 'One UI scale value enlarges the editor, action buttons and modal spacing together: '+JSON.stringify({scale,before,after,font:getComputedStyle(document.documentElement).fontSize}));
+      check(panel.getBoundingClientRect().width<=innerWidth&&panel.getBoundingClientRect().height<=innerHeight, 'An enlarged editor stays within the viewport: '+scale);
+      check(button.getBoundingClientRect().right<=panel.getBoundingClientRect().right+1&&button.getBoundingClientRect().bottom<=innerHeight+1, 'Enlarged save controls remain reachable: '+scale);
+      check(body.value===data.item.editable_body, 'Changing the UI scale preserves the editor draft: '+scale);
+    }
+    document.documentElement.style.removeProperty('--ui-scale');
+    T.dialog.close(dialog,{history:false});
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
   if (mode === 'health-shell') {
     check(!T.adminDefinitions, 'The actual health bundle has no scheduler list declaration');
     const toggle = T.dom.element('button',{'data-admin-nav-toggle':'',type:'button'});
@@ -64,6 +214,9 @@
     const constraints = window.socialConstraints, form = T.ui.form('/api/statuses', 'POST');
     form.append(T.components.render('status/composer-body', {constraints,viewer:{id:1},value:''}));
     const commentForm = T.components.render('status/comment-form', {constraints,content_id:7,parent_id:0,viewer:{id:1}});
+    check(new FormData(commentForm).get('parent_id') === '0', 'Root comments submit numeric zero through native FormData');
+    const replyForm = T.components.render('status/comment-form', {constraints,content_id:7,parent_id:20,viewer:{id:1}});
+    check(new FormData(replyForm).get('parent_id') === '20', 'Replies retain their parent ID through native FormData');
     document.body.append(form, commentForm); T.lifecycle.start(); T.publishing.controllers.editor.hydrate(document);
     for (const [host,name] of [[form,'body'],[commentForm,'comment']]) {
       const source=host.elements.namedItem(name), editor=source.closest('[data-status-editor]').querySelector('[data-status-editor-input]');
@@ -73,6 +226,11 @@
       editor.textContent+='\u{1F642}'; editor.dispatchEvent(new Event('input',{bubbles:true}));
       check(!T.forms.validate(host)&&Array.from(source.value).length===constraints[name].max_length+1,'Social '+name+' retains its overflowing draft and rejects it through the common validator');
     }
+    T.forms.clearErrors(commentForm);
+    const draft = commentForm.elements.namedItem('comment').value;
+    const summary = T.forms.applyErrors(commentForm, {parent_id:['The parent is unavailable.']});
+    check(summary.getBoundingClientRect().width >= commentForm.clientWidth - 1, 'A hidden-field error spans the complete comment form instead of its avatar column');
+    check(commentForm.elements.namedItem('comment').value === draft, 'A form-level comment error preserves the draft');
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
   if (mode === 'constraints') {
@@ -173,7 +331,6 @@
   if (mode === 'settings' || mode === 'settings-blog') {
     if (mode === 'settings-blog') {
       window.settingsSchema = {sections: window.blogSettings.sections};
-      document.body.dataset.settingsPresentation = JSON.stringify(window.blogSettings.presentation);
     }
     const schema = window.settingsSchema || {sections:[
       {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.footer_html',label:'Footer',type:'textarea',value:'Saved footer'}]},

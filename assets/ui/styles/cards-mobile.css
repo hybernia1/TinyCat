@@ -1,15 +1,15 @@
-@media (max-width: 759px) {
+@media (max-width: 899px) {
 .section {
-    padding-block: 14px 22px;
+    padding-block: 0.875rem 1.375rem;
   }
 
 .card-body,
   .status-composer .card-body {
-    padding: 12px;
+    padding: 0.75rem;
   }
 
 .card-header,
   .card-footer {
-    padding: 10px 12px;
+    padding: 0.625rem 0.75rem;
   }
 }

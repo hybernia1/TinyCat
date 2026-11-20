@@ -9,10 +9,10 @@
   z-index: 70;
   display: none;
   width: var(--popover-width, max-content);
-  min-width: min(var(--popover-min-width, 132px), var(--popover-available-width, calc(100vw - 24px)));
-  max-width: var(--popover-available-width, calc(100vw - 24px));
+  min-width: min(var(--popover-min-width, 8.25rem), var(--popover-available-width, calc(100vw - 1.5rem)));
+  max-width: var(--popover-available-width, calc(100vw - 1.5rem));
   height: max-content;
-  max-height: var(--popover-max-height, calc(100dvh - 24px));
+  max-height: var(--popover-max-height, calc(100dvh - 1.5rem));
   align-content: start;
   margin: 0;
   padding: var(--popover-padding, 0);

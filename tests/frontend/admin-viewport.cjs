@@ -23,7 +23,7 @@ try {
   const source = JSON.stringify(sources).replace(/<\/script/gi, "<\\/script");
   const page = `<!doctype html><html><body><script>
     (async function () {
-      const sources = ${source}, widths = [320,375,390,599,600,760,1024], all = [];
+      const sources = ${source}, widths = [320,375,390,599,600,760,899,900,1024], all = [];
       for (const source of sources) for (const height of [360,480,812]) for (const width of widths) {
         const frame = document.createElement('iframe');
         frame.style.cssText = 'position:fixed;top:0;left:0;border:0;width:'+width+'px;height:'+height+'px';
@@ -47,12 +47,12 @@ try {
   </script></body></html>`;
   const target = path.join(temporary, "fixture.html");
   fs.writeFileSync(target, page);
-  const result = execFileSync(browser, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-sync", "--hide-scrollbars", "--virtual-time-budget=40000", "--user-data-dir=" + path.join(temporary, "profile"), "--dump-dom", pathToFileURL(target).href], { encoding: "utf8", timeout: 60000, maxBuffer: 16e6, stdio: ["ignore", "pipe", "pipe"] });
+  const result = execFileSync(browser, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-sync", "--hide-scrollbars", "--virtual-time-budget=60000", "--user-data-dir=" + path.join(temporary, "profile"), "--dump-dom", pathToFileURL(target).href], { encoding: "utf8", timeout: 60000, maxBuffer: 16e6, stdio: ["ignore", "pipe", "pipe"] });
   const match = result.match(/<pre id="all-metrics">([\s\S]*?)<\/pre>/);
   assert.ok(match, "The browser must render every viewport fixture");
   const cases = JSON.parse(match[1].replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&"));
-  assert.equal(cases.length, 252);
-  assert.deepEqual([...new Set(cases.map(item => item.width))].sort((a,b) => a-b), [320,375,390,599,600,760,1024]);
+  assert.equal(cases.length, 324);
+  assert.deepEqual([...new Set(cases.map(item => item.width))].sort((a,b) => a-b), [320,375,390,599,600,760,899,900,1024]);
   for (const item of cases) {
     const label = JSON.stringify(item);
     assert.ok(item.documentWidth <= item.width && item.bodyWidth <= item.width, "Page overflow: " + label);
@@ -72,14 +72,17 @@ try {
     assert.ok(item.navigationFits && item.navigationChanges, "The compact section switch fits below the header and activates the same tab panels: " + label);
     assert.ok(item.sortingWorks, "Sorting stays available through the original header links: " + label);
     assert.ok(item.chipsWork, "Removing one filter preserves other filters, sorting and page size, resets the page and retains keyboard focus: " + label);
+    assert.ok(item.pinnedList, "Desktop lists pin their controls while mobile lists retain natural page scrolling: " + label);
+    assert.ok(item.controlsScale, "Form controls scale with increased root text size: " + label);
+    assert.ok(item.paginationCompact, "Pagination keeps its range, active page and previous/next controls in one compact row: " + label);
     assert.ok(item.summaryClean, "Filter summaries contain badges only and collapse when empty: " + label);
     assert.ok(item.tableLayout && item.sortAvailable && item.fallbackUsable && item.complexSpansKept && item.emptyKept, "Native tables keep headers and sorting at every viewport, with local scrolling, complex spans and empty states: " + label);
   }
   for (const context of ['page', 'modal', 'accounts']) {
-    assert.ok(cases.some(item => item.context === context && item.width < 600), "Exercise mobile tables in " + context);
-    assert.ok(cases.some(item => item.context === context && item.width >= 600), "Exercise desktop tables in " + context);
+    assert.ok(cases.some(item => item.context === context && item.width < 900), "Exercise mobile tables in " + context);
+    assert.ok(cases.some(item => item.context === context && item.width >= 900), "Exercise desktop tables in " + context);
   }
-  console.log("PASS responsive admin tables, native sorting, filters and tooltips in pages and modals (252 cases)");
+  console.log("PASS responsive admin tables, native sorting, filters and tooltips in pages and modals (324 cases)");
 } finally {
   const resolved = fs.realpathSync(temporary), parent = fs.realpathSync(os.tmpdir());
   assert.equal(path.dirname(resolved), parent, "Cleanup must stay in the temporary directory");

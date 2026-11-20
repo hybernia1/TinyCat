@@ -3,6 +3,7 @@
     "name": "Українська"
   },
   "common": {
+    "help": "Довідка",
     "sort": "Сортування",
     "refresh": "Оновити",
     "save": "Зберегти",
@@ -82,7 +83,10 @@
     "activated": "{entity} активовано.",
     "deactivated": "{entity} деактивовано.",
     "action_for": "{action} — {context}",
-    "search_empty": "Нічого не знайдено."
+    "search_empty": "Нічого не знайдено.",
+    "copy": "Копіювати",
+    "copied": "Скопійовано.",
+    "copy_failed": "Не вдалося скопіювати текст."
   },
   "relative": {
     "now": "зараз",

@@ -107,6 +107,14 @@ foreach (ClientAssets::manifests() as $file) {
             $absolute = str_replace('\\', '/', \TinyCat\Support\Paths::basePath($style));
             if (!str_starts_with($absolute, $expectedDirectory)) { throw new RuntimeException('Stylesheet must belong to its manifest: ' . $style); }
             $owners[$style] = $file;
+            $css = (string) file_get_contents($absolute);
+            preg_match_all('/@media\s*([^\{]+)\{/i', $css, $media);
+            foreach ($media[1] as $condition) {
+                preg_match_all('/\((min|max)-width\s*:\s*([^\)]+)\)/i', $condition, $widths, PREG_SET_ORDER);
+                foreach ($widths as $width) {
+                    if (trim($width[2]) !== ($width[1] === 'min' ? '900px' : '899px')) { throw new RuntimeException('Use the shared mobile/desktop boundary: ' . $style); }
+                }
+            }
             $checks++;
         }
     }

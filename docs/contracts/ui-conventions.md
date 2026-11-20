@@ -226,3 +226,197 @@ rozpočtů; veřejné stránky a instalace settings controller nenačítají.
 - `php tools/assets/asset-report.php --check` — dosažitelnost assetů a rozpočty distribuce.
 
 Kontrola UI kontraktů je také součástí `php tests/run.php`.
+
+## UI scale
+
+The shared root token `--ui-scale` multiplies the browser's base font size.
+Its global default is `1`. The reusable `data-ui-density="compact"` document
+profile selects a 0.875 density scale and compact control spacing in core CSS.
+Administration chooses that profile through document metadata, without its own
+metric overrides. Root text combines the browser base, global `--ui-scale` and
+`--ui-density-scale`, so one global scale change also enlarges compact pages.
+A larger interface uses one override of the global scale, without rewriting component
+sizes or adding viewport variants. No separate settings control is implied.
+
+Use rem for component dimensions, spacing and modal size tokens, and em for
+text-relative icons. Shared controls derive their height/padding from control
+tokens. Keep border hairlines and viewport breakpoints independent of this scale;
+viewport caps still constrain dialogs and scroll containers. Mobile input text
+has a 16px floor and touch section selectors retain their minimum target size,
+while both grow at larger root sizes. Do not use CSS zoom or a visual transform
+as a substitute for normal layout reflow.
+
+Native regressions exercise the same scale token at 125%, 150% and 200% in list
+fixtures and enlarged editor dialogs, including draft preservation, local table
+overflow and reachable save actions.
+
+## Shared theme surfaces
+
+Core defines each light/dark colour pair once with `light-dark()`. Explicit
+`data-theme` and the existing system preference rule select `color-scheme`;
+layouts do not duplicate palettes. Scoped dark surfaces use the same tokens.
+`--surface` is the main content surface, `--surface-panel` distinguishes navigation
+and auxiliary panels, and the muted/soft surface tokens express subdued/active
+states. Layout owners select these semantic tokens instead of copying colours.
+Theme and density primitives are available to every project using core CSS.
+
+## Form help
+
+Optional explanatory hints use the shared `ui/help` component. `ui/field`,
+`ui/select` and settings fields accept their owner's `help` text and place the
+info control beside the caption. Direct helpers take `text`, optional `label`
+and optional `help_id`. Keep hint translations and constraints with their owner.
+Do not hide or transform arbitrary `.help` nodes: that typography class is also
+used by live validation/status text and operational metadata.
+
+Help reuses the shared tooltip service. Hover/focus, click/touch and Enter/Space
+open or dismiss it; Escape dismisses the hint before the surrounding modal.
+The span button preserves valid label content and prevents label activation,
+checkbox toggling and form submission. Hidden plain-text descriptions retain
+existing IDs, are associated with their controls during hydration and survive
+validation feedback. Content is escaped and displayed as text, never HTML.
+Long descriptions scroll inside the viewport-constrained tooltip. Empty hints
+render nothing. No per-field popup is created during initialization.
+
+Place each info control beside the specific caption, task title or cadence it
+explains. Do not mechanically replace an introductory paragraph with an isolated
+icon in its former row. Remove redundant introductory prose entirely when the
+page already explains itself. Helpers inside disclosure summaries must preserve
+the disclosure state on click and keyboard activation.
+
+Keep errors, live statuses, maintenance/staleness warnings and actual task
+parameters visible. Introductory prose in the isolated embed/share document is
+page content, not a core form hint; it does not load the application UI runtime.
+
+## Typed inputs and validation
+
+`ui/field` and settings fields delegate native inputs to `ui/input`. Its shared
+semantic type map uses the existing sprite: search, password, email, URL,
+telephone, date/month/week and time/datetime-local. Text and number controls,
+checkboxes, radios and file pickers do not receive decorative icons. Keep native
+input types, labels, names, attributes and browser picker behavior intact.
+Search controls reuse `.input-icon`, including the public suggestion control;
+do not add per-page icon offsets or duplicate semantic type maps in controllers.
+The shared icon size/gap, padding, focus width and error underline use core tokens
+and follow the regular/compact density profile and global UI scale.
+
+Validation uses `aria-invalid="true"` on the native control or the existing
+`data-validation-for` editor proxy. Core renders a danger underline and danger
+focus ring; inline error text and `aria-describedby` remain visible/associated.
+Clearing validation removes only the current error and restores normal styling.
+Do not use unconditional `:invalid` styling on untouched required fields.
+
+## Settings presentation
+
+Settings use the same ComponentLookup-backed catalog as other shared editors.
+Owners declare label/help/placeholder translation expressions in their existing
+SettingsSection fields; Sections resolves them for server consumers and retains
+them in client component definitions. Nested fields keep their owner and derive
+stable presentation paths from their parent key. Date examples are presentation
+lookups. The controller prepares canonical values, constraints and native control
+attributes, without reading page-level presentation JSON or duplicating labels.
+
+Admin HTML contains only the settings modal trigger. Its authorized resource
+still carries values, options and constraints, with secrets blanked and no
+component definitions or translation identifiers. Rendering and translating the
+form starts after the existing resource loader opens the editor. No separate
+presentation endpoint, inline catalog or manually registered JavaScript fields.
+
+## Flash messages and transient toasts
+
+Use success, danger, warning and info tones. A completed operation with findings
+uses warning, not a false success claim. Inline validation describes individual
+fields; a toast must not replace those messages. Shared toasts use plain text,
+accessible status/alert roles, dismiss controls and viewport-aware positioning.
+
+AJAX actions that stay on the page use the common response message/meta.type
+path. Actions that return a full-page redirect must queue the localized message
+with Session::flash under success/error/warning/info before returning. The next
+page emits the shared flash template, and the toast service reads its content
+fragment once. Merely returning a message or success code with a redirect does
+not preserve a toast across navigation.
+Persistent operation reports, such as updater recovery output, remain page
+content; do not confuse them with transient flash feedback.
+
+Modals and toasts use one width boundary: mobile below 900px, desktop from 900px.
+Pointer/hover capabilities do not select an overlay layout. Toast width, inset
+and action size are core tokens; padding and gaps reuse the control density
+profile. Mobile dismiss controls retain the shared touch minimum. Visual viewport
+measurements constrain available space through the token-based inset rather than
+hardcoded margins. Toasts keep focus in the current task, ignore blank messages,
+and treat content as text. Unknown tones fall back to info; error aliases danger.
+
+Input icon positioning and padding apply only to direct children of `.input-icon`.
+Its descendants can include an entire search popover; empty-state/action icons
+inside that surface must retain their own shared component layout. Search-all
+is a standard ghost action link with a search icon, not an identity/avatar row.
+Full search pages show one shared empty state if all collections are empty and
+omit cards for empty collections when matches exist elsewhere.
+
+## Code presentation and copying
+
+Core normalizes code typography with the shared font-mono token, and pre/code
+blocks use the shared code-block surface and control spacing. Inline copy actions
+use control-height-inline; block actions use control-height-compact. Both follow
+the global scale/density, with a minimum inline action target.
+
+The shared code-copy lifecycle service decorates nonempty readonly code after
+rendering, including lazy dialogs and refreshed lists. It places one ordinary
+icon button beside the code, never inside its text. Repeated hydration reuses the
+control and replacement code is retargeted; editable code and code inside links,
+buttons or disclosure summaries are left untouched. No domain-specific copy
+implementation or parallel server button renderer is needed.
+
+Copy uses the current textContent unchanged, preserving literal markup, Unicode
+and whitespace. Clipboard API is preferred; the local selection fallback stays
+inside the owning modal, restores focus/selection and removes its temporary
+field. A detached source cannot trigger a late fallback. Copy never submits or
+marks a form clean. Success/failure uses the existing localized toast service;
+a denied/failed copy must not announce success.
+
+The full search page uses the existing public header as its only query input.
+Its catalog contributes content, not a second container/search form: one page
+heading, collection headings and shared result-list/identity rows. Core Discovery
+passes the normalized query to the common page context. Pagination stays with
+its owning collection and no optional module layout is required.
+
+Shared alerts are borderless. Info/success/warning/danger use their semantic text
+and soft-background tokens; do not add per-page outline variants.
+
+
+## Public workspaces and search presentation
+
+`Core/Ui/Page::render` accepts optional `navigation` entries (`label`, `icon`,
+`url`, `active`). The shared `ui/public-workspace` wraps the page content before
+it reaches the selected theme or the core document. It is not a second route
+registry: owners supply links to their existing public routes. Desktop uses a
+left navigation column; below 900px the same links form a horizontally scrollable
+source selector. Width uses `--public-navigation-width`; spacing and controls
+reuse core tokens. Links retain native navigation, keyboard focus and
+`aria-current="page"`. The workspace does not add another search form.
+
+`Core/Discovery` derives search navigation from active `SearchSource` entries.
+A source may supply an icon and a lazy `render(items): string` callback for HTML
+presentation. Registration and JSON search never invoke this renderer. Only the
+HTML page passes the already selected, bounded items to their owner, wraps the
+returned markup as trusted presentation, and places it in the shared group.
+Sources without a renderer retain shared identity rows. Query, visibility,
+authorization, stable cursors and canonical URLs remain owned by the source.
+No domain IDs or source list belong in the shared workspace or core search host.
+
+Social batches visible selected IDs through its feed hydration and reuses
+`status/card`. Blog search and public listing share `blog/article-summary`.
+Optional owner assets must cover `/search/all` when that presentation needs them.
+Empty results use one `ui/empty-state`; the header remains the only query input.
+
+
+## Responsive layout boundary
+
+All viewport-dependent UI CSS and client navigation use mobile below 900px
+(max-width 899px) and desktop from 900px. The former 600/760px intermediate
+layouts are retired across core and Social. The existing sm:grid-2 and md:grid-2
+utility names share the desktop rule; they do not introduce separate breakpoints.
+User preferences such as reduced motion and colour scheme are independent of
+viewport layouts. Touch event handling may differ, but pointer type does not
+select a third layout. Confirm button desktop sizing lives with desktop modal
+styles; no confirm-mobile stylesheet remains.

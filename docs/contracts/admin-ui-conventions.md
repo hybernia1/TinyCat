@@ -15,6 +15,24 @@ their background list never rebuilds or removes an open editor.
 
 `/admin/users` is the reference for administration lists.
 
+The administration content has no padding on desktop or mobile. Its actual
+sections and controls own their internal spacing; do not add a second page inset.
+
+Administration selects the core compact profile with `data-ui-density="compact"`
+on the document. It does not define its own scale or control/modal token overrides.
+The global `--ui-scale` factor defaults to `1` and affects every density profile.
+Core multiplies it by `--ui-density-scale` (1 normally, 0.875 in the compact profile).
+At a 16px browser base, the default regular/compact text sizes are 16px/14px;
+`--ui-scale: 1.25` enlarges them to 20px/17.5px together. Do not introduce per-list
+typography or size overrides for accessibility scaling.
+
+Buttons, inputs, selects and pagination use shared `--control-height`,
+`--control-height-compact` and control-padding tokens defined in rem units.
+Administration adjusts vertical density and selects the compact height on
+desktop layouts. Mobile input text keeps a 16px minimum and grows with larger
+root text. The section selector uses the shared touch-height minimum. Dialog
+dimensions and padding follow rem-based tokens, capped by the viewport.
+
 The admin bar owns the page title for all administration pages, including
 cron configuration, site health, updates, and URL blocking. A single outer
 content card does not repeat it. Keep headings on distinct inner sections,
@@ -22,6 +40,22 @@ such as history or diagnostic issues. For shared outer cards, select
 `primary: true` explicitly.
 
 Settings are opened directly from the administration navigation in a modal.
+
+Sidebar width and navigation row dimensions follow the root scale. Navigation
+groups do not add inter-row gaps, and submenus use compact indentation. At larger
+scales the navigation scrolls inside the sidebar while its header and footer remain usable.
+
+The sidebar selects the shared dark palette with `data-theme="dark"` and uses
+`--surface-panel`, distinct from the content's `--surface` in both themes. Do not
+copy theme colour values into administration styles. The page
+background follows the surface token (white in light mode). Cards inside main
+administration content have no outer border or corner radius; tables, notices
+and section separators retain their own meaning. Dialog cards retain their frame.
+
+The scheduler task overview uses a single summary table rather than task cards.
+Each row groups the task name, cadence and default limits, followed by the latest
+run, visible status text, duration and a visibly labelled run action. Narrow
+screens scroll the table within its wrapper without widening the document.
 
 ## List structure
 
@@ -36,6 +70,22 @@ Settings are opened directly from the administration navigation in a modal.
   translated titles. Toolbar controls stack naturally on narrow screens.
 - Inside `card-body`, use one `stack stack-gap-14` containing
   `ui/list-toolbar`, `table-wrap > table.table`, and `ui/pagination`.
+- In the existing desktop administration layout (at least 900px wide), the shell
+  allocates the remaining height to the table wrapper. Toolbar and pagination
+  stay outside the scrolling rows; column headings stick inside that wrapper.
+  Keep overflow local in both directions. Mobile layouts retain natural page
+  scrolling. Scheduler overview and history share the available height,
+  with the overview capped at 40dvh. This rule does not alter modal layout.
+- Shared pagination keeps the record range and navigation in one compact row.
+  In its base mobile layout, retain previous/next controls and the current page; neighbouring
+  page numbers remain available on wider layouts. Keep accessible labels and
+  the existing AJAX/history destinations on every navigation control.
+- Reuse the existing mobile/desktop stylesheet separation. Do not introduce
+  extra layout conditions based on viewport height, hover or pointer type.
+- The enclosing card or workspace owns the surface and outer frame.
+  `table-wrap` contains horizontal scrolling without a second border,
+  background or radius. Table headings use normal case, muted text and
+  the shared subdued background; do not add per-list heading variants.
 - `ui/list-toolbar` includes the shared `ui/list-summary` below its controls.
   Show only small neutral chips for search text and active filter labels
   and selected values. Do not prefix them with a result-count sentence.
@@ -89,6 +139,10 @@ Settings are opened directly from the administration navigation in a modal.
 The cron overview contains sibling task cards followed by a history card.
 Task cards must not be nested inside the history card. Bot details use a tabbed modal; their source and post lists retain separate
 query state.
+Bot account fields contain biography only. Avatar belongs to a separate
+Avatar tab using the same `users/avatar-control` as user administration;
+the avatar editor saves independently and the parent tab has no competing
+Save action. Do not duplicate account statistics above the editor.
 
 Bot run history uses `/api/bots/accounts/{id}/runs` with its own
 `#bot-detail-runs-list` target, shared list toolbar and pagination.
@@ -114,7 +168,7 @@ checks these table and sorting invariants against the actual administration shel
 
 ## Mobile modal navigation
 
-Below 600px, tabbed modals use a full-width section select with the active
+Below 900px, tabbed modals use a full-width section select with the active
 section icon instead of a horizontally clipped tab strip. Keep the full
 translated section names and a minimum 44px control height. The switch is
 in the existing navigation row below the header, outside the scrolling body.
@@ -442,3 +496,12 @@ them with the declared transport paths. Metadata never registers data handlers,
 grants permissions, chooses domain tables or changes an API response into a UI
 definition. Unselected owners contribute nothing. Duplicate IDs, list targets,
 page paths and editor resources are rejected.
+
+## Optional help
+
+Settings and other editor hints appear as shared info controls beside captions,
+using `ui/help` through the shared field components. Do not add explanatory
+paragraphs under individual fields or implement a separate settings help popup.
+Preserve visible validation feedback and operational notices. The general
+[form help contract](ui-conventions.md#form-help) defines keyboard, touch,
+screen-reader descriptions and lifecycle behavior.

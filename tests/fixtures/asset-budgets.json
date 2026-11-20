@@ -1,22 +1,22 @@
 {
   "/admin/article-sources": {
-    "raw_js": 229376,
-    "gzip_js": 52224,
-    "raw_css": 38912,
-    "gzip_css": 8192,
+    "raw_js": 240128,
+    "gzip_js": 53760,
+    "raw_css": 43008,
+    "gzip_css": 9216,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/site-health": {
-    "raw_js": 227328,
-    "gzip_js": 51456,
+    "raw_js": 240640,
+    "gzip_js": 53760,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/moderation": {
-    "raw_js": 287744,
+    "raw_js": 294400,
     "gzip_js": 60800,
     "raw_css": 63488,
     "gzip_css": 12288,
@@ -24,8 +24,8 @@
     "stylesheets": 1
   },
   "/admin/articles": {
-    "raw_js": 249856,
-    "gzip_js": 57344,
+    "raw_js": 262144,
+    "gzip_js": 58880,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
@@ -40,39 +40,47 @@
     "stylesheets": 1
   },
   "/admin/updates": {
-    "raw_js": 205056,
-    "gzip_js": 48128,
-    "raw_css": 47104,
-    "gzip_css": 10240,
-    "scripts": 4,
-    "stylesheets": 1
-  },
-  "/admin/users": {
-    "raw_js": 223232,
+    "raw_js": 219648,
     "gzip_js": 50176,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
+  "/admin/users": {
+    "raw_js": 239104,
+    "gzip_js": 52736,
+    "raw_css": 47104,
+    "gzip_css": 10240,
+    "scripts": 4,
+    "stylesheets": 1
+  },
   "/admin/bots": {
-    "raw_js": 370688,
-    "gzip_js": 78848,
+    "raw_js": 376832,
+    "gzip_js": 79360,
     "raw_css": 55296,
     "gzip_css": 11264,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/cron": {
-    "raw_js": 244736,
-    "gzip_js": 54272,
+    "raw_js": 259584,
+    "gzip_js": 56832,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
+  "/search/all": {
+    "raw_js": 374272,
+    "gzip_js": 79360,
+    "raw_css": 71680,
+    "gzip_css": 13312,
+    "scripts": 4,
+    "stylesheets": 1
+  },
   "/articles": {
-    "raw_js": 376832,
+    "raw_js": 379904,
     "gzip_js": 81920,
     "raw_css": 71680,
     "gzip_css": 13312,
@@ -80,32 +88,32 @@
     "stylesheets": 1
   },
   "/install": {
-    "raw_js": 55296,
-    "gzip_js": 15360,
+    "raw_js": 57856,
+    "gzip_js": 16384,
     "raw_css": 38912,
     "gzip_css": 8192,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin": {
-    "raw_js": 204800,
-    "gzip_js": 48128,
+    "raw_js": 219136,
+    "gzip_js": 50176,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/blog": {
-    "raw_js": 369152,
-    "gzip_js": 78464,
+    "raw_js": 374272,
+    "gzip_js": 79360,
     "raw_css": 71680,
     "gzip_css": 13312,
     "scripts": 4,
     "stylesheets": 1
   },
   "/": {
-    "raw_js": 369152,
-    "gzip_js": 78464,
+    "raw_js": 374272,
+    "gzip_js": 79360,
     "raw_css": 71680,
     "gzip_css": 13312,
     "scripts": 4,

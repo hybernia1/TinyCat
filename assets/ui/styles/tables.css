@@ -2,9 +2,6 @@
   position: relative;
   min-width: 0;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
 }
 
 .table {
@@ -16,17 +13,16 @@
 .table th,
 .table td {
   border-bottom: 1px solid var(--border);
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   text-align: left;
   vertical-align: top;
 }
 
 .table th {
-  background: var(--surface-soft);
+  background: var(--surface-muted);
   color: var(--muted);
   font-size: 0.8125rem;
-  font-weight: 750;
-  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .table tr:last-child td {

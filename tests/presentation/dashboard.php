@@ -45,7 +45,7 @@ $html = Views::dashboard($data) . TinyCat\Core\Ui\Admin\Diagnostics::render($dat
 if (($argv[1] ?? '') === '--fixture') {
     $css = TinyCat\Support\AssetGraph::stylesheet(TinyCat\Support\ClientAssets::sourceStyles('/admin'));
     $layout = TinyCat\Support\View::render('shell', ['content' => $html, 'actions' => '', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => Localization::t('common.dashboard'), 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'settingsEditor' => '', 'titleIcon' => 'dashboard'], $root . '/App/Core/Ui/Admin/templates');
-    echo '<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $layout . '<script>';
+    echo '<!doctype html><html lang="cs" data-ui-density="compact"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $layout . '<script>';
     echo 'window.TinyCat={lifecycle:{register(name, service){if(service.init)service.init();if(service.hydrate)service.hydrate(document);}}};';
     foreach (['assets/core/dom.js', 'assets/core/icons.js', 'assets/ui/popovers.js'] as $file) {
         echo preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/' . $file));
@@ -68,10 +68,16 @@ $check(!str_contains($html, '<script>') && str_contains($html, '@author&lt;unsaf
 $doc = new DOMDocument();
 @$doc->loadHTML('<?xml encoding="UTF-8">' . $html);
 $xpath = new DOMXPath($doc);
-$check($xpath->query('//article//h2')->length === 8 && str_contains($html, Localization::t('admin.stats.content')), 'Statistics retain their actual labels through the shared stat card.');
+$check($xpath->query('//table[not(thead)]/tbody/tr/th[@scope="row"]')->length === 8 && str_contains($html, Localization::t('admin.stats.content')), 'Summary statistics use accessible row headings and their actual labels.');
+$sprite = new DOMDocument();
+$sprite->load($root . '/assets/icons.svg');
+$spriteXPath = new DOMXPath($sprite);
+foreach ($data['stats'] as $stat) {
+    $check($spriteXPath->query('//*[@id="' . $stat['icon'] . '"]')->length === 1, 'Every dashboard statistic references an existing sprite symbol.');
+}
 $check($data['counts']['social_links'] === 2 && $data['counts']['social_terms'] === 1, 'Link and tag counts use their Social-owned tables.');
 $check(TinyCat\Core\Identity\Administration::roleCounts() === ['admin' => 1, 'user' => 1, 'bot' => 1], 'Identity counts separate administrators, users and bots.');
-$check($xpath->query('//article//strong[text()="1"]')->length >= 2, 'Published and scheduled statistics show their prepared values.');
+$check($xpath->query('//table[not(thead)]//strong[text()="1"]')->length >= 2, 'Published and scheduled statistics show their prepared values.');
 $check($xpath->query('//table[@id="dashboard-comments-table"]/tbody/tr')->length === 8, 'Comments render as table rows.');
 $check($xpath->query('//table/thead/tr/th[@scope="col"]')->length === 4, 'Every column has an accessible heading.');
 $check($xpath->query('//time[@datetime]')->length === 8, 'Comment timestamps retain machine-readable dates.');
@@ -84,6 +90,6 @@ $data['cache'] = ['available' => false, 'driver' => 'filesystem'];
 $data['memcached'] = ['configured' => false, 'available' => false, 'extension' => false];
 $data['opcache'] = ['enabled' => false, 'resettable' => false];
 $empty = Views::dashboard($data) . TinyCat\Core\Ui\Admin\Diagnostics::render($data);
-$check(str_contains($empty, Localization::t('admin.no_recent_comments')) && !str_contains($empty, '<table'), 'Empty comments use the shared empty state.');
+$check(str_contains($empty, Localization::t('admin.no_recent_comments')) && !str_contains($empty, 'id="dashboard-comments-table"'), 'Empty comments use the shared empty state.');
 $check(!str_contains($empty, '<form') && str_contains($empty, Localization::t('admin.cache.filesystem')) && str_contains($empty, Localization::t('admin.cache.memcached_disabled')), 'Disabled services show the real fallback and do not offer reset.');
 echo 'PASS dashboard data, shared components, safe comments and cache diagnostics (' . $checks . " checks)\n";

@@ -21,7 +21,7 @@ import "../core/lifecycle.js";
     var x = viewport.offsetLeft + viewport.width - window.innerWidth;
     var y = Math.min(0, viewport.offsetTop + viewport.height - window.innerHeight);
     stack.style.transform = "translate(" + Math.round(x) + "px, " + Math.round(y) + "px)";
-    stack.style.maxWidth = Math.max(0, viewport.width - 20) + "px";
+    stack.style.maxWidth = "calc(" + Math.max(0, viewport.width) + "px - var(--toast-inset) * 2)";
   }
   function toastIconName(type) {
     if (type === "success") {
@@ -39,7 +39,7 @@ import "../core/lifecycle.js";
     return "info";
   }
   function normalizeToastType(type) {
-    type = String(type || "info").toLowerCase();
+    type = String(type).toLowerCase();
 
     if (type === "error") {
       return "danger";
@@ -57,6 +57,7 @@ import "../core/lifecycle.js";
     return icon;
   }
   TinyCat.toasts.show = function (message, type, timeout) {
+    if (!String(message || "").trim()) return null;
     var stack = qs(".toast-stack");
     var normalizedType = normalizeToastType(type);
     var closeTimeout;
@@ -119,7 +120,7 @@ import "../core/lifecycle.js";
       node.dataset.toastReady = "true";
 
       try {
-        messages = JSON.parse(node.textContent || "[]");
+        messages = JSON.parse((node.content || node).textContent || "[]");
       } catch (error) {
         messages = [];
       }

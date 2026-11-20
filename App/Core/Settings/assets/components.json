@@ -11,8 +11,18 @@
           "attrs": {
             "class": "grid sm:grid-2",
             "data-editor-section": {"get": "section.key"},
-            "data-editor-label": {"get": "section.label"},
-            "data-editor-icon": {"get": "section.icon"}
+            "data-editor-label": {
+              "lookup": {"get": "section.key"},
+              "default": "",
+              "catalog": "settings.sections",
+              "field": "label"
+            },
+            "data-editor-icon": {
+              "lookup": {"get": "section.key"},
+              "default": "settings",
+              "catalog": "settings.sections",
+              "field": "icon"
+            }
           },
           "children": [
             {
@@ -26,151 +36,195 @@
     ]
   },
   "settings/field": {
-    "tag": {"get": "root_tag"},
-    "attrs": {"class": {"get": "root_class"}},
-    "children": [
-      {"tag": "span", "attrs": {"class": "label"}, "children": [{"get": "label"}]},
-      {"tag": "input", "attrs": {"get": "attributes"}, "when": {"eq": [{"get": "kind"}, "input"]}},
-      {
-        "tag": "textarea",
-        "attrs": {"get": "attributes"},
-        "when": {"eq": [{"get": "kind"}, "textarea"]},
-        "children": [{"get": "value"}]
-      },
-      {
-        "tag": "select",
-        "attrs": {"get": "attributes"},
-        "when": {"eq": [{"get": "kind"}, "select"]},
-        "children": [
-          {
-            "each": {"get": "options"},
-            "as": "option",
-            "children": {
-              "tag": "option",
-              "attrs": {"value": {"get": "option.value"}, "selected": {"get": "option.selected"}},
-              "children": [{"get": "option.label"}]
-            }
-          }
-        ]
-      },
-      {
-        "tag": "input",
-        "attrs": {"type": "hidden", "name": {"get": "name"}, "value": "0"},
-        "when": {"eq": [{"get": "kind"}, "bool"]}
-      },
-      {
-        "tag": "span",
-        "attrs": {"class": "check-line"},
-        "when": {"eq": [{"get": "kind"}, "bool"]},
-        "children": [
-          {
-            "tag": "input",
-            "attrs": {"type": "checkbox", "name": {"get": "name"}, "value": "1", "checked": {"get": "checked"}}
+    "each": {"lookup": {"get": "key"}, "default": [], "catalog": "settings.fields", "field": "views"},
+    "as": "display",
+    "children": {
+      "tag": {"get": "root_tag"},
+      "attrs": {"class": {"if": [{"get": "display.span"}, "field min-w-0 grid-span-full", "field min-w-0"]}},
+      "children": [
+        {
+          "tag": "span",
+          "attrs": {"class": "label cluster gap-1"},
+          "children": [
+            {"get": "display.label"},
+            {"component": "ui/help", "data": {"text": {"get": "display.help"}, "label": {"get": "display.label"}}}
+          ]
+        },
+        {
+          "component": "ui/input",
+          "data": {"attributes": {"get": "attributes"}},
+          "when": {"eq": [{"get": "kind"}, "input"]}
+        },
+        {
+          "tag": "textarea",
+          "attrs": {
+            "class": {"get": "attributes.class"},
+            "name": {"get": "attributes.name"},
+            "rows": {"get": "attributes.rows"},
+            "maxlength": {"get": "attributes.maxlength"},
+            "placeholder": {"or": [{"get": "display.placeholder"}, {"get": "attributes.placeholder"}]}
           },
-          {"tag": "span", "children": [{"t": "settings.enabled"}]}
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "grid sm:grid-2"},
-        "when": {"eq": [{"get": "kind"}, "group"]},
-        "children": [
-          {
-            "each": {"get": "fields"},
-            "as": "field",
-            "children": {"component": "settings/field", "data": {"get": "field"}}
-          }
-        ]
-      },
-      {
-        "tag": "input",
-        "attrs": {"type": "hidden", "name": {"concat": [{"get": "name"}, "[_present]"]}, "value": "1"},
-        "when": {"eq": [{"get": "kind"}, "templates"]}
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "stack gap-2"},
-        "when": {"eq": [{"get": "kind"}, "templates"]},
-        "children": [
-          {
-            "each": {"get": "options"},
-            "as": "option",
-            "children": {
+          "when": {"eq": [{"get": "kind"}, "textarea"]},
+          "children": [{"get": "value"}]
+        },
+        {
+          "tag": "select",
+          "attrs": {"get": "attributes"},
+          "when": {"eq": [{"get": "kind"}, "select"]},
+          "children": [
+            {
+              "each": {"get": "options"},
+              "as": "option",
+              "children": {
+                "tag": "option",
+                "attrs": {"value": {"get": "option.value"}, "selected": {"get": "option.selected"}},
+                "children": [
+                  {
+                    "if": [
+                      {
+                        "lookup": {"get": "option.value"},
+                        "default": "",
+                        "catalog": "settings.formats",
+                        "field": "example"
+                      },
+                      {
+                        "concat": [
+                          {"get": "option.value"},
+                          " - ",
+                          {
+                            "lookup": {"get": "option.value"},
+                            "default": "",
+                            "catalog": "settings.formats",
+                            "field": "example"
+                          }
+                        ]
+                      },
+                      {"get": "option.label"}
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "tag": "input",
+          "attrs": {"type": "hidden", "name": {"get": "name"}, "value": "0"},
+          "when": {"eq": [{"get": "kind"}, "bool"]}
+        },
+        {
+          "tag": "span",
+          "attrs": {"class": "check-line"},
+          "when": {"eq": [{"get": "kind"}, "bool"]},
+          "children": [
+            {
+              "tag": "input",
+              "attrs": {"type": "checkbox", "name": {"get": "name"}, "value": "1", "checked": {"get": "checked"}}
+            },
+            {"tag": "span", "children": [{"t": "settings.enabled"}]}
+          ]
+        },
+        {
+          "tag": "div",
+          "attrs": {"class": "grid sm:grid-2"},
+          "when": {"eq": [{"get": "kind"}, "group"]},
+          "children": [
+            {
+              "each": {"get": "fields"},
+              "as": "field",
+              "children": {"component": "settings/field", "data": {"get": "field"}}
+            }
+          ]
+        },
+        {
+          "tag": "input",
+          "attrs": {"type": "hidden", "name": {"concat": [{"get": "name"}, "[_present]"]}, "value": "1"},
+          "when": {"eq": [{"get": "kind"}, "templates"]}
+        },
+        {
+          "tag": "div",
+          "attrs": {"class": "stack gap-2"},
+          "when": {"eq": [{"get": "kind"}, "templates"]},
+          "children": [
+            {
+              "each": {"get": "options"},
+              "as": "option",
+              "children": {
+                "tag": "label",
+                "attrs": {"class": "check-line"},
+                "children": [
+                  {
+                    "tag": "input",
+                    "attrs": {
+                      "type": "checkbox",
+                      "name": {"get": "option.name"},
+                      "value": "1",
+                      "checked": {"get": "option.selected"}
+                    }
+                  },
+                  {"tag": "span", "children": [{"get": "option.label"}]}
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "tag": "input",
+          "attrs": {"type": "hidden", "name": {"get": "name"}, "value": {"get": "value"}},
+          "when": {"eq": [{"get": "kind"}, "image"]}
+        },
+        {
+          "tag": "div",
+          "attrs": {
+            "class": "content-image-preview image-preview-contain",
+            "data-empty": {"if": [{"get": "value"}, null, "true"]}
+          },
+          "when": {"eq": [{"get": "kind"}, "image"]},
+          "children": [
+            {"tag": "img", "attrs": {"src": {"get": "value"}, "alt": "", "loading": "lazy"}, "when": {"get": "value"}},
+            {
+              "tag": "span",
+              "attrs": {"class": "content-image-preview-empty"},
+              "when": {"not": {"get": "value"}},
+              "children": [{"icon": "image"}, {"tag": "span", "children": [{"t": "settings.image_empty"}]}]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attrs": {"class": "content-image-actions"},
+          "when": {"eq": [{"get": "kind"}, "image"]},
+          "children": [
+            {
               "tag": "label",
-              "attrs": {"class": "check-line"},
+              "attrs": {"class": "btn btn-secondary btn-sm"},
               "children": [
+                {"icon": "upload"},
+                {"tag": "span", "children": [{"t": "settings.image_upload"}]},
                 {
                   "tag": "input",
                   "attrs": {
-                    "type": "checkbox",
-                    "name": {"get": "option.name"},
-                    "value": "1",
-                    "checked": {"get": "option.selected"}
+                    "type": "file",
+                    "name": {"get": "upload_name"},
+                    "accept": "image/jpeg,image/png,image/gif,image/webp",
+                    "class": "sr-only"
                   }
-                },
-                {"tag": "span", "children": [{"get": "option.label"}]}
+                }
+              ]
+            },
+            {
+              "tag": "label",
+              "attrs": {"class": "check-line mb-0"},
+              "when": {"get": "value"},
+              "children": [
+                {"tag": "input", "attrs": {"type": "checkbox", "name": {"get": "remove_name"}, "value": "1"}},
+                {"tag": "span", "children": [{"t": "settings.image_remove"}]}
               ]
             }
-          }
-        ]
-      },
-      {
-        "tag": "input",
-        "attrs": {"type": "hidden", "name": {"get": "name"}, "value": {"get": "value"}},
-        "when": {"eq": [{"get": "kind"}, "image"]}
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "content-image-preview image-preview-contain",
-          "data-empty": {"if": [{"get": "value"}, null, "true"]}
-        },
-        "when": {"eq": [{"get": "kind"}, "image"]},
-        "children": [
-          {"tag": "img", "attrs": {"src": {"get": "value"}, "alt": "", "loading": "lazy"}, "when": {"get": "value"}},
-          {
-            "tag": "span",
-            "attrs": {"class": "content-image-preview-empty"},
-            "when": {"not": {"get": "value"}},
-            "children": [{"icon": "image"}, {"tag": "span", "children": [{"t": "settings.image_empty"}]}]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "content-image-actions"},
-        "when": {"eq": [{"get": "kind"}, "image"]},
-        "children": [
-          {
-            "tag": "label",
-            "attrs": {"class": "btn btn-secondary btn-sm"},
-            "children": [
-              {"icon": "upload"},
-              {"tag": "span", "children": [{"t": "settings.image_upload"}]},
-              {
-                "tag": "input",
-                "attrs": {
-                  "type": "file",
-                  "name": {"get": "upload_name"},
-                  "accept": "image/jpeg,image/png,image/gif,image/webp",
-                  "class": "sr-only"
-                }
-              }
-            ]
-          },
-          {
-            "tag": "label",
-            "attrs": {"class": "check-line mb-0"},
-            "when": {"get": "value"},
-            "children": [
-              {"tag": "input", "attrs": {"type": "checkbox", "name": {"get": "remove_name"}, "value": "1"}},
-              {"tag": "span", "children": [{"t": "settings.image_remove"}]}
-            ]
-          }
-        ]
-      },
-      {"tag": "span", "attrs": {"class": "help"}, "when": {"get": "help"}, "children": [{"get": "help"}]}
-    ]
+          ]
+        }
+      ]
+    }
   },
   "settings/editor-form": {
     "tag": "form",

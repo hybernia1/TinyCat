@@ -3,6 +3,7 @@
     "name": "Türkçe"
   },
   "common": {
+    "help": "Yardım",
     "sort": "Sıralama",
     "refresh": "Yenile",
     "save": "Kaydet",
@@ -82,7 +83,10 @@
     "activated": "{entity} etkinleştirildi.",
     "deactivated": "{entity} devre dışı bırakıldı.",
     "action_for": "{action} — {context}",
-    "search_empty": "Hiçbir şey bulunamadı."
+    "search_empty": "Hiçbir şey bulunamadı.",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı.",
+    "copy_failed": "Metin kopyalanamadı."
   },
   "relative": {
     "now": "şimdi",

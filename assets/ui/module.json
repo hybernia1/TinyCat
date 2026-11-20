@@ -8,7 +8,8 @@
       "assets/ui/toasts.js",
       "assets/ui/tabs.js",
       "assets/ui/popovers.js",
-      "assets/ui/image-placeholders.js"
+      "assets/ui/image-placeholders.js",
+      "assets/ui/code-copy.js"
     ],
     "components": [],
     "styles": [
@@ -61,7 +62,6 @@
       "assets/ui/styles/pagination-desktop.css",
       "assets/ui/styles/split-desktop.css",
       "assets/ui/styles/field-inline-desktop.css",
-      "assets/ui/styles/modal-confirm-mobile.css",
       "assets/ui/styles/grid-desktop.css",
       "assets/ui/styles/modal-workspace-desktop.css",
       "assets/ui/styles/reduced-motion.css",
@@ -69,7 +69,8 @@
       "assets/ui/styles/tooltip.css",
       "assets/ui/styles/result-list.css",
       "assets/ui/styles/identity-rows.css",
-      "assets/ui/styles/load-more.css"
+      "assets/ui/styles/load-more.css",
+      "assets/ui/styles/public-workspace.css"
     ],
     "translations": [
       "common.menu",
@@ -80,7 +81,10 @@
       "common.confirm",
       "common.confirm_action",
       "common.image_prepare_failed",
-      "common.request_failed"
+      "common.request_failed",
+      "common.copy",
+      "common.copied",
+      "common.copy_failed"
     ]
   },
   {

@@ -36,8 +36,6 @@ import "./workspace.js";
     root.dataset.botPostsRevision = String(Number(root.dataset.botPostsRevision || 0) + 1);
     T.content.replaceChildren(root, T.components.render("bots/posts", Object.assign({}, data, { state: data })));
     T.botDetail.pagination(root, source);
-    var count = document.querySelector('[data-bot-stat="posts"]');
-    if (count && Number.isFinite(Number(data.total_count))) { count.textContent = String(data.total_count); }
   }
   function refreshPosts() {
     T.botDetail.changed();

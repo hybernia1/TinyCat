@@ -17,6 +17,10 @@ final class ModulesPage
             try { $result = Administration::change((string) $request->input('id'), filter_var($request->input('enabled'), FILTER_VALIDATE_BOOL), (string) $request->input('revision')); }
             catch (\DomainException $error) { Response::error(Localization::t($error->getMessage()), $error->getCode(), 'module_change_rejected'); }
             catch (\Throwable $error) { error_log('Module activation failed: ' . $error->getMessage()); Response::error(Localization::t('modules.failed'), 409, 'module_change_failed'); }
+            \TinyCat\Http\Session::flash('success', Localization::t(
+                filter_var($request->input('enabled'), FILTER_VALIDATE_BOOL) ? 'common.activated' : 'common.deactivated',
+                ['entity' => Administration::name((string) $request->input('id'))],
+            ));
             return ['active' => $result['active'], 'backup' => $result['backup'] ?? '', 'redirect' => '/admin/modules'];
         }, 'admin');
         $api->get('/modules/packages/creation', static fn (): array => ['limits' => ['bytes' => \TinyCat\Core\Modules\ModulePackage::MAX_BYTES], 'permissions' => ['install' => Administration::snapshot()['manageable']]], 'admin');

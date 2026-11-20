@@ -1,6 +1,6 @@
 .tabs {
   display: flex;
-  gap: 6px;
+  gap: calc(var(--control-padding-block) * 0.75);
   overflow-x: auto;
   border-bottom: 1px solid var(--border);
 }
@@ -10,7 +10,7 @@
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--muted);
-  padding: 10px 4px;
+  padding: var(--control-padding-inline) calc(var(--control-padding-block) / 2);
   font-weight: 700;
   white-space: nowrap;
 }

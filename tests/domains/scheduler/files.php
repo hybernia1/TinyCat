@@ -295,7 +295,7 @@ try {
     $presentation = \TinyCat\Core\Tasks\Presentation::tasks();
     $assert(array_keys($presentation) === ['fixture.import'] && $presentation['fixture.import']['icon'] === 'rss' && $presentation['fixture.import']['title'] === ['t' => 'cron.task'], 'Presentation follows an arbitrary registered task instead of a fixed task list.');
     $assert(\TinyCat\Core\Tasks\Presentation::options()['fixture.import:batch']['label'] === ['t' => 'cron.options.bot_limit'], 'Parameter labels are scoped to the task that registered them.');
-    $customHtml = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-card', ['task' => ['name' => 'fixture.import', 'options' => ['batch' => 7], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
+    $customHtml = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => ['batch' => 7], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
     $assert(str_contains($customHtml, '#rss') && str_contains($customHtml, \TinyCat\Support\Localization::t('cron.task')), 'Initial HTML uses the registered icon and translated title.');
     $clientDefinitions = \TinyCat\Support\ClientAssets::withBuildCache(static fn (): array => \TinyCat\Support\ClientAssets::definitions('/admin/cron/list'));
     $encoded = json_encode($clientDefinitions, JSON_THROW_ON_ERROR);
@@ -303,7 +303,7 @@ try {
     $assert($callbackCalls === 0 && $database->prepared === $presentationQueries, 'Building task presentation performs no SQL and invokes no runner, normalizer or detail callback.');
     \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture.owner' => new \TinyCat\Core\Modules\Contributions(componentLookups: $lookups)]));
     $assert(\TinyCat\Core\Tasks\Presentation::tasks() === [], 'Removing a task registration removes its presentation metadata.');
-    $historical = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-card', ['task' => ['name' => 'fixture.import', 'options' => [], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
+    $historical = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => [], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
     $assert(str_contains($historical, '#clock') && str_contains($historical, 'fixture.import'), 'Unknown historical tasks retain a safe generic icon and literal identifier.');
 } finally { \TinyCat\Core\Modules\Registrations::configure($originalRegistrations); }
 

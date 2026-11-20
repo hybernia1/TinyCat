@@ -134,10 +134,9 @@
             ]
           },
           {
-            "tag": "p",
-            "attrs": {"class": "table-meta m-0"},
-            "when": {"not": {"get": "has_release"}},
-            "children": [{"t": "updates.check_help"}]
+            "component": "ui/help",
+            "data": {"text": {"t": "updates.check_help"}, "label": {"t": "updates.title"}},
+            "when": {"not": {"get": "has_release"}}
           },
           {
             "component": "ui/notice",

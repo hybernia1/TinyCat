@@ -634,9 +634,7 @@
       "inputs": [
         "field",
         "section.fields",
-        "section.icon",
         "section.key",
-        "section.label",
         "sections"
       ]
     },
@@ -644,16 +642,26 @@
       "name": "settings/field",
       "source": "App/Core/Settings/assets/components.json",
       "dependencies": [
-        "settings/field"
+        "settings/field",
+        "ui/help",
+        "ui/input"
       ],
       "inputs": [
         "attributes",
+        "attributes.class",
+        "attributes.maxlength",
+        "attributes.name",
+        "attributes.placeholder",
+        "attributes.rows",
         "checked",
+        "display.help",
+        "display.label",
+        "display.placeholder",
+        "display.span",
         "field",
         "fields",
-        "help",
+        "key",
         "kind",
-        "label",
         "name",
         "option.label",
         "option.name",
@@ -661,7 +669,6 @@
         "option.value",
         "options",
         "remove_name",
-        "root_class",
         "root_tag",
         "upload_name",
         "value"
@@ -694,7 +701,7 @@
         "scheduler/icon",
         "scheduler/name",
         "scheduler/status",
-        "scheduler/task-card",
+        "scheduler/task-row",
         "ui/empty-state",
         "ui/filter-trigger",
         "ui/list-toolbar",
@@ -776,28 +783,6 @@
       ]
     },
     {
-      "name": "scheduler/task-card",
-      "source": "App/Core/Tasks/assets/components.json",
-      "dependencies": [
-        "scheduler/icon",
-        "scheduler/name",
-        "scheduler/option",
-        "scheduler/status",
-        "ui/api-action"
-      ],
-      "inputs": [
-        "_key",
-        "option",
-        "task.latest",
-        "task.latest.duration_ms",
-        "task.latest.started_at",
-        "task.latest.status",
-        "task.name",
-        "task.options",
-        "task.run_url"
-      ]
-    },
-    {
       "name": "scheduler/name",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [],
@@ -840,11 +825,14 @@
     {
       "name": "scheduler/administration",
       "source": "App/Core/Tasks/assets/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/help"
+      ],
       "inputs": [
         "cronToken",
         "cronUrl",
         "taskViews",
+        "view.cadence_label",
         "view.cli_command",
         "view.help_label",
         "view.http_command",
@@ -852,6 +840,27 @@
         "view.query_url",
         "view.schedule_label",
         "view.title_label"
+      ]
+    },
+    {
+      "name": "scheduler/task-row",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [
+        "scheduler/icon",
+        "scheduler/name",
+        "scheduler/option",
+        "ui/api-action"
+      ],
+      "inputs": [
+        "_key",
+        "option",
+        "task.latest",
+        "task.latest.duration_ms",
+        "task.latest.started_at",
+        "task.latest.status",
+        "task.name",
+        "task.options",
+        "task.run_url"
       ]
     },
     {
@@ -872,6 +881,7 @@
       "source": "App/Core/Updates/assets/components.json",
       "dependencies": [
         "ui/empty-state",
+        "ui/help",
         "ui/notice",
         "ui/stat-card",
         "ui/status-badge"
@@ -1076,15 +1086,11 @@
       "name": "blog/public-list",
       "source": "App/Modules/Blog/assets/components.json",
       "dependencies": [
+        "blog/article-summary",
         "ui/empty-state"
       ],
       "inputs": [
-        "article.author",
-        "article.excerpt",
-        "article.id",
-        "article.published_iso",
-        "article.published_label",
-        "article.title",
+        "article",
         "articles",
         "next_url",
         "title"
@@ -1113,6 +1119,30 @@
       ],
       "inputs": [
         "resource"
+      ]
+    },
+    {
+      "name": "blog/article-summary",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "article.author",
+        "article.excerpt",
+        "article.id",
+        "article.published_iso",
+        "article.published_label",
+        "article.title"
+      ]
+    },
+    {
+      "name": "blog/search-results",
+      "source": "App/Modules/Blog/assets/components.json",
+      "dependencies": [
+        "blog/article-summary"
+      ],
+      "inputs": [
+        "article",
+        "articles"
       ]
     },
     {
@@ -1509,17 +1539,6 @@
       ]
     },
     {
-      "name": "bots/stat",
-      "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [
-        "ui/stat-card"
-      ],
-      "inputs": [
-        "stat.key",
-        "stat.value"
-      ]
-    },
-    {
       "name": "bots/run-status",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
@@ -1634,7 +1653,9 @@
     {
       "name": "bots/source-preview",
       "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/help"
+      ],
       "inputs": [
         "_key",
         "format",
@@ -1672,11 +1693,9 @@
       "name": "bots/account-fields",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "ui/field",
-        "users/avatar-control"
+        "ui/field"
       ],
       "inputs": [
-        "item",
         "item.bio"
       ]
     },
@@ -1990,15 +2009,10 @@
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
         "ui/admin-list",
-        "ui/stat-card"
+        "ui/dashboard-overview"
       ],
       "inputs": [
         "comments_html",
-        "stat.heading",
-        "stat.icon",
-        "stat.label",
-        "stat.note",
-        "stat.value",
         "stats"
       ]
     },
@@ -2148,7 +2162,8 @@
       "name": "status/embed-content",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "ui/field"
+        "ui/field",
+        "ui/help"
       ],
       "inputs": [
         "preview",
@@ -2186,12 +2201,6 @@
       "inputs": [
         "tabs"
       ]
-    },
-    {
-      "name": "bots/workspace-account",
-      "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [],
-      "inputs": []
     },
     {
       "name": "bots/workspace-lists",
@@ -2278,9 +2287,23 @@
       ]
     },
     {
+      "name": "search/posts",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [
+        "status/card"
+      ],
+      "inputs": [
+        "items",
+        "post"
+      ]
+    },
+    {
       "name": "ui/field",
       "source": "assets/ui/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/help",
+        "ui/input"
+      ],
       "inputs": [
         "attributes",
         "field_class",
@@ -2294,12 +2317,16 @@
     {
       "name": "ui/select",
       "source": "assets/ui/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/help"
+      ],
       "inputs": [
         "_key",
         "attributes",
         "choice",
         "choices",
+        "help",
+        "help_id",
         "label",
         "value"
       ]
@@ -2379,7 +2406,9 @@
     {
       "name": "ui/search-form",
       "source": "assets/ui/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/input"
+      ],
       "inputs": [
         "_key",
         "filters",
@@ -2664,14 +2693,10 @@
     {
       "name": "ui/dashboard-overview",
       "source": "assets/ui/components.json",
-      "dependencies": [
-        "ui/stat-card"
-      ],
+      "dependencies": [],
       "inputs": [
-        "stat.heading",
         "stat.icon",
         "stat.label",
-        "stat.note",
         "stat.value",
         "stats"
       ]
@@ -2986,17 +3011,19 @@
     {
       "name": "ui/search-page",
       "source": "assets/ui/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/empty-state"
+      ],
       "inputs": [
+        "group.content",
         "group.items",
         "group.name",
         "group.next_url",
+        "item.avatar_url",
         "item.excerpt",
         "item.title",
         "item.url",
-        "result.collections",
-        "result.query",
-        "searchUrl"
+        "result.collections"
       ]
     },
     {
@@ -3063,6 +3090,40 @@
         "snapshot.groups",
         "snapshot.manageable",
         "snapshot.problems"
+      ]
+    },
+    {
+      "name": "ui/help",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "help_id",
+        "label",
+        "text"
+      ]
+    },
+    {
+      "name": "ui/input",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "attributes",
+        "attributes.type",
+        "input_icon"
+      ]
+    },
+    {
+      "name": "ui/public-workspace",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "content",
+        "entry.active",
+        "entry.icon",
+        "entry.label",
+        "entry.url",
+        "navigation",
+        "title"
       ]
     }
   ],
@@ -3181,7 +3242,6 @@
     "assets/ui/styles/split-desktop.css",
     "assets/modules/admin/styles/admin-lists-desktop.css",
     "assets/ui/styles/field-inline-desktop.css",
-    "assets/ui/styles/modal-confirm-mobile.css",
     "assets/modules/admin/styles/admin-shell-desktop.css",
     "assets/ui/styles/grid-desktop.css",
     "App/Modules/Social/assets/users/styles/profile-layout-desktop.css",
@@ -3197,19 +3257,20 @@
     "assets/ui/styles/tooltip.css",
     "assets/ui/styles/identity-rows.css",
     "assets/ui/styles/load-more.css",
-    "assets/ui/styles/information-pages.css"
+    "assets/ui/styles/information-pages.css",
+    "assets/ui/styles/public-workspace.css"
   ],
   "css_classes": {
     "admin-backdrop": [
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
-        "line": 32,
+        "line": 33,
         "context": [],
         "selector": ".admin-backdrop"
       },
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
-        "line": 41,
+        "line": 42,
         "context": [],
         "selector": "body.admin-nav-open .admin-backdrop"
       },
@@ -3225,7 +3286,7 @@
     "admin-brand": [
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
-        "line": 55,
+        "line": 57,
         "context": [],
         "selector": ".admin-brand"
       },
@@ -3256,28 +3317,98 @@
         "selector": ".admin-content"
       },
       {
+        "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
+        "line": 157,
+        "context": [],
+        "selector": ".admin-content .card:not(.modal .card)"
+      },
+      {
         "source": "assets/ui/styles/containers-mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".admin-content .card"
       },
       {
-        "source": "assets/modules/admin/styles/admin-content-mobile.css",
-        "line": 6,
-        "context": [
-          "@media (max-width: 759px)"
-        ],
-        "selector": ".admin-content"
-      },
-      {
         "source": "assets/modules/admin/styles/admin-shell-desktop.css",
-        "line": 27,
+        "line": 32,
         "context": [
           "@media (min-width: 900px)"
         ],
-        "selector": ".admin-content"
+        "selector": ".admin-main:has(.admin-content .admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 38,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-main:has(.admin-content .admin-list-toolbar) > .admin-topbar"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 42,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 42,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content div:has(.table-wrap):has(.admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 42,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content section:has(.table-wrap):has(.admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 51,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .table-wrap"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 58,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content [data-scheduler-view] > .table-wrap"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 63,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .pagination"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 63,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .card-header"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 68,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .table > thead > tr > th"
       }
     ],
     "admin-filter-actions": [
@@ -3291,7 +3422,7 @@
         "source": "assets/modules/admin/styles/admin-content-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".admin-filter-actions"
       },
@@ -3299,7 +3430,7 @@
         "source": "assets/modules/admin/styles/admin-lists-desktop.css",
         "line": 13,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".admin-filter-actions"
       }
@@ -3315,9 +3446,81 @@
         "source": "assets/modules/admin/styles/admin-lists-desktop.css",
         "line": 2,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".admin-list-toolbar"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 32,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-main:has(.admin-content .admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 38,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-main:has(.admin-content .admin-list-toolbar) > .admin-topbar"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 42,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 42,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content div:has(.table-wrap):has(.admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 42,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content section:has(.table-wrap):has(.admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 51,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .table-wrap"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 63,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .pagination"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 63,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .card-header"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 68,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .table > thead > tr > th"
       }
     ],
     "admin-main": [
@@ -3326,6 +3529,22 @@
         "line": 108,
         "context": [],
         "selector": ".admin-main"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 32,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-main:has(.admin-content .admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 38,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-main:has(.admin-content .admin-list-toolbar) > .admin-topbar"
       }
     ],
     "admin-menu-btn": [
@@ -3349,13 +3568,13 @@
     "admin-nav-chevron": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 70,
+        "line": 71,
         "context": [],
         "selector": ".admin-nav-chevron"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 78,
+        "line": 79,
         "context": [],
         "selector": ".admin-nav-group[open] .admin-nav-chevron"
       }
@@ -3363,19 +3582,19 @@
     "admin-nav-group": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 50,
+        "line": 51,
         "context": [],
         "selector": ".admin-nav-group"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 64,
+        "line": 65,
         "context": [],
         "selector": ".admin-nav-group[data-active=\"true\"] > .admin-nav-summary"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 78,
+        "line": 79,
         "context": [],
         "selector": ".admin-nav-group[open] .admin-nav-chevron"
       }
@@ -3383,25 +3602,25 @@
     "admin-nav-link": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 29,
+        "line": 30,
         "context": [],
         "selector": ".admin-nav-link"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 40,
+        "line": 41,
         "context": [],
         "selector": ".admin-nav-link:hover"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 40,
+        "line": 41,
         "context": [],
         "selector": ".admin-nav-link[aria-current=\"page\"]"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 46,
+        "line": 47,
         "context": [],
         "selector": ".admin-nav-link[aria-current=\"page\"]"
       },
@@ -3410,24 +3629,32 @@
         "line": 88,
         "context": [],
         "selector": ".admin-nav-submenu .admin-nav-link"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 27,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-nav-link"
       }
     ],
     "admin-nav-open": [
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
-        "line": 24,
+        "line": 25,
         "context": [],
         "selector": "body.admin-nav-open"
       },
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
-        "line": 28,
+        "line": 29,
         "context": [],
         "selector": "body.admin-nav-open .admin-sidebar"
       },
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
-        "line": 41,
+        "line": 42,
         "context": [],
         "selector": "body.admin-nav-open .admin-backdrop"
       },
@@ -3443,7 +3670,7 @@
     "admin-nav-submenu": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 82,
+        "line": 83,
         "context": [],
         "selector": ".admin-nav-submenu"
       },
@@ -3457,25 +3684,25 @@
     "admin-nav-summary": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 54,
+        "line": 55,
         "context": [],
         "selector": ".admin-nav-summary"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 60,
+        "line": 61,
         "context": [],
         "selector": ".admin-nav-summary::-webkit-details-marker"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 64,
+        "line": 65,
         "context": [],
         "selector": ".admin-nav-group[data-active=\"true\"] > .admin-nav-summary"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 64,
+        "line": 65,
         "context": [],
         "selector": ".admin-nav-summary:hover"
       }
@@ -3491,7 +3718,7 @@
         "source": "assets/modules/admin/styles/admin-lists-desktop.css",
         "line": 18,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".admin-per-page-form"
       }
@@ -3513,7 +3740,7 @@
         "source": "assets/modules/admin/styles/admin-lists-desktop.css",
         "line": 8,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".admin-search-form"
       }
@@ -3551,7 +3778,7 @@
       },
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
-        "line": 28,
+        "line": 29,
         "context": [],
         "selector": "body.admin-nav-open .admin-sidebar"
       },
@@ -3577,7 +3804,7 @@
     "admin-sidebar-footer": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 93,
+        "line": 92,
         "context": [],
         "selector": ".admin-sidebar-footer"
       }
@@ -3585,7 +3812,7 @@
     "admin-sidebar-header": [
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
-        "line": 45,
+        "line": 46,
         "context": [],
         "selector": ".admin-sidebar-header"
       }
@@ -3596,6 +3823,14 @@
         "line": 112,
         "context": [],
         "selector": ".admin-topbar"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 38,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-main:has(.admin-content .admin-list-toolbar) > .admin-topbar"
       }
     ],
     "admin-topbar-actions": [
@@ -3657,7 +3892,7 @@
         "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-app > .alert"
       },
@@ -3665,7 +3900,7 @@
         "source": "App/Modules/Social/assets/status/styles/feedback-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-section > .alert"
       }
@@ -3673,7 +3908,7 @@
     "alert-danger": [
       {
         "source": "assets/ui/styles/alerts.css",
-        "line": 27,
+        "line": 24,
         "context": [],
         "selector": ".alert-danger"
       }
@@ -3689,7 +3924,7 @@
     "alert-success": [
       {
         "source": "assets/ui/styles/alerts.css",
-        "line": 15,
+        "line": 14,
         "context": [],
         "selector": ".alert-success"
       }
@@ -3697,7 +3932,7 @@
     "alert-warning": [
       {
         "source": "assets/ui/styles/alerts.css",
-        "line": 21,
+        "line": 19,
         "context": [],
         "selector": ".alert-warning"
       }
@@ -3739,7 +3974,7 @@
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
         "line": 41,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-toolbar > .archive-filter"
       }
@@ -3819,7 +4054,7 @@
         "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-composer .status-compose-row .avatar"
       },
@@ -3879,7 +4114,7 @@
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
         "line": 48,
         "context": [
-          "@media (max-width: 380px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".avatar-editor .avatar-upload"
       }
@@ -3907,7 +4142,7 @@
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
         "line": 60,
         "context": [
-          "@media (max-width: 380px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".avatar-editor-appearance"
       }
@@ -3923,7 +4158,7 @@
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
         "line": 49,
         "context": [
-          "@media (max-width: 380px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".avatar-editor-controls"
       }
@@ -3981,7 +4216,7 @@
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
         "line": 48,
         "context": [
-          "@media (max-width: 380px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".avatar-editor .avatar-upload"
       }
@@ -4125,7 +4360,7 @@
     "block": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 63,
+        "line": 59,
         "context": [],
         "selector": ".block"
       }
@@ -4147,37 +4382,31 @@
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 1,
+        "line": 142,
         "context": [],
         "selector": ".btn"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 146,
-        "context": [],
-        "selector": ".btn"
-      },
-      {
-        "source": "assets/ui/styles/buttons.css",
-        "line": 163,
+        "line": 160,
         "context": [],
         "selector": ".btn:hover"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 168,
+        "line": 165,
         "context": [],
         "selector": ".btn:active"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 172,
+        "line": 169,
         "context": [],
         "selector": ".btn:disabled"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 172,
+        "line": 169,
         "context": [],
         "selector": ".btn[aria-disabled=\"true\"]"
       },
@@ -4189,7 +4418,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 18,
+        "line": 15,
         "context": [],
         "selector": ".status-email-notice .btn"
       },
@@ -4213,9 +4442,9 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
-        "line": 6,
+        "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-email-notice .btn"
       },
@@ -4223,7 +4452,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
         "line": 17,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".public-list-header-actions > .btn"
       },
@@ -4231,7 +4460,7 @@
         "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
         "line": 12,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-compose-main .btn"
       },
@@ -4239,15 +4468,15 @@
         "source": "assets/ui/styles/cookie-consent-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".cookie-consent-actions .btn"
       },
       {
-        "source": "assets/ui/styles/modal-confirm-mobile.css",
+        "source": "assets/ui/styles/modal-workspace-desktop.css",
         "line": 2,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer .btn"
       },
@@ -4256,18 +4485,32 @@
         "line": 8,
         "context": [],
         "selector": ".load-more > .btn"
+      },
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 12,
+        "context": [],
+        "selector": ".public-workspace-nav .btn"
+      },
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 33,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".public-workspace-nav .btn"
       }
     ],
     "btn-danger": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 199,
+        "line": 196,
         "context": [],
         "selector": ".btn-danger"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 204,
+        "line": 201,
         "context": [],
         "selector": ".btn-danger:hover"
       }
@@ -4275,13 +4518,13 @@
     "btn-ghost": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 209,
+        "line": 206,
         "context": [],
         "selector": ".btn-ghost"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 213,
+        "line": 210,
         "context": [],
         "selector": ".btn-ghost:hover"
       }
@@ -4289,7 +4532,7 @@
     "btn-group": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 245,
+        "line": 242,
         "context": [],
         "selector": ".btn-group"
       }
@@ -4297,7 +4540,7 @@
     "btn-icon": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 223,
+        "line": 220,
         "context": [],
         "selector": ".btn-icon"
       },
@@ -4311,13 +4554,13 @@
     "btn-primary": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 179,
+        "line": 176,
         "context": [],
         "selector": ".btn-primary"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 184,
+        "line": 181,
         "context": [],
         "selector": ".btn-primary:hover"
       }
@@ -4325,13 +4568,13 @@
     "btn-secondary": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 189,
+        "line": 186,
         "context": [],
         "selector": ".btn-secondary"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 194,
+        "line": 191,
         "context": [],
         "selector": ".btn-secondary:hover"
       }
@@ -4339,7 +4582,7 @@
     "btn-sm": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 217,
+        "line": 214,
         "context": [],
         "selector": ".btn-sm"
       }
@@ -4368,10 +4611,16 @@
         "selector": ".card"
       },
       {
+        "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
+        "line": 157,
+        "context": [],
+        "selector": ".admin-content .card:not(.modal .card)"
+      },
+      {
         "source": "assets/ui/styles/containers-mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".section .card"
       },
@@ -4379,7 +4628,7 @@
         "source": "assets/ui/styles/containers-mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".admin-content .card"
       }
@@ -4395,7 +4644,7 @@
         "source": "assets/ui/styles/cards-mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".card-body"
       },
@@ -4403,7 +4652,7 @@
         "source": "assets/ui/styles/cards-mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-composer .card-body"
       }
@@ -4425,7 +4674,7 @@
         "source": "assets/ui/styles/cards-mobile.css",
         "line": 11,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".card-footer"
       }
@@ -4477,9 +4726,17 @@
         "source": "assets/ui/styles/cards-mobile.css",
         "line": 11,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".card-header"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 63,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .card-header"
       }
     ],
     "check-card": [
@@ -4525,7 +4782,7 @@
     "cluster": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 37,
+        "line": 33,
         "context": [],
         "selector": ".cluster"
       }
@@ -4533,7 +4790,7 @@
     "code-block": [
       {
         "source": "assets/ui/styles/code-block.css",
-        "line": 1,
+        "line": 10,
         "context": [],
         "selector": ".code-block"
       }
@@ -4549,7 +4806,7 @@
         "source": "assets/ui/styles/containers-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".section > .container"
       }
@@ -4655,7 +4912,7 @@
         "source": "assets/ui/styles/cookie-consent-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".cookie-consent"
       }
@@ -4671,7 +4928,7 @@
         "source": "assets/ui/styles/cookie-consent-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".cookie-consent-actions .btn"
       }
@@ -4819,7 +5076,7 @@
         "source": "assets/ui/styles/tables-mobile.css",
         "line": 4,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".table:has(> tbody > tr:only-child > td:only-child > .empty-state)"
       },
@@ -4827,7 +5084,7 @@
         "source": "assets/ui/styles/tables-mobile.css",
         "line": 9,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".table:has(> tbody > tr:only-child > td:only-child > .empty-state) > thead"
       }
@@ -4891,7 +5148,7 @@
         "source": "App/Modules/Social/assets/status/styles/feed-switch-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".feed-switch"
       }
@@ -4931,7 +5188,7 @@
         "source": "App/Modules/Social/assets/status/styles/feed-switch-mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".feed-switch-link"
       },
@@ -4939,7 +5196,7 @@
         "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-switch .feed-switch-link"
       },
@@ -4947,7 +5204,7 @@
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
         "line": 45,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-toolbar .feed-switch-link"
       }
@@ -4975,7 +5232,7 @@
     "field-error": [
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 68,
+        "line": 73,
         "context": [],
         "selector": ".field-error"
       }
@@ -4997,7 +5254,7 @@
         "source": "assets/ui/styles/field-inline-desktop.css",
         "line": 2,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".field-inline"
       }
@@ -5077,7 +5334,7 @@
         "source": "App/Modules/Social/assets/users/styles/following-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".following-modal-grid"
       }
@@ -5085,7 +5342,7 @@
     "gap-1": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 85,
+        "line": 81,
         "context": [],
         "selector": ".gap-1"
       }
@@ -5093,7 +5350,7 @@
     "gap-2": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 89,
+        "line": 85,
         "context": [],
         "selector": ".gap-2"
       }
@@ -5113,7 +5370,7 @@
       },
       {
         "source": "assets/ui/styles/global-search-controls.css",
-        "line": 4,
+        "line": 2,
         "context": [],
         "selector": ".global-search[aria-busy=\"true\"] .global-search-input"
       },
@@ -5121,23 +5378,15 @@
         "source": "assets/ui/styles/navbar-mobile.css",
         "line": 27,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".global-search"
-      }
-    ],
-    "global-search-control": [
-      {
-        "source": "assets/ui/styles/global-search-controls.css",
-        "line": 2,
-        "context": [],
-        "selector": ".global-search-control > .icon"
       }
     ],
     "global-search-heading": [
       {
         "source": "assets/ui/styles/global-search-controls.css",
-        "line": 12,
+        "line": 10,
         "context": [],
         "selector": ".global-search-heading"
       }
@@ -5145,13 +5394,7 @@
     "global-search-input": [
       {
         "source": "assets/ui/styles/global-search-controls.css",
-        "line": 3,
-        "context": [],
-        "selector": ".global-search-input"
-      },
-      {
-        "source": "assets/ui/styles/global-search-controls.css",
-        "line": 4,
+        "line": 2,
         "context": [],
         "selector": ".global-search[aria-busy=\"true\"] .global-search-input"
       },
@@ -5159,7 +5402,7 @@
         "source": "assets/ui/styles/global-search-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".global-search-input"
       }
@@ -5167,7 +5410,7 @@
     "global-search-results": [
       {
         "source": "assets/ui/styles/global-search-controls.css",
-        "line": 5,
+        "line": 3,
         "context": [],
         "selector": ".global-search-results"
       }
@@ -5175,7 +5418,7 @@
     "global-search-section": [
       {
         "source": "assets/ui/styles/global-search-controls.css",
-        "line": 7,
+        "line": 5,
         "context": [],
         "selector": ".global-search-section"
       }
@@ -5183,7 +5426,7 @@
     "grid": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 50,
+        "line": 46,
         "context": [],
         "selector": ".grid"
       }
@@ -5191,7 +5434,7 @@
     "grid-span-full": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 55,
+        "line": 51,
         "context": [],
         "selector": ".grid-span-full"
       }
@@ -5227,7 +5470,7 @@
         "source": "assets/ui/content/styles/mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-link-card.has-image"
       }
@@ -5271,15 +5514,33 @@
     "help": [
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 63,
+        "line": 68,
         "context": [],
         "selector": ".help"
+      },
+      {
+        "source": "assets/ui/styles/fields.css",
+        "line": 79,
+        "context": [],
+        "selector": ".help[data-help]"
+      },
+      {
+        "source": "assets/ui/styles/fields.css",
+        "line": 93,
+        "context": [],
+        "selector": ".help[data-help]:hover"
+      },
+      {
+        "source": "assets/ui/styles/fields.css",
+        "line": 98,
+        "context": [],
+        "selector": ".help[data-help]:focus-visible"
       }
     ],
     "hidden": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 67,
+        "line": 63,
         "context": [],
         "selector": ".hidden"
       }
@@ -5295,7 +5556,7 @@
         "source": "App/Modules/Social/assets/status/styles/home-feed-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-app"
       },
@@ -5303,7 +5564,7 @@
         "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-app > .alert"
       }
@@ -5319,7 +5580,7 @@
         "source": "App/Modules/Social/assets/status/styles/feedback-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-section > .alert"
       }
@@ -5341,7 +5602,7 @@
         "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-switch"
       },
@@ -5349,7 +5610,7 @@
         "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-switch .feed-switch-link"
       },
@@ -5401,7 +5662,7 @@
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
         "line": 37,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-toolbar"
       },
@@ -5409,7 +5670,7 @@
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
         "line": 41,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-toolbar > .archive-filter"
       },
@@ -5417,7 +5678,7 @@
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
         "line": 45,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-toolbar .feed-switch-link"
       }
@@ -5467,15 +5728,9 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 8,
+        "line": 5,
         "context": [],
         "selector": ".status-email-notice > .icon"
-      },
-      {
-        "source": "assets/ui/styles/global-search-controls.css",
-        "line": 2,
-        "context": [],
-        "selector": ".global-search-control > .icon"
       },
       {
         "source": "assets/ui/content/styles/status-content.css",
@@ -5557,15 +5812,15 @@
       },
       {
         "source": "assets/ui/styles/input-icon.css",
-        "line": 6,
+        "line": 7,
         "context": [],
-        "selector": ".input-icon .icon"
+        "selector": ".input-icon > .icon"
       },
       {
         "source": "assets/ui/styles/navbar-mobile.css",
         "line": 48,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".nav-link-icon .icon"
       }
@@ -5685,7 +5940,7 @@
     "inline-flex": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 59,
+        "line": 55,
         "context": [],
         "selector": ".inline-flex"
       }
@@ -5719,13 +5974,19 @@
         "source": "assets/ui/styles/fields.css",
         "line": 55,
         "context": [],
-        "selector": ".input[aria-invalid=\"true\"]"
+        "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]"
+      },
+      {
+        "source": "assets/ui/styles/fields.css",
+        "line": 63,
+        "context": [],
+        "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]:focus:not(:disabled)"
       },
       {
         "source": "assets/ui/styles/input-icon.css",
-        "line": 15,
+        "line": 18,
         "context": [],
-        "selector": ".input-icon .input"
+        "selector": ".input-icon > .input"
       }
     ],
     "input-icon": [
@@ -5743,15 +6004,15 @@
       },
       {
         "source": "assets/ui/styles/input-icon.css",
-        "line": 6,
+        "line": 7,
         "context": [],
-        "selector": ".input-icon .icon"
+        "selector": ".input-icon > .icon"
       },
       {
         "source": "assets/ui/styles/input-icon.css",
-        "line": 15,
+        "line": 18,
         "context": [],
-        "selector": ".input-icon .input"
+        "selector": ".input-icon > .input"
       }
     ],
     "is-active": [
@@ -5811,9 +6072,23 @@
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 49,
+        "line": 53,
         "context": [],
         "selector": ".pagination-link.is-active"
+      },
+      {
+        "source": "assets/ui/styles/pagination.css",
+        "line": 76,
+        "context": [],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 8,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       }
     ],
     "is-child": [
@@ -5827,7 +6102,7 @@
         "source": "assets/ui/content/styles/discussion-mobile.css",
         "line": 8,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-comment.is-child"
       }
@@ -5907,7 +6182,7 @@
         "source": "assets/ui/content/styles/discussion-mobile.css",
         "line": 3,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-comment-form.is-reply"
       }
@@ -5945,7 +6220,7 @@
     "justify-end": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 81,
+        "line": 77,
         "context": [],
         "selector": ".justify-end"
       }
@@ -6041,19 +6316,19 @@
     "link-button": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 228,
+        "line": 225,
         "context": [],
         "selector": ".link-button"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 240,
+        "line": 237,
         "context": [],
         "selector": ".link-button:hover"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 240,
+        "line": 237,
         "context": [],
         "selector": ".link-button:focus"
       }
@@ -6095,7 +6370,7 @@
     "m-0": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 93,
+        "line": 89,
         "context": [],
         "selector": ".m-0"
       }
@@ -6103,7 +6378,7 @@
     "max-w-auth": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 109,
+        "line": 105,
         "context": [],
         "selector": ".max-w-auth"
       }
@@ -6111,7 +6386,7 @@
     "max-w-auth-sm": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 105,
+        "line": 101,
         "context": [],
         "selector": ".max-w-auth-sm"
       }
@@ -6119,7 +6394,7 @@
     "max-w-prose": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 113,
+        "line": 109,
         "context": [],
         "selector": ".max-w-prose"
       }
@@ -6127,7 +6402,7 @@
     "mb-0": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 97,
+        "line": 93,
         "context": [],
         "selector": ".mb-0"
       }
@@ -6145,7 +6420,7 @@
     "md:grid-3": [
       {
         "source": "assets/ui/styles/grid-desktop.css",
-        "line": 12,
+        "line": 7,
         "context": [
           "@media (min-width: 900px)"
         ],
@@ -6155,7 +6430,7 @@
     "md:grid-4": [
       {
         "source": "assets/ui/styles/grid-desktop.css",
-        "line": 6,
+        "line": 11,
         "context": [
           "@media (min-width: 900px)"
         ],
@@ -6191,6 +6466,12 @@
       }
     ],
     "modal": [
+      {
+        "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
+        "line": 157,
+        "context": [],
+        "selector": ".admin-content .card:not(.modal .card)"
+      },
       {
         "source": "assets/ui/styles/modal.css",
         "line": 1,
@@ -6255,7 +6536,7 @@
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
         "line": 10,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-mobile=\"fullscreen\"][data-open=\"true\"]"
       },
@@ -6263,55 +6544,79 @@
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
         "line": 10,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-kind=\"editor\"][data-open=\"true\"]"
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 22,
+        "line": 10,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
+        ],
+        "selector": ".modal[data-modal-size=\"workspace\"][data-open=\"true\"]"
+      },
+      {
+        "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
+        "line": 23,
+        "context": [
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-mobile=\"fullscreen\"] > .modal-panel"
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 22,
+        "line": 23,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-kind=\"editor\"] > .modal-panel"
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 33,
+        "line": 23,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
+        ],
+        "selector": ".modal[data-modal-size=\"workspace\"] > .modal-panel"
+      },
+      {
+        "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
+        "line": 35,
+        "context": [
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-mobile=\"fullscreen\"] > .modal-panel > .modal-body"
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 33,
+        "line": 35,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-kind=\"editor\"] > .modal-panel > .modal-body"
       },
       {
-        "source": "assets/ui/styles/modal-confirm-mobile.css",
-        "line": 2,
+        "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
+        "line": 35,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (max-width: 899px)"
         ],
-        "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer .btn"
+        "selector": ".modal[data-modal-size=\"workspace\"] > .modal-panel > .modal-body"
       },
       {
         "source": "assets/ui/styles/modal-workspace-desktop.css",
         "line": 2,
         "context": [
-          "@media (min-width: 900px) and (hover: hover) and (pointer: fine)"
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer .btn"
+      },
+      {
+        "source": "assets/ui/styles/modal-workspace-desktop.css",
+        "line": 6,
+        "context": [
+          "@media (min-width: 900px)"
         ],
         "selector": ".modal[data-modal-size=\"workspace\"] > .modal-panel"
       }
@@ -6345,25 +6650,33 @@
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 33,
+        "line": 35,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-mobile=\"fullscreen\"] > .modal-panel > .modal-body"
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 33,
+        "line": 35,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-kind=\"editor\"] > .modal-panel > .modal-body"
       },
       {
-        "source": "assets/ui/styles/modal-workspace-desktop.css",
-        "line": 9,
+        "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
+        "line": 35,
         "context": [
-          "@media (min-width: 900px) and (hover: hover) and (pointer: fine)"
+          "@media (max-width: 899px)"
+        ],
+        "selector": ".modal[data-modal-size=\"workspace\"] > .modal-panel > .modal-body"
+      },
+      {
+        "source": "assets/ui/styles/modal-workspace-desktop.css",
+        "line": 13,
+        "context": [
+          "@media (min-width: 900px)"
         ],
         "selector": ".modal-body"
       }
@@ -6424,18 +6737,18 @@
         "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer .btn"
       },
       {
-        "source": "assets/ui/styles/modal-confirm-mobile.css",
+        "source": "assets/ui/styles/modal-workspace-desktop.css",
         "line": 2,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer .btn"
       },
       {
         "source": "assets/ui/styles/modal-workspace-desktop.css",
-        "line": 9,
+        "line": 13,
         "context": [
-          "@media (min-width: 900px) and (hover: hover) and (pointer: fine)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".modal-footer"
       }
@@ -6455,9 +6768,9 @@
       },
       {
         "source": "assets/ui/styles/modal-workspace-desktop.css",
-        "line": 9,
+        "line": 13,
         "context": [
-          "@media (min-width: 900px) and (hover: hover) and (pointer: fine)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".modal-header"
       }
@@ -6515,7 +6828,7 @@
         "source": "assets/ui/styles/modal-layout.css",
         "line": 34,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal-panel > .modal-tabs"
       },
@@ -6527,41 +6840,57 @@
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 22,
+        "line": 23,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-mobile=\"fullscreen\"] > .modal-panel"
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 22,
+        "line": 23,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-kind=\"editor\"] > .modal-panel"
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 33,
+        "line": 23,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
+        ],
+        "selector": ".modal[data-modal-size=\"workspace\"] > .modal-panel"
+      },
+      {
+        "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
+        "line": 35,
+        "context": [
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-mobile=\"fullscreen\"] > .modal-panel > .modal-body"
       },
       {
         "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
-        "line": 33,
+        "line": 35,
         "context": [
-          "@media (max-width: 759px), (hover: none) and (pointer: coarse)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal[data-modal-kind=\"editor\"] > .modal-panel > .modal-body"
       },
       {
-        "source": "assets/ui/styles/modal-workspace-desktop.css",
-        "line": 2,
+        "source": "assets/ui/styles/mobile-inputs-and-dialogs.css",
+        "line": 35,
         "context": [
-          "@media (min-width: 900px) and (hover: hover) and (pointer: fine)"
+          "@media (max-width: 899px)"
+        ],
+        "selector": ".modal[data-modal-size=\"workspace\"] > .modal-panel > .modal-body"
+      },
+      {
+        "source": "assets/ui/styles/modal-workspace-desktop.css",
+        "line": 6,
+        "context": [
+          "@media (min-width: 900px)"
         ],
         "selector": ".modal[data-modal-size=\"workspace\"] > .modal-panel"
       }
@@ -6577,7 +6906,7 @@
         "source": "assets/ui/styles/modal-layout.css",
         "line": 39,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal-tab-switch"
       },
@@ -6585,7 +6914,7 @@
         "source": "assets/ui/styles/modal-layout.css",
         "line": 45,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal-tab-switch > [data-tab-select-icon]"
       },
@@ -6593,7 +6922,7 @@
         "source": "assets/ui/styles/modal-layout.css",
         "line": 46,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal-tab-switch > .select"
       }
@@ -6609,7 +6938,7 @@
         "source": "assets/ui/styles/modal-layout.css",
         "line": 34,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal-panel > .modal-tabs"
       },
@@ -6617,15 +6946,15 @@
         "source": "assets/ui/styles/modal-layout.css",
         "line": 38,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal-tabs > .tabs"
       },
       {
         "source": "assets/ui/styles/modal-workspace-desktop.css",
-        "line": 9,
+        "line": 13,
         "context": [
-          "@media (min-width: 900px) and (hover: hover) and (pointer: fine)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".modal-tabs"
       }
@@ -6633,7 +6962,7 @@
     "mx-auto": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 101,
+        "line": 97,
         "context": [],
         "selector": ".mx-auto"
       }
@@ -6681,7 +7010,7 @@
         "source": "assets/ui/styles/navbar-mobile.css",
         "line": 43,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".nav-link-icon"
       },
@@ -6689,7 +7018,7 @@
         "source": "assets/ui/styles/navbar-mobile.css",
         "line": 48,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".nav-link-icon .icon"
       }
@@ -6705,7 +7034,7 @@
         "source": "assets/ui/styles/navbar-mobile.css",
         "line": 36,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".nav-links"
       }
@@ -6729,7 +7058,7 @@
         "source": "assets/ui/styles/navbar-mobile.css",
         "line": 14,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".navbar-brand"
       },
@@ -6737,7 +7066,7 @@
         "source": "assets/ui/styles/navbar-mobile.css",
         "line": 21,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".navbar-brand strong"
       }
@@ -6753,7 +7082,7 @@
         "source": "assets/ui/styles/navbar-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".navbar-inner"
       }
@@ -6777,7 +7106,7 @@
         "source": "App/Core/Notifications/assets/styles/notification-badge-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".notification-badge"
       }
@@ -6910,82 +7239,182 @@
         "selector": ".modal-footer > .pagination"
       },
       {
-        "source": "assets/ui/styles/pagination-desktop.css",
-        "line": 1,
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 63,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
-        "selector": ".pagination"
+        "selector": ".admin-content:has(.admin-list-toolbar) .pagination"
       }
     ],
     "pagination-ellipsis": [
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 24,
+        "line": 28,
         "context": [],
         "selector": ".pagination-ellipsis"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 65,
+        "line": 69,
         "context": [],
         "selector": ".pagination-ellipsis"
+      },
+      {
+        "source": "assets/ui/styles/pagination.css",
+        "line": 76,
+        "context": [],
+        "selector": ".pagination-list > .pagination-ellipsis"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 2,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-ellipsis"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 8,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-list > .pagination-ellipsis"
       }
     ],
     "pagination-link": [
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 24,
+        "line": 28,
         "context": [],
         "selector": ".pagination-link"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 43,
+        "line": 47,
         "context": [],
         "selector": ".pagination-link:hover"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 49,
+        "line": 53,
         "context": [],
         "selector": ".pagination-link.is-active"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 55,
+        "line": 59,
         "context": [],
         "selector": ".pagination-link[aria-disabled=\"true\"]"
+      },
+      {
+        "source": "assets/ui/styles/pagination.css",
+        "line": 76,
+        "context": [],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 2,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-link"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 8,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       }
     ],
     "pagination-list": [
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 15,
+        "line": 18,
         "context": [],
         "selector": ".pagination-list"
+      },
+      {
+        "source": "assets/ui/styles/pagination.css",
+        "line": 76,
+        "context": [],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
+      },
+      {
+        "source": "assets/ui/styles/pagination.css",
+        "line": 76,
+        "context": [],
+        "selector": ".pagination-list > .pagination-ellipsis"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 8,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 8,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-list > .pagination-ellipsis"
       }
     ],
     "pagination-next": [
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 60,
+        "line": 64,
         "context": [],
         "selector": ".pagination-next"
+      },
+      {
+        "source": "assets/ui/styles/pagination.css",
+        "line": 76,
+        "context": [],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 8,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       }
     ],
     "pagination-prev": [
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 60,
+        "line": 64,
         "context": [],
         "selector": ".pagination-prev"
+      },
+      {
+        "source": "assets/ui/styles/pagination.css",
+        "line": 76,
+        "context": [],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
+      },
+      {
+        "source": "assets/ui/styles/pagination-desktop.css",
+        "line": 8,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       }
     ],
     "pagination-summary": [
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 9,
+        "line": 11,
         "context": [],
         "selector": ".pagination-summary"
       }
@@ -7413,7 +7842,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".public-list-header"
       },
@@ -7421,7 +7850,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".public-list-header.public-list-header-actions"
       },
@@ -7429,7 +7858,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".section .public-list-header"
       }
@@ -7439,7 +7868,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".public-list-header.public-list-header-actions"
       },
@@ -7447,7 +7876,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
         "line": 12,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".public-list-header-actions > .text-2xl"
       },
@@ -7455,7 +7884,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
         "line": 17,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".public-list-header-actions > .btn"
       }
@@ -7504,6 +7933,58 @@
         "selector": ".public-sidebar-footer a"
       }
     ],
+    "public-workspace": [
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 1,
+        "context": [],
+        "selector": ".public-workspace"
+      },
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 23,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".public-workspace"
+      }
+    ],
+    "public-workspace-nav": [
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 6,
+        "context": [],
+        "selector": ".public-workspace-nav"
+      },
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 12,
+        "context": [],
+        "selector": ".public-workspace-nav .btn"
+      },
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 17,
+        "context": [],
+        "selector": ".public-workspace-nav [aria-current=\"page\"]"
+      },
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 29,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".public-workspace-nav"
+      },
+      {
+        "source": "assets/ui/styles/public-workspace.css",
+        "line": 33,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".public-workspace-nav .btn"
+      }
+    ],
     "publishing-text": [
       {
         "source": "assets/ui/content/styles/status-text.css",
@@ -7539,7 +8020,7 @@
         "source": "assets/ui/styles/cards-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".section"
       },
@@ -7547,7 +8028,7 @@
         "source": "assets/ui/styles/containers-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".section > .container"
       },
@@ -7555,7 +8036,7 @@
         "source": "assets/ui/styles/containers-mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".section .card"
       },
@@ -7563,7 +8044,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".section .public-list-header"
       },
@@ -7571,7 +8052,7 @@
         "source": "assets/ui/styles/section-desktop.css",
         "line": 2,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".section"
       }
@@ -7599,13 +8080,19 @@
         "source": "assets/ui/styles/fields.css",
         "line": 55,
         "context": [],
-        "selector": ".select[aria-invalid=\"true\"]"
+        "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]"
+      },
+      {
+        "source": "assets/ui/styles/fields.css",
+        "line": 63,
+        "context": [],
+        "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]:focus:not(:disabled)"
       },
       {
         "source": "assets/ui/styles/modal-layout.css",
         "line": 46,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal-tab-switch > .select"
       }
@@ -7634,10 +8121,10 @@
     ],
     "sm:grid-2": [
       {
-        "source": "assets/ui/styles/modal-confirm-mobile.css",
-        "line": 6,
+        "source": "assets/ui/styles/grid-desktop.css",
+        "line": 2,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".sm\\:grid-2"
       }
@@ -7645,7 +8132,7 @@
     "split": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 44,
+        "line": 40,
         "context": [],
         "selector": ".split"
       },
@@ -7663,9 +8150,9 @@
       },
       {
         "source": "assets/ui/styles/split-desktop.css",
-        "line": 1,
+        "line": 2,
         "context": [
-          "@media (min-width: 760px)"
+          "@media (min-width: 900px)"
         ],
         "selector": ".split"
       }
@@ -7673,7 +8160,7 @@
     "sr-only": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 71,
+        "line": 67,
         "context": [],
         "selector": ".sr-only"
       }
@@ -7693,13 +8180,13 @@
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 5,
+        "line": 1,
         "context": [],
         "selector": ".stack > *"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 9,
+        "line": 5,
         "context": [],
         "selector": ".stack > * + *"
       },
@@ -7719,7 +8206,7 @@
     "stack-gap-12": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 21,
+        "line": 17,
         "context": [],
         "selector": ".stack-gap-12"
       }
@@ -7727,7 +8214,7 @@
     "stack-gap-14": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 25,
+        "line": 21,
         "context": [],
         "selector": ".stack-gap-14"
       }
@@ -7735,7 +8222,7 @@
     "stack-gap-16": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 29,
+        "line": 25,
         "context": [],
         "selector": ".stack-gap-16"
       }
@@ -7743,7 +8230,7 @@
     "stack-gap-24": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 33,
+        "line": 29,
         "context": [],
         "selector": ".stack-gap-24"
       }
@@ -7751,7 +8238,7 @@
     "stack-gap-4": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 13,
+        "line": 9,
         "context": [],
         "selector": ".stack-gap-4"
       }
@@ -7759,7 +8246,7 @@
     "stack-gap-8": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 17,
+        "line": 13,
         "context": [],
         "selector": ".stack-gap-8"
       }
@@ -7889,7 +8376,7 @@
         "source": "assets/ui/content/styles/discussion-mobile.css",
         "line": 8,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-comment.is-child"
       }
@@ -7997,7 +8484,7 @@
         "source": "assets/ui/content/styles/discussion-mobile.css",
         "line": 3,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-comment-form"
       },
@@ -8005,7 +8492,7 @@
         "source": "assets/ui/content/styles/discussion-mobile.css",
         "line": 3,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-comment-form.is-reply"
       }
@@ -8301,7 +8788,7 @@
         "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
         "line": 12,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-compose-main .btn"
       }
@@ -8323,7 +8810,7 @@
         "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-compose-row"
       },
@@ -8331,7 +8818,7 @@
         "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-composer .status-compose-row .avatar"
       }
@@ -8341,7 +8828,7 @@
         "source": "assets/ui/styles/cards-mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-composer .card-body"
       },
@@ -8349,7 +8836,7 @@
         "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
         "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-composer .status-compose-row .avatar"
       }
@@ -8415,7 +8902,7 @@
         "source": "assets/ui/content/styles/mobile.css",
         "line": 11,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-editor-input"
       }
@@ -8513,21 +9000,21 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 8,
+        "line": 5,
         "context": [],
         "selector": ".status-email-notice > .icon"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 18,
+        "line": 15,
         "context": [],
         "selector": ".status-email-notice .btn"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
-        "line": 6,
+        "line": 7,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-email-notice .btn"
       }
@@ -8535,7 +9022,7 @@
     "status-email-notice-copy": [
       {
         "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 13,
+        "line": 10,
         "context": [],
         "selector": ".status-email-notice-copy"
       },
@@ -8543,7 +9030,7 @@
         "source": "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-email-notice-copy"
       }
@@ -8579,7 +9066,7 @@
         "source": "App/Modules/Social/assets/status/styles/status-feed-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-feed"
       }
@@ -8943,7 +9430,7 @@
         "source": "assets/ui/content/styles/mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-link-card.has-image"
       }
@@ -9081,7 +9568,7 @@
         "source": "assets/ui/content/styles/mobile.css",
         "line": 6,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".status-link-media"
       }
@@ -9637,31 +10124,31 @@
     "table": [
       {
         "source": "assets/ui/styles/tables.css",
-        "line": 10,
+        "line": 7,
         "context": [],
         "selector": ".table"
       },
       {
         "source": "assets/ui/styles/tables.css",
-        "line": 16,
+        "line": 13,
         "context": [],
         "selector": ".table th"
       },
       {
         "source": "assets/ui/styles/tables.css",
-        "line": 16,
+        "line": 13,
         "context": [],
         "selector": ".table td"
       },
       {
         "source": "assets/ui/styles/tables.css",
-        "line": 24,
+        "line": 21,
         "context": [],
         "selector": ".table th"
       },
       {
         "source": "assets/ui/styles/tables.css",
-        "line": 32,
+        "line": 28,
         "context": [],
         "selector": ".table tr:last-child td"
       },
@@ -9669,15 +10156,15 @@
         "source": "assets/ui/styles/tables-mobile.css",
         "line": 2,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
-        "selector": ".table"
+        "selector": ".table:has(> thead)"
       },
       {
         "source": "assets/ui/styles/tables-mobile.css",
         "line": 4,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".table:has(> tbody > tr:only-child > td:only-child > .empty-state)"
       },
@@ -9685,7 +10172,7 @@
         "source": "assets/ui/styles/tables-mobile.css",
         "line": 9,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".table:has(> tbody > tr:only-child > td:only-child > .empty-state) > thead"
       },
@@ -9712,6 +10199,14 @@
         "line": 79,
         "context": [],
         "selector": ".table .table-meta.text-danger"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 68,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .table > thead > tr > th"
       }
     ],
     "table-actions": [
@@ -9898,6 +10393,38 @@
         "line": 1,
         "context": [],
         "selector": ".table-wrap"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 42,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content div:has(.table-wrap):has(.admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 42,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content section:has(.table-wrap):has(.admin-list-toolbar)"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 51,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content:has(.admin-list-toolbar) .table-wrap"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-shell-desktop.css",
+        "line": 58,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".admin-content [data-scheduler-view] > .table-wrap"
       }
     ],
     "tabs": [
@@ -9911,7 +10438,7 @@
         "source": "assets/ui/styles/modal-layout.css",
         "line": 38,
         "context": [
-          "@media (max-width: 599px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".modal-tabs > .tabs"
       }
@@ -9945,7 +10472,7 @@
     "text-2xl": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 129,
+        "line": 125,
         "context": [],
         "selector": ".text-2xl"
       },
@@ -9959,7 +10486,7 @@
         "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
         "line": 12,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".public-list-header-actions > .text-2xl"
       }
@@ -9967,7 +10494,7 @@
     "text-base": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 117,
+        "line": 113,
         "context": [],
         "selector": ".text-base"
       }
@@ -9975,7 +10502,7 @@
     "text-danger": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 142,
+        "line": 138,
         "context": [],
         "selector": ".text-danger"
       },
@@ -9989,7 +10516,7 @@
     "text-lg": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 121,
+        "line": 117,
         "context": [],
         "selector": ".text-lg"
       }
@@ -9997,7 +10524,7 @@
     "text-muted": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 134,
+        "line": 130,
         "context": [],
         "selector": ".text-muted"
       }
@@ -10005,7 +10532,7 @@
     "text-primary": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 138,
+        "line": 134,
         "context": [],
         "selector": ".text-primary"
       }
@@ -10013,7 +10540,7 @@
     "text-xl": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 125,
+        "line": 121,
         "context": [],
         "selector": ".text-xl"
       }
@@ -10047,7 +10574,13 @@
         "source": "assets/ui/styles/fields.css",
         "line": 55,
         "context": [],
-        "selector": ".textarea[aria-invalid=\"true\"]"
+        "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]"
+      },
+      {
+        "source": "assets/ui/styles/fields.css",
+        "line": 63,
+        "context": [],
+        "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]:focus:not(:disabled)"
       }
     ],
     "toast": [
@@ -10055,14 +10588,6 @@
         "source": "assets/ui/styles/toasts.css",
         "line": 12,
         "context": [],
-        "selector": ".toast"
-      },
-      {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 117,
-        "context": [
-          "@media (max-width: 759px)"
-        ],
         "selector": ".toast"
       }
     ],
@@ -10223,9 +10748,9 @@
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 111,
+        "line": 110,
         "context": [
-          "@media (max-width: 759px)"
+          "@media (max-width: 899px)"
         ],
         "selector": ".toast-stack"
       }
@@ -10503,88 +11028,6 @@
       ]
     },
     {
-      "selector": ".btn",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".btn",
-          "context": [],
-          "source": "assets/ui/styles/buttons.css",
-          "line": 1,
-          "declarations": [
-            [
-              "align-self",
-              "flex-start"
-            ]
-          ]
-        },
-        {
-          "selector": ".btn",
-          "context": [],
-          "source": "assets/ui/styles/buttons.css",
-          "line": 146,
-          "declarations": [
-            [
-              "display",
-              "inline-flex"
-            ],
-            [
-              "min-height",
-              "40px"
-            ],
-            [
-              "align-items",
-              "center"
-            ],
-            [
-              "justify-content",
-              "center"
-            ],
-            [
-              "gap",
-              "8px"
-            ],
-            [
-              "border",
-              "1px solid transparent"
-            ],
-            [
-              "border-radius",
-              "var(--radius-sm)"
-            ],
-            [
-              "padding",
-              "8px 14px"
-            ],
-            [
-              "background",
-              "var(--surface)"
-            ],
-            [
-              "color",
-              "var(--text)"
-            ],
-            [
-              "font-weight",
-              "650"
-            ],
-            [
-              "line-height",
-              "1.2"
-            ],
-            [
-              "text-decoration",
-              "none"
-            ],
-            [
-              "transition",
-              "background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 150ms ease"
-            ]
-          ]
-        }
-      ]
-    },
-    {
       "selector": ".card-header",
       "context": [],
       "rules": [
@@ -10596,7 +11039,7 @@
           "declarations": [
             [
               "padding",
-              "12px 14px"
+              "0.75rem 0.875rem"
             ]
           ]
         },
@@ -10626,7 +11069,7 @@
           "declarations": [
             [
               "padding",
-              "12px 14px"
+              "0.75rem 0.875rem"
             ]
           ]
         },
@@ -10668,7 +11111,7 @@
             ],
             [
               "min-height",
-              "40px"
+              "var(--control-height)"
             ],
             [
               "border",
@@ -10688,7 +11131,7 @@
             ],
             [
               "padding",
-              "8px 10px"
+              "var(--control-padding-block) var(--control-padding-inline)"
             ],
             [
               "transition",
@@ -10704,7 +11147,7 @@
           "declarations": [
             [
               "min-height",
-              "112px"
+              "7rem"
             ],
             [
               "resize",
@@ -10722,7 +11165,7 @@
           "selector": ".table th",
           "context": [],
           "source": "assets/ui/styles/tables.css",
-          "line": 16,
+          "line": 13,
           "declarations": [
             [
               "border-bottom",
@@ -10730,7 +11173,7 @@
             ],
             [
               "padding",
-              "10px 12px"
+              "0.625rem 0.75rem"
             ],
             [
               "text-align",
@@ -10746,11 +11189,11 @@
           "selector": ".table th",
           "context": [],
           "source": "assets/ui/styles/tables.css",
-          "line": 24,
+          "line": 21,
           "declarations": [
             [
               "background",
-              "var(--surface-soft)"
+              "var(--surface-muted)"
             ],
             [
               "color",
@@ -10762,11 +11205,7 @@
             ],
             [
               "font-weight",
-              "750"
-            ],
-            [
-              "text-transform",
-              "uppercase"
+              "600"
             ]
           ]
         }
@@ -11084,7 +11523,7 @@
             ],
             [
               "padding",
-              "7px 9px"
+              "0.4375rem 0.5625rem"
             ]
           ]
         },
@@ -11122,7 +11561,7 @@
             ],
             [
               "padding",
-              "1px 2px"
+              "1px 0.125rem"
             ],
             [
               "text-decoration-thickness",
@@ -11176,7 +11615,7 @@
             ],
             [
               "padding",
-              "1px 2px"
+              "1px 0.125rem"
             ],
             [
               "text-decoration-thickness",
@@ -11226,7 +11665,7 @@
             ],
             [
               "gap",
-              "4px"
+              "0.25rem"
             ],
             [
               "color",
@@ -11258,7 +11697,7 @@
             ],
             [
               "padding",
-              "2px 0"
+              "0.125rem 0"
             ],
             [
               "font",
@@ -11364,7 +11803,7 @@
           "selector": ".admin-nav-link[aria-current=\"page\"]",
           "context": [],
           "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-          "line": 40,
+          "line": 41,
           "declarations": [
             [
               "background",
@@ -11380,7 +11819,7 @@
           "selector": ".admin-nav-link[aria-current=\"page\"]",
           "context": [],
           "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-          "line": 46,
+          "line": 47,
           "declarations": [
             [
               "box-shadow",
@@ -11398,7 +11837,7 @@
           "selector": ".pagination-ellipsis",
           "context": [],
           "source": "assets/ui/styles/pagination.css",
-          "line": 24,
+          "line": 28,
           "declarations": [
             [
               "display",
@@ -11406,11 +11845,11 @@
             ],
             [
               "min-width",
-              "38px"
+              "var(--control-height)"
             ],
             [
               "min-height",
-              "38px"
+              "var(--control-height)"
             ],
             [
               "flex",
@@ -11426,7 +11865,7 @@
             ],
             [
               "border",
-              "1px solid var(--border)"
+              "1px solid transparent"
             ],
             [
               "border-radius",
@@ -11442,7 +11881,7 @@
             ],
             [
               "padding",
-              "7px 11px"
+              "var(--control-padding-block) var(--control-padding-inline)"
             ],
             [
               "font-size",
@@ -11450,7 +11889,7 @@
             ],
             [
               "font-weight",
-              "700"
+              "500"
             ],
             [
               "line-height",
@@ -11466,7 +11905,7 @@
           "selector": ".pagination-ellipsis",
           "context": [],
           "source": "assets/ui/styles/pagination.css",
-          "line": 65,
+          "line": 69,
           "declarations": [
             [
               "border-color",
@@ -11482,7 +11921,7 @@
             ],
             [
               "padding-inline",
-              "4px"
+              "0.25rem"
             ]
           ]
         }
@@ -11536,7 +11975,7 @@
             ],
             [
               "gap",
-              "10px"
+              "var(--control-padding-inline)"
             ],
             [
               "background",
@@ -11636,7 +12075,7 @@
             ],
             [
               "gap",
-              "6px"
+              "calc(var(--control-padding-block) * 0.75)"
             ]
           ]
         }
@@ -11658,11 +12097,11 @@
             ],
             [
               "width",
-              "30px"
+              "var(--toast-action-size)"
             ],
             [
               "height",
-              "30px"
+              "var(--toast-action-size)"
             ],
             [
               "place-items",
@@ -11708,11 +12147,11 @@
             ],
             [
               "width",
-              "30px"
+              "var(--toast-action-size)"
             ],
             [
               "height",
-              "30px"
+              "var(--toast-action-size)"
             ],
             [
               "place-items",
@@ -11984,6 +12423,15 @@
         {
           "name": "appendAvatar",
           "line": 35
+        }
+      ]
+    },
+    {
+      "source": "assets/ui/code-copy.js",
+      "methods": [
+        {
+          "name": "init",
+          "line": 58
         }
       ]
     },
@@ -12272,11 +12720,11 @@
       "methods": [
         {
           "name": "dispose",
-          "line": 74
+          "line": 96
         },
         {
           "name": "init",
-          "line": 75
+          "line": 97
         }
       ]
     }
@@ -12471,7 +12919,8 @@
           "/blog",
           "/articles",
           "/admin/articles",
-          "/admin/article-sources"
+          "/admin/article-sources",
+          "/search/all"
         ]
       }
     ],
@@ -13299,14 +13748,6 @@
         ]
       }
     ],
-    "assets/ui/styles/modal-confirm-mobile.css": [
-      {
-        "manifest": "assets/ui/module.json",
-        "routes": [
-          "*"
-        ]
-      }
-    ],
     "assets/ui/styles/modal-layout.css": [
       {
         "manifest": "assets/ui/module.json",
@@ -13364,6 +13805,14 @@
       }
     ],
     "assets/ui/styles/popovers.css": [
+      {
+        "manifest": "assets/ui/module.json",
+        "routes": [
+          "*"
+        ]
+      }
+    ],
+    "assets/ui/styles/public-workspace.css": [
       {
         "manifest": "assets/ui/module.json",
         "routes": [
@@ -14312,6 +14761,25 @@
         "assets/ui/component-builders.js"
       ],
       "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "assets/ui/code-copy.js",
+      "imports": [
+        "assets/core/dom.js",
+        "assets/core/icons.js",
+        "assets/core/i18n.js",
+        "assets/core/lifecycle.js",
+        "assets/ui/toasts.js"
+      ],
+      "entries": [
+        {
+          "manifest": "assets/ui/module.json",
+          "routes": [
+            "*"
+          ]
+        }
+      ],
       "standalone": false
     },
     {

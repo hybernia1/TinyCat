@@ -64,7 +64,7 @@ import "./tabs.js";
 
       if (!input) {
         var summary = document.createElement("div");
-        summary.className = "alert alert-danger";
+        summary.className = "alert alert-danger grid-span-full";
         summary.dataset.fieldError = name;
         summary.setAttribute("role", "alert"); summary.setAttribute("tabindex", "-1");
         summary.textContent = String(message || ""); form.appendChild(summary);

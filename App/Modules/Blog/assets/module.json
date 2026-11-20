@@ -5,7 +5,8 @@
       "/blog",
       "/articles",
       "/admin/articles",
-      "/admin/article-sources"
+      "/admin/article-sources",
+      "/search/all"
     ],
     "entries": [],
     "components": [],

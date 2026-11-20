@@ -18,6 +18,33 @@ const html = `<!doctype html><html lang="cs"><head><meta name="viewport" content
       const context = await browser.newContext({ viewport: {width,height}, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
       const page = await context.newPage();
       await page.goto('http://127.0.0.1:'+server.address().port+'/');
+      const theme = await page.evaluate(() => {
+        const root = document.documentElement, panel = document.createElement('aside'), content = document.createElement('section'), input = document.createElement('input');
+        panel.dataset.theme='dark'; panel.style.cssText='background:var(--surface-panel);color:var(--text);box-shadow:var(--shadow-sm)';
+        content.style.cssText='background:var(--surface);color:var(--text)'; input.className='input';
+        document.body.append(panel,content,input);
+        root.dataset.theme='light';
+        const light = getComputedStyle(content).backgroundColor, panelLight = getComputedStyle(panel).backgroundColor;
+        root.dataset.theme='dark';
+        const dark = getComputedStyle(content).backgroundColor, panelDark = getComputedStyle(panel).backgroundColor, text = getComputedStyle(panel).color, shadow=getComputedStyle(panel).boxShadow;
+        function luminance(color) { return color.match(/[\d.]+/g).slice(0,3).map(Number).map(value=>{value/=255;return value<=0.04045?value/12.92:Math.pow((value+0.055)/1.055,2.4);}).reduce((sum,value,index)=>sum+value*[0.2126,0.7152,0.0722][index],0); }
+        const contrast = (luminance(text)+0.05)/(luminance(panelDark)+0.05);
+        root.dataset.theme='light';
+        const regular=input.getBoundingClientRect().height;
+        root.dataset.uiDensity='compact'; const compact=input.getBoundingClientRect().height;
+        root.style.setProperty('--ui-scale','1.5'); const large=input.getBoundingClientRect().height;
+        root.style.removeProperty('--ui-scale'); root.removeAttribute('data-ui-density'); root.removeAttribute('data-theme');
+        panel.remove();content.remove();input.remove();
+        return {light,dark,panelLight,panelDark,contrast,regular,compact,large,shadow};
+      });
+      assert.ok(theme.light!==theme.dark && theme.panelLight===theme.panelDark && theme.panelDark!==theme.dark, 'Shared palette distinguishes content and a scoped dark panel: '+JSON.stringify(theme)); checks++;
+      assert.ok(theme.contrast>=4.5, 'Scoped panel text remains readable: '+JSON.stringify(theme)); checks++;
+      assert.notEqual(theme.shadow,'none','Shared theme shadows render in WebKit'); checks++;
+      await page.emulateMedia({colorScheme:'dark'});
+      const automaticDark = await page.evaluate(()=>{const surface=document.createElement('div');surface.style.background='var(--surface)';document.body.append(surface);const color=getComputedStyle(surface).backgroundColor;surface.remove();return color;});
+      assert.equal(automaticDark,theme.dark,'System dark mode resolves the same shared palette'); checks++;
+      await page.emulateMedia({colorScheme:'light'});
+      assert.ok(theme.compact<theme.regular && theme.large>theme.regular, 'Core density and scale work without an administration layout: '+JSON.stringify(theme)); checks++;
       for (const kind of ['account','archive','users']) {
         await page.locator('#'+kind+' summary').tap();
         const metrics = await page.locator('#'+kind+' .popover-panel').evaluate(panel => ({

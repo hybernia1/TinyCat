@@ -3,6 +3,13 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 $mode = $argv[1] ?? '--all';
+if ($mode === '--search-workspace') {
+    $navigation = [];
+    foreach (\TinyCat\Core\Discovery\Search::sources() as $source) { $navigation[] = ['label' => ($source->label)(), 'icon' => $source->icon, 'url' => '/search/all?q=fixture&collection=' . $source->id, 'active' => $navigation === []]; }
+    $content = \TinyCat\Support\Components::render('ui/search-page', ['result' => ['collections' => [['name' => 'Fixture', 'items' => [['title' => str_repeat('Long title ', 20), 'excerpt' => str_repeat('Result text ', 30), 'url' => '/fixture']]]]]]);
+    echo json_encode(['content' => \TinyCat\Support\Components::render('ui/public-workspace', ['title' => 'Search', 'navigation' => $navigation, 'content' => new \TinyCat\Support\Markup($content)]), 'styles' => \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles('/search/all'))], JSON_THROW_ON_ERROR);
+    exit;
+}
 if (in_array($mode, ['--notifications-core', '--notifications-blog'], true)) {
     $root = dirname(__DIR__, 3);
     $selection = $mode === '--notifications-blog' ? ['tinycat.blog' => 'App/Modules/Blog/module.json'] : [];
@@ -12,6 +19,10 @@ if (in_array($mode, ['--notifications-core', '--notifications-blog'], true)) {
     exit;
 }
 
+if ($mode === '--scheduler-help') {
+    echo json_encode(\TinyCat\Support\Components::render('scheduler/administration', ['cronToken' => 'fixture', 'cronUrl' => '/api/scheduler/executions', 'taskViews' => [['icon' => 'clock', 'title_label' => 'Fixture task', 'help_label' => 'Task explanation', 'schedule_label' => 'Scheduling explanation', 'cadence_label' => 'Every hour', 'query_url' => '/api/scheduler/triggers/fixture', 'http_command' => 'fixture-http', 'cli_command' => 'fixture-cli']]]), JSON_THROW_ON_ERROR);
+    exit;
+}
 if ($mode === '--health-action') {
     echo json_encode(\TinyCat\Support\Components::render('ui/api-action', ['url' => '/api/site-health/checks', 'method' => 'POST', 'label' => 'Run check']), JSON_THROW_ON_ERROR);
     exit;
@@ -42,6 +53,10 @@ if ($mode === '--catalogs') {
     }
     echo json_encode($catalogs, JSON_THROW_ON_ERROR);
     exit;
+}
+if ($mode === '--catalog-development') {
+    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json', 'tinycat.blog' => 'App/Modules/Blog/module.json'])->catalog);
+    $mode = '--catalog';
 }
 if ($mode === '--catalog') {
     echo json_encode(\TinyCat\Support\Localization::catalog((string) ($argv[2] ?? 'en')), JSON_THROW_ON_ERROR);

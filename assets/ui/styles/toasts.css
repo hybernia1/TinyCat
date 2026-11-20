@@ -1,24 +1,24 @@
 .toast-stack {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
+  right: var(--toast-inset);
+  bottom: var(--toast-inset);
   z-index: 70;
   display: grid;
-  width: min(calc(100vw - 32px), 420px);
-  gap: 8px;
+  width: min(calc(100vw - var(--toast-inset) * 2), var(--toast-width));
+  gap: var(--control-padding-block);
   pointer-events: none;
 }
 
 .toast {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 30px;
+  grid-template-columns: var(--toast-action-size) minmax(0, 1fr) var(--toast-action-size);
   align-items: center;
-  gap: 10px;
+  gap: var(--control-padding-inline);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
-  padding: 10px;
+  padding: var(--control-padding-inline);
   color: var(--text);
   font-weight: 650;
   pointer-events: auto;
@@ -27,8 +27,8 @@
 .toast-icon,
 .toast-close {
   display: inline-grid;
-  width: 30px;
-  height: 30px;
+  width: var(--toast-action-size);
+  height: var(--toast-action-size);
   place-items: center;
   border-radius: var(--radius-sm);
 }
@@ -106,16 +106,9 @@
   color: currentColor;
 }
 
-@media (max-width: 759px) {
-
-.toast-stack {
-    right: 10px;
-    bottom: 10px;
-    width: calc(100vw - 20px);
-  }
-
-.toast {
-    grid-template-columns: 32px minmax(0, 1fr) 30px;
-    gap: 8px;
+@media (max-width: 899px) {
+  .toast-stack {
+    --toast-inset: var(--control-padding-inline);
+    --toast-action-size: var(--control-height-touch);
   }
 }

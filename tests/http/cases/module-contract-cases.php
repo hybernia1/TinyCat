@@ -9,18 +9,25 @@ foreach (['GET', 'POST'] as $retiredSettingsMethod) {
     $assert(preg_match('/\s404\s/', (string) ($retiredHeaders[0] ?? '')) === 1, 'The standalone settings page is retired for ' . $retiredSettingsMethod . '.');
 }
 $settingsHostPage = file_get_contents('http://' . $address . '/admin', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+preg_match('/<html[^>]*\blang="([^"]+)"/', $settingsHostPage, $adminLanguageMatch);
+$assert(isset($adminLanguageMatch[1]) && str_contains($settingsHostPage, 'data-interface-prefix="' . $adminLanguageMatch[1] . '"'), 'The admin document propagates its displayed language through the existing API interface context.');
+$assert(str_contains($settingsHostPage, 'data-ui-density="compact"'), 'The admin document selects the reusable core compact UI profile.');
+foreach (['en' => 'Automatic', 'cs' => 'Automaticky'] as $editorLocale => $automaticLabel) {
+    [$editorStatus, $editorResource] = $request('GET', '/api/settings/editor', null, 'admin', ['X-TinyCat-Locale' => $editorLocale]);
+    $siteFields = [];
+    foreach ($editorResource['data']['sections'] as $editorSection) { if ($editorSection['key'] === 'site') { $siteFields = array_column($editorSection['fields'], null, 'key'); } }
+    $assert($editorStatus === 200 && $siteFields['site.homepage']['options'][0]['name'] === $automaticLabel && $siteFields['site.theme']['options'][0]['name'] === $automaticLabel, 'Settings option names respect the administration interface language.');
+}
 $assert(is_string($settingsHostPage) && str_contains($settingsHostPage, 'data-modal-open="modal-settings-editor"') && str_contains($settingsHostPage, 'data-modal-url="/api/settings/editor"') && !str_contains($settingsHostPage, 'data-settings-editor') && !str_contains($settingsHostPage, 'href="/admin/settings"'), 'Admin navigation opens the shared settings modal without a standalone page.');
 $assert(!str_contains($settingsHostPage, 'name="settings[') && !str_contains($settingsHostPage, 'id="modal-settings-editor"') && !str_contains($settingsHostPage, 'href="/admin/moderation/blocking"'), 'Settings fields and editor DOM are absent from the initial page and blocked websites have no separate navigation page.');
-preg_match('/data-settings-presentation="([^"]+)"/', $settingsHostPage, $settingsPresentationMatch);
-$settingsPresentation = json_decode(html_entity_decode($settingsPresentationMatch[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true, 512, JSON_THROW_ON_ERROR);
-$assert(isset($settingsPresentation['sections']['content_images'], $settingsPresentation['fields']['moderation.blocked_urls']), 'The admin document derives Social presentation from the registered PHP settings owners.');
-$checkSettingsPresentation = static function (array $fieldPresentation) use (&$checkSettingsPresentation, $assert): void {
-    $assert(array_diff(array_keys($fieldPresentation), ['label', 'help', 'placeholder', 'span', 'fields']) === [], 'Settings presentation contains no values, defaults, credentials or callbacks.');
-    $assert(is_string($fieldPresentation['label'] ?? null), 'Every nested field has an owner-provided presentation label.');
-    foreach ($fieldPresentation['fields'] ?? [] as $child) { $checkSettingsPresentation($child); }
-};
-foreach ($settingsPresentation['fields'] as $fieldPresentation) { $checkSettingsPresentation($fieldPresentation); }
-$assert(isset($settingsPresentation['fields']['email.smtp']['fields']['host'], $settingsPresentation['fields']['email.smtp']['fields']['password']), 'Mail contributes nested SMTP presentation without JavaScript field declarations.');
+$assert(!str_contains($settingsHostPage, 'data-settings-presentation'), 'Admin HTML contains no deferred settings presentation payload.');
+$searchDocumentHtml = file_get_contents('http://' . $address . '/search/all', false, stream_context_create(['http' => ['header' => "Accept: text/html", 'ignore_errors' => true]]));
+$searchDocument = new DOMDocument();
+@$searchDocument->loadHTML((string) $searchDocumentHtml);
+$searchXPath = new DOMXPath($searchDocument);
+$assert($searchXPath->query('//input[@type="search"]')->length === 1 && $searchXPath->query('//*[@id="main-content"]//form')->length === 0, 'The full search page uses only the shared header search field.');
+$assert($searchXPath->query('//*[@id="main-content"]//h1')->length === 1 && $searchXPath->query('//*[@id="main-content"]//*[contains(concat(" ", normalize-space(@class), " "), " empty-state ")]')->length === 1, 'An empty full search page has one contextual heading and shared empty state.');
+
 $moderationPage = file_get_contents('http://' . $address . '/admin/moderation/reports?status=open&reason=spam', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $moderationDocument = new DOMDocument();
 @$moderationDocument->loadHTML((string) $moderationPage);

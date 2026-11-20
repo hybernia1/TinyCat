@@ -1,15 +1,15 @@
-@media (max-width: 759px) {
+@media (max-width: 899px) {
 .status-link-card.has-image {
-    grid-template-columns: 76px minmax(0, 1fr);
+    grid-template-columns: 4.75rem minmax(0, 1fr);
   }
 
 .status-link-media {
-    width: 76px;
-    min-height: 76px;
+    width: 4.75rem;
+    min-height: 4.75rem;
   }
 
 .status-editor-input {
-    min-height: 72px;
-    padding: 9px 10px;
+    min-height: 4.5rem;
+    padding: 0.5625rem 0.625rem;
   }
 }

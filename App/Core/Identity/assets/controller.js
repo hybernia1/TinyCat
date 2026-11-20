@@ -74,8 +74,8 @@ import "../../../../assets/ui/toasts.js";
 
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.dataset.url || source.getAttribute("href") || "/", window.location.href);
-      if (!/^\/api\/users(?:\/|$)/.test(url.pathname)) { return false; }
       var data = response.data;
+      if (!/^\/api\/users(?:\/|$)/.test(url.pathname) || !data.user) { return false; }
       if (data.user) {
         if (Object.prototype.hasOwnProperty.call(data.user, "bio")) {
           document.querySelectorAll('[data-author-id="' + Number(data.user.id) + '"][data-author-bio]').forEach(function (node) { node.textContent = data.user.bio || ""; node.classList.add("is-resource-text"); });

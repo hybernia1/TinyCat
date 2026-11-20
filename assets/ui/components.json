@@ -3,22 +3,36 @@
     "tag": "label",
     "attrs": {"class": {"or": [{"get": "field_class"}, "field"]}},
     "children": [
-      {"tag": "span", "attrs": {"class": "label"}, "children": [{"get": "label"}]},
-      {"tag": "input", "attrs": {"get": "attributes"}, "when": {"not": {"get": "textarea"}}},
-      {"tag": "textarea", "attrs": {"get": "attributes"}, "when": {"get": "textarea"}, "children": [{"get": "value"}]},
       {
         "tag": "span",
-        "attrs": {"class": "help", "id": {"get": "help_id"}},
-        "when": {"get": "help"},
-        "children": [{"get": "help"}]
-      }
+        "attrs": {"class": "label cluster gap-1"},
+        "children": [
+          {"get": "label"},
+          {
+            "component": "ui/help",
+            "data": {"text": {"get": "help"}, "label": {"get": "label"}, "help_id": {"get": "help_id"}}
+          }
+        ]
+      },
+      {"component": "ui/input", "data": {"attributes": {"get": "attributes"}}, "when": {"not": {"get": "textarea"}}},
+      {"tag": "textarea", "attrs": {"get": "attributes"}, "when": {"get": "textarea"}, "children": [{"get": "value"}]}
     ]
   },
   "ui/select": {
     "tag": "label",
     "attrs": {"class": "field"},
     "children": [
-      {"tag": "span", "attrs": {"class": "label"}, "children": [{"get": "label"}]},
+      {
+        "tag": "span",
+        "attrs": {"class": "label cluster gap-1"},
+        "children": [
+          {"get": "label"},
+          {
+            "component": "ui/help",
+            "data": {"text": {"get": "help"}, "label": {"get": "label"}, "help_id": {"get": "help_id"}}
+          }
+        ]
+      },
       {
         "tag": "select",
         "attrs": {"get": "attributes"},
@@ -82,7 +96,7 @@
                 "tag": "span",
                 "attrs": {"class": "pagination-ellipsis", "aria-hidden": "true"},
                 "when": {"get": "page.gap_before"},
-                "children": ["â€¦"]
+                "children": ["…"]
               },
               {
                 "tag": "span",
@@ -249,21 +263,16 @@
       },
       {"tag": "input", "attrs": {"type": "hidden", "name": "per_page", "value": {"get": "pagination.per_page"}}},
       {
-        "tag": "span",
-        "attrs": {"class": "input-icon"},
-        "children": [
-          {"icon": "search"},
-          {
-            "tag": "input",
-            "attrs": {
-              "class": "input",
-              "type": "search",
-              "name": "q",
-              "value": {"get": "filters.q"},
-              "aria-label": {"t": "common.search"}
-            }
+        "component": "ui/input",
+        "data": {
+          "attributes": {
+            "class": "input",
+            "type": "search",
+            "name": "q",
+            "value": {"get": "filters.q"},
+            "aria-label": {"t": "common.search"}
           }
-        ]
+        }
       }
     ]
   },
@@ -592,30 +601,24 @@
   },
   "ui/stat-card": {
     "tag": "article",
-    "attrs": {"class": "card min-w-0"},
+    "attrs": {"class": "stack stack-gap-4 min-w-0"},
     "children": [
       {
-        "tag": "div",
-        "attrs": {"class": "card-body stack"},
+        "tag": {"or": [{"get": "heading"}, "h3"]},
+        "attrs": {"class": "text-base m-0 cluster gap-2"},
+        "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "label"}]
+      },
+      {
+        "tag": "p",
+        "attrs": {"class": "text-xl m-0"},
+        "when": {"not": {"eq": [{"get": "value"}, null]}},
         "children": [
-          {
-            "tag": {"or": [{"get": "heading"}, "h3"]},
-            "attrs": {"class": "text-lg m-0 cluster gap-2"},
-            "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "label"}]
-          },
-          {
-            "tag": "p",
-            "attrs": {"class": "text-2xl m-0"},
-            "when": {"not": {"eq": [{"get": "value"}, null]}},
-            "children": [
-              {"tag": "strong", "attrs": {"get": "value_attributes"}, "children": [{"get": "value"}]},
-              " ",
-              {"tag": "small", "attrs": {"class": "table-meta"}, "when": {"get": "unit"}, "children": [{"get": "unit"}]}
-            ]
-          },
-          {"tag": "p", "attrs": {"class": "table-meta m-0"}, "when": {"get": "note"}, "children": [{"get": "note"}]}
+          {"tag": "strong", "attrs": {"get": "value_attributes"}, "children": [{"get": "value"}]},
+          " ",
+          {"tag": "small", "attrs": {"class": "table-meta"}, "when": {"get": "unit"}, "children": [{"get": "unit"}]}
         ]
-      }
+      },
+      {"tag": "p", "attrs": {"class": "table-meta m-0"}, "when": {"get": "note"}, "children": [{"get": "note"}]}
     ]
   },
   "ui/notice": {
@@ -838,21 +841,48 @@
   },
   "ui/dashboard-overview": {
     "tag": "section",
-    "attrs": {"class": "grid sm:grid-2 md:grid-4", "aria-label": {"t": "common.dashboard"}},
+    "attrs": {"class": "card card-body", "aria-label": {"t": "common.dashboard"}},
     "children": [
       {
-        "each": {"get": "stats"},
-        "as": "stat",
+        "tag": "div",
+        "attrs": {"class": "table-wrap"},
         "children": [
           {
-            "component": "ui/stat-card",
-            "data": {
-              "heading": {"get": "stat.heading"},
-              "icon": {"get": "stat.icon"},
-              "label": {"get": "stat.label"},
-              "value": {"get": "stat.value"},
-              "note": {"get": "stat.note"}
-            }
+            "tag": "table",
+            "attrs": {"class": "table", "aria-label": {"t": "common.dashboard"}},
+            "children": [
+              {
+                "tag": "tbody",
+                "children": [
+                  {
+                    "each": {"get": "stats"},
+                    "as": "stat",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "children": [
+                          {
+                            "tag": "th",
+                            "attrs": {"scope": "row"},
+                            "children": [
+                              {
+                                "tag": "span",
+                                "attrs": {"class": "cluster gap-2"},
+                                "children": [
+                                  {"icon": {"get": "stat.icon"}, "when": {"get": "stat.icon"}},
+                                  {"get": "stat.label"}
+                                ]
+                              }
+                            ]
+                          },
+                          {"tag": "td", "children": [{"tag": "strong", "children": [{"get": "stat.value"}]}]}
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -1302,7 +1332,14 @@
     "children": [
       {"csrf": true},
       {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "comment"}},
-      {"tag": "input", "attrs": {"type": "hidden", "name": "parent_id", "value": {"or": [{"get": "parent_id"}, 0]}}},
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "parent_id",
+          "value": {"if": [{"get": "parent_id"}, {"get": "parent_id"}, 0]}
+        }
+      },
       {"component": "ui/avatar", "data": {"user": {"get": "viewer"}, "small": true}},
       {
         "tag": "div",
@@ -1774,7 +1811,7 @@
                 {
                   "tag": "div",
                   "attrs": {
-                    "class": "global-search-control",
+                    "class": "global-search-control input-icon",
                     "data-popover": "",
                     "data-popover-mode": "input",
                     "data-popover-match-width": "true"
@@ -1984,80 +2021,75 @@
   ],
   "ui/search-page": {
     "tag": "div",
-    "attrs": {"class": "container stack stack-gap-16"},
+    "attrs": {"class": "stack stack-gap-24"},
     "children": [
       {
-        "tag": "form",
-        "attrs": {"action": {"get": "searchUrl"}, "method": "get", "role": "search", "class": "cluster gap-2"},
-        "children": [
-          {
-            "tag": "label",
-            "attrs": {"class": "field"},
-            "children": [
-              {"t": "common.search"},
-              {
-                "tag": "input",
-                "attrs": {
-                  "class": "input",
-                  "type": "search",
-                  "name": "q",
-                  "value": {"get": "result.query"},
-                  "maxlength": "80",
-                  "minlength": "2",
-                  "required": true
-                }
-              }
-            ]
-          },
-          {
-            "tag": "button",
-            "attrs": {"class": "btn btn-primary", "type": "submit"},
-            "children": [{"t": "common.search"}]
-          }
-        ]
+        "tag": "h1",
+        "attrs": {"class": "text-lg m-0 cluster gap-2"},
+        "children": [{"icon": "search"}, {"t": "common.search"}]
+      },
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "common.search_empty"}, "icon": "search"},
+        "when": {"not": {"count": {"get": "result.collections"}, "where": "items"}}
       },
       {
         "each": {"get": "result.collections"},
         "as": "group",
         "children": {
           "tag": "section",
-          "attrs": {"class": "card"},
+          "attrs": {"class": "stack stack-gap-8"},
+          "when": {"get": "group.items"},
           "children": [
+            {"tag": "h2", "attrs": {"class": "text-base m-0"}, "children": [{"get": "group.name"}]},
+            {"slot": {"get": "group.content"}, "when": {"get": "group.content"}},
             {
-              "tag": "div",
-              "attrs": {"class": "card-header"},
-              "children": [
-                {"tag": "h2", "attrs": {"class": "text-lg m-0 cluster gap-2"}, "children": [{"get": "group.name"}]}
-              ]
-            },
-            {
-              "tag": "div",
-              "attrs": {"class": "card-body stack"},
+              "tag": "ul",
+              "attrs": {"class": "result-list"},
+              "when": {"not": {"get": "group.content"}},
               "children": [
                 {
                   "each": {"get": "group.items"},
                   "as": "item",
                   "children": {
-                    "tag": "article",
+                    "tag": "li",
                     "children": [
                       {
-                        "tag": "h3",
+                        "tag": "a",
+                        "attrs": {"class": "identity-row", "href": {"get": "item.url"}},
                         "children": [
-                          {"tag": "a", "attrs": {"href": {"get": "item.url"}}, "children": [{"get": "item.title"}]}
+                          {
+                            "tag": "span",
+                            "attrs": {"class": "avatar"},
+                            "children": [
+                              {
+                                "tag": "img",
+                                "attrs": {"src": {"get": "item.avatar_url"}, "alt": "", "loading": "lazy"},
+                                "when": {"get": "item.avatar_url"}
+                              },
+                              {"icon": "search", "when": {"not": {"get": "item.avatar_url"}}}
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {"class": "identity-copy"},
+                            "children": [
+                              {"tag": "strong", "children": [{"get": "item.title"}]},
+                              {"tag": "span", "when": {"get": "item.excerpt"}, "children": [{"get": "item.excerpt"}]}
+                            ]
+                          }
                         ]
-                      },
-                      {"tag": "p", "children": [{"get": "item.excerpt"}]}
+                      }
                     ]
                   }
-                },
-                {"tag": "p", "when": {"not": {"get": "group.items"}}, "children": [{"t": "common.search_empty"}]},
-                {
-                  "tag": "a",
-                  "attrs": {"class": "btn btn-secondary", "href": {"get": "group.next_url"}},
-                  "when": {"get": "group.next_url"},
-                  "children": [{"t": "notifications.load_more"}]
                 }
               ]
+            },
+            {
+              "tag": "a",
+              "attrs": {"class": "btn btn-secondary", "href": {"get": "group.next_url"}},
+              "when": {"get": "group.next_url"},
+              "children": [{"t": "notifications.load_more"}]
             }
           ]
         }
@@ -2313,7 +2345,6 @@
     "tag": "div",
     "attrs": {"class": "stack stack-gap-16"},
     "children": [
-      {"tag": "p", "attrs": {"class": "text-muted m-0"}, "children": [{"t": "modules.help"}]},
       {
         "component": "ui/notice",
         "data": {"label": {"t": "modules.unavailable"}, "tone": "warning"},
@@ -2494,6 +2525,83 @@
           }
         ]
       }
+    ]
+  },
+  "ui/help": {
+    "tag": "span",
+    "attrs": {
+      "class": "help",
+      "role": "button",
+      "tabindex": "0",
+      "aria-label": {
+        "if": [{"get": "label"}, {"concat": [{"t": "common.help"}, ": ", {"get": "label"}]}, {"t": "common.help"}]
+      },
+      "aria-expanded": "false",
+      "title": {"get": "text"},
+      "data-help": ""
+    },
+    "when": {"get": "text"},
+    "children": [
+      {"icon": "info"},
+      {
+        "tag": "span",
+        "attrs": {"hidden": true, "data-help-text": "", "id": {"get": "help_id"}},
+        "children": [{"get": "text"}]
+      }
+    ]
+  },
+  "ui/input": {
+    "each": {
+      "lookup": {"get": "attributes.type"},
+      "cases": {
+        "search": ["search"],
+        "password": ["lock"],
+        "email": ["mail"],
+        "url": ["link"],
+        "tel": ["phone"],
+        "date": ["calendar"],
+        "month": ["calendar"],
+        "week": ["calendar"],
+        "time": ["clock"],
+        "datetime-local": ["calendar"]
+      },
+      "default": [null]
+    },
+    "as": "input_icon",
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {"class": "input-icon"},
+        "when": {"get": "input_icon"},
+        "children": [{"icon": {"get": "input_icon"}}, {"tag": "input", "attrs": {"get": "attributes"}}]
+      },
+      {"tag": "input", "attrs": {"get": "attributes"}, "when": {"not": {"get": "input_icon"}}}
+    ]
+  },
+  "ui/public-workspace": {
+    "tag": "div",
+    "attrs": {"class": "public-workspace"},
+    "children": [
+      {
+        "tag": "nav",
+        "attrs": {"class": "public-workspace-nav", "aria-label": {"get": "title"}},
+        "children": [
+          {
+            "each": {"get": "navigation"},
+            "as": "entry",
+            "children": {
+              "tag": "a",
+              "attrs": {
+                "class": "btn btn-ghost",
+                "href": {"get": "entry.url"},
+                "aria-current": {"if": [{"get": "entry.active"}, "page", null]}
+              },
+              "children": [{"icon": {"get": "entry.icon"}}, {"get": "entry.label"}]
+            }
+          }
+        ]
+      },
+      {"tag": "div", "attrs": {"class": "min-w-0"}, "children": [{"slot": {"get": "content"}}]}
     ]
   }
 }

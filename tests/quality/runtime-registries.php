@@ -84,7 +84,7 @@ $assert($notificationCalls === 0 && $metadata->owner('notification', 'fixture.no
 $reject(static fn () => new Registries(['fixture.one' => $bundle, 'fixture.two' => $bundle]), 'Duplicate inbox providers');
 $reject(static fn () => new Registries(['fixture.one' => new Contributions(notificationTypes: [$type]), 'fixture.two' => new Contributions(notificationTypes: [$type])]), 'Duplicate notification types');
 $discoveryCalls = 0;
-$source = new \TinyCat\Core\Modules\SearchSource('fixture', static function () use (&$discoveryCalls): string { $discoveryCalls++; return 'Fixture'; }, static function () use (&$discoveryCalls): array { $discoveryCalls++; return ['items' => [], 'cursor' => []]; });
+$source = new \TinyCat\Core\Modules\SearchSource('fixture', static function () use (&$discoveryCalls): string { $discoveryCalls++; return 'Fixture'; }, static function () use (&$discoveryCalls): array { $discoveryCalls++; return ['items' => [], 'cursor' => []]; }, render: static function () use (&$discoveryCalls): string { $discoveryCalls++; return ''; });
 $section = new \TinyCat\Core\Modules\SitemapSection('fixture', static function () use (&$discoveryCalls): int { $discoveryCalls++; return 0; }, static function () use (&$discoveryCalls): array { $discoveryCalls++; return []; });
 $discovery = new Contributions(search: [$source], sitemaps: [$section]);
 $metadata = new Registries(['fixture.owner' => $discovery]);

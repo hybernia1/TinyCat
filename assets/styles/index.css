@@ -109,7 +109,6 @@
 @import "../ui/styles/split-desktop.css";
 @import "../modules/admin/styles/admin-lists-desktop.css";
 @import "../ui/styles/field-inline-desktop.css";
-@import "../ui/styles/modal-confirm-mobile.css";
 @import "../modules/admin/styles/admin-shell-desktop.css";
 @import "../ui/styles/grid-desktop.css";
 @import "../../App/Modules/Social/assets/users/styles/profile-layout-desktop.css";
@@ -126,3 +125,4 @@
 @import "../ui/styles/identity-rows.css";
 @import "../ui/styles/load-more.css";
 @import "../ui/styles/information-pages.css";
+@import "../ui/styles/public-workspace.css";

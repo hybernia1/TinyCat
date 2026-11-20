@@ -13,7 +13,7 @@ declare(strict_types=1);
 /** @var string $userMenu */
 ?>
         <div class="admin-shell" data-admin-shell>
-            <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar>
+            <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar data-theme="dark">
                 <div class="admin-sidebar-header">
                     <a class="admin-brand" href="/">
                         <?php if ($siteLogoUrl !== ''): ?>

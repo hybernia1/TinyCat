@@ -3,6 +3,7 @@
     "name": "Čeština"
   },
   "common": {
+    "help": "Nápověda",
     "sort": "Řazení",
     "refresh": "Obnovit",
     "save": "Uložit",
@@ -82,7 +83,10 @@
     "activated": "{entity} aktivován.",
     "deactivated": "{entity} deaktivován.",
     "action_for": "{action} — {context}",
-    "search_empty": "Nic nenalezeno."
+    "search_empty": "Nic nenalezeno.",
+    "copy": "Kopírovat",
+    "copied": "Zkopírováno.",
+    "copy_failed": "Text se nepodařilo zkopírovat."
   },
   "relative": {
     "now": "teď",

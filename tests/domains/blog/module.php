@@ -260,9 +260,7 @@ try {
     $assert($status === 403, 'Core diagnostics mutation requires CSRF without Social');
     [$status, , $dashboard] = $request('/admin', actor: 'admin');
     $assert($status === 200 && str_contains($dashboard, 'id="dashboard-cache"') && !str_contains($dashboard, 'recent-comments'), 'Core administration hosts diagnostics without social tables');
-    preg_match('/data-settings-presentation="([^"]+)"/', $dashboard, $settingsPresentationMatch);
-    $settingsPresentation = json_decode(html_entity_decode($settingsPresentationMatch[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true, 512, JSON_THROW_ON_ERROR);
-    $assert(isset($settingsPresentation['sections']['blog'], $settingsPresentation['fields']['blog.images.enabled']) && !isset($settingsPresentation['sections']['content_images']), 'Blog-only admin derives its own settings presentation without Social client assets');
+    $assert(!str_contains($dashboard, 'data-settings-presentation'), 'Blog-only admin omits settings presentation from initial HTML');
     [$status, $editor] = $request('/api/settings/editor', actor: 'admin');
     $unchanged = [];
     foreach ($editor['data']['sections'] ?? [] as $section) {

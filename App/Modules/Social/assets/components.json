@@ -1185,7 +1185,7 @@
                           {
                             "tag": "td",
                             "attrs": {"class": "table-meta"},
-                            "children": [{"or": [{"date": {"get": "source.last_imported_at"}}, "Ă˘â‚¬â€ť"]}]
+                            "children": [{"or": [{"date": {"get": "source.last_imported_at"}}, "—"]}]
                           },
                           {
                             "tag": "td",
@@ -1609,8 +1609,8 @@
                           "children": [
                             {
                               "tag": "span",
-                              "attrs": {"class": "table-text", "title": {"or": [{"get": "run.error"}, "Ă˘â‚¬â€ť"]}},
-                              "children": [{"or": [{"get": "run.error"}, "Ă˘â‚¬â€ť"]}]
+                              "attrs": {"class": "table-text", "title": {"or": [{"get": "run.error"}, "—"]}},
+                              "children": [{"or": [{"get": "run.error"}, "—"]}]
                             }
                           ]
                         }
@@ -1625,26 +1625,6 @@
       ]
     }
   ],
-  "bots/stat": {
-    "component": "ui/stat-card",
-    "data": {
-      "label": {
-        "lookup": {"get": "stat.key"},
-        "cases": {
-          "sources": {"t": "bots.detail_stat_sources"},
-          "active_sources": {"t": "bots.detail_stat_active_sources"},
-          "posts": {"t": "bots.detail_stat_posts"},
-          "runs": {"t": "bots.detail_stat_runs"}
-        }
-      },
-      "icon": {
-        "lookup": {"get": "stat.key"},
-        "cases": {"sources": "rss", "active_sources": "check", "posts": "file", "runs": "refresh"}
-      },
-      "value": {"get": "stat.value"},
-      "value_attributes": {"data-bot-stat": {"get": "stat.key"}}
-    }
-  },
   "bots/run-status": {
     "component": "ui/status-badge",
     "data": {
@@ -2204,7 +2184,7 @@
     "tag": "div",
     "attrs": {"class": "stack"},
     "children": [
-      {"tag": "p", "attrs": {"class": "alert alert-info"}, "children": [{"t": "bots.preview_help"}]},
+      {"component": "ui/help", "data": {"text": {"t": "bots.preview_help"}}},
       {
         "tag": "strong",
         "children": [
@@ -2348,14 +2328,6 @@
           "textarea": true,
           "attributes": {"class": "textarea", "name": "bio", "rows": "4", "maxlength": "500"}
         }
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "field stack stack-gap-8"},
-        "children": [
-          {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "account.avatar"}]},
-          {"component": "users/avatar-control", "data": {"user": {"get": "item"}}}
-        ]
       }
     ]
   },
@@ -2671,7 +2643,7 @@
                                             "concat": [
                                               "#",
                                               {"get": "report.content_id"},
-                                              " Ă‚Â· ",
+                                              " · ",
                                               {"get": "report.author_name"}
                                             ]
                                           }
@@ -2681,7 +2653,7 @@
                                             "concat": [
                                               "#",
                                               {"get": "report.content_id"},
-                                              " Ă‚Â· ",
+                                              " · ",
                                               {"get": "report.author_name"}
                                             ]
                                           }
@@ -2890,9 +2862,9 @@
                                         "tag": "strong",
                                         "attrs": {
                                           "class": "table-primary",
-                                          "title": {"or": [{"get": "report.reporter_name"}, "Ă˘â‚¬â€ť"]}
+                                          "title": {"or": [{"get": "report.reporter_name"}, "—"]}
                                         },
-                                        "children": [{"or": [{"get": "report.reporter_name"}, "Ă˘â‚¬â€ť"]}]
+                                        "children": [{"or": [{"get": "report.reporter_name"}, "—"]}]
                                       },
                                       {
                                         "tag": "div",
@@ -2930,7 +2902,7 @@
                           {
                             "tag": "td",
                             "children": [
-                              {"if": [{"get": "report.created_at"}, {"date": {"get": "report.created_at"}}, "Ă˘â‚¬â€ť"]}
+                              {"if": [{"get": "report.created_at"}, {"date": {"get": "report.created_at"}}, "—"]}
                             ]
                           },
                           {
@@ -2978,7 +2950,7 @@
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"or": [{"get": "report.reporter_name"}, "Ă˘â‚¬â€ť"]}]
+        "children": [{"or": [{"get": "report.reporter_name"}, "—"]}]
       },
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "moderation.report_reason"}]},
       {
@@ -3008,25 +2980,21 @@
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"if": [{"get": "report.created_at"}, {"date": {"get": "report.created_at"}}, "Ă˘â‚¬â€ť"]}]
+        "children": [{"if": [{"get": "report.created_at"}, {"date": {"get": "report.created_at"}}, "—"]}]
       },
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "moderation.report_note"}]},
-      {
-        "tag": "dd",
-        "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"or": [{"get": "report.note"}, "Ă˘â‚¬â€ť"]}]
-      },
+      {"tag": "dd", "attrs": {"class": "m-0 is-resource-text"}, "children": [{"or": [{"get": "report.note"}, "—"]}]},
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "moderation.reviewer"}]},
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"or": [{"get": "report.reviewer_name"}, "Ă˘â‚¬â€ť"]}]
+        "children": [{"or": [{"get": "report.reviewer_name"}, "—"]}]
       },
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "common.updated"}]},
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"if": [{"get": "report.reviewed_at"}, {"date": {"get": "report.reviewed_at"}}, "Ă˘â‚¬â€ť"]}]
+        "children": [{"if": [{"get": "report.reviewed_at"}, {"date": {"get": "report.reviewed_at"}}, "—"]}]
       }
     ]
   },
@@ -3674,7 +3642,7 @@
                     "children": [
                       {
                         "tag": "div",
-                        "attrs": {"class": "alert alert-info status-email-notice"},
+                        "attrs": {"class": "alert alert-info status-email-notice cluster"},
                         "when": {"get": "email_missing"},
                         "children": [
                           {"icon": "info"},
@@ -4011,28 +3979,7 @@
     "tag": "div",
     "attrs": {"class": "stack stack-gap-14", "data-dashboard": ""},
     "children": [
-      {
-        "tag": "section",
-        "attrs": {"class": "grid sm:grid-2 md:grid-4", "aria-label": {"t": "common.dashboard"}},
-        "children": [
-          {
-            "each": {"get": "stats"},
-            "as": "stat",
-            "children": [
-              {
-                "component": "ui/stat-card",
-                "data": {
-                  "heading": {"get": "stat.heading"},
-                  "icon": {"get": "stat.icon"},
-                  "label": {"get": "stat.label"},
-                  "value": {"get": "stat.value"},
-                  "note": {"get": "stat.note"}
-                }
-              }
-            ]
-          }
-        ]
-      },
+      {"component": "ui/dashboard-overview", "data": {"stats": {"get": "stats"}}},
       {
         "component": "ui/admin-list",
         "data": {
@@ -4182,11 +4129,10 @@
           "spellcheck": "false",
           "aria-describedby": {"concat": [{"get": "dialog_id"}, "-username-help"]}
         },
-        "help": {"t": "account.username_hint"},
+        "help": {"concat": [{"t": "account.username_hint"}, "\n\n", {"t": "bots.account_create_help"}]},
         "help_id": {"concat": [{"get": "dialog_id"}, "-username-help"]}
       }
-    },
-    {"tag": "p", "attrs": {"class": "help m-0"}, "children": [{"t": "bots.account_create_help"}]}
+    }
   ],
   "bots/account-filter-form": {
     "tag": "form",
@@ -4371,7 +4317,7 @@
     "tag": "div",
     "attrs": {"class": "stack"},
     "children": [
-      {"tag": "p", "attrs": {"class": "muted"}, "children": [{"t": "account.status_embed_help"}]},
+      {"component": "ui/help", "data": {"text": {"t": "account.status_embed_help"}}},
       {"slot": {"get": "preview"}},
       {
         "component": "ui/field",
@@ -4435,7 +4381,6 @@
     ]
   },
   "bots/workspace": {"tag": "div", "attrs": {"class": "stack stack-gap-16"}, "children": [{"slot": {"get": "tabs"}}]},
-  "bots/workspace-account": {"tag": "div", "attrs": {"class": "grid sm:grid-2 md:grid-4", "data-bot-summary": ""}},
   "bots/workspace-lists": [
     {
       "tag": "div",
@@ -4842,5 +4787,16 @@
         }
       ]
     }
-  ]
+  ],
+  "search/posts": {
+    "tag": "div",
+    "attrs": {"class": "status-feed", "data-status-feed": ""},
+    "children": [
+      {
+        "each": {"get": "items"},
+        "as": "post",
+        "children": {"component": "status/card", "data": {"item": {"get": "post"}, "open_modal": true, "anchor": true}}
+      }
+    ]
+  }
 }

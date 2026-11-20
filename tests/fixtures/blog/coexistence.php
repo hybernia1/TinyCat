@@ -35,6 +35,12 @@ $assert(array_column(TinyCat\Social\Search\Queries::public_search_content_rows('
 $combinedSearch = TinyCat\Core\Discovery\Search::query('Coexistence');
 $searchGroups = array_column($combinedSearch['collections'], null, 'id');
 $assert(array_column($searchGroups['content']['items'], 'id') === [$post] && array_column($searchGroups['articles']['items'], 'id') === [$article], 'Generic search combines active owners with separate canonical resources');
+$assert(!isset($searchGroups['content']['content']) && !isset($searchGroups['articles']['content']), 'Search API groups remain canonical data without owner markup');
+foreach (TinyCat\Core\Discovery\Search::sources() as $source) {
+    if (!in_array($source->id, ['content', 'articles'], true)) { continue; }
+    $markup = ($source->render)($searchGroups[$source->id]['items']);
+    $assert(str_contains($markup, $source->id === 'content' ? 'status-card' : 'blog-article') && !str_contains($markup, $source->id === 'content' ? 'Combined article' : 'Coexistence status'), 'Search presentation reuses owner cards and preserves independent numeric IDs');
+}
 $assert(TinyCat\Http\LocaleRouting::url('/search/all?q=Coexistence', 'cs') === '/cs/search/all?q=Coexistence' && TinyCat\Http\LocaleRouting::split('/cs/search/all')['path'] === '/search/all', 'Generic search preserves explicit interface languages without the social AJAX route');
 $assert(TinyCat\Core\Discovery\Sitemap::count('articles') > 1 && TinyCat\Core\Discovery\Sitemap::hasSection('status'), 'Combined sitemap retains both article and status sources');
 $assert(TinyCat\Core\Discovery\Sitemap::count('status') === 1 && TinyCat\Social\Posts\AuthorStatistics::author_activity_stats(1)['posts'] === 1, 'Sitemap and social statistics exclude articles');

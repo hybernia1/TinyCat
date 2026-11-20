@@ -1,6 +1,6 @@
 .brand-logo {
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   flex: 0 0 auto;
   border-radius: var(--radius-sm);
   object-fit: contain;

@@ -30,20 +30,20 @@
 
 .modal-tab-switch { display: none; }
 
-@media (max-width: 599px) {
+@media (max-width: 899px) {
   .modal-panel > .modal-tabs {
-    padding-block: 8px;
+    padding-block: 0.5rem;
     border-bottom: 1px solid var(--border);
   }
   .modal-tabs > .tabs { display: none; }
   .modal-tab-switch {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--control-padding-inline);
     min-width: 0;
   }
   .modal-tab-switch > [data-tab-select-icon] { display: inline-flex; flex-shrink: 0; color: var(--muted); }
-  .modal-tab-switch > .select { flex: 1; min-width: 0; min-height: 44px; }
+  .modal-tab-switch > .select { flex: 1; min-width: 0; min-height: var(--control-height-touch); }
 }
 
 .modal-body {
@@ -60,7 +60,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--control-padding-inline);
   background: var(--surface);
 }
 
@@ -71,7 +71,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 6px;
+  gap: calc(var(--control-padding-block) * 0.75);
 }
 
 .modal-footer > .pagination {

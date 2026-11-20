@@ -11,7 +11,7 @@ final class Dashboard
     {
         $stats = [
             ['icon' => 'link', 'label' => \TinyCat\Support\Localization::t('admin.stats.links'), 'table' => 'social_links'],
-            ['icon' => 'tag', 'label' => \TinyCat\Support\Localization::t('admin.stats.tags'), 'table' => 'social_terms'],
+            ['icon' => 'hash', 'label' => \TinyCat\Support\Localization::t('admin.stats.tags'), 'table' => 'social_terms'],
             ['icon' => 'file', 'label' => \TinyCat\Support\Localization::t('admin.stats.content'), 'table' => 'social_posts'],
             ['icon' => 'clock', 'label' => \TinyCat\Support\Localization::t('admin.stats.scheduled_content'), 'table' => 'social_posts', 'count_key' => 'scheduled_content'],
             ['icon' => 'thumb-up', 'label' => \TinyCat\Support\Localization::t('admin.stats.likes'), 'table' => 'social_post_likes'],

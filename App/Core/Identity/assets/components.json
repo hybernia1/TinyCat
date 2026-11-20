@@ -390,14 +390,9 @@
             "pattern": {"if": [{"get": "register"}, {"get": "options.username_pattern"}, null]},
             "minlength": {"if": [{"get": "register"}, "2", null]},
             "maxlength": {"if": [{"get": "register"}, "32", null]}
-          }
+          },
+          "help": {"if": [{"get": "register"}, {"t": "account.username_hint"}, null]}
         }
-      },
-      {
-        "tag": "span",
-        "attrs": {"class": "help"},
-        "when": {"get": "register"},
-        "children": [{"t": "account.username_hint"}]
       },
       {
         "component": "ui/field",
@@ -1042,10 +1037,10 @@
             "maxlength": "254",
             "autocomplete": "email",
             "data-email-check-url": {"concat": ["/api/users/", {"get": "user.id"}, "/email-checks"]}
-          }
+          },
+          "help": {"t": "account.email_optional"}
         }
       },
-      {"tag": "span", "attrs": {"class": "help"}, "children": [{"t": "account.email_optional"}]},
       {"tag": "input", "attrs": {"type": "hidden", "name": "email_notifications", "value": "0"}},
       {
         "tag": "label",

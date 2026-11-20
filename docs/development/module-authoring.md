@@ -429,16 +429,19 @@ ve vlastním asset manifestu; viz [kontrakt administrace](../contracts/admin-ui-
 HTTP obsluhy, dotazy, oprávnění a zvláštní UI dál implementuje vlastník.
 
 Modul přispívá lazy `SettingsSection` přes `Contributions.settings`. Callback vrací
-sekci s přeloženým `label`, `icon` a `fields`; každé pole obsahuje `key`, `type`,
+sekci s `label`, `icon` a `fields`; každé pole obsahuje `key`, `type`,
 `label` a podle potřeby `default`, omezení, `help`, `placeholder` či `span`.
-Překlad zavolej uvnitř callbacku, nikoli při registraci, aby se použilo aktuální
-locale. Sekce stejné skupiny se slučují; klíč pole má jediného vlastníka.
+Překládané `label`, `help` a `placeholder` deklaruj jako `['t' => 'owner.key']`.
+Core je přeloží pro serverové konzumenty a zachová jako překladové výrazy pro
+klientské komponenty. Podporované jsou také doslovné texty. Sekce stejné skupiny
+se slučují; klíč pole má jediného vlastníka.
 
-Core Settings z těchto definic odvodí prezentační metadata pro administrační HTML
-(`data-settings-presentation`). Přenáší jen názvy sekcí, ikony, popisky, nápovědu,
-placeholdery a rozložení. Hodnoty, výchozí hodnoty, možnosti a callbacky se sem
-nekopírují. Metadata se escapují jako atribut HTML a nevytvářejí formulář ani modal.
-Neúplná prezentace vyvolá konkrétní chybu sekce nebo pole.
+Core Settings z těchto definic odvodí katalogy `ComponentLookup` pro sekce, pole
+a ukázky formátů. Společné komponenty je využívají stejně při PHP vykreslení
+i v klientském balíku; překladové závislosti se odvodí automaticky. Administrační
+HTML neobsahuje atribut `data-settings-presentation`. Hodnoty, výchozí hodnoty,
+možnosti a callbacky se do prezentačních katalogů nekopírují. Formulář ani modal
+nevzniká před otevřením. Neúplná prezentace identifikuje sekci nebo pole.
 
 `GET /api/settings/editor` nadále vrací autorizovaná data a omezení bez HTML,
 překladových klíčů a komponentových definic. Aktuální hodnoty se načítají až při
@@ -446,3 +449,18 @@ otevření společným resource loaderem. Modul nepotřebuje `settings-presentat
 ani opakování překladových závislostí těchto popisků v asset manifestu; katalogy
 a samotné definice dál vlastní modul. Core nezná jeho název ani klíče nastavení.
 Vypnutý nebo chybějící vlastník nepřispívá sekcí ani prezentačními metadaty.
+
+
+### Public search presentation
+
+An existing `SearchSource` can declare named `icon` and `render` arguments.
+The optional renderer accepts the selected canonical items and returns HTML
+rendered through the owner's shared component catalog. It is lazy and used only
+by the public HTML search page, never by registration, suggestions or JSON query.
+Do not rerun candidate selection in it; batch-hydrate only the selected visible
+IDs if rich cards need additional data. Keep canonical API items free of HTML,
+component names and translation identifiers. Sources without a renderer use the
+core identity rows. Core derives source navigation and cursor links from the same
+active registrations; no extra endpoint or sidebar registration is necessary.
+For other public pages, `Page::render` accepts `navigation` entries with `label`,
+`icon`, `url`, `active` and renders the same responsive public workspace.

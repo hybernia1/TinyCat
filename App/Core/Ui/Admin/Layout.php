@@ -36,8 +36,6 @@ final class Layout
         $csrf = \TinyCat\Core\Security\Csrf::token();
         $dateFormat = (string) Startup::option('datetime.datetime', 'Y-m-d H:i:s');
         $dateRelative = (bool) Startup::option('datetime.relative', false);
-        $settingsPresentation = \TinyCat\Core\Identity\Roles::isAdmin($authUser)
-            ? json_encode(\TinyCat\Core\Settings\Sections::presentation(), JSON_THROW_ON_ERROR) : '';
         $iconSprite = Assets::asset('icons.svg');
         $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([
             'authUser' => $authUser, 'profileUrl' => $profileUrl, 'profileNeedsEmail' => $profileNeedsEmail,
@@ -52,10 +50,10 @@ final class Layout
         echo \TinyCat\Core\Ui\Document::frame([
             'title' => $title, 'csrfToken' => $csrf, 'robots' => 'noindex,nofollow',
             'htmlAttributes' => ['lang' => \TinyCat\Support\Localization::locale(), 'data-theme' => $theme !== 'system' ? $theme : null,
+                'data-interface-prefix' => \TinyCat\Support\Localization::locale(), 'data-ui-density' => 'compact',
                 'data-date-format' => $dateFormat, 'data-date-relative' => $dateRelative ? 'true' : 'false'],
             'bodyAttributes' => ['class' => 'admin-shell-page', 'data-application-version' => \TinyCat\Support\Version::CURRENT,
-                'data-current-user-id' => (int) ($authUser['id'] ?? 0), 'data-icon-sprite' => $iconSprite,
-                'data-settings-presentation' => $settingsPresentation !== '' ? $settingsPresentation : null],
+                'data-current-user-id' => (int) ($authUser['id'] ?? 0), 'data-icon-sprite' => $iconSprite],
             'styles' => $styles, 'scripts' => $scripts, 'flashToasts' => $flashToasts,
         ], new \TinyCat\Support\Markup($shell));
     }

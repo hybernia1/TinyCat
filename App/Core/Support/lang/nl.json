@@ -3,6 +3,7 @@
     "name": "Nederlands"
   },
   "common": {
+    "help": "Help",
     "sort": "Sorteren",
     "refresh": "Vernieuwen",
     "save": "Opslaan",
@@ -82,7 +83,10 @@
     "activated": "{entity} geactiveerd.",
     "deactivated": "{entity} gedeactiveerd.",
     "action_for": "{action} — {context}",
-    "search_empty": "Niets gevonden."
+    "search_empty": "Niets gevonden.",
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd.",
+    "copy_failed": "De tekst kon niet worden gekopieerd."
   },
   "relative": {
     "now": "nu",

@@ -91,4 +91,34 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   assert.equal(tagNodes.length, 0, "Leaving a post removes its article tags");
   assert.equal(assigned, 0, "Metadata updates preserve client navigation");
   console.log("PASS search uses shared page navigation, preserves sidebar and submits without reload");
+  const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.resolve(__dirname, '../../.work/tools/ui-webkit-tools/node_modules/playwright');
+  if (!fs.existsSync(modulePath)) { console.log('SKIP native public workspace: set TINYCAT_TEST_PLAYWRIGHT_MODULE'); return; }
+  const fixture = JSON.parse(require('node:child_process').execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(__dirname, '../presentation/fixtures/asset-graph-fixture.php'), '--search-workspace'], {encoding:'utf8', maxBuffer:8e6}));
+  const browser = await require(modulePath).webkit.launch({headless:true});
+  let cases = 0;
+  try {
+    for (const width of [320,390,899,900,1440]) {
+      const page = await browser.newPage({viewport:{width,height:900}});
+      await page.setContent('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+fixture.styles+'</style></head><body><main class="container">'+fixture.content+'</main></body></html>');
+      for (const scale of [1,1.5]) {
+        await page.evaluate(scale => document.documentElement.style.setProperty('--ui-scale',scale), scale);
+        const geometry = await page.evaluate(() => {
+          const nav = document.querySelector('.public-workspace-nav'), content = document.querySelector('.public-workspace > div');
+          return {overflow:document.documentElement.scrollWidth > innerWidth, direction:getComputedStyle(nav).flexDirection, nav:nav.getBoundingClientRect().toJSON(), content:content.getBoundingClientRect().toJSON(), selected:nav.querySelectorAll('[aria-current="page"]').length, search:document.querySelectorAll('input[type="search"]').length};
+        });
+        assert.equal(geometry.overflow,false,'Workspace fits '+width+' at scale '+scale);
+        assert.equal(geometry.direction,width < 900 ? 'row' : 'column');
+        assert.equal(geometry.selected,1);
+        assert.equal(geometry.search,0,'Workspace does not add a second search control');
+        assert.ok(width < 900 ? geometry.content.top >= geometry.nav.bottom : geometry.content.left >= geometry.nav.right);
+        const links = page.locator('.public-workspace-nav a');
+        await links.nth(1).focus();
+        assert.equal(await links.nth(1).evaluate(node => node === document.activeElement),true,'Source links remain focusable without a custom navigation controller');
+        assert.ok(await links.nth(1).getAttribute('href').then(url => url.includes('q=fixture&collection=')));
+        cases++;
+      }
+      await page.close();
+    }
+  } finally { await browser.close(); }
+  console.log('PASS native public workspace at mobile/desktop boundary and enlarged scale ('+cases+' cases)');
 })().catch(error => { console.error(error); process.exitCode = 1; });

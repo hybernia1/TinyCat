@@ -12,11 +12,11 @@ final class Settings
     public static function section_email(): array
     {
         return [
-                'label' => \TinyCat\Support\Localization::t('settings.sections.email'),
+                'label' => ['t' => 'settings.sections.email'],
                 'icon' => 'mail',
                 'fields' => [
-                    ['key' => 'email.smtp', 'label' => \TinyCat\Support\Localization::t('settings.fields.smtp'), 'type' => 'email_smtp', 'default' => \TinyCat\Core\Mail\Smtp::email_smtp_default_config(), 'span' => true, 'fields' => self::smtpFields()],
-                    ['key' => 'email.templates', 'label' => \TinyCat\Support\Localization::t('settings.fields.email_templates'), 'type' => 'email_templates', 'default' => \TinyCat\Core\Mail\Templates::email_template_default_states(), 'span' => true],
+                    ['key' => 'email.smtp', 'label' => ['t' => 'settings.fields.smtp'], 'type' => 'email_smtp', 'default' => \TinyCat\Core\Mail\Smtp::email_smtp_default_config(), 'span' => true, 'fields' => self::smtpFields()],
+                    ['key' => 'email.templates', 'label' => ['t' => 'settings.fields.email_templates'], 'type' => 'email_templates', 'default' => \TinyCat\Core\Mail\Templates::email_template_default_states(), 'span' => true],
                 ],
         ];
     }
@@ -32,7 +32,7 @@ final class Settings
             ['from_name', 'text', 'TinyCat', 120, 'email_from_name'],
         ] as [$key, $type, $default, $max, $label]) {
             $fields[] = ['key' => $key, 'type' => $type, 'default' => $default, 'max' => $max, 'min' => 1,
-                'optional' => $key !== 'port', 'label' => \TinyCat\Support\Localization::t('settings.fields.' . $label)];
+                'optional' => $key !== 'port', 'label' => ['t' => 'settings.fields.' . $label]];
         }
         return $fields;
     }

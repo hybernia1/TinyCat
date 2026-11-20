@@ -3,8 +3,8 @@
   inset: auto;
   z-index: 1200;
   margin: 0;
-  max-width: min(28rem, calc(100vw - 24px));
-  padding: 8px 10px;
+  max-width: min(28rem, var(--tooltip-available-width, calc(100vw - 1.5rem)));
+  padding: 0.5rem 0.625rem;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

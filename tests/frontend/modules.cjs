@@ -59,10 +59,10 @@ class Node {
   dispatchEvent() { return true; }
   addEventListener() {}
 }
-const labels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--catalog"], { encoding: "utf8" }));
+const labels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--catalog-development"], { encoding: "utf8" }));
 const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--templates"], { encoding: "utf8" }));
+Object.assign(definitions, JSON.parse(require('node:child_process').execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.resolve(__dirname,'../presentation/fixtures/component-parity.php'), '--settings-templates'], {encoding:'utf8',maxBuffer:8e6})));
 const document = { addEventListener() {}, querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
-document.body.dataset.settingsPresentation = require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--settings-presentation"], { encoding: "utf8" }).trim();
 document.body.dataset.adminDefinitions = require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--admin-definitions"], { encoding: "utf8" }).trim();
 document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--dates"], { encoding: "utf8" })) };
 document.documentElement.dataset.interfaceRoutes = require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--locale-routes"], { encoding: "utf8" }).trim();
@@ -289,14 +289,14 @@ followForm.elements = { namedItem: () => followAction };
 });
 const schedulerModel = { items: [{ name: "cleanup", options: { cleanup_batch: 500 }, latest: null, run_url: "/api/scheduler/tasks/cleanup/runs" }], runs: [{ id: 1, detail_url: "/api/scheduler/runs/1", task: "cleanup", started_at: "2026-10-26T12:00:00Z", status: "failed", mode: "admin", duration_ms: 25, summary: { changed: 0 }, options: { cleanup_batch: 500 }, error: "<img src=x onerror=bad>" }], task_choices: ["feeds", "cleanup"], status_choices: ["failed"], page_choices: { 25: 25 }, filters: { task: "", status: "" }, navigation: { visible: false } };
 const additionalTasks = T.components.render('scheduler/list', Object.assign({}, schedulerModel, { items: [{ name: 'article_feeds', options: { source_limit: 20 }, latest: null, run_url: '/api/scheduler/tasks/article_feeds/runs' }], runs: [Object.assign({}, schedulerModel.runs[0], { task: 'future.task' })] }));
-check(additionalTasks.textContent.includes('article_feeds') && additionalTasks.textContent.includes('future.task'), 'Additional module tasks retain readable identifiers in AJAX cards and history without core presentation mappings.');
+check(additionalTasks.textContent.includes('article_feeds') && additionalTasks.textContent.includes('future.task'), 'Additional module tasks retain readable identifiers in AJAX rows and history without core presentation mappings.');
 const schedulerRoot = new Node("div"), schedulerSource = new Node("form");
 schedulerSource.setAttribute("action", "/api/scheduler/tasks/cleanup/runs");
 const originalSchedulerQuery = document.querySelector;
 document.querySelector = selector => selector === "#scheduler-list" ? schedulerRoot : originalSchedulerQuery(selector);
 check(T.scheduler.result(schedulerSource, { data: schedulerModel, meta: { pagination: { page: 1, per_page: 50 } } }, schedulerRoot), "Scheduler actions refresh the normalized list through the registered client module.");
 T.modules.hydrate(schedulerRoot);
-check(schedulerRoot.querySelectorAll("button").some(button => button.getAttribute("aria-label") === T.ui.text("cron.run_now") && button.className.includes("btn-icon") && button.querySelector(".sr-only")), "Run-now actions use the standard icon button with an accessible hidden label.");
+check(schedulerRoot.querySelectorAll("button").some(button => button.getAttribute("aria-label") === T.ui.text("cron.run_now") && !button.className.includes("btn-icon") && !button.querySelector(".sr-only") && button.textContent.includes(T.ui.text("cron.run_now"))), "Run-now actions retain a visible label in the task overview.");
 check(schedulerRoot.querySelectorAll("select").find(field => field.getAttribute("name") === "per_page").value === "50", "Scheduler controls read pagination from the shared API metadata.");
 check(document.getElementById("scheduler-filter-modal").querySelectorAll("input").find(field => field.getAttribute("name") === "per_page").value === "50", "The filter modal preserves the API's page-size setting.");
 const schedulerPageForm = schedulerRoot.querySelectorAll("form").find(form => form.className.includes("admin-per-page-form"));
@@ -445,6 +445,8 @@ for (const active of [true, false]) {
 }
 const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-account-edit-fixture");
 const botTitle = botAccountDialog.querySelector('[id="bot-account-edit-fixture-title"]');
+check(!botAccountDialog.querySelector('[data-bot-summary]') && !botAccountDialog.querySelector('[data-bot-stat]'), "Bot account editors contain no redundant statistic block.");
+check(botAccountDialog.querySelector('[data-tab-panel="avatar"]').querySelector('[data-modal-url="/api/users/3/avatar"]') && !botAccountDialog.querySelector('form').querySelector('[data-modal-url="/api/users/3/avatar"]'), "Bot avatars use the shared account control in a separate avatar tab.");
 check(botTitle.children[0].querySelector('.status-indicator-success') && botTitle.children[1].textContent === 'FixtureBot' && !botAccountDialog.querySelector('[href="/author/3"]'), "Bot dialogs put status before the nickname in the header and omit the public profile link.");
 const adminUserDialog = T.accounts.modal(new URL("https://tinycat.test/api/users/2/management?panel=administration"), { data: { user: { ...user, status: "ban" }, administration: { roles: ["user"], statuses: ["active", "ban"] }, options: {} } }, "admin-user-title-fixture");
 const adminUserTitle = adminUserDialog.querySelector('[id="admin-user-title-fixture-title"]');
@@ -452,6 +454,10 @@ check(adminUserTitle.children[0].querySelector('.status-indicator-danger') && ad
 check(botAccountDialog.querySelector("form").dataset.apiMethod === "PATCH" && botAccountDialog.querySelector("form").dataset.ajaxTarget === "#bot-detail-account" && !botAccountDialog.querySelector("form").dataset.modalCloseOnSuccess, "The unified bot account tab saves through PATCH and stays open for the other tabs.");
 check(botAccountDialog.querySelector("textarea").value === unsafe && botAccountDialog.querySelector('[data-modal-url="/api/users/3/avatar"]') && !botAccountDialog.querySelector('[name="avatar"]') && !botAccountDialog.querySelector('[name="remove_avatar"]'), "Bot edit modals retain biography drafts and open the shared avatar editor instead of uploading through the account form.");
 const comment = { id: 20, content_id: 10, parent_id: 0, author: user, body: unsafe, segments: [{ type: "text", text: unsafe }], editable_body: unsafe, created_at: "2026-01-01T12:00:00Z", created_label: "Today", likes_count: 0, liked: false, capabilities: { edit: true, delete: true, interact: true }, replies: [] };
+for (const parentId of [undefined, null, 0, 20]) {
+  const commentForm = T.components.render("status/comment-form", { content_id: 10, viewer: user, parent_id: parentId });
+  check(commentForm.querySelector('[name="parent_id"]').value === String(parentId || 0), "Client comment forms retain a numeric root or reply parent ID.");
+}
 node = T.status.comment(comment, "modal");
 check(node.dataset.contentId === "10" && node.querySelector(".status-comment-body").textContent === unsafe, "Comment DOM retains its parent status and safe text.");
 check(node.querySelector('[name="parent_id"]').getAttribute("value") === "20", "Reply forms address the comment parent explicitly.");
@@ -803,7 +809,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.lifecycle.hydrate = root => T.modules.hydrate(root);
   const parentFilter = new Node('div'); parentFilter.id = 'bots-filter-modal';
   const parentQuery = new Node('input'); parentQuery.name = 'q'; parentQuery.value = 'parent search'; parentFilter.appendChild(parentQuery); document.body.appendChild(parentFilter);
-  check(workspaceTabs.querySelectorAll('[data-tab]').length === 4 && !workspace.querySelector('.modal-footer').hidden, "The bot workspace starts on its editable account tab with one footer save.");
+  check(workspaceTabs.querySelectorAll('[data-tab]').length === 5 && !workspace.querySelector('.modal-footer').hidden, "The bot workspace starts on its editable account tab with one footer save and a separate avatar tab.");
   const detailDraft = workspace.querySelector('textarea'); detailDraft.value = 'Unsaved account draft';
   const sourceNavigation = { visible: true, from: 1, to: 10, total: 11, previous: null, next: { url: '/api/bots/sources?bot=3&page=2', history_url: false }, pages: [{ page: 1, current: true }, { page: 2, current: false, url: '/api/bots/sources?bot=3&page=2', history_url: false }] };
   const workspaceCalls = [];
@@ -917,14 +923,11 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   check(socialSettingsDialog.querySelector('[name="settings[content_images.enabled]"]') && socialSettingsDialog.querySelector('[name="settings[moderation.blocked_urls]"]'), 'Social image and moderation settings use the common PHP-derived presentation.');
   socialSettingsDialog.remove();
   const blogSettings = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--blog-settings"], { encoding: "utf8" }));
-  const socialPresentation = document.body.dataset.settingsPresentation;
-  document.body.dataset.settingsPresentation = JSON.stringify(blogSettings.presentation);
   const blogSettingKeys = ['blog.images.enabled', 'blog.images.max_upload_kb', 'blog.blocked_urls', 'blog.links.utm.enabled', 'blog.links.utm.source', 'blog.links.utm.medium', 'blog.links.utm.campaign'];
   check(blogSettingKeys.every(key => blogSettings.presentation.fields[key]?.label), 'Blog field labels are derived from its PHP settings contribution without module JavaScript.');
   const blogSettingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:{sections:blogSettings.sections}}, 'modal-blog-settings');
   check(blogSettingsDialog.querySelector('[data-tab="blog"]') && blogSettingsDialog.querySelector('[name="settings[blog.links.utm.campaign]"]'), 'Blog-only settings render alongside core settings without Social or a missing section label.');
   blogSettingsDialog.remove();
-  document.body.dataset.settingsPresentation = socialPresentation;
   const savedCaptchaRequest = T.api.request, savedCaptcha = T.ui.captcha, savedCaptchaListener = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
   const searchRoot = new Node('form'), searchInput = new Node('input'), searchResults = new Node('div');

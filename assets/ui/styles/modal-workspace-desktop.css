@@ -1,4 +1,8 @@
-@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+@media (min-width: 900px) {
+  .modal[data-modal-kind="confirm"] .modal-footer .btn {
+    flex: 0 0 auto;
+  }
+
   .modal[data-modal-size="workspace"] > .modal-panel {
     width: var(--modal-workspace-width);
     height: var(--modal-workspace-height);

@@ -147,7 +147,9 @@
       "/admin/bots"
     ],
     "components": [
-      "status/composer-body"
+      "status/composer-body",
+      "status/edit-fields",
+      "status/dialog-form"
     ],
     "entries": [
       "App/Modules/Social/assets/status/index.js"
@@ -322,11 +324,9 @@
       "bots/source-preview",
       "bots/posts",
       "bots/post-filter-form",
-      "bots/stat",
       "bots/runs-list",
       "bots/run-filter-form",
       "bots/workspace",
-      "bots/workspace-account",
       "bots/workspace-lists",
       "bots/workspace-form",
       "bots/workspace-retry",

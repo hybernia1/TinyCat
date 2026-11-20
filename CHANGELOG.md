@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.2.0 - 2026-11-20
+
+- Introduce shared UI scale and density tokens for typography, controls, dialogs, pagination and toasts. Use compact, flat administration with a distinct dark navigation panel and accessible light/dark colours.
+- Standardize mobile below 900px and desktop from 900px; remove intermediate layout breakpoints. Keep desktop table headers and pagination fixed while table content scrolls, with normal page scrolling on mobile.
+- Unify dialog kinds, sizes, viewport handling and toast tones; preserve lazy resources, draft guards, focus, history and native touch behavior. Restore module-activation and Site Health flash feedback.
+- Replace field help blocks with contextual information controls, normalize typed input icons and validation, and add localized copy controls to read-only code.
+- Derive settings presentation from lazy owner component lookups instead of embedding a settings catalog in each admin document. Translate only presentation properties and preserve defaults and options as data.
+- Add a reusable public sidebar workspace with source navigation from active search registrations. Social results reuse post cards; Blog search and listing share article summaries. Preserve independent owner data, visibility, canonical API responses and stable cursors.
+- Simplify bot account editors and dashboard summaries; preserve avatar editing, existing accounts and module activation. Introduce no database migrations and retain the completed 6.0.10 update baseline.
+
 ## 6.1.4 - 2026-11-19
 
 - Consolidate product pages, menus and editor bodies in owner component catalogs. Retire seventeen redundant PHP templates while retaining document, layout, error and embed boundaries.

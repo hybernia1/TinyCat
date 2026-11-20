@@ -1,0 +1,37 @@
+.public-workspace {
+  display: grid;
+  gap: var(--control-padding-inline);
+}
+
+.public-workspace-nav {
+  display: flex;
+  gap: var(--control-padding-block);
+  overflow-x: auto;
+}
+
+.public-workspace-nav .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.public-workspace-nav [aria-current="page"] {
+  background: var(--primary-soft);
+  color: var(--text);
+}
+
+@media (min-width: 900px) {
+  .public-workspace {
+    grid-template-columns: var(--public-navigation-width) minmax(0, 1fr);
+    gap: calc(var(--control-padding-inline) * 3);
+    align-items: start;
+  }
+
+  .public-workspace-nav {
+    flex-direction: column;
+  }
+
+  .public-workspace-nav .btn {
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+}

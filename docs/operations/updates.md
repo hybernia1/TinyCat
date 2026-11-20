@@ -75,6 +75,31 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.2.0
+
+Requires completed **6.0.10 or newer** and PHP 8.4. Shared UI scale and density
+now control typography, fields, buttons, dialogs, pagination and toasts. Layouts
+use one mobile/desktop boundary at 900px. Administration is compact and flat;
+public search uses a shared sidebar workspace with owner-rendered result cards.
+Settings presentation is lazy owner metadata instead of initial HTML payloads.
+Contextual help, validation and code-copy controls use shared core mechanisms.
+
+No database migration or activation change is introduced. Existing data,
+configuration, uploads and installed module ownership are retained. The signed
+deletion plan removes the retired confirm-layout stylesheet; its desktop rule
+is part of the shared desktop modal stylesheet.
+
+```sh
+php tools/release/build-update.php --version=6.2.0 --assembly=development --active=tinycat.social --output=.work/releases/release-6-2-0/update
+php tools/release/build-update.php --version=6.2.0 --assembly=platform --fresh-install --output=.work/releases/release-6-2-0/install
+```
+
+Verify the exact update against published 6.0.10, 6.0.11 and 6.1.4 platform sources
+with `--platform-baseline --direct-web --cached-autoload`, including retained Blog
+ownership, data preservation and exact rollback. Verify the production package
+with a fresh isolated MySQL installation. Refresh and verify the private rescue
+launcher on 6.0.10 before updating, as described below.
+
 ## Upgrading to 6.1.4
 
 Requires completed **6.0.10 or newer** and PHP 8.4. This release consolidates

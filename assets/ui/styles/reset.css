@@ -15,7 +15,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
 }
 
@@ -86,7 +86,7 @@ a:hover {
   border-radius: var(--radius-sm);
   background: var(--primary);
   color: #fff;
-  padding: 10px 14px;
+  padding: 0.625rem 0.875rem;
   font-weight: 700;
   text-decoration: none;
   box-shadow: var(--shadow);

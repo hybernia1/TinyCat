@@ -107,6 +107,8 @@ $assert($status === 200 && !str_contains($healthPage, 'Undefined array key') && 
 $assert($status === 409, 'Concurrent manual diagnostics use the same scheduler lock.');
 [$status, $manualHealth] = $request('POST', '/api/site-health/checks', [], 'admin', $csrf);
 $assert($status === 201 && $manualHealth['code'] === 'health_check_finished' && $manualHealth['data']['redirect'] === '/admin/site-health', 'Manual diagnostics use the canonical API and return resource data with a page redirect.');
+$healthyInspection = ($manualHealth['data']['execution']['tasks']['site-health']['summary']['health']['status'] ?? 'unknown') === 'ok';
+$assert(is_string($manualHealth['message']) && $manualHealth['message'] !== '' && $manualHealth['meta']['type'] === ($healthyInspection ? 'success' : 'warning'), 'Completed inspections carry a localized message and distinguish completion from health problems.');
 [$status, $healthSnapshot] = $request('GET', '/api/site-health', null, 'admin');
 $assert($status === 200 && count($healthSnapshot['data']['report']['checks']) === 9 && !$healthSnapshot['data']['stale'], 'The health resource exposes persisted check outcomes without executing new work.');
 [$status, $healthPage] = $exportRequest('/admin/site-health', 'GET', ['X-Test-Role' => 'admin']);

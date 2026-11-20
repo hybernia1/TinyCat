@@ -39,6 +39,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 - [Audit významových hranic core a modulů](audits/core-module-boundaries-2026-11-12.md)
   a [plán platformních služeb a kombinovatelných funkcí](plans/core-services-and-feature-modules.md).
 - [Audit aplikačního JavaScriptu po 6.1.3](audits/application-javascript-2026-11-19.md).
+- [UI audit a směr minimalistické CRM administrace](audits/ui-crm-2026-11-19.md).
 - [Přesun produktové struktury do katalogů komponent](audits/presentation-ownership-2026-11-19.md).
 - [Dokončení produktových stránek a hranice prezentace 6.1.4](audits/presentation-pages-6.1.4-2026-11-19.md).
 - [Platformní služby: implementace a ověření etapy 1A](audits/core-services-stage-1a-2026-11-12.md).

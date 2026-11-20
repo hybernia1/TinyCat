@@ -1,5 +1,5 @@
-@media (max-width: 599px) {
-  .table { min-width: 44rem; }
+@media (max-width: 899px) {
+  .table:has(> thead) { min-width: 44rem; }
 
   .table:has(> tbody > tr:only-child > td:only-child > .empty-state) {
     min-width: 0;

@@ -20,9 +20,14 @@ import "./form-requests.js";
         || typeof options.closeLabel !== "string" || !options.closeLabel.trim()) {
         throw new TypeError("A dialog requires a stable ID, accessible labels and DOM content.");
       }
+      var kind = options.kind || "content", size = options.size || "default", mobile = options.mobile || null;
+      if (!["content", "editor", "confirm"].includes(kind) || !["default", "compact", "wide", "reading", "workspace", "confirm"].includes(size)
+        || (mobile !== null && mobile !== "fullscreen") || (size === "confirm" && kind !== "confirm")) {
+        throw new TypeError("Unknown dialog kind, size or mobile mode.");
+      }
       var titleId = options.id + "-title";
       var root = TinyCat.components.render("ui/modal", {
-        root_attributes: { id: options.id, "class": "modal", role: "dialog", "aria-modal": "true", "aria-hidden": "true", "aria-labelledby": titleId, "data-open": "false", "data-modal-kind": options.kind || "content", "data-modal-size": options.size || "default", "data-modal-mobile": options.mobile || null, "data-modal-dispose-on-close": options.disposeOnClose === false ? "false" : "true" },
+        root_attributes: { id: options.id, "class": "modal", role: "dialog", "aria-modal": "true", "aria-hidden": "true", "aria-labelledby": titleId, "data-open": "false", "data-modal-kind": kind, "data-modal-size": size, "data-modal-mobile": mobile, "data-modal-dispose-on-close": options.disposeOnClose === false ? "false" : "true" },
         panel_attributes: { "class": "modal-panel", tabindex: "-1" },
         title_id: titleId, title: options.title, icon: options.icon || "", close_label: options.closeLabel,
         close_icon: options.closeIcon instanceof Node ? options.closeIcon : document.createTextNode("\u00d7"),
@@ -95,12 +100,12 @@ import "./form-requests.js";
     return Boolean(modal && (modal.dataset.remoteLoaded === "true" || modal.dataset.modalDisposeOnClose === "true"));
   }
   function modalUsesVisualViewport(modal) {
-    return Boolean(modal && modal.matches && modal.matches('[data-modal-kind="editor"], [data-modal-mobile="fullscreen"]'));
+    return Boolean(modal && modal.matches && modal.matches('[data-modal-kind="editor"], [data-modal-mobile="fullscreen"], [data-modal-size="workspace"]'));
   }
   function modalNeedsMobilePageLock(modal) {
     return modalUsesVisualViewport(modal)
       && window.matchMedia
-      && window.matchMedia("(max-width: 759px), (hover: none) and (pointer: coarse)").matches;
+      && window.matchMedia("(max-width: 899px)").matches;
   }
   function lockPageForModal(modal) {
     var body;
@@ -168,6 +173,9 @@ import "./form-requests.js";
   }
   function syncOpenModalVisualViewports() {
     modalStack.forEach(syncModalVisualViewport);
+    var mobileModal = modalStack.find(modalNeedsMobilePageLock);
+    if (mobileModal) { lockPageForModal(mobileModal); }
+    else { unlockPageForModal(); }
   }
   function scheduleOpenModalViewportSync() {
     if (TinyCat.__modalViewportSyncQueued === true) {

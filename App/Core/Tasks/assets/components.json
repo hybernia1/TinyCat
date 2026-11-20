@@ -47,12 +47,38 @@
     "children": [
       {
         "tag": "div",
-        "attrs": {"class": "grid sm:grid-2 md:grid-3"},
+        "attrs": {"class": "table-wrap"},
         "children": [
           {
-            "each": {"get": "items"},
-            "as": "task",
-            "children": [{"component": "scheduler/task-card", "data": {"task": {"get": "task"}}}]
+            "tag": "table",
+            "attrs": {"class": "table", "aria-label": {"t": "cron.list_title"}},
+            "children": [
+              {
+                "tag": "thead",
+                "children": [
+                  {
+                    "tag": "tr",
+                    "children": [
+                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "cron.task"}]},
+                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "cron.latest"}]},
+                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "cron.status"}]},
+                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "cron.duration"}]},
+                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "common.actions"}]}
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "children": [
+                  {
+                    "each": {"get": "items"},
+                    "as": "task",
+                    "children": [{"component": "scheduler/task-row", "data": {"task": {"get": "task"}}}]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -619,124 +645,6 @@
       {"extensions": "scheduler/run-detail"}
     ]
   },
-  "scheduler/task-card": {
-    "tag": "article",
-    "attrs": {"class": "card min-w-0"},
-    "children": [
-      {
-        "tag": "div",
-        "attrs": {"class": "card-header"},
-        "children": [
-          {
-            "tag": "h3",
-            "attrs": {"class": "text-lg m-0 cluster gap-2"},
-            "children": [
-              {"component": "scheduler/icon", "data": {"name": {"get": "task.name"}}},
-              {"component": "scheduler/name", "data": {"name": {"get": "task.name"}}}
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "card-body stack"},
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {"class": "stack stack-gap-4"},
-            "children": [
-              {
-                "tag": "div",
-                "attrs": {"class": "stack stack-gap-4"},
-                "when": {"get": "task.latest"},
-                "children": [
-                  {
-                    "tag": "div",
-                    "children": [{"component": "scheduler/status", "data": {"status": {"get": "task.latest.status"}}}]
-                  },
-                  {
-                    "tag": "time",
-                    "attrs": {"datetime": {"get": "task.latest.started_at"}},
-                    "when": {"get": "task.latest.started_at"},
-                    "children": [{"date": {"get": "task.latest.started_at"}}]
-                  },
-                  {
-                    "tag": "small",
-                    "attrs": {"class": "text-muted"},
-                    "children": [
-                      {
-                        "if": [
-                          {"eq": [{"get": "task.latest.duration_ms"}, null]},
-                          "",
-                          {"concat": [{"get": "task.latest.duration_ms"}, " ms"]}
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "span",
-                "attrs": {"class": "cluster gap-2 text-muted"},
-                "when": {"not": {"get": "task.latest"}},
-                "children": ["â€”"]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "text-muted"},
-            "children": [
-              {
-                "tag": "div",
-                "children": [
-                  {"lookup": {"get": "task.name"}, "default": "", "catalog": "scheduler.tasks", "field": "schedule"}
-                ]
-              },
-              {
-                "each": {"get": "task.options"},
-                "as": "option",
-                "children": [
-                  {
-                    "tag": "div",
-                    "attrs": {"class": "help m-0"},
-                    "children": [
-                      {
-                        "component": "scheduler/option",
-                        "data": {
-                          "key": {"concat": [{"get": "task.name"}, ":", {"get": "_key"}]},
-                          "name": {"get": "_key"}
-                        }
-                      },
-                      ": ",
-                      {"get": "option"}
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "card-footer cluster justify-end"},
-        "children": [
-          {
-            "component": "ui/api-action",
-            "data": {
-              "url": {"get": "task.run_url"},
-              "method": "POST",
-              "target": {"admin_ref": "core.scheduler-runs", "field": "target"},
-              "label": {"t": "cron.run_now"},
-              "icon": "play",
-              "button_class": "btn btn-sm btn-ghost btn-icon"
-            }
-          }
-        ]
-      }
-    ]
-  },
   "scheduler/name": {
     "lookup": {"get": "name"},
     "default": {"get": "name"},
@@ -797,10 +705,13 @@
                       {"icon": "key"},
                       {
                         "tag": "span",
-                        "attrs": {"class": "stack stack-gap-4"},
+                        "attrs": {"class": "cluster gap-1"},
                         "children": [
                           {"tag": "strong", "children": [{"t": "cron.access_title"}]},
-                          {"tag": "small", "children": [{"t": "cron.access_help"}]}
+                          {
+                            "component": "ui/help",
+                            "data": {"text": {"t": "cron.access_help"}, "label": {"t": "cron.access_title"}}
+                          }
                         ]
                       }
                     ]
@@ -876,8 +787,28 @@
                           "tag": "span",
                           "attrs": {"class": "stack stack-gap-4"},
                           "children": [
-                            {"tag": "strong", "children": [{"get": "view.title_label"}]},
-                            {"tag": "small", "children": [{"get": "view.help_label"}]}
+                            {
+                              "tag": "strong",
+                              "attrs": {"class": "cluster gap-1"},
+                              "children": [
+                                {"get": "view.title_label"},
+                                {
+                                  "component": "ui/help",
+                                  "data": {"text": {"get": "view.help_label"}, "label": {"get": "view.title_label"}}
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "small",
+                              "attrs": {"class": "cluster gap-1"},
+                              "children": [
+                                {"get": "view.cadence_label"},
+                                {
+                                  "component": "ui/help",
+                                  "data": {"text": {"get": "view.schedule_label"}, "label": {"t": "cron.schedule"}}
+                                }
+                              ]
+                            }
                           ]
                         }
                       ]
@@ -896,7 +827,15 @@
                         {
                           "tag": "span",
                           "attrs": {"class": "label cluster gap-2"},
-                          "children": [{"icon": "link"}, " ", {"t": "cron.task_url"}]
+                          "children": [
+                            {"icon": "link"},
+                            " ",
+                            {"t": "cron.task_url"},
+                            {
+                              "component": "ui/help",
+                              "data": {"text": {"t": "cron.query_help"}, "label": {"t": "cron.task_url"}}
+                            }
+                          ]
                         },
                         {
                           "tag": "input",
@@ -904,12 +843,12 @@
                             "class": "input",
                             "value": {"get": "view.query_url"},
                             "data-scheduler-url": "",
-                            "readonly": true
+                            "readonly": true,
+                            "aria-label": {"t": "cron.task_url"}
                           }
                         }
                       ]
                     },
-                    {"tag": "p", "attrs": {"class": "help m-0"}, "children": [{"t": "cron.query_help"}]},
                     {
                       "tag": "div",
                       "attrs": {"class": "field"},
@@ -953,12 +892,140 @@
                           ]
                         }
                       ]
-                    },
-                    {"tag": "p", "attrs": {"class": "help m-0"}, "children": [{"get": "view.schedule_label"}]}
+                    }
                   ]
                 }
               ]
             }
+          }
+        ]
+      }
+    ]
+  },
+  "scheduler/task-row": {
+    "tag": "tr",
+    "children": [
+      {
+        "tag": "td",
+        "children": [
+          {
+            "tag": "strong",
+            "attrs": {"class": "table-primary cluster gap-2"},
+            "children": [
+              {"component": "scheduler/icon", "data": {"name": {"get": "task.name"}}},
+              {"component": "scheduler/name", "data": {"name": {"get": "task.name"}}}
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "table-meta"},
+            "children": [
+              {
+                "tag": "div",
+                "children": [
+                  {"lookup": {"get": "task.name"}, "default": "", "catalog": "scheduler.tasks", "field": "schedule"}
+                ]
+              },
+              {
+                "each": {"get": "task.options"},
+                "as": "option",
+                "children": [
+                  {
+                    "tag": "div",
+                    "attrs": {"class": "help m-0"},
+                    "children": [
+                      {
+                        "component": "scheduler/option",
+                        "data": {
+                          "key": {"concat": [{"get": "task.name"}, ":", {"get": "_key"}]},
+                          "name": {"get": "_key"}
+                        }
+                      },
+                      ": ",
+                      {"get": "option"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "td",
+        "children": [
+          {
+            "tag": "time",
+            "attrs": {"datetime": {"get": "task.latest.started_at"}},
+            "when": {"get": "task.latest.started_at"},
+            "children": [{"date": {"get": "task.latest.started_at"}}]
+          },
+          {
+            "tag": "span",
+            "attrs": {"class": "table-meta"},
+            "when": {"not": {"get": "task.latest"}},
+            "children": [{"t": "cron.never"}]
+          }
+        ]
+      },
+      {
+        "tag": "td",
+        "children": [
+          {
+            "tag": "span",
+            "when": {"get": "task.latest"},
+            "children": [
+              {
+                "lookup": {"get": "task.latest.status"},
+                "cases": {
+                  "running": {"t": "cron.statuses.running"},
+                  "completed": {"t": "cron.statuses.completed"},
+                  "failed": {"t": "cron.statuses.failed"},
+                  "not_due": {"t": "cron.statuses.not_due"},
+                  "has_more": {"t": "cron.statuses.has_more"},
+                  "interrupted": {"t": "cron.statuses.interrupted"}
+                },
+                "default": ""
+              }
+            ]
+          },
+          {"tag": "span", "when": {"not": {"get": "task.latest"}}, "children": ["—"]}
+        ]
+      },
+      {
+        "tag": "td",
+        "attrs": {"class": "table-meta"},
+        "children": [
+          {
+            "if": [
+              {"eq": [{"get": "task.latest.duration_ms"}, null]},
+              "—",
+              {"concat": [{"get": "task.latest.duration_ms"}, " ms"]}
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "td",
+        "attrs": {"class": "table-actions-cell"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "table-actions"},
+            "children": [
+              {
+                "component": "ui/api-action",
+                "data": {
+                  "url": {"get": "task.run_url"},
+                  "method": "POST",
+                  "target": {"admin_ref": "core.scheduler-runs", "field": "target"},
+                  "label": {"t": "cron.run_now"},
+                  "icon": "play",
+                  "button_class": "btn btn-sm btn-secondary",
+                  "show_label": true
+                }
+              }
+            ]
           }
         ]
       }

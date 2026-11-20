@@ -54,8 +54,10 @@ Formulář a dialog nadále používají společné factory a ochranu konceptu.
 Vnořená pole podporovaného typu deklaruje vlastník pomocí `fields` uvnitř pole SettingsSection;
 například Mail vlastní podpole SMTP včetně výchozích hodnot a omezení.
 Resource rekurzivně odstraní popisky, callbacky a defaults a vynuluje hesla.
-`Sections::presentation()` zvlášť odvodí pouze popisky a prezentační metadata,
-také pro podpole. JavaScript nevede druhý seznam SMTP polí ani jejich popisků.
+Core Settings z registrací odvodí `ComponentLookup` pro popisky a prezentační
+metadata včetně podpolí. Překladové výrazy zůstávají v katalogu komponent;
+nepřenášejí se jako JSON v HTML atributu. JavaScript nevede druhý seznam SMTP
+polí ani jejich popisků.
 `fields` je schéma editoru; nemění serverová pravidla ukládání ani validaci
 složené hodnoty SMTP.
 
