@@ -4,6 +4,7 @@ import "../../../../Core/Ui/assets/list-navigation.js";
 import "../../../../Core/Ui/assets/runtime/dom.js";
 import "../../../../Core/Ui/assets/runtime/api-client.js";
 import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/filters.js";
 import "../../../../Core/Ui/assets/tabs.js";
 (function () {
   "use strict";

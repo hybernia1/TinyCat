@@ -12803,23 +12803,23 @@
       "methods": [
         {
           "name": "url",
-          "line": 13
-        },
-        {
-          "name": "apply",
           "line": 14
         },
         {
+          "name": "apply",
+          "line": 15
+        },
+        {
           "name": "modal",
-          "line": 21
+          "line": 22
         },
         {
           "name": "result",
-          "line": 37
+          "line": 38
         },
         {
           "name": "hydrate",
-          "line": 46
+          "line": 47
         }
       ]
     },
@@ -14779,7 +14779,6 @@
     {
       "source": "App/Core/Ui/assets/admin/index.js",
       "imports": [
-        "App/Core/Ui/assets/filters.js",
         "App/Core/Ui/assets/admin/navigation.js",
         "App/Core/Ui/assets/admin-resources.js"
       ],
@@ -14822,6 +14821,7 @@
       "source": "App/Core/Ui/assets/admin-resources.js",
       "imports": [
         "App/Core/Ui/assets/component-builders.js",
+        "App/Core/Ui/assets/filters.js",
         "App/Core/Ui/assets/content-updates.js",
         "App/Core/Ui/assets/list-navigation.js",
         "App/Core/Ui/assets/runtime/modules.js"
@@ -15475,6 +15475,7 @@
         "App/Core/Ui/assets/avatar-rendering.js",
         "App/Core/Ui/assets/dialogs.js",
         "App/Core/Ui/assets/component-builders.js",
+        "App/Core/Ui/assets/filters.js",
         "App/Core/Ui/assets/form-state.js",
         "App/Core/Ui/assets/form-requests.js",
         "App/Core/Ui/assets/toasts.js",
@@ -15520,6 +15521,7 @@
         "App/Core/Ui/assets/runtime/dom.js",
         "App/Core/Ui/assets/runtime/api-client.js",
         "App/Core/Ui/assets/component-builders.js",
+        "App/Core/Ui/assets/filters.js",
         "App/Core/Ui/assets/tabs.js"
       ],
       "entries": [],

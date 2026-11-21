@@ -1,4 +1,5 @@
 import "./component-builders.js";
+import "./filters.js";
 import "./content-updates.js";
 import "./list-navigation.js";
 import "./runtime/modules.js";

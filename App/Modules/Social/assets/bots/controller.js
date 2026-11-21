@@ -6,6 +6,7 @@ import "../../../../Core/Ui/assets/runtime/api-client.js";
 import "../../../../Core/Ui/assets/avatar-rendering.js";
 import "../../../../Core/Ui/assets/dialogs.js";
 import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/filters.js";
 import "../../../../Core/Ui/assets/form-state.js";
 import "../../../../Core/Ui/assets/form-requests.js";
 import "../../../../Core/Ui/assets/toasts.js";
