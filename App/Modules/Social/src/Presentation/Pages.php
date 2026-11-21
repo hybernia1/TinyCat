@@ -12,11 +12,6 @@ use TinyCat\Core\Identity\Access;
 /** HTTP authorization, actions and prepared page composition. */
 final class Pages
 {
-    public static function dashboard(): void
-    {
-        \TinyCat\Core\Ui\Admin\Dashboard::respond();
-    }
-
     public static function privacySection(): string
     {
         return Components::render('site/privacy-section', ['siteName' => \TinyCat\Core\Ui\Site::site_name(), 'privacyLimitRows' => self::privacyLimitRows()]);

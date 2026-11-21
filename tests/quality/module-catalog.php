@@ -115,6 +115,10 @@ try {
         $data->providers = $providers;
         $reject(static fn () => Definition::fromMetadata($data, $temporary), 'Invalid provider declaration');
     }
+    foreach (['settings', 'permissions', 'tasks', 'navigation', 'health'] as $kind) {
+        $data = $metadata('alpha'); $data->providers = (object) [$kind => 'Fixture\\Alpha\\Provider'];
+        $reject(static fn () => Definition::fromMetadata($data, $temporary), 'Unsupported provider rejected during metadata parsing: ' . $kind);
+    }
     foreach (['requires', 'exports', 'providers', 'resources'] as $field) {
         $bad = $metadata('alpha');
         $bad->$field = null;
@@ -208,8 +212,8 @@ try {
 
     // Current activation IDs preserve installed owners without historical remapping.
     $plan = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', \TinyCat\Core\Modules\SourceModules::selection($root));
-    $assert($plan['format'] === 4 && $plan['required'] === [] && array_keys($plan['selection']) === ['tinycat.blog', 'tinycat.social'], 'Signed selection archives history and contains only optional functional modules');
-    $standalone = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.blog', \TinyCat\Core\Modules\SourceModules::selection($root));
+    $assert($plan['format'] === 4 && $plan['required'] === [] && array_keys($plan['selection']) === ['tinycat.social'], 'Signed selection archives history and contains only optional functional modules');
+    $standalone = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', \TinyCat\Core\Modules\SourceModules::selection($root));
     foreach (['tinycat.users', 'tinycat.moderation', 'tinycat.bots'] as $stream) {
         $assert($standalone['schemaOwners'][$stream] === 'tinycat.social', 'Social owns the unchanged historical stream: ' . $stream);
     }
@@ -222,14 +226,14 @@ try {
     }
     $transitionRoot = $temporary . '/transition';
     mkdir($transitionRoot . '/App', 0700, true); mkdir($transitionRoot . '/storage', 0700);
-    $oldPlan = $plan; $oldPlan['active'] = ['tinycat.blog'];
+    $oldPlan = $plan; $oldPlan['active'] = [];
     file_put_contents($transitionRoot . '/App/distribution.json', json_encode($oldPlan, JSON_THROW_ON_ERROR));
     TinyCat\Core\Modules\Deployment::write($transitionRoot, $oldPlan, $oldPlan['active'], array_keys($oldPlan['selection']), '6.0.6');
     $before = file_get_contents($transitionRoot . '/storage/deployment.json');
     $transition = TinyCat\Core\Modules\Deployment::transition($transitionRoot, $plan);
-    $assert($transition === ['active' => ['tinycat.blog'], 'installed' => ['tinycat.blog', 'tinycat.social']], 'A completed current deployment retains disabled installed data owners without enabling them');
+    $assert($transition === ['active' => [], 'installed' => ['tinycat.social']], 'A completed current deployment retains disabled installed data owners without enabling them');
     $assert(file_get_contents($transitionRoot . '/storage/deployment.json') === $before, 'Upgrade discovery does not mutate deployment state');
-    $withoutSocial = $plan; unset($withoutSocial['selection']['tinycat.social'], $withoutSocial['requires']['tinycat.social']); $withoutSocial['active'] = ['tinycat.blog'];
+    $withoutSocial = $plan; unset($withoutSocial['selection']['tinycat.social'], $withoutSocial['requires']['tinycat.social']); $withoutSocial['active'] = [];
     try { TinyCat\Core\Modules\Deployment::transition($transitionRoot, $withoutSocial); $assert(false, 'Removing installed Social must fail'); }
     catch (RuntimeException) { $assert(true, 'A new artifact cannot discard retained Social sources or data'); }
     foreach ([1, 2] as $format) {

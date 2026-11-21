@@ -58,25 +58,25 @@ try {
         foreach (glob($candidate . '/App/Core/Support/lang/*.json') ?: [] as $language) { $locale = basename($language); file_put_contents($root . '/lang/' . $locale, json_encode([$table => ['title' => 'Selected ' . $short]], JSON_THROW_ON_ERROR)); }
     };
     $makeModule('notes', 1, ['tinycat.accounts']); $makeModule('reports', 1, ['fixture.notes']);
-    $selection = require $candidate . '/App/Modules/Blog/selection.php'; $base = array_keys($selection);
-    $selection += ['fixture.notes' => 'App/Modules/Notes/module.json', 'fixture.reports' => 'App/Modules/Reports/module.json'];
-    file_put_contents($candidate . '/App/Modules/Blog/selection.php', '<?php return ' . var_export($selection, true) . ';');
+    $base = [];
+    $selection = ['fixture.notes' => 'App/Modules/Notes/module.json', 'fixture.reports' => 'App/Modules/Reports/module.json'];
+    file_put_contents($candidate . '/App/modules.php', '<?php return ' . var_export($selection, true) . ';');
     $pair = sodium_crypto_sign_keypair(); $secret = sodium_crypto_sign_secretkey($pair); $public = sodium_crypto_sign_publickey($pair);
     $key = $workspace . '/signing.key'; file_put_contents($key, base64_encode($secret));
     $build = static function (string $version, string $output, bool $fresh = false) use ($run, $candidate, $key, $base, $assert): void {
         // Only these variants are consumed: the initial installation and three successive updates.
-        $command = [PHP_BINARY, $candidate . '/tools/release/build-update.php', '--version=' . $version, '--assembly=blog', '--active=' . implode(',', $base), '--allow-dirty', '--output=' . $output . ($fresh ? '/install' : '/update'), '--key=' . $key];
+        $command = [PHP_BINARY, $candidate . '/tools/release/build-update.php', '--version=' . $version, '--assembly=source', '--product=fixture.lifecycle', ($base === [] ? '--active' : '--active=' . implode(',', $base)), '--allow-dirty', '--output=' . $output . ($fresh ? '/install' : '/update'), '--key=' . $key];
         if ($fresh) { $command[] = '--fresh-install'; }
         [$exit, $text, $error] = $run($command, $candidate);
-        $assert($exit === 0, 'Signed Blog build: ' . $text . $error);
+        $assert($exit === 0, 'Signed fixture product build: ' . $text . $error);
     };
     $initialVersionFile = $candidate . '/App/Core/Support/Version.php';
     file_put_contents($initialVersionFile, preg_replace("/CURRENT = '[^']+'/", "CURRENT = '" . $versions[0] . "'", (string) file_get_contents($initialVersionFile)));
     $build($versions[0], $workspace . '/v1', true);
-    $installManifest = json_decode((string) file_get_contents($workspace . '/v1/install/tinycat-blog-install.json'), true, 512, JSON_THROW_ON_ERROR);
-    $assert($installManifest['distribution']['product'] === 'tinycat.blog' && $installManifest['minimum_version'] === $versions[0], 'Signed identity prevents old updaters from applying module packages');
-    $assert($installManifest['migrations'] === [] && !isset($installManifest['files']['App/Modules/Social/src/Posts/Registration.php']) && isset($installManifest['files']['App/Core/Settings/Store.php']) && isset($installManifest['files']['App/Modules/Notes/src/Module.php']), 'Blog package contains only available product owners, including inactive modules');
-    $assert(isset($installManifest['files']['scheduled-tasks.php']) && isset($installManifest['files']['App/Console.php']), 'Blog has a working production CLI instead of a missing social scheduler');
+    $installManifest = json_decode((string) file_get_contents($workspace . '/v1/install/fixture.lifecycle-install.json'), true, 512, JSON_THROW_ON_ERROR);
+    $assert($installManifest['distribution']['product'] === 'fixture.lifecycle' && $installManifest['minimum_version'] === $versions[0], 'Signed identity prevents old updaters from applying module packages');
+    $assert($installManifest['migrations'] === [] && !isset($installManifest['files']['App/Modules/Social/src/Posts/Registration.php']) && isset($installManifest['files']['App/Core/Settings/Store.php']) && isset($installManifest['files']['App/Modules/Notes/src/Module.php']), 'fixture product package contains only available product owners, including inactive modules');
+    $assert(isset($installManifest['files']['scheduled-tasks.php']) && isset($installManifest['files']['App/Console.php']), 'fixture product has a working production CLI instead of a missing social scheduler');
     $root = $workspace . '/installation'; mkdir($root, 0700);
     $zip = new ZipArchive(); $zip->open($workspace . '/v1/install/' . $installManifest['package']); $zip->extractTo($root); $zip->close();
     $config = ['database' => ['dsn' => 'sqlite:' . $root . '/database.sqlite'], 'updates' => ['public_key' => base64_encode($public)], 'i18n' => ['locale' => 'en']];
@@ -88,7 +88,7 @@ try {
     [$exit, $text, $error] = $console(['rescue']); $assert($exit === 0 && is_file($root . '/storage/updates/console.php'), 'Private rescue launcher is available without dev tools: ' . $text . $error);
     $entry = $root . '/storage/updates/console.php';
     $pdo = new PDO('sqlite:' . $root . '/database.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-    $assert(count($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 21, 'Fresh signed Blog creates exactly its declared tables');
+    $assert(count($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 8, 'Fresh signed fixture product creates exactly its declared tables: ' . implode(', ', $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll(PDO::FETCH_COLUMN)));
     $assert(password_verify('Module-Regression-42', (string) $pdo->query('SELECT password FROM users')->fetchColumn()), 'CLI uses the shared account password writer');
     [$exit] = $console(['install'], $administrator); $assert($exit !== 0 && (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() === 1, 'Fresh installer refuses to adopt existing data');
     $packagePhase = 'install'; require $fixture . '/package-cases.php';
@@ -113,7 +113,7 @@ try {
     $insert = $pdo->prepare('INSERT INTO lifecycle_notes(body) VALUES (?)'); $insert->execute([$body]);
     [$status, $json] = $request('/api/fixture/notes'); $assert($status === 200 && str_contains($json, 'Unicode'), 'Activation registers the real authorized product API');
     [$status, $html] = $request('/fixture/notes'); $assert($status === 200 && str_contains($html, 'Selected notes'), 'Activation adds module-owned translations');
-    [$status, $html] = $request('/'); $assert($status === 200, 'Blog HTTP boot remains ready after optional activation');
+    [$status, $html] = $request('/'); $assert($status === 200, 'fixture product HTTP boot remains ready after optional activation');
     $assert(preg_match_all('~(?:src|href)="(/cache/assets/[^"?]+)~', $html, $assetMatches) > 0, 'Changed selection falls back from stale compiled assets');
     $delivered = '';
     foreach ($assetMatches[1] as $url) { [$assetStatus, $asset] = $request(html_entity_decode($url)); $assert($assetStatus === 200, 'Selected fallback asset is served'); $delivered .= $asset; }
@@ -138,8 +138,8 @@ try {
     file_put_contents($versionFile, str_replace("CURRENT = '" . $versions[0] . "'", "CURRENT = '" . $versions[1] . "'", $versionSource));
     $build($versions[1], $workspace . '/v2');
     $update = static function (string $directory) use ($console): array {
-        $manifest = json_decode((string) file_get_contents($directory . '/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
-        return $console(['update', $directory . '/tinycat-blog-update.json', $directory . '/tinycat-blog-update.sig', $directory . '/' . $manifest['package']]);
+        $manifest = json_decode((string) file_get_contents($directory . '/fixture.lifecycle-update.json'), true, 512, JSON_THROW_ON_ERROR);
+        return $console(['update', $directory . '/fixture.lifecycle-update.json', $directory . '/fixture.lifecycle-update.sig', $directory . '/' . $manifest['package']]);
     };
     [$exit, $text, $error] = $update($workspace . '/v2/update'); $assert($exit === 0, 'Signed inactive-module update: ' . $text . $error);
     $packagePhase = 'after-core-update'; require $fixture . '/package-cases.php';
@@ -148,8 +148,8 @@ try {
     $makeModule('notes', 3, ['tinycat.accounts']);
     file_put_contents($versionFile, str_replace("CURRENT = '" . $versions[0] . "'", "CURRENT = '" . $versions[2] . "'", $versionSource));
     $build($versions[2], $workspace . '/v3');
-    $manifest = json_decode((string) file_get_contents($workspace . '/v3/update/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
-    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/update-worker.php', $root, $workspace . '/v3/update/tinycat-blog-update.json', $workspace . '/v3/update/tinycat-blog-update.sig', $workspace . '/v3/update/' . $manifest['package']], $root);
+    $manifest = json_decode((string) file_get_contents($workspace . '/v3/update/fixture.lifecycle-update.json'), true, 512, JSON_THROW_ON_ERROR);
+    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/update-worker.php', $root, $workspace . '/v3/update/fixture.lifecycle-update.json', $workspace . '/v3/update/fixture.lifecycle-update.sig', $workspace . '/v3/update/' . $manifest['package']], $root);
     $assert($exit === 0 && (json_decode($text, true)['cached_provider_version'] ?? null) === 2, 'Update uses signed migrations while the old PHP provider is cached: ' . $text . $error);
     $assert((int) $pdo->query('SELECT revision_three FROM lifecycle_notes')->fetchColumn() === 3, 'Cached old provider cannot suppress the next migration');
     // A valid signature does not authorize a different product or a fresh-install artifact.
@@ -157,7 +157,7 @@ try {
     $foreignPath = $workspace . '/foreign.json'; $signed = json_encode($foreign, JSON_THROW_ON_ERROR); file_put_contents($foreignPath, $signed); file_put_contents($workspace . '/foreign.sig', base64_encode(sodium_crypto_sign_detached($signed, $secret)));
     [$exit] = $console(['update', $foreignPath, $workspace . '/foreign.sig', $workspace . '/v3/update/' . $manifest['package']]);
     $assert($exit !== 0 && !is_file($root . '/storage/maintenance.json'), 'Cross-product update is rejected before changes');
-    [$exit] = $console(['update', $workspace . '/v1/install/tinycat-blog-install.json', $workspace . '/v1/install/tinycat-blog-install.sig', $workspace . '/v1/install/' . $installManifest['package']]);
+    [$exit] = $console(['update', $workspace . '/v1/install/fixture.lifecycle-install.json', $workspace . '/v1/install/fixture.lifecycle-install.sig', $workspace . '/v1/install/' . $installManifest['package']]);
     $assert($exit !== 0, 'Fresh-install artifacts cannot overwrite an installed product');
     $stateBytes = file_get_contents($root . '/storage/deployment.json');
     $makeModule('notes', 4, ['tinycat.accounts']);
@@ -165,8 +165,8 @@ try {
     file_put_contents($versionFile, str_replace("CURRENT = '" . $versions[0] . "'", "CURRENT = '" . $versions[3] . "'", $versionSource));
     $build($versions[3], $workspace . '/v4');
     if (PHP_OS_FAMILY === 'Windows') {
-        $replacement = json_decode((string) file_get_contents($workspace . '/v4/update/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
-        [$exit, $text, $error] = $run([PHP_BINARY, $root . '/App/Console.php', 'update', $workspace . '/v4/update/tinycat-blog-update.json', $workspace . '/v4/update/tinycat-blog-update.sig', $workspace . '/v4/update/' . $replacement['package']], $root);
+        $replacement = json_decode((string) file_get_contents($workspace . '/v4/update/fixture.lifecycle-update.json'), true, 512, JSON_THROW_ON_ERROR);
+        [$exit, $text, $error] = $run([PHP_BINARY, $root . '/App/Console.php', 'update', $workspace . '/v4/update/fixture.lifecycle-update.json', $workspace . '/v4/update/fixture.lifecycle-update.sig', $workspace . '/v4/update/' . $replacement['package']], $root);
         $assert($exit !== 0 && !is_file($root . '/storage/maintenance.json') && (int) $pdo->query("SELECT version FROM module_installations WHERE module_id = 'fixture.notes'")->fetchColumn() === 3, 'Windows refuses replacement of a running managed CLI before DB or file changes');
     }
     [$exit, $text, $error] = $update($workspace . '/v4/update');

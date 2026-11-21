@@ -32,7 +32,7 @@ komponenty a cestu k chybnému poli. [Reference zápisu](../docs/reference/compo
 popisuje rozdělení odpovědností i připojení schématu do editoru.
 
 `asset-report.php --check --assembly=platform` ověřuje kombinovaný výběr
-Blog + Social proti stejným rozpočtům. Tuto nadmnožinu kontroluje také
+produkčních modulů proti stejným rozpočtům. Tuto nadmnožinu kontroluje také
 `tests/assets/budgets.php`; nepřidává druhý úplný build do testovací skupiny.
 
 ## Release, data a měření
@@ -83,7 +83,7 @@ Before deployment, refresh inherited rescue launchers with the installed 6.0.10 
 [operator prerequisite](../docs/operations/updates.md#retiring-the-autoload-facade).
 Published migrations and local rollback backups remain intact.
 
-`--assembly=blog` sestaví samostatný produkt; `--product=vendor.product` a
+`--product=vendor.product` a
 `--active=id1,id2` určují vlastní identitu a výchozí aktivaci. Distribuce,
 produkční CLI `App/Console.php`, migrace a rescue rollback mají společný
 [provozní návod](../docs/operations/module-deployment.md). CLI je součást aplikace,
@@ -92,7 +92,7 @@ nikoli vývojových tools.
 ## Struktura
 
 Samostatný modul sestaví `php tools/release/build-module.php
---module=App/Modules/Blog --version=1.0.0 --output=storage/releases/modules`.
+--module=App/Modules/Notes --version=1.0.0 --output=.work/releases/modules`.
 Vstupem je přímý modulový adresář s manifestem; výstupem ZIP s inventářem,
 checksumy a migrační historií. `--minimum-core` a `--minimum-php` deklarují
 kompatibilitu. Instalaci přes administraci nebo `module-install` popisuje
@@ -134,3 +134,14 @@ section in the core UI tokens from the four canonical symbols in `assets/icons.s
 Without `--write` it checks freshness. The existing UI-contract check also verifies
 this output. Do not edit generated SVG mask data by hand. Runtime uses ordinary
 CSS and needs no generator, JavaScript hydration or additional image requests.
+
+### Verifying multiple application products
+
+`php tools/release/verify-update.php DIRECTORY --product=vendor.application`
+selects exactly one local update manifest for that product. Add `--fresh-install`
+for its install variant. Product metadata is used only for discovery; successful
+verification still requires the configured signing key, exact archive inventory
+and the signed artifact filename. Several products may share a directory or a
+GitHub release without adding product-specific branches to the verifier.
+The [release procedure](../docs/operations/updates.md#product-update-channels)
+requires core and Social assets for standard TinyCat releases.

@@ -56,7 +56,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 - [Společné feedové importy pro Social a Blog: etapa 4](audits/social-core-stage4-2026-11-14.md).
 - [Správa zdrojů článků a feedové importy](operations/feed-imports.md).
 - [Živá testovací instalace a Laragon](development/local-environment.md).
-- [Blogová sestava nad Accounts a Publishing](development/blog-assembly.md).
+- [Závazný kontrakt funkčních modulů](contracts/module-contract.md).
 - [Instalace, aktivace modulů a obnova produktové distribuce](operations/module-deployment.md).
 - [Samostatné ZIPy a správce modulů](audits/module-packages-2026-11-14.md).
 - [Návrh modulární platformy: jádro, moduly a sestavy](plans/modular-platform.md).

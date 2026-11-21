@@ -123,7 +123,7 @@ final class Comments
             return (int) ($comment['content_author_id'] ?? 0) === $userId;
         }
 
-        $status = \TinyCat\Social\Content\Posts::find((int) ($comment['content_id'] ?? 0));
+        $status = \TinyCat\Social\Posts\Repository::find((int) ($comment['content_id'] ?? 0));
 
         return $status !== null && (int) ($status['author_id'] ?? 0) === $userId;
     }

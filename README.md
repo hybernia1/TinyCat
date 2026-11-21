@@ -5,8 +5,9 @@ TinyCat is a small, self-hosted modular application framework written in plain P
 The development platform provides identity, security and shared technical services;
 functional modules own their complete domain data. Core has no mandatory content,
 comment, tag or media tables. See [domain ownership](docs/development/domain-storage.md). The default assembly provides the social features below;
-[Blog](docs/development/blog-assembly.md) can run independently or alongside Social
-in the platform assembly, with a shared identity and [module lifecycle](docs/operations/module-deployment.md).
+Social is optional; a core-only assembly provides the foundation for other
+applications. Modules follow the [module contract](docs/contracts/module-contract.md)
+and share the [module lifecycle](docs/operations/module-deployment.md).
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 

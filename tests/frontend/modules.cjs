@@ -923,12 +923,12 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const socialSettingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:socialSettings}, 'modal-social-settings');
   check(socialSettingsDialog.querySelector('[name="settings[content_images.enabled]"]') && socialSettingsDialog.querySelector('[name="settings[moderation.blocked_urls]"]'), 'Social image and moderation settings use the common PHP-derived presentation.');
   socialSettingsDialog.remove();
-  const blogSettings = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--blog-settings"], { encoding: "utf8" }));
-  const blogSettingKeys = ['blog.images.enabled', 'blog.images.max_upload_kb', 'blog.blocked_urls', 'blog.links.utm.enabled', 'blog.links.utm.source', 'blog.links.utm.medium', 'blog.links.utm.campaign'];
-  check(blogSettingKeys.every(key => blogSettings.presentation.fields[key]?.label), 'Blog field labels are derived from its PHP settings contribution without module JavaScript.');
-  const blogSettingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:{sections:blogSettings.sections}}, 'modal-blog-settings');
-  check(blogSettingsDialog.querySelector('[data-tab="blog"]') && blogSettingsDialog.querySelector('[name="settings[blog.links.utm.campaign]"]'), 'Blog-only settings render alongside core settings without Social or a missing section label.');
-  blogSettingsDialog.remove();
+  const moduleSettings = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--module-settings"], { encoding: "utf8" }));
+  const moduleSettingKeys = ['fixture.images.enabled', 'fixture.images.max_upload_kb', 'fixture.blocked_urls', 'fixture.links.utm.enabled', 'fixture.links.utm.source', 'fixture.links.utm.medium', 'fixture.links.utm.campaign'];
+  check(moduleSettingKeys.every(key => moduleSettings.presentation.fields[key]?.label), 'Fixture field labels are derived from its PHP settings contribution without module JavaScript.');
+  const moduleSettingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:{sections:moduleSettings.sections}}, 'modal-module-settings');
+  check(moduleSettingsDialog.querySelector('[data-tab="fixture"]') && moduleSettingsDialog.querySelector('[name="settings[fixture.links.utm.campaign]"]'), 'Fixture-only settings render alongside core settings without Social or a missing section label.');
+  moduleSettingsDialog.remove();
   const savedCaptchaRequest = T.api.request, savedCaptcha = T.ui.captcha, savedCaptchaListener = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
   const searchRoot = new Node('form'), searchInput = new Node('input'), searchResults = new Node('div');

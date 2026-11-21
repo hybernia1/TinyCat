@@ -41,6 +41,13 @@ try {
         }
     }
     copy($workspace . '/index.php', $root . '/index.php');
+    // Exercise a signed product shape rather than an unversioned source checkout.
+    $prepare = "define('TINYCAT', true); require " . var_export($root . '/App/Core/Runtime/autoload.php', true)
+        . "; $" . "plan = \\TinyCat\\Core\\Modules\\Distribution::describe(" . var_export($root, true) . ", 'tinycat.core', []); file_put_contents("
+        . var_export($root . '/App/distribution.json', true) . ", json_encode($" . "plan, JSON_THROW_ON_ERROR));";
+    exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($prepare) . ' 2>&1', $prepareOutput, $prepareExit);
+    $assert($prepareExit === 0, 'The isolated core distribution is prepared: ' . implode(' ', $prepareOutput));
+
     $serverDb->exec('CREATE DATABASE `' . $name . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
     $created = true;
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
@@ -92,6 +99,12 @@ try {
     $assert($status === 422, 'Invalid administrator data fails without completing installation.');
     [$status, $result] = $request('POST', '/api/installation/steps/admin', ['username' => 'install_api_admin', 'password' => $password, 'password_confirm' => $password]);
     $assert($status === 200 && $result['data']['step'] === 'done' && $result['data']['redirect'] === '/admin', 'The final API step creates the administrator and configuration.');
+    $deployment = json_decode((string) file_get_contents($root . '/storage/deployment.json'), true, 512, JSON_THROW_ON_ERROR);
+    $assert($deployment['product'] === 'tinycat.core' && $deployment['active'] === [] && $deployment['installed'] === [], 'Web installation records the same core deployment as CLI installation');
+    $activate = "define('TINYCAT', true); require " . var_export($root . '/App/Core/Runtime/autoload.php', true)
+        . "; \\TinyCat\\Core\\Runtime\\Application::start(); \\TinyCat\\Core\\Modules\\Lifecycle::activate([], \\TinyCat\\Core\\Modules\\Deployment::read(" . var_export($root, true) . "));";
+    exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($activate) . ' 2>&1', $activateOutput, $activateExit);
+    $assert($activateExit === 0, 'Module lifecycle accepts the web-installed product: ' . implode(' ', $activateOutput));
     $installed = require $root . '/config.php';
     $assert($installed['install']['complete'] === true && $installed['install']['locale'] === 'cs' && $installed['database']['name'] === $name, 'Only the isolated configuration is written.');
     $pdo = new PDO('mysql:host=' . $db['host'] . ';port=' . ($db['port'] ?? 3306) . ';dbname=' . $name, $db['user'], $db['password'], $options);

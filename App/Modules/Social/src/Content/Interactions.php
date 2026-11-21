@@ -134,7 +134,7 @@ final class Interactions
     {
         $comment = Comments::status_comment_find($id);
         if ($comment === null) { return; }
-        $publication = Posts::find((int) $comment['content_id']);
+        $publication = \TinyCat\Social\Posts\Repository::find((int) $comment['content_id']);
         $kind = (string) ($publication['kind'] ?? '');
         if ($kind !== 'post') { return; }
         // Cleanup does not grant access; an inactive owner never resolves public targets.

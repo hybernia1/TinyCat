@@ -31,8 +31,7 @@ final class Lifecycle
             $modules = Loader::fromSelection($root, Distribution::selection($plan, $plan['active']));
             if ($pdo !== null) { ModuleSchemas::synchronize($pdo, $schemas); }
             foreach ($modules->providers(ProvidesSetup::class) as $id => $provider) { if (isset($setup[$id])) { $provider::completeSetup($setup[$id]); } }
-            Deployment::write($root, $plan, $plan['active'], $plan['active'], \TinyCat\Support\Version::CURRENT);
-            return ['installed' => $plan['active'], 'active' => $plan['active']];
+            return self::completeInstallation($plan);
         }, $pdo !== null, static function () use ($root, $pdo): void {
             if (Deployment::read($root) !== null) { throw new \RuntimeException('Deployment changed during installation; retry.'); }
             if ($pdo !== null) {
@@ -40,6 +39,20 @@ final class Lifecycle
                 if ($query === false || $query->fetch() !== false) { throw new \RuntimeException('Fresh installation requires an empty database.'); }
             }
         });
+    }
+
+    /** Finalize both CLI and staged web installations after schema and account setup.
+     * @param array<string, mixed> $plan
+     * @return array{installed: list<string>, active: list<string>} */
+    public static function completeInstallation(array $plan): array
+    {
+        $root = Paths::basePath();
+        Distribution::validate($plan);
+        if (Deployment::read($root) !== null) { throw new \RuntimeException('An installed deployment cannot be replaced by fresh installation.'); }
+        $schemas = Distribution::schemas($plan, $root, $plan['active']);
+        if ($schemas !== [] && !ModuleSchemas::ready(Connection::get(), $schemas)) { throw new \RuntimeException('Installation schemas are not ready.'); }
+        Deployment::write($root, $plan, $plan['active'], $plan['active'], \TinyCat\Support\Version::CURRENT);
+        return ['installed' => $plan['active'], 'active' => $plan['active']];
     }
 
     /** @param list<string> $active

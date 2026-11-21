@@ -10,6 +10,13 @@ use stdClass;
 /** Metadata only: loading a definition never loads a provider or domain class. */
 final readonly class Definition
 {
+    public const PROVIDER_TYPES = [
+        'routes' => Module::class,
+        'schema' => ProvidesSchema::class,
+        'contributions' => ProvidesContributions::class,
+        'services' => \TinyCat\Core\Runtime\InitializesModule::class,
+    ];
+
     /**
      * @param list<string> $requires
      * @param list<string> $exports
@@ -75,9 +82,7 @@ final readonly class Definition
         }
         $exports = self::stringList(property_exists($data, 'exports') ? $data->exports : [], 'exports');
         foreach ($exports as $export) { self::ownedClass($export, $namespace); }
-        $providers = self::stringMap(property_exists($data, 'providers') ? $data->providers : new stdClass(), [
-            'services', 'routes', 'schema', 'settings', 'permissions', 'tasks', 'navigation', 'health', 'contributions',
-        ]);
+        $providers = self::stringMap(property_exists($data, 'providers') ? $data->providers : new stdClass(), array_keys(self::PROVIDER_TYPES));
         foreach ($providers as $provider) { self::ownedClass($provider, $namespace); }
         $resources = self::stringMap(property_exists($data, 'resources') ? $data->resources : new stdClass(), [
             'translations', 'emails', 'templates', 'assets', 'components', 'componentExtensions', 'migrations', 'entrypoints',

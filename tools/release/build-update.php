@@ -86,10 +86,9 @@ $selection = match ($assembly) {
     'source' => require $root . '/App/modules.php',
     'platform' => \TinyCat\Core\Modules\SourceModules::production($root),
     'development' => \TinyCat\Core\Modules\SourceModules::selection($root),
-    'blog' => require $root . '/App/Modules/Blog/selection.php',
-    default => throw new InvalidArgumentException('Unknown assembly; use source, platform, development, blog or core.'),
+    default => throw new InvalidArgumentException('Unknown assembly; use source, platform, development or core.'),
 };
-$product = (string) ($options['product'] ?? match ($assembly) { 'core' => 'tinycat.core', 'blog' => 'tinycat.blog', default => 'tinycat.social' });
+$product = (string) ($options['product'] ?? match ($assembly) { 'core' => 'tinycat.core', default => 'tinycat.social' });
 $active = isset($options['active']) ? ((string) $options['active'] === '' ? [] : explode(',', (string) $options['active'])) : null;
 $distribution = \TinyCat\Core\Modules\Distribution::describe($root, $product, $selection, $active);
 if ($distribution['format'] === 4) {

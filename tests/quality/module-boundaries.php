@@ -36,16 +36,23 @@ foreach (glob($root . '/App/Modules/*/src/Api.php') ?: [] as $path) {
 
 $assert((require $root . '/App/modules.php') === ['tinycat.social' => 'App/Modules/Social/module.json'], 'Source selects one Social module');
 $available = \TinyCat\Core\Modules\SourceModules::selection($root);
-$assert(array_keys($available) === ['tinycat.blog', 'tinycat.social'], 'Only functional modules are available for activation');
+$assert(isset($available['tinycat.social']), 'The Social manifest is available independently of activation');
 $framework = json_decode((string) file_get_contents($root . '/App/Core/services.json'), true, 512, JSON_THROW_ON_ERROR);
 foreach ($framework as $entry) {
     $assert(!isset($available[$entry['metadata']['id']]), 'Framework capability is not a selectable module');
     $assert(is_file($root . '/App/Core/' . $entry['directory'] . '/ServiceProvider.php'), 'Framework registration belongs to core');
 }
-foreach (['Social', 'Blog'] as $owner) {
-    $assert(is_file($root . '/App/Modules/' . $owner . '/module.json') && is_file($root . '/App/Modules/' . $owner . '/src/Module.php'), 'Functional module has one manifest and initialization');
+foreach ($available as $manifest) {
+    $assert(is_file($root . '/' . dirname($manifest) . '/src/Module.php'), 'Functional module has one registration entry');
 }
-$assert(count(glob($root . '/App/Modules/*/module.json') ?: []) === 2, 'No hidden independently selectable Social fragments or framework manifests');
+foreach (glob($root . '/App/Modules/Social/*/module.json') ?: [] as $internalManifest) {
+    $metadata = json_decode((string) file_get_contents($internalManifest), true, 512, JSON_THROW_ON_ERROR);
+    $assert(!isset($metadata['coreApi'], $metadata['id']), 'Social internals are not independently selectable modules');
+}
+foreach (glob($root . '/App/Modules/*/src/Module.php') ?: [] as $moduleEntry) {
+    $entrySource = (string) file_get_contents($moduleEntry);
+    $assert(preg_match('/\\\\(?:Connection|Transactions)::|\\\\PDO\\b|\\b(?:SELECT|INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE)\\b/', $entrySource) !== 1, 'Module entry delegates persistence to its domain owner: ' . $moduleEntry);
+}
 $securityModule = (string) file_get_contents($root . '/App/Core/Security/ServiceProvider.php');
 $assert(!str_contains($securityModule, 'Api::register') && !str_contains($securityModule, 'Search\\'), 'Technical Security does not activate consumer challenge routes');
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/App', FilesystemIterator::SKIP_DOTS)) as $file) {

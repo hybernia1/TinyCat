@@ -3,10 +3,15 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
-TinyCat 6.0.2 provides signed product identities, selective
-distributions and independently owned Blog and Social storage. See the
+TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
+
+Current unreleased sources remove the unused Blog module and its assembly preset.
+The release-specific sections below retain historical commands and evidence for
+their immutable packages. They do not restore Blog support in current sources.
+An installed Blog owner blocks an update to the new distribution before changes;
+do not bypass ownership checks or erase its data to force an update.
 
 ## Supported update baseline
 
@@ -1007,7 +1012,7 @@ The update and install subdirectories each contain their ZIP, manifest and
 signature. Preparation uses private temporary directories and publishes files
 only after archive completion, hashing and signing. A `.build.lock` coordinates
 replacement of previous outputs; it is not a release asset. Upload only the six
-named ZIP/JSON/SIG assets. The output directory must be writable; interrupted
+named ZIP/JSON/SIG assets for each product; a standard core/Social release has twelve. The output directory must be writable; interrupted
 or failed publication can retain a `.build-*` directory with `.previous` recovery
 copies when restoring a prior file fails.
 
@@ -1025,6 +1030,43 @@ skip an application migration permanently.
 A release that introduces a new managed top-level directory needs a bridge
 release first. The bridge updates the updater allowlist without shipping files
 inside the new directory. Only the following release may populate that directory.
+
+### Product update channels
+
+Every installation selects its update assets using the `product` and `artifact`
+from its installed signed distribution. A repository may publish several products
+in one GitHub release, but each needs its own update ZIP, manifest and signature.
+The updater never substitutes another product when its assets are missing.
+An app may configure `updates.repository` and `updates.public_key` in its local
+configuration for its own GitHub release channel and signing authority.
+
+The standard TinyCat release must include both the core-only and production Social
+variants. Build each selection with the existing builder, from the same clean
+release commit and version, and keep their outputs separate:
+
+```sh
+php tools/release/build-update.php --version=X.Y.Z --assembly=core --both --output=.work/releases/release-X.Y.Z/core
+php tools/release/build-update.php --version=X.Y.Z --assembly=platform --both --output=.work/releases/release-X.Y.Z/social
+php tools/release/verify-update.php .work/releases/release-X.Y.Z/core/update --product=tinycat.core
+php tools/release/verify-update.php .work/releases/release-X.Y.Z/core/install --product=tinycat.core --fresh-install
+php tools/release/verify-update.php .work/releases/release-X.Y.Z/social/update
+php tools/release/verify-update.php .work/releases/release-X.Y.Z/social/install --fresh-install
+```
+
+Publish all twelve ZIP/JSON/SIG files in the same matching release. Core files use
+`tinycat.core` and Social files use `tinycat`; names do not collide. Never upload
+`.build.lock`, extracted installations, keys or evidence reports. Existing signed
+releases remain immutable; add the core channel in the next release rather than
+replacing or extending a published release retroactively.
+
+Custom applications declare their artifact stem in their distribution profile.
+Verification uses `--product=vendor.application` and discovers that product's local
+manifest, verifies its signature and archive, and checks the signed artifact name.
+No product-name map in the verifier or updater needs editing. Missing or ambiguous
+manifests fail verification. An artifact cannot discard an installed owner. Blog has been removed from current
+sources; historical Blog installations require an explicit separate retirement
+procedure and are rejected by the new distribution without changing their data.
+
 
 ## Migrations
 

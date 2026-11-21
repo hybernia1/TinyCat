@@ -184,10 +184,9 @@ state after verification.
 
 ## Instalace a data
 
-Aktuální nasazení z 12. 11. 2026 je **6.0.0-dev.3** s aktivním Blogem
-i Socialem. [Report nasazení](../audits/platform-completion-2026-11-12.md)
-uvádí podpisové mezikroky, zálohy, ověření vypnutého Socialu a shodná data,
-konfiguraci i všech 9 141 existujících médií. Archiv Blogu je `/blog`.
+Na výslovné zadání byla 21. 11. 2026 provedena nová instalace **6.3.1 core**
+bez funkčních modulů. Starší [report nasazení](../audits/platform-completion-2026-11-12.md)
+popisuje historickou instalaci, nikoli současný stav domény.
 
 Doména `.test` není souhlas k resetu. Stávající instalace má svou konfiguraci,
 účty a média. Bez zadání reinstalace neměň její DB připojení, nemaž tabulky

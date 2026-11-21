@@ -10,9 +10,9 @@ if ($mode === '--search-workspace') {
     echo json_encode(['content' => \TinyCat\Support\Components::render('ui/public-workspace', ['title' => 'Search', 'navigation' => $navigation, 'content' => new \TinyCat\Support\Markup($content)]), 'styles' => \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles('/search/all'))], JSON_THROW_ON_ERROR);
     exit;
 }
-if (in_array($mode, ['--notifications-core', '--notifications-blog'], true)) {
+if ($mode === '--notifications-core') {
     $root = dirname(__DIR__, 3);
-    $selection = $mode === '--notifications-blog' ? ['tinycat.blog' => 'App/Modules/Blog/module.json'] : [];
+    $selection = [];
     \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, $selection)->catalog);
     $paths = \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries('/notifications'));
     echo json_encode(array_map(static fn (string $path): array => ['path' => $path, 'source' => \TinyCat\Support\AssetGraph::javascript([$path])], $paths), JSON_THROW_ON_ERROR);
@@ -55,7 +55,7 @@ if ($mode === '--catalogs') {
     exit;
 }
 if ($mode === '--catalog-development') {
-    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json', 'tinycat.blog' => 'App/Modules/Blog/module.json'])->catalog);
+    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json'])->catalog);
     $mode = '--catalog';
 }
 if ($mode === '--catalog') {
@@ -69,9 +69,9 @@ if ($mode === '--styles') {
     exit;
 }
 $roots = $mode === '--core' ? ['assets/ui/component-builders.js', 'assets/ui/dialogs.js', 'assets/core/page-navigation.js'] : ($mode === '--validation' ? ['assets/ui/ajax-bindings.js', 'App/Modules/Social/assets/status/form-actions.js', 'App/Modules/Social/assets/moderation/controller.js', 'App/Core/Settings/assets/index.js', 'App/Modules/Social/assets/users/index.js', 'App/Modules/Social/assets/bots/index.js', 'App/Core/Updates/assets/index.js'] : []);
-if ($mode === '--blog-settings') {
-    $catalog = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.blog' => 'App/Modules/Blog/module.json'])->catalog;
-    \TinyCat\Core\Modules\Resources::configure($catalog);
+if ($mode === '--module-settings') {
+    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), [])->catalog);
+    require dirname(__DIR__, 2) . '/fixtures/modules/settings.php';
     echo json_encode(['presentation' => \TinyCat\Core\Settings\Sections::presentation(), ...\TinyCat\Core\Settings\Resource::editor()], JSON_THROW_ON_ERROR);
     exit;
 }

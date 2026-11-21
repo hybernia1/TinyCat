@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
-namespace TinyCat\Social\Content;
+namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Posts\{Tags, PostCreation};
+use TinyCat\Social\Content\{Links, Interactions, ImageStorage};
 
 use TinyCat\Database\Connection;
 use TinyCat\Database\Transactions;
 
-/** Content persistence. Social dependants supply their transactional cleanup explicitly. */
-final class Posts
+/** Post persistence. Related cleanup shares the owning transaction. */
+final class Repository
 {
     /** @return array<mixed>|null */
     public static function find(int $id): ?array

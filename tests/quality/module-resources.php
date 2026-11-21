@@ -33,20 +33,18 @@ $ownedFiles = static fn (string $name): array => array_values(array_filter(array
 $assert($normalize(ClientAssets::manifests()) === $normalize([$root . '/assets/ui/module.json', ...$ownedFiles('module.json')]), 'One Social manifest and the explicit framework own the complete ordered asset catalog');
 $assert($normalize(Resources::files('components')) === $normalize([$root . '/assets/ui/components.json', ...$ownedFiles('components.json')]), 'Components use the same framework and functional ownership');
 $expected = [];
-foreach (['Identity', 'Health', 'Mail', 'Notifications', 'Publishing', 'Tasks', 'Security', 'Settings', 'Support', 'Ui', 'Updates', 'Social'] as $owner) {
+$owners = ['Identity' => 'tinycat.accounts', 'Health' => 'tinycat.health', 'Mail' => 'tinycat.mail', 'Notifications' => 'tinycat.notifications', 'Tasks' => 'tinycat.scheduler', 'Security' => 'tinycat.security', 'Settings' => 'tinycat.settings', 'Support' => 'tinycat.support', 'Ui' => 'tinycat.ui', 'Updates' => 'tinycat.updates', 'Social' => 'tinycat.social'];
+foreach ($owners as $owner => $id) {
     $directory = $root . ($owner === 'Social' ? '/App/Modules/Social' : '/App/Core/' . $owner);
-    foreach (glob($directory . '/lang/*.json') ?: [] as $file) { $expected[$owner][basename($file, '.json')] = str_replace('\\', '/', $file); }
-}
-foreach (['Identity', 'Mail', 'Social'] as $owner) {
-    $directory = $root . ($owner === 'Social' ? '/App/Modules/Social' : '/App/Core/' . $owner);
-    foreach (glob($directory . '/emails/*.json') ?: [] as $file) { $expected[$owner . 'Emails'][basename($file, '.json')] = str_replace('\\', '/', $file); }
+    foreach (['translations' => 'lang', 'emails' => 'emails'] as $kind => $folder) {
+        foreach (glob($directory . '/' . $folder . '/*.json') ?: [] as $file) { $expected[$id . '/' . $kind][basename($file, '.json')] = str_replace('\\', '/', $file); }
+    }
 }
 ksort($expected);
-$assert(TranslationSources::files() === $expected, 'Every legacy translation source has an explicit catalog owner');
+$assert(TranslationSources::files() === $expected, 'Every translation source has a stable module ID and resource kind');
 $default = Resources::catalog();
-$assert(!$default->has('tinycat.blog') && !isset(TranslationSources::files()['Blog']), 'An alternate built-in product is not activated by its directory');
 $baseline = $compile();
-foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/module.json'], 'blog' => ['tinycat.blog' => 'App/Modules/Blog/module.json'], 'combined' => \TinyCat\Core\Modules\SourceModules::selection($root)] as $assembly => $selection) {
+foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/module.json']] as $assembly => $selection) {
     $catalog = \TinyCat\Core\Modules\Loader::fromSelection($root, $selection)->catalog;
     Resources::withCatalog($catalog, static function () use ($assembly, $selection, $assert): void {
         $socialSelected = isset($selection['tinycat.social']);
@@ -55,17 +53,14 @@ foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/mod
         $assert(isset($messages['install.purpose_social_posts']) === $socialSelected && isset($messages['install.purpose_user_followers']) === $socialSelected, $assembly . ': Social table descriptions follow the selected data owner');
         $assert(!isset($messages['install.purpose_content']), $assembly . ': Retired global content descriptions are not shipped');
         $assert(str_contains($messages['install.tables_intro'], 'selected modules'), $assembly . ': Installation text describes the selected owners');
-        foreach (['/login', '/privacy', '/social', '/status/1', '/blog', '/articles/1'] as $route) {
+        foreach (['/login', '/privacy', '/social', '/status/1', '/fixture'] as $route) {
             $scripts = AssetGraph::order(ClientAssets::entries($route));
             $assert(!in_array('App/Core/Identity/assets/admin.js', $scripts, true), $assembly . ': public pages exclude the account list adapter');
             $social = array_filter($scripts, static fn (string $file): bool => str_starts_with($file, 'App/Modules/Social/'));
             $assert(($social !== []) === isset($selection['tinycat.social']), $assembly . ': Social imports follow explicit activation');
         }
-        foreach (['/admin', '/admin/users', '/admin/bots', '/admin/articles'] as $route) {
+        foreach (['/admin', '/admin/users', '/admin/bots', '/admin/fixture'] as $route) {
             $assert(in_array('App/Core/Identity/assets/admin.js', AssetGraph::order(ClientAssets::entries($route)), true), $assembly . ': administrative account actions retain the list adapter');
-        }
-        foreach (['/' => true, '/blog' => true, '/articles/1' => true, '/admin/articles' => true, '/admin/article-sources' => true, '/login' => false, '/privacy' => false, '/social' => false, '/admin' => false, '/admin/users' => false] as $route => $needed) {
-            $assert(in_array('App/Modules/Blog/assets/styles/blog.css', ClientAssets::sourceStyles($route), true) === ($needed && isset($selection['tinycat.blog'])), $assembly . ': Blog styles belong only to its page families');
         }
     });
 }
@@ -83,6 +78,20 @@ mkdir($directory . '/lang', 0700);
 mkdir($unselected, 0700);
 $saved = [];
 try {
+    $billing = [];
+    foreach (['vendorone.billing' => 'VendorOne\\Billing\\', 'vendortwo.billing' => 'VendorTwo\\Billing\\'] as $id => $namespace) {
+        $billingRoot = $directory . '/' . str_replace('.', '-', $id); mkdir($billingRoot . '/lang', 0700, true);
+        file_put_contents($billingRoot . '/lang/en.json', json_encode([str_replace('.', '_', $id) => ['value' => $id]], JSON_THROW_ON_ERROR));
+        $billing[] = \TinyCat\Core\Modules\Definition::fromMetadata((object) ['format' => 1, 'coreApi' => 1, 'id' => $id, 'namespace' => $namespace, 'resources' => (object) ['translations' => 'lang', 'emails' => 'lang']], $billingRoot);
+    }
+    Resources::withCatalog(new Catalog($billing), static function () use ($assert, $reject): void {
+        $sources = Resources::translations();
+        $assert(count($sources) === 4 && isset($sources['vendorone.billing/translations'], $sources['vendortwo.billing/translations']), 'Independent namespaces with the same leaf retain distinct translation owners');
+        $assert(Resources::translationDomain('vendorone.billing/translations') === 'app' && Resources::translationDomain('vendorone.billing/emails') === 'emails', 'Resource kind selects the domain even when two kinds share a directory');
+        $reject(static fn () => Resources::translationDomain('vendorone.billing/unknown'), 'Unknown translation resource kind');
+        $messages = Localization::catalog('en');
+        $assert(($messages['vendorone_billing.value'] ?? '') === 'vendorone.billing' && ($messages['vendortwo_billing.value'] ?? '') === 'vendortwo.billing', 'Both independent translation catalogs remain readable together');
+    });
     file_put_contents($directory . '/index.js', 'window.moduleSelectionProbe = true;');
     file_put_contents($directory . '/probe.css', '.module-selection-probe { color: red; }');
     file_put_contents($directory . '/module.json', json_encode([[
@@ -206,6 +215,11 @@ try {
     rmdir($directory . '/lang');
     unlink($directory . '/probe.css');
     foreach (['index.js', 'module.json', 'components.json'] as $file) { unlink($directory . '/' . $file); unlink($unselected . '/' . $file); }
+    foreach (['vendorone-billing', 'vendortwo-billing'] as $fixture) {
+        unlink($directory . '/' . $fixture . '/lang/en.json');
+        rmdir($directory . '/' . $fixture . '/lang');
+        rmdir($directory . '/' . $fixture);
+    }
     rmdir($directory);
     rmdir($unselected);
 }

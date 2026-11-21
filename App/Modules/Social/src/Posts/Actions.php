@@ -299,7 +299,7 @@ final class Actions
         }
 
         try {
-            $oldPath = \TinyCat\Social\Content\Posts::update($contentId, $draft, $preparedLinks, $newImage, $removeImage, $existingImage);
+            $oldPath = \TinyCat\Social\Posts\Repository::update($contentId, $draft, $preparedLinks, $newImage, $removeImage, $existingImage);
         } catch (Throwable $exception) {
             if ($newImage !== null) {
                 \TinyCat\Social\Content\ImageStorage::delete((string) ($newImage['path'] ?? ''));

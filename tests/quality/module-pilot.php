@@ -54,6 +54,8 @@ try {
     $assert(!class_exists(\TinyCat\Core\Settings\Store::class, false), 'Manifest discovery does not load application settings');
     $assert(in_array('pilot_notes', $tables, true) && in_array('migrations', $tables, true), 'Selected schema tables join the readiness inventory');
     $assert($registries->owner('task', 'pilot.notes.refresh') === 'demo.notes', 'Manifest contribution provider is registered');
+    $assert($registries->owner('widget', 'social.comments') === 'tinycat.social' && $registries->owner('dashboard-stats', 'social.content') === 'tinycat.social', 'Internal Social registrars retain one actual module owner');
+    $assert(!array_any($registries->entries->dashboards, static fn ($page): bool => $page->id === 'tinycat.site.admin'), 'Social contributes widgets instead of replacing the core dashboard with a forwarding page');
     $missingDependency = ['demo.notes' => $relative . '/module.json'];
     $assert(Loader::fromSelection($root, $missingDependency)->catalog->has('tinycat.scheduler'), 'Module receives the mandatory scheduler capability without selecting a framework module');
     $reject(static fn () => \TinyCat\Core\Modules\Providers::assertDistributable($modules->catalog), 'Publishing schemas without a module-aware update path');
@@ -71,8 +73,7 @@ try {
         $map['fixture.' . strtolower($name)] = str_replace('\\', '/', substr($base, strlen($root) + 1)) . '/module.json';
         return Loader::fromSelection($root, $map);
     };
-    $unsupported = $invalid('Unsupported', 'Fixture\\Unsupported\\', ['permissions' => 'Fixture\\Unsupported\\Provider']);
-    $reject(static fn () => $unsupported->registries(), 'An unsupported provider kind');
+    $reject(static fn () => $invalid('Unsupported', 'Fixture\\Unsupported\\', ['permissions' => 'Fixture\\Unsupported\\Provider']), 'An unsupported provider kind is rejected before runtime discovery');
     $badStartup = $invalid('BadStartup', 'Fixture\\BadStartup\\', ['services' => 'Fixture\\BadStartup\\Provider'], '<?php namespace Fixture\\BadStartup; final class Provider {}');
     $optionsBefore = TinyCat\Core\Runtime\Startup::$options;
     $reject(static fn () => $badStartup->initialize(), 'Initializer without its required interface');

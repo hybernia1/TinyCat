@@ -43,13 +43,13 @@ TinyCat\Core\Modules\Registrations::configure(new TinyCat\Core\Modules\Registrie
 Connection::insert('notifications', ['user_id' => 1, 'actor_id' => 2, 'type' => 'content_like', 'subject_id' => $post, 'notification_key' => 'content_like:' . $post, 'created_at' => '2000-01-01', 'updated_at' => '2000-01-01']);
 $pdo->exec("CREATE TRIGGER reject_notification_delete BEFORE DELETE ON notifications BEGIN SELECT RAISE(ABORT, 'notification cleanup failure'); END");
 try { TinyCat\Social\Posts\Posts::status_delete_content($post, deleteReports: false); $assert(false, 'Database failure must stop deletion'); }
-catch (PDOException) { $assert(TinyCat\Social\Content\Posts::find($post) !== null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 1, 'Notification cleanup failure preserves the post and its reactions'); }
+catch (PDOException) { $assert(TinyCat\Social\Posts\Repository::find($post) !== null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 1, 'Notification cleanup failure preserves the post and its reactions'); }
 $assert((int) Connection::value('SELECT COUNT(*) FROM notifications') === 1, 'Failed cleanup retains the notification');
 $pdo->exec('DROP TRIGGER reject_notification_delete');
 TinyCat\Social\Content\Comments::status_delete_comment_rows($comment);
 $assert((int) Connection::value('SELECT COUNT(*) FROM social_comments') === 0 && (int) Connection::value('SELECT COUNT(*) FROM social_comment_likes') === 0, 'Comment tree cleanup removes replies and reactions');
 TinyCat\Social\Posts\Posts::status_delete_content($post, deleteReports: false);
-$assert(TinyCat\Social\Content\Posts::find($post) === null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 0, 'Social cleanup delegates content deletion to Publishing');
+$assert(TinyCat\Social\Posts\Repository::find($post) === null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 0, 'Social cleanup delegates content deletion to Publishing');
 $assert((int) Connection::value('SELECT COUNT(*) FROM notifications') === 0, 'Successful post deletion removes its notifications');
 $owners = [];
 foreach ($modules->catalog->definitions() as $definition) { $owners[] = $definition->id; }

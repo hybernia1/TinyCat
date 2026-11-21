@@ -328,9 +328,9 @@
     check(!document.querySelector('.modal'), 'All resource dialogs are removed after closing');
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
-  if (mode === 'settings' || mode === 'settings-blog') {
-    if (mode === 'settings-blog') {
-      window.settingsSchema = {sections: window.blogSettings.sections};
+  if (mode === 'settings' || mode === 'settings-module') {
+    if (mode === 'settings-module') {
+      window.settingsSchema = {sections: window.moduleSettings.sections};
     }
     const schema = window.settingsSchema || {sections:[
       {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.footer_html',label:'Footer',type:'textarea',value:'Saved footer'}]},
@@ -364,13 +364,13 @@
     check(dialog.querySelectorAll('.image-preview-contain').length === 2 && dialog.querySelector('.grid-span-full'), 'Site images and full-width settings retain shared layout primitives');
     check([...dialog.querySelectorAll('.field > .label')].every(label => label.textContent.trim()), 'Every server field has a client-owned presentation label');
     check(footer.value === 'Saved footer' && form.elements.namedItem('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
-    if (mode === 'settings-blog') {
-      check(form.checkValidity(), 'Unchanged Blog defaults pass native form validation');
-      for (const key of ['blog.blocked_urls','blog.links.utm.source','blog.links.utm.campaign']) {
+    if (mode === 'settings-module') {
+      check(form.checkValidity(), 'Unchanged Fixture defaults pass native form validation');
+      for (const key of ['fixture.blocked_urls','fixture.links.utm.source','fixture.links.utm.campaign']) {
         const control = form.elements.namedItem('settings['+key+']');
-        check(control.value === '' && !control.required, 'Blog optional settings retain valid empty defaults: '+key);
+        check(control.value === '' && !control.required, 'Fixture optional settings retain valid empty defaults: '+key);
       }
-      check(form.elements.namedItem('settings[blog.links.utm.medium]').required, 'Blog UTM medium retains required native validation');
+      check(form.elements.namedItem('settings[fixture.links.utm.medium]').required, 'Fixture UTM medium retains required native validation');
     }
     footer.value='Edited footer'; footer.dispatchEvent(new Event('input',{bubbles:true}));
     check(T.forms.dirty(dialog).length === 1, 'Settings edits use the shared draft guard');

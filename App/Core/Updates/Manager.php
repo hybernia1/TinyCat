@@ -235,10 +235,10 @@ class Manager extends Package
         $releaseJson = self::requestText($apiUrl, self::MAX_MANIFEST_BYTES, 'application/vnd.github+json');
         $release = self::decodeJson($releaseJson, 'GitHub release response');
         $assets = self::releaseAssets($release);
-        $profiles = \TinyCat\Core\Modules\Distribution::profiles(\TinyCat\Core\Modules\Loader::load(\TinyCat\Support\Paths::basePath()));
-        $product = \TinyCat\Core\Modules\Distribution::read(\TinyCat\Support\Paths::basePath())['product'] ?? array_key_first($profiles);
+        $plan = \TinyCat\Core\Modules\Distribution::read(\TinyCat\Support\Paths::basePath());
+        $product = $plan['product'] ?? array_key_first(\TinyCat\Core\Modules\Distribution::profiles(\TinyCat\Core\Modules\Loader::load(\TinyCat\Support\Paths::basePath())));
         if (!is_string($product)) { throw new RuntimeException('No distribution profile is configured.'); }
-        $stem = \TinyCat\Core\Modules\Distribution::stem($product);
+        $stem = \TinyCat\Core\Modules\Distribution::stem($product, $plan);
         $manifestUrl = $assets[$stem . '-update.json'] ?? '';
         $signatureUrl = $assets[$stem . '-update.sig'] ?? '';
 

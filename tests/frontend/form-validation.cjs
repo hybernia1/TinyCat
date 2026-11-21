@@ -13,7 +13,7 @@ const css = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fix
 const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/form-validation-fixture.js'),'utf8');
 const settingsSchema = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--settings'], {encoding:'utf8',maxBuffer:8e6}));
 const adminDefinitions = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--admin-definitions'], {encoding:'utf8'}));
-const blogSettings = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--blog-settings'], {encoding:'utf8',maxBuffer:8e6}));
+const moduleSettings = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--module-settings'], {encoding:'utf8',maxBuffer:8e6}));
 const socialConstraints = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--social-constraints'], {encoding:'utf8'}));
 const inputConstraints = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--constraints'], {encoding:'utf8',maxBuffer:8e6}));
 const healthBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/site-health','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
@@ -32,7 +32,7 @@ let server;
 try {
   const file = path.join(temporary,'fixture.html');
   const fixtureHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="csrf-token" content="test"><style>${css}</style></head><body><button id="opener">Open</button><pre id="validation-test-results"></pre><script>window.TinyCat = {adminDefinitions: ${JSON.stringify(adminDefinitions).replace(/</g,'\\u003c')}};\n${source}\nTinyCat.components.register(${JSON.stringify(templates).replace(/</g,'\\u003c')});\nwindow.settingsSchema = ${JSON.stringify(settingsSchema).replace(/</g,'\\u003c')};\nwindow.inputConstraints = ${JSON.stringify(inputConstraints)}; window.socialConstraints = ${JSON.stringify(socialConstraints)};
-window.blogSettings = ${JSON.stringify(blogSettings).replace(/</g,'\\u003c')};\n${fixture}</script></body></html>`;
+window.moduleSettings = ${JSON.stringify(moduleSettings).replace(/</g,'\\u003c')};\n${fixture}</script></body></html>`;
   const healthHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="csrf-token" content="test"><style>${css}</style></head><body><pre id="validation-test-results"></pre>${healthAction}<script>
 ${healthSource}
 window.settingsSchema=${JSON.stringify(settingsSchema).replace(/</g,'\\u003c')};
@@ -43,7 +43,7 @@ ${fixture}</script></body></html>`;
   server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{res.setHeader("Content-Type","text/html");res.end(fs.readFileSync(process.argv[1]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', file], {stdio:['ignore','pipe','pipe']});
   const port = await new Promise((resolve,reject) => { server.once('error',reject); server.stdout.once('data',data=>resolve(Number(String(data).trim()))); });
   let checks = 0;
-  for (const mode of ['code-copy','scheduler-help','field-types','help-info','help-info-cs','queue-edit','health-shell','social-forms','social-constraints','constraints','creation','settings','settings-blog','moderation','report','server','native','success','scroll','summary','nested','proxy']) {
+  for (const mode of ['code-copy','scheduler-help','field-types','help-info','help-info-cs','queue-edit','health-shell','social-forms','social-constraints','constraints','creation','settings','settings-module','moderation','report','server','native','success','scroll','summary','nested','proxy']) {
     fs.writeFileSync(file, mode === 'scheduler-help' ? healthHtml.replace(healthSource, () => schedulerSource).replace(healthAction, () => schedulerMarkup) : mode === 'help-info-cs' ? healthHtml.replace(healthSource, () => healthCs) : mode === 'queue-edit' ? queueHtml : ['health-shell','help-info'].includes(mode) ? healthHtml : ['social-forms','code-copy'].includes(mode) ? publicHtml : fixtureHtml);
     const url = new URL('http://127.0.0.1:'+port+'/fixture.html'); url.searchParams.set('case',mode);
     const output = execFileSync(browser, ['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-sync','--hide-scrollbars','--window-size=375,812','--virtual-time-budget=15000','--user-data-dir='+path.join(temporary,'profile-'+mode),'--dump-dom',url.href], {encoding:'utf8',timeout:30000,maxBuffer:8e6,stdio:['ignore','pipe','pipe']});

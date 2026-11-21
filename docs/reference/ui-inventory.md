@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-197 definic komponent, 398 CSS tříd, 128 CSS importů, 95 JS souborů, 27 UI služeb, 2 PHP partialů.
+184 definic komponent, 398 CSS tříd, 128 CSS importů, 94 JS souborů, 27 UI služeb, 2 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -68,19 +68,6 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `scheduler/task-row` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/icon, scheduler/name, scheduler/option, ui/api-action |
 | `updates/actions` | [App/Core/Updates/assets/components.json](../../App/Core/Updates/assets/components.json) | ui/modal-trigger |
 | `updates/page` | [App/Core/Updates/assets/components.json](../../App/Core/Updates/assets/components.json) | ui/empty-state, ui/help, ui/notice, ui/stat-card, ui/status-badge |
-| `blog/articles` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading, ui/status-badge |
-| `blog/article-filter` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/select |
-| `blog/article-fields` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | publishing/editor, publishing/image-field, ui/field, ui/select |
-| `blog/source-fields` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/field, ui/select |
-| `blog/sources` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading, ui/status-badge |
-| `blog/source-filter` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/select |
-| `blog/source-preview` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | — |
-| `blog/embed-quote` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | — |
-| `blog/public-list` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | blog/article-summary, ui/empty-state |
-| `blog/article-page` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | — |
-| `blog/source-form` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | blog/source-fields |
-| `blog/article-summary` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | — |
-| `blog/search-results` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | blog/article-summary |
 | `users/following-profile` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/avatar |
 | `status/time` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/permalink, ui/action-label |
 | `status/image` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/attached-image, status/permalink |
@@ -262,7 +249,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Core/Tasks/assets/controller.js](../../App/Core/Tasks/assets/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | přes importy / společný runtime |
 | [App/Core/Tasks/assets/index.js](../../App/Core/Tasks/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Tasks/assets/controller.js](../../App/Core/Tasks/assets/controller.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | /admin/cron, /admin/site-health |
 | [App/Core/Updates/assets/index.js](../../App/Core/Updates/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | /admin/updates |
-| [App/Modules/Blog/assets/sources.js](../../App/Modules/Blog/assets/sources.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | /admin/article-sources |
 | [App/Modules/Social/assets/bots/controller.js](../../App/Modules/Social/assets/bots/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-state.js](../../assets/ui/form-state.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js), [App/Modules/Social/assets/bots/source-preview.js](../../App/Modules/Social/assets/bots/source-preview.js), [App/Modules/Social/assets/bots/workspace.js](../../App/Modules/Social/assets/bots/workspace.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/bots/index.js](../../App/Modules/Social/assets/bots/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Modules/Social/assets/bots/controller.js](../../App/Modules/Social/assets/bots/controller.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | /admin/bots |
 | [App/Modules/Social/assets/bots/source-preview.js](../../App/Modules/Social/assets/bots/source-preview.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | přes importy / společný runtime |
@@ -371,7 +357,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 
 ## CSS mimo hlavní importní graf
 
-- [App/Modules/Blog/assets/styles/blog.css](../../App/Modules/Blog/assets/styles/blog.css): `blog-article`, `blog-body`, `blog-body-input`, `blog-excerpt`, `blog-page`, `blog-title`
 - [assets/embed.css](../../assets/embed.css): `embed-audio-summary`, `embed-author`, `embed-author-link`, `embed-avatar`, `embed-avatar-initial`, `embed-body`, `embed-card`, `embed-image`, `embed-link`, `embed-link-copy`, `embed-link-image`, `embed-play`, `embed-play-icon`, `embed-player`, `embed-provider`, `share-code`, `share-heading`, `share-page`, `status-audio-player`
 
 ## Vlastnictví a načítání CSS v pořadí kaskády

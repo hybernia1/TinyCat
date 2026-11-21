@@ -2,7 +2,7 @@
 
 Vstupní manuál pro autora funkčního modulu. Začni hranicí jeho odpovědnosti,
 pak manifestem, registrací a stránkou. Další schopnosti přidávej podle potřeby.
-Praktickým obsahovým vzorem je [Blog](../../App/Modules/Blog/).
+Závazná pravidla shrnuje [kontrakt modulu](../contracts/module-contract.md).
 Podrobnosti doplňují [architektura](core-and-modules.md),
 [transport](modules.md) a [instalace a aktivace](../operations/module-deployment.md).
 Audity a otevřené plány nejsou referencí aktuálního API.
@@ -103,7 +103,7 @@ return [
 ];
 ```
 
-Pokud zachováváš Social či Blog, ponech i jejich manifesty. Samotný adresář
+Pokud zachováváš Social, ponech i jeho manifest. Samotný adresář
 modul neaktivuje. Dostupnost určuje manifest ve složce modulu, aktivaci spravuje
 explicitní stav a lifecycle. Vlastní distribuční profil je potřeba jen pro
 samostatnou instalační sestavu, ne pro každý modul.
@@ -267,8 +267,8 @@ Modul bez vlastních tabulek nepotřebuje schema provider. Pro vlastní data
 implementuj `ProvidesSchema`, deklaruj provider `schema` v manifestu a vrať
 `ModuleSchema`: aktuální verzi, vlastněné tabulky, fresh instalaci a úplnou
 posloupnost `SchemaMigration` od verze 1. Soubory patří do vlastního
-`migrations/`, deklarovaného v `resources`. Vzor: [Blog/Schema](../../App/Modules/Blog/src/Schema.php)
-a [Blog/Module](../../App/Modules/Blog/src/Module.php).
+`migrations/`, deklarovaného v `resources`. Minimální spustitelný příklad nabízí
+[testovací Notes](../../tests/fixtures/modules/notes/src/Module.php).
 
 Používej vlastní prefix, například `notes_entries`. Modul vlastní celý záznam
 a jeho vztahy; neodkazuje na univerzální `content` ani nerozlišuje cizí entity
@@ -287,7 +287,7 @@ Povinný framework se vždy inicializuje před funkčními manifesty. `coreApi`
 deklaruje jeho kontrakt; `requires` potřebuje uvádět funkční modulové závislosti,
 nikoli aktivaci povinných služeb core.
 
-API registruj přes předaný `TinyCat\Http\Api`. Databázové API stejně jako Blog
+API registruj přes předaný `TinyCat\Http\Api`. Databázové API
 obal kontrolou připravenosti schématu přes `whenReady`. Server ověřuje oprávnění
 při každém čtení i zápisu; zápisy respektují CSRF a společnou JSON obálku.
 Resources vracejí data, oprávnění a omezení, nikoli HTML, komponentové definice
@@ -295,8 +295,8 @@ nebo překladové identifikátory. Viz [HTTP API](../reference/api.md).
 
 ## 5. Administrativní seznamy a modaly
 
-Navazuj na [Blog/Administration](../../App/Modules/Blog/src/Administration.php)
-a [Blog klienta](../../App/Modules/Blog/assets/index.js). Selekci a pravidla
+Navazuj na [administrační kontrakt](../contracts/admin-ui-conventions.md).
+Selekci a pravidla
 vlastní modul, společné chování poskytuje core:
 
 - PHP a AJAX vykreslují stejnou komponentu seznamu.
@@ -379,7 +379,7 @@ destruktivní scénáře patří do izolovaných fixtures.
 ## 8. Samostatný instalační ZIP
 
 ```powershell
-php tools/release/build-module.php --module=App/Modules/Blog --version=1.0.0 --output=storage/releases/modules --minimum-core=6.0.0-dev.9
+php tools/release/build-module.php --module=App/Modules/Notes --version=1.0.0 --output=.work/releases/modules --minimum-core=6.3.1
 ```
 
 Builder ověří manifest, poskytovatele, zdroje a migrace. ZIP obsahuje kořenový
@@ -500,3 +500,15 @@ label, lazy `load` callback and metadata-only `fields` callback. The loader retu
 `fields` returns `['orders' => ['label' => ['t' => 'shop.orders']]]`. Counts stay
 canonical integers; the shared component catalog owns their labels. Registration
 and field metadata must not execute SQL. Add `visible` for narrower authorization.
+
+## Provider kinds and translation ownership
+
+The manifest accepts exactly `routes`, `schema`, `contributions` and `services`.
+Settings, tasks, navigation and health checks are typed contributions; they are
+not separate provider kinds. Metadata and runtime validate the same contracts.
+
+Translation-source ownership uses `<module-id>/translations` and
+`<module-id>/emails`, independent of the PHP namespace leaf. Different modules
+may both end their namespace with `Billing`. Their actual message keys must
+still have distinct ownership and keep the translation-contract locale parity.
+This internal source identity does not rename application or email message keys.

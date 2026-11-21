@@ -8,7 +8,8 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\
 \TinyCat\Support\Localization::locale('en');
 if (($argv[1] ?? '') === '--page-routes') { echo json_encode(\TinyCat\Http\Router::pageDefinitions('tinycat.social'), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--settings-templates') {
-    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json', 'tinycat.blog' => 'App/Modules/Blog/module.json'])->catalog);
+    \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json'])->catalog);
+    require dirname(__DIR__, 2) . '/fixtures/modules/settings.php';
     echo json_encode(array_filter(\TinyCat\Support\Components::templates(), static fn (string $key): bool => str_starts_with($key, 'settings/'), ARRAY_FILTER_USE_KEY), JSON_THROW_ON_ERROR); exit(0);
 }
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }

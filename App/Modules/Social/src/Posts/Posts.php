@@ -102,7 +102,7 @@ final class Posts
      */
     public static function status_find(int $id): ?array
     {
-        $post = \TinyCat\Social\Content\Posts::find($id);
+        $post = \TinyCat\Social\Posts\Repository::find($id);
         return $post !== null && ($post['kind'] ?? 'post') === 'post' ? $post : null;
     }
 
@@ -112,7 +112,7 @@ final class Posts
      */
     public static function status_can_edit(?array $item, ?array $user): bool
     {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Content\Posts::canEdit($item, $user);
+        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::canEdit($item, $user);
     }
 
     /**
@@ -121,7 +121,7 @@ final class Posts
      */
     public static function status_can_delete(?array $item, ?array $user): bool
     {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Content\Posts::canEdit($item, $user);
+        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::canEdit($item, $user);
     }
 
     /**
@@ -179,7 +179,7 @@ final class Posts
 
     public static function status_delete_content(int $contentId, bool $deleteReports = true, bool $deleteNotifications = true, bool $deleteImageFile = true): string
     {
-        return \TinyCat\Social\Content\Posts::delete($contentId, static function () use ($contentId, $deleteReports, $deleteNotifications): void {
+        return \TinyCat\Social\Posts\Repository::delete($contentId, static function () use ($contentId, $deleteReports, $deleteNotifications): void {
             if ($deleteNotifications) { NotificationHistory::removeForContent($contentId); }
             if ($deleteReports) { \TinyCat\Database\Connection::delete('content_reports', ['content_id' => $contentId]); }
         }, $deleteImageFile);
@@ -202,6 +202,6 @@ final class Posts
     /** @param array<string, mixed>|null $item */
     public static function status_can_view(?array $item): bool
     {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Content\Posts::visible($item);
+        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::visible($item);
     }
 }

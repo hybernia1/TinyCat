@@ -1,7 +1,7 @@
 # Testy TinyCat
 
 Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitních
-92 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
+90 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 
@@ -62,17 +62,9 @@ start, API, HTML a build v kopii bez Users, Status a Bots.
 Stejná fixture ověřuje také core schránku, obecný neprůhledný předmět, health
 upozornění, fallback po vypnutí vlastníka a zachování dat při payload migraci.
 Čisté core (8 tabulek) a doménové úložiště Socialu ověřuje
-`php tests/domains/publishing/module.php` v izolované kopii bez Blogu. `social-boundaries.php` ve stejné složce
+`php tests/domains/publishing/module.php` v izolované kopii. `social-boundaries.php` ve stejné složce
 ověřuje sledování, sociální projekce a transakční úklid bez Notifications.
-Blog ověřuje `php tests/domains/blog/module.php` v kopii bez sociálních zdrojů:
-fresh instalaci, modulovou migraci, skutečný HTTP vstup, API, editor, CSRF,
-locale a assety. Nad stejnou databází pak připojí Social a technické adaptéry:
-ověří samostatná schémata, oddělené druhy publikací, kořen a administraci,
-vypnutí/obnovení obou funkcí přes skutečné CLI a zachování dat, nastavení
-i šablon. `php tests/domains/blog/mysql.php` ověřuje MySQL DDL, dlouhé
-UTF-8 články, rollback, FK a obnovu migrace v samostatné dočasné databázi.
-
-`php tests/release/module-lifecycle.php` sestaví podepsaný Blog a volitelné
+`php tests/release/module-lifecycle.php` sestaví podepsané core a volitelné
 manifestové moduly; ověřuje fresh CLI, HTTP zdroje, aktivaci, neaktivní
 upgrady, starého načteného poskytovatele, chybu migrace, přerušení a rollback.
 `php tests/release/database-snapshots.php` ověřuje SQLite/MySQL obnovu dat,
@@ -111,10 +103,6 @@ Podrobnosti: [lokální prostředí a hranice izolovaných testů](../docs/devel
 - Další integrační požadavky jako GD/WebP, ZIP/Sodium či Memcached určují
   konkrétní skupiny. SKIP znamená neprovedenou kontrolu, nikoli ověřenou integraci.
 
-Blogový browser scénář lze lokálně spustit ve stejném WebKitu jako CI:
-nastav `TINYCAT_TEST_BLOG_BROWSER=webkit` a `TINYCAT_TEST_PLAYWRIGHT_MODULE`
-na příslušnou instalaci Playwrightu před cíleným během `tests/domains/blog/module.php`.
-Bez této volby zůstává zachován výběr dostupného místního Chromium/Chrome.
 
 ## Hlavní oblasti
 

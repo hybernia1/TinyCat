@@ -284,6 +284,7 @@ try {
     }
 
     unset($entry, $iterator, $archive);
+    if (!$freshInstall) { (require $root . '/tests/fixtures/releases/product-channel-cases.php')($root, $temporaryRoot, $version, $keyPath, $secretKey, $publicKey, $output); }
     sodium_memzero($secretKey);
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();

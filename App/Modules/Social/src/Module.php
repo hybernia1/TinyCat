@@ -12,7 +12,7 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
 {
     public static function initialize(): void
     {
-        Content\ServiceProvider::initialize();
+        Content\Registration::initialize();
         Posts\Registration::initialize();
         Moderation\ActionPolicy::register();
         Presentation\Registration::initialize();
@@ -21,7 +21,7 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
     public static function contributions(): Contributions
     {
         return (new Registries([
-            'content' => Content\ServiceProvider::contributions(),
+            'content' => Content\Registration::contributions(),
             'profiles' => Profiles\Registration::contributions(),
             'posts' => Posts\Registration::contributions(),
             'automation' => Automation\Registration::contributions(),
@@ -46,7 +46,7 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
     /** @return list<string> */
     public static function tables(): array
     {
-        return [...Content\Schema::tables(), ...Content\InteractionSchema::tables(), ...Profiles\Schema::tables(), ...Moderation\Schema::tables(), ...Automation\Schema::tables()];
+        return array_merge(...array_map(static fn (ModuleSchema $schema): array => $schema->tables, array_values(self::schemas())));
     }
 
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
@@ -54,12 +54,12 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
         return new \TinyCat\Core\Identity\Participant(prepareDelete: static function (array $user): \TinyCat\Core\Identity\Deletion {
             Posts\NotificationCleanup::prepareAccountDelete($user);
             return Content\AccountLifecycle::prepareDelete($user);
-        }, statusChanged: Automation\Registration::accountStatusChanged(...));
+        }, statusChanged: Automation\AccountLifecycle::accountStatusChanged(...));
     }
 
     public static function register(Api $api): void
     {
-        Content\ServiceProvider::register($api);
+        Content\Registration::register($api);
         Profiles\Registration::register($api);
         Posts\Registration::register($api);
         Moderation\Registration::register($api);
@@ -70,9 +70,6 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
 
     public static function fileReferences(string $group, array $candidates): array
     {
-        $source = match ($group) { 'raster-images:uploads/status-images' => ['social_post_images', 'path'], 'link-images' => ['social_links', 'image_url'], default => null };
-        if ($source === null || $candidates === [] || !\TinyCat\Database\Schema::exists(\TinyCat\Database\Connection::get(), $source[0])) { return []; }
-        $rows = \TinyCat\Database\Connection::all('SELECT ' . $source[1] . ' AS path FROM ' . $source[0] . ' WHERE ' . $source[1] . ' IN (' . implode(', ', array_fill(0, count($candidates), '?')) . ')', $candidates);
-        return array_values(array_map(static fn (array $row): string => (string) $row['path'], $rows));
+        return Content\FileReferences::find($group, $candidates);
     }
 }

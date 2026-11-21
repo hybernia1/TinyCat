@@ -5,7 +5,7 @@ declare(strict_types=1);
 $sourceRoot = dirname(__DIR__, 3);
 if (($argv[1] ?? '') !== '--isolated') {
     $workspace = sys_get_temp_dir() . '/tinycat-account-module-' . bin2hex(random_bytes(10));
-    $excluded = ['App/Modules/Social', 'App/Modules/Blog', 'App/Core/Support/compiled', 'assets/build'];
+    $excluded = ['App/Modules/Social', 'App/Core/Support/compiled', 'assets/build'];
     $copy = static function (string $relative) use (&$copy, $sourceRoot, $workspace, $excluded): void {
         if (in_array($relative, $excluded, true)) { return; }
         $source = $sourceRoot . '/' . $relative; $target = $workspace . '/' . $relative;

@@ -121,7 +121,7 @@ final class Providers
     {
         self::refreshValidation();
         if (self::$validated !== null && isset(self::$validated[$definition])) { return; }
-        if (array_diff(array_keys($definition->providers), ['contributions', 'routes', 'schema', 'services']) !== []) { throw new \InvalidArgumentException('Unsupported runtime provider kind: ' . $definition->id); }
+        if (array_diff(array_keys($definition->providers), array_keys(Definition::PROVIDER_TYPES)) !== []) { throw new \InvalidArgumentException('Unsupported runtime provider kind: ' . $definition->id); }
         $namespace = strtolower($definition->namespace);
         foreach (['tinycat\\core\\', 'tinycat\\support\\', 'tinycat\\http\\', 'tinycat\\database\\'] as $reserved) {
             if ($definition->manifest !== null && str_starts_with($namespace, $reserved)) { throw new \InvalidArgumentException('Manifest module uses a reserved core namespace.'); }
@@ -130,7 +130,7 @@ final class Providers
         if (($definition->providers !== [] || $definition->exports !== []) && !is_dir($sourcePath)) { throw new \InvalidArgumentException('Module source directory is missing.'); }
         $source = realpath($sourcePath);
         if ($definition->manifest !== null && $source !== false && !ModuleAutoload::inside($source, $definition->root)) { throw new \InvalidArgumentException('Module source directory escapes its root.'); }
-        $interfaces = ['routes' => Module::class, 'schema' => ProvidesSchema::class, 'contributions' => ProvidesContributions::class, 'services' => \TinyCat\Core\Runtime\InitializesModule::class];
+        $interfaces = Definition::PROVIDER_TYPES;
         foreach ($definition->providers as $kind => $class) { self::provider($definition, $kind, $kind === 'schema' && is_subclass_of($class, ProvidesSchemas::class) ? ProvidesSchemas::class : $interfaces[$kind]); }
         if (self::$validated !== null) { self::$validated[$definition] = true; }
     }

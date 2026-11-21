@@ -10,8 +10,8 @@ v `App/Modules/`, společné mechanismy v `App/Core/`.
 
 Modul vlastní své entity, dotazy, FK, oprávnění a transakce. Core nemá univerzální
 `content` ani společné komentáře; přesný inventář a převod popisují
-[doménová data](domain-storage.md). Blog používá `Articles` a `Discussion`, Social
-vlastní `Content` a sociální politiku. Nevolej repository jiného vlastníka jen
+[doménová data](domain-storage.md). Social vlastní statusy a sociální politiku.
+Nevolej repository jiného vlastníka jen
 kvůli sdílenému editoru nebo stejnému číselnému ID.
 
 `Core/Ui/InteractionTarget`, `RichTextResource`, `DiscussionResource` a
@@ -28,7 +28,7 @@ doručení. Soubor neodstraňuj před commitem a neukládej nepotvrzené čtení
 Společná prezentace je v `assets/ui/content/`; kompatibilní feature ID
 `publishing.discussion-base` a `publishing.discussion` zůstávají zachována.
 URL, `submit_controller` a schopnost `reply_mentions` dodává vlastník.
-Sociální nabídka je volitelné `componentExtensions` rozšíření. Blog nepřebírá
+Sociální nabídka je volitelné `componentExtensions` rozšíření. Jiný modul nepřebírá
 zmínky, reputaci ani sociální události jen kvůli společnému UI.
 
 HTTP i počáteční HTML používají stejné komponentové definice. Doménové endpointy
@@ -40,8 +40,8 @@ Společné rozhraní nevytváří druhý ruční renderer modalů či seznamů.
 
 Stránka volá `Core/Ui/Page::render()` s obsahem a metadaty. Core připraví dokument,
 head, jazykové menu, uživatelské menu a consent UI. Vlastní téma dodává rozložení
-obsahu přes `PageTheme`; nekopíruje head a vnější dokument. Blog je příkladem
-použití výchozího rámu, Social příkladem vlastního tématu nad týmž dokumentem.
+obsahu přes `PageTheme`; nekopíruje head a vnější dokument. Social poskytuje
+vlastní téma nad týmž dokumentem; modul bez tématu používá výchozí rám.
 
 `ProvidesContributions::contributions()` může vrátit tyto lazy příspěvky:
 
@@ -52,7 +52,7 @@ použití výchozího rámu, Social příkladem vlastního tématu nad týmž do
 | `widgets` | `DashboardWidget` | HTML widgetu pro společný administrátorský dashboard. |
 | `embeds` | `EmbedSource` | Lazy výběr veřejného obsahu pro společný oEmbed podle lokální kanonické cesty. |
 
-Příklad deklarace cesty: `new LocalizedRoute('blog.article', '^/articles/[1-9][0-9]*$')`.
+Příklad deklarace cesty: `new LocalizedRoute('notes.detail', '^/notes/[1-9][0-9]*$')`.
 Vzor neobsahuje regex oddělovače; musí být použitelný v PHP i JavaScriptu.
 Obsah článku se přepnutím jazyka nepřekládá a canonical zůstává bez prefixu.
 `translatedDocument: true` používej pro překládaný dokument, například privacy;
@@ -65,13 +65,12 @@ administrace; serverová autorizace jeho dat stále patří vlastníkovi. Vypnut
 nepřispívá cestami, informačním obsahem ani widgety.
 
 `Core/Text/Policies::provide(owner, name, policy)` registruje pojmenované čisté
-renderovací hooky. Social používá `post`, Blog `article`. Politiky nemají SQL;
+renderovací hooky. Social používá `post`. Politiky nemají SQL;
 normování a validaci uloženého textu určuje vlastník.
 
 Blokování URL a UTM má každý modul samostatné. Social zachovává historické klíče
-`moderation.blocked_urls` a `content_links.*`, Blog používá `blog.blocked_urls`
-a `blog.links.*`; normalizaci poskytuje `Core/Security/UrlRules` a
-`Core/Links/Tracking`. Blog-only instalace neposkytuje sociální moderation API.
+`moderation.blocked_urls` a `content_links.*`; další modul deklaruje své klíče.
+Normalizaci poskytuje `Core/Security/UrlRules` a `Core/Links/Tracking`.
 
 `Core/Text/Segments`, `Core/Links/Presentation` a UI komponenty sdílejí text,
 odkazy, obrázky a přehrávače. `Core/Links/Outbound` přijímá autorizovaný text

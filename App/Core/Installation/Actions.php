@@ -159,6 +159,8 @@ final class Actions
         try {
             $adminId = Installer::create_admin_account($username, $password, (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
             Installer::default_settings($state);
+            $plan = \TinyCat\Core\Modules\Distribution::read(\TinyCat\Support\Paths::basePath());
+            if ($plan !== null) { \TinyCat\Core\Modules\Lifecycle::completeInstallation($plan); }
             Installer::write_config($state);
             unset($_SESSION['tc_install']);
             \TinyCat\Core\Identity\Authentication::authLogin($adminId);

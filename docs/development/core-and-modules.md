@@ -1,8 +1,8 @@
 # Core a funkční moduly
 
 Core je povinný framework. Funkční modul přidává konkrétní použití aplikace
-a lze jej vypnout. Social a Blog mohou běžet samostatně, společně, nebo být
-oba neaktivní. Administrace a správa modulů zůstávají součástí core.
+a lze jej vypnout. Social je volitelný; čisté core nepotřebuje jeho data ani UI.
+Administrace a správa modulů zůstávají součástí core.
 
 Společné veřejné vstupy a jejich vynucení určuje
 [kontrakt core pro API, UI a validace](../contracts/core-application-contract.md).
@@ -57,13 +57,6 @@ App/
       lang/
       emails/
       assets/
-    Blog/
-      module.json
-      src/Module.php
-      migrations/
-      templates/
-      lang/
-      assets/
 ```
 
 Vrstva `Composition` ani produktové bootstrapy neexistují. Vnitřní složky
@@ -92,7 +85,7 @@ Klientský Social přispívá do core navigace načtením a vykreslením stránk
 historii, scroll a řízení souběžných přechodů vlastní společný mechanismus.
 
 `Social/Module` je jediný poskytovatel modulových kontraktů. Vnitřní
-`Registration` a `Content/ServiceProvider` jsou pomocné třídy bez vlastních
+`Registration` jsou pomocné třídy bez vlastních
 modulových rozhraní. Jediným zdrojem inventáře tabulek jsou příslušná `Schema`;
 hlavní modul z nich skládá úplný seznam. Aktivační stav účtu mění
 `Core/Identity/Administration`, Social připojuje lazy callback pro své botí zdroje.
@@ -115,7 +108,7 @@ Výchozí jazyk dokumentů zajišťuje `Localization::defaultLocale()` nezávisl
 jazyku návštěvníka. Technické oEmbed URL ověřuje core; Social poskytuje data
 viditelného statusu. Strojové chyby dokumentů používají `Http/Document`, API dál
 společnou API obálku. HTTP CSP čerpá podporované přehrávače přímo z core katalogu,
-Social ani Blog neudržují globální kopii povolených originů. Inicializace Socialu
+Moduly neudržují globální kopii povolených originů. Inicializace Socialu
 neresetuje URL konfiguraci ani vlastnictví textových politik jiných poskytovatelů.
 
 ## Načtení a vlastnictví
@@ -141,7 +134,6 @@ modul se při inventarizaci nenačítá jako PHP. Výchozí aktivace zdrojů nap
 ```php
 return [
     'tinycat.social' => 'App/Modules/Social/module.json',
-    'tinycat.blog' => 'App/Modules/Blog/module.json',
 ];
 ```
 
@@ -169,8 +161,8 @@ Core/Identity vlastní účty a jejich administraci. Social/Profiles vlastní
 veřejné autory a vztahy. Životní cyklus účtu používá příspěvky vlastníků;
 při smazání zapojuje i nainstalované neaktivní vlastníky zachovaných dat.
 
-Blog vlastní celý článek v `blog_articles`, Social celý status v `social_posts`.
-Každý má vlastní diskuse, reakce, tagy, odkazy, média a zdroje. Core neobsahuje
+Social vlastní celý status v `social_posts` a vlastní diskuse, reakce, tagy,
+odkazy, média a zdroje. Core neobsahuje
 univerzální publikační tabulky. Podrobný [inventář a mechanismy](domain-storage.md)
 rozlišují technickou podporu od doménového SQL. Souběh ani stejné ID nevytváří
 vazbu mezi vlastníky.
@@ -184,14 +176,14 @@ definic; vypnutí jednoho modulu neodstraní účet ani data druhého.
 Podepsaný descriptor odděluje `selection` od povinného `framework`
 bez Publishingu. `schemaOwners` přiřazuje historické streamy aktuálním vlastníkům.
 Social vlastní Users, Moderation, Bots, Publishing verze 4 a Status verze 3;
-Blog vlastní verzi 4. Historické ID není aktivační jednotka. Publikované migrační
+Historické ID není aktivační jednotka. Publikované migrační
 bajty a checksumy se nemění. Vestavěná historie je od 6.0.9 archivní prefix
 formátu 4 s původními ID, pořadím, checksumy a explicitním `file: null`.
 Každý vlastník má samostatnou podepsanou `fresh` baseline bez řetězení starých
 datových převodů. Původní journalové záznamy se nepřepisují.
 Aktualizační cesta a retirement historie jsou v [datovém kontraktu](domain-storage.md).
 
-Současné zdroje podporují descriptor formátu 3 i 4 a vyžadují dokončenou 6.0.8
+Současné zdroje podporují descriptor formátu 3 i 4 a vyžadují dokončenou 6.0.10
 nebo novější instalaci. Archivovaný prefix vyžaduje také odpovídající dokončené
 schéma vlastníka. Starší aktivační ID převádí nezměněný podepsaný release
 6.0.6, archivní čtení přidává neměnná 6.0.8; současný core nemá seznam částí

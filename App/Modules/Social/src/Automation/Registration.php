@@ -4,14 +4,6 @@ namespace TinyCat\Social\Automation;
 
 final class Registration
 {
-    /** @param array<string, mixed> $user */
-    public static function accountStatusChanged(array $user, bool $active): void
-    {
-        if (!$active && ($user['role'] ?? '') === 'bot') {
-            \TinyCat\Database\Connection::update('bot_sources', ['enabled' => 0], ['bot_user_id' => (int) $user['id']]);
-        }
-    }
-
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
         return new \TinyCat\Core\Modules\Contributions(

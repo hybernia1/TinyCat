@@ -2,7 +2,7 @@
 
 Core poskytuje identity, bezpečnost a technické mechanismy. Nezakládá univerzální
 publikace, komentáře, tagy ani média. CRM nemusí instalovat žádnou z těchto funkcí.
-Blog a Social vlastní celé agregáty včetně tabulek, pravidel a HTTP rozhraní.
+Funkční moduly vlastní celé agregáty včetně tabulek, pravidel a HTTP rozhraní.
 
 ## Čerstvé schéma
 
@@ -23,16 +23,7 @@ user_followers, content_reports,
 bot_sources, bot_feed_history, bot_source_runs, bot_source_posts
 ```
 
-Blog přidává třináct tabulek:
-
-```text
-blog_articles, blog_article_redirects, blog_article_images,
-blog_terms, blog_article_tags, blog_links, blog_article_links,
-blog_comments, blog_article_likes, blog_comment_likes,
-blog_sources, blog_feed_history, blog_source_articles
-```
-
-Core s Blogem má 21 tabulek, se Socialem 24 a s oběma moduly 37.
+Core se Socialem má 24 tabulek. Blog byl z aktuálních zdrojů odstraněn.
 Společný journal `migrations` rozlišuje `kind = global` a `kind = schema`;
 `stream` zachovává původní ID migračního streamu. Globální verze vydání je
 v `release_version`, číselné pořadí schématu v `sequence`. Při ověřeném převodu
@@ -41,11 +32,9 @@ spuštění jejich migrací. Staré modulové záznamy mají neznámý `applied_
 nové zápisy obsahují skutečný čas. Stav schémat zůstává v `module_installations`.
 Jiné historické tabulky nejsou automaticky určené k odstranění.
 
-`blog_articles` obsahuje celého autora, název, text, náhled, stav a časové údaje.
-Neobsahuje `content_id` ani `kind`. `blog_source_articles.article_id` i ostatní
-článkové vztahy odkazují přímo na článek. Social zachovává místní sloupec
+Social zachovává místní sloupec
 `content_id` a historické `kind = post`, ale jeho FK odkazují na `social_posts`.
-Článek a status, stejně jako jejich komentáře, mohou mít totožná číselná ID.
+Entity různých vlastníků mohou mít totožná číselná ID.
 Identitu určuje vlastník a konkrétní endpoint, nikoli globální číselný prostor.
 
 ## Sdílené mechanismy
@@ -72,12 +61,12 @@ nevytvářej kvůli přejmenování URL jejich zbytečné kopie.
 
 Core Notifications nečte žádnou publikační tabulku. Historická pole
 `content_id` a `comment_id` jsou neprůhledná data producenta bez doménových FK.
-Social vlastní jejich význam, hydrataci i úklid. Blog diskuse jeho události
-nevyvolává. Smazání účtu zapojuje i nainstalované vypnuté vlastníky.
+Social vlastní jejich význam, hydrataci i úklid. Smazání účtu zapojuje
+i nainstalované vypnuté vlastníky.
 
 ## Archivace migrační historie
 
-Současný zdrojový baseline vyžaduje dokončenou 6.0.8. Neměnný release 6.0.8
+Současný zdrojový baseline vyžaduje dokončenou 6.0.10. Neměnný release 6.0.8
 zavedl čtení archivní historie a ponechal publikované soubory pro updater 6.0.7.
 Navazující zdroje archivují všech 24 dosavadních vestavěných migrací ve formátu 4;
 každý vlastník má samostatný aktuální fresh snapshot. Původní migrační PHP,
@@ -112,6 +101,10 @@ včetně PHP souborů odstraněných při archivaci. Nevyžaduje jejich opětovn
 spuštění ani změnu původních checksumů.
 
 ## Převod historické instalace
+
+Následující popis zachycuje historický převod v neměnných vydáních. Současné
+zdroje tyto datové adaptéry ani Blog neobsahují; nepřidávej je zpět kvůli novému
+modulu. Pro podporovaný upgrade platí dokončená 6.0.10 a aktuální provozní návod.
 
 Descriptor formátu 3 zachovává seznam povinného frameworku bez Publishingu.
 Schéma vlastníka deklaruje neměnnou historii, případně podepsaný `fresh` soubor

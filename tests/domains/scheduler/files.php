@@ -265,14 +265,6 @@ try {
     $assert(\TinyCat\Core\Tasks\History::latest($taskId)['status'] === 'failed', 'History records failure when the completion write fails.');
 } finally { \TinyCat\Core\Modules\Registrations::configure($registered); }
 
-require_once __DIR__ . '/../../../App/Modules/Blog/src/FeedSources.php';
-$blogTask = \TinyCat\Blog\FeedSources::task();
-foreach ([0, -1] as $invalidId) {
-    $rejected = false;
-    try { ($blogTask->normalize)(['source_limit' => 20, 'source_id' => $invalidId]); }
-    catch (InvalidArgumentException) { $rejected = true; }
-    $assert($rejected, 'Invalid Blog source selectors cannot expand into a batch.');
-}
 foreach (['all', str_repeat('a', 41)] as $invalidTask) {
     $rejected = false;
     try { new \TinyCat\Core\Modules\ScheduledTask($invalidTask, $runner); }

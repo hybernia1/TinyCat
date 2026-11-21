@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace TinyCat\Social\Content;
 
 /** Internal Social contributions, HTTP routes and runtime caches. */
-final class ServiceProvider
+final class Registration
 {
 
     public static function initialize(): void
