@@ -46,6 +46,7 @@ class Node {
     const match = node => {
       if (selector.includes(",")) return selector.split(",").some(tag => node.tag === tag.trim());
       if (selector.startsWith("#")) return node.id === selector.slice(1);
+      if (/^[a-z]+\[/.test(selector)) return node.matches(selector);
       const attr = selector.match(/^\[([^=\]]+)(?:="([^"]*)")?\]$/);
       if (attr) return node.getAttribute(attr[1]) !== null && (attr[2] === undefined || node.getAttribute(attr[1]) === attr[2]);
       return selector[0] === "." ? node.className.split(/\s+/).includes(selector.slice(1)) : node.tag === selector;
@@ -911,16 +912,18 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const settingsForm = settingsDialog.querySelector('form');
   check(settingsDialog.dataset.modalDisposeOnClose === 'true' && settingsDialog.querySelectorAll('[data-tab]').length === 2, 'Settings are disposable resource editors using shared sections.');
   check(settingsDialog.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === settingsForm.id && settingsForm.getAttribute('enctype') === 'multipart/form-data', 'Deferred settings keep a shared footer and multipart uploads.');
-  check(settingsForm.querySelector('textarea').textContent === 'Draft' && settingsForm.querySelectorAll('input').some(input => input.getAttribute('name') === 'settings[email.smtp][host]' && input.getAttribute('value') === 'smtp.example.test'), 'Deferred settings retain textareas and nested SMTP field names.');
+  check(settingsForm.querySelector('textarea').textContent === 'Draft' && settingsDialog.querySelectorAll('input').some(input => input.getAttribute('name') === 'settings[email.smtp][host]' && input.getAttribute('value') === 'smtp.example.test'), 'Deferred settings retain textareas and nested SMTP field names.');
   check(settingsForm.dataset.confirmUnsaved === 'true', 'Deferred settings protect unsaved changes.');
-  const smtpPassword = settingsForm.querySelector('[name="settings[email.smtp][password]"]');
-  check(smtpPassword.getAttribute('value') === '' && smtpFields.every(field => settingsForm.querySelector('[name="settings[email.smtp]['+field.key+']"]')), 'All owner-declared SMTP fields render and the password stays blank.');
+  const smtpPassword = settingsDialog.querySelector('[name="settings[email.smtp][password]"]');
+  check(smtpPassword.getAttribute('value') === '' && smtpFields.every(field => settingsDialog.querySelector('[name="settings[email.smtp]['+field.key+']"]')), 'All owner-declared SMTP fields render and the password stays blank.');
   const savedLogo = new Node('input'); savedLogo.setAttribute('name', 'settings[site.logo_url]'); savedLogo.value = '/old.webp';
   const pendingLogo = new Node('input'); pendingLogo.type = 'file'; pendingLogo.value = 'selected.webp';
   const savedPassword = new Node('input'); savedPassword.type = 'password'; savedPassword.value = 'submitted secret';
   const removeLogo = new Node('input'); removeLogo.setAttribute('name', 'settings_remove[site.logo_url]'); removeLogo.checked = true;
   [savedLogo, pendingLogo, savedPassword, removeLogo].forEach(input => settingsForm.appendChild(input));
-  check(T.settings.result(settingsForm, {data:{saved:true,images:{'site.logo_url':'/new.webp'}}}).length === 0 && savedLogo.value === '/new.webp' && !pendingLogo.value && !savedPassword.value && !removeLogo.checked, 'Repeated settings saves retain image paths and clear submitted uploads and secrets.');
+  const savedRoots = T.settings.result(settingsForm, {data:{sections:[{key:'site',fields:[{key:'site.name',type:'text',value:'Canonical name'},{key:'site.logo_url',type:'site_image',value:'/new.webp'}]}]}});
+  check(savedRoots[0] === settingsForm && settingsForm.querySelector('[name="settings[site.logo_url]"]').getAttribute('value') === '/new.webp' && !settingsForm.contains(pendingLogo) && !settingsForm.contains(savedPassword) && !settingsForm.contains(removeLogo), 'Canonical settings saves render updated images and discard submitted upload/secret controls through the original components.');
+  check(settingsDialog.querySelector('[name="settings[email.smtp][password]"]') === smtpPassword, 'Canonical section saves retain controls in other section drafts.');
   Node.prototype.addEventListener = savedSettingsListener;
   settingsDialog.remove();
   const socialSettings = settingsSchema;
