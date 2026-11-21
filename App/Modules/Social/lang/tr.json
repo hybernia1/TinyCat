@@ -371,7 +371,8 @@
       "likes": "Beğeniler",
       "comments": "Yorumlar",
       "follows": "Takip Edilenler",
-      "reports": "Raporları"
+      "reports": "Raporları",
+      "content_group": "İçerik"
     },
     "table_missing": "Tablo henüz oluşturulmadı."
   },

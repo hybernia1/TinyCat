@@ -5,14 +5,14 @@ const {execFileSync} = require("node:child_process");
 const {pathToFileURL} = require("node:url");
 const browser = [process.env.TINYCAT_TEST_CHROME, "C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"].filter(Boolean).find(file => fs.existsSync(file));
 if (!browser) { console.log("SKIP dashboard viewport: set TINYCAT_TEST_CHROME"); process.exit(0); }
-const source = execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(__dirname, "../presentation/dashboard.php"), "--fixture"], {encoding:"utf8",maxBuffer:8e6});
+const sources = ['--fixture','--cache-fixture'].map(mode=>execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(__dirname, "../presentation/dashboard.php"),mode], {encoding:"utf8",maxBuffer:8e6}));
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "tinycat-dashboard-"));
 try {
   const fixture = path.join(temporary, "dashboard.html");
   fs.writeFileSync(fixture, `<!doctype html><html><body><script>
     (async function () {
-      const source = ${JSON.stringify(source).replace(/<\/script/gi, "<\\/script")}, results = [];
-      for (const width of [320,375,390,599,600,760,1280]) {
+      const sources = ${JSON.stringify(sources).replace(/<\/script/gi, "<\\/script")}, results = [];
+      for (const source of sources) for (const width of [320,375,390,760,899,900,1280]) {
         const frame = document.createElement('iframe');
         frame.style.cssText = 'position:fixed;inset:0;border:0;width:'+width+'px;height:812px';
         await new Promise(resolve => {
@@ -23,19 +23,15 @@ try {
             clearInterval(timer); resolve();
           }, 10);
         });
-        const doc = frame.contentDocument, win = frame.contentWindow, table = doc.querySelector('#dashboard-comments-table');
-        const rows = [...table.tBodies[0].rows], mobile = width < 600;
-        results.push({width, documentWidth:doc.documentElement.scrollWidth,
-          rows:rows.length, cards:table.hasAttribute('data-mobile-cards'),
-          stats:doc.querySelectorAll('table:not(:has(thead)) th[scope="row"]').length,
-          summaryFits:[...doc.querySelectorAll('table:not(:has(thead))')].every(summary=>summary.scrollWidth<=summary.closest('.table-wrap').clientWidth+1),
-          display:win.getComputedStyle(table).display,
-          headers:table.tHead.rows[0].cells.length > 0 && win.getComputedStyle(table.tHead).display === 'table-header-group',
-          fits:table.closest('.table-wrap').getBoundingClientRect().right <= width, scrollable:['auto','scroll'].includes(win.getComputedStyle(table.closest('.table-wrap')).overflowX),
-          clipped:rows.every(row => row.cells[0].querySelector('.table-primary').getBoundingClientRect().height <= 2 * parseFloat(win.getComputedStyle(row.cells[0].querySelector('.table-primary')).lineHeight) + 1),
-          noUnrelatedSort:!doc.querySelector('.table-mobile-sort'),
-          resetFits:[...doc.querySelectorAll('form button')].every(button => button.getBoundingClientRect().right <= width)
-        });
+        const doc = frame.contentDocument, win = frame.contentWindow, grid = doc.querySelector('.dashboard-grid');
+        const cache=!!doc.querySelector('[data-cache-page]');
+        doc.querySelectorAll('[data-cache-header]').forEach(node=>node.textContent='header-'+ 'x'.repeat(200));
+        const widgets = [...grid.querySelectorAll(':scope > section')];
+        results.push({width,cache, documentWidth:doc.documentElement.scrollWidth, widgets:widgets.length,
+          rowsFit:cache || [...doc.querySelectorAll('[data-widget-row]')].every(row=>{const time=row.querySelector('[data-widget-time]'),content=row.querySelector('.min-w-0');return !time || (width<900 ? time.getBoundingClientRect().top>=content.getBoundingClientRect().bottom-1 : time.getBoundingClientRect().left>=content.getBoundingClientRect().right-1);}),
+          columns:win.getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+          fits:widgets.every(widget=>widget.getBoundingClientRect().right<=width+1 && widget.scrollWidth<=widget.clientWidth+1),
+          noLegacy:!doc.querySelector('#dashboard-cache') && (cache || !doc.querySelector('table')), underlines:!cache || [...doc.querySelectorAll('table')].every(table=>{const cells=table.rows[table.rows.length-1].cells;return win.getComputedStyle(cells[0]).borderBottomWidth===win.getComputedStyle(cells[1]).borderBottomWidth;}), normalized:!cache || [...doc.querySelectorAll('table')].every(table=>[...table.rows].every(row=>row.cells.length===2 && row.cells[0].getAttribute('scope')==='row')), links:[...grid.querySelectorAll('a')].every(link=>link.getBoundingClientRect().right<=width+1)});
         frame.remove();
       }
       const result = document.createElement('pre'); result.id = 'dashboard-metrics'; result.textContent = JSON.stringify(results); document.body.append(result);
@@ -45,13 +41,14 @@ try {
   const match = output.match(/<pre id="dashboard-metrics">([\s\S]*?)<\/pre>/);
   assert.ok(match, "Every dashboard viewport must render: " + output.slice(-1500));
   const results = JSON.parse(match[1].replace(/&quot;/g,'"').replace(/&amp;/g,'&'));
-  assert.equal(results.length,7);
+  assert.equal(results.length,14);
   for (const item of results) {
-    assert.ok(item.documentWidth <= item.width && item.fits && item.resetFits && item.summaryFits, "Dashboard overflow: "+JSON.stringify(item));
-    assert.ok(item.rows === 8 && item.stats === 8 && !item.cards && item.headers && item.scrollable && item.clipped && item.noUnrelatedSort, "Social widget content and shared table behavior: "+JSON.stringify(item));
-    assert.equal(item.display, "table");
+    assert.ok(item.documentWidth <= item.width && item.fits && item.links && item.noLegacy && item.normalized && item.underlines && item.rowsFit, 'Widget layout fits: '+JSON.stringify(item));
+    assert.equal(item.widgets,item.cache ? 7 : 3);
+    assert.equal(item.columns,item.width < 900 ? 1 : 2);
+
   }
-  console.log("PASS dashboard native tables on desktop and mobile, long comments and diagnostics (7 viewports)");
+  console.log("PASS native shared dashboard/cache grid, long content and mobile/desktop boundary (14 layouts)");
 } finally {
   const resolved = fs.realpathSync(temporary), parent = fs.realpathSync(os.tmpdir());
   assert.equal(path.dirname(resolved),parent); assert.ok(path.basename(resolved).startsWith("tinycat-dashboard-"));

@@ -259,7 +259,9 @@ try {
     [$status] = $request('/api/site/cache-resets', 'POST', [], 'admin', false);
     $assert($status === 403, 'Core diagnostics mutation requires CSRF without Social');
     [$status, , $dashboard] = $request('/admin', actor: 'admin');
-    $assert($status === 200 && str_contains($dashboard, 'id="dashboard-cache"') && !str_contains($dashboard, 'recent-comments'), 'Core administration hosts diagnostics without social tables');
+    $assert($status === 200 && str_contains($dashboard, 'data-dashboard-widget="core.statistics"') && !str_contains($dashboard, 'data-cache-page'), 'Core administration hosts registered widgets without social tables');
+    [$cacheStatus, , $cachePage] = $request('/admin/cache', actor: 'admin');
+    $assert($cacheStatus === 200 && str_contains($cachePage, 'data-cache-page'), 'Cache diagnostics work in Blog-only installations');
     $assert(!str_contains($dashboard, 'data-settings-presentation'), 'Blog-only admin omits settings presentation from initial HTML');
     [$status, $editor] = $request('/api/settings/editor', actor: 'admin');
     $unchanged = [];

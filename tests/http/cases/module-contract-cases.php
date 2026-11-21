@@ -9,6 +9,22 @@ foreach (['GET', 'POST'] as $retiredSettingsMethod) {
     $assert(preg_match('/\s404\s/', (string) ($retiredHeaders[0] ?? '')) === 1, 'The standalone settings page is retired for ' . $retiredSettingsMethod . '.');
 }
 $settingsHostPage = file_get_contents('http://' . $address . '/admin', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$cachePage = file_get_contents('http://' . $address . '/admin/cache', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$assert(str_contains($cachePage, 'data-cache-page') && str_contains($cachePage, 'data-cache-probe-url') && !str_contains($settingsHostPage, 'data-cache-page'), 'Cache diagnostics have a separate authorized page and are absent from the dashboard.');
+foreach (['' => 401, 'user' => 403] as $cacheRole => $expectedCacheStatus) {
+    [$cacheStatus] = $request('GET', '/admin/cache', null, $cacheRole, ['Accept' => 'application/json']);
+    $assert($cacheStatus === $expectedCacheStatus, 'Cache diagnostics remain private to administrators.');
+}
+foreach (['' => 401, 'user' => 403] as $statsRole => $expectedStatsStatus) {
+    [$statsStatus] = $request('GET', '/api/site/dashboard-stats?stats=identity.accounts', null, $statsRole);
+    $assert($statsStatus === $expectedStatsStatus, 'Statistics require administrator authorization.');
+}
+[$statsStatus, $statsResource] = $request('GET', '/api/site/dashboard-stats?stats=identity.accounts', null, 'admin');
+$assert($statsStatus === 200 && $statsResource['data']['id'] === 'identity.accounts' && isset($statsResource['data']['items'][0]['key']) && is_int($statsResource['data']['items'][0]['value']) && !isset($statsResource['data']['items'][0]['label']), 'Statistics API returns canonical counts without presentation metadata.');
+[$socialStatsStatus, $socialStatsResource] = $request('GET', '/api/site/dashboard-stats?stats=social.content', null, 'admin');
+$assert($socialStatsStatus === 200 && array_column($socialStatsResource['data']['items'], 'key') === ['social.content.published', 'social.content.scheduled', 'social.content.comments', 'social.content.likes'] && count(array_filter(array_column($socialStatsResource['data']['items'], 'value'), is_int(...))) === 4, 'Selected Social statistics remain owner-scoped canonical integer counts.');
+[$unknownStatsStatus] = $request('GET', '/api/site/dashboard-stats?stats=unknown.owner', null, 'admin');
+$assert($unknownStatsStatus === 404, 'Unknown statistics groups are rejected.');
 preg_match('/<html[^>]*\blang="([^"]+)"/', $settingsHostPage, $adminLanguageMatch);
 $assert(isset($adminLanguageMatch[1]) && str_contains($settingsHostPage, 'data-interface-prefix="' . $adminLanguageMatch[1] . '"'), 'The admin document propagates its displayed language through the existing API interface context.');
 $assert(str_contains($settingsHostPage, 'data-ui-density="compact"'), 'The admin document selects the reusable core compact UI profile.');

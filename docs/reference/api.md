@@ -904,3 +904,11 @@ true), `source` (default the configured website hostname), `medium` (default
 `referral`) and optional `campaign`. Missing source configuration leaves URLs
 untagged. Existing UTM values, repeated query keys, encoding and fragments are
 preserved; metadata normalization and public feed/export source URLs are unchanged.
+
+### Dashboard statistics
+
+`GET /api/site/dashboard-stats?stats=<registered-id>` is administrator-only.
+The normal JSON envelope contains `data.id`, `data.items` (stable metric `key`
+and integer `value`) and `data.url`. Labels are resolved by the shared component
+catalog, not returned by the domain resource. Unknown, inactive or hidden groups
+return 404. Only the selected owner's lazy loader executes.

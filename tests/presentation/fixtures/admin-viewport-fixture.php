@@ -149,7 +149,7 @@ for (const long of [false, true]) {
     await new Promise(resolve => setTimeout(resolve, 100));
     const bounds = panel.getBoundingClientRect(), wrap = document.querySelector('.table-wrap');
     const summaryClean = !summary.querySelector('[data-list-result-count]') && (getComputedStyle(summary).display !== 'none') === !!summary.querySelector('.badge');
-    const identity = wrap.querySelector('.table-identity'), primary = identity.querySelector('.table-primary');
+    const identity = wrap.querySelector('.identity-row'), primary = identity.querySelector('.table-primary');
     const primaryBounds = primary.getBoundingClientRect(), details = [...identity.querySelectorAll('.table-meta')];
     const identityAligned = details.every(detail => Math.abs(detail.getBoundingClientRect().left - primaryBounds.left) < 1 && detail.getBoundingClientRect().top >= primaryBounds.bottom && parseFloat(getComputedStyle(detail).fontSize) < parseFloat(getComputedStyle(primary).fontSize));
     const primaryStyle = getComputedStyle(primary);
@@ -293,7 +293,10 @@ for (const multiplier of [1.25,1.5,2]) {
 }
 if (previousScale) document.documentElement.style.setProperty('--ui-scale',previousScale);
 else document.documentElement.style.removeProperty('--ui-scale');
-results.forEach(result => Object.assign(result, {controlsScale, pinnedList, pinnedDiagnostics, paginationCompact, sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
+const tableBadgesReadable = [...document.querySelectorAll('table .badge')].every(badge => getComputedStyle(badge,'::before').maskImage!=='none' && badge.textContent.trim());
+const identitySlots = [...document.querySelectorAll('table .identity-row')].map(identity => identity.firstElementChild);
+const identitySlotsNormalized = identitySlots.every(slot => slot.matches('.avatar.avatar-sm') && Math.abs(slot.getBoundingClientRect().width - identitySlots[0].getBoundingClientRect().width) < 1);
+results.forEach(result => Object.assign(result, {tableBadgesReadable, identitySlotsNormalized, controlsScale, pinnedList, pinnedDiagnostics, paginationCompact, sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
 const output = document.createElement('pre'); output.id = 'layout-metrics'; output.textContent = JSON.stringify(results); document.body.append(output);
 }());
 </script></body></html>

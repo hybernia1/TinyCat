@@ -25,7 +25,8 @@
           "interrupted": {"t": "cron.statuses.interrupted"}
         },
         "default": ""
-      }
+      },
+      "text": true
     }
   },
   "scheduler/list": {
@@ -201,9 +202,15 @@
                                         "children": [
                                           {
                                             "tag": "div",
-                                            "attrs": {"class": "table-identity"},
+                                            "attrs": {"class": "identity-row identity-row-inset"},
                                             "children": [
-                                              {"component": "scheduler/icon", "data": {"name": {"get": "run.task"}}},
+                                              {
+                                                "tag": "span",
+                                                "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                                "children": [
+                                                  {"component": "scheduler/icon", "data": {"name": {"get": "run.task"}}}
+                                                ]
+                                              },
                                               {
                                                 "tag": "div",
                                                 "attrs": {"class": "table-identity-body"},

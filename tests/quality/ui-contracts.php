@@ -7,6 +7,9 @@ require __DIR__ . '/../../App/Core/Runtime/autoload.php';
 use TinyCat\Support\AssetGraph;
 use TinyCat\Support\ClientAssets;
 
+require_once __DIR__ . '/../../tools/assets/status-icons.php';
+$expectedMasks = \TinyCat\Tools\Assets\StatusIcons::css((string) file_get_contents(__DIR__ . '/../../assets/icons.svg'));
+if (!str_contains(str_replace("\r\n", "\n", (string) file_get_contents(__DIR__ . '/../../assets/ui/styles/tokens.css')), $expectedMasks)) { throw new RuntimeException('Regenerate status masks with php tools/assets/status-icons.php --write.'); }
 $validate = require __DIR__ . '/../../tools/quality/ui-contracts.php';
 $result = $validate();
 $schemaPath = __DIR__ . '/../../docs/reference/component-catalog.schema.json';
@@ -108,6 +111,8 @@ foreach (ClientAssets::manifests() as $file) {
             if (!str_starts_with($absolute, $expectedDirectory)) { throw new RuntimeException('Stylesheet must belong to its manifest: ' . $style); }
             $owners[$style] = $file;
             $css = (string) file_get_contents($absolute);
+            $withoutComments = trim((string) preg_replace('~/\*.*?\*/~s', '', $css));
+            if ($withoutComments !== '' && preg_match('/[};]$/D', $withoutComments) !== 1) { throw new RuntimeException('Stylesheet ends with an unfinished rule: ' . $style); }
             preg_match_all('/@media\s*([^\{]+)\{/i', $css, $media);
             foreach ($media[1] as $condition) {
                 preg_match_all('/\((min|max)-width\s*:\s*([^\)]+)\)/i', $condition, $widths, PREG_SET_ORDER);

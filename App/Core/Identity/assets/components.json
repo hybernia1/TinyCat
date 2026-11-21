@@ -145,42 +145,7 @@
     "tag": "tr",
     "attrs": {"class": {"if": [{"eq": [{"get": "user.status"}, "active"]}, null, "table-row-inactive"]}},
     "children": [
-      {
-        "tag": "td",
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {"class": "table-identity"},
-            "children": [
-              {
-                "component": "ui/account-status",
-                "data": {
-                  "status": {"get": "user.status"},
-                  "label": {
-                    "lookup": {"get": "user.status"},
-                    "cases": {
-                      "active": {"t": "users.statuses.active"},
-                      "waiting": {"t": "users.statuses.waiting"},
-                      "ban": {"t": "users.statuses.ban"}
-                    }
-                  }
-                }
-              },
-              {
-                "tag": "div",
-                "attrs": {"class": "table-identity-body"},
-                "children": [
-                  {
-                    "tag": "strong",
-                    "attrs": {"class": "table-primary", "title": {"get": "user.username"}},
-                    "children": [{"get": "user.username"}]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
+      {"tag": "td", "children": [{"component": "users/identity-row", "data": {"user": {"get": "user"}}}]},
       {
         "tag": "td",
         "children": [
@@ -1437,6 +1402,45 @@
                 "tag": "button",
                 "attrs": {"class": "context-menu-action is-danger", "type": "submit"},
                 "children": [{"icon": "logout"}, " ", {"tag": "span", "children": [{"t": "common.logout"}]}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "users/identity-row": {
+    "tag": "div",
+    "attrs": {"class": "identity-row identity-row-inset"},
+    "children": [
+      {"component": "ui/avatar", "data": {"user": {"get": "user"}, "small": true, "alt": ""}},
+      {
+        "tag": "div",
+        "attrs": {"class": "table-identity-body"},
+        "children": [
+          {
+            "tag": "strong",
+            "attrs": {"class": "table-primary", "title": {"get": "user.username"}},
+            "children": [{"get": "user.username"}]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "table-meta"},
+            "children": [
+              {
+                "component": "ui/account-status",
+                "data": {
+                  "status": {"get": "user.status"},
+                  "label": {
+                    "lookup": {"get": "user.status"},
+                    "cases": {
+                      "active": {"t": "users.statuses.active"},
+                      "waiting": {"t": "users.statuses.waiting"},
+                      "ban": {"t": "users.statuses.ban"}
+                    }
+                  },
+                  "text": true
+                }
               }
             ]
           }

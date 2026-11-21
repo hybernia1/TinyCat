@@ -44,20 +44,25 @@ final class Platform
 
     public static function contributions(): Contributions
     {
-        return new Contributions(localizedRoutes: [
+        return new Contributions(componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('dashboard.statistics', Admin\Statistics::fieldLookup(...))], localizedRoutes: [
             new LocalizedRoute('core.home', '^/$'),
             new LocalizedRoute('core.identity', '^/(?:login|register|logout)$', ['next']),
             new LocalizedRoute('core.recovery', '^/recovery$', ['token']),
             new LocalizedRoute('core.notifications', '^/notifications$'),
             new LocalizedRoute('core.privacy', '^/privacy$', translatedDocument: true),
             new LocalizedRoute('core.search', '^/search/all$', ['q', 'collection']),
-        ], navigation: [new NavigationItem('tinycat.core.dashboard', static fn (): array => ['href' => '/admin', 'icon' => 'dashboard', 'label' => \TinyCat\Support\Localization::t('common.dashboard')], 0)],
-            widgets: [new DashboardWidget('core.diagnostics', static fn (): string => Admin\Diagnostics::render(), 100)]);
+        ], widgets: [new DashboardWidget('core.statistics', Admin\Statistics::widget(...), -10, type: 'metrics', title: static fn (): string => \TinyCat\Support\Localization::t('admin.widgets.stats'), icon: 'chart', visible: static fn (): bool => Admin\Statistics::groups() !== [])], navigation: [new NavigationItem('tinycat.core.dashboard', static fn (): array => ['href' => '/admin', 'icon' => 'dashboard', 'label' => \TinyCat\Support\Localization::t('common.dashboard')], 0),
+            new NavigationItem('tinycat.core.cache', static fn (): array => ['href' => '/admin/cache', 'icon' => 'database', 'label' => \TinyCat\Support\Localization::t('admin.cache.title')], 65)]);
     }
 
     public static function register(\TinyCat\Http\Api $api): void
     {
         Information::register();
-        $api->post('/site/cache-resets', static fn (): array => ['reset' => \TinyCat\Support\Cache::resetOpcache(), 'redirect' => '/admin'], 'admin', 200);
+        $api->get('/site/dashboard-stats', static function (Request $request): array {
+            $request->validated(['stats' => 'required|string|max:80']);
+            return Admin\Statistics::resource((string) $request->input('stats'));
+        }, 'admin');
+        Router::route('GET', '/admin/cache', Admin\CachePage::respond(...));
+        $api->post('/site/cache-resets', static fn (): array => ['reset' => \TinyCat\Support\Cache::resetOpcache(), 'redirect' => '/admin/cache'], 'admin', 200);
     }
 }

@@ -64,7 +64,7 @@ viewport.width = 300; viewport.offsetLeft = 20;
 viewportEvents.resize();
 assert.equal(stack.style.transform, "translate(-55px, 0px)");
 assert.equal(stack.style.maxWidth, "calc(300px - var(--toast-inset) * 2)");
-toast.children[2].events.click();
+toast.children[1].events.click();
 assert.equal(toast.removed, true);
 assert.equal(timers.size, 0);
 window.visualViewport = null;
@@ -79,7 +79,7 @@ flash.textContent = '';
 flash.content = {textContent: JSON.stringify([{message: 'Blog activated.', type: 'success'}])};
 flashNodes = [flash];
 T.toasts.init();
-assert.equal(stack.children.at(-1).children[1].textContent, 'Blog activated.');
+assert.equal(stack.children.at(-1).children[0].textContent, 'Blog activated.');
 assert.equal(flash.removed, true);
 const renderedCount = stack.children.length;
 T.toasts.init();
@@ -88,6 +88,6 @@ for (const [tone,expected] of [['success','success'],['danger','danger'],['warni
   const notice=T.toasts.show('<b>Literal notice</b>',tone);
   assert.equal(notice.className,'toast toast-'+expected);
   assert.equal(notice.attributes.role,['danger','warning'].includes(expected)?'alert':'status');
-  assert.equal(notice.children[1].textContent,'<b>Literal notice</b>');
+  assert.equal(notice.children[0].textContent,'<b>Literal notice</b>');
 }
 console.log("PASS toast mobile viewport, modal opening, touch duration, mouse pause and dismissal");

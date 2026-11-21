@@ -301,6 +301,11 @@ $memberHeader = \TinyCat\Core\Ui\DocumentData::publicHeader(array_replace($heade
 ]));
 $assert(str_contains($memberHeader, 'href="/admin"') && str_contains($memberHeader, 'data-notification-button') && str_contains($memberHeader, 'user-menu-trigger'), 'Authenticated header composes owner menus and administration link.');
 $assert(!str_contains($memberHeader, 'data-language-menu') && !str_contains($memberHeader, 'data-global-search'), 'Authenticated header respects conditional language and search surfaces.');
+foreach (['/uploads/avatars/member.webp', ''] as $avatarUrl) {
+    $identityHtml = \TinyCat\Support\Components::render('users/identity-row', ['user' => ['id' => 17, 'username' => 'Member <unsafe>', 'status' => 'waiting', 'avatar_url' => $avatarUrl]]);
+    $assert(str_contains($identityHtml, 'avatar avatar-sm') && str_contains($identityHtml, 'data-avatar-user-id="17"') && str_contains($identityHtml, 'Member &lt;unsafe&gt;'), 'Shared account cells preserve avatar identity and escaped names.');
+    $assert($avatarUrl === '' ? !str_contains($identityHtml, '<img') && str_contains($identityHtml, 'avatar-fallback') : str_contains($identityHtml, 'src="' . $avatarUrl . '"'), 'Shared account cells render uploaded avatars or the existing fallback.');
+}
 restore_error_handler();
 foreach ([['onclick' => 'alert(1)'], ['style' => 'color:red'], ['srcdoc' => '<script>bad</script>'], ['src' => 'javascript:alert(1)'], ['formaction' => "java\nscript:alert(1)"], ['src' => 'data:text/html,bad']] as $attributes) {
     $rejected = false;

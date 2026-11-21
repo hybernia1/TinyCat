@@ -371,7 +371,8 @@
       "likes": "Лайки",
       "comments": "Коментарі",
       "follows": "Підписки",
-      "reports": "Скарги"
+      "reports": "Скарги",
+      "content_group": "Вміст"
     },
     "table_missing": "Таблицю ще не створено."
   },

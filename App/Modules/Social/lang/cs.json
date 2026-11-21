@@ -371,7 +371,8 @@
       "likes": "Lajky",
       "comments": "Komentáře",
       "follows": "Sledování",
-      "reports": "Nahlášení"
+      "reports": "Nahlášení",
+      "content_group": "Obsah"
     },
     "table_missing": "Tabulka zatím není vytvořená."
   },

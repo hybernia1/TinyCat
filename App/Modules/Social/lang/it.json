@@ -371,7 +371,8 @@
       "likes": "Mi piace",
       "comments": "Commenti",
       "follows": "Relazioni di seguito",
-      "reports": "Segnalazioni"
+      "reports": "Segnalazioni",
+      "content_group": "Contenuti"
     },
     "table_missing": "La tabella non è stata ancora creata."
   },

@@ -112,12 +112,13 @@
       "name": "users/admin-row",
       "source": "App/Core/Identity/assets/components.json",
       "dependencies": [
-        "ui/account-status",
         "ui/activation-action",
         "ui/api-action",
-        "ui/modal-trigger"
+        "ui/modal-trigger",
+        "users/identity-row"
       ],
       "inputs": [
+        "user",
         "user.can_delete",
         "user.id",
         "user.protected",
@@ -429,6 +430,19 @@
         "profileNeedsEmail",
         "profileUrl",
         "theme"
+      ]
+    },
+    {
+      "name": "users/identity-row",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/account-status",
+        "ui/avatar"
+      ],
+      "inputs": [
+        "user",
+        "user.status",
+        "user.username"
       ]
     },
     {
@@ -1482,16 +1496,17 @@
       "name": "bots/accounts",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "ui/account-status",
         "ui/activation-action",
         "ui/api-action",
         "ui/empty-state",
         "ui/list-toolbar",
         "ui/modal-trigger",
         "ui/pagination",
-        "ui/sort-heading"
+        "ui/sort-heading",
+        "users/identity-row"
       ],
       "inputs": [
+        "account",
         "account.id",
         "account.post_count",
         "account.source_count",
@@ -1556,7 +1571,8 @@
         "ui/empty-state",
         "ui/list-toolbar",
         "ui/pagination",
-        "ui/sort-heading"
+        "ui/sort-heading",
+        "ui/status-badge"
       ],
       "inputs": [
         "api_url",
@@ -2002,35 +2018,6 @@
       "dependencies": [],
       "inputs": [
         "type"
-      ]
-    },
-    {
-      "name": "site/dashboard",
-      "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [
-        "ui/admin-list",
-        "ui/dashboard-overview"
-      ],
-      "inputs": [
-        "comments_html",
-        "stats"
-      ]
-    },
-    {
-      "name": "site/dashboard-comments",
-      "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [
-        "ui/empty-state"
-      ],
-      "inputs": [
-        "comment.author_url",
-        "comment.body",
-        "comment.content_body",
-        "comment.content_url",
-        "comment.created_iso",
-        "comment.created_label",
-        "comment.username",
-        "items"
       ]
     },
     {
@@ -2516,7 +2503,8 @@
       ],
       "inputs": [
         "label",
-        "status"
+        "status",
+        "text"
       ]
     },
     {
@@ -2553,6 +2541,7 @@
       "dependencies": [],
       "inputs": [
         "label",
+        "text",
         "tone"
       ]
     },
@@ -2673,32 +2662,6 @@
       "inputs": [
         "action",
         "context"
-      ]
-    },
-    {
-      "name": "ui/dashboard-cache",
-      "source": "assets/ui/components.json",
-      "dependencies": [],
-      "inputs": [
-        "available",
-        "detail",
-        "driver",
-        "service.details",
-        "service.label",
-        "service.resettable",
-        "service.status",
-        "services"
-      ]
-    },
-    {
-      "name": "ui/dashboard-overview",
-      "source": "assets/ui/components.json",
-      "dependencies": [],
-      "inputs": [
-        "stat.icon",
-        "stat.label",
-        "stat.value",
-        "stats"
       ]
     },
     {
@@ -2916,9 +2879,13 @@
     {
       "name": "ui/dashboard",
       "source": "assets/ui/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/dashboard-widget",
+        "ui/empty-state"
+      ],
       "inputs": [
-        "content"
+        "widget",
+        "widgets"
       ]
     },
     {
@@ -3125,6 +3092,129 @@
         "navigation",
         "title"
       ]
+    },
+    {
+      "name": "ui/cache-services",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/cache-service"
+      ],
+      "inputs": [
+        "service",
+        "services"
+      ]
+    },
+    {
+      "name": "ui/dashboard-widget",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/avatar",
+        "ui/dashboard-metrics",
+        "ui/empty-state",
+        "ui/notice"
+      ],
+      "inputs": [
+        "entry.detail",
+        "entry.icon",
+        "entry.label",
+        "entry.time",
+        "entry.url",
+        "entry.user",
+        "group.id",
+        "group.label",
+        "widget.content",
+        "widget.data",
+        "widget.data.detail",
+        "widget.data.groups",
+        "widget.data.id",
+        "widget.data.items",
+        "widget.data.text",
+        "widget.data.tone",
+        "widget.data.url",
+        "widget.icon",
+        "widget.id",
+        "widget.title",
+        "widget.type"
+      ]
+    },
+    {
+      "name": "ui/cache-page",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/detail-table",
+        "ui/help",
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "application.badge_label",
+        "application.description",
+        "application.name",
+        "application.tone",
+        "application.value",
+        "assets.description",
+        "assets.mode",
+        "assets.name",
+        "assets.rows",
+        "browser.description",
+        "browser.name",
+        "browser.rows",
+        "observation.label",
+        "observation.rows",
+        "observation.url",
+        "observations",
+        "services"
+      ]
+    },
+    {
+      "name": "ui/cache-service",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/detail-table",
+        "ui/notice",
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "service.badge_label",
+        "service.icon",
+        "service.issue",
+        "service.label",
+        "service.resettable",
+        "service.rows",
+        "service.status",
+        "service.tone"
+      ]
+    },
+    {
+      "name": "ui/detail-table",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/status-badge"
+      ],
+      "inputs": [
+        "row.attributes",
+        "row.badge",
+        "row.label",
+        "row.tone",
+        "row.value",
+        "rows",
+        "title"
+      ]
+    },
+    {
+      "name": "ui/dashboard-metrics",
+      "source": "assets/ui/components.json",
+      "dependencies": [
+        "ui/empty-state"
+      ],
+      "inputs": [
+        "items",
+        "metric.display_value",
+        "metric.icon",
+        "metric.key",
+        "metric.label",
+        "metric.value",
+        "url"
+      ]
     }
   ],
   "duplicate_component_names": [],
@@ -3258,7 +3348,8 @@
     "assets/ui/styles/identity-rows.css",
     "assets/ui/styles/load-more.css",
     "assets/ui/styles/information-pages.css",
-    "assets/ui/styles/public-workspace.css"
+    "assets/ui/styles/public-workspace.css",
+    "assets/ui/styles/dashboard.css"
   ],
   "css_classes": {
     "admin-backdrop": [
@@ -3889,6 +3980,18 @@
         "selector": ".alert"
       },
       {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 14,
+        "context": [],
+        "selector": ".alert::before"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 44,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
         "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
         "line": 7,
         "context": [
@@ -3908,7 +4011,13 @@
     "alert-danger": [
       {
         "source": "assets/ui/styles/alerts.css",
-        "line": 24,
+        "line": 38,
+        "context": [],
+        "selector": ".alert-danger"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 55,
         "context": [],
         "selector": ".alert-danger"
       }
@@ -3916,7 +4025,13 @@
     "alert-info": [
       {
         "source": "assets/ui/styles/alerts.css",
-        "line": 9,
+        "line": 23,
+        "context": [],
+        "selector": ".alert-info"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 58,
         "context": [],
         "selector": ".alert-info"
       }
@@ -3924,7 +4039,13 @@
     "alert-success": [
       {
         "source": "assets/ui/styles/alerts.css",
-        "line": 14,
+        "line": 28,
+        "context": [],
+        "selector": ".alert-success"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 54,
         "context": [],
         "selector": ".alert-success"
       }
@@ -3932,7 +4053,13 @@
     "alert-warning": [
       {
         "source": "assets/ui/styles/alerts.css",
-        "line": 19,
+        "line": 33,
+        "context": [],
+        "selector": ".alert-warning"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 56,
         "context": [],
         "selector": ".alert-warning"
       }
@@ -4063,6 +4190,12 @@
         "line": 15,
         "context": [],
         "selector": ".identity-row > .avatar"
+      },
+      {
+        "source": "assets/ui/styles/identity-rows.css",
+        "line": 23,
+        "context": [],
+        "selector": ".identity-row > .avatar .icon"
       }
     ],
     "avatar-creator-toggle": [
@@ -4280,7 +4413,7 @@
     "avatar-xl": [
       {
         "source": "assets/ui/styles/avatar-sizes.css",
-        "line": 6,
+        "line": 5,
         "context": [],
         "selector": ".avatar-xl"
       },
@@ -4343,18 +4476,90 @@
     ],
     "badge-danger": [
       {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 44,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 55,
+        "context": [],
+        "selector": ".badge-danger"
+      },
+      {
         "source": "assets/ui/styles/badge-danger.css",
         "line": 1,
         "context": [],
         "selector": ".badge-danger"
       }
     ],
+    "badge-info": [
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 44,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 58,
+        "context": [],
+        "selector": ".badge-info"
+      },
+      {
+        "source": "assets/ui/styles/badges.css",
+        "line": 21,
+        "context": [],
+        "selector": ".badge-info"
+      }
+    ],
     "badge-primary": [
       {
         "source": "assets/ui/styles/badges.css",
-        "line": 15,
+        "line": 16,
         "context": [],
         "selector": ".badge-primary"
+      }
+    ],
+    "badge-success": [
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 44,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 54,
+        "context": [],
+        "selector": ".badge-success"
+      },
+      {
+        "source": "assets/ui/styles/badges.css",
+        "line": 26,
+        "context": [],
+        "selector": ".badge-success"
+      }
+    ],
+    "badge-warning": [
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 44,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 56,
+        "context": [],
+        "selector": ".badge-warning"
+      },
+      {
+        "source": "assets/ui/styles/badges.css",
+        "line": 32,
+        "context": [],
+        "selector": ".badge-warning"
       }
     ],
     "block": [
@@ -4945,6 +5150,28 @@
         "line": 26,
         "context": [],
         "selector": ".cookie-consent-copy span"
+      }
+    ],
+    "dashboard-grid": [
+      {
+        "source": "assets/ui/styles/dashboard.css",
+        "line": 1,
+        "context": [],
+        "selector": ".dashboard-grid"
+      },
+      {
+        "source": "assets/ui/styles/dashboard.css",
+        "line": 10,
+        "context": [],
+        "selector": ".dashboard-grid [data-widget-metrics]"
+      },
+      {
+        "source": "assets/ui/styles/dashboard.css",
+        "line": 45,
+        "context": [
+          "@media (min-width: 900px)"
+        ],
+        "selector": ".dashboard-grid"
       }
     ],
     "desktop-only": [
@@ -5770,7 +5997,7 @@
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 202,
+        "line": 195,
         "context": [],
         "selector": ".status-comment-like-button .icon"
       },
@@ -5805,12 +6032,6 @@
         "selector": ".avatar-creator-toggle[aria-expanded=\"true\"] .icon"
       },
       {
-        "source": "assets/ui/styles/table-identity.css",
-        "line": 21,
-        "context": [],
-        "selector": ".table-identity > .icon"
-      },
-      {
         "source": "assets/ui/styles/input-icon.css",
         "line": 7,
         "context": [],
@@ -5823,6 +6044,12 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".nav-link-icon .icon"
+      },
+      {
+        "source": "assets/ui/styles/identity-rows.css",
+        "line": 23,
+        "context": [],
+        "selector": ".identity-row > .avatar .icon"
       }
     ],
     "icon-lg": [
@@ -5890,19 +6117,25 @@
         "source": "assets/ui/styles/identity-rows.css",
         "line": 16,
         "context": [],
-        "selector": ".identity-row:hover"
+        "selector": ".identity-row:is(a, button):hover"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
         "line": 16,
         "context": [],
-        "selector": ".identity-row:focus-visible"
+        "selector": ".identity-row:is(a, button):focus-visible"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
         "line": 17,
         "context": [],
         "selector": ".identity-row.is-unread"
+      },
+      {
+        "source": "assets/ui/styles/identity-rows.css",
+        "line": 23,
+        "context": [],
+        "selector": ".identity-row > .avatar .icon"
       }
     ],
     "identity-row-compact": [
@@ -6066,7 +6299,7 @@
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 208,
+        "line": 201,
         "context": [],
         "selector": ".status-comment-like-button.is-active"
       },
@@ -8095,6 +8328,12 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".modal-tab-switch > .select"
+      },
+      {
+        "source": "assets/ui/styles/dashboard.css",
+        "line": 19,
+        "context": [],
+        "selector": "[data-dashboard-stats-form] > .select"
       }
     ],
     "sidebar-user-list": [
@@ -8422,7 +8661,7 @@
     "status-comment-diff-marker": [
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 233,
+        "line": 230,
         "context": [],
         "selector": ".status-comment-diff-marker"
       }
@@ -8442,7 +8681,7 @@
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 236,
+        "line": 233,
         "context": [],
         "selector": ".status-comment-diff-removed"
       }
@@ -8536,7 +8775,7 @@
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 230,
+        "line": 227,
         "context": [],
         "selector": ".status-comment-history-diff"
       }
@@ -8608,37 +8847,31 @@
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 193,
-        "context": [],
-        "selector": ".status-comment-like-button"
-      },
-      {
-        "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 202,
+        "line": 195,
         "context": [],
         "selector": ".status-comment-like-button .icon"
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 208,
+        "line": 201,
         "context": [],
         "selector": ".status-comment-like-button.is-active"
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 213,
+        "line": 206,
         "context": [],
         "selector": ".status-comment-like-button"
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 224,
+        "line": 221,
         "context": [],
         "selector": ".status-comment-like-button:hover"
       },
       {
         "source": "assets/ui/content/styles/discussion-editing.css",
-        "line": 227,
+        "line": 224,
         "context": [],
         "selector": ".status-comment-like-button:focus-visible"
       }
@@ -9217,12 +9450,6 @@
         "line": 1,
         "context": [],
         "selector": ".status-indicator"
-      },
-      {
-        "source": "assets/ui/styles/table-identity.css",
-        "line": 21,
-        "context": [],
-        "selector": ".table-identity > .status-indicator"
       }
     ],
     "status-indicator-danger": [
@@ -10150,7 +10377,13 @@
         "source": "assets/ui/styles/tables.css",
         "line": 28,
         "context": [],
-        "selector": ".table tr:last-child td"
+        "selector": ".table > tbody > tr:last-child > td"
+      },
+      {
+        "source": "assets/ui/styles/tables.css",
+        "line": 28,
+        "context": [],
+        "selector": ".table > tbody > tr:last-child > th"
       },
       {
         "source": "assets/ui/styles/tables-mobile.css",
@@ -10184,19 +10417,19 @@
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 68,
+        "line": 56,
         "context": [],
         "selector": ".table .table-meta"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 75,
+        "line": 63,
         "context": [],
         "selector": ".table .table-meta a"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 79,
+        "line": 67,
         "context": [],
         "selector": ".table .table-meta.text-danger"
       },
@@ -10243,36 +10476,16 @@
         "selector": ".table .table-actions-cell"
       }
     ],
-    "table-identity": [
-      {
-        "source": "assets/ui/styles/table-identity.css",
-        "line": 15,
-        "context": [],
-        "selector": ".table-identity"
-      },
-      {
-        "source": "assets/ui/styles/table-identity.css",
-        "line": 21,
-        "context": [],
-        "selector": ".table-identity > .icon"
-      },
-      {
-        "source": "assets/ui/styles/table-identity.css",
-        "line": 21,
-        "context": [],
-        "selector": ".table-identity > .status-indicator"
-      }
-    ],
     "table-identity-body": [
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 27,
+        "line": 15,
         "context": [],
         "selector": ".table-identity-body"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 43,
+        "line": 31,
         "context": [],
         "selector": ".table-identity-body > .table-meta"
       }
@@ -10280,31 +10493,31 @@
     "table-meta": [
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 43,
+        "line": 31,
         "context": [],
         "selector": ".table-identity-body > .table-meta"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 63,
+        "line": 51,
         "context": [],
         "selector": ".table-meta"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 68,
+        "line": 56,
         "context": [],
         "selector": ".table .table-meta"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 75,
+        "line": 63,
         "context": [],
         "selector": ".table .table-meta a"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 79,
+        "line": 67,
         "context": [],
         "selector": ".table .table-meta.text-danger"
       }
@@ -10312,13 +10525,13 @@
     "table-primary": [
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 35,
+        "line": 23,
         "context": [],
         "selector": ".table-primary"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 43,
+        "line": 31,
         "context": [],
         "selector": ".table-primary:not(time)"
       }
@@ -10374,7 +10587,7 @@
     "table-text": [
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 43,
+        "line": 31,
         "context": [],
         "selector": ".table-text"
       }
@@ -10382,7 +10595,7 @@
     "table-text-url": [
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 55,
+        "line": 43,
         "context": [],
         "selector": ".table-text-url"
       }
@@ -10508,7 +10721,7 @@
       },
       {
         "source": "assets/ui/styles/table-identity.css",
-        "line": 79,
+        "line": 67,
         "context": [],
         "selector": ".table .table-meta.text-danger"
       }
@@ -10585,16 +10798,28 @@
     ],
     "toast": [
       {
+        "source": "assets/ui/styles/alerts.css",
+        "line": 44,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
         "source": "assets/ui/styles/toasts.css",
         "line": 12,
         "context": [],
         "selector": ".toast"
+      },
+      {
+        "source": "assets/ui/styles/toasts.css",
+        "line": 103,
+        "context": [],
+        "selector": ".toast::before"
       }
     ],
     "toast-body": [
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 41,
+        "line": 36,
         "context": [],
         "selector": ".toast-body"
       }
@@ -10602,139 +10827,101 @@
     "toast-close": [
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 27,
+        "line": 28,
         "context": [],
         "selector": ".toast-close"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 47,
+        "line": 42,
         "context": [],
         "selector": ".toast-close"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 55,
+        "line": 50,
         "context": [],
         "selector": ".toast-close:hover"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 55,
+        "line": 50,
         "context": [],
         "selector": ".toast-close:focus-visible"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 102,
+        "line": 89,
         "context": [],
         "selector": ".toast-success .toast-close"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 102,
+        "line": 89,
         "context": [],
         "selector": ".toast-danger .toast-close"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 102,
+        "line": 89,
         "context": [],
         "selector": ".toast-warning .toast-close"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 102,
+        "line": 89,
         "context": [],
         "selector": ".toast-info .toast-close"
       }
     ],
     "toast-danger": [
       {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 67,
+        "source": "assets/ui/styles/alerts.css",
+        "line": 55,
         "context": [],
         "selector": ".toast-danger"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 85,
+        "line": 62,
         "context": [],
         "selector": ".toast-danger"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 94,
+        "line": 80,
         "context": [],
-        "selector": ".toast-danger .toast-icon"
+        "selector": ".toast-danger"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 102,
+        "line": 89,
         "context": [],
         "selector": ".toast-danger .toast-close"
       }
     ],
-    "toast-icon": [
-      {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 27,
-        "context": [],
-        "selector": ".toast-icon"
-      },
-      {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 36,
-        "context": [],
-        "selector": ".toast-icon"
-      },
-      {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 94,
-        "context": [],
-        "selector": ".toast-success .toast-icon"
-      },
-      {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 94,
-        "context": [],
-        "selector": ".toast-danger .toast-icon"
-      },
-      {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 94,
-        "context": [],
-        "selector": ".toast-warning .toast-icon"
-      },
-      {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 94,
-        "context": [],
-        "selector": ".toast-info .toast-icon"
-      }
-    ],
     "toast-info": [
       {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 79,
+        "source": "assets/ui/styles/alerts.css",
+        "line": 58,
         "context": [],
         "selector": ".toast-info"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 85,
+        "line": 74,
         "context": [],
         "selector": ".toast-info"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 94,
+        "line": 80,
         "context": [],
-        "selector": ".toast-info .toast-icon"
+        "selector": ".toast-info"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 102,
+        "line": 89,
         "context": [],
         "selector": ".toast-info .toast-close"
       }
@@ -10748,7 +10935,7 @@
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 110,
+        "line": 97,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -10757,52 +10944,52 @@
     ],
     "toast-success": [
       {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 61,
+        "source": "assets/ui/styles/alerts.css",
+        "line": 54,
         "context": [],
         "selector": ".toast-success"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 85,
+        "line": 56,
         "context": [],
         "selector": ".toast-success"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 94,
+        "line": 80,
         "context": [],
-        "selector": ".toast-success .toast-icon"
+        "selector": ".toast-success"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 102,
+        "line": 89,
         "context": [],
         "selector": ".toast-success .toast-close"
       }
     ],
     "toast-warning": [
       {
-        "source": "assets/ui/styles/toasts.css",
-        "line": 73,
+        "source": "assets/ui/styles/alerts.css",
+        "line": 56,
         "context": [],
         "selector": ".toast-warning"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 85,
+        "line": 68,
         "context": [],
         "selector": ".toast-warning"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 94,
+        "line": 80,
         "context": [],
-        "selector": ".toast-warning .toast-icon"
+        "selector": ".toast-warning"
       },
       {
         "source": "assets/ui/styles/toasts.css",
-        "line": 102,
+        "line": 89,
         "context": [],
         "selector": ".toast-warning .toast-close"
       }
@@ -10998,6 +11185,328 @@
   },
   "repeated_css_selectors": [
     {
+      "selector": ":root",
+      "context": [],
+      "rules": [
+        {
+          "selector": ":root",
+          "context": [],
+          "source": "assets/ui/styles/tokens.css",
+          "line": 1,
+          "declarations": [
+            [
+              "--ui-scale",
+              "1"
+            ],
+            [
+              "--ui-density-scale",
+              "1"
+            ],
+            [
+              "font-size",
+              "calc(100% * var(--ui-scale) * var(--ui-density-scale))"
+            ],
+            [
+              "--control-height",
+              "2.5rem"
+            ],
+            [
+              "--control-height-compact",
+              "2.25rem"
+            ],
+            [
+              "--control-height-inline",
+              "max(1.75rem, 24px)"
+            ],
+            [
+              "--control-height-touch",
+              "max(2.75rem, 44px)"
+            ],
+            [
+              "--control-padding-block",
+              "0.5rem"
+            ],
+            [
+              "--control-padding-inline",
+              "0.625rem"
+            ],
+            [
+              "--control-icon-size",
+              "1rem"
+            ],
+            [
+              "--control-icon-gap",
+              "0.625rem"
+            ],
+            [
+              "--control-focus-width",
+              "0.1875rem"
+            ],
+            [
+              "--control-error-width",
+              "0.125rem"
+            ],
+            [
+              "--toast-width",
+              "26.25rem"
+            ],
+            [
+              "--toast-inset",
+              "1rem"
+            ],
+            [
+              "--toast-action-size",
+              "var(--control-height-compact)"
+            ],
+            [
+              "--identity-line-height",
+              "1.4"
+            ],
+            [
+              "--identity-symbol-size",
+              "calc(1em * var(--identity-line-height) + var(--control-height-inline) + var(--control-padding-block))"
+            ],
+            [
+              "--table-text-width",
+              "24rem"
+            ],
+            [
+              "--table-text-lines",
+              "2"
+            ],
+            [
+              "--public-navigation-width",
+              "14rem"
+            ],
+            [
+              "--modal-width",
+              "35rem"
+            ],
+            [
+              "--modal-width-compact",
+              "27.5rem"
+            ],
+            [
+              "--modal-width-confirm",
+              "26.25rem"
+            ],
+            [
+              "--modal-width-reading",
+              "46.25rem"
+            ],
+            [
+              "--modal-width-wide",
+              "57.5rem"
+            ],
+            [
+              "--modal-height",
+              "47.5rem"
+            ],
+            [
+              "--modal-suggestions-height",
+              "38.75rem"
+            ],
+            [
+              "--modal-workspace-width",
+              "min(80vw, var(--modal-width-wide))"
+            ],
+            [
+              "--modal-workspace-height",
+              "min(80dvh, var(--modal-height))"
+            ],
+            [
+              "--modal-padding",
+              "0.75rem"
+            ],
+            [
+              "--modal-padding-desktop",
+              "1rem"
+            ],
+            [
+              "color-scheme",
+              "light"
+            ],
+            [
+              "--font-sans",
+              "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+            ],
+            [
+              "--font-mono",
+              "ui-monospace, SFMono-Regular, Consolas, \"Liberation Mono\", monospace"
+            ],
+            [
+              "--bg",
+              "light-dark(#f6f6f4, #151a21)"
+            ],
+            [
+              "--surface-panel",
+              "light-dark(#f1f3f5, #191e26)"
+            ],
+            [
+              "--surface",
+              "light-dark(#ffffff, #222831)"
+            ],
+            [
+              "--surface-muted",
+              "light-dark(#f8f8f6, #282f3a)"
+            ],
+            [
+              "--surface-soft",
+              "light-dark(#efefec, #303a47)"
+            ],
+            [
+              "--surface-strong",
+              "light-dark(#deded9, #455266)"
+            ],
+            [
+              "--surface-alpha",
+              "light-dark(rgba(255, 255, 255, 0.92), rgba(34, 40, 49, 0.92))"
+            ],
+            [
+              "--surface-alpha-strong",
+              "light-dark(rgba(255, 255, 255, 0.94), rgba(34, 40, 49, 0.94))"
+            ],
+            [
+              "--text",
+              "light-dark(#1f1f22, #e1e7ef)"
+            ],
+            [
+              "--muted",
+              "light-dark(#686865, #a2adbd)"
+            ],
+            [
+              "--border",
+              "light-dark(#d9d9d4, #384352)"
+            ],
+            [
+              "--primary",
+              "light-dark(#64748b, #8aaddb)"
+            ],
+            [
+              "--primary-strong",
+              "light-dark(#475569, #b4cef0)"
+            ],
+            [
+              "--primary-soft",
+              "light-dark(#eef2f6, #2d3e55)"
+            ],
+            [
+              "--unread-surface",
+              "color-mix(in srgb, var(--primary-soft) 54%, var(--surface))"
+            ],
+            [
+              "--on-primary",
+              "light-dark(#ffffff, #122035)"
+            ],
+            [
+              "--accent",
+              "light-dark(#5f7f7a, #8aa7a1)"
+            ],
+            [
+              "--danger",
+              "light-dark(#dc2626, #f87171)"
+            ],
+            [
+              "--danger-strong",
+              "light-dark(#b91c1c, #fca5a5)"
+            ],
+            [
+              "--danger-soft",
+              "light-dark(#fee2e2, #3d1f25)"
+            ],
+            [
+              "--on-danger",
+              "light-dark(#ffffff, #2e1014)"
+            ],
+            [
+              "--success",
+              "light-dark(#15803d, #4ade80)"
+            ],
+            [
+              "--success-soft",
+              "light-dark(#e9f8ef, #123522)"
+            ],
+            [
+              "--warning",
+              "light-dark(#b45309, #fbbf24)"
+            ],
+            [
+              "--warning-soft",
+              "light-dark(#fff4e5, #3a2b0b)"
+            ],
+            [
+              "--info",
+              "light-dark(#64748b, #8aaddb)"
+            ],
+            [
+              "--info-soft",
+              "light-dark(#eef2f6, #2d3e55)"
+            ],
+            [
+              "--radius",
+              "0.5rem"
+            ],
+            [
+              "--radius-sm",
+              "0.3125rem"
+            ],
+            [
+              "--avatar-radius",
+              "var(--radius-sm)"
+            ],
+            [
+              "--shadow",
+              "0 0.625rem 1.75rem light-dark(rgba(20, 31, 44, 0.12), rgba(0, 0, 0, 0.36))"
+            ],
+            [
+              "--shadow-sm",
+              "0 0.25rem 0.875rem light-dark(rgba(20, 31, 44, 0.08), rgba(0, 0, 0, 0.28))"
+            ],
+            [
+              "--shadow-lg",
+              "0 1.125rem 2.875rem light-dark(rgba(20, 31, 44, 0.18), rgba(0, 0, 0, 0.46))"
+            ],
+            [
+              "--overlay",
+              "light-dark(rgba(31, 31, 34, 0.46), rgba(0, 0, 0, 0.62))"
+            ],
+            [
+              "--container",
+              "70rem"
+            ],
+            [
+              "--transition",
+              "160ms ease"
+            ]
+          ]
+        },
+        {
+          "selector": ":root",
+          "context": [],
+          "source": "assets/ui/styles/tokens.css",
+          "line": 98,
+          "declarations": [
+            [
+              "--status-icon-info",
+              "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M12%2011v6M12%207h.01%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E\")"
+            ],
+            [
+              "--status-icon-success",
+              "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22m8%2012%203%203%205-6%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E\")"
+            ],
+            [
+              "--status-icon-warning",
+              "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M12%203%202%2021h20L12%203Z%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M12%209v5M12%2018h.01%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E\")"
+            ],
+            [
+              "--status-icon-danger",
+              "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M9%209l6%206M15%209l-6%206%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E\")"
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "selector": "button",
       "context": [],
       "rules": [
@@ -11152,6 +11661,510 @@
             [
               "resize",
               "vertical"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".alert-info",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".alert-info",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 23,
+          "declarations": [
+            [
+              "background",
+              "var(--info-soft)"
+            ],
+            [
+              "color",
+              "var(--info)"
+            ]
+          ]
+        },
+        {
+          "selector": ".alert-info",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 58,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-info)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".alert-success",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".alert-success",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 28,
+          "declarations": [
+            [
+              "background",
+              "var(--success-soft)"
+            ],
+            [
+              "color",
+              "var(--success)"
+            ]
+          ]
+        },
+        {
+          "selector": ".alert-success",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 54,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-success)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".alert-warning",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".alert-warning",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 33,
+          "declarations": [
+            [
+              "background",
+              "var(--warning-soft)"
+            ],
+            [
+              "color",
+              "var(--warning)"
+            ]
+          ]
+        },
+        {
+          "selector": ".alert-warning",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 56,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-warning)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".alert-danger",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".alert-danger",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 38,
+          "declarations": [
+            [
+              "background",
+              "var(--danger-soft)"
+            ],
+            [
+              "color",
+              "var(--danger)"
+            ]
+          ]
+        },
+        {
+          "selector": ".alert-danger",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 55,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-danger)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".badge-success",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".badge-success",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 54,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-success)"
+            ]
+          ]
+        },
+        {
+          "selector": ".badge-success",
+          "context": [],
+          "source": "assets/ui/styles/badges.css",
+          "line": 26,
+          "declarations": [
+            [
+              "background",
+              "var(--success-soft)"
+            ],
+            [
+              "color",
+              "var(--success)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".toast-success",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".toast-success",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 54,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-success)"
+            ]
+          ]
+        },
+        {
+          "selector": ".toast-success",
+          "context": [],
+          "source": "assets/ui/styles/toasts.css",
+          "line": 56,
+          "declarations": [
+            [
+              "--toast-color",
+              "var(--success)"
+            ],
+            [
+              "--toast-background",
+              "var(--success-soft)"
+            ],
+            [
+              "--toast-border-strength",
+              "34%"
+            ]
+          ]
+        },
+        {
+          "selector": ".toast-success",
+          "context": [],
+          "source": "assets/ui/styles/toasts.css",
+          "line": 80,
+          "declarations": [
+            [
+              "border-color",
+              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
+            ],
+            [
+              "background",
+              "var(--toast-background)"
+            ],
+            [
+              "color",
+              "var(--toast-color)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".badge-danger",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".badge-danger",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 55,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-danger)"
+            ]
+          ]
+        },
+        {
+          "selector": ".badge-danger",
+          "context": [],
+          "source": "assets/ui/styles/badge-danger.css",
+          "line": 1,
+          "declarations": [
+            [
+              "background",
+              "var(--danger-soft)"
+            ],
+            [
+              "color",
+              "var(--danger)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".toast-danger",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".toast-danger",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 55,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-danger)"
+            ]
+          ]
+        },
+        {
+          "selector": ".toast-danger",
+          "context": [],
+          "source": "assets/ui/styles/toasts.css",
+          "line": 62,
+          "declarations": [
+            [
+              "--toast-color",
+              "var(--danger)"
+            ],
+            [
+              "--toast-background",
+              "var(--danger-soft)"
+            ],
+            [
+              "--toast-border-strength",
+              "38%"
+            ]
+          ]
+        },
+        {
+          "selector": ".toast-danger",
+          "context": [],
+          "source": "assets/ui/styles/toasts.css",
+          "line": 80,
+          "declarations": [
+            [
+              "border-color",
+              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
+            ],
+            [
+              "background",
+              "var(--toast-background)"
+            ],
+            [
+              "color",
+              "var(--toast-color)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".badge-warning",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".badge-warning",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 56,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-warning)"
+            ]
+          ]
+        },
+        {
+          "selector": ".badge-warning",
+          "context": [],
+          "source": "assets/ui/styles/badges.css",
+          "line": 32,
+          "declarations": [
+            [
+              "background",
+              "var(--warning-soft)"
+            ],
+            [
+              "color",
+              "var(--warning)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".toast-warning",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".toast-warning",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 56,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-warning)"
+            ]
+          ]
+        },
+        {
+          "selector": ".toast-warning",
+          "context": [],
+          "source": "assets/ui/styles/toasts.css",
+          "line": 68,
+          "declarations": [
+            [
+              "--toast-color",
+              "var(--warning)"
+            ],
+            [
+              "--toast-background",
+              "var(--warning-soft)"
+            ],
+            [
+              "--toast-border-strength",
+              "34%"
+            ]
+          ]
+        },
+        {
+          "selector": ".toast-warning",
+          "context": [],
+          "source": "assets/ui/styles/toasts.css",
+          "line": 80,
+          "declarations": [
+            [
+              "border-color",
+              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
+            ],
+            [
+              "background",
+              "var(--toast-background)"
+            ],
+            [
+              "color",
+              "var(--toast-color)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".badge-info",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".badge-info",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 58,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-info)"
+            ]
+          ]
+        },
+        {
+          "selector": ".badge-info",
+          "context": [],
+          "source": "assets/ui/styles/badges.css",
+          "line": 21,
+          "declarations": [
+            [
+              "background",
+              "var(--info-soft)"
+            ],
+            [
+              "color",
+              "var(--info)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".toast-info",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".toast-info",
+          "context": [],
+          "source": "assets/ui/styles/alerts.css",
+          "line": 58,
+          "declarations": [
+            [
+              "--status-icon",
+              "var(--status-icon-info)"
+            ]
+          ]
+        },
+        {
+          "selector": ".toast-info",
+          "context": [],
+          "source": "assets/ui/styles/toasts.css",
+          "line": 74,
+          "declarations": [
+            [
+              "--toast-color",
+              "var(--info)"
+            ],
+            [
+              "--toast-background",
+              "var(--info-soft)"
+            ],
+            [
+              "--toast-border-strength",
+              "34%"
+            ]
+          ]
+        },
+        {
+          "selector": ".toast-info",
+          "context": [],
+          "source": "assets/ui/styles/toasts.css",
+          "line": 80,
+          "declarations": [
+            [
+              "border-color",
+              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
+            ],
+            [
+              "background",
+              "var(--toast-background)"
+            ],
+            [
+              "color",
+              "var(--toast-color)"
             ]
           ]
         }
@@ -11531,7 +12544,7 @@
           "selector": ".status-comment-history-diff",
           "context": [],
           "source": "assets/ui/content/styles/discussion-editing.css",
-          "line": 230,
+          "line": 227,
           "declarations": [
             [
               "white-space",
@@ -11589,7 +12602,7 @@
           "selector": ".status-comment-diff-removed",
           "context": [],
           "source": "assets/ui/content/styles/discussion-editing.css",
-          "line": 236,
+          "line": 233,
           "declarations": [
             [
               "text-decoration",
@@ -11640,76 +12653,6 @@
             [
               "text-decoration",
               "none"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".status-comment-like-button",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".status-comment-like-button",
-          "context": [],
-          "source": "assets/ui/content/styles/discussion-editing.css",
-          "line": 193,
-          "declarations": [
-            [
-              "display",
-              "inline-flex"
-            ],
-            [
-              "align-items",
-              "center"
-            ],
-            [
-              "gap",
-              "0.25rem"
-            ],
-            [
-              "color",
-              "var(--muted)"
-            ],
-            [
-              "font-weight",
-              "800"
-            ]
-          ]
-        },
-        {
-          "selector": ".status-comment-like-button",
-          "context": [],
-          "source": "assets/ui/content/styles/discussion-editing.css",
-          "line": 213,
-          "declarations": [
-            [
-              "appearance",
-              "none"
-            ],
-            [
-              "border",
-              "0"
-            ],
-            [
-              "background",
-              "transparent"
-            ],
-            [
-              "padding",
-              "0.125rem 0"
-            ],
-            [
-              "font",
-              "inherit"
-            ],
-            [
-              "font-weight",
-              "800"
-            ],
-            [
-              "cursor",
-              "pointer"
             ]
           ]
         }
@@ -12082,56 +13025,6 @@
       ]
     },
     {
-      "selector": ".toast-icon",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-icon",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 27,
-          "declarations": [
-            [
-              "display",
-              "inline-grid"
-            ],
-            [
-              "width",
-              "var(--toast-action-size)"
-            ],
-            [
-              "height",
-              "var(--toast-action-size)"
-            ],
-            [
-              "place-items",
-              "center"
-            ],
-            [
-              "border-radius",
-              "var(--radius-sm)"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-icon",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 36,
-          "declarations": [
-            [
-              "background",
-              "var(--surface-soft)"
-            ],
-            [
-              "color",
-              "var(--muted)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
       "selector": ".toast-close",
       "context": [],
       "rules": [
@@ -12139,7 +13032,7 @@
           "selector": ".toast-close",
           "context": [],
           "source": "assets/ui/styles/toasts.css",
-          "line": 27,
+          "line": 28,
           "declarations": [
             [
               "display",
@@ -12167,7 +13060,7 @@
           "selector": ".toast-close",
           "context": [],
           "source": "assets/ui/styles/toasts.css",
-          "line": 47,
+          "line": 42,
           "declarations": [
             [
               "border",
@@ -12188,190 +13081,6 @@
             [
               "padding",
               "0"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".toast-success",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-success",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 61,
-          "declarations": [
-            [
-              "--toast-color",
-              "var(--success)"
-            ],
-            [
-              "--toast-background",
-              "var(--success-soft)"
-            ],
-            [
-              "--toast-border-strength",
-              "34%"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-success",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 85,
-          "declarations": [
-            [
-              "border-color",
-              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
-            ],
-            [
-              "background",
-              "var(--toast-background)"
-            ],
-            [
-              "color",
-              "var(--toast-color)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".toast-danger",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-danger",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 67,
-          "declarations": [
-            [
-              "--toast-color",
-              "var(--danger)"
-            ],
-            [
-              "--toast-background",
-              "var(--danger-soft)"
-            ],
-            [
-              "--toast-border-strength",
-              "38%"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-danger",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 85,
-          "declarations": [
-            [
-              "border-color",
-              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
-            ],
-            [
-              "background",
-              "var(--toast-background)"
-            ],
-            [
-              "color",
-              "var(--toast-color)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".toast-warning",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-warning",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 73,
-          "declarations": [
-            [
-              "--toast-color",
-              "var(--warning)"
-            ],
-            [
-              "--toast-background",
-              "var(--warning-soft)"
-            ],
-            [
-              "--toast-border-strength",
-              "34%"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-warning",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 85,
-          "declarations": [
-            [
-              "border-color",
-              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
-            ],
-            [
-              "background",
-              "var(--toast-background)"
-            ],
-            [
-              "color",
-              "var(--toast-color)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".toast-info",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-info",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 79,
-          "declarations": [
-            [
-              "--toast-color",
-              "var(--info)"
-            ],
-            [
-              "--toast-background",
-              "var(--info-soft)"
-            ],
-            [
-              "--toast-border-strength",
-              "34%"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-info",
-          "context": [],
-          "source": "assets/ui/styles/toasts.css",
-          "line": 85,
-          "declarations": [
-            [
-              "border-color",
-              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
-            ],
-            [
-              "background",
-              "var(--toast-background)"
-            ],
-            [
-              "color",
-              "var(--toast-color)"
             ]
           ]
         }
@@ -12423,6 +13132,19 @@
         {
           "name": "appendAvatar",
           "line": 35
+        }
+      ]
+    },
+    {
+      "source": "assets/ui/cache-inspection.js",
+      "methods": [
+        {
+          "name": "hydrate",
+          "line": 33
+        },
+        {
+          "name": "dispose",
+          "line": 37
         }
       ]
     },
@@ -12526,6 +13248,19 @@
         {
           "name": "replaceNode",
           "line": 17
+        }
+      ]
+    },
+    {
+      "source": "assets/ui/dashboard-stats.js",
+      "methods": [
+        {
+          "name": "result",
+          "line": 7
+        },
+        {
+          "name": "init",
+          "line": 15
         }
       ]
     },
@@ -12796,7 +13531,6 @@
     {
       "source": "App/Modules/Social/src/Presentation/Views.php",
       "methods": [
-        "dashboard",
         "sidebar"
       ]
     },
@@ -13569,6 +14303,14 @@
         "manifest": "assets/ui/module.json",
         "routes": [
           "public"
+        ]
+      }
+    ],
+    "assets/ui/styles/dashboard.css": [
+      {
+        "manifest": "assets/ui/module.json",
+        "routes": [
+          "/admin"
         ]
       }
     ],
@@ -14764,6 +15506,22 @@
       "standalone": false
     },
     {
+      "source": "assets/ui/cache-inspection.js",
+      "imports": [
+        "assets/core/lifecycle.js",
+        "assets/core/i18n.js"
+      ],
+      "entries": [
+        {
+          "manifest": "assets/ui/module.json",
+          "routes": [
+            "/admin/cache"
+          ]
+        }
+      ],
+      "standalone": false
+    },
+    {
       "source": "assets/ui/code-copy.js",
       "imports": [
         "assets/core/dom.js",
@@ -14958,6 +15716,22 @@
         "assets/core/lifecycle.js"
       ],
       "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "assets/ui/dashboard-stats.js",
+      "imports": [
+        "assets/ui/ajax-bindings.js",
+        "assets/ui/content-updates.js"
+      ],
+      "entries": [
+        {
+          "manifest": "assets/ui/module.json",
+          "routes": [
+            "/admin"
+          ]
+        }
+      ],
       "standalone": false
     },
     {

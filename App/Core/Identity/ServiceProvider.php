@@ -37,7 +37,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
-        return new \TinyCat\Core\Modules\Contributions(homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.accounts.login', '/login', static function (): void { Pages::homepage(); }, PHP_INT_MAX, static fn (): string => \TinyCat\Support\Localization::t('auth.login_title'), 'login', navigation: false)], settings: Settings::sections(), temporaryDirectories: [
+        return new \TinyCat\Core\Modules\Contributions(statistics: [new \TinyCat\Core\Modules\DashboardStats('identity.accounts', static fn (): string => \TinyCat\Support\Localization::t('admin.stats.users'), Administration::dashboardWidget(...), fields: Administration::statisticsFields(...))], homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.accounts.login', '/login', static function (): void { Pages::homepage(); }, PHP_INT_MAX, static fn (): string => \TinyCat\Support\Localization::t('auth.login_title'), 'login', navigation: false)], settings: Settings::sections(), temporaryDirectories: [
             new \TinyCat\Core\Modules\TemporaryDirectory('avatars', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/avatars'), 10),
         ], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.users.admin', static fn (): array => \TinyCat\Core\Ui\Admin\Definitions::navigation('core.users'), 20)], maintenance: [
             new \TinyCat\Core\Modules\MaintenanceTask('orphan_avatar_files', static fn (int $batch): array => Avatar::cleanupOrphans($batch), 50),

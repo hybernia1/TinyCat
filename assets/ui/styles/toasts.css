@@ -10,6 +10,7 @@
 }
 
 .toast {
+  --status-icon-size: var(--control-height-inline);
   display: grid;
   grid-template-columns: var(--toast-action-size) minmax(0, 1fr) var(--toast-action-size);
   align-items: center;
@@ -24,18 +25,12 @@
   pointer-events: auto;
 }
 
-.toast-icon,
 .toast-close {
   display: inline-grid;
   width: var(--toast-action-size);
   height: var(--toast-action-size);
   place-items: center;
   border-radius: var(--radius-sm);
-}
-
-.toast-icon {
-  background: var(--surface-soft);
-  color: var(--muted);
 }
 
 .toast-body {
@@ -91,14 +86,6 @@
   color: var(--toast-color);
 }
 
-.toast-success .toast-icon,
-.toast-danger .toast-icon,
-.toast-warning .toast-icon,
-.toast-info .toast-icon {
-  background: var(--surface);
-  color: var(--toast-color);
-}
-
 .toast-success .toast-close,
 .toast-danger .toast-close,
 .toast-warning .toast-close,
@@ -111,4 +98,9 @@
     --toast-inset: var(--control-padding-inline);
     --toast-action-size: var(--control-height-touch);
   }
+}
+
+.toast::before {
+  justify-self: center;
+  align-self: center;
 }

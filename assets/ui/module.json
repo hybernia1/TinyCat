@@ -426,5 +426,35 @@
       "assets/ui/styles/information-pages.css"
     ],
     "translations": []
+  },
+  {
+    "routes": [
+      "/admin/cache"
+    ],
+    "entries": [
+      "assets/ui/cache-inspection.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "admin.cache.observing",
+      "admin.cache.no_encoding",
+      "admin.cache.observe_error"
+    ]
+  },
+  {
+    "routes": [
+      "/admin"
+    ],
+    "entries": [
+      "assets/ui/dashboard-stats.js"
+    ],
+    "components": [
+      "ui/dashboard-metrics"
+    ],
+    "styles": [
+      "assets/ui/styles/dashboard.css"
+    ],
+    "translations": []
   }
 ]

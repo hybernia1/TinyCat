@@ -85,11 +85,11 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
                                   {
                                     "tag": "span",
-                                    "attrs": {"class": "table-identity-icon"},
+                                    "attrs": {"class": "avatar avatar-sm"},
                                     "children": [{"icon": "file-text"}]
                                   },
                                   {
@@ -136,7 +136,8 @@
                                       "warning",
                                       {"if": [{"eq": [{"get": "article.state"}, "published"]}, "ok", "neutral"]}
                                     ]
-                                  }
+                                  },
+                                  "text": true
                                 }
                               }
                             ]
@@ -551,13 +552,9 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
-                                  {
-                                    "tag": "span",
-                                    "attrs": {"class": "table-identity-icon"},
-                                    "children": [{"icon": "rss"}]
-                                  },
+                                  {"tag": "span", "attrs": {"class": "avatar avatar-sm"}, "children": [{"icon": "rss"}]},
                                   {
                                     "tag": "div",
                                     "attrs": {"class": "table-identity-body"},
@@ -597,7 +594,8 @@
                                       {"t": "modules.inactive"}
                                     ]
                                   },
-                                  "tone": {"if": [{"get": "source.enabled"}, "ok", "neutral"]}
+                                  "tone": {"if": [{"get": "source.enabled"}, "ok", "neutral"]},
+                                  "text": true
                                 }
                               }
                             ]

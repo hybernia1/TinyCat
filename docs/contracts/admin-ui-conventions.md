@@ -109,7 +109,7 @@ screens scroll the table within its wrapper without widening the document.
   values remain an em dash.
 - Keep row actions in `table-actions`. Use small ghost icon buttons;
   destructive actions use `text-danger` and confirmation.
-- First-column identities use `table-identity`: an optional status or type
+- First-column identities use `identity-row`: an optional status or type
   icon followed by `table-identity-body`. The body stacks the main
   `table-primary` name and `table-meta` details with a shared 4px gap.
   Metadata aligns with the name, not underneath the icon. Keep icons on
@@ -161,7 +161,7 @@ preserves readable identities, data and row actions. Do not replace domain table
 with private mobile cards, a second sorting menu or duplicated row content.
 
 Sorting remains in the original translated column headings, including on mobile.
-Use `ui/sort-heading`, standard `table-identity`, `table-meta` and
+Use `ui/sort-heading`, standard `identity-row`, `table-meta` and
 `table-actions-cell` tokens. Filter and page-size controls use the same shared
 toolbar and popover services as desktop. `tests/frontend/admin-viewport.cjs`
 checks these table and sorting invariants against the actual administration shell.
@@ -505,3 +505,97 @@ paragraphs under individual fields or implement a separate settings help popup.
 Preserve visible validation feedback and operational notices. The general
 [form help contract](ui-conventions.md#form-help) defines keyboard, touch,
 screen-reader descriptions and lifecycle behavior.
+
+
+## Registered dashboard widgets and cache diagnostics
+
+The dashboard host renders one shared responsive grid: one column below 900px,
+two from 900px, using core density, spacing and colours. It contains registered
+widgets only; cache diagnostics have their own `/admin/cache` route and menu item.
+Core/Ui owns widget frames and presentation types, never domain queries.
+
+`DashboardWidget` retains stable ID, lazy callback and order, with optional `type`,
+`title`, `icon` and `visible` metadata. Supported types:
+
+- `metrics`: `items` with `label` and formatted `value`.
+- `list`: `items` with `label`, canonical `url`, optional `detail` and `time`.
+- `status`: `text`, `tone` and optional `detail`.
+- `custom`: owner-rendered component markup within the same frame, preserving the
+  original callable contract for existing modules.
+
+Typed widgets may provide a footer `url`. The owner translates titles, formats
+values, authorizes its data and selects bounded candidates before hydration.
+The host caps displayed items at eight; this does not replace SQL limits.
+Visibility is checked before title/data callbacks. A failing visibility callback
+fails closed; a failing data callback produces a local error widget and leaves
+other widgets usable. Registration never executes these callbacks. No client
+widget registry, hidden dialog, HTML domain resource or persistence table exists.
+
+Identity contributes account statistics, Health supplies its latest stored inspection
+without running a probe, Social supplies five recent comments and Blog five
+recent articles. Inactive owners contribute nothing. The previous aggregate
+Social statistics table and its view-data adapter are retired.
+
+Cache uses the same grid and card primitives. Single state values belong beside
+the heading, especially disabled Memcached and OPcache. Metric and HTTP-header
+blocks use the shared `ui/detail-table` with two cells per row and `scope="row"`.
+Descriptions remain prose. Do not create one-row status tables simply to use a
+table everywhere. `ui/status-badge` supports `text: true` for a visible labelled
+badge: success for enabled, info for deliberately disabled, danger for failure.
+Its existing icon-status default remains unchanged. Table body last-row borders
+are removed from both header and data cells.
+
+The cache page reports configured application storage, runtime Memcached and
+OPcache metrics, release/on-demand assets, CSS/JS/HTML minification, declared
+browser-cache rules and observed HTTP headers. It does not scan cache keys or
+expose private paths. The browser samples the public homepage and its stylesheet
+anonymously, without cookies, using same-origin URLs and rejecting redirects.
+These samples show actual Content-Encoding, Cache-Control, Vary and ETag; they do
+not prove that every URL shares that policy. Requests are deduplicated per view
+and aborted on disposal; errors are distinct from uncompressed responses.
+OPcache reset keeps the existing administrator/CSRF/confirmation flow and returns
+to `/admin/cache`. There is no new bulk cache deletion action.
+
+### Statistics groups
+
+The core `core.statistics` widget hosts `DashboardStats` contributions in a native
+select. Each owner provides an ID, label, lazy count loader and metadata-only
+`fields` callback. The callback maps local metric keys to translation expressions.
+The shared `dashboard.statistics` component lookup compiles this metadata for PHP
+and browser rendering. It must not query data or evaluate the count loader.
+
+`GET /api/site/dashboard-stats?stats=<id>` requires administrator authorization,
+checks owner visibility and loads only the selected group. It returns canonical
+`id`, `items` (`key`, integer `value`) and an optional canonical `url`. No labels,
+component definitions or rendered HTML belong in this response. Inactive owners
+are absent and unknown or hidden groups return 404. The first HTML render uses
+the same metrics component and selects the first visible group by default.
+
+The selector uses the shared AJAX form and auto-submit lifecycle, including stale
+request protection, loading, errors and content disposal. No hidden panels or
+preloaded counts for other groups are created. Without JavaScript its GET form
+continues to work. A failed request preserves the previous metrics and selection.
+
+Dashboard list items may supply `user` (the shared avatar model) or a fallback
+`icon`. Their title and detail occupy the flexible middle column; time is a
+trailing column on desktop and moves beneath the text on mobile. Rows use shared
+spacing tokens and dividers. Statistics presentation metadata may provide an
+`icon`; canonical API counts stay unchanged. Desktop grid siblings stretch to
+matching height within each row. Cache cards use the same grid alignment.
+
+User and bot account tables share `users/identity-row`, owned by core Identity.
+It composes the existing small `ui/avatar`, account status and escaped username
+using table identity primitives. Use canonical `avatar_url` already supplied by
+account resources, without per-row lookups. Server rendering and refreshed JSON
+lists use the same definition. Avatar sizing, fallbacks and updates remain in the
+existing core avatar component; no list-specific avatar CSS is needed.
+
+
+All table state badges include readable text; their severity symbols are supplied
+by shared CSS rather than component SVG markup. The common `identity-row` and
+existing inset variant serve account tables, other admin lists and dashboard
+rows/metrics. Use the existing avatar surface for both account images and
+owner-supplied content symbols. Its shared size derives from title line-height,
+inline-control height and inter-row spacing, so the normal title/state pair and
+symbol scale together. Small/large avatar variants use the same `--avatar-size`
+mechanism. Do not add dashboard-specific or domain-specific icon dimensions.

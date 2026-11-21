@@ -119,7 +119,10 @@
             "tag": "div",
             "attrs": {"class": "cluster"},
             "children": [
-              {"component": "ui/status-badge", "data": {"tone": {"get": "tone"}, "label": {"get": "status_label"}}}
+              {
+                "component": "ui/status-badge",
+                "data": {"tone": {"get": "tone"}, "label": {"get": "status_label"}, "text": true}
+              }
             ]
           },
           {
@@ -189,7 +192,8 @@
                             "tone": {"if": [{"get": "extension"}, "ok", "critical"]},
                             "label": {
                               "if": [{"get": "extension"}, {"t": "common.done"}, {"t": "updates.missing_extensions"}]
-                            }
+                            },
+                            "text": true
                           }
                         },
                         {"tag": "span", "children": ["PHP ", {"get": "_key"}]}
@@ -200,7 +204,10 @@
                     "tag": "li",
                     "attrs": {"class": "result-item"},
                     "children": [
-                      {"component": "ui/status-badge", "data": {"tone": "ok", "label": {"t": "common.done"}}},
+                      {
+                        "component": "ui/status-badge",
+                        "data": {"tone": "ok", "label": {"t": "common.done"}, "text": true}
+                      },
                       " ",
                       {"tag": "span", "children": [{"t": "updates.signed_packages"}]}
                     ]
@@ -209,7 +216,10 @@
                     "tag": "li",
                     "attrs": {"class": "result-item"},
                     "children": [
-                      {"component": "ui/status-badge", "data": {"tone": "ok", "label": {"t": "common.done"}}},
+                      {
+                        "component": "ui/status-badge",
+                        "data": {"tone": "ok", "label": {"t": "common.done"}, "text": true}
+                      },
                       " ",
                       {"tag": "span", "children": [{"t": "updates.automatic_backup"}]}
                     ]
@@ -218,7 +228,10 @@
                     "tag": "li",
                     "attrs": {"class": "result-item"},
                     "children": [
-                      {"component": "ui/status-badge", "data": {"tone": "ok", "label": {"t": "common.done"}}},
+                      {
+                        "component": "ui/status-badge",
+                        "data": {"tone": "ok", "label": {"t": "common.done"}, "text": true}
+                      },
                       " ",
                       {"tag": "span", "children": [{"t": "updates.protected_runtime"}]}
                     ]
@@ -343,8 +356,13 @@
                                   "children": [
                                     {
                                       "tag": "div",
-                                      "attrs": {"class": "table-identity"},
+                                      "attrs": {"class": "identity-row identity-row-inset"},
                                       "children": [
+                                        {
+                                          "tag": "span",
+                                          "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                          "children": [{"icon": "database"}]
+                                        },
                                         {
                                           "tag": "div",
                                           "attrs": {"class": "table-identity-body"},

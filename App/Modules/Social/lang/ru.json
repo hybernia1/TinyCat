@@ -371,7 +371,8 @@
       "likes": "Нравится",
       "comments": "Комментарии",
       "follows": "Подписки",
-      "reports": "Жалобы"
+      "reports": "Жалобы",
+      "content_group": "Контент"
     },
     "table_missing": "Таблица еще не создана."
   },

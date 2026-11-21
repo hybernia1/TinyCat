@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.3.0 - 2026-11-21
+
+- Replace the administration overview with typed, owner-registered dashboard widgets and a shared statistics selector that loads only the selected group.
+- Move cache diagnostics to a dedicated grid showing runtime cache state, asset generation, minification, configured browser policies and anonymously observed HTTP cache/compression headers.
+- Share scalable avatar and content-icon rows across user/bot tables, other administration lists and dashboard widgets; display table states as readable badges.
+- Generate decorative badge, alert and toast symbols through CSS masks from the canonical icon sprite, reducing repeated SVG markup and notification JavaScript.
+- Fix the stylesheet boundary that removed spacing between the homepage feed switch and its first card; remove duplicate discussion-button styling and obsolete dashboard presentation code.
+- Preserve module independence, API authorization, form drafts and notification lifecycle. Introduce no database migration and retain the completed 6.0.10 update baseline.
+
 ## 6.2.0 - 2026-11-20
 
 - Introduce shared UI scale and density tokens for typography, controls, dialogs, pagination and toasts. Use compact, flat administration with a distinct dark navigation panel and accessible light/dark colours.

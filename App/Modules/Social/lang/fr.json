@@ -371,7 +371,8 @@
       "likes": "Goûts",
       "comments": "Commentaires",
       "follows": "Suit",
-      "reports": "Rapports"
+      "reports": "Rapports",
+      "content_group": "Contenu"
     },
     "table_missing": "Le tableau n'a pas encore été créé."
   },

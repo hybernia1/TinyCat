@@ -371,7 +371,8 @@
       "likes": "Gefällt mir",
       "comments": "Kommentare",
       "follows": "Folgt",
-      "reports": "Berichte"
+      "reports": "Berichte",
+      "content_group": "Inhalte"
     },
     "table_missing": "Die Tabelle wurde noch nicht erstellt."
   },

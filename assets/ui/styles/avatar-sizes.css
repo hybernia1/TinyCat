@@ -1,9 +1,7 @@
 .avatar-sm {
-  width: 2.125rem;
-  height: 2.125rem;
+  --avatar-size: 2.125rem;
 }
 
 .avatar-xl {
-  width: 6rem;
-  height: 6rem;
+  --avatar-size: 6rem;
 }

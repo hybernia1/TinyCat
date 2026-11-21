@@ -420,3 +420,22 @@ User preferences such as reduced motion and colour scheme are independent of
 viewport layouts. Touch event handling may differ, but pointer type does not
 select a third layout. Confirm button desktop sizing lives with desktop modal
 styles; no confirm-mobile stylesheet remains.
+
+
+### Status decoration
+
+Severity variants of badges, inline alerts and toasts derive their decorative
+symbol from shared CSS `::before` masks. Their HTML carries variant classes and
+readable text; do not append SVG severity icons or icon wrappers. Info uses
+`info`, success uses `check-circle`, warning uses `alert` and danger uses
+`x-circle`. General state badges use the information variant when no severity applies. Icon-only indicators and
+actual content/action icons keep the shared SVG component where appropriate.
+
+The generated mask section in core UI tokens comes from the canonical sprite
+through `php tools/assets/status-icons.php --write`. The UI contract checks its
+freshness; do not maintain separate SVG paths. The production stylesheet contains
+ordinary CSS and inline SVG masks, with no runtime generation or image fetch.
+Masks use current colour and shared size/spacing tokens. Alert masks stay
+vertically centred within the whole notice, including multiline text.
+Readable text and the existing live-region roles carry accessible meaning;
+pseudo-elements have empty content and convey no extra announcement.

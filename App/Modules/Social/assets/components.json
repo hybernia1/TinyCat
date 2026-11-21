@@ -1030,16 +1030,12 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
                                   {
-                                    "component": "ui/account-status",
-                                    "data": {
-                                      "status": {"if": [{"get": "source.enabled"}, "active", "disabled"]},
-                                      "label": {
-                                        "if": [{"get": "source.enabled"}, {"t": "bots.enabled"}, {"t": "bots.disabled"}]
-                                      }
-                                    }
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "rss"}]
                                   },
                                   {
                                     "tag": "div",
@@ -1049,6 +1045,26 @@
                                         "tag": "strong",
                                         "attrs": {"class": "table-primary", "title": {"get": "source.name"}},
                                         "children": [{"get": "source.name"}]
+                                      },
+                                      {
+                                        "tag": "div",
+                                        "attrs": {"class": "table-meta"},
+                                        "children": [
+                                          {
+                                            "component": "ui/account-status",
+                                            "data": {
+                                              "status": {"if": [{"get": "source.enabled"}, "active", "disabled"]},
+                                              "label": {
+                                                "if": [
+                                                  {"get": "source.enabled"},
+                                                  {"t": "bots.enabled"},
+                                                  {"t": "bots.disabled"}
+                                                ]
+                                              },
+                                              "text": true
+                                            }
+                                          }
+                                        ]
                                       },
                                       {
                                         "tag": "div",
@@ -1379,39 +1395,7 @@
                         "children": [
                           {
                             "tag": "td",
-                            "children": [
-                              {
-                                "tag": "div",
-                                "attrs": {"class": "table-identity"},
-                                "children": [
-                                  {
-                                    "component": "ui/account-status",
-                                    "data": {
-                                      "status": {"get": "account.status"},
-                                      "label": {
-                                        "lookup": {"get": "account.status"},
-                                        "cases": {
-                                          "active": {"t": "users.statuses.active"},
-                                          "waiting": {"t": "users.statuses.waiting"},
-                                          "ban": {"t": "users.statuses.ban"}
-                                        }
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "tag": "div",
-                                    "attrs": {"class": "table-identity-body"},
-                                    "children": [
-                                      {
-                                        "tag": "strong",
-                                        "attrs": {"class": "table-primary", "title": {"get": "account.username"}},
-                                        "children": [{"get": "account.username"}]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
+                            "children": [{"component": "users/identity-row", "data": {"user": {"get": "account"}}}]
                           },
                           {"tag": "td", "children": [{"get": "account.source_count"}]},
                           {"tag": "td", "children": [{"get": "account.post_count"}]},
@@ -1571,8 +1555,13 @@
                           "children": [
                             {
                               "tag": "div",
-                              "attrs": {"class": "table-identity"},
+                              "attrs": {"class": "identity-row identity-row-inset"},
                               "children": [
+                                {
+                                  "tag": "span",
+                                  "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                  "children": [{"icon": "clock"}]
+                                },
                                 {
                                   "tag": "div",
                                   "attrs": {"class": "table-identity-body"},
@@ -1654,7 +1643,8 @@
           "interrupted": {"t": "bots.run_statuses.interrupted"}
         },
         "default": {"get": "status"}
-      }
+      },
+      "text": true
     }
   },
   "bots/posts": {
@@ -1746,8 +1736,13 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "file-text"}]
+                                  },
                                   {
                                     "tag": "div",
                                     "attrs": {"class": "table-identity-body"},
@@ -1792,17 +1787,18 @@
                             "tag": "td",
                             "children": [
                               {
-                                "tag": "span",
-                                "attrs": {"class": "badge"},
-                                "children": [
-                                  {
+                                "component": "ui/status-badge",
+                                "data": {
+                                  "label": {
                                     "if": [
                                       {"get": "post.published"},
                                       {"t": "bots.post_published"},
                                       {"t": "bots.post_scheduled"}
                                     ]
-                                  }
-                                ]
+                                  },
+                                  "tone": {"if": [{"get": "post.published"}, "ok", "warning"]},
+                                  "text": true
+                                }
                               }
                             ]
                           },
@@ -1971,21 +1967,12 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
                                   {
-                                    "component": "ui/account-status",
-                                    "data": {
-                                      "status": {"get": "post.status"},
-                                      "label": {
-                                        "lookup": {"get": "post.status"},
-                                        "cases": {
-                                          "active": {"t": "users.statuses.active"},
-                                          "waiting": {"t": "users.statuses.waiting"},
-                                          "ban": {"t": "users.statuses.ban"}
-                                        }
-                                      }
-                                    }
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "file-text"}]
                                   },
                                   {
                                     "tag": "div",
@@ -2003,6 +1990,27 @@
                                           "title": {"get": "post.username"}
                                         },
                                         "children": [{"get": "post.username"}]
+                                      },
+                                      {
+                                        "tag": "div",
+                                        "attrs": {"class": "table-meta"},
+                                        "children": [
+                                          {
+                                            "component": "ui/account-status",
+                                            "data": {
+                                              "status": {"get": "post.status"},
+                                              "label": {
+                                                "lookup": {"get": "post.status"},
+                                                "cases": {
+                                                  "active": {"t": "users.statuses.active"},
+                                                  "waiting": {"t": "users.statuses.waiting"},
+                                                  "ban": {"t": "users.statuses.ban"}
+                                                }
+                                              },
+                                              "text": true
+                                            }
+                                          }
+                                        ]
                                       }
                                     ]
                                   }
@@ -2617,8 +2625,13 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "shield"}]
+                                  },
                                   {
                                     "tag": "div",
                                     "attrs": {"class": "table-identity-body"},
@@ -2852,8 +2865,13 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "user"}]
+                                  },
                                   {
                                     "tag": "div",
                                     "attrs": {"class": "table-identity-body"},
@@ -3015,7 +3033,8 @@
           "reviewed": {"t": "moderation.report_statuses.reviewed"}
         },
         "default": {"t": "moderation.report_statuses.reviewed"}
-      }
+      },
+      "text": true
     }
   },
   "search/page": {
@@ -3645,7 +3664,6 @@
                         "attrs": {"class": "alert alert-info status-email-notice cluster"},
                         "when": {"get": "email_missing"},
                         "children": [
-                          {"icon": "info"},
                           {
                             "tag": "span",
                             "attrs": {"class": "status-email-notice-copy"},
@@ -3974,136 +3992,6 @@
       "text": {"t": "public.filter_text"}
     },
     "default": {"t": "public.filter_content"}
-  },
-  "site/dashboard": {
-    "tag": "div",
-    "attrs": {"class": "stack stack-gap-14", "data-dashboard": ""},
-    "children": [
-      {"component": "ui/dashboard-overview", "data": {"stats": {"get": "stats"}}},
-      {
-        "component": "ui/admin-list",
-        "data": {
-          "title": {"t": "admin.recent_comments"},
-          "icon": "message-circle",
-          "target_id": "dashboard-comments",
-          "content": {"get": "comments_html"}
-        }
-      }
-    ]
-  },
-  "site/dashboard-comments": {
-    "tag": "div",
-    "children": [
-      {
-        "component": "ui/empty-state",
-        "data": {"label": {"t": "admin.no_recent_comments"}, "icon": "message-circle"},
-        "when": {"not": {"get": "items"}}
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "table-wrap"},
-        "when": {"get": "items"},
-        "children": [
-          {
-            "tag": "table",
-            "attrs": {"class": "table", "id": "dashboard-comments-table"},
-            "children": [
-              {"tag": "caption", "attrs": {"class": "sr-only"}, "children": [{"t": "admin.recent_comments"}]},
-              {
-                "tag": "thead",
-                "children": [
-                  {
-                    "tag": "tr",
-                    "children": [
-                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "admin.stats.comments"}]},
-                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "common.username"}]},
-                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "public.status_title"}]},
-                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "common.created"}]}
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "tbody",
-                "children": [
-                  {
-                    "each": {"get": "items"},
-                    "as": "comment",
-                    "children": [
-                      {
-                        "tag": "tr",
-                        "children": [
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "div",
-                                "attrs": {"class": "table-identity"},
-                                "children": [
-                                  {
-                                    "tag": "div",
-                                    "attrs": {"class": "table-identity-body"},
-                                    "children": [
-                                      {
-                                        "tag": "span",
-                                        "attrs": {"class": "table-primary", "title": {"get": "comment.body"}},
-                                        "children": [{"get": "comment.body"}]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "a",
-                                "attrs": {
-                                  "href": {"get": "comment.author_url"},
-                                  "class": "table-text",
-                                  "title": {"get": "comment.username"}
-                                },
-                                "children": [{"get": "comment.username"}]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "a",
-                                "attrs": {
-                                  "href": {"get": "comment.content_url"},
-                                  "class": "table-text",
-                                  "title": {"or": [{"get": "comment.content_body"}, {"t": "common.open"}]}
-                                },
-                                "children": [{"or": [{"get": "comment.content_body"}, {"t": "common.open"}]}]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "time",
-                                "attrs": {"datetime": {"get": "comment.created_iso"}},
-                                "children": [{"get": "comment.created_label"}]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
   },
   "status/comment-menu": {
     "component": "status/menu",

@@ -464,3 +464,39 @@ core identity rows. Core derives source navigation and cursor links from the sam
 active registrations; no extra endpoint or sidebar registration is necessary.
 For other public pages, `Page::render` accepts `navigation` entries with `label`,
 `icon`, `url`, `active` and renders the same responsive public workspace.
+
+
+### Dashboard widgets
+
+Add `DashboardWidget` entries to the existing `Contributions.widgets` collection.
+No second endpoint, registry or core domain switch is required. For example, a
+shop owner can supply a bounded order list lazily:
+
+```php
+new DashboardWidget(
+    'shop.recent-orders',
+    static fn (): array => DashboardData::recentOrders(limit: 5),
+    order: 40,
+    type: 'list',
+    title: static fn (): string => Localization::t('shop.recent_orders'),
+    icon: 'file-text',
+    visible: static fn (): bool => Access::canViewOrders(),
+)
+```
+
+Here `DashboardData` and `Access` belong to the example shop module. The callback
+returns `['items' => [['label' => '...', 'url' => '/admin/...', 'detail' => '...',
+ 'time' => '...']], 'url' => '/admin/...']`. The owner controls SQL, permissions,
+ordering, formatting and translations; the host controls the frame and responsive
+layout. Do not fetch orders during registration or add shop tables to core.
+Metrics and status widgets use the same registration. The custom type accepts an
+owner component-rendered body where a standard type is insufficient. See the
+[dashboard contract](../contracts/admin-ui-conventions.md#registered-dashboard-widgets-and-cache-diagnostics).
+
+Statistics can instead join the core selector through `Contributions(statistics:
+[new DashboardStats(...)])`. Supply a stable owner-scoped ID, translated group
+label, lazy `load` callback and metadata-only `fields` callback. The loader returns
+`['items' => [['key' => 'orders', 'value' => 12]], 'url' => '/admin/orders']`;
+`fields` returns `['orders' => ['label' => ['t' => 'shop.orders']]]`. Counts stay
+canonical integers; the shared component catalog owns their labels. Registration
+and field metadata must not execute SQL. Add `visible` for narrower authorization.

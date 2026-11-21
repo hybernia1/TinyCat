@@ -2,28 +2,47 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Ui\Admin;
 
-use TinyCat\Support\{Components, Format, Localization};
+use TinyCat\Core\Modules\Registrations;
+use TinyCat\Support\{Components, Localization, Markup};
 
-/** Framework overview plus lazy contributions from active owners. */
+/** The host owns layout and widget types; owners supply authorized data. */
 final class Dashboard
 {
+    /** @return list<array<string, mixed>> */
+    public static function widgets(): array
+    {
+        $result = [];
+        foreach (Registrations::current()->entries->widgets as $widget) {
+            try { if ($widget->visible !== null && !($widget->visible)()) { continue; } }
+            catch (\Throwable) { continue; }
+            $view = ['id' => $widget->id, 'type' => $widget->type, 'title' => $widget->id, 'icon' => $widget->icon];
+            try {
+                if ($widget->title !== null) { $view['title'] = ($widget->title)(); }
+                $data = ($widget->render)();
+                if ($widget->type === 'custom') {
+                    if (!is_string($data)) { throw new \LogicException('Custom widget must render a string.'); }
+                    $view['content'] = new Markup($data);
+                } else {
+                    if (!is_array($data)) { throw new \LogicException('Typed widget must return data.'); }
+                    if (isset($data['items'])) {
+                        if (!is_array($data['items'])) { throw new \LogicException('Widget items must be an array.'); }
+                        $data['items'] = array_slice(array_values($data['items']), 0, 8);
+                    }
+                    $view['data'] = $data;
+                }
+            } catch (\Throwable $error) {
+                error_log('Dashboard widget ' . $widget->id . ': ' . $error->getMessage());
+                $view['type'] = 'status'; $view['data'] = ['text' => Localization::t('common.request_failed'), 'tone' => 'danger'];
+            }
+            $result[] = $view;
+        }
+        return $result;
+    }
+
     public static function respond(): void
     {
         \TinyCat\Core\Identity\Access::require_admin();
-        $stats = [];
-        try { $roles = \TinyCat\Core\Identity\Administration::roleCounts(); }
-        catch (\Throwable) { $roles = array_fill_keys(\TinyCat\Core\Identity\Roles::rolesWith('managed_by_core_admin'), null); }
-        foreach ($roles as $role => $value) {
-            $key = 'users.roles.' . $role;
-            $label = Localization::t($key);
-            $stats[] = ['icon' => 'users', 'label' => $label === $key ? $role : $label, 'value' => $value === null ? '—' : Format::number($value)];
-        }
-        foreach (['notifications' => 'notifications'] as $label => $table) {
-            try { $value = \TinyCat\Database\Connection::count($table); } catch (\Throwable) { $value = null; }
-            $stats[] = ['icon' => 'database', 'label' => Localization::t('admin.stats.' . $label), 'value' => $value === null ? '—' : Format::number($value)];
-        }
-        $content = Components::render('ui/dashboard-overview', ['stats' => $stats]);
-        foreach (\TinyCat\Core\Modules\Registrations::current()->entries->widgets as $widget) { $content .= ($widget->render)(); }
-        \TinyCat\Core\Ui\Page::render(['title' => Localization::t('common.dashboard'), 'current' => '/admin'], Components::render('ui/dashboard', ['content' => new \TinyCat\Support\Markup($content)]));
+        \TinyCat\Http\Request::current()->validated(['stats' => 'string|max:80']);
+        \TinyCat\Core\Ui\Page::render(['title' => Localization::t('common.dashboard'), 'current' => '/admin'], Components::render('ui/dashboard', ['widgets' => self::widgets()]));
     }
 }

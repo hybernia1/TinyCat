@@ -190,13 +190,6 @@
 }
 
 
-.status-comment-like-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--muted);
-  font-weight: 800;
-}
 
 
 .status-comment-like-button .icon {
@@ -211,6 +204,10 @@
 
 
 .status-comment-like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--muted);
   appearance: none;
   border: 0;
   background: transparent;

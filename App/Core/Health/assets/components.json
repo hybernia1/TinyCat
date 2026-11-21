@@ -50,7 +50,8 @@
                           "unknown": {"t": "health.status.unknown"}
                         },
                         "default": {"get": "check.status"}
-                      }
+                      },
+                      "text": true
                     }
                   }
                 ]
@@ -268,7 +269,7 @@
                 "children": [
                   {
                     "component": "ui/status-badge",
-                    "data": {"tone": {"get": "snapshot.status"}, "label": {"get": "status_label"}},
+                    "data": {"tone": {"get": "snapshot.status"}, "label": {"get": "status_label"}, "text": false},
                     "when": {
                       "lookup": {"get": "snapshot.status"},
                       "cases": {"ok": true, "warning": true, "critical": true},
@@ -423,7 +424,11 @@
                             },
                             {
                               "component": "ui/status-badge",
-                              "data": {"tone": {"get": "check.status"}, "label": {"get": "check.status_label"}}
+                              "data": {
+                                "tone": {"get": "check.status"},
+                                "label": {"get": "check.status_label"},
+                                "text": true
+                              }
                             }
                           ]
                         }
@@ -499,8 +504,13 @@
                                   "children": [
                                     {
                                       "tag": "div",
-                                      "attrs": {"class": "table-identity"},
+                                      "attrs": {"class": "identity-row identity-row-inset"},
                                       "children": [
+                                        {
+                                          "tag": "span",
+                                          "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                          "children": [{"icon": "clock"}]
+                                        },
                                         {
                                           "tag": "div",
                                           "attrs": {"class": "table-identity-body"},
@@ -523,7 +533,8 @@
                                       "component": "ui/status-badge",
                                       "data": {
                                         "tone": {"get": "run.health_status"},
-                                        "label": {"get": "run.status_label"}
+                                        "label": {"get": "run.status_label"},
+                                        "text": true
                                       }
                                     },
                                     {"tag": "br", "when": {"get": "run.incomplete"}},

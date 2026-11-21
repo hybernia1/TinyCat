@@ -10,6 +10,22 @@ use TinyCat\Support\Text;
 /** Administrative account policy and writes, independent of HTTP and avatar storage. */
 final class Administration
 {
+    /** @return array<string, mixed> */
+    public static function dashboardWidget(): array
+    {
+        $items = [];
+        foreach (array_intersect_key(self::roleCounts(), array_flip(Roles::rolesWith('managed_by_core_admin'))) as $role => $count) { $items[] = ['key' => $role, 'value' => $count]; }
+        return ['items' => $items, 'url' => '/admin/users'];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    public static function statisticsFields(): array
+    {
+        $fields = [];
+        foreach (Roles::rolesWith('managed_by_core_admin') as $role) { $fields[$role] = ['label' => ['t' => 'users.roles.' . $role], 'icon' => $role === 'admin' ? 'user' : 'users']; }
+        return $fields;
+    }
+
     /** @return array<string, int> */
     public static function roleCounts(): array
     {

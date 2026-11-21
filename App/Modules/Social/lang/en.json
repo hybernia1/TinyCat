@@ -371,7 +371,8 @@
       "likes": "Likes",
       "comments": "Comments",
       "follows": "Follows",
-      "reports": "Reports"
+      "reports": "Reports",
+      "content_group": "Content"
     },
     "table_missing": "The table has not been created yet."
   },

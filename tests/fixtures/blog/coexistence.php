@@ -198,7 +198,9 @@ try {
     $changeModules('tinycat.social', false);
     foreach (['/privacy', '/llms.txt', '/login'] as $path) { [$status] = $request($path); $assert($status === 200, 'Core-only public route: ' . $path); }
     [$status, $html] = $request('/admin', true);
-    $assert($status === 200 && str_contains($html, 'id="dashboard-cache"') && !str_contains($html, 'recent-comments'), 'Core-only dashboard retains technical diagnostics');
+    $assert($status === 200 && str_contains($html, 'data-dashboard-widget="core.statistics"') && !str_contains($html, 'data-dashboard-widget="social.comments"') && !str_contains($html, 'data-dashboard-widget="blog.articles"'), 'Core-only dashboard excludes inactive owner widgets');
+    [$status, $html] = $request('/admin/cache', true);
+    $assert($status === 200 && str_contains($html, 'data-cache-page'), 'Core-only cache page remains available');
     [$status, $html] = $request('/llms-full.txt');
     $assert($status === 200 && !str_contains($html, '## Social'), 'Core-only information excludes inactive owners');
     $changeModules('tinycat.blog', true);

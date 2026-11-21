@@ -11,14 +11,6 @@ use TinyCat\Social\Posts\Tags;
 final class Views
 {
     /** @param array<mixed> $data */
-    public static function dashboard(array $data): string
-    {
-        $model = DashboardViewData::prepare($data);
-        $model['comments_html'] = new \TinyCat\Support\Markup(Components::render('site/dashboard-comments', ['items' => $model['comments']]));
-        return Components::render('site/dashboard', $model);
-    }
-
-    /** @param array<mixed> $data */
     public static function sidebar(array $data = []): string
     {
         return Components::render('site/sidebar', Sidebar::resource($data) + [

@@ -306,7 +306,7 @@ const skippedDetail = T.scheduler.modal(new URL("https://tinycat.test/api/schedu
 check(skippedDetail.textContent.includes("Skipped source") && skippedDetail.textContent.includes("fixture-item-hash"), "Skipped feed diagnostics identify the source and item in the scheduler detail.");
 check(skippedDetail.textContent.includes(T.i18n.t("moderation.messages.blocked_url", { host: "<b>blocked.example</b>" })) && skippedDetail.querySelectorAll("b").length === 0, "Content rejection reasons are localized with parameters and rendered as text.");
 check(schedulerDetail.textContent.includes("<img src=x onerror=bad>") && schedulerDetail.querySelectorAll("img").length === 0, "Scheduler errors render as literal text in the standard detail modal.");
-check(schedulerDetail.textContent.includes("Fixture RSS source") && schedulerDetail.querySelectorAll(".status-indicator-danger").some(indicator => indicator.getAttribute("aria-label") === T.ui.text("bots.run_statuses.interrupted")) && schedulerDetail.textContent.includes("<b>source failure</b>") && schedulerDetail.querySelectorAll("b").length === 0, "The common run modal renders linked source states and escapes their diagnostic errors.");
+check(schedulerDetail.textContent.includes("Fixture RSS source") && schedulerDetail.querySelectorAll(".badge-danger").some(indicator => indicator.textContent === T.ui.text("bots.run_statuses.interrupted") && !indicator.querySelector(".icon")) && schedulerDetail.textContent.includes("<b>source failure</b>") && schedulerDetail.querySelectorAll("b").length === 0, "The common run modal renders linked source states and escapes their diagnostic errors.");
 check(!schedulerRoot.textContent.includes("<img src=x onerror=bad>") && schedulerRoot.querySelector('[data-modal-url="/api/scheduler/runs/1"]'), "Run history opens details lazily through the standard resource modal.");
 {
   const query = document.querySelector, queryAll = document.querySelectorAll;
@@ -439,7 +439,8 @@ for (const active of [true, false]) {
   for (const [component, model, name] of cases) {
     const view = T.components.render(component, model), row = component === 'users/admin-row' ? view : view.querySelector('tbody').querySelector('tr');
     const identity = row.querySelector('td').children[0], indicator = identity.children[0];
-    check(indicator.className.includes('status-indicator-' + tone) && !!indicator.getAttribute('aria-label') && identity.children[1].textContent === name, 'Administration identities show an accessible status icon before their plain name: ' + component);
+    const badge = identity.querySelector('.badge'), meta = identity.querySelector('.table-meta');
+    check(indicator.className.includes('avatar') && identity.querySelector('.table-primary').textContent === name && meta.contains(badge) && badge.className.includes('badge-' + tone) && !badge.querySelector('.icon') && badge.textContent.trim(), 'List identities share an avatar-sized icon and a readable status badge below the name: ' + component);
     check(row.className.includes('table-row-inactive') === !active, 'Inactive rows keep the shared muted appearance: ' + component);
   }
 }

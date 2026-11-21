@@ -451,7 +451,11 @@
   },
   "ui/account-status": {
     "component": "ui/status-badge",
-    "data": {"tone": {"if": [{"eq": [{"get": "status"}, "active"]}, "ok", "critical"]}, "label": {"get": "label"}}
+    "data": {
+      "tone": {"if": [{"eq": [{"get": "status"}, "active"]}, "ok", "critical"]},
+      "label": {"get": "label"},
+      "text": {"get": "text"}
+    }
   },
   "ui/pagination-step": {
     "tag": {"if": [{"get": "step"}, "a", "span"]},
@@ -501,34 +505,55 @@
     "attrs": {
       "class": {
         "if": [
-          {
-            "lookup": {"get": "tone"},
-            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
-            "default": false
-          },
+          {"get": "text"},
           {
             "concat": [
-              "status-indicator status-indicator-",
+              "badge badge-",
               {
                 "lookup": {"get": "tone"},
                 "cases": {
-                  "ok": "success",
                   "success": "success",
-                  "critical": "danger",
+                  "ok": "success",
                   "danger": "danger",
+                  "critical": "danger",
                   "warning": "warning"
                 },
-                "default": ""
+                "default": "info"
               }
             ]
           },
           {
-            "concat": [
-              "badge ",
+            "if": [
               {
                 "lookup": {"get": "tone"},
-                "cases": {"primary": "badge-primary", "running": "badge-primary"},
-                "default": ""
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              },
+              {
+                "concat": [
+                  "status-indicator status-indicator-",
+                  {
+                    "lookup": {"get": "tone"},
+                    "cases": {
+                      "ok": "success",
+                      "success": "success",
+                      "critical": "danger",
+                      "danger": "danger",
+                      "warning": "warning"
+                    },
+                    "default": ""
+                  }
+                ]
+              },
+              {
+                "concat": [
+                  "badge ",
+                  {
+                    "lookup": {"get": "tone"},
+                    "cases": {"primary": "badge-primary", "running": "badge-primary"},
+                    "default": ""
+                  }
+                ]
               }
             ]
           }
@@ -537,9 +562,14 @@
       "role": {
         "if": [
           {
-            "lookup": {"get": "tone"},
-            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
-            "default": false
+            "and": [
+              {"not": {"get": "text"}},
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              }
+            ]
           },
           "img",
           null
@@ -548,9 +578,14 @@
       "aria-label": {
         "if": [
           {
-            "lookup": {"get": "tone"},
-            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
-            "default": false
+            "and": [
+              {"not": {"get": "text"}},
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              }
+            ]
           },
           {"get": "label"},
           null
@@ -559,9 +594,14 @@
       "title": {
         "if": [
           {
-            "lookup": {"get": "tone"},
-            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
-            "default": false
+            "and": [
+              {"not": {"get": "text"}},
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              }
+            ]
           },
           {"get": "label"},
           null
@@ -579,21 +619,31 @@
             "danger": "x-circle",
             "warning": "alert"
           },
-          "default": ""
+          "default": "info"
         },
         "when": {
-          "lookup": {"get": "tone"},
-          "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
-          "default": false
+          "and": [
+            {"not": {"get": "text"}},
+            {
+              "lookup": {"get": "tone"},
+              "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+              "default": false
+            }
+          ]
         }
       },
       {
         "get": "label",
         "when": {
           "not": {
-            "lookup": {"get": "tone"},
-            "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
-            "default": false
+            "and": [
+              {"not": {"get": "text"}},
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              }
+            ]
           }
         }
       }
@@ -626,7 +676,7 @@
     "attrs": {
       "class": {
         "concat": [
-          "alert stack stack-gap-8 alert-",
+          "alert alert-",
           {
             "lookup": {"get": "tone"},
             "cases": {
@@ -643,10 +693,16 @@
       "role": {"lookup": {"get": "tone"}, "cases": {"critical": "alert", "danger": "alert"}, "default": "status"}
     },
     "children": [
-      {"get": "label", "when": {"get": "label"}},
-      {"tag": "strong", "when": {"get": "title"}, "children": [{"get": "title"}]},
-      {"tag": "span", "when": {"get": "description"}, "children": [{"get": "description"}]},
-      {"tag": "small", "when": {"get": "detail"}, "children": [{"get": "detail"}]}
+      {
+        "tag": "div",
+        "attrs": {"class": "stack stack-gap-8 min-w-0"},
+        "children": [
+          {"get": "label", "when": {"get": "label"}},
+          {"tag": "strong", "when": {"get": "title"}, "children": [{"get": "title"}]},
+          {"tag": "span", "when": {"get": "description"}, "children": [{"get": "description"}]},
+          {"tag": "small", "when": {"get": "detail"}, "children": [{"get": "detail"}]}
+        ]
+      }
     ]
   },
   "ui/empty-state": {
@@ -756,138 +812,6 @@
     ]
   },
   "ui/action-label": {"t": "common.action_for", "values": {"action": {"get": "action"}, "context": {"get": "context"}}},
-  "ui/dashboard-cache": {
-    "tag": "div",
-    "attrs": {"class": "stack"},
-    "children": [
-      {
-        "tag": "div",
-        "attrs": {"class": "split"},
-        "children": [
-          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "driver"}]},
-          {
-            "tag": "span",
-            "attrs": {"class": {"if": [{"get": "available"}, "badge badge-primary", "badge badge-danger"]}},
-            "children": [{"if": [{"get": "available"}, {"t": "admin.cache.available"}, {"t": "admin.cache.fallback"}]}]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "grid sm:grid-2 gap-3"},
-        "children": [
-          {
-            "each": {"get": "services"},
-            "as": "service",
-            "children": [
-              {
-                "tag": "section",
-                "attrs": {"class": "stack gap-2"},
-                "children": [
-                  {
-                    "tag": "div",
-                    "attrs": {"class": "split"},
-                    "children": [
-                      {"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"get": "service.label"}]},
-                      {
-                        "tag": "form",
-                        "attrs": {
-                          "method": "post",
-                          "action": "/api/site/cache-resets",
-                          "data-ajax-form": "",
-                          "data-confirm": {"t": "admin.cache.opcache_reset_confirm"},
-                          "data-confirm-title": {"t": "admin.cache.opcache_reset"},
-                          "data-confirm-ok": {"t": "admin.cache.opcache_reset"},
-                          "data-confirm-cancel": {"t": "common.cancel"}
-                        },
-                        "when": {"get": "service.resettable"},
-                        "children": [
-                          {"csrf": true},
-                          {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "reset-opcache"}},
-                          {
-                            "tag": "button",
-                            "attrs": {"class": "btn btn-secondary btn-sm", "type": "submit"},
-                            "children": [
-                              {"icon": "refresh"},
-                              {"tag": "span", "children": [{"t": "admin.cache.opcache_reset"}]}
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "service.status"}]},
-                  {
-                    "tag": "div",
-                    "attrs": {"class": "stack gap-1"},
-                    "when": {"get": "service.details"},
-                    "children": [
-                      {
-                        "each": {"get": "service.details"},
-                        "as": "detail",
-                        "children": [
-                          {"tag": "p", "attrs": {"class": "m-0 table-meta"}, "children": [{"get": "detail"}]}
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "ui/dashboard-overview": {
-    "tag": "section",
-    "attrs": {"class": "card card-body", "aria-label": {"t": "common.dashboard"}},
-    "children": [
-      {
-        "tag": "div",
-        "attrs": {"class": "table-wrap"},
-        "children": [
-          {
-            "tag": "table",
-            "attrs": {"class": "table", "aria-label": {"t": "common.dashboard"}},
-            "children": [
-              {
-                "tag": "tbody",
-                "children": [
-                  {
-                    "each": {"get": "stats"},
-                    "as": "stat",
-                    "children": [
-                      {
-                        "tag": "tr",
-                        "children": [
-                          {
-                            "tag": "th",
-                            "attrs": {"scope": "row"},
-                            "children": [
-                              {
-                                "tag": "span",
-                                "attrs": {"class": "cluster gap-2"},
-                                "children": [
-                                  {"icon": {"get": "stat.icon"}, "when": {"get": "stat.icon"}},
-                                  {"get": "stat.label"}
-                                ]
-                              }
-                            ]
-                          },
-                          {"tag": "td", "children": [{"tag": "strong", "children": [{"get": "stat.value"}]}]}
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
   "publishing/segments": {
     "each": {"get": "segments"},
     "as": "segment",
@@ -1690,8 +1614,19 @@
   },
   "ui/dashboard": {
     "tag": "div",
-    "attrs": {"class": "stack stack-gap-14", "data-dashboard": ""},
-    "children": [{"slot": {"get": "content"}}]
+    "attrs": {"class": "dashboard-grid", "data-dashboard": ""},
+    "children": [
+      {
+        "each": {"get": "widgets"},
+        "as": "widget",
+        "children": {"component": "ui/dashboard-widget", "data": {"widget": {"get": "widget"}}}
+      },
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "admin.widgets.empty"}, "icon": "dashboard"},
+        "when": {"not": {"get": "widgets"}}
+      }
+    ]
   },
   "publishing/comment-history": {
     "tag": "div",
@@ -2440,11 +2375,11 @@
                           "children": [
                             {
                               "tag": "div",
-                              "attrs": {"class": "table-identity"},
+                              "attrs": {"class": "identity-row identity-row-inset"},
                               "children": [
                                 {
                                   "tag": "span",
-                                  "attrs": {"class": "table-identity-icon"},
+                                  "attrs": {"class": "avatar avatar-sm"},
                                   "children": [{"icon": "settings"}]
                                 },
                                 {
@@ -2479,7 +2414,11 @@
                           "children": [
                             {
                               "component": "ui/status-badge",
-                              "data": {"tone": {"get": "item.tone"}, "label": {"get": "item.status_label"}}
+                              "data": {
+                                "tone": {"get": "item.tone"},
+                                "label": {"get": "item.status_label"},
+                                "text": true
+                              }
                             },
                             {
                               "tag": "div",
@@ -2602,6 +2541,424 @@
         ]
       },
       {"tag": "div", "attrs": {"class": "min-w-0"}, "children": [{"slot": {"get": "content"}}]}
+    ]
+  },
+  "ui/cache-services": [
+    {
+      "each": {"get": "services"},
+      "as": "service",
+      "children": {"component": "ui/cache-service", "data": {"service": {"get": "service"}}}
+    }
+  ],
+  "ui/dashboard-widget": {
+    "tag": "section",
+    "attrs": {"class": "card card-body stack stack-gap-12 min-w-0", "data-dashboard-widget": {"get": "widget.id"}},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "cluster"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-base m-0 cluster gap-2"},
+            "children": [{"icon": {"get": "widget.icon"}}, {"get": "widget.title"}]
+          },
+          {
+            "tag": "form",
+            "attrs": {
+              "method": "get",
+              "action": "/admin",
+              "data-dashboard-stats-form": "",
+              "data-ajax-form": "",
+              "data-api-method": "GET",
+              "data-ajax-action": "/api/site/dashboard-stats",
+              "data-ajax-target": "#dashboard-statistics-body",
+              "data-history": "false"
+            },
+            "when": {"get": "widget.data.groups"},
+            "children": [
+              {
+                "tag": "select",
+                "attrs": {
+                  "class": "select",
+                  "name": "stats",
+                  "data-submit-on-change": "",
+                  "aria-label": {"t": "admin.widgets.stats_group"}
+                },
+                "children": [
+                  {
+                    "each": {"get": "widget.data.groups"},
+                    "as": "group",
+                    "children": {
+                      "tag": "option",
+                      "attrs": {
+                        "value": {"get": "group.id"},
+                        "selected": {"if": [{"eq": [{"get": "group.id"}, {"get": "widget.data.id"}]}, true, null]}
+                      },
+                      "children": [{"get": "group.label"}]
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "noscript",
+                "children": [
+                  {
+                    "tag": "button",
+                    "attrs": {"type": "submit", "class": "btn btn-secondary btn-sm"},
+                    "children": [{"t": "common.confirm"}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "id": {"if": [{"get": "widget.data.groups"}, "dashboard-statistics-body", null]},
+          "data-stats-current": {"get": "widget.data.id"}
+        },
+        "when": {"eq": [{"get": "widget.type"}, "metrics"]},
+        "children": [{"component": "ui/dashboard-metrics", "data": {"get": "widget.data"}}]
+      },
+      {
+        "tag": "ul",
+        "attrs": {"class": "result-list", "data-widget-list": ""},
+        "when": {"eq": [{"get": "widget.type"}, "list"]},
+        "children": [
+          {
+            "each": {"get": "widget.data.items"},
+            "as": "entry",
+            "children": {
+              "tag": "li",
+              "attrs": {"data-widget-row": "", "class": "identity-row identity-row-inset"},
+              "children": [
+                {
+                  "component": "ui/avatar",
+                  "data": {
+                    "user": {"get": "entry.user"},
+                    "small": true,
+                    "alt": "",
+                    "fallback_icon": {"or": [{"get": "entry.icon"}, "file-text"]}
+                  }
+                },
+                {
+                  "tag": "div",
+                  "attrs": {"class": "min-w-0"},
+                  "children": [
+                    {
+                      "tag": "a",
+                      "attrs": {"href": {"get": "entry.url"}},
+                      "children": [{"tag": "strong", "children": [{"get": "entry.label"}]}]
+                    },
+                    {
+                      "tag": "p",
+                      "attrs": {"class": "m-0 is-resource-text"},
+                      "when": {"get": "entry.detail"},
+                      "children": [{"get": "entry.detail"}]
+                    }
+                  ]
+                },
+                {
+                  "tag": "small",
+                  "attrs": {"class": "text-muted cluster gap-1", "data-widget-time": ""},
+                  "when": {"get": "entry.time"},
+                  "children": [{"icon": "clock"}, {"get": "entry.time"}]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "common.search_empty"}, "compact": true},
+        "when": {"and": [{"eq": [{"get": "widget.type"}, "list"]}, {"not": {"get": "widget.data.items"}}]}
+      },
+      {
+        "component": "ui/notice",
+        "data": {
+          "detail": {"get": "widget.data.detail"},
+          "tone": {"get": "widget.data.tone"},
+          "title": {"get": "widget.data.text"}
+        },
+        "when": {"eq": [{"get": "widget.type"}, "status"]}
+      },
+      {"slot": {"get": "widget.content"}, "when": {"eq": [{"get": "widget.type"}, "custom"]}},
+      {
+        "tag": "a",
+        "attrs": {"class": "btn btn-ghost btn-sm", "href": {"get": "widget.data.url"}},
+        "when": {"and": [{"get": "widget.data.url"}, {"not": {"eq": [{"get": "widget.type"}, "metrics"]}}]},
+        "children": [{"t": "admin.widgets.more"}, {"icon": "arrow-right"}]
+      }
+    ]
+  },
+  "ui/cache-page": {
+    "tag": "div",
+    "attrs": {"class": "dashboard-grid", "data-cache-page": ""},
+    "children": [
+      {
+        "tag": "section",
+        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-base m-0 cluster gap-2"},
+            "children": [
+              {"icon": "database"},
+              {"get": "application.name"},
+              {
+                "component": "ui/status-badge",
+                "data": {"label": {"get": "application.badge_label"}, "tone": {"get": "application.tone"}, "text": true}
+              }
+            ]
+          },
+          {"tag": "strong", "children": [{"get": "application.value"}]},
+          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "application.description"}]}
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-base m-0 cluster gap-2"},
+            "children": [{"icon": "code"}, {"get": "assets.name"}]
+          },
+          {"tag": "span", "attrs": {"class": "text-muted"}, "children": [{"get": "assets.mode"}]},
+          {"component": "ui/detail-table", "data": {"title": {"get": "assets.name"}, "rows": {"get": "assets.rows"}}},
+          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "assets.description"}]}
+        ]
+      },
+      {"slot": {"get": "services"}},
+      {
+        "each": {"get": "observations"},
+        "as": "observation",
+        "children": {
+          "tag": "section",
+          "attrs": {
+            "class": "card card-body stack stack-gap-12 min-w-0",
+            "data-cache-probe-url": {"get": "observation.url"}
+          },
+          "children": [
+            {
+              "tag": "h2",
+              "attrs": {"class": "text-base m-0 cluster gap-2"},
+              "children": [
+                {"icon": "globe"},
+                "HTTP · ",
+                {"get": "observation.label"},
+                {
+                  "component": "ui/help",
+                  "data": {"text": {"t": "admin.cache.http_help"}, "label": {"t": "admin.cache.http"}}
+                }
+              ]
+            },
+            {
+              "component": "ui/detail-table",
+              "data": {"title": {"get": "observation.label"}, "rows": {"get": "observation.rows"}}
+            }
+          ]
+        }
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0 grid-span-full"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-base m-0 cluster gap-2"},
+            "children": [{"icon": "monitor"}, {"get": "browser.name"}]
+          },
+          {"component": "ui/detail-table", "data": {"title": {"get": "browser.name"}, "rows": {"get": "browser.rows"}}},
+          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "browser.description"}]}
+        ]
+      }
+    ]
+  },
+  "ui/cache-service": {
+    "tag": "section",
+    "attrs": {"class": "card card-body stack stack-gap-12 min-w-0"},
+    "children": [
+      {
+        "tag": "h2",
+        "attrs": {"class": "text-base m-0 cluster gap-2"},
+        "children": [
+          {"icon": {"get": "service.icon"}},
+          {"get": "service.label"},
+          {
+            "component": "ui/status-badge",
+            "data": {"label": {"get": "service.badge_label"}, "tone": {"get": "service.tone"}, "text": true}
+          }
+        ]
+      },
+      {
+        "component": "ui/detail-table",
+        "data": {"title": {"get": "service.label"}, "rows": {"get": "service.rows"}},
+        "when": {"get": "service.rows"}
+      },
+      {
+        "component": "ui/notice",
+        "data": {"label": {"get": "service.status"}, "tone": "danger"},
+        "when": {"get": "service.issue"}
+      },
+      {
+        "tag": "form",
+        "attrs": {
+          "method": "post",
+          "action": "/api/site/cache-resets",
+          "data-ajax-form": "",
+          "data-confirm": {"t": "admin.cache.opcache_reset_confirm"},
+          "data-confirm-title": {"t": "admin.cache.opcache_reset"},
+          "data-confirm-ok": {"t": "admin.cache.opcache_reset"},
+          "data-confirm-cancel": {"t": "common.cancel"}
+        },
+        "when": {"get": "service.resettable"},
+        "children": [
+          {"csrf": true},
+          {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "reset-opcache"}},
+          {
+            "tag": "button",
+            "attrs": {"class": "btn btn-secondary btn-sm", "type": "submit"},
+            "children": [{"icon": "refresh"}, {"tag": "span", "children": [{"t": "admin.cache.opcache_reset"}]}]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/detail-table": {
+    "tag": "div",
+    "attrs": {"class": "table-wrap"},
+    "children": [
+      {
+        "tag": "table",
+        "attrs": {"class": "table", "aria-label": {"get": "title"}},
+        "children": [
+          {
+            "tag": "tbody",
+            "children": [
+              {
+                "each": {"get": "rows"},
+                "as": "row",
+                "children": {
+                  "tag": "tr",
+                  "children": [
+                    {"tag": "th", "attrs": {"scope": "row"}, "children": [{"get": "row.label"}]},
+                    {
+                      "tag": "td",
+                      "attrs": {"class": "is-resource-text"},
+                      "children": [
+                        {
+                          "component": "ui/status-badge",
+                          "data": {"label": {"get": "row.value"}, "tone": {"get": "row.tone"}, "text": true},
+                          "when": {"get": "row.badge"}
+                        },
+                        {
+                          "tag": "span",
+                          "attrs": {"get": "row.attributes"},
+                          "when": {"not": {"get": "row.badge"}},
+                          "children": [{"get": "row.value"}]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/dashboard-metrics": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-12"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "grid", "data-widget-metrics": ""},
+        "children": [
+          {
+            "each": {"get": "items"},
+            "as": "metric",
+            "children": {
+              "tag": "div",
+              "attrs": {"data-widget-metric": "", "class": "identity-row identity-row-inset"},
+              "children": [
+                {
+                  "tag": "span",
+                  "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                  "children": [
+                    {
+                      "icon": {
+                        "or": [
+                          {"get": "metric.icon"},
+                          {
+                            "lookup": {"get": "metric.key"},
+                            "default": "chart",
+                            "catalog": "dashboard.statistics",
+                            "field": "icon"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attrs": {"class": "stack stack-gap-4 min-w-0"},
+                  "children": [
+                    {
+                      "tag": "span",
+                      "attrs": {"class": "text-muted"},
+                      "children": [
+                        {
+                          "or": [
+                            {"get": "metric.label"},
+                            {
+                              "lookup": {"get": "metric.key"},
+                              "default": "",
+                              "catalog": "dashboard.statistics",
+                              "field": "label"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "strong",
+                      "attrs": {"class": "text-xl"},
+                      "children": [
+                        {
+                          "if": [
+                            {"get": "metric.display_value"},
+                            {"get": "metric.display_value"},
+                            {"get": "metric.value"}
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "common.search_empty"}, "compact": true},
+        "when": {"not": {"get": "items"}}
+      },
+      {
+        "tag": "a",
+        "attrs": {"class": "btn btn-ghost btn-sm", "href": {"get": "url"}},
+        "when": {"get": "url"},
+        "children": [{"t": "admin.widgets.more"}, {"icon": "arrow-right"}]
+      }
     ]
   }
 }

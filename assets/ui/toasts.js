@@ -23,21 +23,6 @@ import "../core/lifecycle.js";
     stack.style.transform = "translate(" + Math.round(x) + "px, " + Math.round(y) + "px)";
     stack.style.maxWidth = "calc(" + Math.max(0, viewport.width) + "px - var(--toast-inset) * 2)";
   }
-  function toastIconName(type) {
-    if (type === "success") {
-      return "check-circle";
-    }
-
-    if (type === "danger") {
-      return "x-circle";
-    }
-
-    if (type === "warning") {
-      return "alert";
-    }
-
-    return "info";
-  }
   function normalizeToastType(type) {
     type = String(type).toLowerCase();
 
@@ -46,15 +31,6 @@ import "../core/lifecycle.js";
     }
 
     return ["success", "danger", "warning", "info"].indexOf(type) === -1 ? "info" : type;
-  }
-  function createToastIcon(type) {
-    var icon = document.createElement("span");
-
-    icon.className = "toast-icon";
-    icon.setAttribute("aria-hidden", "true");
-    icon.appendChild(TinyCat.icons.create(toastIconName(type)));
-
-    return icon;
   }
   TinyCat.toasts.show = function (message, type, timeout) {
     if (!String(message || "").trim()) return null;
@@ -83,7 +59,6 @@ import "../core/lifecycle.js";
     close.setAttribute("aria-label", uiText("close", "Close"));
     close.appendChild(TinyCat.icons.create("close"));
 
-    toast.appendChild(createToastIcon(normalizedType));
     toast.appendChild(body);
     toast.appendChild(close);
     stack.appendChild(toast);

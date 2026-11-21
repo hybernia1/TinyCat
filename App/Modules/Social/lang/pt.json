@@ -371,7 +371,8 @@
       "likes": "Curtidas",
       "comments": "Comentários",
       "follows": "Segue",
-      "reports": "Relatórios"
+      "reports": "Relatórios",
+      "content_group": "Conteúdo"
     },
     "table_missing": "A tabela ainda não foi criada."
   },
