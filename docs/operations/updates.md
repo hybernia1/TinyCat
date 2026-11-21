@@ -85,10 +85,13 @@ plan removes the obsolete inline-link hover stylesheet.
 
 Build production update and installation packages with `--assembly=platform --both`.
 Verify the exact signed update with the artifact preflight and representative
-6.0.10, 6.0.11, 6.1.4, 6.2.0 and 6.3.0 update/rollback rehearsals using
-`--platform-baseline --direct-web --cached-autoload`. Rehearse the extracted fresh
-installer against an isolated MySQL database. The development Blog module remains
-excluded from production distributions.
+6.0.10, 6.0.11, 6.1.4, 6.2.0 and 6.3.0 production update/rollback rehearsals using
+`--direct-web --cached-autoload`. Rehearse the extracted fresh installer against
+an isolated MySQL database. The development Blog module remains excluded from
+production distributions. A baseline created with `--platform-baseline` can
+include Blog; it requires a development update assembly retaining that owner.
+The production package must be refused for such a baseline rather than removing
+its installed owner or data.
 
 ## Upgrading to 6.2.0
 
