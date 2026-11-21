@@ -11,15 +11,24 @@ if (PHP_SAPI !== 'cli') {
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
-$options = getopt('', ['artifact::']);
+$options = getopt('', ['artifact::', 'product:', 'fresh-install']);
 $artifact = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
+$product = (string) ($options['product'] ?? 'tinycat.social');
+$freshInstall = array_key_exists('fresh-install', $options);
 
 if (!str_starts_with($artifact, DIRECTORY_SEPARATOR) && preg_match('~^[A-Za-z]:[\\\\/]~', $artifact) !== 1) {
     $artifact = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $artifact);
 }
 
-$manifestPath = $artifact . DIRECTORY_SEPARATOR . 'tinycat-update.json';
-$signaturePath = $artifact . DIRECTORY_SEPARATOR . 'tinycat-update.sig';
+$suffix = $freshInstall ? '-install' : '-update';
+$matches = [];
+foreach (glob($artifact . '/*' . $suffix . '.json') ?: [] as $file) {
+    $candidate = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
+    if (($candidate['distribution']['product'] ?? '') === $product) { $matches[] = $file; }
+}
+if (count($matches) !== 1) { throw new RuntimeException('Expected exactly one artifact for the requested product and kind.'); }
+$manifestPath = $matches[0];
+$signaturePath = substr($manifestPath, 0, -5) . '.sig';
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/artifact-preflight-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . DIRECTORY_SEPARATOR . 'install';
 $failures = [];
@@ -71,7 +80,8 @@ try {
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
     $packageName = basename((string) ($manifest['package'] ?? ''));
     $packagePath = $artifact . DIRECTORY_SEPARATOR . $packageName;
-    $assert($packageName === 'tinycat-' . $version . '.zip' && is_file($packagePath), 'The versioned package is present.');
+    $stem = (string) ($manifest['distribution']['artifact'] ?? '');
+    $assert($packageName === $stem . '-' . $version . ($freshInstall ? '-install' : '') . '.zip' && is_file($packagePath), 'The versioned product package is present.');
     $assert(($manifest['version'] ?? null) === $version, 'Manifest targets the current version.');
     define('TINYCAT', true);
     require_once $root . '/App/Core/Runtime/autoload.php';
@@ -85,11 +95,12 @@ try {
 
     $verifyOutput = [];
     exec(
-        escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/release/verify-update.php') . ' ' . escapeshellarg($artifact) . ' 2>&1',
+        escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/release/verify-update.php') . ' ' . escapeshellarg($artifact) . ' --product=' . escapeshellarg($product) . ($freshInstall ? ' --fresh-install' : '') . ' 2>&1',
         $verifyOutput,
         $verifyExit
     );
     $assert($verifyExit === 0, 'Pinned release key verifies manifest and package: ' . implode(' ', $verifyOutput));
+    if ($verifyExit !== 0) { throw new RuntimeException('Refusing to extract an unverified artifact.'); }
 
     if (!mkdir($installRoot, 0775, true) && !is_dir($installRoot)) {
         throw new RuntimeException('Unable to create artifact extraction directory.');

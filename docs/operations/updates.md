@@ -1083,6 +1083,10 @@ php tools/release/verify-update.php .work/releases/release-X.Y.Z/core/update --p
 php tools/release/verify-update.php .work/releases/release-X.Y.Z/core/install --product=tinycat.core --fresh-install
 php tools/release/verify-update.php .work/releases/release-X.Y.Z/social/update
 php tools/release/verify-update.php .work/releases/release-X.Y.Z/social/install --fresh-install
+php tools/release/artifact-preflight.php --artifact=.work/releases/release-X.Y.Z/core/update --product=tinycat.core
+php tools/release/artifact-preflight.php --artifact=.work/releases/release-X.Y.Z/core/install --product=tinycat.core --fresh-install
+php tools/release/artifact-preflight.php --artifact=.work/releases/release-X.Y.Z/social/update
+php tools/release/artifact-preflight.php --artifact=.work/releases/release-X.Y.Z/social/install --fresh-install
 ```
 
 Publish all twelve ZIP/JSON/SIG files in the same matching release. Core files use

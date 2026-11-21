@@ -231,7 +231,7 @@ Tests and development tools are excluded from signed production packages.
 - `App/Core/Updates/` contains signed application updates and the migration registry.
 - Other `App/` directories contain domain modules and shared infrastructure.
 - Module page handlers live under `App/Modules/<Name>/src/`; private templates and partials live in `App/Modules/<Name>/templates/`. Core services use `App/Core/<Name>/`.
-- `assets/` contains source CSS, JavaScript, the SVG icon sprite, shared UI definitions and module-owned client manifests.
+- `App/Core/Ui/assets/` contains shared UI sources; individual core functions, modules and themes own their remaining assets. Root `assets/build/` contains generated public outputs only.
 - `App/Modules/<Name>/lang/<locale>.json` contains module-owned translations; owners declare server-only email templates through `resources.emails`. `lang/<locale>.json` declares language names.
 - Module manifests explicitly declare JavaScript translation dependencies; component definitions declare theirs through static `t` references. Release builds emit hashed page catalogs and OPcache-compatible PHP catalogs in `App/Core/Support/compiled/`.
 - `storage/` contains private runtime state and generated asset caches.

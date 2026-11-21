@@ -97,66 +97,72 @@ try {
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     \TinyCat\Core\Installation\Installer::create_tables();
     $assert(\TinyCat\Core\Installation\Installer::missing_tables() === [], 'Fresh installer creates every required table.');
-    $tagIndexColumns = static function () use ($database): array {
-        $columns = [];
-        foreach ($database->query('SHOW INDEX FROM social_post_tags')->fetchAll(PDO::FETCH_ASSOC) as $index) {
-            if ($index['Key_name'] === 'content_tags_term_index') {
-                $columns[(int) $index['Seq_in_index']] = (string) $index['Column_name'];
+    $hasSocial = \TinyCat\Core\Modules\Resources::catalog()->has('tinycat.social');
+    if ($hasSocial) {
+        $tagIndexColumns = static function () use ($database): array {
+            $columns = [];
+            foreach ($database->query('SHOW INDEX FROM social_post_tags')->fetchAll(PDO::FETCH_ASSOC) as $index) {
+                if ($index['Key_name'] === 'content_tags_term_index') {
+                    $columns[(int) $index['Seq_in_index']] = (string) $index['Column_name'];
+                }
             }
-        }
-        ksort($columns);
-        return array_values($columns);
-    };
-    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Fresh installation creates the covering tag archive index.');
-    // Historical migrations run before domain adoption in the update rehearsal.
-    // Fresh-schema repair must use the owner of the current relation table.
-    $tagIndexMigration = \TinyCat\Social\Posts\Schema::ensureTagIndex(...);
-    $tagIndexMigration($database);
-    $tagIndexMigration($database);
-    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Tag index repair is idempotent on the fresh schema.');
-    // Keep the term foreign key supported while simulating a legacy missing index.
-    $database->exec('ALTER TABLE social_post_tags ADD INDEX tag_test_fk (term_id), DROP INDEX content_tags_term_index');
-    $tagIndexMigration($database);
-    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Schema repair restores a missing tag archive index.');
-    $database->exec('ALTER TABLE social_post_tags DROP INDEX content_tags_term_index, ADD INDEX content_tags_term_index (content_id, term_id)');
-    $tagIndexMigration($database);
-    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Schema repair corrects the tag index column order.');
-    $database->exec('ALTER TABLE social_post_tags DROP INDEX content_tags_term_index');
-    \TinyCat\Core\Installation\Installer::create_tables();
-    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Restarted installation also restores a missing tag archive index.');
-    $database->exec('ALTER TABLE social_post_tags DROP INDEX tag_test_fk');
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
-        'Fresh installer does not create the obsolete profile social_links table.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'social_posts' AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
-        'Fresh installer does not create the redundant social_posts creation timestamp.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('social_post_images', 'social_post_likes', 'social_comment_likes') AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
-        'Fresh installer does not create redundant relation creation timestamps.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'social_links' AND COLUMN_NAME = 'embed_url'")->fetchColumn() === 0,
-        'Fresh installer does not create the redundant link embed URL.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'email_templates'")->fetchColumn() === 0,
-        'Fresh installer does not create the redundant email template table.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME IN ('last_login_at', 'last_seen_at')")->fetchColumn() === 0,
-        'Fresh installer does not create activity timestamps.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_followers' AND INDEX_NAME = 'user_followers_follower_recent_index'")->fetchColumn() === 3,
-        'Fresh installer creates the recent-followers index.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_followers' AND INDEX_NAME = 'user_followers_follower_index'")->fetchColumn() === 0,
-        'Fresh installer omits the obsolete followers index.'
-    );
+            ksort($columns);
+            return array_values($columns);
+        };
+        $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Fresh installation creates the covering tag archive index.');
+        // Historical migrations run before domain adoption in the update rehearsal.
+        // Fresh-schema repair must use the owner of the current relation table.
+        $tagIndexMigration = \TinyCat\Social\Posts\Schema::ensureTagIndex(...);
+        $tagIndexMigration($database);
+        $tagIndexMigration($database);
+        $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Tag index repair is idempotent on the fresh schema.');
+        // Keep the term foreign key supported while simulating a legacy missing index.
+        $database->exec('ALTER TABLE social_post_tags ADD INDEX tag_test_fk (term_id), DROP INDEX content_tags_term_index');
+        $tagIndexMigration($database);
+        $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Schema repair restores a missing tag archive index.');
+        $database->exec('ALTER TABLE social_post_tags DROP INDEX content_tags_term_index, ADD INDEX content_tags_term_index (content_id, term_id)');
+        $tagIndexMigration($database);
+        $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Schema repair corrects the tag index column order.');
+        $database->exec('ALTER TABLE social_post_tags DROP INDEX content_tags_term_index');
+        \TinyCat\Core\Installation\Installer::create_tables();
+        $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Restarted installation also restores a missing tag archive index.');
+        $database->exec('ALTER TABLE social_post_tags DROP INDEX tag_test_fk');
+        $assert(
+            (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
+            'Fresh installer does not create the obsolete profile social_links table.'
+        );
+        $assert(
+            (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'social_posts' AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
+            'Fresh installer does not create the redundant social_posts creation timestamp.'
+        );
+        $assert(
+            (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('social_post_images', 'social_post_likes', 'social_comment_likes') AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
+            'Fresh installer does not create redundant relation creation timestamps.'
+        );
+        $assert(
+            (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'social_links' AND COLUMN_NAME = 'embed_url'")->fetchColumn() === 0,
+            'Fresh installer does not create the redundant link embed URL.'
+        );
+        $assert(
+            (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'email_templates'")->fetchColumn() === 0,
+            'Fresh installer does not create the redundant email template table.'
+        );
+        $assert(
+            (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME IN ('last_login_at', 'last_seen_at')")->fetchColumn() === 0,
+            'Fresh installer does not create activity timestamps.'
+        );
+        $assert(
+            (int) $database->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_followers' AND INDEX_NAME = 'user_followers_follower_recent_index'")->fetchColumn() === 3,
+            'Fresh installer creates the recent-followers index.'
+        );
+        $assert(
+            (int) $database->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_followers' AND INDEX_NAME = 'user_followers_follower_index'")->fetchColumn() === 0,
+            'Fresh installer omits the obsolete followers index.'
+        );
+    } else {
+        $assert((int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE 'social_%'")->fetchColumn() === 0, 'Core installation creates no Social tables.');
+        $assert(!class_exists(\TinyCat\Social\Posts\Schema::class, false), 'Core installation does not load Social schema code.');
+    }
     $firstTableCount = (int) $database->query('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()')->fetchColumn();
 
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set(new PDO(
@@ -209,17 +215,20 @@ try {
     $assert(($status['account_ready'] ?? false) === true, 'Installed database reports an active account.');
     $assert(($status['ready'] ?? false) === true, 'Installed database is application-ready.');
 
-    $recentIndex = static fn (): array => array_column(\TinyCat\Database\Connection::all(
-        "SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='social_comments' AND INDEX_NAME='content_comments_recent_index' ORDER BY SEQ_IN_INDEX"
-    ), 'COLUMN_NAME');
-    $assert($recentIndex() === ['created_at', 'id'], 'Fresh installs index the latest comments in display order.');
-    \TinyCat\Database\Connection::exec('ALTER TABLE social_comments DROP INDEX content_comments_recent_index');
-    $indexRecentComments = require $migrationRoot . '/migrations/20261026_001_recent_comments_index.php';
-    $database->exec('ALTER TABLE social_comments RENAME TO content_comments');
-    $indexRecentComments(\TinyCat\Database\Connection::get());
-    $indexRecentComments(\TinyCat\Database\Connection::get());
-    $database->exec('ALTER TABLE content_comments RENAME TO social_comments');
-    $assert($recentIndex() === ['created_at', 'id'], 'Recent-comments migration is repeatable on existing installations.');
+    if ($hasSocial) {
+        $recentIndex = static fn (): array => array_column(\TinyCat\Database\Connection::all(
+            "SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='social_comments' AND INDEX_NAME='content_comments_recent_index' ORDER BY SEQ_IN_INDEX"
+        ), 'COLUMN_NAME');
+        $assert($recentIndex() === ['created_at', 'id'], 'Fresh installs index the latest comments in display order.');
+        \TinyCat\Database\Connection::exec('ALTER TABLE social_comments DROP INDEX content_comments_recent_index');
+        $indexRecentComments = require $migrationRoot . '/migrations/20261026_001_recent_comments_index.php';
+        $database->exec('ALTER TABLE social_comments RENAME TO content_comments');
+        $indexRecentComments(\TinyCat\Database\Connection::get());
+        $indexRecentComments(\TinyCat\Database\Connection::get());
+        $database->exec('ALTER TABLE content_comments RENAME TO social_comments');
+        $assert($recentIndex() === ['created_at', 'id'], 'Recent-comments migration is repeatable on existing installations.');
+
+    }
 
     $searchIndex = static fn (): array => array_column(\TinyCat\Database\Connection::all(
         "SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users' AND INDEX_NAME='users_status_username_index' ORDER BY SEQ_IN_INDEX"
@@ -231,105 +240,110 @@ try {
     $indexUserSearch(\TinyCat\Database\Connection::get());
     $assert($searchIndex() === ['status', 'username', 'id'], 'User-search migration is repeatable on existing installations.');
 
-    $botId = (int) \TinyCat\Database\Connection::insert('users', [
-        'username' => 'preserved_feedbot',
-        'role' => 'bot',
-        'status' => 'active',
-        'locale' => 'en',
-        'bio' => '',
-    ]);
-    $feedHash = \TinyCat\Social\Bots\Importer::feedSourceHash('https://93.184.216.34/feed');
-    $sourceId = (int) \TinyCat\Database\Connection::insert('bot_sources', [
-        'bot_user_id' => $botId,
-        'name' => 'Preserved source',
-        'feed_url' => 'https://93.184.216.34/feed',
-        'feed_hash' => $feedHash,
-        'post_template' => \TinyCat\Social\Bots\Importer::defaultSourceTemplate(),
-        'next_run_at' => date('Y-m-d H:i:s', time() + 86400),
-    ]);
-    $historyHash = hash('sha256', 'existing-item');
-    \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => $botId, 'feed_hash' => $feedHash, 'item_hash' => $historyHash]);
-    \TinyCat\Database\Connection::insert('bot_source_runs', ['source_id' => $sourceId, 'status' => 'imported', 'started_at' => \TinyCat\Support\Dates::dateDb(), 'items_seen' => 1]);
+    if ($hasSocial) {
+        $botId = (int) \TinyCat\Database\Connection::insert('users', [
+            'username' => 'preserved_feedbot',
+            'role' => 'bot',
+            'status' => 'active',
+            'locale' => 'en',
+            'bio' => '',
+        ]);
+        $feedHash = \TinyCat\Social\Bots\Importer::feedSourceHash('https://93.184.216.34/feed');
+        $sourceId = (int) \TinyCat\Database\Connection::insert('bot_sources', [
+            'bot_user_id' => $botId,
+            'name' => 'Preserved source',
+            'feed_url' => 'https://93.184.216.34/feed',
+            'feed_hash' => $feedHash,
+            'post_template' => \TinyCat\Social\Bots\Importer::defaultSourceTemplate(),
+            'next_run_at' => date('Y-m-d H:i:s', time() + 86400),
+        ]);
+        $historyHash = hash('sha256', 'existing-item');
+        \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => $botId, 'feed_hash' => $feedHash, 'item_hash' => $historyHash]);
+        \TinyCat\Database\Connection::insert('bot_source_runs', ['source_id' => $sourceId, 'status' => 'imported', 'started_at' => \TinyCat\Support\Dates::dateDb(), 'items_seen' => 1]);
 
-    // Re-running the current installer must preserve live owner data.
-    \TinyCat\Core\Installation\Installer::create_tables();
-    $assert(\TinyCat\Social\Bots\Administration::accountById($botId)['username'] === 'preserved_feedbot', 'Current schema synchronization preserves the bot account and ID.');
-    $assert(\TinyCat\Social\Bots\Importer::findSource($sourceId)['feed_hash'] === $feedHash, 'Current schema synchronization preserves source identity and scheduling.');
-    $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_source_runs WHERE source_id = ?', [$sourceId]) === 1, 'Current schema synchronization preserves run history.');
-    $knownHashes = (new ReflectionMethod(\TinyCat\Social\Bots\FeedStore::class, 'feedHistoryHashes'))->invoke(null, $botId, $feedHash, [$historyHash]);
-    $assert(isset($knownHashes[$historyHash]), 'Current schema synchronization preserves duplicate protection.');
-    $feedTask = \TinyCat\Social\Bots\Importer::scheduledTasks()['feeds']['runner'];
-    $feedResult = $feedTask(['options' => ['bot_limit' => 20]]);
-    $assert($feedResult['ok'] && $feedResult['count'] === 0, 'Built-in scheduler respects a future source schedule.');
+        // Re-running the current installer must preserve live owner data.
+        \TinyCat\Core\Installation\Installer::create_tables();
+        $assert(\TinyCat\Social\Bots\Administration::accountById($botId)['username'] === 'preserved_feedbot', 'Current schema synchronization preserves the bot account and ID.');
+        $assert(\TinyCat\Social\Bots\Importer::findSource($sourceId)['feed_hash'] === $feedHash, 'Current schema synchronization preserves source identity and scheduling.');
+        $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_source_runs WHERE source_id = ?', [$sourceId]) === 1, 'Current schema synchronization preserves run history.');
+        $knownHashes = (new ReflectionMethod(\TinyCat\Social\Bots\FeedStore::class, 'feedHistoryHashes'))->invoke(null, $botId, $feedHash, [$historyHash]);
+        $assert(isset($knownHashes[$historyHash]), 'Current schema synchronization preserves duplicate protection.');
+        $feedTask = \TinyCat\Social\Bots\Importer::scheduledTasks()['feeds']['runner'];
+        $feedResult = $feedTask(['options' => ['bot_limit' => 20]]);
+        $assert($feedResult['ok'] && $feedResult['count'] === 0, 'Built-in scheduler respects a future source schedule.');
 
-    $_SERVER['REQUEST_METHOD'] = 'GET';
-    $_SERVER['HTTP_HOST'] = 'localhost';
-    \TinyCat\Core\Identity\Authentication::authLogin($firstAdmin);
-    // Detail URLs redirect and are covered by the HTTP contract scenarios.
-    foreach (['accounts-page.php', 'sources-page.php'] as $botPage) {
-        $_GET = ['id' => $botId];
-        $_SERVER['REQUEST_URI'] = '/admin/bots/' . $botId;
-        ob_start();
-        try {
-            match ($botPage) {
-                'accounts-page.php' => \TinyCat\Social\Bots\Pages::accounts(),
-                'sources-page.php' => \TinyCat\Social\Bots\Pages::sources(),
-            };
-            $botHtml = (string) ob_get_contents();
-        } finally {
-            ob_end_clean();
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['HTTP_HOST'] = 'localhost';
+        \TinyCat\Core\Identity\Authentication::authLogin($firstAdmin);
+        // Detail URLs redirect and are covered by the HTTP contract scenarios.
+        foreach (['accounts-page.php', 'sources-page.php'] as $botPage) {
+            $_GET = ['id' => $botId];
+            $_SERVER['REQUEST_URI'] = '/admin/bots/' . $botId;
+            ob_start();
+            try {
+                match ($botPage) {
+                    'accounts-page.php' => \TinyCat\Social\Bots\Pages::accounts(),
+                    'sources-page.php' => \TinyCat\Social\Bots\Pages::sources(),
+                };
+                $botHtml = (string) ob_get_contents();
+            } finally {
+                ob_end_clean();
+            }
+            $assert(str_contains($botHtml, 'preserved_feedbot'), 'Built-in bot admin renders current data: ' . $botPage);
+            $assert(!str_contains($botHtml, '/admin/extensions'), 'Built-in bot navigation omits the extension store: ' . $botPage);
         }
-        $assert(str_contains($botHtml, 'preserved_feedbot'), 'Built-in bot admin renders current data: ' . $botPage);
-        $assert(!str_contains($botHtml, '/admin/extensions'), 'Built-in bot navigation omits the extension store: ' . $botPage);
+
     }
 
     $assert(is_string($configHash) && hash_file('sha256', $configPath) === $configHash, 'Schema rehearsal does not replace application configuration.');
 
-    // Run the real importer against the current fresh schema, including interrupted resume.
-    foreach (['Options', 'DeterministicGenerator', 'ProgressReporter', 'CheckpointStore', 'BatchWriter', 'Schema', 'UiFixtures', 'DemoImporter'] as $tool) { require_once $workspaceRoot . '/tools/data/demo-import/' . $tool . '.php'; }
-    mkdir($demoRoot, 0700);
-    file_put_contents($demoRoot . '/config.php', "<?php return ['database' => []];");
-    mkdir($demoRoot . '/storage/cache/assets', 0775, true);
-    file_put_contents($demoRoot . '/storage/cache/assets/demo.aaaaaaaaaaaaaaaaaaaa.js', 'immutable');
-    file_put_contents($demoRoot . '/storage/cache/expired.json', '{}');
-    $demoArguments = ['demo-import.php', '--config=' . $demoRoot . '/config.php', '--profile=small', '--users=12', '--prefix=fixture', '--ui-fixtures=' . (function_exists('imagewebp') ? '1' : '0')];
-    $pausedOptions = \TinyCat\Tools\DemoImport\Options::fromArgv([...$demoArguments, '--reset=1', '--max-batches=2'], $workspaceRoot);
-    $progress = new \TinyCat\Tools\DemoImport\ProgressReporter(false);
-    $paused = (new \TinyCat\Tools\DemoImport\DemoImporter($database, $pausedOptions, $progress, $databaseName))->run();
-    $assert(!$paused['complete'], 'Fresh-schema demo import can pause at a checkpoint.');
-    $resumedOptions = \TinyCat\Tools\DemoImport\Options::fromArgv([...$demoArguments, '--reset=0'], $workspaceRoot);
-    $importer = new \TinyCat\Tools\DemoImport\DemoImporter($database, $resumedOptions, $progress, $databaseName);
-    $demo = $importer->run();
-    $assert($demo['complete'] && $demo['counts']['content'] > 0 && $demo['counts']['content_comments'] > 0, 'Resumed demo import populates the current schema.');
-    $assert(is_file($demoRoot . '/storage/cache/assets/demo.aaaaaaaaaaaaaaaaaaaa.js'), 'Demo import preserves immutable assets for open pages.');
-    $assert(!is_file($demoRoot . '/storage/cache/expired.json'), 'Demo import clears stale data caches.');
-    $assert((int) $database->query("SELECT COUNT(*) FROM settings WHERE setting_key IN ('i18n.locale', 'datetime.timezone')")->fetchColumn() === 2, 'Demo importer uses current localization setting keys.');
-    $repeated = $importer->run();
-    $assert($repeated['counts'] === $demo['counts'], 'Completed demo checkpoint is idempotent.');
-    if (function_exists('imagewebp')) {
-        $assert((int) $database->query('SELECT COUNT(*) FROM bot_sources')->fetchColumn() === 2, 'UI demo includes built-in bot sources.');
-        $assert((int) $database->query('SELECT COUNT(*) FROM bot_sources WHERE enabled <> 0')->fetchColumn() === 0, 'Demo bot sources do not start network imports.');
-        $assert((int) $database->query('SELECT COUNT(*) FROM social_post_images')->fetchColumn() > 0, 'UI demo includes status images.');
-        $assert(is_file($demoRoot . '/uploads/avatars/1.webp'), 'UI demo stores an actual avatar file.');
-        $before = (int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn();
-        (new \TinyCat\Tools\DemoImport\UiFixtures($database, $demoRoot, 'fixture', $resumedOptions->anchor))->run();
-        $assert((int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $before, 'Visual fixture generation is idempotent.');
-    }
+    if ($hasSocial) {
+        // Run the real importer against the current fresh schema, including interrupted resume.
+        foreach (['Options', 'DeterministicGenerator', 'ProgressReporter', 'CheckpointStore', 'BatchWriter', 'Schema', 'UiFixtures', 'DemoImporter'] as $tool) { require_once $workspaceRoot . '/tools/data/demo-import/' . $tool . '.php'; }
+        mkdir($demoRoot, 0700);
+        file_put_contents($demoRoot . '/config.php', "<?php return ['database' => []];");
+        mkdir($demoRoot . '/storage/cache/assets', 0775, true);
+        file_put_contents($demoRoot . '/storage/cache/assets/demo.aaaaaaaaaaaaaaaaaaaa.js', 'immutable');
+        file_put_contents($demoRoot . '/storage/cache/expired.json', '{}');
+        $demoArguments = ['demo-import.php', '--config=' . $demoRoot . '/config.php', '--profile=small', '--users=12', '--prefix=fixture', '--ui-fixtures=' . (function_exists('imagewebp') ? '1' : '0')];
+        $pausedOptions = \TinyCat\Tools\DemoImport\Options::fromArgv([...$demoArguments, '--reset=1', '--max-batches=2'], $workspaceRoot);
+        $progress = new \TinyCat\Tools\DemoImport\ProgressReporter(false);
+        $paused = (new \TinyCat\Tools\DemoImport\DemoImporter($database, $pausedOptions, $progress, $databaseName))->run();
+        $assert(!$paused['complete'], 'Fresh-schema demo import can pause at a checkpoint.');
+        $resumedOptions = \TinyCat\Tools\DemoImport\Options::fromArgv([...$demoArguments, '--reset=0'], $workspaceRoot);
+        $importer = new \TinyCat\Tools\DemoImport\DemoImporter($database, $resumedOptions, $progress, $databaseName);
+        $demo = $importer->run();
+        $assert($demo['complete'] && $demo['counts']['content'] > 0 && $demo['counts']['content_comments'] > 0, 'Resumed demo import populates the current schema.');
+        $assert(is_file($demoRoot . '/storage/cache/assets/demo.aaaaaaaaaaaaaaaaaaaa.js'), 'Demo import preserves immutable assets for open pages.');
+        $assert(!is_file($demoRoot . '/storage/cache/expired.json'), 'Demo import clears stale data caches.');
+        $assert((int) $database->query("SELECT COUNT(*) FROM settings WHERE setting_key IN ('i18n.locale', 'datetime.timezone')")->fetchColumn() === 2, 'Demo importer uses current localization setting keys.');
+        $repeated = $importer->run();
+        $assert($repeated['counts'] === $demo['counts'], 'Completed demo checkpoint is idempotent.');
+        if (function_exists('imagewebp')) {
+            $assert((int) $database->query('SELECT COUNT(*) FROM bot_sources')->fetchColumn() === 2, 'UI demo includes built-in bot sources.');
+            $assert((int) $database->query('SELECT COUNT(*) FROM bot_sources WHERE enabled <> 0')->fetchColumn() === 0, 'Demo bot sources do not start network imports.');
+            $assert((int) $database->query('SELECT COUNT(*) FROM social_post_images')->fetchColumn() > 0, 'UI demo includes status images.');
+            $assert(is_file($demoRoot . '/uploads/avatars/1.webp'), 'UI demo stores an actual avatar file.');
+            $before = (int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn();
+            (new \TinyCat\Tools\DemoImport\UiFixtures($database, $demoRoot, 'fixture', $resumedOptions->anchor))->run();
+            $assert((int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $before, 'Visual fixture generation is idempotent.');
+        }
 
-    $database->exec("INSERT INTO social_terms (name) VALUES ('archive_index_probe')");
-    $probeTermId = (int) $database->lastInsertId();
-    $database->prepare('INSERT INTO social_post_tags (content_id, term_id) SELECT id, ? FROM social_posts ORDER BY id LIMIT 3')->execute([$probeTermId]);
-    // Refresh statistics after bulk fixture writes before asserting the optimizer plan.
-    $database->query('ANALYZE TABLE social_post_tags, social_posts, users')->fetchAll();
-    $probeQuery = \TinyCat\Social\Posts\Feed::public_status_tag_id_query($probeTermId)->order('c.published_at DESC, c.id DESC')->limit(20);
-    \TinyCat\Social\Posts\Feed::public_status_apply_cursor($probeQuery, '2099-01-01 00:00:00', PHP_INT_MAX);
-    $probeSql = (new ReflectionMethod(\TinyCat\Database\Query::class, 'sql'))->invoke($probeQuery);
-    $probeParams = (new ReflectionProperty(\TinyCat\Database\Query::class, 'params'))->getValue($probeQuery);
-    $probeExplain = $database->prepare('EXPLAIN ' . $probeSql);
-    $probeExplain->execute($probeParams);
-    $probePlan = array_column($probeExplain->fetchAll(PDO::FETCH_ASSOC), null, 'table');
-    $assert(($probePlan['ct']['key'] ?? '') === 'content_tags_term_index', 'Rare tag selection uses the covering term index.');
-    $assert(($probePlan['c']['key'] ?? '') === 'PRIMARY' && ($probePlan['c']['type'] ?? '') === 'eq_ref', 'Rare tag cursor looks up matching content by primary key instead of scanning the global feed.');
+        $database->exec("INSERT INTO social_terms (name) VALUES ('archive_index_probe')");
+        $probeTermId = (int) $database->lastInsertId();
+        $database->prepare('INSERT INTO social_post_tags (content_id, term_id) SELECT id, ? FROM social_posts ORDER BY id LIMIT 3')->execute([$probeTermId]);
+        // Refresh statistics after bulk fixture writes before asserting the optimizer plan.
+        $database->query('ANALYZE TABLE social_post_tags, social_posts, users')->fetchAll();
+        $probeQuery = \TinyCat\Social\Posts\Feed::public_status_tag_id_query($probeTermId)->order('c.published_at DESC, c.id DESC')->limit(20);
+        \TinyCat\Social\Posts\Feed::public_status_apply_cursor($probeQuery, '2099-01-01 00:00:00', PHP_INT_MAX);
+        $probeSql = (new ReflectionMethod(\TinyCat\Database\Query::class, 'sql'))->invoke($probeQuery);
+        $probeParams = (new ReflectionProperty(\TinyCat\Database\Query::class, 'params'))->getValue($probeQuery);
+        $probeExplain = $database->prepare('EXPLAIN ' . $probeSql);
+        $probeExplain->execute($probeParams);
+        $probePlan = array_column($probeExplain->fetchAll(PDO::FETCH_ASSOC), null, 'table');
+        $assert(($probePlan['ct']['key'] ?? '') === 'content_tags_term_index', 'Rare tag selection uses the covering term index.');
+        $assert(($probePlan['c']['key'] ?? '') === 'PRIMARY' && ($probePlan['c']['type'] ?? '') === 'eq_ref', 'Rare tag cursor looks up matching content by primary key instead of scanning the global feed.');
+    }
 
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();

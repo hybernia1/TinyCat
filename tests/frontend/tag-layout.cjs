@@ -9,7 +9,7 @@ function read(file, ...args) { return JSON.parse(execFileSync(process.env.TINYCA
 const styles = read("tests/presentation/fixtures/asset-graph-fixture.php", "--styles");
 const templates = read("tests/presentation/fixtures/component-parity.php", "--templates");
 const fixtures = read("tests/presentation/fixtures/tag-layout-fixture.php");
-const scripts = ["core/urls.js", "core/dom.js", "core/i18n.js", "core/icons.js", "core/component-renderer.js", "../App/Core/Ui/assets/content/translation.js"].map(file => fs.readFileSync(path.join(root, "assets", file), "utf8").replace(/^import .*;\r?\n/gm, "")).join("\n");
+const scripts = ["runtime/urls.js", "runtime/dom.js", "runtime/i18n.js", "runtime/icons.js", "runtime/component-renderer.js", "content/translation.js"].map(file => fs.readFileSync(path.join(root, "App/Core/Ui/assets", file), "utf8").replace(/^import .*;\r?\n/gm, "")).join("\n");
 (async function () {
   const server = http.createServer((request, response) => {
     response.setHeader("Content-Type", "text/html; charset=utf-8");
