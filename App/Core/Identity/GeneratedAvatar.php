@@ -111,26 +111,17 @@ final class GeneratedAvatar
     public static function respond(int $userId): void
     {
         if ($userId < 1) {
-            http_response_code(404);
+            \TinyCat\Http\Document::notFound('Avatar not found.');
             return;
         }
         $appearance = [];
         foreach (self::options() as $key => $option) {
             $value = \TinyCat\Http\Request::current()->input($key, $option['default']);
-            if (!is_string($value) || !in_array($value, $option['values'], true)) { http_response_code(404); return; }
+            if (!is_string($value) || !in_array($value, $option['values'], true)) { \TinyCat\Http\Document::notFound('Avatar not found.'); return; }
             $appearance[$key] = $value;
         }
         $svg = self::svg($userId, 'neutral', $appearance);
-        $etag = '"' . hash('sha256', $svg) . '"';
-        header('Content-Type: image/svg+xml; charset=utf-8');
-        header('X-Content-Type-Options: nosniff');
         header("Content-Security-Policy: default-src 'none'; style-src 'none'; sandbox");
-        header('Cache-Control: public, max-age=31536000, immutable');
-        header('ETag: ' . $etag);
-        if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) === $etag) {
-            http_response_code(304);
-            return;
-        }
-        if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'HEAD') { echo $svg; }
+        \TinyCat\Http\Document::respond($svg, 'image/svg+xml', 31536000, true);
     }
 }

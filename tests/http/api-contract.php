@@ -200,6 +200,28 @@ try {
     [$status] = $request('POST', '/api/scheduler/tasks/unknown/runs', [], 'admin', $csrf);
     $assert($status === 404, 'Unknown cron tasks cannot execute arbitrary jobs.');
 
+    $settingsDatabase = new PDO('sqlite:' . $databasePath);
+    [$status] = $request('GET', '/api/settings/editor');
+    $assert($status === 401, 'Settings resources require authentication.');
+    [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Forbidden']], 'user', $csrf);
+    $assert($status === 403, 'Settings writes require administrator authorization.');
+    [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Forbidden']], 'admin');
+    $assert($status === 403, 'Settings writes require CSRF.');
+    [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Original fixture', 'site.home_title' => 'Original title']], 'admin', $csrf);
+    $assert($status === 200 && isset($payload['data']['sections']), 'Settings return their canonical editor resource after save.');
+    [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Partial write', 'app.url' => 'invalid url']], 'admin', $csrf);
+    $assert($status === 422 && isset($payload['error']['details']['errors']['settings[app.url]']), 'Settings validation identifies the failed control.');
+    $assert($settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.name'")->fetchColumn() === 'Original fixture', 'A late validation failure cannot persist earlier settings.');
+    [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => '  Canonical name  ']], 'admin', $csrf);
+    $assert($status === 200 && $settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.name'")->fetchColumn() === 'Canonical name', 'A partial settings write normalizes its submitted value.');
+    $assert($settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.home_title'")->fetchColumn() === 'Original title', 'Unsubmitted settings remain unchanged.');
+    $settingsDatabase->exec("CREATE TRIGGER reject_settings BEFORE UPDATE ON settings WHEN NEW.setting_key = 'site.home_title' BEGIN SELECT RAISE(ABORT, 'Fixture settings failure'); END");
+    [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Rolled back', 'site.home_title' => 'Reject']], 'admin', $csrf);
+    $assert($status === 500 && $settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.name'")->fetchColumn() === 'Canonical name', 'Database failure rolls back the complete settings batch.');
+    $settingsDatabase->exec('DROP TRIGGER reject_settings');
+
+    $settingsDatabase = null;
+
     [$status, $payload] = $request('GET', '/api/foundation/items/7');
     $assert($status === 200 && $payload['data']['id'] === 7 && $payload['data']['value'] === '<b>literal user text</b>' && $payload['message'] === 'Loaded.' && $payload['meta']['source'] === 'module', 'Module APIs receive named parameters and return pure data, messages and metadata.');
     [$status, $payload] = $request('POST', '/api/foundation/items', ['value' => 'new'], 'admin', $csrf);

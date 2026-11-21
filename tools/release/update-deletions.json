@@ -2331,5 +2331,30 @@
     "assets/ui/toasts.js",
     "assets/ui/tooltips.js",
     "assets/styles/index.css"
+  ],
+  "7.1.0": [
+    "App/Core/Ui/DiscussionResource.php",
+    "App/Core/Ui/InteractionTarget.php",
+    "App/Core/Ui/RichTextResource.php",
+    "App/Core/Ui/ThreadTree.php",
+    "App/Core/Ui/assets/content/comments.js",
+    "App/Core/Ui/assets/content/discussion.js",
+    "App/Core/Ui/assets/content/editor-entry.js",
+    "App/Core/Ui/assets/content/editor.js",
+    "App/Core/Ui/assets/content/index.js",
+    "App/Core/Ui/assets/content/media-preview.js",
+    "App/Core/Ui/assets/content/media.js",
+    "App/Core/Ui/assets/content/presentation.js",
+    "App/Core/Ui/assets/content/runtime.js",
+    "App/Core/Ui/assets/content/styles/discussion-content.css",
+    "App/Core/Ui/assets/content/styles/discussion-editing.css",
+    "App/Core/Ui/assets/content/styles/discussion-mobile.css",
+    "App/Core/Ui/assets/content/styles/mobile.css",
+    "App/Core/Ui/assets/content/styles/status-content.css",
+    "App/Core/Ui/assets/content/styles/status-editing.css",
+    "App/Core/Ui/assets/content/styles/status-text.css",
+    "App/Core/Ui/assets/content/translation.js",
+    "App/Core/Ui/assets/styles/hashtags.css",
+    "App/Core/Ui/templates/notFound.php"
   ]
 }

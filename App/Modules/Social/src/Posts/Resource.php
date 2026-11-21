@@ -24,7 +24,7 @@ final class Resource
     {
         $id = (int) ($item['id'] ?? 0);
         $body = (string) ($item['body'] ?? '');
-        $presentation = \TinyCat\Core\Ui\RichTextResource::content($id, $body, 'post', Links::status_links_for_content($id));
+        $presentation = \TinyCat\Social\Posts\TextResource::content($id, $body, 'post', Links::status_links_for_content($id));
         $segments = $presentation['segments'];
         $at = (string) ($item['published_at'] ?? '');
         return [
@@ -75,7 +75,7 @@ final class Resource
      */
     public static function link(array $link, int $contentId = 0): array
     {
-        return \TinyCat\Core\Ui\RichTextResource::link($link, 'post', $contentId);
+        return \TinyCat\Social\Posts\TextResource::link($link, 'post', $contentId);
     }
 
     /**
@@ -127,7 +127,7 @@ final class Resource
     public static function preloadComments(array $comments, ?array $user): void
     {
         $mentionIds = [];
-        foreach (\TinyCat\Core\Ui\ThreadTree::flatten($comments) as $comment) {
+        foreach (\TinyCat\Social\Discussion\ThreadTree::flatten($comments) as $comment) {
             if (preg_match_all(Mentions::mention_id_pattern(), \TinyCat\Core\Text\InlineText::withoutLinks((string) ($comment['body'] ?? '')), $matches)) {
                 foreach ($matches[1] as $id) { $mentionIds[] = (int) $id; }
             }

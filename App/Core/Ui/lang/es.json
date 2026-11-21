@@ -25,9 +25,7 @@
     "not_found_title": "Página no encontrada",
     "not_found_intro": "Esta dirección no lleva a ninguna página. Marque URL o continúe desde la página de inicio.",
     "not_found_home": "Ir a la página de inicio",
-    "not_found_search": "Buscar contenido",
-    "status_image_alt": "Imagen adjunta a una publicación de {author}: {text}",
-    "status_image_alt_empty": "Imagen adjunta a una publicación de {author}"
+    "not_found_search": "Buscar contenido"
   },
   "privacy": {
     "data_title": "Datos y cuenta",
@@ -112,10 +110,7 @@
       "thirty_days": "30 días"
     },
     "stats": {
-      "users": "Usuarios",
-      "links": "Campo de golf",
-      "tags": "Etiquetas",
-      "notifications": "Notificaciones"
+      "users": "Usuarios"
     },
     "widgets": {
       "empty": "No hay widgets disponibles.",
@@ -123,43 +118,5 @@
       "stats": "Estadísticas",
       "stats_group": "Grupo de estadísticas"
     }
-  },
-  "account": {
-    "messages": {
-      "status_tag_too_long": "Una etiqueta puede contener como máximo {max} caracteres.",
-      "status_image_invalid": "Elija una imagen JPEG, PNG o WebP válida dentro de {size} KB.",
-      "comment_required": "El comentario no puede estar vacío.",
-      "comment_not_found": "El comentario no fue encontrado.",
-      "comment_edit_forbidden": "No tienes permiso para editar este comentario.",
-      "comment_forbidden": "No tienes permiso para eliminar este comentario.",
-      "comment_created": "El comentario fue agregado.",
-      "comment_saved": "El comentario fue guardado.",
-      "comment_deleted": "El comentario fue eliminado."
-    },
-    "translation_translate": "Traducir",
-    "translation_hide": "Ocultar traducción",
-    "translation_preparing": "Preparando traducción…",
-    "translation_machine": "Traducción automática",
-    "translation_unavailable": "La traducción no está disponible para este texto.",
-    "translation_same": "Esta publicación ya está en el idioma de su interfaz.",
-    "translation_continue": "Listo. Haga clic en Traducir nuevamente para continuar.",
-    "translation_failed": "La traducción falló. Por favor inténtalo de nuevo.",
-    "status_counter": "Restante {count}",
-    "status_image_add": "Agregar imagen",
-    "status_image_remove": "Quitar imagen",
-    "status_body": "¿Qué hay de nuevo?",
-    "status_comment": "Comentario",
-    "status_comment_placeholder": "Escribe un comentario...",
-    "status_reply": "Responder",
-    "status_like": "Como",
-    "status_reply_placeholder": "Escribe una respuesta...",
-    "status_like_for": "Me gusta – {context}",
-    "status_unlike_for": "A diferencia de – {context}",
-    "status_comments": "Comentarios",
-    "status_comment_history": "Editar historial",
-    "status_comment_history_empty": "Este comentario aún no ha sido editado.",
-    "status_comment_history_updated_by": "Editado por {author}",
-    "status_comment_history_change": "Cambio de comentario",
-    "status_comment_history_unknown": "Usuario desconocido"
   }
 }

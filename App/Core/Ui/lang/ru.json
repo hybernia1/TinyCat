@@ -25,9 +25,7 @@
     "not_found_title": "Страница не найдена",
     "not_found_intro": "Этот адрес не ведет на страницу. Проверьте URL или продолжите с домашней страницы.",
     "not_found_home": "Перейти на домашнюю страницу",
-    "not_found_search": "Поиск по содержимому",
-    "status_image_alt": "Изображение, прикрепленное к сообщению {author}: {text}",
-    "status_image_alt_empty": "Изображение прикреплено к сообщению пользователя {author}."
+    "not_found_search": "Поиск по содержимому"
   },
   "privacy": {
     "data_title": "Данные и учетная запись",
@@ -112,10 +110,7 @@
       "thirty_days": "30 дней"
     },
     "stats": {
-      "users": "Пользователи",
-      "links": "Ссылки",
-      "tags": "Теги",
-      "notifications": "Уведомления"
+      "users": "Пользователи"
     },
     "widgets": {
       "empty": "Нет доступных виджетов.",
@@ -123,43 +118,5 @@
       "stats": "Статистика",
       "stats_group": "Группа статистики"
     }
-  },
-  "account": {
-    "messages": {
-      "status_tag_too_long": "Тег может содержать не более {max} символов.",
-      "status_image_invalid": "Выберите допустимое изображение JPEG, PNG или WebP размером {size} КБ.",
-      "comment_required": "Комментарий не может быть пустым.",
-      "comment_not_found": "Комментарий не найден.",
-      "comment_edit_forbidden": "Вам не разрешено редактировать этот комментарий.",
-      "comment_forbidden": "Вам не разрешено удалять этот комментарий.",
-      "comment_created": "Комментарий добавлен.",
-      "comment_saved": "Комментарий сохранен.",
-      "comment_deleted": "Комментарий был удален."
-    },
-    "translation_translate": "Перевести",
-    "translation_hide": "Скрыть перевод",
-    "translation_preparing": "Подготовка перевода…",
-    "translation_machine": "Машинный перевод",
-    "translation_unavailable": "Перевод этого текста недоступен.",
-    "translation_same": "Этот пост уже на вашем языке интерфейса.",
-    "translation_continue": "Готово. Нажмите «Перевести» еще раз, чтобы продолжить.",
-    "translation_failed": "Не удалось выполнить перевод. Пожалуйста, попробуйте еще раз.",
-    "status_counter": "Осталось {count}",
-    "status_image_add": "Добавить изображение",
-    "status_image_remove": "Удалить изображение",
-    "status_body": "Что нового?",
-    "status_comment": "Комментарий",
-    "status_comment_placeholder": "Написать комментарий...",
-    "status_reply": "Ответить",
-    "status_like": "Нравится",
-    "status_reply_placeholder": "Написать ответ...",
-    "status_like_for": "Нравится – {context}",
-    "status_unlike_for": "В отличие от – {context}",
-    "status_comments": "Комментарии",
-    "status_comment_history": "Редактировать историю",
-    "status_comment_history_empty": "Этот комментарий еще не редактировался.",
-    "status_comment_history_updated_by": "Отредактировал {author}",
-    "status_comment_history_change": "Изменение комментария",
-    "status_comment_history_unknown": "Неизвестный пользователь"
   }
 }

@@ -74,8 +74,9 @@ nikoli PHP adaptéry propojující domény.
 - Textové renderování rozšiřuj pojmenovanými `Core/Text/Policies` a `TextPolicy`.
   Volající předává druh textu explicitně; core nevolí politiku Socialu jako výchozí.
   Pravidla URL a UTM vlastní každý modul; core poskytuje parser a aplikaci pravidel.
-  Sdílené assety v `App/Core/Ui/assets/content` a ID `publishing.*` jsou UI kompatibilita,
-  nikoli modul nebo povinná doménová služba. RSS poskytuje Core/Feeds,
+  Publikační a diskusní UI v `App/Modules/Social/assets/content` vlastní Social;
+  zachovaná ID `publishing.*` nejsou core služba ani samostatný modul. Core/Ui
+  poskytuje pouze obecné formuláře, dialogy a vykreslovací mechanismy. RSS poskytuje Core/Feeds,
   oEmbed hostuje Core/Discovery pro lazy `EmbedSource` vlastníka.
 
 - Nastavení, jejich popisky a `resources.emails` patří vlastníkům.

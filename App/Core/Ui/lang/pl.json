@@ -25,9 +25,7 @@
     "not_found_title": "Nie znaleziono strony",
     "not_found_intro": "Ten adres nie prowadzi do strony. Sprawdź URL lub kontynuuj ze strony głównej.",
     "not_found_home": "Przejdź do strony głównej",
-    "not_found_search": "Przeszukaj zawartość",
-    "status_image_alt": "Obraz dołączony do postu autorstwa {author}: {text}",
-    "status_image_alt_empty": "Obraz dołączony do postu autorstwa {author}"
+    "not_found_search": "Przeszukaj zawartość"
   },
   "privacy": {
     "data_title": "Dane i konto",
@@ -112,10 +110,7 @@
       "thirty_days": "30 dni"
     },
     "stats": {
-      "users": "Użytkownicy",
-      "links": "Linki",
-      "tags": "Tagi",
-      "notifications": "Powiadomienia"
+      "users": "Użytkownicy"
     },
     "widgets": {
       "empty": "Brak dostępnych widżetów.",
@@ -123,43 +118,5 @@
       "stats": "Statystyki",
       "stats_group": "Grupa statystyk"
     }
-  },
-  "account": {
-    "messages": {
-      "status_tag_too_long": "Znacznik może zawierać maksymalnie {max} znaków.",
-      "status_image_invalid": "Wybierz prawidłowy obraz JPEG, PNG lub WebP w promieniu {size} KB.",
-      "comment_required": "Komentarz nie może być pusty.",
-      "comment_not_found": "Nie znaleziono komentarza.",
-      "comment_edit_forbidden": "Nie masz uprawnień do edycji tego komentarza.",
-      "comment_forbidden": "Nie możesz usunąć tego komentarza.",
-      "comment_created": "Komentarz został dodany.",
-      "comment_saved": "Komentarz został zapisany.",
-      "comment_deleted": "Komentarz został usunięty."
-    },
-    "translation_translate": "Tłumacz",
-    "translation_hide": "Ukryj tłumaczenie",
-    "translation_preparing": "Przygotowywanie tłumaczenia…",
-    "translation_machine": "Tłumaczenie maszynowe",
-    "translation_unavailable": "Tłumaczenie tego tekstu jest niedostępne.",
-    "translation_same": "Ten post jest już w Twoim języku interfejsu.",
-    "translation_continue": "Gotowy. Kliknij ponownie Tłumacz, aby kontynuować.",
-    "translation_failed": "Tłumaczenie nie powiodło się. Spróbuj ponownie.",
-    "status_counter": "Pozostało {count}",
-    "status_image_add": "Dodaj obraz",
-    "status_image_remove": "Usuń obraz",
-    "status_body": "Co nowego?",
-    "status_comment": "Komentarz",
-    "status_comment_placeholder": "Napisz komentarz...",
-    "status_reply": "Odpowiedź",
-    "status_like": "Podobnie",
-    "status_reply_placeholder": "Napisz odpowiedź...",
-    "status_like_for": "Lubię – {context}",
-    "status_unlike_for": "Inaczej – {context}",
-    "status_comments": "Komentarze",
-    "status_comment_history": "Edytuj historię",
-    "status_comment_history_empty": "Ten komentarz nie był jeszcze edytowany.",
-    "status_comment_history_updated_by": "Edytowany przez {author}",
-    "status_comment_history_change": "Zmiana komentarza",
-    "status_comment_history_unknown": "Nieznany użytkownik"
   }
 }

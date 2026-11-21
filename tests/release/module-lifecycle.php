@@ -134,14 +134,26 @@ try {
     $assert($exit === 0 && is_file($root . '/storage/notes-deleted-2.txt') && is_file($root . '/storage/reports-deleted-2.txt'), 'Inactive installed data owners participate in account deletion: ' . $text . $error);
     // Update inactive data, then activate and update again with the old provider already cached in PHP.
     $makeModule('notes', 2, ['tinycat.accounts']);
+    $retired = ['App/Core/obsolete-fixture.php', 'App/Modules/Notes/obsolete.php', 'App/Modules/Addon/obsolete.php', 'App/Modules/Addon/missing.php'];
+    file_put_contents($candidate . '/tools/release/update-deletions.json', json_encode([$versions[1] => $retired], JSON_THROW_ON_ERROR));
+    foreach (array_slice($retired, 0, 3) as $path) { file_put_contents($root . '/' . $path, '<?php // historical fixture'); }
     $versionFile = $candidate . '/App/Core/Support/Version.php'; $versionSource = (string) file_get_contents($versionFile);
     file_put_contents($versionFile, str_replace("CURRENT = '" . $versions[0] . "'", "CURRENT = '" . $versions[1] . "'", $versionSource));
     $build($versions[1], $workspace . '/v2');
+    $cleanupManifest = json_decode((string) file_get_contents($workspace . '/v2/update/fixture.lifecycle-update.json'), true, 512, JSON_THROW_ON_ERROR);
+    $assert($cleanupManifest['delete'] === array_slice($retired, 0, 2), 'Builder retires core and owned inactive module files, excluding existing and absent independent module paths');
+    $foreignCleanup = $cleanupManifest; $foreignCleanup['delete'][] = $retired[3];
+    $foreignCleanupJson = json_encode($foreignCleanup, JSON_THROW_ON_ERROR);
+    file_put_contents($workspace . '/foreign-cleanup.json', $foreignCleanupJson);
+    file_put_contents($workspace . '/foreign-cleanup.sig', base64_encode(sodium_crypto_sign_detached($foreignCleanupJson, $secret)));
+    [$exit, $text, $error] = $console(['update', $workspace . '/foreign-cleanup.json', $workspace . '/foreign-cleanup.sig', $workspace . '/v2/update/' . $cleanupManifest['package']]);
+    $assert($exit !== 0 && str_contains($error, 'overlaps an independently installed module') && !is_file($root . '/storage/maintenance.json') && is_file($root . '/' . $retired[0]), 'Runtime still rejects signed foreign module deletions even when the target is absent, before any change');
     $update = static function (string $directory) use ($console): array {
         $manifest = json_decode((string) file_get_contents($directory . '/fixture.lifecycle-update.json'), true, 512, JSON_THROW_ON_ERROR);
         return $console(['update', $directory . '/fixture.lifecycle-update.json', $directory . '/fixture.lifecycle-update.sig', $directory . '/' . $manifest['package']]);
     };
     [$exit, $text, $error] = $update($workspace . '/v2/update'); $assert($exit === 0, 'Signed inactive-module update: ' . $text . $error);
+    $assert(!is_file($root . '/' . $retired[0]) && !is_file($root . '/' . $retired[1]) && is_file($root . '/' . $retired[2]), 'Update cleans its owned legacy files and preserves independent module files');
     $packagePhase = 'after-core-update'; require $fixture . '/package-cases.php';
     $assert((int) $pdo->query("SELECT version FROM module_installations WHERE module_id = 'fixture.notes'")->fetchColumn() === 2 && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Inactive module migrates without losing data');
     [$exit, $text, $error] = $console(['activate', 'fixture.notes']); $assert($exit === 0, 'Updated inactive module can be activated: ' . $text . $error);

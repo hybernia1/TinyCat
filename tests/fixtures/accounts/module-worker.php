@@ -29,4 +29,5 @@ if (in_array($_SERVER['HTTP_X_TEST_LANDING'] ?? '', ['/', '/login', '/register',
     TinyCat\Core\Identity\Integration::provide('fixture.landing', ['landing' => static fn (?array $user): string => $_SERVER['HTTP_X_TEST_LANDING']]);
 }
 $api->get('/_accounts', static fn (): array => ['csrf' => TinyCat\Core\Security\Csrf::token()]);
+TinyCat\Http\Router::route(['GET', 'HEAD'], '/fixture-error/{status:[45][0-9][0-9]}', static fn (string $status) => TinyCat\Core\Runtime\Errors::respond((int) $status));
 if (!TinyCat\Http\Router::dispatch()) { TinyCat\Http\Document::notFound('Not Found'); }

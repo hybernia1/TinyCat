@@ -42,7 +42,7 @@ import "../../Ui/assets/runtime/modules.js";
       var inputType = { int: "number", email: "email", site_url: "url", password: "password" }[type] || "text";
       model.attributes = { "class": "input", name: name, type: inputType, value: model.value,
         required: !spec.optional && (type === "text" || type === "int"), maxlength: type === "int" ? null : spec.max || (type === "site_url" ? 2048 : 190),
-        min: type === "int" ? spec.min || 0 : null, max: type === "int" ? spec.max || 2147483647 : null,
+        min: type === "int" ? spec.min ?? null : null, max: type === "int" ? spec.max ?? null : null,
         autocomplete: type === "password" ? "new-password" : type === "site_url" ? "url" : null, placeholder: type === "site_url" ? "https://example.com" : null };
     }
     return model;
@@ -58,21 +58,23 @@ import "../../Ui/assets/runtime/modules.js";
           return prepareField(spec);
         }) };
       });
-      var form = U.form("/api/settings", "PATCH", T.components.render("settings/editor-form", { sections: sections }));
-      return U.sectionedDialog(id, "settings.title", form, false);
+      var content = T.components.render("settings/editor-form", { sections: sections });
+      content.querySelectorAll("form[data-editor-section]").forEach(function (section) {
+        section.id = id + "-form-" + section.dataset.editorSection;
+        U.form("/api/settings", "PATCH", section);
+      });
+      return U.sectionedDialog(id, "settings.title", content, false);
     },
     result: function (source, response) {
       var action = source.getAttribute("action");
       if (!action || new URL(action, window.location.href).pathname !== "/api/settings") { return false; }
-      var images = response.data.images || {};
-      source.querySelectorAll("input").forEach(function (input) {
-        var name = input.name || input.getAttribute("name") || "";
-        var key = name.startsWith("settings[") ? name.slice(9, -1) : "";
-        if (Object.prototype.hasOwnProperty.call(images, key)) { input.value = images[key]; }
-        if (input.type === "file" || input.type === "password") { input.value = ""; }
-        if (name.startsWith("settings_remove[")) { input.checked = false; }
-      });
-      return [];
+      var section = (response.data.sections || []).find(function (item) { return item.key === source.dataset.editorSection; });
+      if (!section) { throw new TypeError("Missing saved settings section."); }
+      var rendered = T.components.render("settings/sections", { sections: [{ key: section.key, fields: section.fields.map(function (spec) { return prepareField(spec); }) }] });
+      var saved = rendered.querySelector("form");
+      T.lifecycle.dispose(source);
+      source.replaceChildren.apply(source, Array.from(saved.childNodes));
+      return [source];
     }
   };
   T.modules.register("settings", T.settings);

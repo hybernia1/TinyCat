@@ -70,6 +70,8 @@ foreach (TinyCat\Support\ClientAssets::scopes() as $scope) {
 }
 $definitions = TinyCat\Support\ClientAssets::definitions('/admin/users');
 $assert(isset($definitions['users/admin-fields'], $definitions['users/auth-content']) && !isset($definitions['users/following-profile']), 'Accounts builds shared account components without following UI');
+$assert(array_filter(array_keys($definitions), static fn (string $name): bool => str_starts_with($name, 'publishing/')) === [], 'Core has no publication, comment or reaction component definitions');
+$assert(!is_file($workspace . '/App/Core/Ui/DiscussionResource.php') && !is_dir($workspace . '/App/Core/Ui/assets/content'), 'Core distribution carries no Social formatter or publication assets');
 foreach ($files as $path => $content) { $target = $workspace . '/' . $path; if (!is_dir(dirname($target))) { mkdir(dirname($target), 0700, true); } file_put_contents($target, $content); }
 mkdir($workspace . '/sessions', 0700);
 $server = null;
@@ -98,6 +100,25 @@ try {
     };
     for ($attempt = 0; $attempt < 50; $attempt++) { [$status, $data] = $request('/api/_accounts'); if ($status === 200) { break; } usleep(100_000); }
     $assert($status === 200, 'Selected Accounts module starts over HTTP'); $csrf = $data['data']['csrf'];
+    foreach ([400, 404, 500, 503] as $errorStatus) {
+        [$status, , $errorHtml, $errorHeaders] = $request('/fixture-error/' . $errorStatus);
+        $assert($status === $errorStatus && str_contains($errorHeaders['cache-control'] ?? '', 'no-store') && !str_contains($errorHtml, '/search/all') && str_contains($errorHtml, (string) $errorStatus), 'Core error actions and emergency fallback work without registered search: ' . $errorStatus);
+    }
+    [$status, , $privacy] = $request('/privacy');
+    $assert($status === 200 && str_contains($privacy, 'Data and Account') && !str_contains($privacy, 'privacy.intro'), 'Core privacy renders its own account policy without a Social translation or section');
+    [$status, , $llms, $llmsHeaders] = $request('/llms.txt');
+    $assert($status === 200 && !str_contains($llms, '/author/') && !str_contains($llms, '/tag/') && !str_contains($llms, '## Social') && str_contains($llmsHeaders['cache-control'] ?? '', 'max-age=0, must-revalidate'), 'Core LLM document has no Social claims and revalidates after module changes');
+    [$status, , $body] = $request('/llms.txt', extraHeaders: ['If-None-Match: ' . $llmsHeaders['etag']]);
+    $assert($status === 304 && $body === '', 'Unchanged LLM documents retain conditional caching');
+    foreach (['/sitemap.xml', '/sitemap-pages-1.xml', '/robots.txt', '/llms-full.txt'] as $path) {
+        [$status, , $body, $headers] = $request($path);
+        $assert($status === 200 && str_contains($headers['cache-control'] ?? '', 'max-age=0, must-revalidate') && !str_contains($body, '/author/') && !str_contains($body, '/tag/') && !str_contains($body, 'sitemap-status-'), 'Core discovery stays available without Social and revalidates: ' . $path);
+        if ($path === '/sitemap-pages-1.xml') { $assert(str_contains($body, '/privacy</loc>'), 'Core owns its public information URLs'); }
+    }
+    foreach (['/sitemap-authors-1.xml', '/sitemap-tags-1.xml', '/sitemap-status-1.xml', '/author/2/feed', '/tag/example/feed', '/search/feed?q=example'] as $path) {
+        [$status, , , $headers] = $request($path, extraHeaders: ['If-None-Match: "old-module-document"']);
+        $assert($status === 404 && str_contains($headers['cache-control'] ?? '', 'no-store'), 'Unregistered owner routes cannot return cached module content: ' . $path);
+    }
     foreach (['/login', '/register', '/recovery'] as $path) {
         [$status, , $html] = $request($path);
         $assert($status === 200 && str_contains($html, '<form') && str_contains($html, 'csrf-token') && str_contains($html, 'assets/build/'), 'Real HTML and compiled assets: ' . $path);

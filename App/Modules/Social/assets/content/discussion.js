@@ -1,6 +1,6 @@
-import "../runtime/modules.js";
-import "../component-builders.js";
-import "../content-updates.js";
+import "../../../../Core/Ui/assets/runtime/modules.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/content-updates.js";
 import "./comments.js";
 import "./editor-entry.js";
 (function () {

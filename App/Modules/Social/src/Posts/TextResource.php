@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace TinyCat\Core\Ui;
+namespace TinyCat\Social\Posts;
 
 use TinyCat\Core\Links\Providers;
 use TinyCat\Core\Text\LinkParser;
@@ -9,7 +9,7 @@ use TinyCat\Core\Text\Segments;
 use TinyCat\Core\Links\Presentation as Links;
 
 /** Canonical media and text resources contain data only. */
-final class RichTextResource
+final class TextResource
 {
     /** @param list<array<mixed>> $attachments
      * @return array<string, mixed> */

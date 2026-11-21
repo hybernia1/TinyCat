@@ -1,4 +1,4 @@
-import "../runtime/modules.js";
+import "../../../../Core/Ui/assets/runtime/modules.js";
 import "./media.js";
 (function () {
   "use strict";

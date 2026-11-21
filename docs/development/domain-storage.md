@@ -45,13 +45,14 @@ Identitu určuje vlastník a konkrétní endpoint, nikoli globální číselný 
 | `Core/Links`: metadata, prezentace, UTM a autorizované odchozí odkazy | Připojené odkazy, jejich SQL cache a pravidla URL |
 | `Core/Files`: validace a konverze rastru, cache náhledů | Přílohy, oprávnění, kvóty a databázové reference |
 | `Core/Feeds`: parser a průchod importem | Zdroj, claim, GUID historie, příprava příloh a vlastní zápis |
-| `Core/Ui`: editor, diskuse, resource formátování a AJAX | Autorizovaný cíl, načtená data, akce a transportní URL |
+| `Core/Ui`: formuláře, dialogy, komponentový renderer a AJAX | Editor příspěvku, diskuse, resource, oprávnění, akce a transportní URL |
 | `Core/Database`: transakce a stabilní kurzor | Dotazy, řádkové zámky a cizí klíče vlastní funkce |
 | `Core/Discovery`: hledání, sitemap a oEmbed | Viditelnost a kanonická URL svého výsledku |
 
-Sdílené soubory v `App/Core/Ui/assets/content/` a historická ID komponent
-`publishing.*` zajišťují kompatibilní UI. Neznamenají službu ani modul Publishing.
-Nový modul nedeklaruje závislost `tinycat.publishing`.
+Publikační soubory v `App/Modules/Social/assets/content/` a komponenty
+`publishing.*` vlastní Social, včetně překladů, stylů a explicitních klientských
+závislostí. Neznamenají core službu ani modul Publishing. Nový modul nepotřebuje
+Social kvůli formulářům či dialogům a nedeklaruje závislost `tinycat.publishing`.
 
 Zápis agregátu a jeho vztahů je atomický. Přílohy se připraví před transakcí,
 starý soubor se maže až po commitu. `ProvidesFileReferences` chrání soubor

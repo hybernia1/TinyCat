@@ -313,7 +313,7 @@ import "./form-requests.js";
     return true;
   };
   async function loadRemoteModal(target, url, host, force, trigger) {
-    var modal = getModal(target);
+    var modal = getModal(target), previous = modal;
     var modalIndex;
     var data;
 
@@ -327,7 +327,7 @@ import "./form-requests.js";
 
     if (pending.has(target)) { pending.get(target).abort(); }
     var controller = new AbortController(); pending.set(target, controller);
-    var changedDuringRead = false, replacementEvents = ["input", "change", "tinycat:tab"];
+    var changedDuringRead = false, replacementEvents = ["input", "change", "submit", "tinycat:tab"];
     function changed() { changedDuringRead = true; controller.abort(); }
     if (modal) replacementEvents.forEach(function (name) { modal.addEventListener(name, changed); });
     try { data = await TinyCat.api.request(url, { method: "GET", signal: controller.signal }); }
@@ -366,18 +366,33 @@ import "./form-requests.js";
 
     modal.dataset.remoteLoaded = "true";
     modal.dataset.modalUrl = url;
+    if (modal.dataset.modalKind === "editor") {
+      var actions = modal.querySelector(".modal-editor-actions");
+      if (actions) actions.prepend(TinyCat.components.render("ui/editor-refresh", { id: target, url: url }));
+    }
     TinyCat.lifecycle.hydrate(modal);
+    if (previous) TinyCat.dialogHistory.replaced(previous, modal);
 
     return modal;
   }
   TinyCat.dialog.cancelPending = function () { pending.forEach(function (controller) { controller.abort(); }); pending.clear(); };
   TinyCat.dialog.openResource = async function (id, url, options) {
     options = options || {};
-    var modal = await loadRemoteModal(id, url, document.body, false);
+    var previous = getModal(id), opener = previous && previous.__tinycatPreviousFocus;
+    var modal = await loadRemoteModal(id, url, document.body, options.refresh === true);
     if (options.current && !options.current()) { TinyCat.lifecycle.dispose(modal); modal.remove(); return null; }
     var tab = qsa("[data-tab]", modal).find(function (item) { return item.dataset.tab === options.tab; });
     if (tab) TinyCat.tabs.activate(tab, false);
-    return TinyCat.dialog.open(modal, options);
+    TinyCat.dialog.open(modal, options);
+    if (opener) modal.__tinycatPreviousFocus = opener;
+    return modal;
+  };
+  TinyCat.dialog.refresh = async function (target) {
+    var modal = getModal(target);
+    if (!modal || modal.dataset.remoteLoaded !== "true") { return null; }
+    if (modal.querySelector('form[data-api-busy="true"]')) { return null; }
+    var active = qs('[data-tab][aria-selected="true"]', modal);
+    return TinyCat.dialog.openResource(modal.id, modal.dataset.modalUrl, { refresh: true, tab: active && active.dataset.tab, history: false });
   };
   async function openRemoteModal(trigger, force) {
     var parent = trigger && trigger.closest ? trigger.closest("[data-modal-parent-open]") : null;
@@ -392,6 +407,8 @@ import "./form-requests.js";
     setLoading(trigger, true);
 
     try {
+      var current = getModal(target);
+      if (force && current && current.contains(trigger)) return await TinyCat.dialog.refresh(current);
       modal = await loadRemoteModal(target, url, host, force, trigger);
       return TinyCat.dialog.open(modal);
     } finally {

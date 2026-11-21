@@ -23,6 +23,6 @@ final class Routes
         foreach (Registrations::current()->entries->crawlerHints as $hint) { $body .= '# ' . str_replace(["\r", "\n"], '', ($hint->render)()) . "\n"; }
         $body .= "User-agent: *\n";
         foreach (['admin', 'api', 'install', 'login', 'logout', 'notifications', 'recovery', 'register', 'search'] as $path) { $body .= 'Disallow: /' . $path . "\n"; }
-        Document::respond($body . 'Sitemap: ' . \TinyCat\Support\LocalUrls::absolute('/sitemap.xml') . "\n", 'text/plain', 3600);
+        Document::respond($body . 'Sitemap: ' . \TinyCat\Support\LocalUrls::absolute('/sitemap.xml') . "\n", 'text/plain');
     }
 }

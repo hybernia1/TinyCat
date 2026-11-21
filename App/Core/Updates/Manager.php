@@ -411,7 +411,7 @@ class Manager extends Package
 
         header('Retry-After: 300');
         if (self::$unavailable !== null) { (self::$unavailable)(503); }
-        else { http_response_code(503); echo 'Maintenance in progress.'; }
+        else { \TinyCat\Http\Document::error('Maintenance in progress.', 503); }
         exit;
     }
 

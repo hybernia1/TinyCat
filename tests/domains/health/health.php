@@ -52,6 +52,8 @@ $assert(!str_contains(json_encode($report), 'SECRET'), 'Diagnostic reports never
 $assert(Service::inspect(['warning' => static fn (): string => 'warning'])['status'] === 'warning', 'Warnings produce an attention result.');
 $assert(Service::inspect([])['status'] === 'unknown', 'An empty diagnostic is never reported healthy.');
 $assert(Service::snapshot()['stale'], 'Before the first run, health is unknown and stale.');
+$findings = \TinyCat\Support\Components::render('health/scheduler-findings', ['metrics' => ['custom-owner-task' => 'missing', 'site-health' => 'ok']]);
+$assert(str_contains($findings, 'custom-owner-task') && str_contains($findings, \TinyCat\Support\Localization::t('health.title')), 'Scheduler findings show arbitrary owner tasks and use registered labels instead of a fixed task list.');
 $db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('cleanup', 'completed', datetime('now'))");
 $schedulerCheck = \TinyCat\Core\Health\Checks::definitions()['scheduler'];
 $db->exec("INSERT INTO bot_sources VALUES (1)");

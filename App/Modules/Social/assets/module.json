@@ -242,7 +242,7 @@
       "status/thread"
     ],
     "entries": [
-      "App/Core/Ui/assets/content/media-preview.js"
+      "App/Modules/Social/assets/content/media-preview.js"
     ],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-header.css",
@@ -552,5 +552,149 @@
       "captcha_required": "public.search_captcha_required",
       "search_search_captcha_unlocked": "public.search_captcha_unlocked"
     }
+  },
+  {
+    "routes": [],
+    "entries": [
+      "App/Modules/Social/assets/content/presentation.js"
+    ],
+    "components": [
+      "publishing/segments",
+      "publishing/link",
+      "publishing/attached-image"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/content/styles/status-text.css",
+      "App/Modules/Social/assets/content/styles/status-content.css",
+      "App/Modules/Social/assets/content/styles/mobile.css",
+      "App/Modules/Social/assets/content/styles/hashtags.css"
+    ],
+    "translations": [
+      "account.status_counter",
+      "account.status_image_add",
+      "account.status_image_remove",
+      "account.translation_continue",
+      "account.translation_failed",
+      "account.translation_hide",
+      "account.translation_machine",
+      "account.translation_preparing",
+      "account.translation_same",
+      "account.translation_translate",
+      "account.translation_unavailable",
+      "public.status_image_alt",
+      "public.status_image_alt_empty",
+      "account.messages.status_image_invalid"
+    ],
+    "id": "publishing.presentation"
+  },
+  {
+    "routes": [],
+    "entries": [
+      "App/Modules/Social/assets/content/editor-entry.js"
+    ],
+    "components": [
+      "publishing/editor",
+      "publishing/image-field"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/content/styles/status-editing.css",
+      "App/Modules/Social/assets/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.status_counter",
+      "account.status_image_add",
+      "account.status_image_remove",
+      "public.status_image_alt",
+      "public.status_image_alt_empty",
+      "account.status_body",
+      "account.messages.status_image_invalid"
+    ],
+    "id": "publishing.editor"
+  },
+  {
+    "id": "publishing.media",
+    "routes": [],
+    "entries": [
+      "App/Modules/Social/assets/content/media-preview.js"
+    ],
+    "components": [
+      "publishing/link",
+      "publishing/attached-image"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/content/styles/status-content.css",
+      "App/Modules/Social/assets/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.messages.status_image_invalid"
+    ]
+  },
+  {
+    "id": "publishing.discussion-base",
+    "routes": [],
+    "uses": [
+      "publishing.editor",
+      "publishing.presentation"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/content/comments.js"
+    ],
+    "components": [
+      "publishing/comment",
+      "publishing/comment-form",
+      "publishing/like",
+      "publishing/comment-history",
+      "publishing/comment-replies"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/content/styles/discussion-content.css",
+      "App/Modules/Social/assets/content/styles/discussion-editing.css",
+      "App/Modules/Social/assets/content/styles/discussion-mobile.css"
+    ],
+    "translations": [
+      "account.status_comment",
+      "account.status_comment_placeholder",
+      "account.status_comments",
+      "account.status_like",
+      "account.status_like_for",
+      "account.status_reply",
+      "account.status_reply_placeholder",
+      "account.status_unlike_for",
+      "common.confirm_action",
+      "common.delete",
+      "common.edit",
+      "common.leave",
+      "common.stay",
+      "common.unsaved_message",
+      "common.unsaved_title",
+      "account.status_comment_history"
+    ]
+  },
+  {
+    "id": "publishing.discussion",
+    "routes": [],
+    "uses": [
+      "publishing.discussion-base"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/content/discussion.js"
+    ],
+    "components": [
+      "publishing/discussion"
+    ],
+    "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "/privacy"
+    ],
+    "uses": [
+      "ui.tables"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [],
+    "translations": []
   }
 ]

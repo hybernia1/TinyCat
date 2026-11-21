@@ -102,6 +102,10 @@ import "./tabs.js";
     return true;
   }
   T.dialogHistory = {
+    replaced: function (previous, modal) {
+      var frame = frames.find(function (item) { return item.modal === previous; });
+      if (frame) frame.modal = modal;
+    },
     opened: function (modal, options) {
       if (!ready) return;
       var route = descriptor(modal);

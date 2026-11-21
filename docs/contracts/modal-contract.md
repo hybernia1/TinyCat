@@ -101,3 +101,28 @@ Při změně modalů spustit `php tests/quality/ui-contracts.php`,
 `node tests/frontend/form-validation.cjs` a příslušné HTTP kontrakty.
 Změny společného loaderu ověřit také pomocí
 `node tests/frontend/dialog-history.cjs` a `php tools/assets/asset-report.php --check`.
+
+## Sectioned resource editors
+
+Account management and Settings use the same `sectionedDialog` factory. Independently
+saved sections own separate forms. The shared footer submits the active section;
+validation, successful-save state and canonical values apply only to that form.
+Other section drafts remain unchanged. Sections remain available without an extra
+resource request on every tab switch.
+
+The common resource loader adds Refresh to editor footers. `dialog.refresh(modal)`
+and `openResource(id, url, {refresh: true})` use the same guarded loader as explicit
+resource triggers. Refresh preserves the selected tab, opener and history entry.
+It asks before discarding any draft and does not run during a pending save. Editing,
+submitting, switching tabs or closing during the GET invalidates the pending replacement.
+Read failures retain the current editor. There is no owner-specific refresh engine.
+
+Settings PATCH accepts only submitted keys, validates before persistence and commits
+the batch atomically. Cache invalidation follows commit. Its response contains the same
+canonical, password-safe `sections` resource as GET; the client renders only the saved
+section through the original component definitions. This also resets write-only secrets
+and image controls without rebuilding other forms.
+
+Changed section forms mark their shared desktop tab and mobile option with an
+asterisk. The marker uses the existing form snapshot comparison; saving a section
+or restoring its original values clears its marker without changing other drafts.

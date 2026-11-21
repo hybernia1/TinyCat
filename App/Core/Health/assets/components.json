@@ -217,15 +217,11 @@
           {
             "tag": "li",
             "attrs": {"class": "result-item"},
-            "when": {"lookup": {"get": "_key"}, "cases": {"cleanup": true, "feeds": true}, "default": false},
             "children": [
               {
                 "tag": "strong",
                 "children": [
-                  {
-                    "lookup": {"get": "_key"},
-                    "cases": {"cleanup": {"t": "cron.tasks.cleanup"}, "feeds": {"t": "cron.tasks.feeds"}}
-                  }
+                  {"lookup": {"get": "_key"}, "default": {"get": "_key"}, "catalog": "health.tasks", "field": "label"}
                 ]
               },
               " — ",

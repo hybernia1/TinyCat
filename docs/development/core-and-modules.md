@@ -71,7 +71,7 @@ a veřejné kontrakty mezi modulem a frameworkem zůstávají zachované.
 `Social/Posts/PostCreation` je jediná příprava a vytvoření sociálního příspěvku,
 společná pro ruční zápis i feed import. `Social/Posts/Tags` vlastní normalizaci,
 vazby tagů a jejich veřejné výpisy bez dědičné mezivrstvy. `Posts/Resource`
-předává vlastní odkazy přímo společnému `Core/Ui/RichTextResource`.
+předává vlastní odkazy přímo vlastnímu `Social/Posts/TextResource`.
 Transakční aktualizaci a mazání uložených dat poskytuje `Posts/Repository`.
 Diskuse a reakce volají přímo `Posts/InteractionPolicy`; vlastní interní registr
 vlastníků nemají. Nastavení a lokalizaci URL čtou z core a blokování odkazů
@@ -202,7 +202,7 @@ Popisky tabulek pro instalátor a klientskou prezentaci vlastních nastavení
 dodává vlastník ve svých překladech a assetech. Core vybírá tabulky z registrací;
 instalační text nepředpokládá přítomnost konkrétního funkčního modulu.
 
-Textové renderery `Core/Text/Segments` a `Core/Ui/RichTextResource` vyžadují
+Textové renderery `Core/Text/Segments` a `Social/Posts/TextResource` vyžadují
 explicitní druh textu. Registr `Core/Text/Policies` použije příspěvek vlastníka
 pro tento druh, nebo neutrální chování, pokud příspěvek neexistuje. Aktivní
 Social nemění renderování textu jiného vlastníka.

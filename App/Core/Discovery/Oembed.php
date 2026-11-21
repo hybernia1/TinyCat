@@ -33,9 +33,7 @@ final class Oembed
         if ($data === null) { Document::jsonError(404, 'Content not found.'); return; }
         $data = ['version' => '1.0', 'type' => 'rich', 'provider_name' => Site::site_name(), 'provider_url' => Site::absolute_url('/'), 'width' => $width, 'height' => $height, 'cache_age' => 0] + $data;
         if ($format === 'xml') {
-            $body = '<?xml version="1.0" encoding="UTF-8"?><oembed>';
-            foreach ($data as $key => $value) { $body .= '<' . $key . '>' . \TinyCat\Support\Xml::escape((string) $value) . '</' . $key . '>'; }
-            Document::respond($body . '</oembed>', 'text/xml', 0);
+            Document::respond('<?xml version="1.0" encoding="UTF-8"?><oembed>' . \TinyCat\Support\Xml::elements($data) . '</oembed>', 'text/xml');
         } else { Document::respond(json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'application/json', 0); }
     }
 

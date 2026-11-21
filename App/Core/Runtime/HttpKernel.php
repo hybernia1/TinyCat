@@ -37,7 +37,7 @@ final class HttpKernel
     private static function unavailable(string $code, string $message): void
     {
         if (\TinyCat\Http\Router::isApiPath(\TinyCat\Http\Request::current()->path()) || \TinyCat\Http\Request::current()->wantsJson()) { \TinyCat\Http\Response::error($message, 503, $code); }
-        http_response_code(503); echo $message;
+        \TinyCat\Http\Document::error($message, 503);
     }
 
     public static function exception(\Throwable $error): void
@@ -45,6 +45,6 @@ final class HttpKernel
         if (Startup::$exception !== null) { (Startup::$exception)($error); return; }
         error_log('Application request failed: ' . $error->getMessage());
         if (\TinyCat\Http\Router::isApiPath(\TinyCat\Http\Request::current()->path()) || \TinyCat\Http\Request::current()->wantsJson()) { \TinyCat\Http\Response::exception($error); }
-        http_response_code($error->getCode() >= 400 && $error->getCode() <= 599 ? $error->getCode() : 500); echo 'Request failed.';
+        \TinyCat\Http\Document::error('Request failed.', $error->getCode() >= 400 && $error->getCode() <= 599 ? (int) $error->getCode() : 500);
     }
 }

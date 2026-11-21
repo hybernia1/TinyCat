@@ -14,8 +14,8 @@ Modul vlastní své entity, dotazy, FK, oprávnění a transakce. Core nemá uni
 Nevolej repository jiného vlastníka jen
 kvůli sdílenému editoru nebo stejnému číselnému ID.
 
-`Core/Ui/InteractionTarget`, `RichTextResource`, `DiscussionResource` a
-`ThreadTree` zpracují předaná data bez SQL. Vlastník předem ověří cíl a načte
+`Social/Discussion/InteractionTarget`, `Resource`, `ThreadTree` a
+`Social/Posts/TextResource` vlastní sociální resource a prezentaci. Social ověří cíl a načte
 autorizované přílohy, komentáře a stav reakcí. Zápis zamkne vlastní agregát,
 ověří rodiče komentáře i jeho vazbu a atomicky zapíše změnu a limiter.
 `Core/Text/Revisions` pomůže s formátem historie; tabulku vlastní modul.
@@ -25,11 +25,11 @@ spravovaném commitu. Při rollbacku se zahodí. Vnější transakce s takovými
 musí použít `Transactions::run`; samotné PDO `beginTransaction` neslibuje jejich
 doručení. Soubor neodstraňuj před commitem a neukládej nepotvrzené čtení do cache.
 
-Společná prezentace je v `App/Core/Ui/assets/content/`; kompatibilní feature ID
-`publishing.discussion-base` a `publishing.discussion` zůstávají zachována.
-URL, `submit_controller` a schopnost `reply_mentions` dodává vlastník.
-Sociální nabídka je volitelné `componentExtensions` rozšíření. Jiný modul nepřebírá
-zmínky, reputaci ani sociální události jen kvůli společnému UI.
+Sociální prezentace je v `App/Modules/Social/assets/content/`; její feature ID
+`publishing.discussion-base` a `publishing.discussion` patří Socialu.
+Core nabízí obecné formuláře a dialogy, nikoli univerzální komentářovou doménu.
+Sociální nabídka používá `componentExtensions` uvnitř vlastního katalogu.
+Jiný modul si definuje své entity, resource a komponenty bez závislosti na Socialu.
 
 HTTP i počáteční HTML používají stejné komponentové definice. Doménové endpointy
 vracejí kanonická data a oprávnění, nikoli HTML či definice komponent. Autorizační
@@ -37,6 +37,26 @@ kontrola, CSRF a JSON obálka jsou povinné také pro AJAX a multipart `_method`
 Společné rozhraní nevytváří druhý ruční renderer modalů či seznamů.
 
 ## Veřejný dokument a příspěvky UI
+
+Chybové HTML připravuje `Core/Runtime/Errors` s názvem, stavem a dostupnými
+akcemi. Běžná šablona `Core/Ui/templates/error.php` používá společný veřejný
+rám; hledání nabízí pouze při registrovaném zdroji. Samostatný
+`errorFallback.php` zůstává použitelný bez databáze, tématu a externích assetů.
+Obě šablony dostávají připravené URL a popisky, nikoli pevnou cestu či značku.
+Nouzový bootstrap může vrátit prostý text. Chybové dokumenty sdílejí
+`Http/Document::error`, který zachovává status, neposílá ETag, zakazuje cache
+a neposílá tělo při HEAD. Aplikační API dál používá vlastní společnou JSON obálku.
+
+XML/TXT/SVG serializace je oddělená od doručení přes `Http/Document`.
+`Support/Xml` poskytuje escapování, CDATA a ploché skalární elementy s ověřenými
+názvy. RSS renderer přijímá metadata enclosure (`url`, `length`, `type`) od
+vlastníka; nepředpokládá typ sociální přílohy. SVG avatar má vlastní verzovanou
+geometrii a CSP, ale sdílí HTTP validátory a HEAD. TXT příspěvky vlastníka
+vracejí řetězec bez výstupního bufferu a neopakují společné discovery odkazy.
+HTTP responder přijímá také gzip variantu svého ETag, protože Apache
+[`mod_deflate`](https://httpd.apache.org/docs/2.4/mod/mod_deflate.html#deflatealteretag)
+přidává příponu až za PHP. Změna těla zneplatní obě varianty. Aplikace kvůli
+tomu nevyžaduje změnu serverového vhostu ani vlastní implementaci komprese.
 
 Stránka volá `Core/Ui/Page::render()` s obsahem a metadaty. Core připraví dokument,
 head, jazykové menu, uživatelské menu a consent UI. Volitelné

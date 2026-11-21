@@ -44,12 +44,12 @@ final class Comments
             return [];
         }
 
-        if (\TinyCat\Database\Connection::get()->inTransaction()) { return \TinyCat\Core\Ui\ThreadTree::fromRows(self::status_comments_query($kind)->where('cc.content_id = ?', $contentId)->order('cc.created_at ASC, cc.id ASC')->all()); }
+        if (\TinyCat\Database\Connection::get()->inTransaction()) { return \TinyCat\Social\Discussion\ThreadTree::fromRows(self::status_comments_query($kind)->where('cc.content_id = ?', $contentId)->order('cc.created_at ASC, cc.id ASC')->all()); }
 
         $cache =& \TinyCat\Social\Discussion\Comments::status_comments_cache();
 
         if (!array_key_exists($kind . ":" . $contentId, $cache)) {
-            $cache[$kind . ":" . $contentId] = \TinyCat\Core\Ui\ThreadTree::fromRows(
+            $cache[$kind . ":" . $contentId] = \TinyCat\Social\Discussion\ThreadTree::fromRows(
                 \TinyCat\Social\Discussion\Comments::status_comments_query($kind)
                     ->where('cc.content_id = ?', $contentId)
                     ->order('cc.created_at ASC, cc.id ASC')
@@ -70,7 +70,7 @@ final class Comments
         }
 
         \TinyCat\Social\Discussion\Comments::status_preload_comment_user_likes(
-            \TinyCat\Support\Text::positive_int_ids(array_column(\TinyCat\Core\Ui\ThreadTree::flatten($comments), 'id')),
+            \TinyCat\Support\Text::positive_int_ids(array_column(\TinyCat\Social\Discussion\ThreadTree::flatten($comments), 'id')),
             $userId
         );
     }

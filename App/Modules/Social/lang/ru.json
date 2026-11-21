@@ -41,12 +41,46 @@
       "status_image_disabled": "Загрузка изображений в настоящее время отключена.",
       "status_image_compression": "Это изображение невозможно сжать до установленного предельного размера.",
       "status_not_found": "Пост не найден.",
-      "status_forbidden": "Вам не разрешено выполнять это действие."
+      "status_forbidden": "Вам не разрешено выполнять это действие.",
+      "status_tag_too_long": "Тег может содержать не более {max} символов.",
+      "status_image_invalid": "Выберите допустимое изображение JPEG, PNG или WebP размером {size} КБ.",
+      "comment_required": "Комментарий не может быть пустым.",
+      "comment_not_found": "Комментарий не найден.",
+      "comment_edit_forbidden": "Вам не разрешено редактировать этот комментарий.",
+      "comment_forbidden": "Вам не разрешено удалять этот комментарий.",
+      "comment_created": "Комментарий добавлен.",
+      "comment_saved": "Комментарий сохранен.",
+      "comment_deleted": "Комментарий был удален."
     },
     "status_embed": "Встроить запись",
     "status_embed_help": "Скопируйте этот HTML-код в HTML-блок своего сайта. WordPress также может определить встраивание по ссылке на запись.",
     "status_embed_code": "Код для вставки",
-    "status_embed_open": "Открыть исходную запись"
+    "status_embed_open": "Открыть исходную запись",
+    "translation_translate": "Перевести",
+    "translation_hide": "Скрыть перевод",
+    "translation_preparing": "Подготовка перевода…",
+    "translation_machine": "Машинный перевод",
+    "translation_unavailable": "Перевод этого текста недоступен.",
+    "translation_same": "Этот пост уже на вашем языке интерфейса.",
+    "translation_continue": "Готово. Нажмите «Перевести» еще раз, чтобы продолжить.",
+    "translation_failed": "Не удалось выполнить перевод. Пожалуйста, попробуйте еще раз.",
+    "status_counter": "Осталось {count}",
+    "status_image_add": "Добавить изображение",
+    "status_image_remove": "Удалить изображение",
+    "status_body": "Что нового?",
+    "status_comment": "Комментарий",
+    "status_comment_placeholder": "Написать комментарий...",
+    "status_reply": "Ответить",
+    "status_like": "Нравится",
+    "status_reply_placeholder": "Написать ответ...",
+    "status_like_for": "Нравится – {context}",
+    "status_unlike_for": "В отличие от – {context}",
+    "status_comments": "Комментарии",
+    "status_comment_history": "Редактировать историю",
+    "status_comment_history_empty": "Этот комментарий еще не редактировался.",
+    "status_comment_history_updated_by": "Отредактировал {author}",
+    "status_comment_history_change": "Изменение комментария",
+    "status_comment_history_unknown": "Неизвестный пользователь"
   },
   "bots": {
     "title": "Боты",
@@ -315,7 +349,9 @@
       "few": "{count} публикации",
       "many": "{count} публикаций",
       "other": "{count} публикации"
-    }
+    },
+    "status_image_alt": "Изображение, прикрепленное к сообщению {author}: {text}",
+    "status_image_alt_empty": "Изображение прикреплено к сообщению пользователя {author}."
   },
   "app": {
     "name": "TinyCat"

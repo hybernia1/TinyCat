@@ -132,7 +132,8 @@ $assertStyle = static function (string $route, string $style, bool $expected) us
 };
 foreach (['/', '/admin/users'] as $route) { $assertStyle($route, 'App/Core/Identity/assets/styles/avatar-upload.css', true); }
 foreach (['/', '/login', '/search/all', '/privacy', '/notifications'] as $route) {
-    foreach (['App/Core/Ui/assets/styles/tables.css', 'App/Core/Ui/assets/styles/tables-mobile.css', 'App/Core/Ui/assets/styles/pagination.css', 'App/Core/Ui/assets/styles/filter-chips.css'] as $style) { $assertStyle($route, $style, false); }
+    foreach (['App/Core/Ui/assets/styles/tables.css', 'App/Core/Ui/assets/styles/tables-mobile.css'] as $style) { $assertStyle($route, $style, $route === '/privacy'); }
+    foreach (['App/Core/Ui/assets/styles/pagination.css', 'App/Core/Ui/assets/styles/filter-chips.css'] as $style) { $assertStyle($route, $style, false); }
 }
 foreach (['/login', '/search/all', '/privacy', '/notifications'] as $route) {
     $assertStyle($route, 'App/Modules/Social/assets/status/styles/home-feed.css', false);

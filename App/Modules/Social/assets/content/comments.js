@@ -1,11 +1,11 @@
-import "../component-builders.js";
-import "../runtime/dates.js";
-import "../content-updates.js";
-import "../runtime/dom.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/runtime/dates.js";
+import "../../../../Core/Ui/assets/content-updates.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
 import "./editor.js";
 
 import "./runtime.js";
-import "../dialogs.js";
+import "../../../../Core/Ui/assets/dialogs.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

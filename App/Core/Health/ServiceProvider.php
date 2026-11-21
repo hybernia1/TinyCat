@@ -19,8 +19,17 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
             navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.health.admin', static fn (): array => self::adminNavigation(), 60)],
             widgets: [new \TinyCat\Core\Modules\DashboardWidget('core.health', self::widget(...), 10, type: 'status', title: static fn (): string => \TinyCat\Support\Localization::t('health.title'), icon: 'shield')],
             health: $probes,
+            componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('health.tasks', self::taskLabels(...))],
             notificationTypes: \TinyCat\Core\Health\Alerts::types(),
         );
+    }
+
+    /** @return array<string, array{label: array{t: string}}> */
+    public static function taskLabels(): array
+    {
+        $labels = [];
+        foreach (\TinyCat\Core\Modules\Registrations::current()->entries->tasks as $task) { $labels[$task->id] = ['label' => ['t' => $task->definition()['admin']['title']]]; }
+        return $labels;
     }
 
     /** @return array<string, mixed> */

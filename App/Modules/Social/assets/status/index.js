@@ -1,16 +1,16 @@
-import "../../../../Core/Ui/assets/content/index.js";
+import "../content/index.js";
 import "./media-navigation.js";
 import "../../../../Core/Ui/assets/runtime/dom.js";
 import "../../../../Core/Ui/assets/runtime/modules.js";
 import "../../../../Core/Ui/assets/runtime/navigation.js";
 import "./form-actions.js";
 import "./comments.js";
-import "../../../../Core/Ui/assets/content/editor.js";
+import "../content/editor.js";
 import "./feed-loader.js";
 import "./form-context.js";
-import "../../../../Core/Ui/assets/content/media.js";
+import "../content/media.js";
 import "./controller.js";
-import "../../../../Core/Ui/assets/content/translation.js";
+import "../content/translation.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

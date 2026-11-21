@@ -26,6 +26,20 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
     }
 };
 
+$privacy = \TinyCat\Support\Components::render('ui/privacy-page', [
+    'siteName' => 'Fixture', 'siteCaptchaEnabled' => false, 'siteGoogleAnalyticsConfigured' => false,
+    'sections' => new \TinyCat\Support\Markup(\TinyCat\Support\Components::render('site/privacy-section', ['siteName' => 'Fixture', 'privacyLimitRows' => []])),
+]);
+$intro = \TinyCat\Support\Localization::t('privacy.intro', ['site' => 'Fixture']);
+$assert($intro !== 'privacy.intro' && substr_count(html_entity_decode(strip_tags($privacy)), $intro) === 1, 'The Social privacy introduction appears once inside the core information page.');
+$errorData = ['status' => 500, 'title' => 'Error <unsafe>', 'intro' => 'Try again', 'locale' => 'en', 'homeUrl' => '/nested/', 'homeLabel' => 'Home', 'searchUrl' => '', 'searchLabel' => 'Search'];
+foreach (['error', 'errorFallback'] as $template) {
+    $errorHtml = \TinyCat\Support\View::render($template, $errorData, $root . '/App/Core/Ui/templates');
+    $assert(str_contains($errorHtml, 'href="/nested/"') && str_contains($errorHtml, 'Error &lt;unsafe&gt;') && !str_contains($errorHtml, '/search/all'), 'Error templates use prepared portable actions and escape titles: ' . $template);
+}
+$bootstrapError = \TinyCat\Support\View::render('errorFallback', array_diff_key($errorData, array_flip(['homeUrl', 'homeLabel', 'searchUrl', 'searchLabel'])), $root . '/App/Core/Ui/templates');
+$assert(str_contains($bootstrapError, 'href="/"') && str_contains($bootstrapError, '500'), 'Emergency rendering remains compatible with a cached updater that only passes the original error metadata.');
+
 $modal = \TinyCat\Support\Components::render('ui/modal', [
     'root_attributes' => ['id' => 'snapshot-modal', 'class' => 'modal', 'role' => 'dialog', 'aria-modal' => 'true', 'aria-labelledby' => 'snapshot-modal-title'],
     'panel_attributes' => ['class' => 'modal-panel', 'data-snapshot' => 'a&b'],

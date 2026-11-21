@@ -8,7 +8,7 @@ use TinyCat\Social\Posts\Policy;
 use TinyCat\Social\Discussion\Policy as InteractionPolicy;
 use TinyCat\Social\Posts\PostCreation;
 
-use TinyCat\Core\Ui\InteractionTarget;
+use TinyCat\Social\Discussion\InteractionTarget;
 
 use TinyCat\Database\Connection;
 use TinyCat\Database\Transactions;

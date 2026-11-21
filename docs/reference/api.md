@@ -629,7 +629,7 @@ Account activation for regular users uses administrator-only `PUT /api/users/{id
 The bot account resource returns `item` with `source_count`, `active_source_count`, `post_count` and `run_count`. Sources, posts and run history are loaded through their separate list resources; the duplicate bot-account `/management` view is retired.
 
 Settings PATCH takes `{ "settings": { "site.name": "Example" } }`. Omitted
-settings remain unchanged. Boolean false disables a setting. Password fields
+settings remain unchanged. Validation precedes the atomic batch write; failures roll back all database changes. A successful PATCH returns the same password-safe `sections` resource as the editor GET, including canonical saved values. Boolean false disables a setting. Password fields
 retain their value when empty. Read resources contain `key`, `type`, `value` and
 `sensitive`; sensitive values are null. Stored passwords and raw configuration
 are never returned. Blocked URL replacement takes a `blocked_urls` string. The settings modal updates the same rules through `settings[moderation.blocked_urls]`, retaining host normalization and `domain:` rules.

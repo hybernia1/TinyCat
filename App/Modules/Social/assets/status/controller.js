@@ -1,6 +1,6 @@
 // @component-owned: structure is declared in owner catalogs.
-import "../../../../Core/Ui/assets/content/comments.js";
-import "../../../../Core/Ui/assets/content/runtime.js";
+import "../content/comments.js";
+import "../content/runtime.js";
 import "../../../../Core/Ui/assets/content-updates.js";
 import "../../../../Core/Ui/assets/runtime/dates.js";
 import "../../../../Core/Ui/assets/runtime/component-renderer.js";

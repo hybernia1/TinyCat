@@ -184,6 +184,10 @@ try {
         foreach ($retiredFiles as $release => $paths) {
             if (version_compare((string) $release, $manifest['minimum_version'], '<=') || version_compare((string) $release, $version, '>')) { continue; }
             foreach ($paths as $path) {
+                if (str_starts_with($path, 'App/Modules/') && !\TinyCat\Core\Modules\Distribution::includes($path, $manifest['distribution'])) {
+                    if (in_array($path, $manifest['delete'], true)) { $failures[] = 'Foreign module cleanup: ' . $path; }
+                    continue;
+                }
                 if (!in_array($path, $manifest['delete'], true)) { $failures[] = 'Missing overlay cleanup: ' . $path; }
                 if (isset($manifest['files'][$path])) { $failures[] = 'Retired file is still packaged: ' . $path; }
             }

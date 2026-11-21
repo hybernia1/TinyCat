@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace TinyCat\Core\Ui;
+namespace TinyCat\Social\Discussion;
 
 /** Tree shaping for prepared rows; no database access or domain visibility rules. */
 final class ThreadTree

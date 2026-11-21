@@ -100,7 +100,9 @@ try {
     $assert($status === 200 && str_starts_with($svg, '<svg') && str_contains($headers['content-type'][0], 'image/svg+xml'), 'Generated avatar is served without Users');
     $assert(!isset($headers['set-cookie']) && str_contains($headers['cache-control'][0], 'immutable'), 'Public generated avatar does not start a session');
     [$status] = $request('/avatar/generated/v1/1.svg', extra: ['If-None-Match' => $headers['etag'][0]], authorized: false); $assert($status === 304, 'Generated avatar preserves ETag handling');
-    [$status] = $request('/avatar/generated/v1/1.svg?fur=invalid', authorized: false); $assert($status === 404, 'Invalid appearance parameters remain rejected');
+    [$status] = $request('/avatar/generated/v1/1.svg', extra: ['If-None-Match' => '"other", W/' . $headers['etag'][0]], authorized: false); $assert($status === 304, 'Generated avatars share weak/list validator handling with other documents');
+    [$status] = $request('/avatar/generated/v1/1.svg', extra: ['If-None-Match' => 'W/' . substr($headers['etag'][0], 0, -1) . '-gzip"'], authorized: false); $assert($status === 304, 'A downstream gzip validator retains the identity of the generated SVG');
+    [$status, , $badHeaders] = $request('/avatar/generated/v1/1.svg?fur=invalid', authorized: false); $assert($status === 404 && str_contains($badHeaders['cache-control'][0], 'no-store') && !isset($badHeaders['etag']), 'Invalid appearance parameters remain rejected without cacheable error responses');
     [$status, , $headers] = $request('/avatar/Member', authorized: false); $assert($status === 302 && str_contains($headers['location'][0], '/avatar/generated/v1/1.svg'), 'Username lookup preserves generated fallback URL');
     [$status] = $request('/avatar/missing', authorized: false); $assert($status === 404, 'Missing username uses the technical 404 response');
     [$status] = $request('/api/_avatars/appearance', 'PATCH', ['appearance' => ['fur' => 'ginger']]); $assert($status === 403, 'Appearance mutation retains common CSRF');

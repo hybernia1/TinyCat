@@ -4,6 +4,9 @@ declare(strict_types=1);
 /** @var string $title */
 /** @var string $intro */
 /** @var string $locale */
+// Optional when an older updater has already loaded the error handler.
+$homeUrl ??= '/';
+$homeLabel ??= 'Home';
 ?>
 <!doctype html>
 <html lang="<?= \TinyCat\Support\Html::e($locale) ?>">
@@ -25,7 +28,7 @@ declare(strict_types=1);
         <p><?= $status ?></p>
         <h1><?= \TinyCat\Support\Html::e($title) ?></h1>
         <p><?= \TinyCat\Support\Html::e($intro) ?></p>
-        <a href="/">TinyCat</a>
+        <a href="<?= \TinyCat\Support\Html::e($homeUrl) ?>"><?= \TinyCat\Support\Html::e($homeLabel) ?></a>
     </main>
 </body>
 </html>

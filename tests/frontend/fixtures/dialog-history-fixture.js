@@ -120,8 +120,8 @@
     history.back(); await wait(() => modal() && modal().dataset.modalKind === 'confirm', 'A later Back can retry discarding');
     modal().querySelectorAll('.modal-footer button')[1].click();
     await wait(() => !modal() && !location.hash, 'Confirmed discard closes the editor on its original page');
-    const persistent = editor('settings-editor-modal', true); T.lifecycle.hydrate(persistent); T.dialog.open(persistent);
-    tab('history').click(); check(location.hash.includes('modal=settings-editor-modal') && location.hash.includes('tab=history'), 'Persistent settings share the same URL contract');
+    const persistent = editor('persistent-editor-modal', true); T.lifecycle.hydrate(persistent); T.dialog.open(persistent);
+    tab('history').click(); check(location.hash.includes('modal=persistent-editor-modal') && location.hash.includes('tab=history'), 'Persistent editors share the same URL contract');
     persistent.querySelector('[data-modal-close]').click(); await wait(() => !modal() && !location.hash, 'The standard close button consumes persistent modal history');
     history.forward(); await wait(() => modal() === persistent && tab('history').getAttribute('aria-selected') === 'true', 'Persistent modals reopen without losing their tab');
     document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true})); await wait(() => !modal() && !location.hash, 'Escape closes the modal and returns to the base before the race test');

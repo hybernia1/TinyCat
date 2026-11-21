@@ -1,5 +1,5 @@
-import "../runtime/i18n.js";
-import "../runtime/icons.js";
+import "../../../../Core/Ui/assets/runtime/i18n.js";
+import "../../../../Core/Ui/assets/runtime/icons.js";
 import "./runtime.js";
 (function () {
   "use strict";

@@ -44,7 +44,7 @@ final class Platform
 
     public static function contributions(): Contributions
     {
-        return new Contributions(componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('dashboard.statistics', Admin\Statistics::fieldLookup(...))], localizedRoutes: [
+        return new Contributions(sitemaps: [new \TinyCat\Core\Modules\SitemapSection('pages', static fn (): int => count(Information::pages()), static fn (int $limit, int $offset): array => array_slice(Information::pages(), $offset, $limit), 10)], crawlerHints: [new \TinyCat\Core\Modules\CrawlerHint('tinycat.core.llms', static fn (): string => 'AI and LLM context: ' . Site::absolute_url('/llms.txt'))], componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('dashboard.statistics', Admin\Statistics::fieldLookup(...))], localizedRoutes: [
             new LocalizedRoute('core.home', '^/$'),
             new LocalizedRoute('core.identity', '^/(?:login|register|logout)$', ['next']),
             new LocalizedRoute('core.recovery', '^/recovery$', ['token']),

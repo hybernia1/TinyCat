@@ -212,6 +212,9 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
         foreach ((array) $allDeletions as $deletionVersion => $paths) {
             if (version_compare((string) $deletionVersion, $variantMinimum, '>') && version_compare((string) $deletionVersion, $version, '<=')) {
                 foreach ((array) $paths as $path) {
+                    // A distribution only retires files inside module roots it owns.
+                    // Keep legacy non-module paths: supported upgrades may still need them.
+                    if (str_starts_with((string) $path, 'App/Modules/') && !\TinyCat\Core\Modules\Distribution::includes((string) $path, $distribution)) { continue; }
                     $deletions[] = (string) $path;
                 }
             }

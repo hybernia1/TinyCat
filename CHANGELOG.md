@@ -1,5 +1,15 @@
 # Changelog
 
+## 7.1.0 - 2026-11-21
+
+- Keep Social publishing/discussion components, controllers, styles and translations with their module; remove retired core presentation classes and duplicate discussion resource preparation. Core public pages no longer depend on these Social resources.
+- Make privacy, sitemap, crawler documents and feed discovery reflect registered active owners. Remove duplicate site descriptions, missing translation keys and Social-specific guidance from core-only sites.
+- Unify HTTP error presentation, HEAD/error cache policy, generated-avatar delivery and compressed ETag validation. Validate flat oEmbed XML, derive RSS enclosure metadata from its owner and simplify TXT exports.
+- Share guarded resource-editor refresh, active-tab/history restoration and independent section drafts. Settings save only their selected section, validate before atomic database writes, invalidate caches after commit and reconcile canonical values through the original components.
+- Mark unsaved editor tabs and mobile options with an asterisk, clearing only saved or manually restored drafts.
+- Limit update deletion manifests to module roots owned by each distribution. Core updates preserve independently installed modules; runtime ownership protection remains strict even for absent deletion targets.
+- No database migration. PHP 8.4 and completed 6.0.10 or newer remain required. Extension authors must update imports of moved Social UI helpers. Settings PATCH now returns the password-safe editor `sections` resource rather than the retired saved/images summary.
+
 ## 7.0.0 - 2026-11-21
 
 - Make the core-only framework a complete foundation for independent applications, with explicit installation state, stable translation ownership and product-specific update channels. Publish core and Social installation/update packages together.

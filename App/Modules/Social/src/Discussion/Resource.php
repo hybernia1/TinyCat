@@ -2,9 +2,9 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Discussion;
 
-use TinyCat\Core\Ui\InteractionTarget;
+use TinyCat\Core\Text\Segments;
 
-/** Social prepares reactions before passing rows to the data-only common formatter. */
+/** Social comment data, capabilities and prepared thread presentation. */
 final class Resource
 {
     /** @param array<mixed> $rows
@@ -20,19 +20,16 @@ final class Resource
      * @return array<string, mixed> */
     public static function comment(array $row, ?array $actor, InteractionTarget $target): array
     {
-        $row['liked'] = $actor !== null && Comments::status_comment_user_liked((int) $row['id'], (int) $actor['id']);
-        $row['replies'] = self::prepare((array) ($row['replies'] ?? []), $actor);
-        return \TinyCat\Core\Ui\DiscussionResource::comment($row, $actor, $target);
-    }
-    /** @param array<mixed> $rows
-     * @param array<string, mixed>|null $actor
-     * @return list<array<string, mixed>> */
-    private static function prepare(array $rows, ?array $actor): array
-    {
-        return array_map(static function (array $row) use ($actor): array {
-            $row['liked'] = $actor !== null && Comments::status_comment_user_liked((int) $row['id'], (int) $actor['id']);
-            $row['replies'] = self::prepare((array) ($row['replies'] ?? []), $actor);
-            return $row;
-        }, array_values($rows));
+        $id = (int) $row['id']; $authorId = (int) $row['user_id'];
+        $own = $actor !== null && (int) $actor['id'] === $authorId;
+        $admin = \TinyCat\Core\Identity\Roles::isAdmin($actor);
+        return ['id' => $id, 'content_id' => $target->id, 'parent_id' => (int) ($row['parent_id'] ?? 0),
+            'author' => ['id' => $authorId, 'username' => (string) ($row['author_name'] ?? ''), 'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($row)],
+            'body' => (string) $row['body'], 'editable_body' => (string) $row['body'],
+            'segments' => Segments::compactTags(Segments::text((string) $row['body'], $target->kind, [], $target->id, $id)),
+            'created_at' => \TinyCat\Support\Dates::dateIso((string) $row['created_at']),
+            'likes_count' => (int) ($row['likes_count'] ?? 0), 'liked' => $actor !== null && Comments::status_comment_user_liked($id, (int) $actor['id']),
+            'capabilities' => ['edit' => $own || $admin, 'delete' => $own || $admin || $target->manage, 'interact' => $target->interact],
+            'replies' => array_map(static fn (array $reply): array => self::comment($reply, $actor, $target), array_values((array) ($row['replies'] ?? [])))];
     }
 }

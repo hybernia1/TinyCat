@@ -80,6 +80,26 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 7.1.0
+
+Publish matching core and Social update/install artifacts. The minimum remains a
+completed 6.0.10 installation with PHP 8.4; no database migration is added.
+Configuration, uploads, module activation and migration history are preserved.
+Core artifacts retire only their own module roots, so an independently installed
+Social package is not included in core cleanup. Absent foreign-module paths remain
+protected by the runtime; missing files within the artifact's own scope are harmless.
+
+Social publishing/discussion client sources now live under its own assets directory.
+Extension imports of the retired core discussion/text-resource helpers must use their
+Social owners. Existing publishing component IDs remain available through Social.
+Deploy the matching generated assets with the runtime; do not copy only PHP files.
+
+Settings sections save independently and show unsaved-tab markers. PATCH `/api/settings`
+returns the same password-safe `sections` resource as the editor GET, replacing the
+previous saved/images summary. Resource refresh protects drafts and preserves history.
+Core-only sitemap/privacy/crawler documents include only registered owner contributions.
+Error, SVG, XML, TXT and RSS delivery use the shared protocol mechanisms.
+
 ## Upgrading to 7.0.0
 
 Requires completed **6.0.10 or newer** and PHP 8.4. This major release consolidates

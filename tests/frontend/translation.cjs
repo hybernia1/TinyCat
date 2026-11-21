@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const source = fs.readFileSync(path.resolve(__dirname, "../../App/Core/Ui/assets/content/translation.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
+const source = fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/content/translation.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
 function node(value = "") {
   return {
     dataset: {}, hidden: false, textContent: value, innerText: value, children: [], attributes: {}, handlers: {},

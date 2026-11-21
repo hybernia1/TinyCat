@@ -88,7 +88,7 @@ foreach ($smtpField['fields'] as $child) {
 }
 $assert(in_array('moderation.blocked_urls', array_column($fields, 'key'), true), 'Remote settings include URL blocking.');
 [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Modular fixture', 'auth.registration.enabled' => false]], 'admin', $csrf);
-$assert($status === 200 && $payload['data']['saved'] && array_keys($payload['data']['images']) === ['site.logo_url', 'site.favicon_url'], 'Settings PATCH returns confirmation and saved public image paths for repeated AJAX saves.');
+$assert($status === 200 && isset($payload['data']['sections']) && !str_contains(json_encode($payload), 'fixture-secret'), 'Settings PATCH returns canonical editor values without saved secrets for repeated AJAX saves.');
 $assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'i18n.locale'")->fetchColumn() === 'en', 'Partial settings changes preserve omitted settings.');
 $assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'auth.registration.enabled'")->fetchColumn() === '0', 'A JSON false value disables a setting.');
 foreach ([['settings' => 'invalid'], ['settings' => ['site.name' => []]], ['settings' => ['email.smtp' => ['password' => []]]]] as $invalid) {

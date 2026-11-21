@@ -41,12 +41,46 @@
       "status_image_disabled": "Het uploaden van afbeeldingen is momenteel uitgeschakeld.",
       "status_image_compression": "Deze afbeelding kan niet worden gecomprimeerd tot de geconfigureerde maximale grootte.",
       "status_not_found": "Het bericht is niet gevonden.",
-      "status_forbidden": "Je mag deze actie niet uitvoeren."
+      "status_forbidden": "Je mag deze actie niet uitvoeren.",
+      "status_tag_too_long": "Een tag kan maximaal {max} tekens bevatten.",
+      "status_image_invalid": "Kies een geldige JPEG-, PNG- of WebP-afbeelding binnen {size} KB.",
+      "comment_required": "Opmerking mag niet leeg zijn.",
+      "comment_not_found": "De reactie is niet gevonden.",
+      "comment_edit_forbidden": "Je kunt deze reactie niet bewerken.",
+      "comment_forbidden": "Je mag deze reactie niet verwijderen.",
+      "comment_created": "Het commentaar is toegevoegd.",
+      "comment_saved": "De opmerking is opgeslagen.",
+      "comment_deleted": "De opmerking is verwijderd."
     },
     "status_embed": "Bericht insluiten",
     "status_embed_help": "Kopieer deze HTML-code naar een HTML-blok op je website. WordPress kan de insluiting ook herkennen via de bericht-URL.",
     "status_embed_code": "Insluitcode",
-    "status_embed_open": "Oorspronkelijk bericht openen"
+    "status_embed_open": "Oorspronkelijk bericht openen",
+    "translation_translate": "Vertalen",
+    "translation_hide": "Verberg vertaling",
+    "translation_preparing": "Vertaling voorbereiden…",
+    "translation_machine": "Machinevertaling",
+    "translation_unavailable": "Er is geen vertaling beschikbaar voor deze tekst.",
+    "translation_same": "Dit bericht is al in uw interfacetaal.",
+    "translation_continue": "Klaar. Klik nogmaals op Vertalen om door te gaan.",
+    "translation_failed": "Vertaling mislukt. Probeer het opnieuw.",
+    "status_counter": "Resterend {count}",
+    "status_image_add": "Afbeelding toevoegen",
+    "status_image_remove": "Afbeelding verwijderen",
+    "status_body": "Wat is er nieuw?",
+    "status_comment": "Opmerking",
+    "status_comment_placeholder": "Schrijf een reactie...",
+    "status_reply": "Antwoord",
+    "status_like": "Vind ik leuk",
+    "status_reply_placeholder": "Schrijf een antwoord...",
+    "status_like_for": "Vind ik leuk – {context}",
+    "status_unlike_for": "In tegenstelling tot – {context}",
+    "status_comments": "Opmerkingen",
+    "status_comment_history": "Geschiedenis bewerken",
+    "status_comment_history_empty": "Deze opmerking is nog niet bewerkt.",
+    "status_comment_history_updated_by": "Bewerkt door {author}",
+    "status_comment_history_change": "Opmerking gewijzigd",
+    "status_comment_history_unknown": "Onbekende gebruiker"
   },
   "bots": {
     "title": "-bots",
@@ -315,7 +349,9 @@
       "few": "{count} berichten",
       "many": "{count} berichten",
       "other": "{count} berichten"
-    }
+    },
+    "status_image_alt": "Afbeelding bijgevoegd bij een bericht van {author}: {text}",
+    "status_image_alt_empty": "Afbeelding bijgevoegd bij een bericht van {author}"
   },
   "app": {
     "name": "TinyCat"

@@ -97,8 +97,9 @@ final class Syndication
             $creator = (string) ($item['author_name'] ?? '');
             $creatorUrl = \TinyCat\Core\Ui\Site::absolute_url(\TinyCat\Http\LocaleRouting::canonical(\TinyCat\Social\Profiles\Profiles::author_url((int) $item['author_id'])));
 
-            $items[] = compact('itemTitle', 'itemUrl', 'publishedDate', 'imageUrl', 'imageBytes', 'attachedImage', 'imageType', 'rssBody', 'categories', 'creator', 'creatorUrl');
+            $enclosure = $attachedImage !== '' ? ['url' => $imageUrl, 'length' => $imageBytes, 'type' => $imageType] : null;
+            $items[] = compact('itemTitle', 'itemUrl', 'publishedDate', 'imageUrl', 'imageType', 'rssBody', 'categories', 'creator', 'creatorUrl', 'enclosure');
         }
-        \TinyCat\Http\Document::respond(\TinyCat\Core\Feeds\Rss::render($rssTitle, $rssDescription, $rssLink, $selfUrl, $items, $rssImage, $locale), 'application/rss+xml', 300);
+        \TinyCat\Http\Document::respond(\TinyCat\Core\Feeds\Rss::render($rssTitle, $rssDescription, $rssLink, $selfUrl, $items, $rssImage, $locale), 'application/rss+xml');
     }
 }

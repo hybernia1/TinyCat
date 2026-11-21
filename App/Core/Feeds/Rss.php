@@ -37,8 +37,9 @@ final class Rss
                 $body .= '<media:content medium="image"' . ($item['imageType'] !== '' ? ' type="' . $escape($item['imageType']) . '"' : '')
                     . ' url="' . $escape(\TinyCat\Core\Ui\Site::absolute_url($item['imageUrl'])) . '" />';
             }
-            if ($item['attachedImage'] !== '') {
-                $body .= '<enclosure url="' . $escape(\TinyCat\Core\Ui\Site::absolute_url($item['imageUrl'])) . '" length="' . $item['imageBytes'] . '" type="image/webp" />';
+            if (is_array($item['enclosure'] ?? null)) {
+                $enclosure = $item['enclosure'];
+                $body .= '<enclosure url="' . $escape(\TinyCat\Core\Ui\Site::absolute_url((string) $enclosure['url'])) . '" length="' . max(0, (int) $enclosure['length']) . '" type="' . $escape((string) $enclosure['type']) . '" />';
             }
             $body .= '<description>' . \TinyCat\Support\Xml::cdata($item['rssBody']) . '</description></item>';
         }

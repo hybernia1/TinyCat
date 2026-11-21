@@ -41,12 +41,46 @@
       "status_image_disabled": "Les téléchargements d'images sont actuellement désactivés.",
       "status_image_compression": "Cette image ne peut pas être compressée à la limite de taille configurée.",
       "status_not_found": "Le message n'a pas été trouvé.",
-      "status_forbidden": "Vous n'êtes pas autorisé à effectuer cette action."
+      "status_forbidden": "Vous n'êtes pas autorisé à effectuer cette action.",
+      "status_tag_too_long": "Une balise peut contenir au maximum {max} caractères.",
+      "status_image_invalid": "Choisissez une image JPEG, PNG ou WebP valide dans {size} Ko.",
+      "comment_required": "Le commentaire ne peut pas être vide.",
+      "comment_not_found": "Le commentaire n'a pas été trouvé.",
+      "comment_edit_forbidden": "Vous n'êtes pas autorisé à modifier ce commentaire.",
+      "comment_forbidden": "Vous n'êtes pas autorisé à supprimer ce commentaire.",
+      "comment_created": "Le commentaire a été ajouté.",
+      "comment_saved": "Le commentaire a été enregistré.",
+      "comment_deleted": "Le commentaire a été supprimé."
     },
     "status_embed": "Intégrer la publication",
     "status_embed_help": "Copiez ce code HTML dans un bloc HTML de votre site. WordPress peut aussi découvrir le contenu à intégrer depuis son URL.",
     "status_embed_code": "Code d’intégration",
-    "status_embed_open": "Ouvrir la publication originale"
+    "status_embed_open": "Ouvrir la publication originale",
+    "translation_translate": "Traduire",
+    "translation_hide": "Masquer la traduction",
+    "translation_preparing": "Préparation de la traduction…",
+    "translation_machine": "Traduction automatique",
+    "translation_unavailable": "La traduction n’est pas disponible pour ce texte.",
+    "translation_same": "Cet article est déjà dans la langue de votre interface.",
+    "translation_continue": "Prêt. Cliquez à nouveau sur Traduire pour continuer.",
+    "translation_failed": "La traduction a échoué. Veuillez réessayer.",
+    "status_counter": "{count} restant",
+    "status_image_add": "Ajouter une image",
+    "status_image_remove": "Supprimer l'image",
+    "status_body": "Quoi de neuf?",
+    "status_comment": "Commentaire",
+    "status_comment_placeholder": "Écrivez un commentaire...",
+    "status_reply": "Répondre",
+    "status_like": "Comme",
+    "status_reply_placeholder": "Écrivez une réponse...",
+    "status_like_for": "J'aime – {context}",
+    "status_unlike_for": "Contrairement à – {context}",
+    "status_comments": "Commentaires",
+    "status_comment_history": "Modifier l'historique",
+    "status_comment_history_empty": "Ce commentaire n'a pas encore été modifié.",
+    "status_comment_history_updated_by": "Edité par {author}",
+    "status_comment_history_change": "Modification du commentaire",
+    "status_comment_history_unknown": "Utilisateur inconnu"
   },
   "bots": {
     "title": "Bots",
@@ -315,7 +349,9 @@
       "few": "{count} publications",
       "many": "{count} publications",
       "other": "{count} publications"
-    }
+    },
+    "status_image_alt": "Image jointe à un message de {author} : {text}",
+    "status_image_alt_empty": "Image jointe à un message de {author}"
   },
   "app": {
     "name": "TinyCat"

@@ -346,44 +346,62 @@
       const get = new URL(url).pathname === '/api/settings/editor';
       if (get) reads++; else writes++;
       if (!get) {
-        check(options.body.get('settings[email.smtp][host]') === 'smtp.example.test', 'Settings keep nested multipart field names');
+        check(!options.body.has('settings[email.smtp][host]'), 'Saving Site excludes the Email draft');
         check(options.body.get('settings[site.footer_html]') === 'Edited footer', 'Settings submit the textarea draft');
       }
-      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:get ? schema : {saved:true,images:{}},meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
+      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:schema,meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
     };
     T.lifecycle.start();
     check(reads === 0 && !document.querySelector('#modal-settings-editor'), 'Initial hydration neither requests nor creates settings');
     const dialog = await T.settings.open('email');
     check(reads === 1 && dialog.dataset.modalDisposeOnClose === 'true', 'Settings are fetched only when opened and are disposable');
     check(!dialog.querySelector('[data-tab-panel="email"]').hidden && location.hash.includes('modal=settings/editor'), 'Requested section and canonical resource history are shared');
-    const form = dialog.querySelector('form'), footer = form.elements.namedItem('settings[site.footer_html]');
+    const control = name => [...dialog.querySelectorAll('form')].map(item => item.elements.namedItem(name)).find(Boolean), footer = control('settings[site.footer_html]');
     for (const section of schema.sections) for (const spec of section.fields) {
       const suffix = spec.type === 'email_smtp' ? '[host]' : spec.type === 'email_templates' ? '[_present]' : '';
-      check(Boolean(form.elements.namedItem('settings['+spec.key+']'+suffix)), 'The editor retains the submitted field for '+spec.key);
+      check(Boolean(control('settings['+spec.key+']'+suffix)), 'The editor retains the submitted field for '+spec.key);
     }
     check(dialog.querySelectorAll('.image-preview-contain').length === 2 && dialog.querySelector('.grid-span-full'), 'Site images and full-width settings retain shared layout primitives');
     check([...dialog.querySelectorAll('.field > .label')].every(label => label.textContent.trim()), 'Every server field has a client-owned presentation label');
-    check(footer.value === 'Saved footer' && form.elements.namedItem('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
+    check(footer.value === 'Saved footer' && control('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
     if (mode === 'settings-module') {
-      check(form.checkValidity(), 'Unchanged Fixture defaults pass native form validation');
+      check([...dialog.querySelectorAll('form')].every(item => item.checkValidity()), 'Unchanged Fixture defaults pass native form validation');
       for (const key of ['fixture.blocked_urls','fixture.links.utm.source','fixture.links.utm.campaign']) {
-        const control = form.elements.namedItem('settings['+key+']');
-        check(control.value === '' && !control.required, 'Fixture optional settings retain valid empty defaults: '+key);
+        const field = control('settings['+key+']');
+        check(field.value === '' && !field.required, 'Fixture optional settings retain valid empty defaults: '+key);
       }
-      check(form.elements.namedItem('settings[fixture.links.utm.medium]').required, 'Fixture UTM medium retains required native validation');
+      check(control('settings[fixture.links.utm.medium]').required, 'Fixture UTM medium retains required native validation');
     }
     footer.value='Edited footer'; footer.dispatchEvent(new Event('input',{bubbles:true}));
-    check(T.forms.dirty(dialog).length === 1, 'Settings edits use the shared draft guard');
+    const emailDraft = control('settings[email.smtp][host]'); emailDraft.value='unsaved.example.test'; emailDraft.dispatchEvent(new Event('input',{bubbles:true}));
+    check(T.forms.dirty(dialog).length === 2, 'Settings sections use independent shared draft guards');
+    check(dialog.querySelectorAll('[data-tab-dirty]').length === 2, 'Every changed section has a dirty marker');
+    check(dialog.querySelector('[data-tab-select] option[value="email"]').textContent.endsWith(' *'), 'Mobile sections show the same dirty marker');
     const confirmation = T.dialog.confirm;
     T.forms.confirmWith(async () => false);
     check(await T.dialog.requestClose(dialog,{history:false}) === false && dialog.isConnected && footer.value === 'Edited footer', 'Declining close preserves the complete settings draft');
+    try { await T.dialog.refresh(dialog); } catch (error) { check(error.name === 'AbortError', 'Declining refresh cancels resource replacement'); }
+    check(reads === 1, 'A rejected refresh does not request data');
     T.forms.confirmWith(confirmation);
+    T.tabs.activate(dialog.querySelector('[data-tab="site"]'), false);
     dialog.querySelector('.modal-footer [type="submit"]').click();
-    await wait(() => writes === 1 && !T.forms.dirty(dialog).length, 'Saving settings uses shared AJAX and clears the saved draft');
-    T.dialog.close(dialog,{history:false});
+    await wait(() => writes === 1 && T.forms.dirty(dialog).length === 1, 'Saving clears only the submitted section draft');
+    check(emailDraft.value === 'unsaved.example.test', 'Saving Site preserves the Email draft');
+    check(!dialog.querySelector('[data-tab="site"] [data-tab-dirty]') && dialog.querySelector('[data-tab="email"] [data-tab-dirty]'), 'Saving clears only the saved section marker');
+    emailDraft.value='smtp.example.test'; emailDraft.dispatchEvent(new Event('input',{bubbles:true}));
+    check(!dialog.querySelector('[data-tab-dirty]') && !dialog.querySelector('[data-tab-select] option[value="email"]').textContent.endsWith(' *'), 'Restoring original values clears desktop and mobile markers');
+    check(control('settings[site.footer_html]').value === 'Saved footer', 'Saved controls reconcile the canonical resource');
+    const currentHash = location.hash, entries = history.length;
+    const refreshed = await T.dialog.refresh(dialog);
+    check(reads === 2 && refreshed !== dialog && location.hash === currentHash && history.length === entries && !refreshed.querySelector('[data-tab-panel="site"]').hidden, 'Shared refresh retains tab and history without adding an entry');
+    check(refreshed.querySelectorAll('[data-modal-resource-refresh]').length === 1, 'Resource editor exposes one common refresh action');
+    T.tabs.activate(refreshed.querySelector('[data-tab="email"]'), false);
+    check(location.hash.includes('tab=email'), 'A refreshed editor retains live tab history binding');
+    T.dialog.close(refreshed);
+    await wait(() => !location.hash, 'Closing a refreshed editor consumes its original history entry');
     check(!document.querySelector('#modal-settings-editor'), 'Closing settings disposes the editor DOM');
     const reopened = await T.settings.open('site');
-    check(reads === 2 && reopened !== dialog, 'Reopening settings fetches current server data');
+    check(reads === 3 && reopened !== dialog, 'Reopening settings fetches current server data');
     T.dialog.close(reopened,{history:false});
     document.getElementById('validation-test-results').textContent = JSON.stringify({ok:true,mode,checks});
     return;

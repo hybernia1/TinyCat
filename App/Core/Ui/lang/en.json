@@ -25,9 +25,7 @@
     "not_found_title": "Page not found",
     "not_found_intro": "This address does not lead to a page. Check the URL or continue from the homepage.",
     "not_found_home": "Go to homepage",
-    "not_found_search": "Search content",
-    "status_image_alt": "Image attached to a post by {author}: {text}",
-    "status_image_alt_empty": "Image attached to a post by {author}"
+    "not_found_search": "Search content"
   },
   "privacy": {
     "data_title": "Data and Account",
@@ -112,10 +110,7 @@
       "thirty_days": "30 days"
     },
     "stats": {
-      "users": "Users",
-      "links": "Links",
-      "tags": "Tags",
-      "notifications": "Notifications"
+      "users": "Users"
     },
     "widgets": {
       "empty": "No dashboard widgets are available.",
@@ -123,43 +118,5 @@
       "stats": "Statistics",
       "stats_group": "Statistics group"
     }
-  },
-  "account": {
-    "messages": {
-      "status_tag_too_long": "A tag can contain at most {max} characters.",
-      "status_image_invalid": "Choose a valid JPEG, PNG, or WebP image within {size} KB.",
-      "comment_required": "Comment cannot be empty.",
-      "comment_not_found": "The comment was not found.",
-      "comment_edit_forbidden": "You are not allowed to edit this comment.",
-      "comment_forbidden": "You are not allowed to delete this comment.",
-      "comment_created": "The comment was added.",
-      "comment_saved": "The comment was saved.",
-      "comment_deleted": "The comment was deleted."
-    },
-    "translation_translate": "Translate",
-    "translation_hide": "Hide translation",
-    "translation_preparing": "Preparing translation…",
-    "translation_machine": "Machine translation",
-    "translation_unavailable": "Translation is unavailable for this text.",
-    "translation_same": "This post is already in your interface language.",
-    "translation_continue": "Ready. Click Translate again to continue.",
-    "translation_failed": "Translation failed. Please try again.",
-    "status_counter": "Remaining {count}",
-    "status_image_add": "Add image",
-    "status_image_remove": "Remove image",
-    "status_body": "What's new?",
-    "status_comment": "Comment",
-    "status_comment_placeholder": "Write a comment...",
-    "status_reply": "Reply",
-    "status_like": "Like",
-    "status_reply_placeholder": "Write a reply...",
-    "status_like_for": "Like – {context}",
-    "status_unlike_for": "Unlike – {context}",
-    "status_comments": "Comments",
-    "status_comment_history": "Edit history",
-    "status_comment_history_empty": "This comment has not been edited yet.",
-    "status_comment_history_updated_by": "Edited by {author}",
-    "status_comment_history_change": "Comment change",
-    "status_comment_history_unknown": "Unknown user"
   }
 }

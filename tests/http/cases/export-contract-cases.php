@@ -21,15 +21,24 @@ $exportRequest = static function (string $path, string $method = 'GET', array $e
     $assert(is_string($body), 'Machine-readable endpoints complete HTTP requests.');
     return [(int) ($match[1] ?? 0), (string) $body, $responseHeaders];
 };
+[$status, $llms] = $exportRequest('/llms.txt');
+$assert($status === 200 && substr_count($llms, '- [Homepage](') === 1 && substr_count($llms, '- [Sitemap](') === 1, 'Core discovery links are not duplicated by a Social contribution.');
+$insertExport->execute([900004, 900001, "First line\r\nSecond line", '2020-01-01 00:00:00']);
+[$status, $sample] = $exportRequest('/llms-full.txt');
+$assert($status === 200 && str_contains($sample, "> First line\n> Second line") && !str_contains($sample, '> > Second line'), 'Text exports quote normalized line endings once.');
+$exportDb->exec('DELETE FROM social_posts WHERE id=900004');
 foreach (['/robots.txt', '/llms.txt', '/llms-full.txt', '/sitemap.xml', '/sitemap-pages-1.xml', '/sitemap-tags-1.xml', '/sitemap-status-1.xml', '/author/900001/feed', '/tag/exportpublic/feed', '/search/feed?q=Export&media=text'] as $path) {
     [$status, $body, $headers] = $exportRequest($path);
     $assert($status === 200 && isset($headers['etag']) && str_contains($headers['cache-control'], 'public'), $path . ' exposes shared validators and public cache headers.');
+    $assert(str_contains($headers['cache-control'], 'max-age=0, must-revalidate'), $path . ' revalidates availability and active module contributions before reuse.');
     $assert(!isset($headers['set-cookie']) && !isset($headers['pragma']), $path . ' does not create a visitor session.');
     $assert(!str_contains($body, 'FUTURE-EXPORT-SECRET') && !str_contains($body, 'HIDDEN-EXPORT-SECRET'), 'Documents exclude hidden and future content even for administrators.');
     [$headStatus, $headBody, $headHeaders] = $exportRequest($path, 'HEAD');
     $assert($headStatus === 200 && $headBody === '' && $headHeaders['etag'] === $headers['etag'], 'HEAD shares GET metadata without a response body.');
     [$unchanged, $empty, $cachedHeaders] = $exportRequest($path, 'GET', ['If-None-Match' => '"unrelated", W/' . $headers['etag']]);
     $assert($unchanged === 304 && $empty === '' && isset($cachedHeaders['cache-control']), 'Conditional GET accepts weak validators in a list and returns an empty 304.');
+    [$compressed, $empty] = $exportRequest($path, 'GET', ['If-None-Match' => substr($headers['etag'], 0, -1) . '-gzip"']);
+    $assert($compressed === 304 && $empty === '', 'Downstream compression validators revalidate the same generated document.');
     [$otherStatus, $otherBody] = $exportRequest($path, 'GET', ['Accept-Language' => 'en', 'X-Test-Role' => 'admin']);
     $assert($otherStatus === 200 && $otherBody === $body, 'Export representations are independent of visitor identity and language.');
     if (str_contains($headers['content-type'], 'xml')) {
@@ -91,6 +100,7 @@ $exportDb->exec("INSERT INTO social_post_images (content_id, path, width, height
 $imageFeed = simplexml_load_string($imageRss);
 $imageUrl = (string) $imageFeed->channel->item->enclosure['url'];
 $assert($status === 200 && str_starts_with($imageUrl, 'http://localhost/') && (string) $imageFeed->channel->item->enclosure['length'] === '1234', 'RSS retains the absolute image enclosure and its real byte length.');
+$assert((string) $imageFeed->channel->item->enclosure['type'] === 'image/webp', 'Social supplies its actual attachment MIME type to the generic RSS renderer.');
 $assert((string) $imageFeed->channel->item->children('http://search.yahoo.com/mrss/')->content->attributes()['url'] === $imageUrl && str_contains((string) $imageFeed->channel->item->description, '<img src="' . $imageUrl . '" alt="'), 'RSS includes the same image in Media RSS and safe HTML with alternative text.');
 [$status, $imageHtml] = $exportRequest('/status/900001');
 $imageSchema = $schemaFromPage($imageHtml);
@@ -165,7 +175,7 @@ $exportDb->exec("UPDATE social_posts SET body = 'Updated export' WHERE id = 9000
 $assert($status === 200 && $oldHeaders['etag'] !== $changedHeaders['etag'], 'Changed content invalidates the RSS representation immediately.');
 foreach (['/sitemap-unknown-1.xml', '/sitemap-status-999999999999999999999.xml', '/author/900002/feed', '/tag/missingexport/feed'] as $path) {
     [$status, $body, $headers] = $exportRequest($path);
-    $assert($status === 404 && $headers['cache-control'] === 'no-store', 'Missing documents and overflowing sitemap pages return non-cacheable 404 responses.');
+    $assert($status === 404 && $headers['cache-control'] === 'no-store, max-age=0' && !isset($headers['etag']), 'Missing documents and overflowing sitemap pages share non-cacheable error headers.');
 }
 $exportDb->exec('DELETE FROM social_post_tags WHERE term_id >= 900001');
 $exportDb->exec('DELETE FROM social_terms WHERE id >= 900001');
@@ -235,6 +245,8 @@ foreach ([400, 401, 403, 404, 405, 422, 429, 500, 502, 503] as $errorStatus) {
     $errorPayload = json_decode($body, true);
     $assert($status === $errorStatus && is_array($errorPayload) && $errorPayload['status'] === $errorStatus && $errorPayload['ok'] === false && str_contains($headers['content-type'], 'application/json'), 'JSON error requests keep the shared envelope instead of HTML navigation: ' . $errorStatus);
 }
+[$status, , $errorHeaders] = $exportRequest('/fixture-error/500', 'GET', ['If-None-Match' => '*']);
+$assert($status === 500 && !isset($errorHeaders['etag']), 'Conditional requests cannot turn an error into a cached success.');
 
 [$status, $body, $headers] = $exportRequest('/privacy');
 $policyDocument = new DOMDocument();

@@ -34,7 +34,6 @@
       "App/Core/Ui/assets/styles/status-indicator-warning.css",
       "App/Core/Ui/assets/styles/check-line.css",
       "App/Core/Ui/assets/styles/navbar.css",
-      "App/Core/Ui/assets/styles/hashtags.css",
       "App/Core/Ui/assets/styles/popovers.css",
       "App/Core/Ui/assets/styles/context-menu-trigger.css",
       "App/Core/Ui/assets/styles/context-menu-actions.css",
@@ -100,6 +99,7 @@
       "ui/field",
       "ui/select",
       "ui/editor-actions",
+      "ui/editor-refresh",
       "ui/account-title"
     ],
     "translations": [
@@ -283,137 +283,6 @@
       "common.cancel",
       "common.close"
     ]
-  },
-  {
-    "routes": [],
-    "entries": [
-      "App/Core/Ui/assets/content/presentation.js"
-    ],
-    "components": [
-      "publishing/segments",
-      "publishing/link",
-      "publishing/attached-image"
-    ],
-    "styles": [
-      "App/Core/Ui/assets/content/styles/status-text.css",
-      "App/Core/Ui/assets/content/styles/status-content.css",
-      "App/Core/Ui/assets/content/styles/mobile.css"
-    ],
-    "translations": [
-      "account.status_counter",
-      "account.status_image_add",
-      "account.status_image_remove",
-      "account.translation_continue",
-      "account.translation_failed",
-      "account.translation_hide",
-      "account.translation_machine",
-      "account.translation_preparing",
-      "account.translation_same",
-      "account.translation_translate",
-      "account.translation_unavailable",
-      "public.status_image_alt",
-      "public.status_image_alt_empty",
-      "account.messages.status_image_invalid"
-    ],
-    "id": "publishing.presentation"
-  },
-  {
-    "routes": [],
-    "entries": [
-      "App/Core/Ui/assets/content/editor-entry.js"
-    ],
-    "components": [
-      "publishing/editor",
-      "publishing/image-field"
-    ],
-    "styles": [
-      "App/Core/Ui/assets/content/styles/status-editing.css",
-      "App/Core/Ui/assets/content/styles/mobile.css"
-    ],
-    "translations": [
-      "account.status_counter",
-      "account.status_image_add",
-      "account.status_image_remove",
-      "public.status_image_alt",
-      "public.status_image_alt_empty",
-      "account.status_body",
-      "account.messages.status_image_invalid"
-    ],
-    "id": "publishing.editor"
-  },
-  {
-    "id": "publishing.media",
-    "routes": [],
-    "entries": [
-      "App/Core/Ui/assets/content/media-preview.js"
-    ],
-    "components": [
-      "publishing/link",
-      "publishing/attached-image"
-    ],
-    "styles": [
-      "App/Core/Ui/assets/content/styles/status-content.css",
-      "App/Core/Ui/assets/content/styles/mobile.css"
-    ],
-    "translations": [
-      "account.messages.status_image_invalid"
-    ]
-  },
-  {
-    "id": "publishing.discussion-base",
-    "routes": [],
-    "uses": [
-      "publishing.editor",
-      "publishing.presentation"
-    ],
-    "entries": [
-      "App/Core/Ui/assets/content/comments.js"
-    ],
-    "components": [
-      "publishing/comment",
-      "publishing/comment-form",
-      "publishing/like",
-      "publishing/comment-history",
-      "publishing/comment-replies"
-    ],
-    "styles": [
-      "App/Core/Ui/assets/content/styles/discussion-content.css",
-      "App/Core/Ui/assets/content/styles/discussion-editing.css",
-      "App/Core/Ui/assets/content/styles/discussion-mobile.css"
-    ],
-    "translations": [
-      "account.status_comment",
-      "account.status_comment_placeholder",
-      "account.status_comments",
-      "account.status_like",
-      "account.status_like_for",
-      "account.status_reply",
-      "account.status_reply_placeholder",
-      "account.status_unlike_for",
-      "common.confirm_action",
-      "common.delete",
-      "common.edit",
-      "common.leave",
-      "common.stay",
-      "common.unsaved_message",
-      "common.unsaved_title",
-      "account.status_comment_history"
-    ]
-  },
-  {
-    "id": "publishing.discussion",
-    "routes": [],
-    "uses": [
-      "publishing.discussion-base"
-    ],
-    "entries": [
-      "App/Core/Ui/assets/content/discussion.js"
-    ],
-    "components": [
-      "publishing/discussion"
-    ],
-    "styles": [],
-    "translations": []
   },
   {
     "routes": [

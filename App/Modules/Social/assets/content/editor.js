@@ -1,9 +1,9 @@
-import "../runtime/dom.js";
-import "../runtime/api-client.js";
-import "../runtime/navigation.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/runtime/navigation.js";
 import "./runtime.js";
-import "../avatar-rendering.js";
-import "../component-builders.js";
+import "../../../../Core/Ui/assets/avatar-rendering.js";
+import "../../../../Core/Ui/assets/component-builders.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

@@ -46,7 +46,21 @@ $assert((int) $db->query('SELECT COUNT(*) FROM social_posts WHERE id = 1')->fetc
 $assert(Xml::escape("A\x01<&B") === 'A&lt;&amp;B', 'XML escapes entities and removes forbidden control characters.');
 $xml = simplexml_load_string('<value>' . Xml::cdata('a]]>b') . '</value>');
 $assert($xml !== false && (string) $xml === 'a]]>b', 'CDATA terminators remain valid and round-trip without changes.');
+$fields = simplexml_load_string('<oembed>' . Xml::elements(['title' => '<unsafe> & text', 'width' => 12, 'enabled' => true]) . '</oembed>');
+$assert($fields !== false && (string) $fields->title === '<unsafe> & text' && (string) $fields->width === '12', 'Flat protocol XML validates fields and escapes their scalar values.');
+foreach ([['bad><injected' => 'value'], ['nested' => ['unexpected']], ['number' => INF]] as $invalid) {
+    try { Xml::elements($invalid); throw new RuntimeException('Invalid XML field was accepted.'); }
+    catch (LogicException) { $assert(true, 'Invalid XML names and unsupported values are rejected.'); }
+}
+$rssItem = ['itemTitle' => 'Audio', 'itemUrl' => 'https://example.test/audio', 'publishedDate' => '', 'creator' => 'Owner', 'creatorUrl' => '', 'categories' => [], 'imageUrl' => '', 'rssBody' => 'Description', 'enclosure' => ['url' => '/audio.mp3', 'type' => 'audio/mpeg', 'length' => 321]];
+$rss = simplexml_load_string(\TinyCat\Core\Feeds\Rss::render('Feed', 'Description', '/', 'https://example.test/feed', [$rssItem]));
+$assert($rss !== false && (string) $rss->channel->item->enclosure['type'] === 'audio/mpeg' && (string) $rss->channel->item->enclosure['length'] === '321', 'Generic RSS preserves owner-supplied enclosure metadata instead of assuming WebP.');
 $pages = Sitemap::pageCounts();
+\TinyCat\Core\Modules\Resources::withCatalog(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), [])->catalog, static function () use ($assert): void {
+    $assert(Sitemap::sections() === ['pages'] && array_keys(Sitemap::pageCounts()) === ['pages'], 'Changing to core-only registration cannot reuse cached Social sitemap sections.');
+    $assert(\TinyCat\Core\Ui\Information::sections('llms') === '' && \TinyCat\Core\Ui\Information::sections('llms-full') === '', 'Information documents use the same active owner selection as the sitemap.');
+});
+$assert(Sitemap::pageCounts() === $pages && Sitemap::hasSection('tags'), 'Restoring the Social selection restores only its registered sitemap sections.');
 $db->exec("UPDATE users SET status = 'inactive' WHERE id = 1");
 $assert(Sitemap::pageCounts() === $pages && Sitemap::entries('status', 1000, 0) === [] && Export::posts() === [], 'A cached sitemap directory never preserves content after its author becomes hidden.');
 // Machine metadata must not inherit a user-selected display format for ISO dates.

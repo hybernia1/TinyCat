@@ -7,9 +7,10 @@
         "each": {"get": "sections"},
         "as": "section",
         "children": {
-          "tag": "div",
+          "tag": "form",
           "attrs": {
             "class": "grid sm:grid-2",
+            "enctype": "multipart/form-data",
             "data-editor-section": {"get": "section.key"},
             "data-editor-label": {
               "lookup": {"get": "section.key"},
@@ -227,11 +228,7 @@
     }
   },
   "settings/editor-form": {
-    "tag": "form",
-    "attrs": {"enctype": "multipart/form-data"},
-    "children": [
-      {"component": "settings/sections", "data": {"sections": {"get": "sections"}}},
-      {"tag": "button", "attrs": {"type": "submit", "class": "btn btn-primary"}, "children": [{"t": "common.save"}]}
-    ]
+    "tag": "div",
+    "children": [{"component": "settings/sections", "data": {"sections": {"get": "sections"}}}]
   }
 }

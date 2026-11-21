@@ -7,7 +7,7 @@ use TinyCat\Social\Posts\NotificationEvents;
 use TinyCat\Social\Posts\NotificationHistory;
 use TinyCat\Social\Posts\Posts;
 
-use TinyCat\Core\Ui\InteractionTarget;
+use TinyCat\Social\Discussion\InteractionTarget;
 
 /** Social authorization, quotas and notification semantics remain owned by Social. */
 final class Policy

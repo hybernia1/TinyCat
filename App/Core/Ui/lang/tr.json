@@ -25,9 +25,7 @@
     "not_found_title": "Sayfa bulunamadı",
     "not_found_intro": "Bu adres bir sayfaya yönlendirmez. URL'yi kontrol edin veya ana sayfadan devam edin.",
     "not_found_home": "Ana sayfaya git",
-    "not_found_search": "İçerik ara",
-    "status_image_alt": "{author} tarafından gönderilen bir yayına eklenen resim: {text}",
-    "status_image_alt_empty": "Resim {author} tarafından bir gönderiye eklenmiştir"
+    "not_found_search": "İçerik ara"
   },
   "privacy": {
     "data_title": "Veri ve Hesap",
@@ -112,10 +110,7 @@
       "thirty_days": "30 gün"
     },
     "stats": {
-      "users": "Kullanıcılar",
-      "links": "Bağlantılar",
-      "tags": "Etiketler",
-      "notifications": "Bildirimler"
+      "users": "Kullanıcılar"
     },
     "widgets": {
       "empty": "Kullanılabilir pano bileşeni yok.",
@@ -123,43 +118,5 @@
       "stats": "İstatistikler",
       "stats_group": "İstatistik grubu"
     }
-  },
-  "account": {
-    "messages": {
-      "status_tag_too_long": "Bir etiket en fazla {max} karakter içerebilir.",
-      "status_image_invalid": "{size} KB dahilinde geçerli bir JPEG, PNG veya WebP resmi seçin.",
-      "comment_required": "Yorum boş olamaz.",
-      "comment_not_found": "Yorum bulunamadı.",
-      "comment_edit_forbidden": "Bu yorumu düzenlemenize izin verilmiyor.",
-      "comment_forbidden": "Bu yorumu silmenize izin verilmiyor.",
-      "comment_created": "Yorum eklendi.",
-      "comment_saved": "Yorum kaydedildi.",
-      "comment_deleted": "Yorum silindi."
-    },
-    "translation_translate": "Çeviri",
-    "translation_hide": "Çeviriyi gizle",
-    "translation_preparing": "Çeviri hazırlanıyor…",
-    "translation_machine": "Makine çevirisi",
-    "translation_unavailable": "Bu metin için çeviri mevcut değil.",
-    "translation_same": "Bu gönderi zaten arayüz dilinizdedir.",
-    "translation_continue": "Hazır. Devam etmek için tekrar Çevir'i tıklayın.",
-    "translation_failed": "Çeviri başarısız oldu. Lütfen tekrar deneyin.",
-    "status_counter": "Kalan {count}",
-    "status_image_add": "Resim ekle",
-    "status_image_remove": "Resmi kaldır",
-    "status_body": "Yenilikler neler?",
-    "status_comment": "Yorum",
-    "status_comment_placeholder": "Bir yorum yazın...",
-    "status_reply": "Yanıtla",
-    "status_like": "Beğen",
-    "status_reply_placeholder": "Bir yanıt yazın...",
-    "status_like_for": "Beğen – {context}",
-    "status_unlike_for": "Farklı – {context}",
-    "status_comments": "Yorumlar",
-    "status_comment_history": "Geçmişi düzenle",
-    "status_comment_history_empty": "Bu yorum henüz düzenlenmedi.",
-    "status_comment_history_updated_by": "Düzenleyen: {author}",
-    "status_comment_history_change": "Yorum değişikliği",
-    "status_comment_history_unknown": "Bilinmeyen kullanıcı"
   }
 }

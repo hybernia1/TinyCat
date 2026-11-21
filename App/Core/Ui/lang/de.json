@@ -25,9 +25,7 @@
     "not_found_title": "Seite nicht gefunden",
     "not_found_intro": "Diese Adresse führt nicht zu einer Seite. Überprüfen Sie den URL oder fahren Sie von der Homepage fort.",
     "not_found_home": "Gehen Sie zur Startseite",
-    "not_found_search": "Inhalte durchsuchen",
-    "status_image_alt": "Bild angehängt an einen Beitrag von {author}: {text}",
-    "status_image_alt_empty": "Bild an einen Beitrag angehängt von {author}"
+    "not_found_search": "Inhalte durchsuchen"
   },
   "privacy": {
     "data_title": "Daten und Konto",
@@ -112,10 +110,7 @@
       "thirty_days": "30 Tage"
     },
     "stats": {
-      "users": "Benutzer",
-      "links": "Links",
-      "tags": "Schlagworte",
-      "notifications": "Benachrichtigungen"
+      "users": "Benutzer"
     },
     "widgets": {
       "empty": "Keine Dashboard-Widgets verfügbar.",
@@ -123,43 +118,5 @@
       "stats": "Statistiken",
       "stats_group": "Statistikgruppe"
     }
-  },
-  "account": {
-    "messages": {
-      "status_tag_too_long": "Ein Tag kann höchstens {max} Zeichen enthalten.",
-      "status_image_invalid": "Wählen Sie ein gültiges JPEG-, PNG- oder WebP-Bild innerhalb von {size} KB.",
-      "comment_required": "Der Kommentar darf nicht leer sein.",
-      "comment_not_found": "Der Kommentar wurde nicht gefunden.",
-      "comment_edit_forbidden": "Sie sind nicht berechtigt, diesen Kommentar zu bearbeiten.",
-      "comment_forbidden": "Es ist Ihnen nicht gestattet, diesen Kommentar zu löschen.",
-      "comment_created": "Der Kommentar wurde hinzugefügt.",
-      "comment_saved": "Der Kommentar wurde gespeichert.",
-      "comment_deleted": "Der Kommentar wurde gelöscht."
-    },
-    "translation_translate": "Übersetzen",
-    "translation_hide": "Übersetzung ausblenden",
-    "translation_preparing": "Übersetzung vorbereiten…",
-    "translation_machine": "Maschinelle Übersetzung",
-    "translation_unavailable": "Für diesen Text ist keine Übersetzung verfügbar.",
-    "translation_same": "Dieser Beitrag ist bereits in Ihrer Benutzeroberflächensprache.",
-    "translation_continue": "Bereit. Klicken Sie erneut auf „Übersetzen“, um fortzufahren.",
-    "translation_failed": "Die Übersetzung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
-    "status_counter": "Verbleibende {count}",
-    "status_image_add": "Bild hinzufügen",
-    "status_image_remove": "Bild entfernen",
-    "status_body": "Was ist neu?",
-    "status_comment": "Kommentar",
-    "status_comment_placeholder": "Schreibe einen Kommentar...",
-    "status_reply": "Antwort",
-    "status_like": "Wie",
-    "status_reply_placeholder": "Schreibe eine Antwort...",
-    "status_like_for": "Gefällt mir – {context}",
-    "status_unlike_for": "Im Gegensatz zu – {context}",
-    "status_comments": "Kommentare",
-    "status_comment_history": "Verlauf bearbeiten",
-    "status_comment_history_empty": "Dieser Kommentar wurde noch nicht bearbeitet.",
-    "status_comment_history_updated_by": "Bearbeitet von {author}",
-    "status_comment_history_change": "Kommentaränderung",
-    "status_comment_history_unknown": "Unbekannter Benutzer"
   }
 }

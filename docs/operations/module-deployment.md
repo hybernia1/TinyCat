@@ -67,6 +67,21 @@ produktu, dostupné a aktivní moduly, povinný framework, vlastnictví schémat
 plány s checksumy. Stejný popis je uvnitř balíčku v `App/distribution.json`.
 Lokální aktivaci vlastní chráněný `storage/deployment.json`; nepřepisuj ji ručně.
 
+Historický mazací seznam se při sestavení omezí na modulové adresáře vlastněné
+danou distribucí. Core balíček proto nemaže soubory samostatně instalovaných
+modulů; jejich úklid patří aktualizaci vlastníka. Toto pravidlo platí i pro
+vypnuté moduly a neexistující cesty. Staré cesty mimo `App/Modules/` zůstávají
+v plánu kvůli podporovaným přechodům. Runtime nadále odmítá balíček zasahující
+do nezávisle instalovaného modulu před změnou souborů nebo dat.
+
+Veřejné discovery výstupy používají stejný registr aktivních vlastníků.
+Core přispívá homepage a stránkou soukromí do `SitemapSection`; moduly přidávají
+své vlastní sekce, `InformationSection`, `CrawlerHint` a feedové routy.
+Po vypnutí vlastníka jeho sekce zmizí a jeho feedové i sitemapové adresy vracejí
+404. Dynamické sitemap, robots, LLM a RSS dokumenty používají společný
+`Http/Document` s ETag a povinnou revalidací; trvalé cache bez revalidace jsou
+vyhrazené výslovně verzovaným výstupům.
+
 ## Fresh instalace
 
 Rozbal instalační artefakt do samostatné instalace a připrav její `config.php`

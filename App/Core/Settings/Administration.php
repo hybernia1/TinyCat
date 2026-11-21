@@ -10,22 +10,6 @@ final class Administration
     /**
      * @return array<mixed>
      */
-    public static function tc_admin_settings_payload(): array
-    {
-        $images = [];
-        foreach (self::tc_admin_settings_sections() as $section) {
-            foreach ($section['fields'] as $field) {
-                if ($field['type'] === 'site_image') {
-                    $images[$field['key']] = (string) \TinyCat\Core\Settings\Store::config($field['key'], '');
-                }
-            }
-        }
-        return ['saved' => true, 'images' => $images];
-    }
-
-    /**
-     * @return array<mixed>
-     */
     public static function tc_admin_settings_sections(): array
     {
         return \TinyCat\Core\Settings\Sections::current();
@@ -56,6 +40,8 @@ final class Administration
             \TinyCat\Http\Response::validation(['settings' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
         }
 
+        $updates = [];
+        $images = [];
         foreach (\TinyCat\Core\Settings\Administration::tc_admin_settings_sections() as $group => $section) {
             foreach ((array) $section['fields'] as $field) {
                 if (!array_key_exists($field['key'], $posted)) {
@@ -70,10 +56,22 @@ final class Administration
                 if (($field['type'] ?? '') === 'password' && trim((string) (($posted[(string) $field['key']] ?? ''))) === '') {
                     continue;
                 }
-                [$value, $type] = \TinyCat\Core\Settings\Administration::tc_admin_settings_value_from_post($field, $posted);
-                \TinyCat\Core\Settings\Store::setSetting((string) $field['key'], $value, $type, (string) $group);
+                if ($field['type'] === 'site_image') { $images[] = [$field, (string) $group]; continue; }
+                try {
+                    [$value, $type] = self::tc_admin_settings_value_from_post($field, $posted);
+                } catch (InvalidArgumentException $exception) {
+                    \TinyCat\Http\Response::validation(['settings[' . $field['key'] . ']' => [\TinyCat\Http\Response::issue('settings_save_failed', $exception->getMessage())]]);
+                }
+                $updates[] = [(string) $field['key'], $value, $type, (string) $group];
             }
         }
+        \TinyCat\Database\Transactions::run(static function () use ($updates, $images, $posted): void {
+            foreach ($images as [$field, $group]) {
+                [$value, $type] = self::tc_admin_settings_value_from_post($field, $posted);
+                $updates[] = [(string) $field['key'], $value, $type, $group];
+            }
+            foreach ($updates as [$key, $value, $type, $group]) { Store::setSetting($key, $value, $type, $group); }
+        });
     }
 
     /**

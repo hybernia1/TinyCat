@@ -1,9 +1,9 @@
-import "../runtime/i18n.js";
-import "../runtime/dom.js";
-import "../runtime/navigation.js";
+import "../../../../Core/Ui/assets/runtime/i18n.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/navigation.js";
 import "./runtime.js";
-import "../image-uploads.js";
-import "../toasts.js";
+import "../../../../Core/Ui/assets/image-uploads.js";
+import "../../../../Core/Ui/assets/toasts.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat, uploads = new WeakMap();

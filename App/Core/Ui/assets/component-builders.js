@@ -123,7 +123,7 @@ import "./dialogs.js";
       var sections = fields ? Array.from(fields.querySelectorAll("[data-editor-section]")).map(function (section) {
         return { name: section.dataset.editorSection, label: section.dataset.editorLabel, icon: section.dataset.editorIcon, content: section, editable: section.dataset.editorEditable !== "false" };
       }) : [];
-      if (sections.length < 2) { return T.ui.adminDialog(id, title, form, persistent); }
+      if (!sections.length || (sections.length < 2 && form.tagName === "FORM")) { return T.ui.adminDialog(id, title, form, persistent); }
       var tabs = T.ui.tabbedContent(id, sections, selected || sections[0].name, T.ui.text(title));
       fields.appendChild(tabs.content);
       var separateForms = form.tagName !== "FORM", dialog;

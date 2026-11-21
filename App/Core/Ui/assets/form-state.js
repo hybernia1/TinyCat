@@ -154,6 +154,20 @@ import "./tabs.js";
 
     return JSON.stringify(values);
   }
+  function updateDirtyTabs(form) {
+    var panel = form.closest("[data-tab-panel]"), root = panel && panel.closest("[data-tabs]");
+    if (!root) return;
+    var dirty = qsa('form[data-dirty="true"]', panel).length > 0;
+    var tab = qsa("[data-tab]", root).find(function (item) { return item.dataset.tab === panel.dataset.tabPanel; });
+    if (!tab) return;
+    var marker = tab.querySelector("[data-tab-dirty]");
+    if (dirty && !marker) tab.appendChild(TinyCat.dom.element("span", { "data-tab-dirty": "", "aria-label": TinyCat.i18n.t("common.unsaved_title") }, " *"));
+    if (!dirty && marker) marker.remove();
+    qsa("[data-tab-select] option", root).filter(function (option) { return option.value === panel.dataset.tabPanel; }).forEach(function (option) {
+      if (option.__tinycatLabel === undefined) option.__tinycatLabel = option.textContent;
+      option.textContent = option.__tinycatLabel + (dirty ? " *" : "");
+    });
+  }
   function markFormClean(form) {
     if (!form || form.dataset.confirmUnsaved !== "true") {
       return;
@@ -161,6 +175,7 @@ import "./tabs.js";
 
     form.__tinycatInitialSnapshot = formSnapshot(form);
     form.dataset.dirty = "false";
+    updateDirtyTabs(form);
   }
   function updateDirtyForm(form) {
     if (!form || form.dataset.confirmUnsaved !== "true") {
@@ -172,6 +187,7 @@ import "./tabs.js";
     }
 
     form.dataset.dirty = formSnapshot(form) === form.__tinycatInitialSnapshot ? "false" : "true";
+    updateDirtyTabs(form);
   }
   function dirtyForms(modal) {
     return qsa('form[data-confirm-unsaved="true"][data-dirty="true"]', modal);

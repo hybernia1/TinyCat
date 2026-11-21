@@ -25,9 +25,7 @@
     "not_found_title": "Сторінка не знайдена",
     "not_found_intro": "Ця адреса не веде на сторінку. Перевірте URL або продовжте з домашньої сторінки.",
     "not_found_home": "Перейти на домашню сторінку",
-    "not_found_search": "Пошук вмісту",
-    "status_image_alt": "Зображення, прикріплене до публікації користувача {author}: {text}",
-    "status_image_alt_empty": "Зображення, додане до публікації {author}"
+    "not_found_search": "Пошук вмісту"
   },
   "privacy": {
     "data_title": "Дані та обліковий запис",
@@ -112,10 +110,7 @@
       "thirty_days": "30 днів"
     },
     "stats": {
-      "users": "Користувачі",
-      "links": "Посилання",
-      "tags": "Теги",
-      "notifications": "Сповіщення"
+      "users": "Користувачі"
     },
     "widgets": {
       "empty": "Немає доступних віджетів.",
@@ -123,43 +118,5 @@
       "stats": "Статистика",
       "stats_group": "Група статистики"
     }
-  },
-  "account": {
-    "messages": {
-      "status_tag_too_long": "Тег може містити щонайбільше {max} символів.",
-      "status_image_invalid": "Виберіть дійсне зображення JPEG, PNG або WebP розміром {size} КБ.",
-      "comment_required": "Коментарі не можуть бути порожніми.",
-      "comment_not_found": "Коментарі не знайдено.",
-      "comment_edit_forbidden": "Вам не дозволено редагувати цей коментар.",
-      "comment_forbidden": "Ви не маєте права видалити цей коментар.",
-      "comment_created": "Коментар додано.",
-      "comment_saved": "Коментар збережено.",
-      "comment_deleted": "Коментарі видалено."
-    },
-    "translation_translate": "Перекласти",
-    "translation_hide": "Приховати переклад",
-    "translation_preparing": "Готується переклад…",
-    "translation_machine": "Машинний переклад",
-    "translation_unavailable": "Переклад цього тексту недоступний.",
-    "translation_same": "Ця публікація вже є вашою мовою інтерфейсу.",
-    "translation_continue": "Готовий. Натисніть «Перекласти» ще раз, щоб продовжити.",
-    "translation_failed": "Помилка перекладу. Спробуйте ще раз.",
-    "status_counter": "Залишилося {count}",
-    "status_image_add": "Додати зображення",
-    "status_image_remove": "Видалити зображення",
-    "status_body": "Що нового?",
-    "status_comment": "Коментар",
-    "status_comment_placeholder": "Написати коментар...",
-    "status_reply": "Відповідь",
-    "status_like": "Подобається",
-    "status_reply_placeholder": "Написати відповідь...",
-    "status_like_for": "Подобається – {context}",
-    "status_unlike_for": "На відміну від – {context}",
-    "status_comments": "Коментарі",
-    "status_comment_history": "Історія редагування",
-    "status_comment_history_empty": "Цей коментар ще не відредаговано.",
-    "status_comment_history_updated_by": "Відредаговано {author}",
-    "status_comment_history_change": "Зміна коментаря",
-    "status_comment_history_unknown": "Невідомий користувач"
   }
 }

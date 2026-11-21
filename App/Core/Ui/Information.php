@@ -9,6 +9,13 @@ use TinyCat\Support\{Components, Localization, Markup};
 /** Framework information surfaces compose lazy sections from active owners. */
 final class Information
 {
+    /** @return list<array{url: string, last_modified: null}> */
+    public static function pages(): array
+    {
+        $items = [['url' => '/', 'last_modified' => null], ['url' => '/privacy', 'last_modified' => null]];
+        foreach (array_keys(\TinyCat\Support\Languages::language_packages()) as $locale) { $items[] = ['url' => \TinyCat\Http\LocaleRouting::url('/privacy', $locale), 'last_modified' => null]; }
+        return $items;
+    }
     public static function sections(string $surface): string
     {
         $content = '';
@@ -39,11 +46,13 @@ final class Information
     }
     public static function llms(bool $full = false): void
     {
-        $body = '# ' . Site::site_name() . "\n\n" . Site::site_meta_description() . "\n\n";
-        $body .= 'Interface languages: ' . implode(', ', array_keys(\TinyCat\Support\Languages::language_packages())) . ". Content retains its original language.\n\n";
-        $body .= '- [Homepage](' . Site::absolute_url('/') . ")\n- [Privacy and rules](" . Site::absolute_url('/privacy') . ")\n- [Sitemap](" . Site::absolute_url('/sitemap.xml') . ")\n\n";
+        $body = '# ' . Site::site_name() . "\n\n";
+        $description = Site::site_meta_description();
+        if ($description !== '') { $body .= $description . "\n\n"; }
+        $body .= 'Interface languages: ' . implode(', ', array_keys(\TinyCat\Support\Languages::language_packages())) . ".\n\n";
+        $body .= '- [Homepage](' . Site::absolute_url('/') . ")\n- [Privacy and rules](" . Site::absolute_url('/privacy') . ")\n- [Sitemap](" . Site::absolute_url('/sitemap.xml') . ")\n- [Robots rules](" . Site::absolute_url('/robots.txt') . ")\n\n";
         $body .= self::sections('llms');
         if ($full) { $body .= self::sections('llms-full'); }
-        ResponseDocument::respond($body, 'text/plain', 900);
+        ResponseDocument::respond($body, 'text/plain');
     }
 }
