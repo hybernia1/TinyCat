@@ -271,6 +271,16 @@ if (context !== 'modal') {
       && document.documentElement.scrollHeight <= innerHeight + 1
       && document.activeElement.closest('.pagination') === pagination
     : wrap.scrollTop === 0 && document.documentElement.scrollHeight > innerHeight && getComputedStyle(heading).position !== 'sticky';
+  const originalTheme = document.documentElement.getAttribute('data-theme');
+  for (const theme of ['light', 'dark']) {
+    document.documentElement.dataset.theme = theme;
+    pinnedList = pinnedList && [...wrap.querySelectorAll('thead th')].every(cell => {
+      const color = getComputedStyle(cell).backgroundColor;
+      return color !== 'transparent' && !color.endsWith(', 0)');
+    });
+  }
+  if (originalTheme === null) { document.documentElement.removeAttribute('data-theme'); }
+  else { document.documentElement.dataset.theme = originalTheme; }
   pinnedDiagnostics = {before, after, scroll:wrap.scrollTop, documentHeight:document.documentElement.scrollHeight, paginationBottom:pagination.getBoundingClientRect().bottom, focused:document.activeElement.closest('.pagination') === pagination};
   paginationCompact = pagination.getBoundingClientRect().height <= 55
     && pagination.scrollWidth <= pagination.clientWidth
@@ -293,10 +303,27 @@ for (const multiplier of [1.25,1.5,2]) {
 }
 if (previousScale) document.documentElement.style.setProperty('--ui-scale',previousScale);
 else document.documentElement.style.removeProperty('--ui-scale');
+let rowStatesConsistent=true;
+const stateBody=document.querySelector('.table tbody'), stateSource=stateBody.rows[0], originalTheme=document.documentElement.getAttribute('data-theme');
+for (const theme of ['light','dark']) {
+  document.documentElement.setAttribute('data-theme',theme);
+  const rows=[0,1,2].map(()=>stateSource.cloneNode(true));stateBody.append(...rows);
+  rows[0].classList.add('table-row-inactive');rows[1].classList.remove('table-row-inactive');
+  const inactiveBackground=getComputedStyle(rows[0]).backgroundColor;
+  rows[0].classList.remove('table-row-inactive');
+  rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0]).backgroundColor===inactiveBackground && getComputedStyle(rows[0]).backgroundColor!==getComputedStyle(rows[1]).backgroundColor;
+  rows[0].classList.add('table-row-inactive');
+  const actionsCell=rows[0].querySelector('.table-actions-cell');
+  rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0].cells[0]).fontStyle==='italic' && getComputedStyle(rows[0].querySelector('.badge')).fontStyle==='normal' && (!actionsCell || getComputedStyle(actionsCell).fontStyle==='normal');
+  const action=rows[0].querySelector('button,a');
+  if(action){action.focus({preventScroll:true});rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0]).backgroundColor!==inactiveBackground;action.blur();}
+  rows.forEach(row=>row.remove());
+}
+if(originalTheme===null)document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',originalTheme);
 const tableBadgesReadable = [...document.querySelectorAll('table .badge')].every(badge => getComputedStyle(badge,'::before').maskImage!=='none' && badge.textContent.trim());
 const identitySlots = [...document.querySelectorAll('table .identity-row')].map(identity => identity.firstElementChild);
 const identitySlotsNormalized = identitySlots.every(slot => slot.matches('.avatar.avatar-sm') && Math.abs(slot.getBoundingClientRect().width - identitySlots[0].getBoundingClientRect().width) < 1);
-results.forEach(result => Object.assign(result, {tableBadgesReadable, identitySlotsNormalized, controlsScale, pinnedList, pinnedDiagnostics, paginationCompact, sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
+results.forEach(result => Object.assign(result, {rowStatesConsistent, tableBadgesReadable, identitySlotsNormalized, controlsScale, pinnedList, pinnedDiagnostics, paginationCompact, sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
 const output = document.createElement('pre'); output.id = 'layout-metrics'; output.textContent = JSON.stringify(results); document.body.append(output);
 }());
 </script></body></html>

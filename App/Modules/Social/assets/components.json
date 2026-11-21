@@ -1042,9 +1042,18 @@
                                     "attrs": {"class": "table-identity-body"},
                                     "children": [
                                       {
-                                        "tag": "strong",
-                                        "attrs": {"class": "table-primary", "title": {"get": "source.name"}},
-                                        "children": [{"get": "source.name"}]
+                                        "tag": "a",
+                                        "attrs": {
+                                          "class": "table-primary",
+                                          "href": {"get": "source.feed_url"},
+                                          "aria-label": {
+                                            "concat": [{"get": "source.name"}, " — ", {"get": "source.feed_url"}]
+                                          },
+                                          "target": "_blank",
+                                          "rel": "noopener noreferrer",
+                                          "title": {"get": "source.name"}
+                                        },
+                                        "children": [{"tag": "strong", "children": [{"get": "source.name"}]}]
                                       },
                                       {
                                         "tag": "div",
@@ -1063,23 +1072,6 @@
                                               },
                                               "text": true
                                             }
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "tag": "div",
-                                        "attrs": {"class": "table-meta"},
-                                        "children": [
-                                          {
-                                            "tag": "a",
-                                            "attrs": {
-                                              "href": {"get": "source.feed_url"},
-                                              "target": "_blank",
-                                              "rel": "noopener noreferrer",
-                                              "class": "table-text-url",
-                                              "title": {"get": "source.feed_url"}
-                                            },
-                                            "children": [{"get": "source.feed_url"}]
                                           }
                                         ]
                                       },

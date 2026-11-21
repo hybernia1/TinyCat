@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 use TinyCat\Core\Installation\Pages;
 use TinyCat\Support\Components;
 
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration(['install' => ['complete' => false, 'locale' => 'en']]));
 \TinyCat\Support\Localization::locale('en');
 // Presentation must work before a usable application database exists.
 \TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
@@ -35,7 +36,7 @@ $render = static fn (array $data): string => Components::render('installation/pa
 $languages = ['en' => ['code' => 'en', 'label' => 'English'], 'cs' => ['code' => 'cs', 'label' => '<Czech & language>']];
 $language = Pages::prepare('language', $languages, ['locale' => 'cs']);
 $html = $render($language);
-$assert(str_contains($html, 'value="cs" checked') && !str_contains($html, 'value="en" checked'), 'Exactly the selected language is checked.');
+$assert(str_contains($html, 'value="cs" selected') && !str_contains($html, 'value="en" selected'), 'Exactly the selected language is selected.');
 $assert(str_contains($html, '&lt;Czech &amp; language&gt;'), 'Language labels are escaped.');
 $assert(substr_count($html, 'aria-current="step"') === 1 && substr_count($html, '<form ') === 1, 'Only one current step and one active form are rendered.');
 $assert(str_contains($html, 'action="/api/installation/steps/language"') && str_contains($html, 'name="_csrf"') && str_contains($html, 'data-installation-form'), 'Language submission preserves its endpoint and form lifecycle.');

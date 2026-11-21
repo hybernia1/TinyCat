@@ -17,7 +17,7 @@ declare(strict_types=1);
         body { margin: 0; padding: 24px; }
         main { max-width: 40rem; margin: 12vh auto; }
         h1 { font-size: 1.75rem; line-height: 1.3; }
-        a { color: inherit; text-underline-offset: .2em; }
+        a { color: inherit; text-decoration: none; }
     </style>
 </head>
 <body>

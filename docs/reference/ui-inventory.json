@@ -453,7 +453,6 @@
         "step.active",
         "step.complete",
         "step.label",
-        "step.number",
         "steps"
       ]
     },
@@ -463,7 +462,6 @@
       "dependencies": [],
       "inputs": [
         "language.code",
-        "language.display_code",
         "language.label",
         "languages",
         "locale"
@@ -3270,7 +3268,6 @@
     "App/Modules/Social/assets/status/styles/status-text.css",
     "assets/ui/styles/hashtags.css",
     "App/Modules/Social/assets/status/styles/status-inline-link.css",
-    "assets/ui/styles/inline-link-states.css",
     "assets/ui/content/styles/status-content.css",
     "assets/ui/content/styles/discussion-content.css",
     "assets/ui/styles/popovers.css",
@@ -3403,13 +3400,13 @@
     "admin-content": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 150,
+        "line": 149,
         "context": [],
         "selector": ".admin-content"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 157,
+        "line": 156,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -3617,7 +3614,7 @@
     "admin-main": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 108,
+        "line": 107,
         "context": [],
         "selector": ".admin-main"
       },
@@ -3659,13 +3656,13 @@
     "admin-nav-chevron": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 71,
+        "line": 70,
         "context": [],
         "selector": ".admin-nav-chevron"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 79,
+        "line": 78,
         "context": [],
         "selector": ".admin-nav-group[open] .admin-nav-chevron"
       }
@@ -3673,19 +3670,19 @@
     "admin-nav-group": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 51,
+        "line": 50,
         "context": [],
         "selector": ".admin-nav-group"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 65,
+        "line": 64,
         "context": [],
         "selector": ".admin-nav-group[data-active=\"true\"] > .admin-nav-summary"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 79,
+        "line": 78,
         "context": [],
         "selector": ".admin-nav-group[open] .admin-nav-chevron"
       }
@@ -3699,25 +3696,25 @@
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 41,
+        "line": 40,
         "context": [],
-        "selector": ".admin-nav-link:hover"
+        "selector": ".admin-nav-link:is(:hover, :focus-visible)"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 41,
-        "context": [],
-        "selector": ".admin-nav-link[aria-current=\"page\"]"
-      },
-      {
-        "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 47,
+        "line": 40,
         "context": [],
         "selector": ".admin-nav-link[aria-current=\"page\"]"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 88,
+        "line": 46,
+        "context": [],
+        "selector": ".admin-nav-link[aria-current=\"page\"]"
+      },
+      {
+        "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
+        "line": 87,
         "context": [],
         "selector": ".admin-nav-submenu .admin-nav-link"
       },
@@ -3761,13 +3758,13 @@
     "admin-nav-submenu": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 83,
+        "line": 82,
         "context": [],
         "selector": ".admin-nav-submenu"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 88,
+        "line": 87,
         "context": [],
         "selector": ".admin-nav-submenu .admin-nav-link"
       }
@@ -3775,27 +3772,27 @@
     "admin-nav-summary": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 55,
+        "line": 54,
         "context": [],
         "selector": ".admin-nav-summary"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 61,
+        "line": 60,
         "context": [],
         "selector": ".admin-nav-summary::-webkit-details-marker"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 65,
+        "line": 64,
         "context": [],
         "selector": ".admin-nav-group[data-active=\"true\"] > .admin-nav-summary"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 65,
+        "line": 64,
         "context": [],
-        "selector": ".admin-nav-summary:hover"
+        "selector": ".admin-nav-summary:is(:hover, :focus-visible)"
       }
     ],
     "admin-per-page-form": [
@@ -3895,7 +3892,7 @@
     "admin-sidebar-footer": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 92,
+        "line": 91,
         "context": [],
         "selector": ".admin-sidebar-footer"
       }
@@ -3911,7 +3908,7 @@
     "admin-topbar": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 112,
+        "line": 111,
         "context": [],
         "selector": ".admin-topbar"
       },
@@ -3927,7 +3924,7 @@
     "admin-topbar-actions": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 140,
+        "line": 139,
         "context": [],
         "selector": ".admin-topbar-actions"
       }
@@ -3935,13 +3932,13 @@
     "admin-topbar-title": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 127,
+        "line": 126,
         "context": [],
         "selector": ".admin-topbar-title"
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 134,
+        "line": 133,
         "context": [],
         "selector": ".admin-topbar-title strong"
       }
@@ -3967,7 +3964,7 @@
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 101,
+        "line": 100,
         "context": [],
         "selector": ".admin-user"
       }
@@ -4187,13 +4184,13 @@
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 15,
+        "line": 14,
         "context": [],
         "selector": ".identity-row > .avatar"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 23,
+        "line": 22,
         "context": [],
         "selector": ".identity-row > .avatar .icon"
       }
@@ -4450,6 +4447,12 @@
         "selector": "[data-list-summary]:not(:has(.badge))"
       },
       {
+        "source": "assets/ui/styles/tables.css",
+        "line": 55,
+        "context": [],
+        "selector": ".table-row-inactive .badge"
+      },
+      {
         "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
         "line": 32,
         "context": [],
@@ -4587,31 +4590,25 @@
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 142,
+        "line": 146,
         "context": [],
         "selector": ".btn"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 160,
+        "line": 163,
         "context": [],
         "selector": ".btn:hover"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 165,
-        "context": [],
-        "selector": ".btn:active"
-      },
-      {
-        "source": "assets/ui/styles/buttons.css",
-        "line": 169,
+        "line": 167,
         "context": [],
         "selector": ".btn:disabled"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 169,
+        "line": 167,
         "context": [],
         "selector": ".btn[aria-disabled=\"true\"]"
       },
@@ -4709,13 +4706,13 @@
     "btn-danger": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 196,
+        "line": 193,
         "context": [],
         "selector": ".btn-danger"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 201,
+        "line": 198,
         "context": [],
         "selector": ".btn-danger:hover"
       }
@@ -4723,13 +4720,13 @@
     "btn-ghost": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 206,
+        "line": 203,
         "context": [],
         "selector": ".btn-ghost"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 210,
+        "line": 207,
         "context": [],
         "selector": ".btn-ghost:hover"
       }
@@ -4737,7 +4734,7 @@
     "btn-group": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 242,
+        "line": 233,
         "context": [],
         "selector": ".btn-group"
       }
@@ -4745,7 +4742,7 @@
     "btn-icon": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 220,
+        "line": 217,
         "context": [],
         "selector": ".btn-icon"
       },
@@ -4759,13 +4756,13 @@
     "btn-primary": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 176,
+        "line": 173,
         "context": [],
         "selector": ".btn-primary"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 181,
+        "line": 178,
         "context": [],
         "selector": ".btn-primary:hover"
       }
@@ -4773,13 +4770,13 @@
     "btn-secondary": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 186,
+        "line": 183,
         "context": [],
         "selector": ".btn-secondary"
       },
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 191,
+        "line": 188,
         "context": [],
         "selector": ".btn-secondary:hover"
       }
@@ -4787,7 +4784,7 @@
     "btn-sm": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 214,
+        "line": 211,
         "context": [],
         "selector": ".btn-sm"
       }
@@ -4817,7 +4814,7 @@
       },
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 157,
+        "line": 156,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -5509,7 +5506,7 @@
         "source": "assets/ui/styles/filter-chips.css",
         "line": 6,
         "context": [],
-        "selector": ".filter-chip:hover"
+        "selector": ".filter-chip:is(:hover, :focus-visible)"
       }
     ],
     "filter-menu-panel": [
@@ -5569,7 +5566,7 @@
     "gap-1": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 81,
+        "line": 85,
         "context": [],
         "selector": ".gap-1"
       }
@@ -5577,7 +5574,7 @@
     "gap-2": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 85,
+        "line": 89,
         "context": [],
         "selector": ".gap-2"
       }
@@ -5724,18 +5721,6 @@
         "line": 1,
         "context": [],
         "selector": ".hashtag"
-      },
-      {
-        "source": "assets/ui/styles/inline-link-states.css",
-        "line": 1,
-        "context": [],
-        "selector": ".hashtag:hover"
-      },
-      {
-        "source": "assets/ui/styles/inline-link-states.css",
-        "line": 1,
-        "context": [],
-        "selector": ".hashtag:focus"
       }
     ],
     "help": [
@@ -5949,7 +5934,7 @@
       },
       {
         "source": "assets/ui/styles/navbar.css",
-        "line": 58,
+        "line": 56,
         "context": [],
         "selector": ".nav-link-icon .icon"
       },
@@ -6047,7 +6032,7 @@
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 23,
+        "line": 22,
         "context": [],
         "selector": ".identity-row > .avatar .icon"
       }
@@ -6063,31 +6048,31 @@
     "identity-copy": [
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 18,
+        "line": 17,
         "context": [],
         "selector": ".identity-copy"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 19,
+        "line": 18,
         "context": [],
         "selector": ".identity-copy > strong"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 20,
+        "line": 19,
         "context": [],
         "selector": ".identity-copy > span"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 20,
+        "line": 19,
         "context": [],
         "selector": ".identity-copy > small"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 20,
+        "line": 19,
         "context": [],
         "selector": ".identity-copy > time"
       }
@@ -6095,7 +6080,7 @@
     "identity-copy-truncate": [
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 21,
+        "line": 20,
         "context": [],
         "selector": ".identity-copy-truncate > *"
       }
@@ -6109,31 +6094,25 @@
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 15,
+        "line": 14,
         "context": [],
         "selector": ".identity-row > .avatar"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 16,
+        "line": 15,
         "context": [],
-        "selector": ".identity-row:is(a, button):hover"
+        "selector": ".identity-row:is(a, button):is(:hover, :focus-visible)"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
         "line": 16,
-        "context": [],
-        "selector": ".identity-row:is(a, button):focus-visible"
-      },
-      {
-        "source": "assets/ui/styles/identity-rows.css",
-        "line": 17,
         "context": [],
         "selector": ".identity-row.is-unread"
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 23,
+        "line": 22,
         "context": [],
         "selector": ".identity-row > .avatar .icon"
       }
@@ -6141,7 +6120,7 @@
     "identity-row-compact": [
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 13,
+        "line": 12,
         "context": [],
         "selector": ".identity-row-compact"
       }
@@ -6149,7 +6128,7 @@
     "identity-row-inset": [
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 14,
+        "line": 13,
         "context": [],
         "selector": ".identity-row-inset"
       }
@@ -6305,13 +6284,13 @@
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 53,
+        "line": 52,
         "context": [],
         "selector": ".pagination-link.is-active"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 76,
+        "line": 75,
         "context": [],
         "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       },
@@ -6437,7 +6416,7 @@
       },
       {
         "source": "assets/ui/styles/identity-rows.css",
-        "line": 17,
+        "line": 16,
         "context": [],
         "selector": ".identity-row.is-unread"
       }
@@ -6448,6 +6427,14 @@
         "line": 123,
         "context": [],
         "selector": ".status-editor-counter.is-warning"
+      }
+    ],
+    "justify-between": [
+      {
+        "source": "assets/ui/styles/buttons.css",
+        "line": 81,
+        "context": [],
+        "selector": ".justify-between"
       }
     ],
     "justify-end": [
@@ -6549,21 +6536,9 @@
     "link-button": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 225,
+        "line": 222,
         "context": [],
         "selector": ".link-button"
-      },
-      {
-        "source": "assets/ui/styles/buttons.css",
-        "line": 237,
-        "context": [],
-        "selector": ".link-button:hover"
-      },
-      {
-        "source": "assets/ui/styles/buttons.css",
-        "line": 237,
-        "context": [],
-        "selector": ".link-button:focus"
       }
     ],
     "load-more": [
@@ -6603,7 +6578,7 @@
     "m-0": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 89,
+        "line": 93,
         "context": [],
         "selector": ".m-0"
       }
@@ -6611,7 +6586,7 @@
     "max-w-auth": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 105,
+        "line": 109,
         "context": [],
         "selector": ".max-w-auth"
       }
@@ -6619,7 +6594,7 @@
     "max-w-auth-sm": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 101,
+        "line": 105,
         "context": [],
         "selector": ".max-w-auth-sm"
       }
@@ -6627,7 +6602,7 @@
     "max-w-prose": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 109,
+        "line": 113,
         "context": [],
         "selector": ".max-w-prose"
       }
@@ -6635,7 +6610,7 @@
     "mb-0": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 93,
+        "line": 97,
         "context": [],
         "selector": ".mb-0"
       }
@@ -6676,18 +6651,6 @@
         "line": 63,
         "context": [],
         "selector": ".mention-link"
-      },
-      {
-        "source": "assets/ui/styles/inline-link-states.css",
-        "line": 1,
-        "context": [],
-        "selector": ".mention-link:hover"
-      },
-      {
-        "source": "assets/ui/styles/inline-link-states.css",
-        "line": 1,
-        "context": [],
-        "selector": ".mention-link:focus"
       }
     ],
     "min-w-0": [
@@ -6701,7 +6664,7 @@
     "modal": [
       {
         "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-        "line": 157,
+        "line": 156,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -7195,7 +7158,7 @@
     "mx-auto": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 97,
+        "line": 101,
         "context": [],
         "selector": ".mx-auto"
       }
@@ -7209,19 +7172,19 @@
       },
       {
         "source": "assets/ui/styles/navbar.css",
-        "line": 37,
+        "line": 36,
         "context": [],
         "selector": ".nav-link"
       },
       {
         "source": "assets/ui/styles/navbar.css",
-        "line": 63,
+        "line": 61,
         "context": [],
-        "selector": ".nav-link:hover"
+        "selector": ".nav-link:is(:hover, :focus-visible)"
       },
       {
         "source": "assets/ui/styles/navbar.css",
-        "line": 63,
+        "line": 61,
         "context": [],
         "selector": ".nav-link[aria-current=\"page\"]"
       }
@@ -7229,13 +7192,13 @@
     "nav-link-icon": [
       {
         "source": "assets/ui/styles/navbar.css",
-        "line": 52,
+        "line": 50,
         "context": [],
         "selector": ".nav-link-icon"
       },
       {
         "source": "assets/ui/styles/navbar.css",
-        "line": 58,
+        "line": 56,
         "context": [],
         "selector": ".nav-link-icon .icon"
       },
@@ -7259,7 +7222,7 @@
     "nav-links": [
       {
         "source": "assets/ui/styles/navbar.css",
-        "line": 29,
+        "line": 28,
         "context": [],
         "selector": ".nav-links"
       },
@@ -7489,13 +7452,13 @@
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 69,
+        "line": 68,
         "context": [],
         "selector": ".pagination-ellipsis"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 76,
+        "line": 75,
         "context": [],
         "selector": ".pagination-list > .pagination-ellipsis"
       },
@@ -7525,25 +7488,25 @@
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 47,
+        "line": 46,
         "context": [],
-        "selector": ".pagination-link:hover"
+        "selector": ".pagination-link:is(:hover, :focus-visible)"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 53,
+        "line": 52,
         "context": [],
         "selector": ".pagination-link.is-active"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 59,
+        "line": 58,
         "context": [],
         "selector": ".pagination-link[aria-disabled=\"true\"]"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 76,
+        "line": 75,
         "context": [],
         "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       },
@@ -7573,13 +7536,13 @@
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 76,
+        "line": 75,
         "context": [],
         "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 76,
+        "line": 75,
         "context": [],
         "selector": ".pagination-list > .pagination-ellipsis"
       },
@@ -7603,13 +7566,13 @@
     "pagination-next": [
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 64,
+        "line": 63,
         "context": [],
         "selector": ".pagination-next"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 76,
+        "line": 75,
         "context": [],
         "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       },
@@ -7625,13 +7588,13 @@
     "pagination-prev": [
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 64,
+        "line": 63,
         "context": [],
         "selector": ".pagination-prev"
       },
       {
         "source": "assets/ui/styles/pagination.css",
-        "line": 76,
+        "line": 75,
         "context": [],
         "selector": ".pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active)"
       },
@@ -8347,13 +8310,13 @@
     "skip-link": [
       {
         "source": "assets/ui/styles/reset.css",
-        "line": 81,
+        "line": 80,
         "context": [],
         "selector": ".skip-link"
       },
       {
         "source": "assets/ui/styles/reset.css",
-        "line": 95,
+        "line": 94,
         "context": [],
         "selector": ".skip-link:focus"
       }
@@ -8577,7 +8540,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-detail.css",
-        "line": 24,
+        "line": 23,
         "context": [],
         "selector": ".status-post-modal-content .status-body"
       }
@@ -8939,7 +8902,7 @@
     "status-comments-thread": [
       {
         "source": "App/Modules/Social/assets/status/styles/status-detail.css",
-        "line": 15,
+        "line": 14,
         "context": [],
         "selector": ".status-comments-thread"
       }
@@ -9482,18 +9445,6 @@
         "line": 1,
         "context": [],
         "selector": ".status-inline-link"
-      },
-      {
-        "source": "assets/ui/styles/inline-link-states.css",
-        "line": 1,
-        "context": [],
-        "selector": ".status-inline-link:hover"
-      },
-      {
-        "source": "assets/ui/styles/inline-link-states.css",
-        "line": 1,
-        "context": [],
-        "selector": ".status-inline-link:focus"
       }
     ],
     "status-like-icon-filled": [
@@ -9899,13 +9850,13 @@
     "status-post-modal-content": [
       {
         "source": "App/Modules/Social/assets/status/styles/status-detail.css",
-        "line": 19,
+        "line": 18,
         "context": [],
         "selector": ".status-post-modal-content"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-detail.css",
-        "line": 24,
+        "line": 23,
         "context": [],
         "selector": ".status-post-modal-content .status-body"
       }
@@ -10346,6 +10297,12 @@
         "line": 18,
         "context": [],
         "selector": ".tab[aria-selected=\"true\"]"
+      },
+      {
+        "source": "assets/ui/styles/tabs.css",
+        "line": 18,
+        "context": [],
+        "selector": ".tab[aria-current=\"step\"]"
       }
     ],
     "table": [
@@ -10375,15 +10332,39 @@
       },
       {
         "source": "assets/ui/styles/tables.css",
-        "line": 28,
+        "line": 27,
         "context": [],
         "selector": ".table > tbody > tr:last-child > td"
       },
       {
         "source": "assets/ui/styles/tables.css",
-        "line": 28,
+        "line": 27,
         "context": [],
         "selector": ".table > tbody > tr:last-child > th"
+      },
+      {
+        "source": "assets/ui/styles/tables.css",
+        "line": 32,
+        "context": [],
+        "selector": ".table > tbody > tr"
+      },
+      {
+        "source": "assets/ui/styles/tables.css",
+        "line": 36,
+        "context": [],
+        "selector": ".table > thead > tr > th"
+      },
+      {
+        "source": "assets/ui/styles/tables.css",
+        "line": 36,
+        "context": [],
+        "selector": ".table > tbody > tr:nth-child(even)"
+      },
+      {
+        "source": "assets/ui/styles/tables.css",
+        "line": 41,
+        "context": [],
+        "selector": ".table > tbody > tr:is(:hover, :focus-within)"
       },
       {
         "source": "assets/ui/styles/tables-mobile.css",
@@ -10452,22 +10433,16 @@
     ],
     "table-actions-cell": [
       {
-        "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 65,
+        "source": "assets/ui/styles/tables.css",
+        "line": 45,
         "context": [],
         "selector": ".table-row-inactive > td:not(.table-actions-cell)"
       },
       {
-        "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 69,
+        "source": "assets/ui/styles/tables.css",
+        "line": 50,
         "context": [],
-        "selector": ".table-row-inactive > td:not(.table-actions-cell) a"
-      },
-      {
-        "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 69,
-        "context": [],
-        "selector": ".table-row-inactive > td:not(.table-actions-cell) strong"
+        "selector": ".table-row-inactive > td:not(.table-actions-cell) :is(a, strong)"
       },
       {
         "source": "assets/ui/styles/table-identity.css",
@@ -10538,28 +10513,22 @@
     ],
     "table-row-inactive": [
       {
-        "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 61,
-        "context": [],
-        "selector": ".table-row-inactive"
-      },
-      {
-        "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 65,
+        "source": "assets/ui/styles/tables.css",
+        "line": 45,
         "context": [],
         "selector": ".table-row-inactive > td:not(.table-actions-cell)"
       },
       {
-        "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 69,
+        "source": "assets/ui/styles/tables.css",
+        "line": 50,
         "context": [],
-        "selector": ".table-row-inactive > td:not(.table-actions-cell) a"
+        "selector": ".table-row-inactive > td:not(.table-actions-cell) :is(a, strong)"
       },
       {
-        "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 69,
+        "source": "assets/ui/styles/tables.css",
+        "line": 55,
         "context": [],
-        "selector": ".table-row-inactive > td:not(.table-actions-cell) strong"
+        "selector": ".table-row-inactive .badge"
       }
     ],
     "table-sort": [
@@ -10573,13 +10542,13 @@
     "table-sort-indicator": [
       {
         "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 50,
+        "line": 49,
         "context": [],
         "selector": ".table-sort-indicator"
       },
       {
         "source": "assets/modules/admin/styles/admin-lists.css",
-        "line": 57,
+        "line": 56,
         "context": [],
         "selector": ".table-sort-indicator[data-active]"
       }
@@ -10685,7 +10654,7 @@
     "text-2xl": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 125,
+        "line": 129,
         "context": [],
         "selector": ".text-2xl"
       },
@@ -10707,7 +10676,7 @@
     "text-base": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 113,
+        "line": 117,
         "context": [],
         "selector": ".text-base"
       }
@@ -10715,7 +10684,7 @@
     "text-danger": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 138,
+        "line": 142,
         "context": [],
         "selector": ".text-danger"
       },
@@ -10729,7 +10698,7 @@
     "text-lg": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 117,
+        "line": 121,
         "context": [],
         "selector": ".text-lg"
       }
@@ -10737,7 +10706,7 @@
     "text-muted": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 130,
+        "line": 134,
         "context": [],
         "selector": ".text-muted"
       }
@@ -10745,7 +10714,7 @@
     "text-primary": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 134,
+        "line": 138,
         "context": [],
         "selector": ".text-primary"
       }
@@ -10753,7 +10722,7 @@
     "text-xl": [
       {
         "source": "assets/ui/styles/buttons.css",
-        "line": 121,
+        "line": 125,
         "context": [],
         "selector": ".text-xl"
       }
@@ -11336,59 +11305,59 @@
             ],
             [
               "--bg",
-              "light-dark(#f6f6f4, #151a21)"
+              "light-dark(#f6f6f4, #181818)"
             ],
             [
               "--surface-panel",
-              "light-dark(#f1f3f5, #191e26)"
+              "light-dark(#f1f3f5, #121212)"
             ],
             [
               "--surface",
-              "light-dark(#ffffff, #222831)"
+              "light-dark(#ffffff, #1f1f1f)"
             ],
             [
               "--surface-muted",
-              "light-dark(#f8f8f6, #282f3a)"
+              "light-dark(#f8f8f6, #242424)"
             ],
             [
               "--surface-soft",
-              "light-dark(#efefec, #303a47)"
+              "light-dark(#efefec, #2b2b2b)"
             ],
             [
               "--surface-strong",
-              "light-dark(#deded9, #455266)"
+              "light-dark(#deded9, #454545)"
             ],
             [
               "--surface-alpha",
-              "light-dark(rgba(255, 255, 255, 0.92), rgba(34, 40, 49, 0.92))"
+              "light-dark(rgba(255, 255, 255, 0.92), rgba(31, 31, 31, 0.92))"
             ],
             [
               "--surface-alpha-strong",
-              "light-dark(rgba(255, 255, 255, 0.94), rgba(34, 40, 49, 0.94))"
+              "light-dark(rgba(255, 255, 255, 0.94), rgba(31, 31, 31, 0.94))"
             ],
             [
               "--text",
-              "light-dark(#1f1f22, #e1e7ef)"
+              "light-dark(#1f1f22, #d4d4d4)"
             ],
             [
               "--muted",
-              "light-dark(#686865, #a2adbd)"
+              "light-dark(#686865, #a3a3a3)"
             ],
             [
               "--border",
-              "light-dark(#d9d9d4, #384352)"
+              "light-dark(#d9d9d4, #383838)"
             ],
             [
               "--primary",
-              "light-dark(#64748b, #8aaddb)"
+              "light-dark(#64748b, #91b4cf)"
             ],
             [
               "--primary-strong",
-              "light-dark(#475569, #b4cef0)"
+              "light-dark(#475569, #bdd4e5)"
             ],
             [
               "--primary-soft",
-              "light-dark(#eef2f6, #2d3e55)"
+              "light-dark(#eef2f6, #29343c)"
             ],
             [
               "--unread-surface",
@@ -11396,51 +11365,63 @@
             ],
             [
               "--on-primary",
-              "light-dark(#ffffff, #122035)"
+              "light-dark(#ffffff, #15212a)"
+            ],
+            [
+              "--button-primary-bg",
+              "light-dark(var(--primary), #247398)"
+            ],
+            [
+              "--button-primary-hover",
+              "light-dark(var(--primary-strong), #247ba0)"
+            ],
+            [
+              "--button-primary-text",
+              "light-dark(var(--on-primary), #ffffff)"
             ],
             [
               "--accent",
-              "light-dark(#5f7f7a, #8aa7a1)"
+              "light-dark(#5f7f7a, #98aaa5)"
             ],
             [
               "--danger",
-              "light-dark(#dc2626, #f87171)"
+              "light-dark(#dc2626, #eb9292)"
             ],
             [
               "--danger-strong",
-              "light-dark(#b91c1c, #fca5a5)"
+              "light-dark(#b91c1c, #f3b3b3)"
             ],
             [
               "--danger-soft",
-              "light-dark(#fee2e2, #3d1f25)"
+              "light-dark(#fee2e2, #382526)"
             ],
             [
               "--on-danger",
-              "light-dark(#ffffff, #2e1014)"
+              "light-dark(#ffffff, #291718)"
             ],
             [
               "--success",
-              "light-dark(#15803d, #4ade80)"
+              "light-dark(#15803d, #9ac59b)"
             ],
             [
               "--success-soft",
-              "light-dark(#e9f8ef, #123522)"
+              "light-dark(#e9f8ef, #253428)"
             ],
             [
               "--warning",
-              "light-dark(#b45309, #fbbf24)"
+              "light-dark(#b45309, #dbbc7d)"
             ],
             [
               "--warning-soft",
-              "light-dark(#fff4e5, #3a2b0b)"
+              "light-dark(#fff4e5, #373024)"
             ],
             [
               "--info",
-              "light-dark(#64748b, #8aaddb)"
+              "light-dark(#64748b, #91b4cf)"
             ],
             [
               "--info-soft",
-              "light-dark(#eef2f6, #2d3e55)"
+              "light-dark(#eef2f6, #29343c)"
             ],
             [
               "--radius",
@@ -11484,7 +11465,7 @@
           "selector": ":root",
           "context": [],
           "source": "assets/ui/styles/tokens.css",
-          "line": 98,
+          "line": 101,
           "declarations": [
             [
               "--status-icon-info",
@@ -12205,10 +12186,6 @@
           "line": 21,
           "declarations": [
             [
-              "background",
-              "var(--surface-muted)"
-            ],
-            [
               "color",
               "var(--muted)"
             ],
@@ -12746,7 +12723,7 @@
           "selector": ".admin-nav-link[aria-current=\"page\"]",
           "context": [],
           "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-          "line": 41,
+          "line": 40,
           "declarations": [
             [
               "background",
@@ -12762,7 +12739,7 @@
           "selector": ".admin-nav-link[aria-current=\"page\"]",
           "context": [],
           "source": "assets/modules/admin/styles/admin-navigation-and-content.css",
-          "line": 47,
+          "line": 46,
           "declarations": [
             [
               "box-shadow",
@@ -12837,10 +12814,6 @@
             [
               "line-height",
               "1"
-            ],
-            [
-              "text-decoration",
-              "none"
             ]
           ]
         },
@@ -12848,7 +12821,7 @@
           "selector": ".pagination-ellipsis",
           "context": [],
           "source": "assets/ui/styles/pagination.css",
-          "line": 69,
+          "line": 68,
           "declarations": [
             [
               "border-color",
@@ -14423,14 +14396,6 @@
         "manifest": "assets/ui/module.json",
         "routes": [
           "public"
-        ]
-      }
-    ],
-    "assets/ui/styles/inline-link-states.css": [
-      {
-        "manifest": "assets/ui/module.json",
-        "routes": [
-          "*"
         ]
       }
     ],

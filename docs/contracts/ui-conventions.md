@@ -439,3 +439,20 @@ Masks use current colour and shared size/spacing tokens. Alert masks stay
 vertically centred within the whole notice, including multiline text.
 Readable text and the existing live-region roles carry accessible meaning;
 pseudo-elements have empty content and convey no extra announcement.
+
+
+### Link decoration
+
+Links share the core reset: no underline at rest, hover or focus. Hover may use
+the existing stronger link colour; keyboard focus keeps the shared visible
+outline. Do not reintroduce underline overrides in owner styles or link-like
+buttons. Standalone embed and fallback documents follow the same rule. Semantic
+text-diff removal marks retain their line-through decoration.
+
+### Neutral interaction surfaces
+
+Use `--surface-soft` for transient hover and keyboard-focus backgrounds of
+interactive rows, disclosure summaries, menu items, filter chips and selectable
+cards. Keep semantic selection, unread and severity surfaces distinct; do not
+replace their state colors with hover colors. Reuse existing component selectors
+and global focus outlines instead of adding utility classes or per-page colors.

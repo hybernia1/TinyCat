@@ -599,3 +599,10 @@ owner-supplied content symbols. Its shared size derives from title line-height,
 inline-control height and inter-row spacing, so the normal title/state pair and
 symbol scale together. Small/large avatar variants use the same `--avatar-size`
 mechanism. Do not add dashboard-specific or domain-specific icon dimensions.
+
+Table bodies use the shared core table zebra backgrounds and the same hover and
+focus-within highlight. Inactive rows keep those backgrounds; their descriptive
+cells use muted italic text, while badges and action controls remain upright.
+Do not add an inactive background that hides striping or interaction feedback.
+Bot source names link directly to their feed URL, including in the account
+workspace; avoid repeating the URL as a separate metadata row.

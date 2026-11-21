@@ -15,7 +15,8 @@
   white-space: nowrap;
 }
 
-.tab[aria-selected="true"] {
+.tab[aria-selected="true"],
+.tab[aria-current="step"] {
   border-bottom-color: var(--primary);
   color: var(--text);
 }

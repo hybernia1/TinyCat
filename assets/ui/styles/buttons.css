@@ -78,6 +78,10 @@
   justify-content: flex-end;
 }
 
+.justify-between {
+  justify-content: space-between;
+}
+
 .gap-1 {
   gap: 0.25rem;
 }
@@ -153,34 +157,27 @@
   color: var(--text);
   font-weight: 650;
   line-height: 1.2;
-  text-decoration: none;
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
 .btn:hover {
   color: var(--text);
-  transform: translateY(-1px);
-}
-
-.btn:active {
-  transform: translateY(0);
 }
 
 .btn:disabled,
 .btn[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.6;
-  transform: none;
 }
 
 .btn-primary {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
 }
 
 .btn-primary:hover {
-  background: var(--primary-strong);
-  color: var(--on-primary);
+  background: var(--button-primary-hover);
+  color: var(--button-primary-text);
 }
 
 .btn-secondary {
@@ -231,12 +228,6 @@
   cursor: pointer;
   font: inherit;
   font-weight: 800;
-  text-decoration: none;
-}
-
-.link-button:hover,
-.link-button:focus {
-  text-decoration: underline;
 }
 
 .btn-group {

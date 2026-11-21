@@ -26,7 +26,7 @@
 
 .disclosure-summary:hover,
 .disclosure-summary:focus-visible {
-  background: var(--primary-soft);
+  background: var(--surface-soft);
 }
 
 .disclosure-heading {

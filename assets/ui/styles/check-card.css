@@ -13,7 +13,7 @@
 .check-card:hover,
 .check-card:focus-within {
   border-color: var(--primary);
-  background: var(--primary-soft);
+  background: var(--surface-soft);
 }
 
 .check-card input {

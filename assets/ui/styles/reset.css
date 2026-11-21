@@ -65,8 +65,7 @@ button {
 
 a {
   color: var(--primary);
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.18em;
+  text-decoration: none;
 }
 
 a:hover {

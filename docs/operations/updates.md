@@ -75,6 +75,21 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.3.1
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This patch refines shared
+links, table interaction, sticky header backgrounds, neutral dark surfaces and
+installer presentation. There are no database migrations or activation changes.
+Configuration, accounts, content and uploads are preserved. The signed deletion
+plan removes the obsolete inline-link hover stylesheet.
+
+Build production update and installation packages with `--assembly=platform --both`.
+Verify the exact signed update with the artifact preflight and representative
+6.0.10, 6.0.11, 6.1.4, 6.2.0 and 6.3.0 update/rollback rehearsals using
+`--platform-baseline --direct-web --cached-autoload`. Rehearse the extracted fresh
+installer against an isolated MySQL database. The development Blog module remains
+excluded from production distributions.
+
 ## Upgrading to 6.2.0
 
 Requires completed **6.0.10 or newer** and PHP 8.4. Shared UI scale and density

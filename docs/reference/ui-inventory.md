@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-197 definic komponent, 397 CSS tříd, 129 CSS importů, 95 JS souborů, 27 UI služeb, 2 PHP partialů.
+197 definic komponent, 398 CSS tříd, 128 CSS importů, 95 JS souborů, 27 UI služeb, 2 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -431,7 +431,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [assets/ui/styles/hashtags.css](../../assets/ui/styles/hashtags.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
 | [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [assets/ui/styles/inline-link-states.css](../../assets/ui/styles/inline-link-states.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
 | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
 | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
@@ -577,7 +576,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `avatar-upload-empty-note` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-upload-preview` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-xl` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css), [assets/ui/styles/avatar-sizes.css](../../assets/ui/styles/avatar-sizes.css) |
-| `badge` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css), [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css), [assets/ui/styles/badges.css](../../assets/ui/styles/badges.css), [assets/ui/styles/filter-chips.css](../../assets/ui/styles/filter-chips.css), [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) |
+| `badge` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css), [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css), [assets/ui/styles/badges.css](../../assets/ui/styles/badges.css), [assets/ui/styles/filter-chips.css](../../assets/ui/styles/filter-chips.css), [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css), [assets/ui/styles/tables.css](../../assets/ui/styles/tables.css) |
 | `badge-danger` | [assets/ui/styles/alerts.css](../../assets/ui/styles/alerts.css), [assets/ui/styles/badge-danger.css](../../assets/ui/styles/badge-danger.css) |
 | `badge-info` | [assets/ui/styles/alerts.css](../../assets/ui/styles/alerts.css), [assets/ui/styles/badges.css](../../assets/ui/styles/badges.css) |
 | `badge-primary` | [assets/ui/styles/badges.css](../../assets/ui/styles/badges.css) |
@@ -646,7 +645,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `has-image` | [assets/ui/content/styles/mobile.css](../../assets/ui/content/styles/mobile.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
 | `has-modal` | [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) |
 | `has-unread` | [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
-| `hashtag` | [assets/ui/styles/hashtags.css](../../assets/ui/styles/hashtags.css), [assets/ui/styles/inline-link-states.css](../../assets/ui/styles/inline-link-states.css) |
+| `hashtag` | [assets/ui/styles/hashtags.css](../../assets/ui/styles/hashtags.css) |
 | `help` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) |
 | `hidden` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
 | `home-feed-app` | [App/Modules/Social/assets/status/styles/home-feed-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-mobile.css), [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css), [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) |
@@ -676,6 +675,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `is-resource-text` | [assets/ui/styles/resource-text.css](../../assets/ui/styles/resource-text.css) |
 | `is-unread` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css), [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) |
 | `is-warning` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
+| `justify-between` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
 | `justify-end` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
 | `label` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [assets/ui/styles/field-inline.css](../../assets/ui/styles/field-inline.css), [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) |
 | `language-flag` | [assets/ui/styles/language.css](../../assets/ui/styles/language.css) |
@@ -696,7 +696,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `md:grid-2` | [assets/ui/styles/grid-desktop.css](../../assets/ui/styles/grid-desktop.css) |
 | `md:grid-3` | [assets/ui/styles/grid-desktop.css](../../assets/ui/styles/grid-desktop.css) |
 | `md:grid-4` | [assets/ui/styles/grid-desktop.css](../../assets/ui/styles/grid-desktop.css) |
-| `mention-link` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css), [assets/ui/styles/inline-link-states.css](../../assets/ui/styles/inline-link-states.css) |
+| `mention-link` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
 | `min-w-0` | [assets/ui/styles/visibility.css](../../assets/ui/styles/visibility.css) |
 | `modal` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css), [assets/ui/styles/mobile-inputs-and-dialogs.css](../../assets/ui/styles/mobile-inputs-and-dialogs.css), [assets/ui/styles/modal-confirm-buttons.css](../../assets/ui/styles/modal-confirm-buttons.css), [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/modal-workspace-desktop.css](../../assets/ui/styles/modal-workspace-desktop.css), [assets/ui/styles/modal.css](../../assets/ui/styles/modal.css) |
 | `modal-backdrop` | [assets/ui/styles/modal.css](../../assets/ui/styles/modal.css) |
@@ -847,7 +847,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `status-indicator-danger` | [assets/ui/styles/status-indicators.css](../../assets/ui/styles/status-indicators.css) |
 | `status-indicator-success` | [assets/ui/styles/status-indicators.css](../../assets/ui/styles/status-indicators.css) |
 | `status-indicator-warning` | [assets/ui/styles/status-indicator-warning.css](../../assets/ui/styles/status-indicator-warning.css) |
-| `status-inline-link` | [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css), [assets/ui/styles/inline-link-states.css](../../assets/ui/styles/inline-link-states.css) |
+| `status-inline-link` | [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css) |
 | `status-like-icon-filled` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
 | `status-like-icon-outline` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
 | `status-link-account` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
@@ -887,11 +887,11 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `tab` | [assets/ui/styles/tabs.css](../../assets/ui/styles/tabs.css) |
 | `table` | [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css), [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css), [assets/ui/styles/tables-mobile.css](../../assets/ui/styles/tables-mobile.css), [assets/ui/styles/tables.css](../../assets/ui/styles/tables.css) |
 | `table-actions` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-actions-cell` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css), [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
+| `table-actions-cell` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css), [assets/ui/styles/tables.css](../../assets/ui/styles/tables.css) |
 | `table-identity-body` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
 | `table-meta` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
 | `table-primary` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-row-inactive` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
+| `table-row-inactive` | [assets/ui/styles/tables.css](../../assets/ui/styles/tables.css) |
 | `table-sort` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
 | `table-sort-indicator` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
 | `table-text` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |

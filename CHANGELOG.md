@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.3.1 - 2026-11-21
+
+- Unify links without underlines and remove the retired inline-link stylesheet from update installations.
+- Use subtle table striping, neutral hover/keyboard feedback and italic inactive descriptions; keep sticky header cells opaque while scrolling.
+- Refine dark mode with graphite surfaces, restrained semantic colors and shared primary-button fill tokens; remove button hover movement.
+- Reuse neutral interaction surfaces across disclosures, menus, filters and clickable identity rows. Link bot feed names directly to their source URL.
+- Simplify installation with compact step tabs, a native language selector and separate action footers, with Back on the left and the primary action on the right.
+- Preserve data, module activation, API contracts and the completed 6.0.10 update baseline; introduce no database migrations.
+
 ## 6.3.0 - 2026-11-21
 
 - Replace the administration overview with typed, owner-registered dashboard widgets and a shared statistics selector that loads only the selected group.

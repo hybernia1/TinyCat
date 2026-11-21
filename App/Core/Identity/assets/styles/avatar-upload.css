@@ -43,7 +43,7 @@
 .avatar-editor-controls { display: grid; justify-items: start; gap: 0.5rem; }
 .avatar-editor .avatar-upload-drop { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
 .avatar-editor-remove { color: var(--danger); background: transparent; padding-inline: 0; }
-.avatar-editor-remove:hover { background: transparent; color: var(--danger); text-decoration: underline; }
+.avatar-editor-remove:hover { background: transparent; color: var(--danger); }
 @media (max-width: 899px) {
   .avatar-editor .avatar-upload { grid-template-columns: 1fr; justify-items: center; }
   .avatar-editor-controls { justify-items: center; }

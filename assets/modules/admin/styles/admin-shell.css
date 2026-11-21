@@ -60,5 +60,4 @@ body.admin-nav-open .admin-backdrop {
   align-items: center;
   gap: 0.625rem;
   color: var(--text);
-  text-decoration: none;
 }

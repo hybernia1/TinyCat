@@ -2074,5 +2074,8 @@
   ],
   "6.3.0": [
     "App/Modules/Social/src/Presentation/DashboardViewData.php"
+  ],
+  "6.3.1": [
+    "assets/ui/styles/inline-link-states.css"
   ]
 }

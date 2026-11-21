@@ -41,10 +41,9 @@
   font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1;
-  text-decoration: none;
 }
 
-.pagination-link:hover {
+.pagination-link:is(:hover, :focus-visible) {
   border-color: var(--surface-strong);
   background: var(--surface-soft);
   color: var(--text);

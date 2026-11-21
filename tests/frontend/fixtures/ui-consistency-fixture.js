@@ -45,6 +45,19 @@
     }
     document.documentElement.style.removeProperty('--ui-scale');
 
+    const linkWidget=T.components.render('ui/dashboard-widget',{widget:{id:'fixture.links',title:'Links',icon:'users',type:'list',data:{items:[{label:'@admin',detail:'A comment',url:'/author/1'}]}}});
+    document.body.append(linkWidget);
+    const linkSamples=[...linkWidget.querySelectorAll('a')];
+    for (const className of ['','status-inline-link','mention-link','hashtag']) {
+      const link=document.createElement('a');link.className=className;link.href='/#link-style';link.textContent='Readable link';document.body.append(link);linkSamples.push(link);
+    }
+    for (const link of linkSamples) {
+      check(getComputedStyle(link).textDecorationLine==='none','Dashboard and inline links have no default underline');
+      link.focus();
+      check(getComputedStyle(link).textDecorationLine==='none' && getComputedStyle(link).outlineStyle!=='none','Keyboard focus stays visible without adding a link underline');
+    }
+    linkSamples.forEach(link=>link.remove());linkWidget.remove();
+
     const header = T.components.render('ui/public-header', {hasGlobalSearch:true, urls:{home:'/',search:'/search/all'}, nav:[], languages:[]});
     const form = header.querySelector('[data-global-search]'); form.style.cssText = 'position:fixed;top:12px;left:12px;width:calc(100% - 24px)';
     const anchor = form.querySelector('[data-popover]'), input = form.querySelector('[data-global-search-input]'), box = form.querySelector('[data-global-search-results]'), searchIcon = anchor.querySelector(':scope > .icon');
@@ -151,20 +164,22 @@
     document.body.append(installation);
     for (const theme of ['light', 'dark']) {
       document.documentElement.dataset.theme = theme;
-      const steps = installation.querySelector('ol');
+      const steps = installation.querySelector('nav.tabs');
       check(steps.children.length === 5 && steps.querySelectorAll('[aria-current="step"]').length === 1, 'Installation exposes five steps and one current step: '+theme);
       check(steps.children[2].getAttribute('aria-current') === 'step' && steps.children[0].querySelector('svg'), 'Installation distinguishes current and completed steps: '+theme);
-      const choices = installation.querySelectorAll('label.check-card');
-      check(choices.length >= 2 && installation.querySelector('input[value="cs"]').checked, 'Installation retains its selected native language: '+theme);
-      choices[1].click();
-      check(choices[1].querySelector('input').checked && installation.querySelectorAll('input[name="locale"]:checked').length === 1, 'Clicking the shared card selects exactly one language: '+theme);
-      choices[1].querySelector('input').focus();
-      check(choices[1].matches(':focus-within'), 'Native language focus stays inside its shared card: '+theme);
-      for (const node of installation.querySelectorAll('.result-item, .check-card, .btn')) {
+      const language = installation.querySelector('select[name="locale"]');
+      check(language.options.length >= 2 && language.value === 'cs', 'Installation retains its selected native language: '+theme);
+      language.value = 'en'; language.dispatchEvent(new Event('change', {bubbles:true}));
+      check(new FormData(language.form).get('locale') === 'en', 'Native language selection is submitted by the original form: '+theme);
+      language.focus();
+      check(document.activeElement === language, 'Language select receives native keyboard focus: '+theme);
+      const submit = installation.querySelector('.card-footer button[type="submit"]');
+      check(submit.form === language.form, 'Footer submit retains its native form association: '+theme);
+      for (const node of installation.querySelectorAll('nav.tabs, .select, .btn')) {
         const bounds = node.getBoundingClientRect();
         check(bounds.width > 0 && bounds.left >= 0 && bounds.right <= innerWidth + 1, 'Installation control fits the viewport: '+theme);
       }
-      installation.querySelector('input[value="cs"]').click();
+      language.value = 'cs';
     }
     installation.remove();
     const avatarImage = '/avatar-fixture.svg';

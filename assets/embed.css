@@ -2,7 +2,6 @@
 * { box-sizing: border-box; }
 body { margin: 0; overflow-wrap: anywhere; }
 a { color: #315dc7; text-decoration: none; }
-a:hover { text-decoration: underline; }
 a:focus-visible, textarea:focus-visible { outline: 3px solid #7599ef; outline-offset: 3px; }
 .embed-card { padding: 22px; border: 1px solid #dce0e7; border-radius: 14px; background: #fff; }
 .embed-author { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }

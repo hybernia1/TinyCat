@@ -98,12 +98,12 @@ final class Pages
         $currentIndex = (int) array_search($step, array_keys($labels), true);
         $steps = [];
         foreach (array_keys($labels) as $index => $code) {
-            $steps[] = ['number' => $index + 1, 'label' => \TinyCat\Support\Localization::t($labels[$code]), 'active' => $code === $step, 'complete' => $index < $currentIndex];
+            $steps[] = ['label' => \TinyCat\Support\Localization::t($labels[$code]), 'active' => $code === $step, 'complete' => $index < $currentIndex];
         }
         $data = ['current' => $step, 'steps' => $steps, 'locale' => \TinyCat\Support\Localization::locale()];
         if ($step === 'language') {
             $data['locale'] = (string) ($state['locale'] ?? $data['locale']);
-            $data['languages'] = array_values(array_map(static fn (array $language): array => $language + ['display_code' => strtoupper($language['code'])], $languages));
+            $data['languages'] = array_values($languages);
         } elseif ($step === 'db') {
             $database = is_array($state['database'] ?? null) ? $state['database'] : (array) \TinyCat\Core\Settings\Store::config('database', []);
             $data['database'] = [];

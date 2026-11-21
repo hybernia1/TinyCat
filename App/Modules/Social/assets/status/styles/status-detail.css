@@ -9,7 +9,6 @@
 .status-time-button:hover,
 .status-time-button:focus {
   color: var(--primary-strong);
-  text-decoration: underline;
 }
 
 .status-comments-thread {

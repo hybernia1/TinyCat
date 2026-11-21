@@ -73,6 +73,7 @@ try {
     assert.ok(item.sortingWorks, "Sorting stays available through the original header links: " + label);
     assert.ok(item.chipsWork, "Removing one filter preserves other filters, sorting and page size, resets the page and retains keyboard focus: " + label);
     assert.ok(item.pinnedList, "Desktop lists pin their controls while mobile lists retain natural page scrolling: " + label);
+    assert.ok(item.rowStatesConsistent, 'Alternating rows, focused rows and italic inactive states coexist in both themes: '+label);
     assert.ok(item.tableBadgesReadable && item.identitySlotsNormalized, 'Table states have symbols and text, and identity symbols share avatar dimensions: '+label);
     assert.ok(item.controlsScale, "Form controls scale with increased root text size: " + label);
     assert.ok(item.paginationCompact, "Pagination keeps its range, active page and previous/next controls in one compact row: " + label);
