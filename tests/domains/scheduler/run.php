@@ -219,7 +219,7 @@ try {
         static fn (string $task): bool => in_array($task, ['orphan_terms', 'orphan_links', 'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications'], true)
     ));
     $result = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, true, $databaseCleanupTasks);
-    $imageCleanup = \TinyCat\Social\Content\ImageStorage::cleanupOrphans(500, '2099/01');
+    $imageCleanup = \TinyCat\Social\Posts\ImageStorage::cleanupOrphans(500, '2099/01');
     $changed = array_map(
         static fn (array $task): int => (int) ($task['changed'] ?? 0),
         (array) ($result['results'] ?? [])

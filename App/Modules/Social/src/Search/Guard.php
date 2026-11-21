@@ -131,7 +131,7 @@ final class Guard
             'code' => 'captcha_required',
             'message' => \TinyCat\Support\Localization::t('public.search_captcha_required'),
             'captcha' => \TinyCat\Core\Security\Captcha::configuration('search'),
-            'verify_url' => '/api/security/challenges/search',
+            'verify_url' => '/api/search/challenges',
             'login_url' => '/login',
             'retry_after' => max(1, (int) ($state['started_at'] ?? $now) + (int) $limits['window'] - $now),
         ];

@@ -98,7 +98,7 @@ $snapshot = new TinyCat\Core\Runtime\Context(new TinyCat\Core\Runtime\Configurat
 TinyCat\Support\Dates::configure($snapshot->dateOption(...));
 $assert(TinyCat\Support\Dates::dateDb(new DateTimeImmutable('2026-11-11 12:00:00 UTC')) === '2026-11-11 12:00:00', 'Technical date policy defaults to the configuration snapshot');
 TinyCat\Support\Dates::configure($context->dateOption(...));
-foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Identity\\Login', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Mail\\Templates', 'TinyCat\\Social\\Presentation\\Presentation', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration'] as $class) {
+foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Identity\\Login', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Mail\\Templates', 'TinyCat\\Social\\Site\\Presentation', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration'] as $class) {
     $assert(!class_exists($class, false), 'Standalone onboarding did not load ' . $class);
 }
 $assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'sqlite_sequence' ORDER BY name"), 'name') === ['password_reset_tokens', 'users'], 'Only account and reset-token tables are needed');

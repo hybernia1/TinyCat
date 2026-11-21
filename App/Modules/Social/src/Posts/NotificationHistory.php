@@ -103,4 +103,13 @@ final class NotificationHistory
             \TinyCat\Database\Connection::exec("DELETE FROM notifications WHERE type IN ('content_comment','comment_like','comment_mention') AND subject_id=?", [$commentId]);
         }
     }
+
+    /** @param array<mixed> $user */
+    public static function prepareAccountDelete(array $user): \TinyCat\Core\Identity\Deletion
+    {
+        $id = (int) $user['id'];
+        foreach (\TinyCat\Database\Connection::all("SELECT id FROM social_posts WHERE kind = 'post' AND author_id = ?", [$id]) as $row) { NotificationHistory::removeForContent((int) $row['id']); }
+        foreach (\TinyCat\Database\Connection::all("SELECT cc.id FROM social_comments cc INNER JOIN social_posts c ON c.id = cc.content_id WHERE c.kind = 'post' AND (cc.user_id = ? OR cc.parent_id IN (SELECT id FROM social_comments WHERE user_id = ?))", [$id, $id]) as $row) { NotificationHistory::removeForComment((int) $row['id']); }
+        return new \TinyCat\Core\Identity\Deletion();
+    }
 }

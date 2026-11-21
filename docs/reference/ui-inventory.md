@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-184 definic komponent, 398 CSS tříd, 128 CSS importů, 94 JS souborů, 27 UI služeb, 2 PHP partialů.
+183 definic komponent, 398 CSS tříd, 128 CSS importů, 94 JS souborů, 27 UI služeb, 1 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -105,9 +105,8 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `moderation/history` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/status, ui/empty-state, ui/modal-trigger |
 | `moderation/report-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/status |
 | `moderation/status` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/status-badge |
-| `search/page` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-actions, status/card, status/feed-more, ui/captcha, ui/empty-state |
 | `site/sidebar` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/avatar, ui/empty-state |
-| `site/public-page` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | search/page, site/archive-actions, site/archive-filter, status/card, status/composer-body, status/feed-more, status/thread, ui/avatar-content, users/avatar-control |
+| `site/public-page` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-actions, site/archive-filter, status/card, status/composer-body, status/feed-more, status/thread, ui/avatar-content, users/avatar-control |
 | `site/archive-filter` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-filter-name |
 | `site/archive-actions` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-filter |
 | `site/archive-filter-name` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
@@ -330,7 +329,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 ## PHP partialy
 
 - [App/Core/Ui/templates/parts/flashes.php](../../App/Core/Ui/templates/parts/flashes.php)
-- [App/Modules/Social/templates/parts/site/sidebar-slot.php](../../App/Modules/Social/templates/parts/site/sidebar-slot.php)
 
 ## PHP renderery
 
@@ -339,8 +337,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Core/Notifications/Views.php](../../App/Core/Notifications/Views.php): `menu`, `items`
 - [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `tc_admin_options`, `tc_admin_datetime`, `tc_admin_datetime_iso`, `admin_user_statuses`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_per_page_view_data`, `admin_pagination_view_data`
 - [App/Core/Updates/Views.php](../../App/Core/Updates/Views.php): `model`
-- [App/Modules/Social/src/Presentation/Views.php](../../App/Modules/Social/src/Presentation/Views.php): `sidebar`
-- [App/Modules/Social/src/Profiles/Views.php](../../App/Modules/Social/src/Profiles/Views.php): `followingProfile`
 
 ## Všechny PHP šablony
 
@@ -351,7 +347,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Core/Ui/templates/notFound.php](../../App/Core/Ui/templates/notFound.php)
 - [App/Core/Ui/templates/parts/flashes.php](../../App/Core/Ui/templates/parts/flashes.php)
 - [App/Core/Ui/templates/public-shell.php](../../App/Core/Ui/templates/public-shell.php)
-- [App/Modules/Social/templates/parts/site/sidebar-slot.php](../../App/Modules/Social/templates/parts/site/sidebar-slot.php)
 - [App/Modules/Social/templates/site/public.php](../../App/Modules/Social/templates/site/public.php)
 - [App/Modules/Social/templates/status/embed.php](../../App/Modules/Social/templates/status/embed.php)
 

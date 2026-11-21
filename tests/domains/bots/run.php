@@ -23,14 +23,14 @@ $assert(!\TinyCat\Core\Identity\Roles::allowsLogin('bot'), 'Bot accounts cannot 
 $assert(!\TinyCat\Social\Profiles\Roles::receivesNotifications('bot'), 'Bot accounts cannot receive notifications.');
 $assert(!\TinyCat\Core\Identity\Roles::managedByCoreAdmin('bot'), 'Bot accounts use their dedicated administration.');
 $assert(\TinyCat\Social\Profiles\Roles::profileSchemaType('bot') === 'Organization', 'Bot profiles retain their schema type.');
-$assert(array_diff(\TinyCat\Social\Automation\Schema::tables(), \TinyCat\Database\Schema::app_required_tables()) === [], 'Bot storage is required by core.');
-$assert(array_keys(\TinyCat\Social\Automation\Importer::scheduledTasks()) === ['feeds'], 'Feeds are always available to the scheduler.');
+$assert(array_diff(\TinyCat\Social\Bots\Schema::tables(), \TinyCat\Database\Schema::app_required_tables()) === [], 'Bot storage is required by core.');
+$assert(array_keys(\TinyCat\Social\Bots\Importer::scheduledTasks()) === ['feeds'], 'Feeds are always available to the scheduler.');
 $assert(!is_file(\TinyCat\Support\Paths::publicPath('admin/extensions.php')), 'Extension administration must be removed.');
 $assert(!method_exists(\TinyCat\Core\Discovery\Sitemap::class, 'registerExtension'), 'Sitemaps cannot register extension sections.');
 
-$assert(\TinyCat\Social\Automation\Importer::feedSourceHash('https://EXAMPLE.com:443/feed/') === \TinyCat\Social\Automation\Importer::feedSourceHash('https://example.com/feed'), 'Equivalent feed URLs must share a duplicate key.');
-$assert(\TinyCat\Social\Automation\Importer::feedSourceHash('file:///private/feed.xml') === '', 'Feed sources require HTTP or HTTPS.');
-$tags = \TinyCat\Social\Content\FeedImport::renderPost(['post_template' => '#{categories}'], ['categories' => array_map(static fn (int $n): string => 'Category ' . $n, range(1, 12))]);
+$assert(\TinyCat\Social\Bots\Importer::feedSourceHash('https://EXAMPLE.com:443/feed/') === \TinyCat\Social\Bots\Importer::feedSourceHash('https://example.com/feed'), 'Equivalent feed URLs must share a duplicate key.');
+$assert(\TinyCat\Social\Bots\Importer::feedSourceHash('file:///private/feed.xml') === '', 'Feed sources require HTTP or HTTPS.');
+$tags = \TinyCat\Social\Bots\FeedPreparation::renderPost(['post_template' => '#{categories}'], ['categories' => array_map(static fn (int $n): string => 'Category ' . $n, range(1, 12))]);
 $assert(substr_count($tags, '#category-') === 12, 'All feed category tags must survive.');
 $assert(\TinyCat\Core\Feeds\FeedParser::parse( '<invalid') === [], 'Invalid XML must not produce posts.');
 
@@ -39,7 +39,7 @@ $podcast = '<rss xmlns:p="http://www.itunes.com/dtds/podcast-1.0.dtd"><channel><
 $podcastItems = \TinyCat\Core\Feeds\FeedParser::parse($podcast);
 $assert($podcastItems[0]['description'] === 'Podcast summary' && $podcastItems[0]['image_urls'] === ['https://93.184.216.34/cover.jpg'], 'Podcast episodes use iTunes summaries and channel artwork without treating audio as an image.');
 $assert($podcastItems[1]['description'] === 'RSS description' && $podcastItems[1]['image_urls'] === ['https://93.184.216.34/episode.jpg'], 'Episode artwork and RSS descriptions take precedence over podcast fallbacks.');
-$sourceOnly = \TinyCat\Social\Content\Links::status_link_prepare_metadata(
+$sourceOnly = \TinyCat\Social\Posts\Links::status_link_prepare_metadata(
     ['normalized_url' => 'https://93.184.216.34/episode'], null, false,
     ['url_hash' => '', 'title' => 'Episode', 'description' => 'RSS description', 'image_urls' => []]
 );
@@ -80,11 +80,11 @@ foreach (['en', 'cs'] as $code) {
     $assert(\TinyCat\Support\Localization::t('cron.tasks.feeds', [], $code) !== 'cron.tasks.feeds', 'Feed scheduler translations must ship in core: ' . $code);
 }
 
-$assert(!str_contains(\TinyCat\Social\Automation\Importer::defaultSourceTemplate(), '{{image}}'), 'Image uploads remain opt-in.');
-$assert(\TinyCat\Social\Content\FeedImport::prepareImage(['post_template' => '{{image}}'], ['url' => 'https://youtu.be/abc123', 'image_urls' => ['https://example.com/thumbnail.jpg']]) === null, 'YouTube feeds do not download thumbnails as post attachments, even with an image placeholder.');
+$assert(!str_contains(\TinyCat\Social\Bots\Importer::defaultSourceTemplate(), '{{image}}'), 'Image uploads remain opt-in.');
+$assert(\TinyCat\Social\Bots\FeedPreparation::prepareImage(['post_template' => '{{image}}'], ['url' => 'https://youtu.be/abc123', 'image_urls' => ['https://example.com/thumbnail.jpg']]) === null, 'YouTube feeds do not download thumbnails as post attachments, even with an image placeholder.');
 $imageOnly = \TinyCat\Core\Feeds\FeedParser::parse('<rss><channel><item><enclosure type="image/png" url="https://93.184.216.34/photo.png"/></item></channel></rss>');
 $assert(count($imageOnly) === 1 && $imageOnly[0]['guid'] === $imageOnly[0]['image_url'], 'Image-only RSS entries receive stable image identity without a title or article URL.');
-$assert(\TinyCat\Social\Content\FeedImport::renderPost(['post_template' => "{{title}}\n{{image}}"], ['title' => 'Photo']) === 'Photo', 'Image placeholders do not appear in post text.');
+$assert(\TinyCat\Social\Bots\FeedPreparation::renderPost(['post_template' => "{{title}}\n{{image}}"], ['title' => 'Photo']) === 'Photo', 'Image placeholders do not appear in post text.');
 
 require __DIR__ . '/formats.php';
 echo "PASS built-in Bots ({$checks} checks)\n";

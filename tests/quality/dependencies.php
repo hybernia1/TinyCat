@@ -43,9 +43,10 @@ foreach ($graph as $owner => $targets) {
                 }
             }
         }
-        if (str_starts_with($owner, 'Social\\Profiles\\') && preg_match('/^Social\\\\(?:Posts|Automation)\\\\/', $target)) {
+        if (str_starts_with($owner, 'Social\\Profiles\\') && preg_match('/^Social\\\\(?:Posts|Bots)\\\\/', $target)) {
             // Social is one module; these explicit integrations replace its callback registry.
             $integrations = [
+                'Social\\Profiles\\Profiles' => 'Social\\Posts\\Archive',
                 'Social\\Profiles\\Following' => 'Social\\Posts\\NotificationEvents',
                 'Social\\Profiles\\Registration' => 'Social\\Posts\\Syndication',
                 'Social\\Profiles\\Repository' => 'Social\\Posts\\AuthorStatistics',

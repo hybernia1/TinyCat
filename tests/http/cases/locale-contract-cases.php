@@ -38,7 +38,7 @@ foreach ([['/cs/', 'cs-CZ,en;q=0.8'], ['/en/', 'en,cs;q=0.8'], ['/en/', 'ja']] a
 [$status, $body] = $exportRequest('/', 'GET', ['Accept-Language' => 'cs-CZ']);
 $assert($status === 200 && str_contains($body, '#flag-cs'), 'An automatically detected interface language also selects the correct navbar flag.');
 
-foreach (['/pl/', '/pl/status/10', '/pl/tag/test', '/pl/author/2', '/pl/search?q=test', '/pl/login', '/pl/register', '/pl/recovery'] as $path) {
+foreach (['/pl/', '/pl/status/10', '/pl/tag/test', '/pl/author/2', '/pl/search/all?q=test', '/pl/login', '/pl/register', '/pl/recovery'] as $path) {
     [$status, $body, $headers] = $exportRequest($path, 'GET', ['Accept-Language' => 'de']);
     $assert($status === 200 && str_contains($body, '<html lang="pl"') && ($headers['content-language'] ?? '') === 'pl', 'Public route renders in its explicit language: ' . $path);
     $assert(str_contains($body, 'data-interface-prefix="pl"') && str_contains($body, 'href="/pl/"'), 'The page shell retains its language prefix.');

@@ -4,9 +4,9 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
-use TinyCat\Social\Automation\DuplicateCleanup;
+use TinyCat\Social\Bots\DuplicateCleanup;
 use TinyCat\Database\Connection;
-use TinyCat\Social\Content\Redirects;
+use TinyCat\Social\Posts\Repository;
 
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $checks = 0;
@@ -80,7 +80,7 @@ $exercise = static function (PDO $db) use ($assert): void {
     $assert((int) $db->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === 18, 'Preview is read-only.');
     $first = DuplicateCleanup::run(1);
     $assert($first['changed'] === 1 && $first['has_more'], 'Cleanup respects its batch limit and reports remaining work.');
-    $assert(Redirects::target(2) === 1 && Redirects::target(99) === 1, 'New and earlier redirects point directly at the surviving post.');
+    $assert(Repository::redirectTarget(2) === 1 && Repository::redirectTarget(99) === 1, 'New and earlier redirects point directly at the surviving post.');
     $trigger = $sqlite ? "CREATE TRIGGER fail_duplicate BEFORE DELETE ON social_posts WHEN OLD.id=3 BEGIN SELECT RAISE(ABORT,'rollback'); END"
         : "CREATE TRIGGER fail_duplicate BEFORE DELETE ON social_posts FOR EACH ROW BEGIN IF OLD.id=3 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='rollback'; END IF; END";
     $db->exec($trigger);
@@ -108,7 +108,7 @@ $exercise = static function (PDO $db) use ($assert): void {
     $again = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('duplicate_bot_posts', 500);
     $assert($again['changed'] === 0 && $again['done'], 'The existing cleanup task dispatches this idempotent subtask.');
     $db->exec("UPDATE social_posts SET status='hidden' WHERE id=1");
-    $assert(Redirects::target(2) === null, 'Aliases cannot reveal a subsequently moderated post.');
+    $assert(Repository::redirectTarget(2) === null, 'Aliases cannot reveal a subsequently moderated post.');
     $db->exec('DELETE FROM social_posts WHERE id=1');
     $assert($db->query('SELECT 1 FROM social_post_redirects WHERE old_id=2')->fetchColumn() === false, 'Deleting a keeper removes its aliases.');
 };

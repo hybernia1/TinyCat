@@ -45,13 +45,13 @@ App/
       module.json                # Jediná aktivace celého Socialu
       src/
         Module.php               # Jediný registrační a inicializační bod
-        Content/                 # Vlastní statusy, diskuse, tagy, odkazy a média
         Profiles/
-        Posts/
+        Posts/                   # Příspěvek, feed, tagy, odkazy a přílohy
+        Discussion/              # Komentáře a reakce
         Moderation/
         Search/
-        Automation/
-        Presentation/
+        Bots/                    # Botí účty, zdroje a publikační fronty
+        Site/                    # Veřejné stránky a téma
       migrations/
       templates/
       lang/
@@ -72,10 +72,10 @@ a veřejné kontrakty mezi modulem a frameworkem zůstávají zachované.
 společná pro ruční zápis i feed import. `Social/Posts/Tags` vlastní normalizaci,
 vazby tagů a jejich veřejné výpisy bez dědičné mezivrstvy. `Posts/Resource`
 předává vlastní odkazy přímo společnému `Core/Ui/RichTextResource`.
-Transakční aktualizaci a mazání uložených dat nadále poskytuje `Content/Posts`.
+Transakční aktualizaci a mazání uložených dat poskytuje `Posts/Repository`.
 Diskuse a reakce volají přímo `Posts/InteractionPolicy`; vlastní interní registr
 vlastníků nemají. Nastavení a lokalizaci URL čtou z core a blokování odkazů
-z vlastní `Content/Policy`. Textové politiky registrují přímo do `Core/Text/Policies`.
+z vlastní `Posts/Policy`. Textové politiky registrují přímo do `Core/Text/Policies`.
 
 Účtové akce, uživatelská jména a avatary se volají přímo přes `Core/Identity`.
 Social nemá přeposílací třídy `Profiles/Actions`, `Profiles/Usernames`,
@@ -93,15 +93,15 @@ Historické migrační streamy, baseline soubory a checksumy se tím nemění.
 
 Profily neposkytují účtové stránky, administrativní view data ani obálku
 administrativní navigace. Veřejné autorské stránky registruje `PublicPages`
-přímo přes `Posts/AuthorPages`. `Profiles/Resource` doplňuje k identitě sociální
-URL; `Profiles/Views` vlastní zobrazení sledovaných autorů. Sledování i jeho
+přímo přes `Posts/AuthorPages`. `Profiles/Profiles::resource()` doplňuje k identitě
+sociální URL; sledovaní autoři používají přímo společné komponenty. Sledování i jeho
 odstranění patří do `Profiles/Following`.
 
 Klientské účty používají `TinyCat.accounts`, sociální vztahy
 `TinyCat.socialUsers`. Sdílený objekt ani alias `TinyCat.users` neexistuje.
 Editor, přehrávače a překlady používají přímo `TinyCat.publishing.controllers`;
 Social k nim nekopíruje druhé ovladače. Mobilní sociální URL vlastní jeho
-samostatná navigační politika. `Presentation/Sidebar` připravuje totožná data
+samostatná navigační politika. `Site/Sidebar` připravuje totožná data
 pro počáteční HTML i deferred resource.
 
 Výchozí jazyk dokumentů zajišťuje `Localization::defaultLocale()` nezávisle na
@@ -170,6 +170,12 @@ vazbu mezi vlastníky.
 Core poskytuje společný dokument, editor, seznamy a dialogy. Moduly přispívají
 stránkami, tématy, homepage a dashboardy. `/` a `/admin` vybírá core z aktivních
 definic; vypnutí jednoho modulu neodstraní účet ani data druhého.
+
+Veřejné stránky Socialu posílají společný komponentový obsah do `Core/Ui/Page`.
+Ten vybere téma; `Site/Layout` je pouze jeho veřejný renderer. Administraci
+obsluhuje core před výběrem veřejného tématu. Botí seznamy používají společné
+`Admin/Definitions::page()` a dodávají jen vlastní akce, například předání ID bota
+do formuláře nového zdroje. Stejný rám se neskládá podruhé v modulu.
 
 ## Migrace a kompatibilita
 

@@ -74,7 +74,7 @@ function runScenario(string $scenario): void
     define('TINYCAT', true);
     require_once $root . '/App/Core/Runtime/autoload.php';
     require_once $root . '/App/Core/Identity/Avatar.php';
-    require_once $root . '/App/Modules/Social/src/Content/ImageStorage.php';
+    require_once $root . '/App/Modules/Social/src/Posts/ImageStorage.php';
     require_once $root . '/App/Core/Text/LinkParser.php';
     require_once $root . '/App/Core/Links/Metadata.php';
     require_once $root . '/App/Modules/Social/src/Profiles/Roles.php';
@@ -198,7 +198,7 @@ function exerciseJsonStatus(): void
     $item = \TinyCat\Social\Posts\Feed::public_status_item(1);
     if ($item === null) { throw new RuntimeException('JSON status fixture was not found.'); }
     \TinyCat\Social\Posts\Resource::posts([$item], $user);
-    \TinyCat\Social\Posts\Resource::comments(\TinyCat\Social\Content\Comments::status_comments(1), $user);
+    \TinyCat\Social\Posts\Resource::comments(\TinyCat\Social\Discussion\Comments::status_comments(1), $user);
 }
 
 function exerciseStatus(): void
@@ -211,8 +211,8 @@ function exerciseStatus(): void
     }
 
     \TinyCat\Social\Posts\Feed::status_preload_feed([$item]);
-    $comments = \TinyCat\Social\Content\Comments::status_comments(1);
-    \TinyCat\Social\Content\Comments::status_preload_comment_tree_user_likes($comments, (int) ($user['id'] ?? 0));
+    $comments = \TinyCat\Social\Discussion\Comments::status_comments(1);
+    \TinyCat\Social\Discussion\Comments::status_preload_comment_tree_user_likes($comments, (int) ($user['id'] ?? 0));
     exerciseStatusImages([$item]);
 
     $pending = $comments;
@@ -223,11 +223,11 @@ function exerciseStatus(): void
             continue;
         }
 
-        \TinyCat\Social\Content\Comments::status_comment_can_delete($comment, $user);
+        \TinyCat\Social\Discussion\Comments::status_comment_can_delete($comment, $user);
         \TinyCat\Social\Posts\Posts::status_api_url('comment-like', ['id' => (int) $comment['content_id'], 'comment_id' => (int) $comment['id']]);
         \TinyCat\Social\Posts\ViewData::status_comment_edit_modal_url((int) $comment['id'], (int) $comment['content_id']);
         \TinyCat\Social\Posts\ViewData::status_comment_history_modal_url((int) $comment['id'], (int) $comment['content_id']);
-        \TinyCat\Social\Content\Comments::status_comment_user_liked((int) ($comment['id'] ?? 0), (int) ($user['id'] ?? 0));
+        \TinyCat\Social\Discussion\Comments::status_comment_user_liked((int) ($comment['id'] ?? 0), (int) ($user['id'] ?? 0));
         array_push($pending, ...(array) ($comment['replies'] ?? []));
     }
 
@@ -275,8 +275,8 @@ function exerciseSearch(): void
 function exerciseStatusImages(array $items): void
 {
     foreach ($items as $item) {
-        \TinyCat\Social\Content\Images::status_image_url((array) $item);
-        \TinyCat\Social\Content\Images::status_image_jsonld((array) $item);
+        \TinyCat\Social\Posts\Images::status_image_url((array) $item);
+        \TinyCat\Social\Posts\Images::status_image_jsonld((array) $item);
     }
 }
 

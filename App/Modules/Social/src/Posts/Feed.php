@@ -9,7 +9,7 @@ final class Feed
 
     public static function archive_type(string $type): string
     {
-        return \TinyCat\Social\Content\Archive::type($type);
+        return \TinyCat\Social\Posts\Archive::type($type);
     }
 
     private static function archive_query(\TinyCat\Database\Query $query, string $type): \TinyCat\Database\Query
@@ -21,7 +21,7 @@ final class Feed
     /** @return array{string, list<string>} */
     public static function archive_predicate(string $type): array
     {
-        return \TinyCat\Social\Content\Archive::predicate($type);
+        return \TinyCat\Social\Posts\Archive::predicate($type);
     }
 
     public static function public_status_select_sql(): string
@@ -57,7 +57,7 @@ final class Feed
 
     public static function public_status_apply_visibility(\TinyCat\Database\Query $query): \TinyCat\Database\Query
     {
-        return \TinyCat\Social\Content\Archive::visible($query);
+        return \TinyCat\Social\Posts\Archive::visible($query);
     }
 
     public static function public_status_id_query(bool $ordered = true): \TinyCat\Database\Query
@@ -152,7 +152,7 @@ final class Feed
      */
     public static function public_status_cursor_condition(string $cursorAt = '', int $cursorId = 0): array
     {
-        return \TinyCat\Social\Content\Archive::cursor($cursorAt, $cursorId);
+        return \TinyCat\Social\Posts\Archive::cursor($cursorAt, $cursorId);
     }
 
     public static function public_status_apply_cursor(\TinyCat\Database\Query $query, string $cursorAt = '', int $cursorId = 0): \TinyCat\Database\Query
@@ -383,10 +383,10 @@ final class Feed
         $userId = (int) (\TinyCat\Core\Identity\Authentication::auth()['id'] ?? 0);
 
         if ($userId > 0) {
-            \TinyCat\Social\Content\Reactions::status_preload_user_likes($ids, $userId);
+            \TinyCat\Social\Discussion\Reactions::status_preload_user_likes($ids, $userId);
         }
 
-        \TinyCat\Social\Content\Links::status_links_cache($ids);
+        \TinyCat\Social\Posts\Links::status_links_cache($ids);
     }
 
     public static function public_status_page_limit(): int

@@ -84,7 +84,7 @@ $home = \TinyCat\Social\Posts\ViewData::public_home_feed_data('following', ['id'
 $assert($home['current_feed_url'] === '/?feed=following&media=video', 'Initial home URL retains feed and filter.');
 $assert(str_contains($home['feed_more']['next_url'], 'media=video'), 'Initial pagination retains the filter.');
 $page = ['title' => 'Tinycat', 'current' => '/', 'meta' => ['url' => '/']];
-$resource = \TinyCat\Social\Presentation\PublicPages::resource('home', ['page' => $page, 'context' => ['feed' => 'following', 'archiveType' => 'video', 'publicHomeFeedData' => $home]]);
+$resource = \TinyCat\Social\Site\PublicPages::resource('home', ['page' => $page, 'context' => ['feed' => 'following', 'archiveType' => 'video', 'publicHomeFeedData' => $home]]);
 $assert($resource['all_feed_url'] === '/?media=video' && $resource['following_feed_url'] === '/?feed=following&media=video', 'Switching feeds retains the filter.');
 $assert($resource['archive_options'][0]['url'] === '/?feed=following' && $resource['archive_options'][1]['url'] === '/?feed=following&media=images', 'Filter options retain the selected feed.');
 $html = \TinyCat\Support\Components::render('site/public-page', $resource);

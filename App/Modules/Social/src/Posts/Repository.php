@@ -2,7 +2,9 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\{Links, Interactions, ImageStorage};
+use TinyCat\Social\Posts\Links;
+use TinyCat\Social\Discussion\Interactions;
+use TinyCat\Social\Posts\ImageStorage;
 
 use TinyCat\Database\Connection;
 use TinyCat\Database\Transactions;
@@ -75,5 +77,13 @@ final class Repository
         $path = (string) ($image['path'] ?? '');
         if ($deleteImageFile) { ImageStorage::delete($path); }
         return $path;
+    }
+
+    public static function redirectTarget(int $id): ?int
+    {
+        $target = \TinyCat\Database\Connection::value("SELECT c.id FROM social_post_redirects r
+            INNER JOIN social_posts c ON c.id=r.content_id INNER JOIN users u ON u.id=c.author_id
+            WHERE r.old_id=? AND c.status='published' AND c.published_at<=? AND u.status='active'", [$id, \TinyCat\Support\Dates::dateDb()]);
+        return $target === null ? null : (int) $target;
     }
 }

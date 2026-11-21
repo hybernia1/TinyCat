@@ -186,7 +186,7 @@
     return;
   }
   if (mode === 'social-forms') {
-    const follow=T.dom.element('form',{method:'post',action:'/api/users/2/followers/me','data-follow-form':'','data-author-id':'2'});
+    const follow=T.dom.element('form',{method:'post',action:'/api/profiles/2/followers/me','data-follow-form':'','data-author-id':'2'});
     follow.append(T.ui.hidden('action','follow'),T.ui.button('public.follow',{type:'submit'})); document.body.append(follow);
     const react=T.dom.element('form',{method:'post',action:'/api/statuses/7/likes/me','data-status-form':'','data-status-id':'7'});
     const like=T.ui.button('common.save',{type:'submit','data-status-like-button':'','aria-pressed':'false'});

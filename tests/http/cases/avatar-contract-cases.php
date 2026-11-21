@@ -13,7 +13,7 @@ $fixtureOwnsAvatar = false;
 try {
     $canvas = imagecreatetruecolor(8, 8);
     ob_start(); imagepng($canvas); $png = (string) ob_get_clean(); imagedestroy($canvas);
-    [$status, $generatedUser] = $request('GET', '/api/users/' . $avatarId);
+    [$status, $generatedUser] = $request('GET', '/api/profiles/' . $avatarId);
     $generatedUrl = '/avatar/generated/v1/' . $avatarId . '.svg';
     $assert($status === 200 && $generatedUser['data']['user']['avatar_url'] === $generatedUrl && !$generatedUser['data']['user']['avatar_custom'], 'A new user receives a generated avatar before uploading.');
     [$modalStatus, $avatarModal] = $request('GET', '/api/users/' . $avatarId . '/avatar', null, 'admin');
@@ -58,7 +58,7 @@ try {
     $avatarUrl = $payload['data']['user']['avatar_url'];
     $assert(str_starts_with($avatarUrl, '/uploads/avatars/' . $avatarId . '.webp?v='), 'Upload returns the new cache-versioned avatar resource.');
     $assert((int) $seed->query('SELECT avatar_exists FROM users WHERE id = ' . $avatarId)->fetchColumn() === 1, 'Successful upload persists avatar availability.');
-    [$status, $payload] = $request('GET', '/api/users/' . $avatarId);
+    [$status, $payload] = $request('GET', '/api/profiles/' . $avatarId);
     $assert($status === 200 && $payload['data']['user']['avatar_url'] === $avatarUrl, 'Subsequent public resources preserve the uploaded avatar URL.');
     $imageBytes = file_get_contents('http://' . $address . $avatarUrl);
     $assert(is_string($imageBytes) && getimagesizefromstring($imageBytes)['mime'] === 'image/webp', 'The returned avatar URL actually serves a WebP image.');
@@ -101,7 +101,7 @@ try {
     [$status] = $request('DELETE', '/api/users/' . $avatarId . '/avatar', [], 'admin', $csrf);
     clearstatcache(true, $avatarFile);
     $assert($status === 200 && !is_file($avatarFile), 'Removing the avatar clears its file.');
-    [$status, $payload] = $request('GET', '/api/users/' . $avatarId);
+    [$status, $payload] = $request('GET', '/api/profiles/' . $avatarId);
     $assert($status === 200 && $payload['data']['user']['avatar_url'] === '/avatar/generated/v1/' . $avatarId . '.svg?gender=female' && !$payload['data']['user']['avatar_custom'], 'Removed avatars return the stable generated fallback.');
     $seed->exec('CREATE TRIGGER fail_new_avatar BEFORE UPDATE ON users WHEN NEW.id = ' . $avatarId . " BEGIN SELECT RAISE(ABORT, 'forced first avatar failure'); END");
     [$status] = $request('POST', '/api/users/' . $avatarId . '/avatar', $multipartBody(['_method' => 'PUT'], $redPng), 'admin', $multipartHeaders);

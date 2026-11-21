@@ -41,7 +41,7 @@ $assert(str_contains($modal, '<p id="snapshot-body">Safe body</p>'), 'Prepared m
 
 $composerBody = \TinyCat\Support\Components::render('status/composer-body', [
     'constraints' => \TinyCat\Social\Posts\Resource::constraints(),
-    'viewer' => \TinyCat\Social\Profiles\Resource::profile(['id' => 1, 'username' => 'alice', 'avatar_exists' => 0]),
+    'viewer' => \TinyCat\Social\Profiles\Profiles::resource(['id' => 1, 'username' => 'alice', 'avatar_exists' => 0]),
     'value' => 'Draft', 'image' => [], 'enabled' => false,
     'submit_name' => 'save', 'submit_value' => '1', 'submit_label' => 'Save', 'submit_icon' => 'save',
 ]);
@@ -137,7 +137,7 @@ $assert(str_contains($logoutPage, 'method="post"') && str_contains($logoutPage, 
 set_error_handler(static function (int $level, string $message): never { throw new ErrorException($message, 0, $level); });
 try {
     ob_start();
-    \TinyCat\Social\Presentation\Layout::render(['title' => 'Public <unsafe>', 'current' => '/search', 'meta' => ['description' => 'Description <unsafe>']], '<p id="page-fixture">Prepared content</p>');
+    \TinyCat\Social\Site\Layout::render(['title' => 'Public <unsafe>', 'current' => '/search', 'meta' => ['description' => 'Description <unsafe>']], '<p id="page-fixture">Prepared content</p>');
     $publicLayout = (string) ob_get_clean();
     $assert(substr_count($publicLayout, '<!doctype html>') === 1 && substr_count($publicLayout, '<body') === 1, 'Public shell produces exactly one HTML document.');
     $assert(str_contains($publicLayout, 'class="navbar"') && !str_contains($publicLayout, 'data-admin-shell'), 'Guest pages use the public shell.');
@@ -176,10 +176,35 @@ try {
     } finally {
         \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
     }
+    // Social page composition must honor the same selected theme as core pages.
+    $originalRegistries = \TinyCat\Core\Modules\Registrations::current();
+    $originalOptions = \TinyCat\Core\Runtime\Startup::$options;
+    try {
+        \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries([
+            'existing' => $originalRegistries->entries,
+            'fixture' => new \TinyCat\Core\Modules\Contributions(themes: [new \TinyCat\Core\Modules\PageTheme('fixture.theme', static function (array $page, string $content): void {
+                \TinyCat\Core\Ui\Document::render($page, '<section data-selected-theme>' . $content . '</section>');
+            })]),
+        ]));
+        \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'site.theme' ? 'fixture.theme' : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
+        ob_start();
+        \TinyCat\Social\Site\PublicPages::render('home', ['page' => ['title' => 'Selected theme', 'current' => '/social', 'meta' => ['url' => '/social']], 'context' => []]);
+        $selectedLayout = (string) ob_get_clean();
+        $assert(str_contains($selectedLayout, 'data-selected-theme') && str_contains($selectedLayout, 'data-public-page="home"'), 'Social content renders inside the selected core theme rather than forcing its own theme.');
+        $assert(substr_count($selectedLayout, '<!doctype html>') === 1, 'Selected themes retain one shared document.');
+    } finally {
+        \TinyCat\Core\Modules\Registrations::configure($originalRegistries);
+        \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
+    }
     \TinyCat\Core\Identity\Authentication::reset(['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'theme' => 'dark'], true);
     ob_start();
-    \TinyCat\Social\Presentation\Layout::render(['title' => 'Administration', 'current' => '/admin/moderation/reports'], '<p>Admin content</p>');
+    \TinyCat\Core\Ui\Page::render(['title' => 'Administration', 'current' => '/admin/moderation/reports'], '<p>Admin content</p>');
     $adminLayout = (string) ob_get_clean();
+    ob_start();
+    \TinyCat\Core\Ui\Admin\Definitions::page('social.bot-creation', ['items' => [], 'filters' => [], 'sorting' => [], 'pagination' => []], '<button data-custom-list-action>Custom action</button>');
+    $customList = (string) ob_get_clean();
+    $assert(str_contains($customList, 'id="bot-accounts-list"') && substr_count($customList, 'data-custom-list-action') === 1 && str_contains($customList, 'data-admin-shell'), 'The common admin page composes the list and owner actions in one shared shell.');
+
     $assert(str_contains($adminLayout, 'data-admin-shell') && !str_contains($adminLayout, 'class="navbar"'), 'Admin pages use only the admin shell.');
     $assert(str_contains($adminLayout, 'noindex,nofollow') && str_contains($adminLayout, 'data-theme="dark"'), 'Admin robots policy and account theme survive the split.');
     $assert(substr_count($adminLayout, '<!doctype html>') === 1 && substr_count($adminLayout, '<title>') === 1 && substr_count($adminLayout, 'name="csrf-token"') === 1, 'Administration uses one complete common document.');

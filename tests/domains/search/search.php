@@ -58,7 +58,7 @@ try {
     \TinyCat\Core\Identity\Authentication::reset(null, true);
 
     $first = Queries::collection('  nebula   quartz  ');
-    parse_str((string) parse_url($first['next_url'], PHP_URL_QUERY), $cursor);
+    $cursor = $first['cursor'];
     $insert->execute([30000, 1, 'quartz nebula inserted between requests', '2025-01-01 00:00:00']);
     $second = Queries::collection('nebula quartz', 'content', $cursor);
     $ids = array_column([...$first['items'], ...$second['items']], 'id');
@@ -81,7 +81,7 @@ try {
     $assert(array_column(Queries::collection('nebula', 'tags')['items'], 'title') === ['#nebula', '#nebula-more', '#xnebula'], 'Tag ranking matches profile ranking.');
     foreach (['users', 'tags'] as $type) {
         $batch = Queries::collection('nebula', $type, [], 2);
-        parse_str((string) parse_url($batch['next_url'], PHP_URL_QUERY), $cursor);
+        $cursor = $batch['cursor'];
         $rest = Queries::collection('nebula', $type, $cursor, 2);
         $assert(count($batch['items']) === 2 && count($rest['items']) === 1 && $rest['done'] && $batch['items'][1]['id'] !== $rest['items'][0]['id'], 'Rank/name/ID cursors preserve entity ranking without offsets.');
     }
@@ -93,12 +93,12 @@ try {
     $pdo->exec('INSERT INTO social_post_images VALUES (10025), (10024)');
     $assert(array_column(Queries::collection('nebula quartz', 'content', [], 20, 'video')['items'], 'id') === [20003, 10025], 'Search media filters apply to both body and link matches without duplicates.');
     $imagePage = Queries::collection('nebula quartz', 'content', [], 1, 'images');
-    parse_str((string) parse_url($imagePage['next_url'], PHP_URL_QUERY), $imageCursor);
-    $assert($imageCursor['media'] === 'images' && array_column($imagePage['items'], 'id') === [10025] && array_column(Queries::collection('nebula quartz', 'content', $imageCursor, 1, 'images')['items'], 'id') === [10024], 'Filtered search continuation retains the filter and advances without omissions.');
+    $imageCursor = $imagePage['cursor'];
+    $assert(array_column($imagePage['items'], 'id') === [10025] && array_column(Queries::collection('nebula quartz', 'content', $imageCursor, 1, 'images')['items'], 'id') === [10024], 'Filtered search continuation retains the filter and advances without omissions.');
     $assert(Queries::collection('nebula quartz', 'content', [], 20, 'audio')['items'] === [], 'Nonmatching media produces an empty result.');
     $assert(!in_array(20003, array_column(Queries::collection('nebula quartz', 'content', [], 50, 'text')['items'], 'id'), true), 'Text-only search excludes link attachments.');
     $assert(Queries::collection('%nebula', 'tags')['items'] === [], 'Percent signs do not turn into a valid tag query.');
-    $assert(Queries::public_search_suggestions('nebula')['content'] === [], 'Autocomplete does not return post suggestions.');
+    $assert(\TinyCat\Core\Discovery\Search::suggestions('nebula')['content'] === [], 'Autocomplete does not return post suggestions.');
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Guests count only published posts from active authors.');
     \TinyCat\Core\Identity\Authentication::reset(['id' => 1, 'role' => 'admin'], true);
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Admins use the same published tag counts as public readers.');
@@ -133,8 +133,9 @@ try {
     $assert(count(Queries::public_search_content_rows('unionboundary', 0)) === 1 && count(Queries::public_search_content_rows('unionboundary', 100)) === 51, 'Bounded source limits retain public limit normalization.');
     \TinyCat\Http\Session::start();
     $_SESSION['_tinycat_search_guard'] = ['count' => 7];
+    $suggestionCount = (int) ($_SESSION['_tinycat_suggestion_guard']['count'] ?? 0);
     \TinyCat\Social\Search\Guard::suggestions();
-    $assert($_SESSION['_tinycat_search_guard'] === ['count' => 7] && $_SESSION['_tinycat_suggestion_guard']['count'] === 1, 'Autocomplete uses a separate search budget.');
+    $assert($_SESSION['_tinycat_search_guard'] === ['count' => 7] && $_SESSION['_tinycat_suggestion_guard']['count'] === $suggestionCount + 1, 'Autocomplete uses a separate search budget.');
     echo 'PASS search semantics (' . ($mysql ? 'MySQL/MariaDB' : 'SQLite') . ", {$checks} checks)\n";
 } finally {
     if ($server instanceof PDO) { Connection::set($server); }

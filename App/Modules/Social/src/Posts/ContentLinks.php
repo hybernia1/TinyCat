@@ -2,11 +2,10 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Redirects;
 
 use TinyCat\Core\Text\LinkParser;
 
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 use TinyCat\Core\Settings\Store;
 
@@ -33,7 +32,7 @@ final class ContentLinks
     {
         $item = \TinyCat\Database\Connection::one('SELECT c.body FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.kind = \'post\' AND c.id = ? AND c.published_at <= ? AND c.status = \'published\' AND u.status = ?', [$contentId, \TinyCat\Support\Dates::dateDb(), 'active']);
         if ($item === null) {
-            $canonicalId = Redirects::target($contentId);
+            $canonicalId = Repository::redirectTarget($contentId);
             return $canonicalId === null ? null : self::resolve($canonicalId, $hash, $commentId);
         }
         if ($commentId > 0) {
@@ -41,6 +40,6 @@ final class ContentLinks
             if ($comment === null) { return null; }
             $item = $comment;
         }
-        return \TinyCat\Social\Content\Outbound::resolve($hash, (string) $item['body'], $commentId === 0 ? static fn (): array => \TinyCat\Database\Connection::all('SELECT l.normalized_url, l.url_hash FROM social_post_links cl INNER JOIN social_links l ON l.id = cl.link_id WHERE cl.content_id = ?', [$contentId]) : null);
+        return \TinyCat\Social\Posts\Outbound::resolve($hash, (string) $item['body'], $commentId === 0 ? static fn (): array => \TinyCat\Database\Connection::all('SELECT l.normalized_url, l.url_hash FROM social_post_links cl INNER JOIN social_links l ON l.id = cl.link_id WHERE cl.content_id = ?', [$contentId]) : null);
     }
 }

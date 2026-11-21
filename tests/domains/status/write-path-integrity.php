@@ -20,7 +20,7 @@ $root = dirname(__DIR__, 3);
 define('TINYCAT', true);
 require_once $root . '/App/Core/Runtime/autoload.php';
 require_once $root . '/App/Core/Identity/Avatar.php';
-require_once $root . '/App/Modules/Social/src/Content/ImageStorage.php';
+require_once $root . '/App/Modules/Social/src/Posts/ImageStorage.php';
 require_once $root . '/App/Core/Text/LinkParser.php';
 require_once $root . '/App/Core/Links/Metadata.php';
 require_once $root . '/App/Modules/Social/src/Profiles/Roles.php';
@@ -126,11 +126,11 @@ $assert(\TinyCat\Social\Posts\Tags::status_tag_normalize(str_repeat('a', 33)) ==
 
 $youtube = \TinyCat\Core\Text\LinkParser::fromRaw('https://youtu.be/abc123');
 $assert(is_array($youtube) && !array_key_exists('embed_url', $youtube), 'Video parser retains only the canonical video identifier.');
-$assert(\TinyCat\Social\Content\Links::status_video_embed_url(['provider' => 'youtube', 'video_id' => 'abc123']) === 'https://www.youtube.com/embed/abc123', 'YouTube embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Social\Content\Links::status_video_embed_url(['provider' => 'vimeo', 'video_id' => '987654']) === 'https://player.vimeo.com/video/987654', 'Vimeo embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Social\Content\Links::status_video_embed_url(['provider' => 'dailymotion', 'video_id' => 'x9demo']) === 'https://www.dailymotion.com/embed/video/x9demo', 'Dailymotion embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Social\Content\Links::status_video_embed_url(['provider' => 'unknown', 'video_id' => 'abc123']) === '', 'Unknown video providers cannot produce an embed URL.');
-$assert(!array_key_exists('embed_url', \TinyCat\Social\Content\Links::status_link_data((array) $youtube)), 'Link persistence excludes the derived embed URL.');
+$assert(\TinyCat\Social\Posts\Links::status_video_embed_url(['provider' => 'youtube', 'video_id' => 'abc123']) === 'https://www.youtube.com/embed/abc123', 'YouTube embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Social\Posts\Links::status_video_embed_url(['provider' => 'vimeo', 'video_id' => '987654']) === 'https://player.vimeo.com/video/987654', 'Vimeo embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Social\Posts\Links::status_video_embed_url(['provider' => 'dailymotion', 'video_id' => 'x9demo']) === 'https://www.dailymotion.com/embed/video/x9demo', 'Dailymotion embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Social\Posts\Links::status_video_embed_url(['provider' => 'unknown', 'video_id' => 'abc123']) === '', 'Unknown video providers cannot produce an embed URL.');
+$assert(!array_key_exists('embed_url', \TinyCat\Social\Posts\Links::status_link_data((array) $youtube)), 'Link persistence excludes the derived embed URL.');
 
 
 // Count transport attempts without DNS or any real outbound request.
@@ -149,22 +149,22 @@ $failureKey = 'link-metadata-failure-v1-' . hash('sha256', (string) $failedLink[
 stream_wrapper_unregister('http');
 stream_wrapper_register('http', FailedLinkTransport::class);
 try {
-    $firstFailure = \TinyCat\Social\Content\Links::status_link_prepare_metadata($failedLink, null);
-    $secondFailure = \TinyCat\Social\Content\Links::status_link_prepare_metadata($failedLink, null);
+    $firstFailure = \TinyCat\Social\Posts\Links::status_link_prepare_metadata($failedLink, null);
+    $secondFailure = \TinyCat\Social\Posts\Links::status_link_prepare_metadata($failedLink, null);
     $assert(FailedLinkTransport::$attempts === 1, 'A repeated unavailable preview reuses the short failure cache.');
     $assert($secondFailure['normalized_url'] === $failedLink['normalized_url'], 'A failed preview retains a usable link.');
     $staleLink = $failedLink + ['image_url' => ''];
     $staleLink['title'] = 'Previously fetched title';
     $staleLink['updated_at'] = '2020-01-01 00:00:00';
-    $stalePreview = \TinyCat\Social\Content\Links::status_link_prepare_metadata($failedLink, $staleLink);
+    $stalePreview = \TinyCat\Social\Posts\Links::status_link_prepare_metadata($failedLink, $staleLink);
     $assert($stalePreview['title'] === 'Previously fetched title' && $stalePreview['_metadata_updated_at'] === $staleLink['updated_at'], 'Failure backoff preserves old metadata without renewing its daily TTL.');
     $failureFile = (new ReflectionMethod(\TinyCat\Support\Cache::class, 'jsonFile'))->invoke(null, $failureKey);
     touch($failureFile, time() - 301);
-    $retry = \TinyCat\Social\Content\Links::status_link_prepare_metadata($failedLink, $staleLink);
+    $retry = \TinyCat\Social\Posts\Links::status_link_prepare_metadata($failedLink, $staleLink);
     $assert(FailedLinkTransport::$attempts === 2 && $retry['_metadata_updated_at'] === $staleLink['updated_at'], 'Once failure backoff expires, retry preserves the old success timestamp on another failure.');
     $freshLink = $staleLink;
     $freshLink['updated_at'] = \TinyCat\Support\Dates::dateDb();
-    $freshPreview = \TinyCat\Social\Content\Links::status_link_prepare_metadata($failedLink, $freshLink);
+    $freshPreview = \TinyCat\Social\Posts\Links::status_link_prepare_metadata($failedLink, $freshLink);
     $assert(FailedLinkTransport::$attempts === 2 && $freshPreview['title'] === 'Previously fetched title', 'Fresh successful metadata remains available during failure backoff.');
 } finally {
     stream_wrapper_restore('http');
@@ -202,14 +202,14 @@ $links = [
 ];
 $linkFailed = false;
 try {
-    \TinyCat\Social\Content\Links::status_sync_links(100, $links);
+    \TinyCat\Social\Posts\Links::status_sync_links(100, $links);
 } catch (PDOException) {
     $linkFailed = true;
 }
 $assert($linkFailed, 'A non-unique link relation failure is propagated.');
 $assert((int) $value('SELECT link_id FROM social_post_links WHERE content_id = 100') === 1, 'Failed link synchronization restores the old relation.');
 $database->exec('DROP TRIGGER fail_link_attach');
-\TinyCat\Social\Content\Links::status_sync_links(100, $links);
+\TinyCat\Social\Posts\Links::status_sync_links(100, $links);
 $assert((int) $value('SELECT COUNT(*) FROM social_post_links WHERE content_id = 100') === 2, 'Successful link synchronization replaces all relations.');
 
 
@@ -296,9 +296,9 @@ $database->exec('CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id
 $database->exec("INSERT INTO bot_source_runs (id, source_id, status) VALUES (1, 2, 'running')");
 $database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, status TEXT, finished_at TEXT, duration_ms INTEGER, summary_json TEXT, error TEXT)');
 $database->exec("INSERT INTO scheduler_runs (id, status) VALUES (1, 'running')");
-$importItems = new \TinyCat\Core\Feeds\FeedPipeline(new \TinyCat\Social\Automation\FeedStore(), new \TinyCat\Social\Automation\FeedPublication());
+$importItems = new \TinyCat\Core\Feeds\FeedPipeline(new \TinyCat\Social\Bots\FeedStore(), new \TinyCat\Social\Bots\FeedPublication());
 $source = ['id' => 2, 'bot_user_id' => 1, 'feed_url' => 'https://feed.example/rss', 'post_template' => '{{title}}'];
-$database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Social\Automation\Importer::feedSourceHash($source['feed_url'])]);
+$database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Social\Bots\Importer::feedSourceHash($source['feed_url'])]);
 $items = [
     ['guid' => 'blocked', 'title' => 'https://blocked.example/article'],
     ['guid' => 'long-tag', 'title' => '#' . str_repeat('a', 33)],
@@ -310,10 +310,10 @@ $assert($result['status'] === 'posted', 'Invalid feed items do not prevent a lat
 $assert(!str_contains(json_encode($result['skipped_items'], JSON_THROW_ON_ERROR), 'message_key'), 'Import diagnostics expose canonical rejection codes and parameters without translation identifiers.');
 $assert(array_column($result['skipped_items'], 'code') === ['blocked_url', 'status_tag_too_long', 'status_required'], 'Feed skips preserve structured content rejection codes.');
 $assert($result['skipped_items'][0]['params'] === ['host' => 'blocked.example'] && $result['skipped_items'][1]['params'] === ['max' => '32'], 'Feed rejections preserve the same parameters as HTTP validation.');
-$sourceHash = \TinyCat\Social\Automation\Importer::feedSourceHash($source['feed_url']);
+$sourceHash = \TinyCat\Social\Bots\Importer::feedSourceHash($source['feed_url']);
 $history = \TinyCat\Database\Connection::all('SELECT item_hash FROM bot_feed_history WHERE feed_hash = ?', [$sourceHash]);
 $assert(array_column($history, 'item_hash') === [hash('sha256', 'allowed')], 'Rejected feed items never acquire successful duplicate claims.');
-$scheduledResult = (new ReflectionMethod(\TinyCat\Social\Automation\Importer::class, 'scheduledResult'))->invoke(null, [$result]);
+$scheduledResult = (new ReflectionMethod(\TinyCat\Social\Bots\Importer::class, 'scheduledResult'))->invoke(null, [$result]);
 \TinyCat\Core\Tasks\History::finish(1, $scheduledResult, 1);
 $assert($scheduledResult['count'] === 1 && $scheduledResult['changed'] === 1, 'Feed task counters distinguish checked sources from newly published posts.');
 $summary = json_decode((string) $value('SELECT summary_json FROM scheduler_runs WHERE id = 1'), true);
@@ -353,10 +353,10 @@ $assert($retried['status'] === 'posted', 'A technical failure can be retried suc
 // Missing legacy settings, batch imports, duplicate GUIDs and queue continuation.
 $database->exec('INSERT INTO bot_sources (id) VALUES (3), (4)');
 $queueSource = array_replace($source, ['id' => 3, 'bot_user_id' => 900, 'feed_url' => 'https://queue.example/rss']);
-$database->prepare('UPDATE bot_sources SET bot_user_id = 900, feed_hash = ? WHERE id = 3')->execute([\TinyCat\Social\Automation\Importer::feedSourceHash($queueSource['feed_url'])]);
-$database->prepare('UPDATE bot_sources SET bot_user_id = 900, feed_hash = ? WHERE id = 4')->execute([\TinyCat\Social\Automation\Importer::feedSourceHash('https://queue.example/other')]);
+$database->prepare('UPDATE bot_sources SET bot_user_id = 900, feed_hash = ? WHERE id = 3')->execute([\TinyCat\Social\Bots\Importer::feedSourceHash($queueSource['feed_url'])]);
+$database->prepare('UPDATE bot_sources SET bot_user_id = 900, feed_hash = ? WHERE id = 4')->execute([\TinyCat\Social\Bots\Importer::feedSourceHash('https://queue.example/other')]);
 foreach ([[], ['publication_interval_minutes' => null], ['publication_interval_minutes' => 0]] as $legacy) {
-    $assert(\TinyCat\Social\Automation\Importer::publicationInterval($legacy) === 30, 'Unset legacy publication intervals default to 30 minutes.');
+    $assert(\TinyCat\Social\Bots\Importer::publicationInterval($legacy) === 30, 'Unset legacy publication intervals default to 30 minutes.');
 }
 $batch = $importItems->import($queueSource, [
     ['guid' => 'queue-a', 'title' => 'Queue first'],
@@ -369,7 +369,7 @@ $assert($batch['status'] === 'posted' && $batch['imported_count'] === 3 && count
 $assert(strtotime($queueRows[1]['published_at']) - strtotime($queueRows[0]['published_at']) === 1800
     && strtotime($queueRows[2]['published_at']) - strtotime($queueRows[1]['published_at']) === 1800, 'Default publication slots are 30 minutes apart.');
 $assert(\TinyCat\Social\Posts\Posts::status_can_view($queueRows[0]) && !\TinyCat\Social\Posts\Posts::status_can_view($queueRows[1]), 'The first slot is public immediately and later slots remain hidden.');
-$batchSummary = (new ReflectionMethod(\TinyCat\Social\Automation\Importer::class, 'scheduledResult'))->invoke(null, [$batch]);
+$batchSummary = (new ReflectionMethod(\TinyCat\Social\Bots\Importer::class, 'scheduledResult'))->invoke(null, [$batch]);
 $assert($batchSummary['changed'] === 3, 'Scheduler change counts include every imported post.');
 $queueSource['publication_interval_minutes'] = 45;
 $continuation = $importItems->import($queueSource, [['guid' => 'queue-c', 'title' => 'Queue third'], ['guid' => 'queue-d', 'title' => 'Queue fourth']], 1);
@@ -399,7 +399,7 @@ imagewebp($preview, $feedPreviewPath);
 imagedestroy($preview);
 try {
     $videoLink = \TinyCat\Core\Text\LinkParser::fromRaw('https://youtu.be/feed123?si=share');
-    \TinyCat\Social\Content\Links::status_link_upsert(array_replace($videoLink, ['title' => 'Cached feed video', 'image_url' => $feedPreviewUrl, '_metadata_updated_at' => $now]));
+    \TinyCat\Social\Posts\Links::status_link_upsert(array_replace($videoLink, ['title' => 'Cached feed video', 'image_url' => $feedPreviewUrl, '_metadata_updated_at' => $now]));
     $feedWithLinks = array_replace($source, ['post_template' => "{{title}}\n{{url}}\nhttps://youtu.be/feed123?si=share"]);
     $feedItem = ['guid' => 'normalized-image-card', 'title' => 'RSS article title', 'description' => 'RSS article summary',
         'url' => 'https://93.184.216.34/rss-article?utm_source=feed', 'image_urls' => [$feedPreviewUrl]];
@@ -498,7 +498,7 @@ $botSource = $source;
 $botSource['bot_user_id'] = 3;
 $database->exec('INSERT INTO bot_sources (id) VALUES (5)');
 $botSource['id'] = 5;
-$database->prepare('UPDATE bot_sources SET bot_user_id = 3, feed_hash = ? WHERE id = 5')->execute([\TinyCat\Social\Automation\Importer::feedSourceHash($botSource['feed_url'])]);
+$database->prepare('UPDATE bot_sources SET bot_user_id = 3, feed_hash = ? WHERE id = 5')->execute([\TinyCat\Social\Bots\Importer::feedSourceHash($botSource['feed_url'])]);
 $botPublication = $importItems->import($botSource, [['guid' => 'bot-mention', 'title' => 'Bot mention @owner']], 1);
 $botPublicationId = (int) $botPublication['content_id'];
 $assert((string) $value('SELECT published_at FROM social_posts WHERE id = ' . $botPublicationId) <= \TinyCat\Support\Dates::dateDb(), 'Bot imports publish immediately through the shared writer.');
@@ -528,7 +528,7 @@ $database->exec("INSERT INTO notifications (id, user_id, subject_id, type, notif
 $database->exec('CREATE TRIGGER fail_comment_delete BEFORE DELETE ON social_comments WHEN OLD.id = 10 BEGIN SELECT RAISE(ABORT, \'forced comment failure\'); END');
 $commentFailed = false;
 try {
-    \TinyCat\Social\Content\Comments::status_delete_comment_rows(10);
+    \TinyCat\Social\Discussion\Comments::status_delete_comment_rows(10);
 } catch (PDOException) {
     $commentFailed = true;
 }
@@ -537,7 +537,7 @@ $assert((int) $value('SELECT COUNT(*) FROM social_comments WHERE content_id = 20
 $assert((int) $value('SELECT COUNT(*) FROM social_comment_likes WHERE comment_id IN (10, 11)') === 2, 'Failed comment deletion restores reactions.');
 $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id IN (10, 11)') === 2, 'Failed comment deletion restores notifications.');
 $database->exec('DROP TRIGGER fail_comment_delete');
-\TinyCat\Social\Content\Comments::status_delete_comment_rows(10);
+\TinyCat\Social\Discussion\Comments::status_delete_comment_rows(10);
 $assert((int) $value('SELECT COUNT(*) FROM social_comments WHERE content_id = 200') === 0, 'Successful comment deletion removes parent and reply.');
 $assert((int) $value('SELECT COUNT(*) FROM social_comment_likes WHERE comment_id IN (10, 11)') === 0, 'Successful comment deletion removes reactions.');
 $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id IN (10, 11)') === 0, 'Successful comment deletion removes notifications.');
@@ -578,9 +578,9 @@ $assert(\TinyCat\Social\Posts\Posts::status_can_edit(['author_id' => 1, 'status'
 $assert(\TinyCat\Social\Posts\Posts::status_can_edit(['author_id' => 1, 'status' => 'hidden'], $admin), 'An administrator may edit hidden content.');
 $assert(!\TinyCat\Social\Posts\Posts::status_can_delete(['author_id' => 1], $other), 'Another user may not delete a status.');
 $assert(\TinyCat\Social\Posts\Posts::status_can_delete(['author_id' => 1], $admin), 'An administrator may delete a status.');
-$assert(\TinyCat\Social\Content\Comments::status_comment_can_edit(['user_id' => 2], $other), 'A comment author may edit the comment.');
-$assert(!\TinyCat\Social\Content\Comments::status_comment_can_edit(['user_id' => 2], $owner), 'The status owner may not rewrite another user comment.');
-$assert(\TinyCat\Social\Content\Comments::status_comment_can_delete(['user_id' => 2, 'content_id' => 200], $owner), 'The status owner may delete a comment on the status.');
+$assert(\TinyCat\Social\Discussion\Comments::status_comment_can_edit(['user_id' => 2], $other), 'A comment author may edit the comment.');
+$assert(!\TinyCat\Social\Discussion\Comments::status_comment_can_edit(['user_id' => 2], $owner), 'The status owner may not rewrite another user comment.');
+$assert(\TinyCat\Social\Discussion\Comments::status_comment_can_delete(['user_id' => 2, 'content_id' => 200], $owner), 'The status owner may delete a comment on the status.');
 
 $unique = null;
 try {
@@ -613,7 +613,7 @@ $assert(
 );
 
 try {
-    \TinyCat\Database\Transactions::run(static fn (): array => \TinyCat\Social\Content\Links::prepareLinks([]));
+    \TinyCat\Database\Transactions::run(static fn (): array => \TinyCat\Social\Posts\Links::prepareLinks([]));
     $assert(false, 'Metadata preparation must reject an active transaction.');
 } catch (LogicException) {
     $assert(true, 'Metadata preparation rejects an active transaction.');
@@ -637,18 +637,18 @@ $normalizeLinks($database);
 $database->exec('ALTER TABLE links RENAME TO social_links');
 $assert($value('SELECT provider FROM social_links WHERE id = 9001') === '' && $value('SELECT link_type FROM social_links WHERE id = 9001') === 'web', 'Classification migration normalizes legacy unknown links and is repeatable.');
 $assert($value('SELECT provider FROM social_links WHERE id = 9002') === 'youtube' && $value('SELECT link_type FROM social_links WHERE id = 9002') === 'video', 'Classification migration preserves recognized providers, content types and row IDs.');
-$wpLinkId = \TinyCat\Social\Content\Links::status_link_upsert(['normalized_url' => 'https://wp.example/article', 'url_hash' => hash('sha256', 'wp-taxonomy'), 'provider' => 'wordpress', 'link_type' => 'web', 'title' => 'Article']);
+$wpLinkId = \TinyCat\Social\Posts\Links::status_link_upsert(['normalized_url' => 'https://wp.example/article', 'url_hash' => hash('sha256', 'wp-taxonomy'), 'provider' => 'wordpress', 'link_type' => 'web', 'title' => 'Article']);
 $assert($value('SELECT provider FROM social_links WHERE id = ' . $wpLinkId) === 'wordpress' && $value('SELECT link_type FROM social_links WHERE id = ' . $wpLinkId) === 'web', 'Recognized WordPress social_links persist their platform separately from social_posts type.');
 
 // Stored-link normalization, merging, dry-run and rollback are covered by
 // tests/tools/link-optimizer.php against the current Social tables on SQLite/MySQL.
-$preparedDuplicates = \TinyCat\Social\Content\Links::prepareLinks([
+$preparedDuplicates = \TinyCat\Social\Posts\Links::prepareLinks([
     ['normalized_url' => 'https://alpha.example?utm_source=one', 'url_hash' => 'stale-one'],
     ['normalized_url' => 'https://alpha.example?utm_source=two', 'url_hash' => 'stale-two'],
 ]);
 $assert(count($preparedDuplicates) === 1 && $preparedDuplicates[0]['url_hash'] === hash('sha256', 'https://alpha.example'), 'Preparation normalizes and deduplicates identities before metadata lookup.');
-$firstVariantId = \TinyCat\Social\Content\Links::status_link_upsert(['normalized_url' => 'https://twitter.com/account/status/987?s=20', 'url_hash' => 'stale-first']);
-$secondVariantId = \TinyCat\Social\Content\Links::status_link_upsert(['normalized_url' => 'https://x.com/other/status/987/photo/1', 'url_hash' => 'stale-second']);
+$firstVariantId = \TinyCat\Social\Posts\Links::status_link_upsert(['normalized_url' => 'https://twitter.com/account/status/987?s=20', 'url_hash' => 'stale-first']);
+$secondVariantId = \TinyCat\Social\Posts\Links::status_link_upsert(['normalized_url' => 'https://x.com/other/status/987/photo/1', 'url_hash' => 'stale-second']);
 $assert($firstVariantId > 0 && $firstVariantId === $secondVariantId, 'Writing equivalent provider variants reuses one database record despite different supplied hashes.');
 
 // Exercise the actual review transaction: evidence must survive a moderation decision.
@@ -735,7 +735,7 @@ $database->exec("UPDATE social_posts SET published_at = '2020-01-01 00:00:00' WH
 $urlResult = $importItems->import($urlSource, [['guid' => 'another-guid', 'title' => 'Duplicate', 'url' => $url]], 1);
 $assert($urlResult['status'] === 'current', 'Published article URLs also suppress changed GUIDs.');
 $database->exec('UPDATE social_posts SET author_id = 999 WHERE id = 98001');
-$database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Social\Automation\Importer::feedSourceHash($urlSource['feed_url'])]);
+$database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Social\Bots\Importer::feedSourceHash($urlSource['feed_url'])]);
 $urlResult = $importItems->import($urlSource, [['guid' => 'other-author-guid', 'title' => 'Allowed for another bot', 'url' => $url]], 1);
 $assert($urlResult['status'] === 'posted', 'An article linked only by another author does not suppress this bot import.');
 

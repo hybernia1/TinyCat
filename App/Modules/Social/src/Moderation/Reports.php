@@ -102,11 +102,11 @@ final class Reports
         $definition = \TinyCat\Core\Ui\Admin\Definitions::get('social.moderation-reports');
         $query = self::reportsQuery();
         $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
-        $filters = self::filters() + ['per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Moderation\Sorting::reports());
+        $filters = self::filters() + ['per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Moderation\Reports::sorting());
         return [
-            'items' => array_map(static fn (array $report): array => Resource::report($report) + ['action_url' => \TinyCat\Support\AdminViews::admin_list_url($definition['endpoint'] . '/' . (int) $report['id'], $filters + ['page' => $pagination['page']])], $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Moderation\Sorting::reports()))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
+            'items' => array_map(static fn (array $report): array => Resource::report($report) + ['action_url' => \TinyCat\Support\AdminViews::admin_list_url($definition['endpoint'] . '/' . (int) $report['id'], $filters + ['page' => $pagination['page']])], $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Moderation\Reports::sorting()))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
             'filters' => $filters, 'pagination' => $pagination,
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Moderation\Sorting::reports(), $filters),
+            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Moderation\Reports::sorting(), $filters),
             'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $filters, historyPath: $definition['path']),
         ];
     }
@@ -178,4 +178,6 @@ final class Reports
         return $query;
     }
 
+    /** @return array{string, string, string, array<string, string>, string, string} */
+    public static function sorting(): array { return \TinyCat\Core\Ui\Admin\Definitions::sorting('social.moderation-reports', ['content' => 'c.body', 'reason' => 'cr.reason', 'status' => 'CASE WHEN rc.open_count > 0 THEN 0 ELSE 1 END'], 'CASE WHEN rc.open_count > 0 THEN 0 ELSE 1 END, rc.latest_reported_at DESC, cr.id DESC', 'cr.id'); }
 }

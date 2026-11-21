@@ -12,22 +12,20 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
 {
     public static function initialize(): void
     {
-        Content\Registration::initialize();
         Posts\Registration::initialize();
         Moderation\ActionPolicy::register();
-        Presentation\Registration::initialize();
+        Site\Registration::initialize();
     }
 
     public static function contributions(): Contributions
     {
         return (new Registries([
-            'content' => Content\Registration::contributions(),
             'profiles' => Profiles\Registration::contributions(),
             'posts' => Posts\Registration::contributions(),
-            'automation' => Automation\Registration::contributions(),
+            'bots' => Bots\Registration::contributions(),
             'moderation' => Moderation\Registration::contributions(),
             'search' => Search\Registration::contributions(),
-            'presentation' => Presentation\Registration::contributions(),
+            'site' => Site\Registration::contributions(),
         ]))->entries;
     }
 
@@ -35,11 +33,11 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
     public static function schemas(): array
     {
         return [
-            'tinycat.publishing' => Content\Schema::schema(),
-            'tinycat.status' => Content\InteractionSchema::schema(),
+            'tinycat.publishing' => Posts\Schema::schema(),
+            'tinycat.status' => Discussion\Schema::schema(),
             'tinycat.users' => Profiles\Schema::schema(),
             'tinycat.moderation' => Moderation\Schema::schema(),
-            'tinycat.bots' => Automation\Schema::schema(),
+            'tinycat.bots' => Bots\Schema::schema(),
         ];
     }
 
@@ -52,24 +50,23 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
     {
         return new \TinyCat\Core\Identity\Participant(prepareDelete: static function (array $user): \TinyCat\Core\Identity\Deletion {
-            Posts\NotificationCleanup::prepareAccountDelete($user);
-            return Content\AccountLifecycle::prepareDelete($user);
-        }, statusChanged: Automation\AccountLifecycle::accountStatusChanged(...));
+            Posts\NotificationHistory::prepareAccountDelete($user);
+            return Posts\AccountLifecycle::prepareDelete($user);
+        }, statusChanged: Bots\AccountLifecycle::accountStatusChanged(...));
     }
 
     public static function register(Api $api): void
     {
-        Content\Registration::register($api);
         Profiles\Registration::register($api);
         Posts\Registration::register($api);
         Moderation\Registration::register($api);
-        Automation\Registration::register($api);
-        Presentation\Registration::register($api);
+        Bots\Registration::register($api);
+        Site\Registration::register($api);
         Search\Registration::register($api);
     }
 
     public static function fileReferences(string $group, array $candidates): array
     {
-        return Content\FileReferences::find($group, $candidates);
+        return Posts\FileReferences::find($group, $candidates);
     }
 }

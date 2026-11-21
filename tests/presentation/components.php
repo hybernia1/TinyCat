@@ -5,8 +5,6 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
-use TinyCat\Social\Profiles\Views as UsersViews;
-use TinyCat\Social\Presentation\Views as SiteViews;
 
 // No workspace database or cache is used by this rendering fixture.
 $database = new PDO('sqlite::memory:');
@@ -118,11 +116,11 @@ foreach ($settingsSections as $section) {
     $assert(str_contains($iconSprite, 'id="' . $section['icon'] . '"'), 'Every settings section has a real shared SVG icon: ' . $section['icon']);
 }
 $assert(in_array('analytics', array_column(\TinyCat\Core\Settings\Resource::editor()['sections'], 'key'), true), 'Deferred settings expose the analytics section.');
-$sidebar = SiteViews::sidebar(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]);
+$sidebar = \TinyCat\Support\Components::render('site/sidebar', \TinyCat\Social\Site\Sidebar::resource(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]) + ['active_tag' => '', 'url' => '/api/site/sidebar']);
 $assert(str_contains($sidebar, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::plural('public.active_user_posts', 5))), 'Translation parameter maps preserve a parameter named count.');
 $assert(str_contains($sidebar, 'href="/author/1"') && str_contains($sidebar, 'href="/author/2"'), 'Sidebar authors retain distinct destinations.');
 $assert(str_contains($sidebar, 'href="/tag/tinycat"'), 'Sidebar topics use their prepared destination.');
-$following = UsersViews::followingProfile(['profile' => $member]);
+$following = \TinyCat\Support\Components::render('users/following-profile', ['user' => \TinyCat\Social\Profiles\Profiles::resource($member)]);
 $assert(str_contains($following, 'Member') && str_contains($following, 'href="/author/2"'), 'Following cards preserve the profile and its destination.');
 $avatar = \TinyCat\Core\Identity\Views::avatar(['user' => ['id' => 99, 'author_id' => 2, 'author_name' => 'Member', 'avatar_exists' => 0]]);
 $assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar, '#user'), 'Post avatars belong to the author and render the shared fallback icon.');
@@ -153,7 +151,7 @@ try {
 }
 $assert(!str_contains((string) file_get_contents(__DIR__ . '/../../App/Core/Ui/Admin/templates/shell.php'), '$settingsEditor'), 'Admin pages do not embed a settings editor.');
 $source = ['id' => 7, 'bot_user_id' => 3, 'username' => 'Bot', 'name' => 'Source', 'enabled' => true, 'feed_url' => 'https://example.test/feed'];
-$sourceModel = ['source' => \TinyCat\Social\Automation\Administration::prepareSourceInput($source), 'constraints' => \TinyCat\Social\Automation\Administration::sourceConstraints(), 'bots' => []];
+$sourceModel = ['source' => \TinyCat\Social\Bots\Administration::prepareSourceInput($source), 'constraints' => \TinyCat\Social\Bots\Administration::sourceConstraints(), 'bots' => []];
 $sourceFields = \TinyCat\Support\Components::render('bots/source-fields', $sourceModel);
 $typedFields = \TinyCat\Support\Components::render('bots/source-fields', array_diff_key($sourceModel, ['bots' => true]));
 $assert(!str_contains($typedFields, 'source_type') && str_contains($typedFields, '{{image}}'), 'Unified source forms retain the optional image marker without a type selector.');
@@ -162,22 +160,22 @@ $assert(str_contains($previewMarkup, '&lt;script&gt;') && str_contains($previewM
 $discoveryMarkup = \TinyCat\Support\Components::render('bots/source-preview', ['format' => 'discovery', 'title' => '', 'items' => [], 'sources' => [['name' => 'One', 'feed_url' => 'https://example.test/one'], ['name' => 'Two', 'feed_url' => 'https://example.test/two']]]);
 $assert(str_contains($discoveryMarkup, 'data-bot-preview-source="0"') && str_contains($discoveryMarkup, 'data-bot-preview-source="1"'), 'Discovery buttons preserve distinct candidate indexes across shared renderers.');
 $assert(preg_match('/name="publication_interval_minutes"[^>]*value="30"/', $sourceFields) === 1, 'Source forms display the publication default supplied by their owner.');
-$configuredFields = \TinyCat\Support\Components::render('bots/source-fields', array_replace($sourceModel, ['source' => \TinyCat\Social\Automation\Administration::prepareSourceInput($source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45])]));
+$configuredFields = \TinyCat\Support\Components::render('bots/source-fields', array_replace($sourceModel, ['source' => \TinyCat\Social\Bots\Administration::prepareSourceInput($source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45])]));
 $assert(preg_match('/name="publication_interval_minutes"[^>]*value="45"/', $configuredFields) === 1 && preg_match('/name="interval_minutes"[^>]*value="60"/', $configuredFields) === 1, 'Source forms display separate polling and publication intervals.');
-$sources = \TinyCat\Support\Components::render('bots/sources', ['bots' => [['id' => 3, 'username' => 'Bot']], 'items' => [\TinyCat\Social\Automation\Importer::sourceResource($source)]]);
+$sources = \TinyCat\Support\Components::render('bots/sources', ['bots' => [['id' => 3, 'username' => 'Bot']], 'items' => [\TinyCat\Social\Bots\Importer::sourceResource($source)]]);
 $assert($hasAction($sources, '/api/bots/sources/7/runs') && $hasAction($sources, '/api/bots/sources/7'), 'Source run and edit/delete actions address the same source.');
-$accounts = \TinyCat\Support\Components::render('bots/accounts', ['items' => [\TinyCat\Social\Automation\Administration::accountResource(['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01'])]]);
+$accounts = \TinyCat\Support\Components::render('bots/accounts', ['items' => [\TinyCat\Social\Bots\Administration::accountResource(['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01'])]]);
 $assert(str_contains($accounts, '/api/bots/accounts'), 'Bot accounts retain canonical API actions.');
 $item = ['id' => 7, 'likes_count' => 2, 'comments_count' => 1];
 $actions = \TinyCat\Support\Components::render('status/actions', ['item' => \TinyCat\Social\Posts\Resource::post($item, $member), 'open_modal' => true]);
 $assert(str_contains($actions, 'action="/api/statuses/7/likes/me"'), 'Status reactions use the resource action.');
-$form = \TinyCat\Support\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Resource::profile($member), 'parent_id' => 0, 'mention' => '']);
+$form = \TinyCat\Support\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Profiles::resource($member), 'parent_id' => 0, 'mention' => '']);
 $assert(str_contains($form, 'action="/api/statuses/7/comments"') && str_contains($form, 'status-comment-input-shell'), 'Comment forms preserve the API action and editor structure.');
 foreach ([null, 0, 20] as $parentId) {
-    $commentForm = \TinyCat\Support\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Resource::profile($member), 'parent_id' => $parentId]);
+    $commentForm = \TinyCat\Support\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Profiles::resource($member), 'parent_id' => $parentId]);
     $assert(str_contains($commentForm, 'name="parent_id" value="' . ($parentId ?? 0) . '"'), 'Comment forms submit a numeric zero for root comments and preserve reply parent IDs.');
 }
-$discussionForm = \TinyCat\Support\Components::render('publishing/comment-form', ['content_id' => 7, 'api_base' => '/api/articles/7', 'viewer' => \TinyCat\Social\Profiles\Resource::profile($member)]);
+$discussionForm = \TinyCat\Support\Components::render('publishing/comment-form', ['content_id' => 7, 'api_base' => '/api/articles/7', 'viewer' => \TinyCat\Social\Profiles\Profiles::resource($member)]);
 $assert(str_contains($discussionForm, 'name="parent_id" value="0"'), 'The shared article discussion form defaults to a numeric root parent without a supplied parent ID.');
 $thread = \TinyCat\Support\Components::render('status/thread', ['item' => \TinyCat\Social\Posts\Resource::post($item, null), 'comments' => \TinyCat\Social\Posts\Resource::comments([['id' => 1, 'content_id' => 7]], null), 'viewer' => null, 'context' => '']);
 $assert(str_contains($thread, 'data-modal-url="/api/users/authentication?'), 'Guest comment threads keep the sign-in modal.');

@@ -110,7 +110,7 @@ if (extension_loaded('gd') && function_exists('imagewebp')) {
     imagefilledrectangle($source, 500, 200, 700, 400, imagecolorallocatealpha($source, 255, 0, 0, 0));
     try {
         $avatar = (new ReflectionMethod(\TinyCat\Core\Identity\Avatar::class, 'resizeSquare'))->invoke(null, $source);
-        $post = (new ReflectionMethod(\TinyCat\Social\Content\ImageStorage::class, 'resize'))->invoke(null, $source);
+        $post = (new ReflectionMethod(\TinyCat\Social\Posts\ImageStorage::class, 'resize'))->invoke(null, $source);
         $assert(imagesx($avatar) === 200 && imagesy($avatar) === 200, 'Avatar resampling preserves its square profile.');
         $assert(imagesx($post) === 800 && imagesy($post) === 400, 'Post resampling preserves its size bound and aspect ratio.');
         $assert(imagecolorsforindex($avatar, imagecolorat($avatar, 0, 0))['alpha'] === 127, 'Shared resampling preserves transparent corners.');
@@ -144,11 +144,11 @@ $previewUrl = '/uploads/links/' . date('Y/m') . '/' . basename($previewPath);
 try {
     $link = ['normalized_url' => 'http://127.0.0.1/article', 'url_hash' => hash('sha256', 'fixture'), 'link_type' => 'link'];
     $source = ['url_hash' => $link['url_hash'], 'title' => 'Feed title', 'description' => 'Feed summary', 'image_urls' => ['http://127.0.0.1/broken', $previewUrl]];
-    $prepared = \TinyCat\Social\Content\Links::status_link_prepare_metadata($link, null, true, $source);
+    $prepared = \TinyCat\Social\Posts\Links::status_link_prepare_metadata($link, null, true, $source);
     $assert($prepared['image_url'] === $previewUrl && $prepared['title'] === 'Feed title', 'Feed metadata avoids article requests and tries later image candidates.');
     $source['image_urls'] = ['http://127.0.0.1/broken'];
     $cached = array_replace($link, ['title' => 'Cached title', 'image_url' => $previewUrl, 'updated_at' => date('Y-m-d H:i:s')]);
-    $prepared = \TinyCat\Social\Content\Links::status_link_prepare_metadata($link, $cached, true, $source);
+    $prepared = \TinyCat\Social\Posts\Links::status_link_prepare_metadata($link, $cached, true, $source);
     $assert($prepared['image_url'] === $previewUrl, 'Failed feed images fall back to article metadata.');
 } finally { unlink($previewPath); }
 

@@ -30,11 +30,11 @@ if (($argv[1] ?? '') !== '--isolated') {
 }
 
 use TinyCat\Database\Connection;
-use TinyCat\Social\Content\Archive;
+use TinyCat\Social\Posts\Archive;
 use TinyCat\Core\Text\{Policies, TextPolicy};
 use TinyCat\Social\Posts\PostCreation;
 use TinyCat\Social\Posts\Repository;
-use TinyCat\Social\Content\Queries;
+use TinyCat\Social\Posts\Queries;
 
 define('TINYCAT', true);
 $workspace = $argv[2];
@@ -58,7 +58,7 @@ $routes = (new ReflectionProperty(TinyCat\Http\Router::class, 'routes'))->getVal
 $assert(str_contains(json_encode(array_column($routes, 'path')), '/statuses'), 'Services do not silently activate social routes');
 $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('PRAGMA foreign_keys = ON'); Connection::set($pdo);
-TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Core\Security\Schema::install($pdo); TinyCat\Social\Content\Schema::install($pdo); TinyCat\Social\Content\InteractionSchema::install($pdo); TinyCat\Social\Content\Schema::install($pdo); TinyCat\Social\Content\InteractionSchema::install($pdo);
+TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Core\Security\Schema::install($pdo); TinyCat\Social\Posts\Schema::install($pdo); TinyCat\Social\Discussion\Schema::install($pdo); TinyCat\Social\Posts\Schema::install($pdo); TinyCat\Social\Discussion\Schema::install($pdo);
 $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $assert(count($tables) === 13 && in_array('social_posts', $tables, true) && !in_array('content', $tables, true), 'Fresh schema owns shared comments and reactions without following or bot tables');
 $pdo->exec("INSERT INTO users(id, username, role, status) VALUES (1, 'Writer', 'user', 'active'), (2, 'Disabled', 'user', 'ban'), (3, 'Admin', 'admin', 'active')");
@@ -115,7 +115,7 @@ $pdo->rollBack(); Repository::delete($imageId); clearstatcache(true, $file);
 $assert(Repository::find($imageId) === null && !is_file($file), 'Successful deletion removes the file after commit');
 try { Repository::delete($id, static function () use ($pdo): void { $pdo->exec("UPDATE social_posts SET body = 'side effect'"); throw new RuntimeException('domain callback failed'); }); $assert(false, 'Callback must fail'); }
 catch (RuntimeException) { $assert(Repository::find($id)['body'] === $update->body, 'Related owner failure rolls back its effects and the publication'); }
-$deletion = TinyCat\Social\Content\AccountLifecycle::prepareDelete(...);
+$deletion = TinyCat\Social\Posts\AccountLifecycle::prepareDelete(...);
 
 $pdo->beginTransaction(); $cleanup = $deletion($writer); $pdo->exec('DELETE FROM users WHERE id = 1'); ($cleanup->afterDelete)(); $pdo->commit(); ($cleanup->afterCommit)();
 $assert((int) Connection::value('SELECT COUNT(*) FROM social_posts WHERE author_id = 1') === 0 && (int) Connection::value('SELECT COUNT(*) FROM social_post_tags') === 0, 'Account deletion uses only publishing-owned cleanup');
@@ -123,8 +123,8 @@ $compile = require $workspace . '/tools/assets/compile-assets.php'; $built = $co
 $assert(isset($built['assets/build/manifest.json']) && count(TinyCat\Support\TranslationSources::packages()) === 12, 'Selected services and Accounts build all locale assets without product sources');
 $feed = TinyCat\Core\Feeds\FeedParser::parse('<rss version="2.0"><channel><item><title>Standalone</title><link>https://example.com/post</link><description>Feed body</description><category>News</category></item></channel></rss>');
 $assert(count($feed) === 1 && $feed[0]['title'] === 'Standalone', 'Publishing parses feeds without Bots sources');
-$rendered = TinyCat\Social\Content\FeedImport::renderPost(['name' => 'Feed'], $feed[0]);
+$rendered = TinyCat\Social\Bots\FeedPreparation::renderPost(['name' => 'Feed'], $feed[0]);
 $assert(str_contains($rendered, 'Standalone') && str_contains($rendered, '#news'), 'Shared import prepares feed text and category tags');
-$assert(TinyCat\Social\Content\FeedImport::prepareImage([], $feed[0]) === null, 'Text-only imports do not load bot or social media adapters');
+$assert(TinyCat\Social\Bots\FeedPreparation::prepareImage([], $feed[0]) === null, 'Text-only imports do not load bot or social media adapters');
 foreach (get_declared_classes() as $class) { $assert(!preg_match('/^TinyCat\\\\(?:Status|Users|Bots|Notifications|Moderation|Settings|Site|Search)\\\\/', $class), 'No product class loaded: ' . $class); }
 echo "PASS Social-owned content schema, preparation, reads, writes, rollback and build ({$checks} checks)\n";

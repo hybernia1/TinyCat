@@ -42,7 +42,7 @@ final class Resource
             'reports' => array_map(self::entry(...), $reports),
             'preview' => $content === null ? null : [
                 'item' => \TinyCat\Social\Posts\Resource::posts([$content], null)[0],
-                'comments' => \TinyCat\Social\Posts\Resource::comments(\TinyCat\Social\Content\Comments::status_comments((int) $content['id']), null),
+                'comments' => \TinyCat\Social\Posts\Resource::comments(\TinyCat\Social\Discussion\Comments::status_comments((int) $content['id']), null),
             ],
         ];
     }

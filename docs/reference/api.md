@@ -299,14 +299,14 @@ remote pages. RSS authors expose their public names and canonical profile URLs.
 | PATCH | `/api/users/me/email` | Own email |
 | PUT | `/api/users/me/password` | Own account, current password required |
 | GET, POST | `/api/users` | Administrator, list/create |
-| GET | `/api/users/{id}` | Public profile whitelist |
+| GET | `/api/profiles/{id}` | Social public profile whitelist |
 | GET | `/api/users/{id}/management` | Owner or administrator |
 | GET | `/api/users/creation` | Administrator-only fresh options and constraints for creating an account |
 | PATCH | `/api/users/{id}` | Owner profile; `scope=administration` requires administrator |
 | DELETE | `/api/users/{id}` | Administrator, protected administrator rules apply |
 | GET, PUT, PATCH, DELETE | `/api/users/{id}/avatar` | Owner or administrator |
-| PUT, DELETE | `/api/users/{id}/followers/me` | Signed-in user, desired follow state |
-| GET | `/api/users/{id}/following` | Signed-in user, cursor list |
+| PUT, DELETE | `/api/profiles/{id}/followers/me` | Signed-in user, desired follow state |
+| GET | `/api/profiles/{id}/following` | Signed-in user, cursor list |
 
 Public profiles contain only `id`, `username`, `bio`, `url`, `avatar_url`,
 `avatar_custom` and `avatar_appearance`.
@@ -719,11 +719,14 @@ disposes the editor after the standard unsaved-change guard accepts it.
 | --- | --- | --- |
 | GET | `/api/search?q=...` | Public search suggestions, guarded by existing limits |
 | GET | `/api/search/suggestions` | Signed-in editor suggestions; `q`, `type`, `limit` |
-| POST | `/api/security/challenges/search` | Public CAPTCHA verification with CSRF |
+| GET | `/api/search/query` | Shared search collections; `q`, `collection`, `cursor`, `limit` |
+| POST | `/api/search/challenges` | Social search CAPTCHA verification with CSRF |
 | GET | `/api/site/sidebar` | Public tags, author resources and structured footer nodes |
 
 CAPTCHA errors contain public widget configuration under `error.details.captcha`,
-never widget markup or provider secrets. The client renders a fresh widget locally.
+never widget markup or provider secrets. `error.details.verify_url` identifies the
+owner's local API endpoint. The client validates that path and renders a fresh
+widget locally; absent or unsafe paths cannot create a verification form.
 The sidebar footer uses allowlisted element/text nodes and safe link attributes.
 Clients never parse an API response as HTML.
 
@@ -763,34 +766,29 @@ feature group. Enabling includes its dependencies. Required modules and active
 dependents prevent unsafe disabling. A stale revision returns 409, invalid
 dependencies return 422. Success returns 201 with `active`, a backup ID and
 `redirect: /admin/modules`. Clients reload the whole page after a change.
-Both operations belong to core and remain available when Social and Blog are disabled.
+Both operations belong to core and remain available when Social is disabled.
 
 ## Search
 
 - `GET /api/search?q=...` is the public autocomplete: at least two characters,
   up to five items per active source. `data.collections` lists source `id` and
   human-readable `name`; items are in `data[id]`. Social sources retain `tags`,
-  `users`, and the empty cheap-autocomplete `content` array. Blog adds `articles`
-  with canonical `/articles/{id}` URLs, including when Social/Search is absent.
+  `users`, and the empty cheap-autocomplete `content` array. Other active owners
+  contribute their own sources through the same registration contract.
 - `GET /api/search/query?q=...` aggregates active sources, at most five items
   per source. Optional `collection` selects one source with `limit=1..20` and
   a scalar `cursor[...]` map. Each collection has `id`, `name`, canonical
   `items`, `next_url`, and `done`. Continuation URLs open the shared HTML page
   `/search/all`; API clients can reuse their collection and cursor parameters.
   Unknown or inactive collections return 404; nested cursor values return 400.
-  Article search matches all words in the published title/body of active authors,
-  with chronological ID cursors, and excludes hidden and future publications.
-  Blog has separate IP budgets of 120 suggestions / 60 searches per minute.
-- `GET /api/search/results?q=...&type=content` returns the same collection
-  as `/search`. Types are `content` (default), `users`, and `tags`. Batches use
-  the configured feed limit; `meta.pagination` contains `next_url` and `done`.
-  `data` contains `query`, `type`, `items`, `minimum_length`, and `valid_query`.
+  Social contributes `content`, `users` and `tags`; each retains its visibility
+  rules and stable cursor. API results are canonical data, without rendered HTML.
 - `GET /api/search/suggestions?q=...&type=all&limit=8` remains the signed-in
   editor completion endpoint (`type=all|tag|user`, limit 1-12).
 
 Queries normalize whitespace and accept at most 80 characters. Full post search
 requires three characters; profiles and tags require two. Too-short queries
-return an empty collection with `valid_query=false`; malformed or overlong API
+return an empty collection; malformed or overlong API
 parameters return 422. `%`, `_`, and `!` are literal characters, not SQL wildcards.
 
 Post search covers the entire published history of active authors, matching all
@@ -807,17 +805,24 @@ Profile and tag results rank exact matches, prefixes, then contained matches;
 ties sort by name and ID. Profile bios are excerpts only. Autocomplete has a
 separate session budget of 120 requests per minute and never consumes the full
 search allowance. Full searches retain the account limits and guest CAPTCHA.
-Continuation uses the standard feed loader and `next_url`. Posts share the feed
+Continuation uses the shared workspace and `next_url`. Posts share the feed
 `cursor_at`/`cursor_id` keyset; profiles and tags use `cursor_rank`, `cursor_name`,
-and `cursor_id` in rank/name/ID order. There are no numbered pages or SQL offsets.
-Post items use the standard status resource consumed by the feed renderer.
-Initial HTML uses the shared initial feed limit; continuation uses the configured
-regular feed limit. New posts do not shift the continuation boundary.
+and `cursor_id` in rank/name/ID order, nested under `cursor[...]` in requests.
+There are no numbered pages or SQL offsets. HTML invokes the owner's post renderer
+after selecting data; API clients receive collection items. Selected collections
+use up to 20 results per page. New posts do not shift the continuation boundary.
 
-Search also participates in `/api/site/pages?path=/search&q=...&type=...`.
-Initial HTML and JSON navigation render the same public page component, preserve
-the existing sidebar and navbar, and support category links, search form submits,
-locale-prefixed URLs and browser history without a document reload.
+`/search/all` is the only public search page, with source navigation in the shared
+workspace. The Social-specific `/search`, `/api/search/results` and
+`/api/site/pages?path=/search` are removed, without aliases. The former
+`/api/users/{id}` GET/follower paths and `/api/security/challenges/search` are also
+removed. Account management stays under `/api/users`; social profiles and follows
+use `/api/profiles`. Deploy matching runtime and versioned client assets together.
+
+Search RSS remains a separate representation at `/search/feed?q=...&media=...`.
+It advertises the shared search page as its canonical HTML destination. Media
+filters remain supported by RSS; the removed Social search page has no separate
+media toolbar or feed-loader branch in the shared workspace.
 
 
 ## Embedding public posts (oEmbed 1.0)

@@ -17,6 +17,6 @@ import "../../../../../assets/ui/component-builders.js";
       button.classList.toggle("btn-primary", !data.following); button.classList.toggle("btn-secondary", data.following);
     };
   T.socialUsers.modal = function (url, response, id) {
-      if (/^\/api\/users\/[0-9]+\/following$/.test(url.pathname)) { return U.dialog(id, "public.following", following(response.data, U.pagination(response))); }
+      if (/^\/api\/profiles\/[0-9]+\/following$/.test(url.pathname)) { return U.dialog(id, "public.following", following(response.data, U.pagination(response))); }
     };
 }());

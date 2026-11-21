@@ -48,7 +48,7 @@ namespace {
     $GLOBALS['dns6Answers'] = [];
     $audioLink = \TinyCat\Core\Text\LinkParser::fromRaw('https://audio.example/episode.mp3');
     $assert($audioLink['link_type'] === 'audio' && $GLOBALS['dnsCalls'] === [] && $GLOBALS['dns6Calls'] === [], 'Audio URL classification stays free of DNS and network operations.');
-    \TinyCat\Social\Content\Links::status_link_data($audioLink);
+    \TinyCat\Social\Posts\Links::status_link_data($audioLink);
     $assert($GLOBALS['dnsCalls'] === [], 'Serializing prepared link data does not perform network checks inside a transaction.');
     $GLOBALS['responses'] = [
         'https://public.example/start' => ['HTTP/1.1 302 Found', 'Location: /next'],
@@ -199,7 +199,7 @@ namespace {
     $assert($metadata['image_url'] === 'https://scontent.xx.fbcdn.net/cover.jpg?key=a&part=b', 'Facebook previews select the post photo instead of avatars, icons and unrelated images.');
     $assert($GLOBALS['httpCalls'] === [$fbPlugin], 'Facebook extraction fetches only its official plugin on the server.');
     $staticFb = ['normalized_url' => $fbPost, 'title' => 'Facebook', 'description' => \TinyCat\Core\Links\Providers::classify($fbPost)['description'], 'updated_at' => date('Y-m-d H:i:s')];
-    $assert(!\TinyCat\Social\Content\Links::status_link_metadata_fresh($staticFb), 'Old static Facebook cards can refresh into real post previews.');
+    $assert(!\TinyCat\Social\Posts\Links::status_link_metadata_fresh($staticFb), 'Old static Facebook cards can refresh into real post previews.');
     $GLOBALS['bodies'][$fbPlugin] = '<html><head><title>Log in to Facebook</title></head><body>Log in</body></html>';
     $assert(\TinyCat\Core\Links\Metadata::fetch($fbPost) === [], 'Unavailable or login-only plugin pages do not become successful metadata.');
     $fbVideo = 'https://www.facebook.com/reel/123456789';
@@ -224,7 +224,7 @@ namespace {
         $localImages = [];
         try {
             foreach (['card' => [184, 172], 'social' => [800, 480], 'video' => [900, 540], 'reel' => [540, 324]] as $variant => $expected) {
-                $local = \TinyCat\Social\Content\Links::status_link_image_cache($imageUrl, $variant);
+                $local = \TinyCat\Social\Posts\Links::status_link_image_cache($imageUrl, $variant);
                 $localImages[] = $local;
                 $info = getimagesize(\TinyCat\Support\Paths::basePath(ltrim($local, '/')));
                 $assert([$info[0], $info[1]] === $expected, 'Preview geometry preserves the intended variant: ' . $variant);
@@ -232,7 +232,7 @@ namespace {
             $assert(count(array_unique($localImages)) === 4, 'Different preview sizes never reuse the wrong cached geometry.');
         } finally {
             foreach ($localImages as $local) {
-                if (\TinyCat\Social\Content\Links::status_link_image_exists($local)) { unlink(\TinyCat\Support\Paths::basePath(ltrim($local, '/'))); }
+                if (\TinyCat\Social\Posts\Links::status_link_image_exists($local)) { unlink(\TinyCat\Support\Paths::basePath(ltrim($local, '/'))); }
             }
         }
     }
@@ -286,7 +286,7 @@ namespace {
     $plainMap = \TinyCat\Core\Links\Metadata::fetch('https://google.com/maps/place/Prague');
     $assert($plainMap['title'] === 'Prague' && count($GLOBALS['httpCalls']) === $before, 'Maps without an exact position use local URL metadata without a pointless image request.');
     $cachedMap = \TinyCat\Core\Text\LinkParser::fromRaw($mapUrl) + ['updated_at' => gmdate('Y-m-d H:i:s')];
-    $assert(\TinyCat\Social\Content\Links::status_link_metadata_fresh($cachedMap), 'Image-free map metadata uses the normal cache TTL rather than refetching on every save.');
+    $assert(\TinyCat\Social\Posts\Links::status_link_metadata_fresh($cachedMap), 'Image-free map metadata uses the normal cache TTL rather than refetching on every save.');
     $GLOBALS['responses'][$mapUrl] = ['HTTP/1.1 302 Found', 'Location: https://consent.google.com/ml'];
     $GLOBALS['dnsAnswers']['consent.google.com'] = ['93.184.216.34'];
     $metadata = \TinyCat\Core\Links\Metadata::fetch($mapUrl);

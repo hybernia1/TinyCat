@@ -59,9 +59,9 @@ foreach (['https://user:password@example.com/a', "https://example.com/a\nb", 'ht
 }
 $assert(LinkParser::fromRaw('https://example.com/a')['url_hash'] !== LinkParser::fromRaw('https://www.example.com/a')['url_hash'], 'Unknown www hosts remain distinct.');
 $assert(LinkParser::fromRaw('https://example.com/#/one')['url_hash'] !== LinkParser::fromRaw('https://example.com/#/two')['url_hash'], 'Fragment routes remain distinct.');
-$data = \TinyCat\Social\Content\Links::status_link_data(['normalized_url' => 'https://twitter.com/Example/status/123?s=20', 'url_hash' => 'untrusted']);
+$data = \TinyCat\Social\Posts\Links::status_link_data(['normalized_url' => 'https://twitter.com/Example/status/123?s=20', 'url_hash' => 'untrusted']);
 $assert($data['normalized_url'] === 'https://x.com/i/web/status/123' && $data['url_hash'] === hash('sha256', $data['normalized_url']), 'Persistence derives identity from the canonical URL instead of trusting a supplied hash.');
-$assert(\TinyCat\Social\Content\Links::status_link_data(['normalized_url' => 'https://example.com/' . str_repeat('a', 2049), 'url_hash' => 'untrusted']) === [], 'Persistence rejects oversized URLs instead of truncating them.');
+$assert(\TinyCat\Social\Posts\Links::status_link_data(['normalized_url' => 'https://example.com/' . str_repeat('a', 2049), 'url_hash' => 'untrusted']) === [], 'Persistence rejects oversized URLs instead of truncating them.');
 $mapUrl = "https://www.google.com/maps/place/50%C2%B006'18.5%22N+14%C2%B025'24.3%22E/@50.105135,14.423416,17z/data=!3m1!4b1?entry=ttu";
 $map = LinkParser::extract($mapUrl)[0];
 $assert($map['normalized_url'] === str_replace(['www.', '?entry=ttu'], '', $mapUrl), 'Map coordinate apostrophes do not split URLs and sharing parameters are removed.');
@@ -93,9 +93,9 @@ $assert(\TinyCat\Core\Links\Providers::youtubeThumbnails('https://youtube.com.ev
 $assert(\TinyCat\Core\Links\Providers::youtubeThumbnails('https://www.youtube.com/@channel') === [], 'Channel pages are not video thumbnails.');
 $assert(\TinyCat\Core\Links\Providers::imageCandidates($video + ['image_url' => 'https://example.com/large.jpg']) === [], 'YouTube artwork never enters the download candidate queue.');
 $youtubeSource = ['url_hash' => $video['url_hash'], 'title' => 'Feed title', 'description' => 'Feed excerpt', 'image_urls' => ['https://example.com/large.jpg']];
-$preparedVideo = \TinyCat\Social\Content\Links::status_link_prepare_metadata($video, null, true, $youtubeSource);
+$preparedVideo = \TinyCat\Social\Posts\Links::status_link_prepare_metadata($video, null, true, $youtubeSource);
 $assert($preparedVideo['image_url'] === '' && $preparedVideo['title'] === 'Feed title', 'New feed videos keep metadata without fetching their artwork.');
-$assert(\TinyCat\Social\Content\Links::status_link_data($video + ['image_url' => '/uploads/links/2026/11/' . str_repeat('a', 40) . '.webp'])['image_url'] === '', 'YouTube persistence cannot retain a stale local thumbnail path.');
+$assert(\TinyCat\Social\Posts\Links::status_link_data($video + ['image_url' => '/uploads/links/2026/11/' . str_repeat('a', 40) . '.webp'])['image_url'] === '', 'YouTube persistence cannot retain a stale local thumbnail path.');
 $fbPost = 'https://www.facebook.com/ExamplePage/posts/pfbidExample123';
 $fbPlugin = 'https://www.facebook.com/plugins/post.php?href=' . rawurlencode($fbPost) . '&width=50';
 $assert(LinkParser::fromRaw($fbPlugin)['normalized_url'] === $fbPost && LinkParser::fromRaw($fbPlugin)['url_hash'] === LinkParser::fromRaw($fbPost)['url_hash'], 'Facebook plugin URLs unwrap to the same canonical post.');

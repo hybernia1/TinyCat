@@ -34,7 +34,7 @@ for (const mode of [false, true, "min"]) {
   const queue = load("/admin/bots/queue", "en", mode);
   check(["status/edit-fields", "status/dialog-form"].every(name => queue.definitions.includes(name)), "Bot queue delivers its complete status editor dependency in every asset variant");
   const profile = load("/author/2", "cs", mode);
-  const followForm = { dataset: {}, getAttribute: name => name === "action" ? "/api/users/2/followers/me" : null };
+  const followForm = { dataset: {}, getAttribute: name => name === "action" ? "/api/profiles/2/followers/me" : null };
   const response = { data: { author_id: 2, following: true, followers_count: 1, following_count: 0 } };
   check(profile.T.accounts.result(followForm, response, null) === false, "Core accounts leave relationship responses to their owner in every public asset variant");
   let handled = false;

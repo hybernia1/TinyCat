@@ -37,7 +37,7 @@ foreach (['TinyCat\\Support\\Config', 'TinyCat\\Core\\Settings\\Store', 'TinyCat
 }
 $assert($legacy->catalog->get('tinycat.social')->namespace === 'TinyCat\\Social\\', 'Legacy IDs identify the current namespace');
 $assert((new Catalog([]))->definitions() === [], 'The technical catalog does not require a business module');
-$reject(static fn () => Loader::fromSelection($root, ['tinycat.bots' => TinyCat\Social\Automation\Registration::class]), 'Bots without Publishing and Status');
+$reject(static fn () => Loader::fromSelection($root, ['tinycat.bots' => TinyCat\Social\Bots\Registration::class]), 'Bots without Publishing and Status');
 $reject(static fn () => Loader::fromSelection($root, ['tinycat.notifications' => TinyCat\Core\Notifications\ServiceProvider::class]), 'Notifications without account identity');
 $inbox = Loader::fromSelection($root, []);
 $assert(!$inbox->catalog->has('tinycat.social') && $inbox->catalog->has('tinycat.accounts') && !$inbox->catalog->has('tinycat.publishing'), 'Framework-only selection has reusable publishing and identity without Social');

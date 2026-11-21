@@ -2,17 +2,17 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Comments;
-use TinyCat\Social\Content\Reactions;
+use TinyCat\Social\Discussion\Comments;
+use TinyCat\Social\Discussion\Reactions;
 
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 final class Resource
 {
     /** @return array<string, array<string, mixed>> */
     public static function constraints(): array
     {
-        return \TinyCat\Http\Validator::constraints(PostCreation::rules() + \TinyCat\Social\Content\Interactions::rules());
+        return \TinyCat\Http\Validator::constraints(PostCreation::rules() + \TinyCat\Social\Discussion\Interactions::rules());
     }
 
     /**
@@ -39,7 +39,7 @@ final class Resource
             'context' => self::context($item),
             'login_url' => \TinyCat\Core\Identity\Login::auth_url_with_next('/login', Posts::status_url($id)),
             'login_modal_url' => \TinyCat\Core\Identity\Login::auth_modal_url('login', Posts::status_url($id)),
-            'image' => ['url' => \TinyCat\Social\Content\Images::status_image_url($item), 'description' => \TinyCat\Core\Ui\Site::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Core\Ui\Site::site_name()],
+            'image' => ['url' => \TinyCat\Social\Posts\Images::status_image_url($item), 'description' => \TinyCat\Core\Ui\Site::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Core\Ui\Site::site_name()],
             'links' => $presentation['links'],
             'likes_count' => (int) ($item['likes_count'] ?? 0),
             'comments_count' => (int) ($item['comments_count'] ?? 0),

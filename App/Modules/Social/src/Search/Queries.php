@@ -24,12 +24,6 @@ final class Queries
         return self::length($query) < 2 || self::length($query) > self::MAX_QUERY_LENGTH;
     }
 
-    /** @return array<string, mixed> */
-    public static function public_search_empty_result(string $query): array
-    {
-        return ['query' => $query, 'tags' => [], 'users' => [], 'content' => []];
-    }
-
     public static function public_search_excerpt(string $text, string $query, int $limit = 120): string
     {
         $text = trim((string) preg_replace('/\s+/u', ' ', $text));
@@ -164,27 +158,6 @@ final class Queries
 
         return $users;
     }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function public_search_suggestions(string $query, int $limit = 5): array
-    {
-        $query = \TinyCat\Social\Search\Queries::public_search_normalize_query($query);
-        $limit = max(1, min(5, $limit));
-
-        if ($query === '' || \TinyCat\Social\Search\Queries::public_search_query_too_short($query)) {
-            return \TinyCat\Social\Search\Queries::public_search_empty_result($query);
-        }
-
-        return [
-            'query' => $query,
-            'tags' => \TinyCat\Social\Search\Queries::public_search_suggestion_tags($query, $limit),
-            'users' => \TinyCat\Social\Search\Queries::public_search_suggestion_users($query, $limit),
-            'content' => [],
-        ];
-    }
-
 
     /**
      * Match all words in one source (post body or an attached link).
@@ -338,6 +311,7 @@ final class Queries
      */
     public static function collection(string $query, string $type = 'content', array $cursor = [], int $limit = 0, string $media = ''): array
     {
+        if (\TinyCat\Http\Validator::validate($cursor, ['cursor_at' => 'string|max:19', 'cursor_id' => 'integer|min:1', 'cursor_rank' => 'integer|min:0|max:2', 'cursor_name' => 'string|max:120']) !== []) { throw new \InvalidArgumentException('Invalid search cursor.', 422); }
         $query = self::public_search_normalize_query($query);
         $media = \TinyCat\Social\Posts\Feed::archive_type($media);
         $type = in_array($type, ['content', 'users', 'tags'], true) ? $type : 'content';
@@ -361,8 +335,7 @@ final class Queries
         $items = array_slice($items, 0, $limit);
         foreach ($items as &$item) { unset($item['cursor_rank'], $item['cursor_name']); }
         unset($item);
-        $next = $done ? '' : '/api/search/results?' . http_build_query(['q' => $query, 'type' => $type, ...($media !== '' ? ['media' => $media] : []), 'limit' => \TinyCat\Social\Posts\Feed::public_status_page_limit(), ...$nextCursor]);
-        return ['query' => $query, 'type' => $type, 'items' => $items, 'next_url' => $next, 'done' => $done,
+        return ['query' => $query, 'type' => $type, 'items' => $items, 'cursor' => $done ? [] : $nextCursor, 'done' => $done,
             'minimum_length' => $minimum, 'valid_query' => $valid];
     }
 }

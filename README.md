@@ -227,7 +227,7 @@ Tests and development tools are excluded from signed production packages.
 - `index.php` is the HTTP front controller; built-in modules register their own routes.
 - `scheduled-tasks.php` is the CLI adapter for the same execution service used by the authenticated scheduler API.
 - `App/bootstrap.php` initializes the runtime and the small `TinyCat\` PSR-4 autoloader.
-- `App/Modules/Social/src/Automation/` owns social feed imports and bot administration.
+- `App/Modules/Social/src/Bots/` owns social feed imports and bot administration.
 - `App/Core/Updates/` contains signed application updates and the migration registry.
 - Other `App/` directories contain domain modules and shared infrastructure.
 - Module page handlers live under `App/Modules/<Name>/src/`; private templates and partials live in `App/Modules/<Name>/templates/`. Core services use `App/Core/<Name>/`.

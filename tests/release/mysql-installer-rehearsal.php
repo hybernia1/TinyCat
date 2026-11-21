@@ -110,7 +110,7 @@ try {
     $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Fresh installation creates the covering tag archive index.');
     // Historical migrations run before domain adoption in the update rehearsal.
     // Fresh-schema repair must use the owner of the current relation table.
-    $tagIndexMigration = \TinyCat\Social\Content\Schema::ensureTagIndex(...);
+    $tagIndexMigration = \TinyCat\Social\Posts\Schema::ensureTagIndex(...);
     $tagIndexMigration($database);
     $tagIndexMigration($database);
     $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Tag index repair is idempotent on the fresh schema.');
@@ -238,13 +238,13 @@ try {
         'locale' => 'en',
         'bio' => '',
     ]);
-    $feedHash = \TinyCat\Social\Automation\Importer::feedSourceHash('https://93.184.216.34/feed');
+    $feedHash = \TinyCat\Social\Bots\Importer::feedSourceHash('https://93.184.216.34/feed');
     $sourceId = (int) \TinyCat\Database\Connection::insert('bot_sources', [
         'bot_user_id' => $botId,
         'name' => 'Preserved source',
         'feed_url' => 'https://93.184.216.34/feed',
         'feed_hash' => $feedHash,
-        'post_template' => \TinyCat\Social\Automation\Importer::defaultSourceTemplate(),
+        'post_template' => \TinyCat\Social\Bots\Importer::defaultSourceTemplate(),
         'next_run_at' => date('Y-m-d H:i:s', time() + 86400),
     ]);
     $historyHash = hash('sha256', 'existing-item');
@@ -253,12 +253,12 @@ try {
 
     // Re-running the current installer must preserve live owner data.
     \TinyCat\Core\Installation\Installer::create_tables();
-    $assert(\TinyCat\Social\Automation\Administration::accountById($botId)['username'] === 'preserved_feedbot', 'Current schema synchronization preserves the bot account and ID.');
-    $assert(\TinyCat\Social\Automation\Importer::findSource($sourceId)['feed_hash'] === $feedHash, 'Current schema synchronization preserves source identity and scheduling.');
+    $assert(\TinyCat\Social\Bots\Administration::accountById($botId)['username'] === 'preserved_feedbot', 'Current schema synchronization preserves the bot account and ID.');
+    $assert(\TinyCat\Social\Bots\Importer::findSource($sourceId)['feed_hash'] === $feedHash, 'Current schema synchronization preserves source identity and scheduling.');
     $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_source_runs WHERE source_id = ?', [$sourceId]) === 1, 'Current schema synchronization preserves run history.');
-    $knownHashes = (new ReflectionMethod(\TinyCat\Social\Automation\FeedStore::class, 'feedHistoryHashes'))->invoke(null, $botId, $feedHash, [$historyHash]);
+    $knownHashes = (new ReflectionMethod(\TinyCat\Social\Bots\FeedStore::class, 'feedHistoryHashes'))->invoke(null, $botId, $feedHash, [$historyHash]);
     $assert(isset($knownHashes[$historyHash]), 'Current schema synchronization preserves duplicate protection.');
-    $feedTask = \TinyCat\Social\Automation\Importer::scheduledTasks()['feeds']['runner'];
+    $feedTask = \TinyCat\Social\Bots\Importer::scheduledTasks()['feeds']['runner'];
     $feedResult = $feedTask(['options' => ['bot_limit' => 20]]);
     $assert($feedResult['ok'] && $feedResult['count'] === 0, 'Built-in scheduler respects a future source schedule.');
 
@@ -272,8 +272,8 @@ try {
         ob_start();
         try {
             match ($botPage) {
-                'accounts-page.php' => \TinyCat\Social\Automation\Pages::accounts(),
-                'sources-page.php' => \TinyCat\Social\Automation\Pages::sources(),
+                'accounts-page.php' => \TinyCat\Social\Bots\Pages::accounts(),
+                'sources-page.php' => \TinyCat\Social\Bots\Pages::sources(),
             };
             $botHtml = (string) ob_get_contents();
         } finally {

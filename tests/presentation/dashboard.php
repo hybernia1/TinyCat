@@ -6,7 +6,7 @@ define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
-use TinyCat\Social\Presentation\Dashboard;
+use TinyCat\Social\Site\Dashboard;
 use TinyCat\Support\Localization;
 
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);

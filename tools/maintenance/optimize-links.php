@@ -54,7 +54,7 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 $report['uncertain'][] = ['id' => $id, 'reason' => 'conflicting_or_missing_post_urls'];
             }
             if ($row['normalized_url'] !== $canonical['normalized_url'] || $row['url_hash'] !== $canonical['url_hash']) { $report['normalized'][] = $id; }
-            $score = (!empty($row['image_url']) && \TinyCat\Social\Content\Links::status_link_image_exists((string) $row['image_url']) ? 8 : 0)
+            $score = (!empty($row['image_url']) && \TinyCat\Social\Posts\Links::status_link_image_exists((string) $row['image_url']) ? 8 : 0)
                 + (!empty($row['title']) && $row['title'] !== $canonical['title'] ? 2 : 0)
                 + (!empty($row['description']) && $row['description'] !== $canonical['description'] ? 1 : 0);
             $groups[$canonical['url_hash']][] = ['row' => $row, 'canonical' => $canonical, 'score' => $score];

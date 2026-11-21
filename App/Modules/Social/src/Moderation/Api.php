@@ -9,6 +9,8 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
+        $api->get('/moderation/blocked-urls', \TinyCat\Social\Posts\Policy::resource(...), 'admin');
+        $api->put('/moderation/blocked-urls', \TinyCat\Social\Posts\Policy::save(...), 'admin');
 
         $api->get('/moderation/report-options', static function (Request $r): array {
             $r->validated(['id' => 'required|integer']);

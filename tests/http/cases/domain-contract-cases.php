@@ -32,7 +32,7 @@ $assert($status === 200 && $payload['data']['user']['id'] === 2 && !isset($paylo
 [$status, $payload] = $request('POST', '/api/users/registrations', ['username' => 'Žaneta.Test', 'password' => 'Example-password-43', 'password_confirm' => 'Example-password-43', 'platform_terms' => '1'], '', $csrf);
 $assert($status === 201 && $payload['data']['user']['username'] === 'Žaneta.Test' && $payload['data']['approved'], 'Registration accepts Unicode and mixed case and returns the created account.');
 $pure($payload);
-[$status, $payload] = $request('GET', '/api/users/2');
+[$status, $payload] = $request('GET', '/api/profiles/2');
 $assert($status === 200 && $payload['data']['user']['username'] === 'member', 'Public profiles are readable without authentication.');
 foreach (['password', 'email', 'email_notifications', 'muted_reason', 'theme', 'locale'] as $private) {
     $assert(!array_key_exists($private, $payload['data']['user']), 'Public profile excludes private field: ' . $private);
@@ -49,16 +49,16 @@ $assert($status === 200 && $payload['data']['user']['theme'] === 'light' && $pay
 $pure($payload);
 [$status, $payload] = $request('PUT', '/api/users/me/password', ['current_password' => 'incorrect', 'password' => 'New-password-44', 'password_confirm' => 'New-password-44'], 'user', $csrf);
 $assert($status === 422 && isset($payload['error']['details']['errors']['current_password']), 'Password changes still verify the current password.');
-[$status, $payload] = $request('PUT', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status, $payload] = $request('PUT', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200 && $payload['data']['following'] && $payload['data']['followers_count'] === 1, 'PUT creates the follow relationship.');
-[$status, $payload] = $request('PUT', '/api/users/1/followers/me', ['author_id' => 3], 'user', $csrf);
+[$status, $payload] = $request('PUT', '/api/profiles/1/followers/me', ['author_id' => 3], 'user', $csrf);
 $assert($status === 200 && $payload['data']['following'] && $payload['data']['followers_count'] === 1, 'Repeating PUT is idempotent and the body cannot change the target.');
-[$status, $payload] = $request('GET', '/api/users/2/following?view=html', null, 'user');
+[$status, $payload] = $request('GET', '/api/profiles/2/following?view=html', null, 'user');
 $assert($status === 200 && count($payload['data']['items']) === 1 && isset($payload['meta']['pagination']), 'Following lists return profile resources and pagination without fragments.');
 $pure($payload);
-[$status] = $request('DELETE', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status] = $request('DELETE', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200, 'DELETE removes the follow relationship.');
-[$status, $payload] = $request('DELETE', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status, $payload] = $request('DELETE', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200 && !$payload['data']['following'], 'Repeating DELETE keeps the unfollowed state.');
 
 [$status, $payload] = $request('GET', '/api/notifications?view=html', null, 'user');

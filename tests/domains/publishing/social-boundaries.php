@@ -16,7 +16,7 @@ $modules->register($api);
 TinyCat\Core\Identity\Authentication::reset(null, true);
 $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('PRAGMA foreign_keys = ON'); Connection::set($pdo);
-TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Social\Content\Schema::install($pdo); TinyCat\Social\Profiles\Schema::install($pdo); TinyCat\Social\Content\InteractionSchema::install($pdo);
+TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Social\Posts\Schema::install($pdo); TinyCat\Social\Profiles\Schema::install($pdo); TinyCat\Social\Discussion\Schema::install($pdo);
 $pdo->exec("INSERT INTO users(id, username, role) VALUES (1, 'Reader', 'user'), (2, 'Writer', 'user'), (3, 'Other', 'user')");
 $own = PostCreation::create(1, PostCreation::fromText('Own'), [], publishedAt: '2000-01-01 00:00:00');
 $post = PostCreation::create(2, PostCreation::fromText('Followed'), [], publishedAt: '2000-01-01 00:00:00');
@@ -46,7 +46,7 @@ try { TinyCat\Social\Posts\Posts::status_delete_content($post, deleteReports: fa
 catch (PDOException) { $assert(TinyCat\Social\Posts\Repository::find($post) !== null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 1, 'Notification cleanup failure preserves the post and its reactions'); }
 $assert((int) Connection::value('SELECT COUNT(*) FROM notifications') === 1, 'Failed cleanup retains the notification');
 $pdo->exec('DROP TRIGGER reject_notification_delete');
-TinyCat\Social\Content\Comments::status_delete_comment_rows($comment);
+TinyCat\Social\Discussion\Comments::status_delete_comment_rows($comment);
 $assert((int) Connection::value('SELECT COUNT(*) FROM social_comments') === 0 && (int) Connection::value('SELECT COUNT(*) FROM social_comment_likes') === 0, 'Comment tree cleanup removes replies and reactions');
 TinyCat\Social\Posts\Posts::status_delete_content($post, deleteReports: false);
 $assert(TinyCat\Social\Posts\Repository::find($post) === null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 0, 'Social cleanup delegates content deletion to Publishing');

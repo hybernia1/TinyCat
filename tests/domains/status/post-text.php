@@ -40,7 +40,7 @@ $assert($description === 'First Second …');
 $assert(!PostTextCleanup::safe('Read more', ''));
 $assert(!PostTextCleanup::safe('#foo bar', '#foobar'));
 $assert(!PostTextCleanup::safe('https://example.com/', 'https://example.org/'));
-$metadata = TinyCat\Social\Content\Links::status_link_data(['normalized_url' => 'https://example.com/', 'description' => '  Preview  […] Read more']);
+$metadata = TinyCat\Social\Posts\Links::status_link_data(['normalized_url' => 'https://example.com/', 'description' => '  Preview  […] Read more']);
 $assert($metadata['description'] === 'Preview …');
 
 if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {

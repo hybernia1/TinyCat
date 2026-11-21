@@ -18,15 +18,15 @@ try {
     $assert(count($adapterItems) === 1 && $adapterItems[0]['image_url'] === $imageUrl, 'The Unified feed parser downloads and normalizes image-only entries through the shared client.');
     $imageResult = $importItems->import($imageSource, [$imageItem], 1);
     $imageId = (int) ($imageResult['content_id'] ?? 0);
-    $imageRecord = \TinyCat\Social\Content\Images::status_image_record($imageId);
+    $imageRecord = \TinyCat\Social\Posts\Images::status_image_record($imageId);
     $assert($imageResult['status'] === 'posted' && $imageRecord !== null, 'Image-only templates create real attachments and skip invalid candidates.');
     $assert($value('SELECT body FROM social_posts WHERE id = ' . $imageId) === '', 'The image placeholder never leaves markup or remote image URLs in the text.');
-    $assert((int) $imageRecord['width'] === 800 && (int) $imageRecord['height'] === 400 && (int) $imageRecord['bytes'] <= \TinyCat\Social\Content\Images::status_image_max_upload_bytes(), 'Source attachments use normal dimensions, WebP conversion and output limits.');
+    $assert((int) $imageRecord['width'] === 800 && (int) $imageRecord['height'] === 400 && (int) $imageRecord['bytes'] <= \TinyCat\Social\Posts\Images::status_image_max_upload_bytes(), 'Source attachments use normal dimensions, WebP conversion and output limits.');
     $beforeRequests = count($GLOBALS['sourceImageRequests']);
     $duplicateImage = $importItems->import($imageSource, [$imageItem], 1);
     $assert($duplicateImage['status'] === 'current' && count($GLOBALS['sourceImageRequests']) === $beforeRequests, 'Duplicate image items do not download or create another file.');
     $plainImage = $importItems->import($source, [array_replace($imageItem, ['guid' => 'image-opt-in', 'title' => 'Text only'])], 1);
-    $assert($plainImage['status'] === 'posted' && \TinyCat\Social\Content\Images::status_image_record((int) $plainImage['content_id']) === null && count($GLOBALS['sourceImageRequests']) === $beforeRequests, 'Templates without the marker retain their existing text-only behavior.');
+    $assert($plainImage['status'] === 'posted' && \TinyCat\Social\Posts\Images::status_image_record((int) $plainImage['content_id']) === null && count($GLOBALS['sourceImageRequests']) === $beforeRequests, 'Templates without the marker retain their existing text-only behavior.');
     $wpRoot = 'http://93.184.216.34/wp-json/';
     $GLOBALS['sourceImageFixtures'][$wpRoot . '?_fields=namespaces'] = '{}';
     $wpWithoutMarker = $importItems->import($source, [['guid' => 'wp-no-image-marker', 'title' => 'Text only', 'url' => 'http://93.184.216.34/article', '_wordpress_root' => $wpRoot, 'image_urls' => []]], 1);
@@ -60,7 +60,7 @@ try {
     $database->exec("UPDATE bot_sources SET feed_hash = 'changed-during-download' WHERE id = 2");
     $staleImage = $importItems->import($imageSource, [['guid' => 'image-stale-source', 'image_urls' => [$imageUrl]]], 1);
     $assert($staleImage['status'] === 'error' && (glob($root . '/uploads/status-images/' . date('Y/m') . '/*.webp') ?: []) === $paths, 'A source changed during image download leaves no orphan attachment.');
-    $database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Social\Automation\Importer::feedSourceHash($imageSource['feed_url'])]);
+    $database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Social\Bots\Importer::feedSourceHash($imageSource['feed_url'])]);
     $disabledConfig = $config->getValue();
     $disabledConfig['content_images']['enabled'] = false;
     $config->setValue(null, $disabledConfig);

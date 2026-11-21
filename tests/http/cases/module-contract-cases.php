@@ -196,50 +196,40 @@ foreach (['/api/bots/accounts?q=feedbot', '/api/users?q=admin'] as $filtered) {
 }
 [$status, $payload] = $request('GET', '/api/bots/accounts?q=%25', null, 'admin');
 $assert($status === 200 && $payload['data']['items'] === [], 'Literal wildcard characters cannot broaden an account search.');
-// Search results and autocomplete have independent contracts.
+// One public search collection API; autocomplete and editor completion have separate purposes.
 $seed->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (9100, 2, 'quartz bright nebula', '2026-01-01 12:00:00'), (9101, 2, 'unrelated post', '2026-01-02 12:00:00')");
-[$status, $payload] = $request('GET', '/api/search/results?q=nebula%20quartz');
-$assert($status === 200 && array_column($payload['data']['items'], 'id') === [9100], 'Full search matches all words in any order.');
-$assert($payload['meta']['pagination']['done'] && $payload['meta']['pagination']['next_url'] === '', 'Search uses the standard feed cursor envelope.');
+[$status, $payload] = $request('GET', '/api/search/query?q=nebula%20quartz&collection=content');
+$group = $payload['data']['collections'][0];
+$assert($status === 200 && array_column($group['items'], 'id') === [9100] && $group['done'], 'Shared search matches all words and returns the selected owner collection.');
 $pure($payload);
 [$status, $payload] = $request('GET', '/api/search?q=quartz');
 $assert($status === 200 && $payload['data']['content'] === [], 'Autocomplete returns no post results.');
-foreach (['/api/search?q=' . str_repeat('a', 81), '/api/search/results?q=quartz&type=invalid', '/api/search/results?q=quartz&cursor_id=-1', '/api/search/results?q[]=invalid'] as $path) {
+foreach (['/api/search?q=' . str_repeat('a', 81), '/api/search/query?q[]=invalid', '/api/search/query?q=quartz&collection[]=invalid', '/api/search/query?q=quartz&collection=content&cursor[cursor_id]=-1'] as $path) {
     [$status] = $request('GET', $path);
-    $assert($status === 422, 'Search rejects invalid query and pagination parameters.');
+    $assert($status === 422, 'Canonical search rejects invalid query and cursor inputs.');
 }
-[$status, $html] = $exportRequest('/search?q=nebula%20quartz');
-$assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Search documents render matching posts without unrelated author posts.');
-[$status, $html] = $exportRequest('/search?q=nebula%20quartz&type=users');
-$assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Retired category URLs render matching posts.');
-$assert(str_contains($html, 'archive-filter') && !str_contains($html, 'type=tags'), 'Search documents expose media filters instead of category navigation.');
-[$status] = $exportRequest('/search?q[]=invalid');
-$assert($status === 422, 'Malformed document queries fail without PHP warnings.');
-[$status, $payload] = $request('GET', '/api/search/results?q=quartz%22');
-$assert($status === 200 && $payload['data']['query'] === 'quartz"' && array_column($payload['data']['items'], 'id') === [9100], 'Quoted queries retain their text and find the unquoted word.');
-[$status, $html] = $exportRequest('/search?q=%22%3Cquartz%3E%22');
+[$status, $html] = $exportRequest('/search/all?q=nebula%20quartz&collection=content');
+$assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Shared search documents render matching posts only.');
+[$status, $payload] = $request('GET', '/api/search/query?q=quartz%22&collection=content');
+$assert($status === 200 && $payload['data']['query'] === 'quartz"' && array_column($payload['data']['collections'][0]['items'], 'id') === [9100], 'Quoted queries retain their text and find the unquoted word.');
+[$status, $html] = $exportRequest('/search/all?q=%22%3Cquartz%3E%22&collection=content');
 $document = new DOMDocument(); libxml_use_internal_errors(true); $document->loadHTML($html); libxml_clear_errors();
 $input = (new DOMXPath($document))->query('//input[@id="global-search-input"]')->item(0);
-$assert($status === 200 && $input->getAttribute('value') === '"<quartz>"' && str_contains($html, 'quartz bright nebula'), 'HTML search preserves and safely escapes quotes and angle brackets while matching words.');
+$assert($status === 200 && $input->getAttribute('value') === '"<quartz>"' && str_contains($html, 'quartz bright nebula'), 'Shared HTML search preserves and escapes the original query.');
 $insertCursor = $seed->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, 2, ?, ?)');
 for ($i = 0; $i < 25; $i++) { $insertCursor->execute([9200 + $i, 'cursorfixture ' . $i, '2020-01-01 12:00:00']); }
-[$status, $firstBatch] = $request('GET', '/api/search/results?q=cursorfixture');
-$assert($status === 200 && count($firstBatch['data']['items']) === 20 && !$firstBatch['meta']['pagination']['done'], 'Search exposes the standard feed continuation URL.');
+[$status, $firstBatch] = $request('GET', '/api/search/query?q=cursorfixture&collection=content');
+$firstGroup = $firstBatch['data']['collections'][0];
+$assert($status === 200 && count($firstGroup['items']) === 20 && !$firstGroup['done'], 'Selected search collections expose stable continuation cursors.');
 $insertCursor->execute([9230, 'cursorfixture newer insertion', '2025-01-01 12:00:00']);
-[$status, $nextBatch] = $request('GET', $firstBatch['meta']['pagination']['next_url']);
-$allIds = array_column([...$firstBatch['data']['items'], ...$nextBatch['data']['items']], 'id');
-$assert($status === 200 && count($nextBatch['data']['items']) === 5 && $nextBatch['meta']['pagination']['done'] && count(array_unique($allIds)) === 25 && !in_array(9230, $allIds, true), 'HTTP search cursors survive new posts and ties without duplicate or missing results.');
-[$status, $html] = $exportRequest('/search?q=cursorfixture');
-$assert($status === 200 && str_contains($html, 'data-status-feed-more') && str_contains($html, 'cursor_at') && !str_contains($html, 'rel="next"'), 'Search documents use the existing feed loader instead of numbered pagination.');
-foreach (['content', 'users', 'tags'] as $type) {
-    [$status, $resource] = $request('GET', '/api/site/pages?path=/search&q=quartz&type=' . $type);
-    $assert($status === 200 && $resource['data']['kind'] === 'search' && $resource['data']['sidebar'] && $resource['data']['search']['type'] === 'content', 'Legacy search category parameters retain the shared post feed and sidebar.');
-    $pure($resource);
+[$status, $nextBatch] = $request('GET', str_replace('/search/all?', '/api/search/query?', $firstGroup['next_url']));
+$nextGroup = $nextBatch['data']['collections'][0];
+$allIds = array_column([...$firstGroup['items'], ...$nextGroup['items']], 'id');
+$assert($status === 200 && count($nextGroup['items']) === 5 && $nextGroup['done'] && count(array_unique($allIds)) === 25 && !in_array(9230, $allIds, true), 'Canonical search cursors survive concurrent inserts and timestamp ties.');
+foreach (['/search?q=quartz', '/api/search/results?q=quartz', '/api/users/2'] as $retired) {
+    [$status] = str_starts_with($retired, '/api/') ? $request('GET', $retired) : $exportRequest($retired);
+    $assert($status === ($retired === '/api/users/2' ? 405 : 404), 'Removed transports have no compatibility aliases: ' . $retired);
 }
-[$status, $resource] = $request('GET', '/api/site/pages?path=/cs/search&q=quartz');
-$assert($status === 200 && $resource['data']['locale'] === 'cs' && str_contains($resource['data']['url'], '/cs/search?'), 'Search navigation preserves locale and query parameters.');
-[$status, $html] = $exportRequest('/search?q=quartz');
-$assert($status === 200 && str_contains($html, 'data-public-page="search"') && str_contains($html, 'data-public-sidebar-slot'), 'Search initial HTML uses the same public page component and sidebar placeholder.');
 [$status, $state] = $request('PATCH', '/api/notifications', ['read' => true], 'user', $csrf);
 $assert($status === 200 && $state['data']['unread_count'] === 0, 'Mark-all clears the unread state.');
 [$status, $html] = $exportRequest('/notifications', 'GET', ['X-Test-Role' => 'user']);

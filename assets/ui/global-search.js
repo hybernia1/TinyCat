@@ -142,10 +142,10 @@ import "./popovers.js";
   function openGlobalSearchCaptcha(root, error) {
     var details = searchCaptchaDetails(error);
     var captcha = details.captcha;
-    var verifyUrl = "/api/security/challenges/search";
+    var verifyUrl = typeof details.verify_url === "string" ? details.verify_url : "";
     var message = (error && error.data && error.data.message) || root.dataset.searchCaptchaRequired || TinyCat.i18n.t("public.search_captcha_required");
     var modal = qs("#global-search-captcha-modal");
-    if (!captcha || !captcha.enabled) {
+    if (!captcha || !captcha.enabled || !/^\/api\/[a-z0-9][a-z0-9_\/-]*$/i.test(verifyUrl)) {
       globalSearchShowMessage(root, message);
       return;
     }

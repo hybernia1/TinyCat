@@ -180,7 +180,7 @@ final class NotificationEvents
             return;
         }
 
-        $comment = \TinyCat\Social\Content\Comments::status_comment_find($commentId);
+        $comment = \TinyCat\Social\Discussion\Comments::status_comment_find($commentId);
         $ownerId = (int) ($comment['user_id'] ?? 0);
         $actorId = (int) ($actor['id'] ?? 0);
         $contentId = (int) ($comment['content_id'] ?? 0);

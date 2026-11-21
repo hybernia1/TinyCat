@@ -98,8 +98,6 @@ import "../../../../../assets/ui/toasts.js";
     next.searchParams.delete("offset");
     next.searchParams.delete("cursor_at");
     next.searchParams.delete("cursor_id");
-    next.searchParams.delete("cursor_rank");
-    next.searchParams.delete("cursor_name");
 
     return compactUrl(next);
   }

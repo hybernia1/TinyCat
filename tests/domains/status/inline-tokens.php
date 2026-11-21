@@ -29,7 +29,7 @@ foreach (['1980s', '3d', 'gothic-1', 'gothic-remake'] as $tag) {
 $sample = 'Feature Update #1 https://indian-tv.cz/clanek/gothic-remake #novinky #gothic-remake';
 $assert(Tags::status_tags_from_text($sample) === ['novinky', 'gothic-remake'], 'RSS update number is prose while trailing named tags are retained');
 $assert(Tags::normalize_tags_for_storage($sample) === $sample, 'RSS body is preserved');
-$imported = TinyCat\Social\Automation\Importer::renderPost([], ['title' => 'Feature Update #1', 'description' => 'Gothic Remake', 'url' => 'https://example.test/article', 'categories' => ['2026', '1980s', 'novinky']]);
+$imported = TinyCat\Social\Bots\Importer::renderPost([], ['title' => 'Feature Update #1', 'description' => 'Gothic Remake', 'url' => 'https://example.test/article', 'categories' => ['2026', '1980s', 'novinky']]);
 $assert(str_contains($imported, 'Feature Update #1'), 'RSS article numbering remains visible');
 $assert(!str_contains($imported, '#2026') && Tags::status_tags_from_text($imported) === ['1980s', 'novinky'], 'RSS categories omit numeric tags and retain mixed names');
 $assert(Tags::normalize_tags_for_storage("#Cafe\u{0301}") === '#cafe', 'Combining diacritics belong to the complete tag token');

@@ -24,7 +24,7 @@ if ($cacheDriver === 'memcached' && isset($options['expire'])) { throw new Runti
 putenv('TINYCAT_PROFILE_CACHE_DRIVER=' . $cacheDriver);
 $pool = new \TinyCat\Tools\Performance\ProfileServerPool($root, $configPath, $log, $workers, (int) ($options['user'] ?? 0));
 try {
-    $paths = explode(',', (string) ($options['paths'] ?? '/,/api/statuses,/api/statuses/1,/author/2,/search?q=performance,/api/site/sidebar'));
+    $paths = explode(',', (string) ($options['paths'] ?? '/,/api/statuses,/api/statuses/1,/author/2,/search/all?q=performance,/api/site/sidebar'));
     $runner = new \TinyCat\Tools\Performance\HttpLoadRunner();
     $scenarios = [];
     foreach ($paths as $path) {

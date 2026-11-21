@@ -2,12 +2,11 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Redirects;
 
 use TinyCat\Http\Request;
 use TinyCat\Http\Web;
 use TinyCat\Social\Moderation\Restrictions;
-use TinyCat\Social\Presentation\Pages as SitePages;
+use TinyCat\Social\Site\Pages as SitePages;
 use TinyCat\Core\Ui\Site as Presentation;
 use TinyCat\Support\Dates;
 use TinyCat\Support\Localization;
@@ -21,7 +20,7 @@ final class Pages
     public static function home(): void
     {
         $data = self::homeData();
-        \TinyCat\Social\Presentation\PublicPages::render('home', $data);
+        \TinyCat\Social\Site\PublicPages::render('home', $data);
     }
 
     /** @return array<string, mixed> */
@@ -57,7 +56,7 @@ final class Pages
         $data = self::detailData($statusId);
         if ($data === null) { self::statusNotFound(); return; }
         if (Request::current()->method() === 'GET' && Request::current()->path() !== $data['page']['current']) { Web::redirect($data['page']['current'], 301); }
-        \TinyCat\Social\Presentation\PublicPages::render('status', $data);
+        \TinyCat\Social\Site\PublicPages::render('status', $data);
     }
 
     /** @return array<string, mixed>|null */
@@ -73,7 +72,7 @@ final class Pages
 
         $authUser = Authentication::auth();
         $item = Feed::public_status_item($statusId);
-        if ($item === null && ($canonicalId = Redirects::target($statusId)) !== null) {
+        if ($item === null && ($canonicalId = Repository::redirectTarget($statusId)) !== null) {
             $statusId = $canonicalId;
             $current = Posts::status_url($statusId);
             $item = Feed::public_status_item($statusId);
@@ -88,7 +87,7 @@ final class Pages
         $comments = $detail['comments'];
 
         $statusTitle = ViewData::status_meta_title($item);
-        $statusImageUrl = \TinyCat\Social\Content\Images::status_image_url($item);
+        $statusImageUrl = \TinyCat\Social\Posts\Images::status_image_url($item);
 
         return ['page' => [
             'title' => $statusTitle,
@@ -103,7 +102,7 @@ final class Pages
                 'image_type' => $statusImageUrl !== '' ? 'image/webp' : '',
                 'image_width' => (int) ($item['image_width'] ?? 0),
                 'image_height' => (int) ($item['image_height'] ?? 0),
-                'image_alt' => $statusImageUrl !== '' ? \TinyCat\Social\Content\Images::status_image_alt_text($item) : '',
+                'image_alt' => $statusImageUrl !== '' ? \TinyCat\Social\Posts\Images::status_image_alt_text($item) : '',
                 'type' => 'article',
                 'published_time' => (string) ($item['published_at'] ?? ''),
                 'author' => Presentation::absolute_url(Profiles::author_url((int) ($item['author_id'] ?? 0))),
@@ -159,7 +158,7 @@ final class Pages
         $data = self::tagData($tag);
         if ($data === null) { \TinyCat\Core\Runtime\Errors::respond(404); return; }
         if (Request::current()->method() === 'GET' && (Request::current()->path() !== $data['page']['current'] || (int) Web::get('page', 0) > 1)) { Web::redirect($data['page']['current'], 301); }
-        \TinyCat\Social\Presentation\PublicPages::render('tag', $data);
+        \TinyCat\Social\Site\PublicPages::render('tag', $data);
     }
 
     /** @return array<string, mixed>|null */

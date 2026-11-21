@@ -132,7 +132,7 @@ final class Posts
         $action = str_replace('_', '-', $action);
         $id = max(0, (int) ($params['id'] ?? 0));
         $commentId = max(0, (int) ($params['comment_id'] ?? 0));
-        if ($commentId > 0 && $id < 1) { $id = (int) (\TinyCat\Social\Content\Comments::status_comment_find($commentId)['content_id'] ?? 0); }
+        if ($commentId > 0 && $id < 1) { $id = (int) (\TinyCat\Social\Discussion\Comments::status_comment_find($commentId)['content_id'] ?? 0); }
         $base = '/api/statuses/' . $id;
         return match ($action) {
             'create' => '/api/statuses',
@@ -152,12 +152,12 @@ final class Posts
     public static function status_json_summary(int $contentId, array $user): array
     {
         $userId = (int) ($user['id'] ?? 0);
-        $liked = $userId > 0 && \TinyCat\Social\Content\Reactions::status_user_liked($contentId, $userId);
-        $commentsCount = \TinyCat\Social\Content\Comments::status_comment_count($contentId);
+        $liked = $userId > 0 && \TinyCat\Social\Discussion\Reactions::status_user_liked($contentId, $userId);
+        $commentsCount = \TinyCat\Social\Discussion\Comments::status_comment_count($contentId);
 
         return [
             'id' => $contentId,
-            'likes_count' => \TinyCat\Social\Content\Reactions::status_like_count($contentId),
+            'likes_count' => \TinyCat\Social\Discussion\Reactions::status_like_count($contentId),
             'comments_count' => $commentsCount,
             'liked' => $liked,
         ];

@@ -82,7 +82,7 @@ final class SitemapData
                     'url' => $url,
                     'last_modified' => isset($row['last_modified']) ? (string) $row['last_modified'] : null,
                 ];
-                $imageUrl = \TinyCat\Social\Content\ImageStorage::url((string) ($row['image_path'] ?? ''));
+                $imageUrl = \TinyCat\Social\Posts\ImageStorage::url((string) ($row['image_path'] ?? ''));
                 if ($imageUrl !== '') {
                     $entry['image_url'] = $imageUrl;
                 }

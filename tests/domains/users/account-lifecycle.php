@@ -112,7 +112,7 @@ catch (RuntimeException $exception) { $assert($exception->getMessage() === 'inje
 $assert(Connection::value('SELECT status FROM users WHERE id = 3') === 'active', 'Status participant failure rolls account change back');
 
 $pdo->exec("CREATE TABLE social_posts (id INTEGER PRIMARY KEY, author_id INTEGER REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL DEFAULT 'post')");
-TinyCat\Social\Content\InteractionSchema::install($pdo);
+TinyCat\Social\Discussion\Schema::install($pdo);
 TinyCat\Core\Notifications\Schema::install($pdo);
 $pdo->exec('CREATE TABLE social_terms (id INTEGER PRIMARY KEY)');
 $pdo->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY)');

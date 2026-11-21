@@ -7,7 +7,7 @@ use TinyCat\Core\Links\Providers;
 
 use TinyCat\Core\Text\LinkParser;
 
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 use TinyCat\Database\Connection;
 use TinyCat\Http\Document;
@@ -99,7 +99,7 @@ final class Embed
             'title' => Presentation::meta_text((string) $item['body'], 120) ?: (string) $item['author_name'],
             'width' => $width, 'height' => $height, 'html' => self::iframe($item, $width, $height), 'cache_age' => 0,
         ];
-        $image = \TinyCat\Social\Content\Images::status_image_url($item);
+        $image = \TinyCat\Social\Posts\Images::status_image_url($item);
         $media = self::media($item);
         $thumbnail = $image;
         foreach ($media as $link) {
@@ -139,7 +139,7 @@ final class Embed
             if (isset($segment['url'])) { $segment['url'] = Presentation::absolute_url($segment['outbound_url'] ?? $segment['url']); }
         }
         unset($segment);
-        $image = \TinyCat\Social\Content\Images::status_image_url($item);
+        $image = \TinyCat\Social\Posts\Images::status_image_url($item);
         $html = View::render('embed', [
             'author' => (string) $item['author_name'], 'authorUrl' => Presentation::absolute_url('/author/' . (int) $item['author_id']),
             'url' => Presentation::absolute_url('/status/' . $id), 'siteName' => Presentation::site_name(),
@@ -148,7 +148,7 @@ final class Embed
             'initial' => mb_strtoupper(mb_substr((string) $item['author_name'], 0, 1)),
             'media' => $media,
             'imageUrl' => $image !== '' ? Presentation::absolute_url($image) : '',
-            'imageAlt' => \TinyCat\Social\Content\Images::status_image_alt_text($item),
+            'imageAlt' => \TinyCat\Social\Posts\Images::status_image_alt_text($item),
             'imageWidth' => (int) ($item['image_width'] ?? 0), 'imageHeight' => (int) ($item['image_height'] ?? 0),
             'publishedAt' => Dates::dateIso((string) $item['published_at']), 'publishedLabel' => Dates::displayDateTime((string) $item['published_at']),
             'styleUrl' => Assets::asset('embed.css'), 'scriptUrl' => Assets::asset('embed-frame.js'),

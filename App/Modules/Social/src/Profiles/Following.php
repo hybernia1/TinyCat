@@ -180,6 +180,6 @@ final class Following
 
     public static function author_following_api_url(int $authorId, string $cursorAt = '', int $cursorId = 0): string
     {
-        return '/api/users/' . $authorId . '/following?' . http_build_query(['cursor_at' => $cursorAt, 'cursor_id' => $cursorId]);
+        return '/api/profiles/' . $authorId . '/following?' . http_build_query(['cursor_at' => $cursorAt, 'cursor_id' => $cursorId]);
     }
 }

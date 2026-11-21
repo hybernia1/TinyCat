@@ -27,6 +27,11 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
   HTTP, Tasks, Settings, Mail a UI mechanismy. Nepřidává jejich lokální kopie.
 - `Api` registruje transport, aplikační služba provádí operaci, `Pages` připravuje
   stránku a komponenty vykreslují. HTTP resource nevrací HTML ani definice UI.
+- U modulu členěného na oblasti skládá `Registration` jejich API a HTML routy;
+  vlastní JSON endpointy deklaruje příslušná `Api`. Nemíchej další endpointy do
+  registračních pomocníků. Sociální profily používají `/api/profiles`, správu
+  identity poskytuje core pod `/api/users`. Sdílené hledání hostuje core;
+  vlastník přispívá zdroji a kurzorovými daty, ne paralelním výsledkovým API.
 - Nastavení vlastní jednu PHP definici sekcí, polí, validace a popisků. Úloha
   vždy běží přes core runner se zámkem a historií; CLI není alternativní cesta.
 
@@ -36,6 +41,12 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
   kořenem modulu. Jejich zdrojem je manifest, nikoli seznam domén v core.
 - Serverové HTML a AJAX sdílejí komponentové definice. Modaly, popovery, formuláře,
   navigace, tokeny a dva responzivní režimy dodržují společné UI kontrakty.
+- Stránku předávej `Core/Ui/Page::render()`, které vybírá administraci a téma.
+  Renderer `PageTheme` skládá pouze vlastní veřejný shell; nevybírá znovu téma
+  ani administraci. Zpětné volání rendereru při registraci zůstává lazy.
+- Administrační seznamy skládej přes `Core/Ui/Admin/Definitions::page()`.
+  Vlastní důvěryhodné HTML akcí může dodat vlastník jako třetí argument;
+  titulek, seznam a rám kvůli vlastnímu tlačítku nekopíruj do stránky modulu.
 - Nový modul používá jeden schema stream. Více historických streamů Socialu je
   kompatibilita publikovaných instalací, nikoli vzor pro novou aplikaci.
 - Publikované ID a checksumy migrací jsou neměnné. Změna má novou migraci a
@@ -55,12 +66,17 @@ ověř podle dopadu v [pravidlech repozitáře](../../AGENTS.md#ověření).
 
 ## Aktuální Social
 
-`Module.php` skládá `Registration` tříd vnitřních částí. `Content` vlastní sdílené
-vztahy statusů, odkazy a soubory; `Posts` jejich publikování a veřejné operace;
-`Profiles` sociální vztahy účtů, `Automation` importy a boty, `Moderation` moderaci,
-`Search` hledání a `Presentation` veřejné téma a stránky. Toto členění nevytváří
+`Module.php` skládá `Registration` tříd vnitřních částí. `Posts` vlastní příspěvek,
+jeho zápis, čtení, feed, tagy, odkazy a přílohy; `Discussion` komentáře a reakce;
+`Profiles` veřejné profily a sledování, `Bots` importy a boty, `Moderation` moderaci,
+`Search` hledání a `Site` veřejné téma a stránky. Toto členění nevytváří
 další framework ani samostatné moduly. Přesuny musí aktualizovat všechny volající
 a nesmějí měnit historická ID, endpointy nebo data jen kvůli názvosloví.
+
+Novou pomocnou třídu odděluj podle samostatné odpovědnosti. Jedno přeposlání do
+komponenty, accessor cache nebo jediný dotaz automaticky nevyžaduje vlastní soubor.
+Malý adaptér má smysl, pokud drží konkrétní kontrakt nebo politiku, například
+`Posts/ImageStorage`. Neslučuj HTTP orchestrace a doménové zápisy kvůli počtu souborů.
 
 Blog byl z aktuálních zdrojů odstraněn. Historické releasy a audity popisují
 tehdejší stav; nejsou šablonou nového modulu. Instalovaný historický vlastník se

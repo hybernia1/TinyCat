@@ -2,9 +2,8 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Comments;
+use TinyCat\Social\Discussion\Comments;
 
-use TinyCat\Social\Content\Redirects;
 
 use \TinyCat\Http\Request;
 use \TinyCat\Http\Response;
@@ -94,7 +93,7 @@ final class Api
         $item = $editing
             ? \TinyCat\Database\Connection::one(Feed::public_status_select_sql() . ' WHERE c.kind = \'post\' AND c.id = ?', [$id])
             : Feed::public_status_item($id);
-        if (!$editing && $item === null && ($canonicalId = Redirects::target($id)) !== null) {
+        if (!$editing && $item === null && ($canonicalId = Repository::redirectTarget($id)) !== null) {
             $id = $canonicalId; $item = Feed::public_status_item($id);
         }
         if ($item === null || (!$editing && !Posts::status_can_view($item))) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
@@ -102,8 +101,8 @@ final class Api
         $items = Resource::posts([$item], $user);
         $comments = Comments::status_comments($id);
         return ['constraints' => Resource::constraints(), 'item' => $items[0], 'comments' => Resource::comments($comments, $user),
-            'viewer' => $user === null ? null : \TinyCat\Social\Profiles\Resource::profile($user),
-            'options' => ['images_enabled' => \TinyCat\Social\Content\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Social\Content\Images::status_image_max_upload_bytes()]];
+            'viewer' => $user === null ? null : \TinyCat\Social\Profiles\Profiles::resource($user),
+            'options' => ['images_enabled' => \TinyCat\Social\Posts\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Social\Posts\Images::status_image_max_upload_bytes()]];
     }
 
     /**

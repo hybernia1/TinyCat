@@ -1632,36 +1632,6 @@
       ]
     },
     {
-      "name": "search/page",
-      "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [
-        "site/archive-actions",
-        "status/card",
-        "status/feed-more",
-        "ui/captcha",
-        "ui/empty-state"
-      ],
-      "inputs": [
-        "archive_options",
-        "archive_type",
-        "csrf",
-        "items",
-        "login_modal_url",
-        "login_url",
-        "next_url",
-        "post",
-        "rss_url",
-        "search.block_code",
-        "search.blocked",
-        "search.captcha",
-        "search.empty",
-        "search.minimum_length",
-        "search.query",
-        "search.valid",
-        "url"
-      ]
-    },
-    {
       "name": "site/sidebar",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
@@ -1688,7 +1658,6 @@
       "name": "site/public-page",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "search/page",
         "site/archive-actions",
         "site/archive-filter",
         "status/card",
@@ -1743,7 +1712,6 @@
         "profile_edit_url",
         "routes",
         "rss_url",
-        "search",
         "sidebar",
         "sidebar_url",
         "tag",
@@ -13207,8 +13175,7 @@
     }
   ],
   "php_partials": [
-    "App/Core/Ui/templates/parts/flashes.php",
-    "App/Modules/Social/templates/parts/site/sidebar-slot.php"
+    "App/Core/Ui/templates/parts/flashes.php"
   ],
   "php_templates": [
     "App/Core/Ui/Admin/templates/shell.php",
@@ -13218,7 +13185,6 @@
     "App/Core/Ui/templates/notFound.php",
     "App/Core/Ui/templates/parts/flashes.php",
     "App/Core/Ui/templates/public-shell.php",
-    "App/Modules/Social/templates/parts/site/sidebar-slot.php",
     "App/Modules/Social/templates/site/public.php",
     "App/Modules/Social/templates/status/embed.php"
   ],
@@ -13268,18 +13234,6 @@
       "source": "App/Core/Updates/Views.php",
       "methods": [
         "model"
-      ]
-    },
-    {
-      "source": "App/Modules/Social/src/Presentation/Views.php",
-      "methods": [
-        "sidebar"
-      ]
-    },
-    {
-      "source": "App/Modules/Social/src/Profiles/Views.php",
-      "methods": [
-        "followingProfile"
       ]
     }
   ],

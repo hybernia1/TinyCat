@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Reactions;
+use TinyCat\Social\Discussion\Reactions;
 
 final class ViewData
 {
@@ -13,7 +13,7 @@ final class ViewData
     public static function status_meta_title(array $item, int $limit = 110): string
     {
         $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? ''));
-        $body = \TinyCat\Social\Content\Links::status_strip_external_urls((string) ($item['body'] ?? ''));
+        $body = \TinyCat\Social\Posts\Links::status_strip_external_urls((string) ($item['body'] ?? ''));
         $body = \TinyCat\Core\Ui\Site::meta_text($body, 90);
 
         if ($body !== '') {
@@ -31,7 +31,7 @@ final class ViewData
         }
 
         if ($author !== '') {
-            return \TinyCat\Social\Content\Images::status_image_url($item) !== ''
+            return \TinyCat\Social\Posts\Images::status_image_url($item) !== ''
                 ? \TinyCat\Support\Localization::t('public.status_title_image_by', ['author' => $author])
                 : \TinyCat\Support\Localization::t('public.status_title_by', ['author' => $author]);
         }
@@ -50,16 +50,16 @@ final class ViewData
             return '';
         }
 
-        foreach (\TinyCat\Social\Content\Links::status_links_for_content($contentId) as $link) {
+        foreach (\TinyCat\Social\Posts\Links::status_links_for_content($contentId) as $link) {
             $link = (array) $link;
 
-            if (\TinyCat\Social\Content\Links::status_link_is_internal($link)) {
+            if (\TinyCat\Social\Posts\Links::status_link_is_internal($link)) {
                 continue;
             }
 
             $title = \TinyCat\Core\Ui\Site::meta_text((string) ($link['title'] ?? ''), $limit);
 
-            if ($title !== '' && !\TinyCat\Social\Content\Links::status_link_title_is_placeholder($title)) {
+            if ($title !== '' && !\TinyCat\Social\Posts\Links::status_link_title_is_placeholder($title)) {
                 return $title;
             }
         }
@@ -78,14 +78,14 @@ final class ViewData
             return '';
         }
 
-        foreach (\TinyCat\Social\Content\Links::status_links_for_content($contentId) as $link) {
+        foreach (\TinyCat\Social\Posts\Links::status_links_for_content($contentId) as $link) {
             $link = (array) $link;
 
-            if (\TinyCat\Social\Content\Links::status_link_is_internal($link)) {
+            if (\TinyCat\Social\Posts\Links::status_link_is_internal($link)) {
                 continue;
             }
 
-            $thumbnail = \TinyCat\Social\Content\Links::status_video_thumbnail_sources($link);
+            $thumbnail = \TinyCat\Social\Posts\Links::status_video_thumbnail_sources($link);
             $imageUrl = trim((string) ($thumbnail['fallback'] ?? ''));
 
             if ($imageUrl !== '') {
@@ -101,16 +101,16 @@ final class ViewData
      */
     public static function status_meta_description(array $item): string
     {
-        $body = \TinyCat\Social\Content\Links::status_strip_external_urls((string) ($item['body'] ?? ''));
+        $body = \TinyCat\Social\Posts\Links::status_strip_external_urls((string) ($item['body'] ?? ''));
         $body = \TinyCat\Core\Ui\Site::meta_text($body, 180);
 
         if ($body !== '') {
             return $body;
         }
 
-        $imageAlt = \TinyCat\Social\Content\Images::status_image_alt_text($item);
+        $imageAlt = \TinyCat\Social\Posts\Images::status_image_alt_text($item);
 
-        if (\TinyCat\Social\Content\Images::status_image_url($item) !== '' && $imageAlt !== '') {
+        if (\TinyCat\Social\Posts\Images::status_image_url($item) !== '' && $imageAlt !== '') {
             return $imageAlt;
         }
 
@@ -124,7 +124,7 @@ final class ViewData
      */
     public static function status_meta_image(array $item): string
     {
-        return \TinyCat\Social\Content\Images::status_image_url($item) ?: \TinyCat\Social\Posts\ViewData::status_meta_link_image($item) ?: \TinyCat\Core\Identity\Avatars::user_avatar_url($item) ?: \TinyCat\Core\Ui\Site::site_meta_image_url();
+        return \TinyCat\Social\Posts\Images::status_image_url($item) ?: \TinyCat\Social\Posts\ViewData::status_meta_link_image($item) ?: \TinyCat\Core\Identity\Avatars::user_avatar_url($item) ?: \TinyCat\Core\Ui\Site::site_meta_image_url();
     }
 
     /**
@@ -164,7 +164,7 @@ final class ViewData
     {
         $items = \TinyCat\Social\Posts\ViewData::status_prepare_items_view([$item], $user);
         $prepared = $items[0] ?? $item;
-        $comments = \TinyCat\Social\Content\Comments::status_comments((int) ($item['id'] ?? 0));
+        $comments = \TinyCat\Social\Discussion\Comments::status_comments((int) ($item['id'] ?? 0));
 
         return [
             'item' => $prepared,
@@ -225,9 +225,9 @@ final class ViewData
         return [
             'item' => $item,
             'image' => [
-                'enabled' => \TinyCat\Social\Content\Images::status_images_enabled(),
-                'url' => \TinyCat\Social\Content\Images::status_image_url($item),
-                'alt' => \TinyCat\Social\Content\Images::status_image_alt_text($item),
+                'enabled' => \TinyCat\Social\Posts\Images::status_images_enabled(),
+                'url' => \TinyCat\Social\Posts\Images::status_image_url($item),
+                'alt' => \TinyCat\Social\Posts\Images::status_image_alt_text($item),
             ],
         ];
     }
@@ -264,13 +264,13 @@ final class ViewData
 
     public static function status_comment_edit_modal_url(int $commentId, int $contentId = 0): string
     {
-        $id = $contentId > 0 ? $contentId : (int) (\TinyCat\Social\Content\Comments::status_comment_find($commentId)['content_id'] ?? 0);
+        $id = $contentId > 0 ? $contentId : (int) (\TinyCat\Social\Discussion\Comments::status_comment_find($commentId)['content_id'] ?? 0);
         return '/api/statuses/' . $id . '?panel=comment-edit&comment_id=' . $commentId;
     }
 
     public static function status_comment_history_modal_url(int $commentId, int $contentId = 0): string
     {
-        $id = $contentId > 0 ? $contentId : (int) (\TinyCat\Social\Content\Comments::status_comment_find($commentId)['content_id'] ?? 0);
+        $id = $contentId > 0 ? $contentId : (int) (\TinyCat\Social\Discussion\Comments::status_comment_find($commentId)['content_id'] ?? 0);
         return '/api/statuses/' . $id . '/comments/' . $commentId . '/revisions';
     }
 

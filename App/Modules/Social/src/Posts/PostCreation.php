@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\{Links, Policy};
+use TinyCat\Social\Posts\Links;
+use TinyCat\Social\Posts\Policy;
 
 use TinyCat\Core\Text\PostText;
 

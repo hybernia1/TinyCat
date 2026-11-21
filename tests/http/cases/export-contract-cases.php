@@ -96,7 +96,7 @@ $assert((string) $imageFeed->channel->item->children('http://search.yahoo.com/mr
 $imageSchema = $schemaFromPage($imageHtml);
 $assert($imageSchema['image']['contentUrl'] === $imageUrl && $imageSchema['image']['width'] === 640, 'JSON-LD and RSS agree on the attached image.');
 // Compare direct HTML and client-navigation metadata while a real attachment exists.
-foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/search?q=Export', '/pl/status/900001'] as $metadataPath) {
+foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/pl/status/900001'] as $metadataPath) {
     [$status, $metadataHtml] = $exportRequest($metadataPath, 'GET', ['Accept-Language' => 'en']);
     $metadataDom = new DOMDocument();
     libxml_use_internal_errors(true); $metadataDom->loadHTML($metadataHtml); libxml_clear_errors();
@@ -114,14 +114,14 @@ foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/search?q=Ex
     $assert($schemaFromPage($metadataHtml) === $metadataDocument['jsonld'], 'HTML and navigation expose identical JSON-LD: ' . $metadataPath);
     $schema = $metadataDocument['jsonld'];
     if (str_contains($metadataPath, '/author/')) { $listedPost = $schema['hasPart'][0]; }
-    elseif (str_contains($metadataPath, '/tag/') || str_contains($metadataPath, '/search')) { $listedPost = $schema['mainEntity']['itemListElement'][0]['item']; }
+    elseif (str_contains($metadataPath, '/tag/')) { $listedPost = $schema['mainEntity']['itemListElement'][0]['item']; }
     else { $listedPost = $schema; }
     foreach (['url', 'text', 'keywords', 'datePublished', 'author'] as $postField) {
         $assert($listedPost[$postField] === $imageSchema[$postField], 'All page contexts describe the same post ' . $postField . ': ' . $metadataPath);
     }
     $assert($listedPost['image']['contentUrl'] === $imageSchema['image']['contentUrl'] && $listedPost['image']['width'] === $imageSchema['image']['width'], 'All contexts use the same attached image URL and dimensions.');
 }
-foreach (['/author/900001', '/tag/exportpublic', '/search?q=Export'] as $filteredPage) {
+foreach (['/author/900001', '/tag/exportpublic'] as $filteredPage) {
     $separator = str_contains($filteredPage, '?') ? '&' : '?';
     [$status, $filteredHtml] = $exportRequest($filteredPage . $separator . 'media=images');
     $filteredDom = new DOMDocument();

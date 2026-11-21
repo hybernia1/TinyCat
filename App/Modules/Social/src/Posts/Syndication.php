@@ -5,7 +5,7 @@ namespace TinyCat\Social\Posts;
 
 use TinyCat\Core\Text\LinkParser;
 
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 final class Syndication
 {
@@ -32,7 +32,7 @@ final class Syndication
             $params = http_build_query(['q' => $query, ...($media !== '' ? ['media' => $media] : [])]);
             $rssTitle = \TinyCat\Support\Localization::t('public.search_title_query', ['query' => $query]);
             $rssDescription = $rssTitle;
-            $rssLink = '/search?' . $params;
+            $rssLink = '/search/all?' . http_build_query(['q' => $query, 'collection' => 'content']);
             $rssSelfLink = '/search/feed?' . $params;
             $rows = \TinyCat\Social\Search\Queries::public_search_content_rows($query, 50, '', 0, $media);
             $rssItems = Export::byIds(array_map('intval', array_column($rows, 'id')));
@@ -84,10 +84,10 @@ final class Syndication
             $itemUrl = \TinyCat\Core\Ui\Site::absolute_url(\TinyCat\Social\Posts\Posts::status_url((int) ($item['id'] ?? 0)));
             $publishedAt = (string) ($item['published_at'] ?? '');
             $publishedDate = $publishedAt !== '' ? \TinyCat\Support\Dates::dateTime($publishedAt, DATE_RSS) : '';
-            $attachedImage = \TinyCat\Social\Content\Images::status_image_url($item);
+            $attachedImage = \TinyCat\Social\Posts\Images::status_image_url($item);
             $imageUrl = $attachedImage !== '' ? $attachedImage : ViewData::status_meta_link_image($item);
             $imageType = $attachedImage !== '' ? 'image/webp' : '';
-            $imageAlt = $attachedImage !== '' ? \TinyCat\Social\Content\Images::status_image_alt_text($item) : $itemTitle;
+            $imageAlt = $attachedImage !== '' ? \TinyCat\Social\Posts\Images::status_image_alt_text($item) : $itemTitle;
             $imageBytes = max(0, (int) ($item['image_bytes'] ?? 0));
             $rssBody = \TinyCat\Core\Feeds\Rss::html($body);
             if ($imageUrl !== '') {

@@ -12,7 +12,7 @@ Novou komponentu upravovat v definici, nikoli přidáním druhé HTML implementa
 
 ## Odpovědnosti
 
-Současný sociální feed připravuje `Social/Presentation/PublicPages` a vykresluje
+Současný sociální feed připravuje `Social/Site/PublicPages` a vykresluje
 `site/public-page`; tutéž strukturu používá klient. Staré PHP partialy feedu
 a `Posts/Views` jsou odstraněné. Příprava kanonických dat proběhne před renderem
 přes resources, včetně dávkových preloadů.

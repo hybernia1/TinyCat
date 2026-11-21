@@ -231,7 +231,7 @@ try {
         [$status] = $request('DELETE', '/api/bots/accounts/' . $invalidId, ['id' => 1], 'admin', $csrf);
         $assert($status === 404, 'Invalid path IDs cannot fall back to a body ID.');
     }
-    [$status, $payload] = $request('POST', '/api/users/1/followers/me', [], 'user', $csrf);
+    [$status, $payload] = $request('POST', '/api/profiles/1/followers/me', [], 'user', $csrf);
     $assert($status === 405, 'Follow state must use PUT or DELETE, never an action toggle.');
     [$status, $payload] = $request('POST', '/api/bots/sources', '{invalid', 'admin', $csrf);
     $assert($status === 400 && $payload['code'] === 'bad_request', 'Malformed JSON must use the same error envelope.');

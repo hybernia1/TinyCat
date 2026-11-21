@@ -17,7 +17,7 @@ final class Mentions
             return [];
         }
 
-        $users =& \TinyCat\Social\Content\ReadCache::author_mention_user_cache();
+        $users =& \TinyCat\Social\Posts\Mentions::author_mention_user_cache();
         $missing = array_values(array_filter($userIds, static fn (int $id): bool => !array_key_exists($id, $users)));
 
         if ($missing !== []) {
@@ -55,7 +55,7 @@ final class Mentions
 
     public static function status_author_url_mention(string $url): string
     {
-        $path = \TinyCat\Social\Content\Links::status_internal_url_path($url);
+        $path = \TinyCat\Social\Posts\Links::status_internal_url_path($url);
         $path = \TinyCat\Http\LocaleRouting::split($path)['path'];
 
         if ($path === '' || preg_match('~^/author/([0-9]+)/?$~', $path, $match) !== 1) {
@@ -166,5 +166,15 @@ final class Mentions
             },
             $part
         ));
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    public static function &author_mention_user_cache(): array
+    {
+        static $users = [];
+
+        return $users;
     }
 }

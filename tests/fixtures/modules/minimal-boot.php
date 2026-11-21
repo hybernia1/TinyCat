@@ -20,7 +20,7 @@ if (($argv[1] ?? '') === '--framework') {
 if (($argv[1] ?? '') === '--social') {
     $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json']);
     \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['dsn' => 'sqlite::memory:']]), $loader);
-    foreach ([\TinyCat\Social\Automation\Pages::class, \TinyCat\Social\Automation\RunDetails::class, \TinyCat\Social\Posts\AuthorPages::class, \TinyCat\Social\Profiles\SitemapData::class, \TinyCat\Social\Posts\Pages::class, \TinyCat\Social\Posts\Embed::class, \TinyCat\Social\Presentation\Pages::class, \TinyCat\Social\Presentation\Layout::class, \TinyCat\Social\Presentation\Discovery::class] as $class) {
+    foreach ([\TinyCat\Social\Bots\Pages::class, \TinyCat\Social\Bots\Resource::class, \TinyCat\Social\Posts\AuthorPages::class, \TinyCat\Social\Profiles\Repository::class, \TinyCat\Social\Posts\Pages::class, \TinyCat\Social\Posts\Embed::class, \TinyCat\Social\Site\Pages::class, \TinyCat\Social\Site\Layout::class, \TinyCat\Social\Site\Discovery::class] as $class) {
         if (class_exists($class, false)) { throw new RuntimeException('Social registration eagerly loaded ' . $class); }
     }
     if (session_status() !== PHP_SESSION_NONE || class_exists(\TinyCat\Database\Connection::class, false)) { throw new RuntimeException('Social registration opened runtime state.'); }
@@ -50,7 +50,7 @@ $assert($matched && ob_get_clean() === 'kernel', 'The minimal app dispatches a t
 $assert($identityCalls === 0, 'Public routing does not resolve an identity.');
 $resolver = (new ReflectionProperty($api, 'currentUser'))->getValue($api);
 $assert($resolver()['id'] === 7 && $identityCalls === 1, 'The API receives the supplied identity resolver.');
-foreach (['TinyCat\\Social\\Profiles\\Registration', 'TinyCat\\Core\\Identity\\Authentication', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Http\\Session'] as $class) {
+foreach (['TinyCat\\Social\\Profiles\\Registration', 'TinyCat\\Core\\Identity\\Authentication', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Http\\Session'] as $class) {
     $assert(!class_exists($class, false), 'Minimal runtime did not load ' . $class);
 }
 $configFile = str_replace('\\', '/', dirname(__DIR__, 3) . '/config.php');

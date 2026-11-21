@@ -10,7 +10,7 @@ use TinyCat\Core\Identity\Authentication;
 use TinyCat\Http\Request;
 use TinyCat\Http\Web;
 use TinyCat\Social\Moderation\Restrictions;
-use TinyCat\Social\Presentation\Pages as SitePages;
+use TinyCat\Social\Site\Pages as SitePages;
 use TinyCat\Core\Ui\Site as Presentation;
 use TinyCat\Social\Posts\Feed;
 use TinyCat\Social\Posts\ViewData as StatusViewData;
@@ -29,7 +29,7 @@ final class AuthorPages
         $data = self::authorData($requestedId);
         if ($data === null) { \TinyCat\Core\Runtime\Errors::respond(404); return; }
         if (Request::current()->method() === 'GET' && (int) Web::get('page', 0) > 1) { Web::redirect($data['page']['current'], 301); }
-        \TinyCat\Social\Presentation\PublicPages::render('author', $data);
+        \TinyCat\Social\Site\PublicPages::render('author', $data);
     }
 
     /** @return array<string, mixed>|null */

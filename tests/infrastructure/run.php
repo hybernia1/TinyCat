@@ -120,8 +120,8 @@ $definitions = Router::pageDefinitions('fixture.pages');
 $assert($definitions === [['pattern' => '^/fixture-page/(?:[1-9][0-9]*)$', 'query' => ['q']]], 'Client metadata is derived from the HTTP route and its query allowlist.');
 $throws(static function (): void { Router::registerModule(static function (): void { foreach ([1, 2] as $_) { Router::page('fixture.rejected', '/duplicate-page', static fn (): string => '', static fn (): array => []); } }); }, InvalidArgumentException::class);
 $assert(Router::pageDefinitions('fixture.rejected') === [], 'A rejected provider rolls back page metadata with its HTTP routes.');
-$sourceInput = \TinyCat\Social\Automation\Administration::prepareSourceInput(['bot_user_id' => 3, 'name' => str_repeat("\u{11B}", 60), 'feed_url' => 'https://example.test/feed', 'post_template' => str_repeat("\u{11B}", 1000)]);
-$sourceRules = \TinyCat\Social\Automation\Administration::sourceRules();
+$sourceInput = \TinyCat\Social\Bots\Administration::prepareSourceInput(['bot_user_id' => 3, 'name' => str_repeat("\u{11B}", 60), 'feed_url' => 'https://example.test/feed', 'post_template' => str_repeat("\u{11B}", 1000)]);
+$sourceRules = \TinyCat\Social\Bots\Administration::sourceRules();
 $assert(\TinyCat\Http\Validator::validate($sourceInput, $sourceRules) === [], 'Social source rules accept exact UTF-8 byte limits and supply the declared interval defaults.');
 foreach (['name' => str_repeat("\u{11B}", 61), 'post_template' => str_repeat("\u{11B}", 1001), 'interval_minutes' => 4, 'publication_interval_minutes' => 43201] as $field => $value) {
     $assert(isset(\TinyCat\Http\Validator::validate(array_replace($sourceInput, [$field => $value]), $sourceRules)[$field]), 'Social source rules reject overflow using their shared field definition: ' . $field);

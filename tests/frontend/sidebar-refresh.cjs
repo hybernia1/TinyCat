@@ -25,7 +25,7 @@ const vm = require("node:vm");
   T.site.refresh(document);
   assert.equal(classes.has("is-loading"), true);
   resolve({ data: {} }); await settle(); assertReady();
-  for (const action of ["/api/statuses/42/likes/me", "/api/statuses/42/comments", "/api/statuses/42", "/api/statuses", "/api/users/2/followers/me"]) {
+  for (const action of ["/api/statuses/42/likes/me", "/api/statuses/42/comments", "/api/statuses/42", "/api/statuses", "/api/profiles/2/followers/me"]) {
     const before = requests;
     const event = { target: { getAttribute: name => name === "action" ? action : null } };
     handlers["tinycat:success"](event); handlers["tinycat:success"](event);

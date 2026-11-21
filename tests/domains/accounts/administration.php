@@ -99,7 +99,7 @@ $assert($row(1)['status'] === 'ban' && $row(5)['status'] === 'active', 'Protecti
 $deleted = Administration::delete($actor, $created, ['fixture' => $participant]);
 $assert((int) $deleted['id'] === $created && Connection::find('users', ['id' => $created]) === null && $guardCallbacks === 1, 'Administrative deletion uses registered domain effects');
 $assert(Administration::delete($actor, $created) === null, 'Repeated deletion remains harmless');
-foreach (['TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) { $assert(!class_exists($class, false), 'Administrative domain did not load ' . $class); }
+foreach (['TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) { $assert(!class_exists($class, false), 'Administrative domain did not load ' . $class); }
 $assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'sqlite_sequence'"), 'name') === ['users'], 'Administrative services need only the account table');
 TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $actor) : void {
 $assert(array_keys(TinyCat\Support\AdminViews::admin_user_statuses()) === Administration::statuses(), 'UI status labels match domain status policy');

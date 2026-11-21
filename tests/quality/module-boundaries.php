@@ -64,6 +64,10 @@ foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/
     $assert(!preg_match('/(?:Core::|use Core;|\bwants_partial\s*\(|\bapi_payload\s*\(|X_TINYCAT_VIEW|legacyPresentation|legacyAliases)/', $source), 'Removed adapter or HTML negotiation remains: ' . $file->getPathname());
     $assert(!preg_match('/^function &?\w+\(/m', $source), 'Application globals must have a module owner: ' . $file->getPathname());
 }
+foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/App/Modules/Social/src', FilesystemIterator::SKIP_DOTS)) as $file) {
+    if ($file->getExtension() !== 'php' || $file->getBasename() === 'Api.php') { continue; }
+    $assert(preg_match('/\$api->(?:get|post|put|patch|delete)\(/', (string) file_get_contents($file->getPathname())) !== 1, 'Social JSON endpoints belong to an Api class: ' . $file->getPathname());
+}
 $entry = (string) file_get_contents($root . '/index.php');
 $assert(!str_contains($entry, 'Router::route(') && !str_contains($entry, 'Api::register('), 'Entry point only composes and dispatches the application.');
 $lock = json_decode((string) file_get_contents($root . '/composer.lock'), true);

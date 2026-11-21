@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 use TinyCat\Support\Cache;
 use TinyCat\Support\Config;
 use TinyCat\Support\Paths;
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['driver' => 'filesystem'], 'database' => ['driver' => 'sqlite']]);
@@ -61,7 +61,7 @@ $database->exec('CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id
 $database->exec("INSERT INTO users VALUES (1, 'fixture-bot', 'bot', 'active')");
 $database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, interval_minutes) VALUES (1, 1, 1, 'http://127.0.0.1/blocked-feed', 60)");
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['bots.cleanup_last_run' => time()]);
-$feedTask = \TinyCat\Social\Automation\Importer::scheduledTasks()['feeds']['runner'];
+$feedTask = \TinyCat\Social\Bots\Importer::scheduledTasks()['feeds']['runner'];
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
 $assert(!$result['ok'] && $result['status'] === 'failed' && $result['summary']['summary']['error'] === 1, 'A failed feed import makes the cron result fail instead of claiming success.');
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
