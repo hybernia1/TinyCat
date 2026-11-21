@@ -99,6 +99,7 @@ PHP;
     $baseline = $compile();
     Resources::withCatalog($modules->catalog, static function () use ($assert, $compile): void {
         $files = $compile();
+        $assert(\TinyCat\Core\Health\ServiceProvider::taskLabels()['pilot.notes.refresh']['label'] === 'pilot.notes.refresh', 'Task IDs without explicit admin titles remain literal labels, never required translation keys');
         $manifest = json_decode($files['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR);
         $scope = $manifest['clients']['/pilot/notes'];
         $assert(str_contains($files[ltrim($scope['app']['raw'], '/')], 'pilotNotes'), 'Co-located module JavaScript is bundled');

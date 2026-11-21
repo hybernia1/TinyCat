@@ -24,11 +24,14 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
         );
     }
 
-    /** @return array<string, array{label: array{t: string}}> */
+    /** @return array<string, array{label: string|array{t: string}}> */
     public static function taskLabels(): array
     {
         $labels = [];
-        foreach (\TinyCat\Core\Modules\Registrations::current()->entries->tasks as $task) { $labels[$task->id] = ['label' => ['t' => $task->definition()['admin']['title']]]; }
+        foreach (\TinyCat\Core\Modules\Registrations::current()->entries->tasks as $task) {
+            $title = $task->admin['title'] ?? '';
+            $labels[$task->id] = ['label' => $title !== '' ? ['t' => $title] : $task->id];
+        }
         return $labels;
     }
 
