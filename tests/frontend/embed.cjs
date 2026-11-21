@@ -12,7 +12,7 @@ const frame = { src: "https://tinycat.test/status/1/embed", height: "600", conte
 const document = { baseURI: "https://blog.test/", readyState: "complete", querySelectorAll() { return [frame]; } };
 const window = { addEventListener(type, handler) { listeners[type] = handler; } };
 const context = vm.createContext({ window, document, URL, Number, Math });
-const parentScript = fs.readFileSync(path.resolve(__dirname, "../../assets/embed.js"), "utf8");
+const parentScript = fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/embed/embed.js"), "utf8");
 vm.runInContext(parentScript, context);
 check(handshakes.length === 1 && handshakes[0].origin === "https://tinycat.test", "An async helper requests the initial height from the expected origin.");
 function resize(origin, eventSource, height) { listeners.message({ origin, source: eventSource, data: { type: "tinycat:embed:resize", height } }); }
@@ -32,7 +32,7 @@ const parent = { postMessage(message, origin) { messages.push(message); origins.
 const childWindow = { parent, location: new URL("https://tinycat.test/status/1/embed" + hash), addEventListener(type, handler) { childListeners[type] = handler; } };
 childWindow.window = childWindow;
 const childDocument = { referrer, documentElement: { dataset: { embedMaxheight: "300" } }, querySelector() { return { getBoundingClientRect() { return { height: 450 }; } }; }, addEventListener(type, handler) { childListeners[type] = handler; } };
-vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../../assets/embed-frame.js"), "utf8"), { window: childWindow, document: childDocument, URL, URLSearchParams, Number, Math });
+vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/embed/embed-frame.js"), "utf8"), { window: childWindow, document: childDocument, URL, URLSearchParams, Number, Math });
 return { childListeners, messages, origins, parent };
 }
 const { childListeners, messages, origins, parent } = child('https://blog.test/article?private=value');
@@ -79,7 +79,7 @@ function player(url, origin, kind, audioUrl = "") {
   const root = { dataset: { audioUrl, playerUrl: url, playerOrigin: origin, playerKind: kind, playerHeight: "166", playerAutoplayParam: "auto_play", playerAutoplayValue: "true" }, querySelector() { return button; }, replaceChildren(frame) { mounted = frame; } };
   const win = { location: new URL("https://tinycat.test") }; win.parent = win;
   const doc = { querySelectorAll() { return [root]; }, getElementById() { return null; }, createElement(tag) { return { tag, setAttribute() {}, playCalls: 0, play() { this.playCalls++; return Promise.resolve(); } }; } };
-  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../../assets/embed-frame.js"), "utf8"), { window: win, document: doc, URL, Number, Math });
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/embed/embed-frame.js"), "utf8"), { window: win, document: doc, URL, Number, Math });
   check(!mounted, "External players stay unloaded before interaction.");
   load(); return mounted;
 }

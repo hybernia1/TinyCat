@@ -58,8 +58,7 @@ $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($assetR
 foreach ($iterator as $entry) {
     if (!$entry->isFile()) { continue; }
     $relative = str_replace('\\', '/', substr($entry->getPathname(), strlen($root) + 1));
-    if (str_starts_with($relative, 'assets/build/') || $relative === 'assets/styles/index.css') { continue; }
-    if (str_starts_with($relative, 'assets/modules/') && !\TinyCat\Core\Modules\Resources::ownsModuleAsset($entry->getPathname())) { continue; }
+    if (str_starts_with($relative, 'assets/build/')) { continue; }
     if (in_array($entry->getExtension(), ['js', 'css'], true) && !isset($reachable[$relative])) { $report['unreachable'][] = $relative; }
 }
 }

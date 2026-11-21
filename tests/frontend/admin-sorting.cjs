@@ -22,7 +22,7 @@ const window = {
   history: { pushState(_state, _title, url) { window.location = new URL(url, window.location); } }, addEventListener() {}
 };
 const context = vm.createContext({ window, document, URL, FormData, AbortController });
-for (const file of ["assets/core/request-lifecycle.js", "assets/core/navigation.js", "assets/ui/list-navigation.js", "assets/ui/ajax-bindings.js"]) {
+for (const file of ["App/Core/Ui/assets/runtime/request-lifecycle.js", "App/Core/Ui/assets/runtime/navigation.js", "App/Core/Ui/assets/list-navigation.js", "App/Core/Ui/assets/ajax-bindings.js"]) {
   vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
 }
 T.lists.register("/admin/users", { target: "#users-list", keepQuery: ["sort", "direction"], url: () => "/api/users" + window.location.search, apply: (target, data) => T.modules.result({}, data, target) });

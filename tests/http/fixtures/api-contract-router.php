@@ -10,13 +10,17 @@ if (preg_match('~^/uploads/avatars/[0-9]+[.]webp$~', $assetPath) === 1
     return false;
 }
 
-if (in_array($assetPath, ['/assets/fallback/image.svg', '/assets/fallback/avatar.svg'], true)) { return false; }
 
 // This router is used only by the isolated HTTP contract test, never by production.
 define('TINYCAT', true);
 ini_set('error_log', 'php://stderr');
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 
+
+if (preg_match('~^/cache/assets/([A-Za-z0-9._-]+[.]svg)$~D', $assetPath, $asset)) {
+    $file = \TinyCat\Support\Cache::file($asset[1], 'assets');
+    if (is_file($file)) { header('Content-Type: image/svg+xml'); readfile($file); return; }
+}
 
 $database = new PDO('sqlite:' . (string) getenv('TINYCAT_API_TEST_DATABASE'));
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

@@ -43,24 +43,32 @@ return static function (): array {
             return ['raw' => $emit($prefix, $source, $type), 'min' => $emit($prefix . '-min', $minified[$key], $type)];
         };
         $runtime = $variants('runtime', \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\ClientAssets::runtime()));
-        $icon = $emit('icons', \TinyCat\Support\AssetGraph::read('assets/icons.svg'), 'svg');
-        $manifest['assets']['icons.svg'] = ['raw' => $icon, 'min' => $icon];
+        $asset = static function (string $path) use (&$asset, &$manifest, $emit, $variants): string {
+            if (isset($manifest['assets'][$path])) { return $manifest['assets'][$path]['raw']; }
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $source = match ($type) {
+                'css' => \TinyCat\Support\AssetGraph::stylesheet([$path], $asset),
+                'js' => \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order([$path])),
+                default => \TinyCat\Support\AssetGraph::read($path),
+            };
+            if (in_array($type, ['css', 'js'], true)) { $output = $variants('standalone-' . pathinfo($path, PATHINFO_FILENAME), $source, $type); }
+            else { $url = $emit('asset-' . pathinfo($path, PATHINFO_FILENAME), $source, $type); $output = ['raw' => $url, 'min' => $url]; }
+            $manifest['assets'][$path] = $output;
+            return $output['raw'];
+        };
+        foreach (\TinyCat\Support\ClientAssets::standalone() as $path) { $asset($path); }
         foreach (\TinyCat\Support\ClientAssets::scopes() as $path) {
             $client = [
                 'runtime' => $runtime,
                 'app' => $variants('app', \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($path), \TinyCat\Support\ClientAssets::runtime()))),
                 'components' => $emit('components', \TinyCat\Support\ClientAssets::componentScript($path)),
                 'catalogs' => [],
-                'styles' => $variants('styles', \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles($path)), 'css'),
+                'styles' => $variants('styles', \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles($path), $asset), 'css'),
             ];
             foreach ($catalogs as $locale => $catalog) {
                 $client['catalogs'][$locale] = $emit('i18n-' . $locale, 'window.TinyCat.i18n.register(' . \TinyCat\Support\ClientAssets::encode($locale) . ',' . \TinyCat\Support\ClientAssets::encode((object) \TinyCat\Support\ClientAssets::catalog($path, $locale, $catalog['app'])) . ');');
             }
             $manifest['clients'][$path] = $client;
-        }
-        foreach (\TinyCat\Support\ClientAssets::standalone() as $path) {
-            $type = pathinfo($path, PATHINFO_EXTENSION);
-            $manifest['assets'][substr($path, strlen('assets/'))] = $variants('standalone-' . pathinfo($path, PATHINFO_FILENAME), \TinyCat\Support\AssetGraph::read($path), $type);
         }
         $files['assets/build/manifest.json'] = \TinyCat\Support\ClientAssets::encode($manifest);
         ksort($files);

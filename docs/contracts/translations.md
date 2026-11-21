@@ -91,7 +91,7 @@ within each module before merging, so moving a key in only one language fails.
 There is no central registry mapping domains to namespaces.
 
 JavaScript dependencies are explicit `translations` lists in existing module
-manifests. Shared controls declare their common messages in `assets/ui/module.json`;
+manifests. Shared controls declare their common messages in `App/Core/Ui/assets/module.json`;
 feature modules do not repeat those shared declarations. Component definitions
 contribute static `t` references transitively through their selected components.
 For example, a module can declare `"translations": ["users.edit_user"]`; an empty

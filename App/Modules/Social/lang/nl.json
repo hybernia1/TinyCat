@@ -310,7 +310,6 @@
     "filter_links": "Links",
     "filter_text": "Alleen tekst",
     "feed_empty_filtered": "Geen berichten komen overeen met dit filter.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} bericht",
       "few": "{count} berichten",

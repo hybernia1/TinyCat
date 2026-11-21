@@ -34,15 +34,15 @@ echo '<!doctype html><html data-ui-density="compact"><head><meta charset="utf-8"
 <script>
 window.TinyCat = { lifecycle: { register: function (name, hooks) { if (hooks.init) hooks.init(); if (name === 'tooltips') { window.tooltipService = hooks; hooks.hydrate(document); } } } };
 window.TinyCat.i18n = { t: key => ({'common.menu':'Menu', 'common.sort':'Řazení'})[key] || key };
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/dom.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/icons.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/component-renderer.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/dom.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/icons.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/component-renderer.js')) ?>
 window.TinyCat.components.register(<?= json_encode(array_intersect_key(TinyCat\Support\Components::templates(), array_flip(['ui/filter-chip', 'ui/list-summary'])), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>);
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/popovers.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/filters.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tooltips.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/component-builders.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tabs.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/popovers.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/filters.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/tooltips.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/component-builders.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/tabs.js')) ?>
 let escapedToModal = 0;
 document.addEventListener('keydown', event => { if (event.key === 'Escape') escapedToModal++; }, true);
 (async function () {

@@ -48,7 +48,7 @@ final class Errors
                 || preg_match('~\.(?:png|jpe?g|gif|webp|avif|svg|ico)$~iD', $path) === 1;
             header('Content-Type: ' . ($image ? 'image/svg+xml' : 'text/plain') . '; charset=UTF-8');
             if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'HEAD') {
-                echo $image ? (string) file_get_contents(dirname(__DIR__, 3) . '/assets/fallback/' . (str_starts_with($path, '/avatar/') ? 'avatar' : 'image') . '.svg') : $title;
+                echo $image ? (string) file_get_contents(dirname(__DIR__, 3) . '/App/Core/Ui/assets/fallback/' . (str_starts_with($path, '/avatar/') ? 'avatar' : 'image') . '.svg') : $title;
             }
             return;
         }

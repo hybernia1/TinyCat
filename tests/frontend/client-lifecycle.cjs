@@ -9,7 +9,7 @@ function lifecycle() {
     translation:{hydrate() {}, dispose() {}}, editor:{hydrate() {calls.hydrate++;}, hideSuggestions() {calls.editorDispose++;}}
   }}, status:{result() {}, navigation:{}, controllers:{feed:{initStatusFeedLazy() {}, dispose() {}},actions:{prepareForms() {}},comments:{}}}};
   const context = vm.createContext({window:{TinyCat:T},document:{}});
-  for (const file of ['assets/core/modules.js','assets/ui/content/presentation.js','assets/ui/content/editor-entry.js','assets/ui/content/index.js','App/Modules/Social/assets/status/index.js']) load(context,file);
+  for (const file of ['App/Core/Ui/assets/runtime/modules.js','App/Core/Ui/assets/content/presentation.js','App/Core/Ui/assets/content/editor-entry.js','App/Core/Ui/assets/content/index.js','App/Modules/Social/assets/status/index.js']) load(context,file);
   T.modules.hydrate({}); T.modules.dispose({});
   assert.deepEqual(calls,{hydrate:1,editorDispose:1,imageDispose:1,mediaDispose:1},'Each shared capability has exactly one lifecycle owner');
 }
@@ -40,7 +40,7 @@ async function composer(outcome) {
   const node={dataset:{},isConnected:true,closest:()=>null,matches:s=>s==='[data-status-image]'};
   const T={dom:{find:s=>s==='[data-status-image-input]'?input:s==='[data-status-image-preview]'?preview:null,all:()=>[]},publishing:{controllers:{}},navigation:{},
     images:{prepare:()=>new Promise((yes,no)=>{resolve=yes;reject=no;}),replace(){replacements++;}},toasts:{show(){toasts++;}},i18n:{t:k=>k}};
-  const context=vm.createContext({window:{TinyCat:T}}); load(context,'assets/ui/content/media.js');
+  const context=vm.createContext({window:{TinyCat:T}}); load(context,'App/Core/Ui/assets/content/media.js');
   const media=T.publishing.controllers.media; media.initStatusImageRoot(node); const pending=input.change(); media.disposeImages(node); node.isConnected=false;
   if(outcome==='success') resolve({}); else reject(new Error('failed'));
   await pending; assert.equal(replacements,0); assert.equal(toasts,0);
@@ -52,7 +52,7 @@ async function upload(outcome) {
   const T={dom:{all:(_s,scope)=>scope===input?[]:[input]},lifecycle:{register(_name,value){service=value;}},toasts:{show(){toasts++;}},i18n:{t:k=>k}};
   const document={createElement:()=>({getContext:()=>({drawImage(){}}),toBlob:fn=>fn({size:1,type:'image/webp'})})};
   const context=vm.createContext({window:{TinyCat:T,DataTransfer:Transfer,createImageBitmap:()=>new Promise((yes,no)=>{resolve=yes;reject=no;})},document,DataTransfer:Transfer,File:class {}});
-  load(context,'assets/ui/image-uploads.js'); service.hydrate({}); const pending=input.change(); service.dispose(input);input.isConnected=false;
+  load(context,'App/Core/Ui/assets/image-uploads.js'); service.hydrate({}); const pending=input.change(); service.dispose(input);input.isConnected=false;
   if(outcome==='success') resolve({width:1,height:1,close(){}});
   else {reject(new Error('failed'));await Promise.resolve();reject(new Error('retry failed'));}
   await pending; assert.equal(replacements,0);assert.equal(toasts,0);

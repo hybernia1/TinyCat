@@ -83,7 +83,7 @@ final class Embed
     /** @param array<string, mixed> $item */
     private static function code(array $item): string
     {
-        return self::iframe($item) . "\n" . '<script async src="' . Html::e(Presentation::absolute_url(Assets::asset('embed.js'))) . '"></script>';
+        return self::iframe($item) . "\n" . '<script async src="' . Html::e(Presentation::absolute_url('/assets/embed.js')) . '"></script>';
     }
 
     /** @return array<string, mixed>|null */
@@ -151,7 +151,7 @@ final class Embed
             'imageAlt' => \TinyCat\Social\Posts\Images::status_image_alt_text($item),
             'imageWidth' => (int) ($item['image_width'] ?? 0), 'imageHeight' => (int) ($item['image_height'] ?? 0),
             'publishedAt' => Dates::dateIso((string) $item['published_at']), 'publishedLabel' => Dates::displayDateTime((string) $item['published_at']),
-            'styleUrl' => Assets::asset('embed.css'), 'scriptUrl' => Assets::asset('embed-frame.js'),
+            'styleUrl' => Assets::asset('App/Modules/Social/assets/embed/embed.css'), 'scriptUrl' => Assets::asset('App/Modules/Social/assets/embed/embed-frame.js'),
             'share' => $share, 'maxHeight' => $height,
             'code' => self::code($item),
         ], dirname(__DIR__, 2) . '/templates/status');

@@ -17,7 +17,7 @@ const source = fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/as
     const window = { TinyCat: T, location: new URL("https://tinycat.test/search"), innerHeight: 800 };
     T.content = { remove: node => node.remove() };
     const context = vm.createContext({ window, document: {}, URL, console, AbortController });
-    vm.runInContext(fs.readFileSync(path.join(__dirname, "../../assets/core/request-lifecycle.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
+    vm.runInContext(fs.readFileSync(path.join(__dirname, "../../App/Core/Ui/assets/runtime/request-lifecycle.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
     vm.runInContext(source, context, { filename: "feed.js" });
     const feed = T.status.controllers.feed;
     await feed.loadStatusFeedMore(control);

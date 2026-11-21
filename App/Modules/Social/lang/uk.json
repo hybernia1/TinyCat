@@ -310,7 +310,6 @@
     "filter_links": "Посилання",
     "filter_text": "Лише текст",
     "feed_empty_filtered": "Немає дописів за цим фільтром.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} допис",
       "few": "{count} дописи",

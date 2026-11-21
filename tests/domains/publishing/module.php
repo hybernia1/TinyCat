@@ -7,7 +7,6 @@ if (($argv[1] ?? '') !== '--isolated') {
     $excluded = ['App/Core/Support/compiled', 'assets/build'];
     $copy = static function (string $relative) use (&$copy, $sourceRoot, $workspace, $excluded): void {
         if (in_array($relative, $excluded, true)) { return; }
-        if (preg_match('~^assets/modules/(?:status|users|bots|notifications|moderation|settings|site|search)$~', $relative)) { return; }
         $source = $sourceRoot . '/' . $relative; $target = $workspace . '/' . $relative;
         if (is_file($source)) { copy($source, $target); return; }
         if (!is_dir($target)) { mkdir($target, 0700, true); }

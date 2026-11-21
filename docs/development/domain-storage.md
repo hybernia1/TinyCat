@@ -49,7 +49,7 @@ Identitu určuje vlastník a konkrétní endpoint, nikoli globální číselný 
 | `Core/Database`: transakce a stabilní kurzor | Dotazy, řádkové zámky a cizí klíče vlastní funkce |
 | `Core/Discovery`: hledání, sitemap a oEmbed | Viditelnost a kanonická URL svého výsledku |
 
-Sdílené soubory v `assets/ui/content/` a historická ID komponent
+Sdílené soubory v `App/Core/Ui/assets/content/` a historická ID komponent
 `publishing.*` zajišťují kompatibilní UI. Neznamenají službu ani modul Publishing.
 Nový modul nedeklaruje závislost `tinycat.publishing`.
 

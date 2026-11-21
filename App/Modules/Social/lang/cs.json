@@ -310,7 +310,6 @@
     "filter_links": "Odkazy",
     "filter_text": "Pouze text",
     "feed_empty_filtered": "Tomuto filtru neodpovídají žádné příspěvky.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} příspěvek",
       "few": "{count} příspěvky",

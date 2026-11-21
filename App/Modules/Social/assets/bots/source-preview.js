@@ -1,8 +1,8 @@
 // @component-owned: structure is declared in owner catalogs.
-import "../../../../../assets/core/lifecycle.js";
-import "../../../../../assets/core/component-renderer.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/form-requests.js";
+import "../../../../Core/Ui/assets/runtime/lifecycle.js";
+import "../../../../Core/Ui/assets/runtime/component-renderer.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/form-requests.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui, bindings = new WeakMap(), serial = 0;

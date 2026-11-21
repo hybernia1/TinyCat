@@ -1,7 +1,8 @@
 [
   {
     "routes": [
-      "public"
+      "public",
+      "/notifications"
     ],
     "components": [
       "notifications/items",

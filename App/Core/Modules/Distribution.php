@@ -9,8 +9,6 @@ use TinyCat\Database\ModuleSchemas;
 /** Signed product identity and module plan; parsing never loads staged PHP. */
 final class Distribution
 {
-    /** @var array<string, list<string>> */
-    private static array $assetRoots = [];
     /** An immutable snapshot of the last successful data-only validation. */
     private static ?string $validated = null;
 
@@ -258,20 +256,6 @@ final class Distribution
     public static function includes(string $relative, array $plan): bool
     {
         if ($relative === PackageRegistry::FILE) { return false; }
-        if (str_starts_with($relative, 'assets/modules/')) {
-            $base = \TinyCat\Support\Paths::basePath();
-            $key = $base . ':' . hash('sha256', json_encode($plan['selection'], JSON_THROW_ON_ERROR));
-            if (!isset(self::$assetRoots[$key])) {
-                $prefix = str_replace('\\', '/', (string) realpath($base)) . '/';
-                self::$assetRoots[$key] = [];
-                foreach (Loader::fromSelection($base, $plan['selection'])->catalog->definitions() as $definition) {
-                    if (!isset($definition->resources['assets'])) { continue; }
-                    $directory = str_replace('\\', '/', dirname($definition->resources['assets'])) . '/';
-                    if (str_starts_with($directory, $prefix)) { self::$assetRoots[$key][] = substr($directory, strlen($prefix)); }
-                }
-            }
-            return array_any(self::$assetRoots[$key], static fn (string $root): bool => str_starts_with($relative, $root));
-        }
         $roots = [];
         foreach ($plan['selection'] as $binding) { $roots[] = str_ends_with($binding, '.json') ? dirname(str_replace('\\', '/', $binding)) . '/' : 'App/Modules/' . explode('\\', $binding)[1] . '/'; }
         if (str_starts_with($relative, 'App/Modules/')) { return array_any($roots, static fn (string $root): bool => str_starts_with($relative, $root)); }

@@ -25,13 +25,13 @@ $reject = static function (callable $action, string $message) use ($assert): voi
 };
 $normalize = static fn (array $files): array => array_map(static fn (string $file): string => str_replace('\\', '/', $file), $files);
 $resourceRoots = [
-    'App/Core/Identity', 'assets/modules/admin', 'App/Core/Health', 'App/Core/Installation',
+    'App/Core/Identity', 'App/Core/Ui/assets/admin', 'App/Core/Health', 'App/Core/Installation',
     'App/Core/Mail', 'App/Core/Notifications', 'App/Core/Publishing', 'App/Core/Tasks',
     'App/Core/Security', 'App/Core/Settings', 'App/Modules/Social', 'App/Core/Updates',
 ];
-$ownedFiles = static fn (string $name): array => array_values(array_filter(array_map(static fn (string $path): string => $root . '/' . $path . ($path === 'assets/modules/admin' ? '/' : '/assets/') . $name, $resourceRoots), is_file(...)));
-$assert($normalize(ClientAssets::manifests()) === $normalize([$root . '/assets/ui/module.json', ...$ownedFiles('module.json')]), 'One Social manifest and the explicit framework own the complete ordered asset catalog');
-$assert($normalize(Resources::files('components')) === $normalize([$root . '/assets/ui/components.json', ...$ownedFiles('components.json')]), 'Components use the same framework and functional ownership');
+$ownedFiles = static fn (string $name): array => array_values(array_filter(array_map(static fn (string $path): string => $root . '/' . $path . ($path === 'App/Core/Ui/assets/admin' ? '/' : '/assets/') . $name, $resourceRoots), is_file(...)));
+$assert($normalize(ClientAssets::manifests()) === $normalize([$root . '/App/Core/Ui/assets/module.json', ...$ownedFiles('module.json')]), 'One Social manifest and the explicit framework own the complete ordered asset catalog');
+$assert($normalize(Resources::files('components')) === $normalize([$root . '/App/Core/Ui/assets/components.json', ...$ownedFiles('components.json')]), 'Components use the same framework and functional ownership');
 $expected = [];
 $owners = ['Identity' => 'tinycat.accounts', 'Health' => 'tinycat.health', 'Mail' => 'tinycat.mail', 'Notifications' => 'tinycat.notifications', 'Tasks' => 'tinycat.scheduler', 'Security' => 'tinycat.security', 'Settings' => 'tinycat.settings', 'Support' => 'tinycat.support', 'Ui' => 'tinycat.ui', 'Updates' => 'tinycat.updates', 'Social' => 'tinycat.social'];
 foreach ($owners as $owner => $id) {
@@ -57,7 +57,7 @@ foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/mod
             $scripts = AssetGraph::order(ClientAssets::entries($route));
             $assert(!in_array('App/Core/Identity/assets/admin.js', $scripts, true), $assembly . ': public pages exclude the account list adapter');
             $social = array_filter($scripts, static fn (string $file): bool => str_starts_with($file, 'App/Modules/Social/'));
-            $assert(($social !== []) === isset($selection['tinycat.social']), $assembly . ': Social imports follow explicit activation');
+            $assert(($social !== []) === ($socialSelected && ($route === '/social' || str_starts_with($route, '/status/'))), $assembly . ': Social imports follow activation and the owner page scope');
         }
         foreach (['/admin', '/admin/users', '/admin/bots', '/admin/fixture'] as $route) {
             $assert(in_array('App/Core/Identity/assets/admin.js', AssetGraph::order(ClientAssets::entries($route)), true), $assembly . ': administrative account actions retain the list adapter');
@@ -70,10 +70,10 @@ ClientAssets::definitions('/selection-probe');
 $baselineEmails = TinyCat\Core\Mail\Templates::email_catalog('en');
 
 $name = 'selection-probe-' . bin2hex(random_bytes(6));
-$relative = 'assets/modules/' . $name;
+$relative = 'App/Modules/' . $name;
 $directory = $root . '/' . $relative;
 $unselected = $directory . '-unselected';
-mkdir($directory, 0700);
+mkdir($directory, 0700, true);
 mkdir($directory . '/lang', 0700);
 mkdir($unselected, 0700);
 $saved = [];

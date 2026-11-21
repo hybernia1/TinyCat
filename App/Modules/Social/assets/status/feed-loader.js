@@ -1,14 +1,14 @@
-import "../../../../../assets/core/request-lifecycle.js";
-import "../../../../../assets/ui/content-updates.js";
-import "../../../../../assets/core/dom.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/core/i18n.js";
-import "../../../../../assets/core/lifecycle.js";
-import "../../../../../assets/core/navigation.js";
+import "../../../../Core/Ui/assets/runtime/request-lifecycle.js";
+import "../../../../Core/Ui/assets/content-updates.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/runtime/i18n.js";
+import "../../../../Core/Ui/assets/runtime/lifecycle.js";
+import "../../../../Core/Ui/assets/runtime/navigation.js";
 import "./controller.js";
-import "../../../../../assets/ui/dialogs.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/toasts.js";
+import "../../../../Core/Ui/assets/dialogs.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/toasts.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

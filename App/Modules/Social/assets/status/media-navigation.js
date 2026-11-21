@@ -1,4 +1,4 @@
-import "../../../../../assets/ui/content/media.js";
+import "../../../../Core/Ui/assets/content/media.js";
 import "./controller.js";
 (function () {
   "use strict";

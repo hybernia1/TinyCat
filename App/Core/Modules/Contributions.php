@@ -12,7 +12,6 @@ final readonly class Contributions
      * @param list<TemporaryDirectory> $temporaryDirectories
      * @param list<string> $configOverrides
      * @param list<NotificationType> $notificationTypes
-     * @param list<PageTheme> $themes
      * @param list<EntryPage> $homepages
      * @param list<EntryPage> $dashboards
      * @param list<SettingsSection> $settings
@@ -35,7 +34,6 @@ final readonly class Contributions
         public array $configOverrides = [],
         public array $notificationTypes = [],
         public bool $notificationInbox = false,
-        public array $themes = [],
         public array $homepages = [],
         public array $dashboards = [],
         public array $settings = [],

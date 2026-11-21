@@ -26,11 +26,11 @@ $legacyTranslations = $compiledTranslations; unset($legacyTranslations['selectio
 $deployment = $argv[1] . '/storage/deployment.json';
 mkdir(dirname($deployment)); file_put_contents($deployment, '{}');
 try {
-    $result['deployed_without_resources'] = \TinyCat\Support\CompiledAssets::asset('icons.svg', false) === null && \TinyCat\Support\CompiledTranslations::packages() === null;
+    $result['deployed_without_resources'] = \TinyCat\Support\CompiledAssets::asset('App/Core/Ui/assets/icons.svg', false) === null && \TinyCat\Support\CompiledTranslations::packages() === null;
     $manifest->setValue(null, $legacyAssets); $translationManifest->setValue(null, $legacyTranslations);
-    $result['deployed_legacy_inventory'] = \TinyCat\Support\CompiledAssets::asset('icons.svg', false) === null && \TinyCat\Support\CompiledTranslations::packages() === null;
+    $result['deployed_legacy_inventory'] = \TinyCat\Support\CompiledAssets::asset('App/Core/Ui/assets/icons.svg', false) === null && \TinyCat\Support\CompiledTranslations::packages() === null;
     unlink($deployment);
-    $result['undeployed_legacy_inventory'] = \TinyCat\Support\CompiledAssets::asset('icons.svg', false) !== null && \TinyCat\Support\CompiledTranslations::packages() !== null;
+    $result['undeployed_legacy_inventory'] = \TinyCat\Support\CompiledAssets::asset('App/Core/Ui/assets/icons.svg', false) !== null && \TinyCat\Support\CompiledTranslations::packages() !== null;
 } finally {
     if (is_file($deployment)) { unlink($deployment); }
     rmdir(dirname($deployment));

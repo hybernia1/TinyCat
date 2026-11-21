@@ -20,7 +20,7 @@ if (($argv[1] ?? '') === '--framework') {
 if (($argv[1] ?? '') === '--social') {
     $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json']);
     \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['dsn' => 'sqlite::memory:']]), $loader);
-    foreach ([\TinyCat\Social\Bots\Pages::class, \TinyCat\Social\Bots\Resource::class, \TinyCat\Social\Posts\AuthorPages::class, \TinyCat\Social\Profiles\Repository::class, \TinyCat\Social\Posts\Pages::class, \TinyCat\Social\Posts\Embed::class, \TinyCat\Social\Site\Pages::class, \TinyCat\Social\Site\Layout::class, \TinyCat\Social\Site\Discovery::class] as $class) {
+    foreach ([\TinyCat\Social\Bots\Pages::class, \TinyCat\Social\Bots\Resource::class, \TinyCat\Social\Posts\AuthorPages::class, \TinyCat\Social\Profiles\Repository::class, \TinyCat\Social\Posts\Pages::class, \TinyCat\Social\Posts\Embed::class, \TinyCat\Social\Site\Pages::class, \TinyCat\Social\Site\Discovery::class] as $class) {
         if (class_exists($class, false)) { throw new RuntimeException('Social registration eagerly loaded ' . $class); }
     }
     if (session_status() !== PHP_SESSION_NONE || class_exists(\TinyCat\Database\Connection::class, false)) { throw new RuntimeException('Social registration opened runtime state.'); }
@@ -64,12 +64,6 @@ $assert($policyCalls === 0, 'Registering a custom access policy does not authori
 $assert($policyCalls === 1, 'Custom authorization is supplied without a core domain switch.');
 try { $api->get('/_unknown-policy', static fn (): array => [], 'fixture.unknown'); throw new RuntimeException('Unknown access policy accepted.'); }
 catch (LogicException) { $assert(true, 'Unknown access policy is rejected.'); }
-$renders = 0;
-\TinyCat\Core\Ui\Page::provide('fixture.one', static function (array $page, string $content) use (&$renders): void { $renders++; echo $content; });
-try { \TinyCat\Core\Ui\Page::provide('fixture.two', static function (array $page, string $content): void {}); throw new RuntimeException('Conflicting presentation accepted.'); }
-catch (LogicException) { $assert($renders === 0, 'Presentation registration stays lazy and rejects conflicting owners.'); }
-ob_start(); \TinyCat\Core\Ui\Page::render([], 'surface');
-$assert(ob_get_clean() === 'surface' && $renders === 1, 'The shared page uses its selected presentation provider.');
 try { \TinyCat\Core\Runtime\Application::boot(new \TinyCat\Core\Runtime\Context()); throw new RuntimeException('Duplicate boot was accepted.'); }
 catch (LogicException) { $assert(\TinyCat\Core\Modules\Resources::revision() === $revision, 'Duplicate boot fails before changing shared state.'); }
 try { \TinyCat\Core\Runtime\Application::start(); throw new RuntimeException('Duplicate start was accepted.'); }

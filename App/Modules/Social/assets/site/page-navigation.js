@@ -1,9 +1,9 @@
-import "../../../../../assets/ui/document-navigation.js";
-import "../../../../../assets/core/page-navigation.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/core/component-renderer.js";
-import "../../../../../assets/core/lifecycle.js";
-import "../../../../../assets/ui/dialogs.js";
+import "../../../../Core/Ui/assets/document-navigation.js";
+import "../../../../Core/Ui/assets/runtime/page-navigation.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/runtime/component-renderer.js";
+import "../../../../Core/Ui/assets/runtime/lifecycle.js";
+import "../../../../Core/Ui/assets/dialogs.js";
 (function () {
   var T = window.TinyCat, sidebar = null;
   function supported(url) {

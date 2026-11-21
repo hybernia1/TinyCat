@@ -79,7 +79,7 @@ final class Pages
         echo \TinyCat\Core\Ui\Document::frame([
             'title' => \TinyCat\Support\Localization::t('install.title') . ' | TinyCat',
             'htmlAttributes' => ['lang' => \TinyCat\Support\Localization::locale()],
-            'bodyAttributes' => ['data-icon-sprite' => \TinyCat\Support\Assets::asset('icons.svg')],
+            'bodyAttributes' => ['data-icon-sprite' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/icons.svg')],
             'csrfToken' => \TinyCat\Core\Security\Csrf::token(),
             'styles' => \TinyCat\Support\ClientAssets::styles('/install'),
             'scripts' => \TinyCat\Support\ClientAssets::scripts('/install'),

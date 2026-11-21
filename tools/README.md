@@ -130,7 +130,7 @@ See [filesystem storage](../docs/development/storage.md#development-outputs).
 ### Status symbols
 
 `php tools/assets/status-icons.php --write` refreshes the marked generated CSS-mask
-section in the core UI tokens from the four canonical symbols in `assets/icons.svg`.
+section in the core UI tokens from the four canonical symbols in `App/Core/Ui/assets/icons.svg`.
 Without `--write` it checks freshness. The existing UI-contract check also verifies
 this output. Do not edit generated SVG mask data by hand. Runtime uses ordinary
 CSS and needs no generator, JavaScript hydration or additional image requests.

@@ -1,7 +1,7 @@
-import "../../../../assets/core/api-client.js";
-import "../../../../assets/core/lifecycle.js";
-import "../../../../assets/ui/component-builders.js";
-import "../../../../assets/ui/form-state.js";
+import "../../Ui/assets/runtime/api-client.js";
+import "../../Ui/assets/runtime/lifecycle.js";
+import "../../Ui/assets/component-builders.js";
+import "../../Ui/assets/form-state.js";
 (function () {
   var T = window.TinyCat, states = new WeakMap(), sequence = 0;
   function fields(root) { return (root || document).querySelectorAll("input[data-email-check-url]"); }

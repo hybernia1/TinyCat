@@ -1,13 +1,18 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Support\AssetGraph;
 
-$directory = __DIR__ . '/../../assets/.graph-test-' . bin2hex(random_bytes(6));
-mkdir($directory);
-$relative = 'assets/' . basename($directory);
+require_once __DIR__ . '/../../tools/support/workspace.php';
+$directory = \TinyCat\Tools\Workspace::directory('tests/asset-graph-' . bin2hex(random_bytes(6)));
+$relative = '.work/tests/' . basename($directory);
+$original = \TinyCat\Core\Modules\Resources::catalog();
+file_put_contents($directory . '/module.json', '[]');
+$owner = \TinyCat\Core\Modules\Definition::fromMetadata((object) ['format' => 1, 'coreApi' => 1, 'id' => 'fixture.asset-graph', 'namespace' => 'Fixture\\AssetGraph\\', 'resources' => (object) ['assets' => 'module.json']], $directory);
+\TinyCat\Core\Modules\Resources::configure(new \TinyCat\Core\Modules\Catalog([...$original->definitions(), $owner]));
 $checks = 0;
 $reject = static function (callable $operation) use (&$checks): void {
     try { $operation(); } catch (RuntimeException) { $checks++; return; }
@@ -27,9 +32,19 @@ try {
     $reject(static fn () => AssetGraph::resolve($relative . '/a.js', '../../App/Core/Runtime/Application.php'));
     file_put_contents($directory . '/b.js', 'export const unsupported = true;');
     $reject(static fn () => AssetGraph::javascript([$relative . '/b.js']));
+    file_put_contents($directory . '/image.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>');
+    file_put_contents($directory . '/theme.css', '.example { background: url("./image.svg"); }');
+    $css = AssetGraph::stylesheet([$relative . '/theme.css']);
+    if (!str_contains($css, '/cache/assets/asset-image.') || str_contains($css, './image.svg')) { throw new RuntimeException('Runtime CSS asset URLs were not rebased.'); }
+    $checks++;
+    $compiled = AssetGraph::stylesheet([$relative . '/theme.css'], static fn (string $path): string => '/assets/build/image.fixture.svg');
+    if (!str_contains($compiled, '/assets/build/image.fixture.svg')) { throw new RuntimeException('Build CSS does not use the same asset resolver.'); }
+    $checks++;
 } finally {
+    \TinyCat\Core\Modules\Resources::configure($original);
     unlink($directory . '/a.js');
     unlink($directory . '/b.js');
+    foreach (['module.json', 'image.svg', 'theme.css'] as $file) { if (is_file($directory . '/' . $file)) { unlink($directory . '/' . $file); } }
     rmdir($directory);
 }
 echo "PASS asset dependency ordering and rejection ({$checks} checks)\n";

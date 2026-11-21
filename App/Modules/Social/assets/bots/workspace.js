@@ -1,10 +1,10 @@
 // @component-owned: structure is declared in owner catalogs.
-import "../../../../../assets/ui/content-updates.js";
-import "../../../../../assets/ui/list-navigation.js";
-import "../../../../../assets/core/dom.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/tabs.js";
+import "../../../../Core/Ui/assets/content-updates.js";
+import "../../../../Core/Ui/assets/list-navigation.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/tabs.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui, states = new WeakMap();

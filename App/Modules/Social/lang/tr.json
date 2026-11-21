@@ -310,7 +310,6 @@
     "filter_links": "Bağlantılar",
     "filter_text": "Yalnızca metin",
     "feed_empty_filtered": "Bu filtreye uyan gönderi yok.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} gönderi",
       "few": "{count} gönderi",

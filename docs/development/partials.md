@@ -1,8 +1,10 @@
 # Společné vykreslování UI
 
+Volitelné veřejné layouty popisuje [minimalistické téma](themes.md).
+
 HTML struktura komponent, které se zobrazují při prvním načtení i přes AJAX,
-má jeden zdroj v `App/Modules/<Name>/assets/components.json` a `assets/ui/components.json`. PHP ji vykreslí přes
-`Support/Components`; prohlížeč přes `assets/core/component-renderer.js`.
+má jeden zdroj v `App/Modules/<Name>/assets/components.json` a `App/Core/Ui/assets/components.json`. PHP ji vykreslí přes
+`Support/Components`; prohlížeč přes `App/Core/Ui/assets/runtime/component-renderer.js`.
 Veřejný obsah zůstává v serverovém HTML a nevyžaduje JavaScript.
 
 Definice jsou rozdělené mezi `users`, `status`, `notifications`, `site`, `bots`,
@@ -132,9 +134,9 @@ Nahrazené PHP šablony jsou odstraněné a uvedené v manifestu mazání pro ak
 
 ## Frontend asset ownership
 
-Shared infrastructure lives in `assets/core`, UI primitives in `assets/ui`, and domain controllers, component definitions and styles in `App/Modules/<Name>/assets`. Each asset manifest declares route scopes, entry points, component roots and styles. Local side-effect imports declare JavaScript dependencies; `Support/AssetGraph` validates and orders them, rejects cycles and builds classic script bundles without a browser module waterfall.
+Shared infrastructure lives in `App/Core/Ui/assets/runtime`, UI primitives in `App/Core/Ui/assets`, and domain controllers, component definitions and styles in `App/Modules/<Name>/assets`. Each asset manifest declares route scopes, entry points, component roots and styles. Local side-effect imports declare JavaScript dependencies; `Support/AssetGraph` validates and orders them, rejects cycles and builds classic script bundles without a browser module waterfall.
 
-`assets/styles/index.css` preserves the global cascade order. The selected module styles are composed into one CSS asset. Pages receive four JavaScript assets: shared runtime, selected component definitions, locale catalog and application bundle. Public, administration and installer scopes include their own dependencies. Release compilation produces immutable content hashes and raw/minified variants; development uses the same graph through the asset cache.
+Owner manifests define stylesheet order; there is no central CSS import index. Selected styles are composed into one CSS asset. Pages receive four JavaScript assets: shared runtime, selected component definitions, locale catalog and application bundle. Public, administration and installer scopes include their own dependencies. Release compilation produces immutable content hashes and raw/minified variants; development uses the same graph through the asset cache.
 
 Run `php tools/preflight.php`. Frontend tests exercise source and compiled bundles, minified delivery, scoped ownership and parity against the reviewed CSS baseline. `tests/assets/graph.php` checks graph ordering and invalid imports.
 
@@ -149,11 +151,30 @@ compressed-size and request-count budgets remain unchanged.
 
 ## Kompozice stránek a testovací data
 
-Modulový `Pages` handler připraví data před vykreslením. `Site/Layout` skládá
-hlavičku, veřejný nebo administrační shell a dokument; `LayoutData` připravuje
-metadata, assety a data účtu, `Navigation` navigační položky. `Support/View`
+Modulový `Pages` handler připraví data před vykreslením. `Core/Ui/Page` vybírá
+veřejný nebo administrační shell; `Core/Ui/DocumentData` připravuje
+metadata, assety a data účtu a `Core/Ui/Document` společný dokument. `Support/View`
 zajišťuje vykreslení šablony. `View::part('Module/name', $data)` načítá pouze
 partial daného modulu z `templates/parts`; vstupy jsou explicitní.
+
+## Rozsahy klientských assetů
+
+Manifesty rozlišují společné UI, veřejné funkce a administraci. Rozsah `public`
+je určen pro skutečně společné veřejné prvky, například hlavičku a hledání.
+Konkrétní funkce deklaruje své cesty: Social načítá feed, profily a veřejnou
+navigaci pouze na `/`, `/social`, `/status`, `/author` a `/tag`. Přihlášení,
+pravidla, oznámení a společné hledání tyto zdroje nepotřebují.
+
+Deklarace konkrétních cest zároveň vytváří samostatné rozsahy release buildu.
+Změnu ověřuj ve zdrojové i kompilované/minifikované variantě. Stejný výběr
+určuje JavaScript, CSS, komponentové definice a klientské překlady.
+
+Tabulky deklaruje pojmenovaná schopnost `ui.tables`, kterou automaticky používá
+administrace a instalátor; jiný vlastník ji může výslovně připojit přes `uses`.
+Stránkování seznamů a filtrační chips patří do administračního rozsahu.
+Obsluhu administračních filtrů načítá administrační vstup, nikoli společné
+formulářové helpery. Sdílený transport formulářů a dialogů zůstává použitelný
+na obou površích bez administračních konzumentů.
 
 Pro izolovanou testovací instalaci lze vytvořit vizuální fixture příkazem
 `php tools/data/demo-import.php --profile=small --users=120 --prefix=demo --ui-fixtures=1 --anchor="YYYY-MM-DD HH:MM:SS"`.

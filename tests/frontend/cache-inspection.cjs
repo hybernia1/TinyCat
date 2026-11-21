@@ -3,7 +3,7 @@ const assert = require('node:assert/strict'), fs = require('node:fs'), path = re
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const requests = [], services = {};
 const T = {lifecycle:{register:(name, service)=>{services[name]=service;}},i18n:{t:key=>key}};
-vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../../assets/ui/cache-inspection.js'),'utf8').replace(/^import .*;\r?\n/gm,''), {
+vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../../App/Core/Ui/assets/cache-inspection.js'),'utf8').replace(/^import .*;\r?\n/gm,''), {
   window:{TinyCat:T,location:{href:'https://tinycat.test/admin/cache',origin:'https://tinycat.test'}}, URL, AbortController,
   fetch:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))
 });

@@ -29,8 +29,8 @@ final class StatusIcons
 
 if (PHP_SAPI === 'cli' && realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
     $root = dirname(__DIR__, 2);
-    $path = $root . '/assets/ui/styles/tokens.css';
-    $css = StatusIcons::css((string) file_get_contents($root . '/assets/icons.svg'));
+    $path = $root . '/App/Core/Ui/assets/styles/tokens.css';
+    $css = StatusIcons::css((string) file_get_contents($root . '/App/Core/Ui/assets/icons.svg'));
     $source = (string) file_get_contents($path);
     if (in_array('--write', $argv, true)) {
         $source = (string) preg_replace('~/\* BEGIN GENERATED STATUS ICONS:.*?/\* END GENERATED STATUS ICONS \*/\s*~s', '', $source);

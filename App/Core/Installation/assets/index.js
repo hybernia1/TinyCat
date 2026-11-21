@@ -1,6 +1,6 @@
-import "../../../../assets/core/lifecycle.js";
-import "../../../../assets/ui/form-requests.js";
-import "../../../../assets/ui/toasts.js";
+import "../../Ui/assets/runtime/lifecycle.js";
+import "../../Ui/assets/form-requests.js";
+import "../../Ui/assets/toasts.js";
 (function () {
   "use strict";
   var T = window.TinyCat;

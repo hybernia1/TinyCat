@@ -155,7 +155,11 @@
   },
   {
     "routes": [
-      "public"
+      "public",
+      "/login",
+      "/register",
+      "/recovery",
+      "/logout"
     ],
     "entries": [
       "App/Core/Identity/assets/public.js"

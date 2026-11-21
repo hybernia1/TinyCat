@@ -157,7 +157,7 @@ seznamů, bez vlastního veřejného AJAX rozcestníku.
 
 Klientská navigace stránky registruje
 `TinyCat.navigation.registerPage({ accepts, target, load, apply })`.
-Její klientský vstup importuje volitelný mechanismus `assets/core/page-navigation.js`;
+Její klientský vstup importuje volitelný mechanismus `App/Core/Ui/assets/runtime/page-navigation.js`;
 instalátor a stránky bez této navigace jej nestahují.
 `accepts(url)` vymezuje podporované URL, `target` je selektor obsahu,
 `load(url, signal)` vrací resource s kanonickým `url` a `apply(target, data)`

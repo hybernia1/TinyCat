@@ -55,7 +55,7 @@ final class PublicPages
     public static function render(string $kind, array $data): void
     {
         $resource = self::resource($kind, $data);
-        \TinyCat\Core\Ui\Page::render($data['page'], Components::render('site/public-page', $resource + ['csrf' => \TinyCat\Core\Security\Csrf::token()]));
+        \TinyCat\Core\Ui\Page::render($data['page'] + ['public' => true], Components::render('site/public-page', $resource + ['csrf' => \TinyCat\Core\Security\Csrf::token()]));
     }
 
     /** @param array<string, mixed> $data

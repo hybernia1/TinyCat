@@ -57,7 +57,7 @@ Informační upozornění přebírají barvy `alert-info`, cookie lišta sdílen
 tokeny zaoblení a stínu.
 
 Komponenty sdílené serverem a prohlížečem mají definici v
-`assets/ui/components.json` nebo `assets/modules/<modul>/components.json`.
+`App/Core/Ui/assets/components.json` nebo `App/Modules/<Name>/assets/components.json`.
 PHP i JS vykreslují stejný katalog. Specifický obsah se skládá z těchto
 komponent; nepřidává se druhá nezávislá implementace stejné struktury.
 
@@ -90,12 +90,12 @@ kanonická data bez ikon, komponent a překladových identifikátorů.
 
 | Vlastník | Obsah |
 | --- | --- |
-| `assets/ui/styles` | Obecné prvky, layout utility, pole, tlačítka, karty, tabulky, stránkování, modaly, menu, tooltipy a toasty |
-| `assets/modules/status/styles` | Feed, composer, statusy, komentáře a metadata autora |
-| `assets/modules/users/styles` | Profil, vlastní účet a editace avataru |
-| `assets/modules/site/styles` | Veřejná navigace, sidebar a layout stránky |
-| `assets/modules/search/styles` | Globální vyhledávání a jeho nabídka |
-| `assets/modules/notifications/styles` | Stránka notifikací a notifikační menu |
+| `App/Core/Ui/assets/styles` | Obecné prvky, layout utility, pole, tlačítka, karty, tabulky, stránkování, modaly, menu, tooltipy a toasty |
+| `App/Modules/Social/assets/status/styles` | Feed, composer, statusy, komentáře a metadata autora |
+| `App/Modules/Social/assets/users/styles` | Veřejné profily a vztahy |
+| `App/Modules/Social/assets/site/styles` | Sociální layout a sidebar |
+| `App/Core/Identity/assets/styles` | Vlastní účet, avatar a uživatelské menu |
+| `App/Core/Notifications/assets/styles` | Stránka notifikací a notifikační menu |
 
 Zbývající moduly vlastní své dosavadní styly stejným způsobem.
 Každý styl deklaruje manifest ve svém adresáři. Kontrola
@@ -110,15 +110,19 @@ Instalační průvodce používá společné `result-list`, `result-item`, `badg
 `check-card` a layout utility. Aktuální krok označuje `aria-current="step"`;
 volby jazyků zachovávají nativní radio tlačítka. Instalace nemá vlastní CSS.
 
-Veřejné moduly ponechávají své veřejné styly na celém veřejném povrchu:
-sdílená navigace a dynamicky otevřené dialogy je mohou potřebovat také mimo
-stránku odpovídající jejich názvu. Nový užší scope musí zohlednit tyto cesty.
+Veřejné moduly deklarují cesty, na kterých se používají jejich komponenty.
+Sdílené dialogy účtu a navigace mají vlastní společný rozsah; jejich použití
+není důvodem přibalovat všechny doménové assety do každé veřejné stránky.
 
 ## Pořadí a varianty
 
-`assets/styles/index.css` je jediný seznam určující globální pořadí CSS.
-Manifest modulu vybírá soubory pro příslušné trasy. Při změně souboru je
-nutné udržet obě deklarace v souladu.
+Manifest vlastníka vybírá soubory i jejich pořadí pro příslušné trasy.
+Společné UI předchází vlastníkům funkcí; další závislosti deklaruje `uses`.
+Centrální CSS index ani paralelní seznam pořadí neexistuje.
+Kořenová `assets/` obsahuje pouze generovaný veřejný výstup buildu.
+Zdrojové obrázky, ikony, CSS a JS zůstávají u vlastníka; společné doručování
+publikuje jen povolené assety s hashem obsahu. Relativní URL v CSS přepisuje
+stejný compiler pro runtime cache i release, aby byl adresář tématu přenositelný.
 
 Soubory pojmenovávat podle rodiny komponent a případně varianty:
 `fields.css`, `table-identity.css`, `pagination-desktop.css`,

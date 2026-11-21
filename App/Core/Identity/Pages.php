@@ -69,6 +69,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.login_title'),
             'current' => '/login',
+            'layout' => 'auth',
             'nav' => [],
             'meta' => [
                 'description' => Localization::t('auth.login_intro'),
@@ -92,6 +93,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.register_title'),
             'current' => '/register',
+            'layout' => 'auth',
             'meta' => [
                 'description' => Localization::t('auth.register_intro'),
                 'url' => '/register',
@@ -108,6 +110,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.logout_title'),
             'current' => '/logout',
+            'layout' => 'auth',
             'meta' => [
                 'description' => Localization::t('auth.logout_intro'),
                 'url' => '/logout',
@@ -123,6 +126,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.recovery_title'),
             'current' => '/recovery',
+            'layout' => 'auth',
             'nav' => [],
             'meta' => [
                 'description' => Localization::t($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro'),

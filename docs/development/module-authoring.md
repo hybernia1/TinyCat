@@ -21,7 +21,7 @@ Editor v asset manifestu deklaruje `uses: ["ui.form-constraints"]`.
 
 Pro přechody mezi celými stránkami použij
 `TinyCat.navigation.registerPage({ accepts, target, load, apply })`.
-Ve svém klientském vstupu importuj `assets/core/page-navigation.js`.
+Ve svém klientském vstupu importuj `App/Core/Ui/assets/runtime/page-navigation.js`.
 `load(url, signal)` načte vlastní data přes společný API klient a vrátí i
 kanonické `url`; `apply(target, data)` vykreslí obsah. Historii, scroll,
 rušení čtení a guard konceptů řeší core. Běžné seznamy dál používají společnou
@@ -145,7 +145,7 @@ final class Module implements ModuleContract, ProvidesContributions
 Registrace sestavuje definice. Neprovádí SQL, session, DDL, poštu ani provozní
 zápisy. Překlad menu se proto vyhodnotí až v render callbacku. Nižší pořadí
 řadí položku výše, podmenu tvoří pole `children`. Ikona musí existovat jako
-symbol ve společném [`assets/icons.svg`](../../assets/icons.svg).
+symbol ve společném [`App/Core/Ui/assets/icons.svg`](../../App/Core/Ui/assets/icons.svg).
 Menu nezakládá routu ani nenahrazuje autorizaci její obsluhy.
 
 `src/Pages.php`:
@@ -199,8 +199,8 @@ další položky do veřejné navigace. Vlastní přihlašovací cíle nesměřu
 `/login`, `/register` ani externí URL; Identity takový cíl nahradí bezpečnou
 homepage. Platné explicitní `next` má nadále přednost.
 Vlastní routa modulu zůstává samostatná. Jazykové prefixy veřejných URL deklaruj
-přes `LocalizedRoute`, včetně povolených query parametrů. `PageTheme` nabízí
-vlastní veřejné rozložení nad společným dokumentem a headem.
+přes `LocalizedRoute`, včetně povolených query parametrů. Veřejné rozložení
+vybírá core z [témat](themes.md); funkční modul žádné téma neregistruje.
 
 ## 3. Komponenty, assety a překlady
 
@@ -321,7 +321,7 @@ callbacky se při registraci neprovádějí.
 | --- | --- |
 | `navigation` | `NavigationItem`: administrativní menu. |
 | `homepages`, `dashboards` | `EntryPage`: kandidáti pro `/` a `/admin`. |
-| `themes`, `widgets`, `localizedRoutes` | `PageTheme`, `DashboardWidget`, `LocalizedRoute`: rozložení, dashboard a jazyky URL. |
+| `widgets`, `localizedRoutes` | `DashboardWidget`, `LocalizedRoute`: dashboard a jazyky URL. |
 | `tasks`, `maintenance` | `ScheduledTask`, `MaintenanceTask`: úlohy a údržba. |
 | `componentLookups` | `ComponentLookup`: lazy prezentační metadata pro sdílené komponenty. |
 | `settings`, `configOverrides` | `SettingsSection` a provozní nastavení vlastníka; prezentace editoru se odvozuje ze stejné deklarace (viz níže). |

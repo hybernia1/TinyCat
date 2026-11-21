@@ -201,7 +201,7 @@ final class ClientAssets
     /** @return list<string> */
     public static function runtime(): array
     {
-        return AssetGraph::order(['assets/core/component-renderer.js']);
+        return AssetGraph::order(['App/Core/Ui/assets/runtime/component-renderer.js']);
     }
 
     /** @return list<string> */
@@ -211,7 +211,7 @@ final class ClientAssets
         foreach (self::features($path) as $feature) {
             foreach ($feature['entries'] ?? [] as $entry) { $entries[] = $entry; }
         }
-        return array_values(array_unique([...$entries, 'assets/bootstrap.js']));
+        return array_values(array_unique([...$entries, 'App/Core/Ui/assets/bootstrap.js']));
     }
 
     /** @return list<string> */
@@ -258,7 +258,7 @@ final class ClientAssets
             foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
                 foreach ($feature['standalone'] ?? [] as $source) {
                     AssetGraph::read($source);
-                    if (!in_array(pathinfo($source, PATHINFO_EXTENSION), ['js', 'css'], true)) { throw new RuntimeException('Invalid standalone asset: ' . $source); }
+                    if (!in_array(pathinfo($source, PATHINFO_EXTENSION), Minifier::ASSET_TYPES, true)) { throw new RuntimeException('Invalid standalone asset: ' . $source); }
                     $sources[] = $source;
                 }
             }

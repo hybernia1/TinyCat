@@ -36,7 +36,7 @@ final class Layout
         $csrf = \TinyCat\Core\Security\Csrf::token();
         $dateFormat = (string) Startup::option('datetime.datetime', 'Y-m-d H:i:s');
         $dateRelative = (bool) Startup::option('datetime.relative', false);
-        $iconSprite = Assets::asset('icons.svg');
+        $iconSprite = Assets::asset('App/Core/Ui/assets/icons.svg');
         $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([
             'authUser' => $authUser, 'profileUrl' => $profileUrl, 'profileNeedsEmail' => $profileNeedsEmail,
             'theme' => $theme,

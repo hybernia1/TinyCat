@@ -59,19 +59,18 @@ final class AssetGraph
         self::synchronize();
         if (self::$buildSources !== null && isset(self::$buildSources[$path])) { return self::$buildSources[$path]; }
         $absolute = realpath(Paths::basePath($path));
-        $assets = realpath(Paths::basePath('assets'));
-        if (!is_string($absolute) || !is_string($assets) || !is_file($absolute)) {
+        if (!is_string($absolute) || !is_file($absolute)) {
             throw new RuntimeException('Missing or invalid asset: ' . $path);
         }
-        $legacy = str_starts_with($path, 'assets/') && str_starts_with($absolute, $assets . DIRECTORY_SEPARATOR);
-        if (!$legacy && (!in_array(pathinfo($absolute, PATHINFO_EXTENSION), ['js', 'css', 'svg'], true) || !\TinyCat\Core\Modules\Resources::ownsModuleAsset($absolute))) {
+        $theme = preg_match('~^App/Themes/([a-z][a-z0-9-]*)/assets/~D', $path, $match) === 1
+            && \TinyCat\Core\Ui\Theme::load($match[1]) !== null
+            && str_starts_with(str_replace('\\', '/', $absolute), str_replace('\\', '/', (string) realpath(Paths::basePath('App/Themes/' . $match[1] . '/assets'))) . '/');
+        if (!in_array(pathinfo($absolute, PATHINFO_EXTENSION), Minifier::ASSET_TYPES, true)
+            || (!$theme && !\TinyCat\Core\Modules\Resources::ownsModuleAsset($absolute))) {
             throw new RuntimeException('Missing or invalid module asset: ' . $path);
         }
-        if (str_starts_with($absolute, $assets . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR)
-            && !\TinyCat\Core\Modules\Resources::ownsModuleAsset($absolute)) {
-            throw new RuntimeException('Asset belongs to an unselected module: ' . $path);
-        }
-        $source = str_replace(["\r\n", "\r"], "\n", (string) file_get_contents($absolute));
+        $source = (string) file_get_contents($absolute);
+        if (in_array(pathinfo($absolute, PATHINFO_EXTENSION), ['js', 'css', 'svg'], true)) { $source = str_replace(["\r\n", "\r"], "\n", $source); }
         if (self::$buildSources !== null) { self::$buildSources[$path] = $source; }
         return $source;
     }
@@ -117,28 +116,29 @@ final class AssetGraph
         return implode("\n;\n", $sources);
     }
 
-    /** @param list<string> $selected */
-    public static function stylesheet(array $selected): string
+    /** @param list<string> $selected
+     * @param (callable(string): string)|null $asset */
+    public static function stylesheet(array $selected, ?callable $asset = null): string
     {
-        $allowed = array_fill_keys($selected, true); $sources = [];
-        preg_match_all('/^@import\s+["\']([^"\']+)["\'];$/m', self::read('assets/styles/index.css'), $matches);
-        foreach ($matches[1] as $relative) {
-            $path = self::relativePath('assets/styles/index.css', $relative);
-            if (isset($allowed[$path])) { $sources[] = self::styleSource($path); unset($allowed[$path]); }
-        }
-        // Preserve the reviewed legacy cascade, then append new module styles in
-        // their manifest order. New modules do not edit the central legacy index.
-        foreach (array_keys($allowed) as $path) { $sources[] = self::styleSource($path); }
+        $sources = [];
+        foreach (array_unique($selected) as $path) { $sources[] = self::styleSource($path, $asset ?? Assets::asset(...)); }
         return implode("\n", $sources);
     }
 
-    private static function styleSource(string $path): string
+    /** @param callable(string): string $asset */
+    private static function styleSource(string $path, callable $asset): string
     {
         $source = self::read($path);
         $tokens = preg_replace('~/\*.*?\*/~s', '', $source) ?? $source;
         if (preg_match('/(?:^|[;{}])\s*@import\b/i', $tokens)) {
             throw new RuntimeException('Declare stylesheet dependencies in the module manifest: ' . $path);
         }
-        return $source;
+        return (string) preg_replace_callback('~url\(\s*(["\']?)([^)"\']+)\1\s*\)~i', static function (array $match) use ($path, $asset): string {
+            $url = trim($match[2]);
+            if ($url === '' || preg_match('~^(?:[a-z][a-z0-9+.-]*:|/|\#)~i', $url)) { return $match[0]; }
+            $parts = explode('#', $url, 2);
+            $file = self::resolve($path, './' . $parts[0]);
+            return 'url("' . $asset($file) . (isset($parts[1]) ? '#' . $parts[1] : '') . '")';
+        }, $source);
     }
 }

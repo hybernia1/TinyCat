@@ -202,7 +202,9 @@ $assert($status === 500 && str_contains($body, '500') && !str_contains($body, 'P
 [$status, $body, $headers] = $exportRequest('/fixture-maintenance', 'GET', ['Accept' => 'application/json']);
 $maintenance = json_decode($body, true);
 $assert($status === 503 && $maintenance['code'] === 'maintenance' && $maintenance['status'] === 503 && !$maintenance['ok'] && $headers['retry-after'] === '300', 'Maintenance follows the shared API envelope and retry semantics.');
-[$status, $body] = $exportRequest('/assets/fallback/image.svg');
+[$pageStatus, $pageHtml] = $exportRequest('/privacy');
+$assert($pageStatus === 200 && preg_match('/data-fallback-image="([^"]+)"/', $pageHtml, $placeholder) === 1, 'The shared document declares a generated image fallback URL.');
+[$status, $body] = $exportRequest(html_entity_decode($placeholder[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 $assert($status === 200 && simplexml_load_string($body) !== false, 'The static image placeholder is independently available with status 200.');
 
 [$status, $body] = $exportRequest('/admin', 'POST', ['X-Test-Role' => 'admin']);

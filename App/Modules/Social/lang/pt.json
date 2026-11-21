@@ -310,7 +310,6 @@
     "filter_links": "Links",
     "filter_text": "Apenas texto",
     "feed_empty_filtered": "Nenhuma publicação corresponde a este filtro.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} publicação",
       "few": "{count} publicações",

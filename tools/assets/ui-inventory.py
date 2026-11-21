@@ -25,7 +25,7 @@ def walk(value):
 def generate():
     components = []
     structures = collections.defaultdict(list)
-    for path in sorted(list((ROOT / 'assets').rglob('components.json')) + list((ROOT / 'App').rglob('assets/components.json'))):
+    for path in sorted(list((ROOT / 'assets').rglob('components.json')) + list((ROOT / 'App').rglob('assets/**/components.json'))):
         # Preserve duplicate keys, including duplicates inside one catalog.
         pairs = json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=lambda p: p)
         definitions = json.loads(path.read_text(encoding='utf-8'))
@@ -39,9 +39,8 @@ def generate():
     classes = collections.defaultdict(list)
     rules = []
     imports = []
-    index = ROOT / 'assets/styles/index.css'
-    for match in re.finditer(r'@import\s+"([^"]+)"', index.read_text(encoding='utf-8')):
-        imports.append((index.parent / match[1]).resolve())
+    manifests = sorted((ROOT / 'App').rglob('assets/**/module.json'))
+    imports = sorted({(ROOT / name).resolve() for path in manifests for feature in json.loads(path.read_text(encoding='utf-8')) for name in feature.get('styles', [])})
     # Lexical block scanner for the current flat CSS + nested @media syntax.
     # This is not a browser cascade/specificity evaluator.
     for path in imports:
@@ -77,7 +76,7 @@ def generate():
         groups[(tuple(rule['context']), rule['selector'])].append(rule)
     repeats = [dict(selector=s, context=list(c), rules=rows) for (c, s), rows in groups.items() if len(rows) > 1]
     helpers = []
-    for path in sorted((ROOT / 'assets/ui').glob('*.js')):
+    for path in sorted((ROOT / 'App/Core/Ui/assets').glob('*.js')):
         text = path.read_text(encoding='utf-8')
         helpers.append(dict(source=rel(path), methods=[dict(name=m[1], line=text.count('\n', 0, m.start()) + 1) for m in re.finditer(r'^\s*(\w+): function\s*\(', text, re.M)]))
     partials = [rel(p) for p in sorted((ROOT / 'App').rglob('templates/parts/**/*.php'))]
@@ -86,11 +85,11 @@ def generate():
     for path in sorted((ROOT / 'App').rglob('*Views.php')):
         source = path.read_text(encoding='utf-8')
         renderers.append(dict(source=rel(path), methods=re.findall(r'public static function\s+(\w+)', source)))
-    standalone = [dict(source=rel(p), classes=sorted(set(re.findall(r'\.([a-zA-Z_][\w-]*)', p.read_text(encoding='utf-8'))))) for p in sorted(list((ROOT / 'assets').rglob('*.css')) + list((ROOT / 'App').rglob('assets/**/*.css'))) if p.resolve() not in imports and p != index]
+    standalone = [dict(source=rel(p), classes=sorted(set(re.findall(r'\.([a-zA-Z_][\w-]*)', p.read_text(encoding='utf-8'))))) for p in sorted(list((ROOT / 'assets').rglob('*.css')) + list((ROOT / 'App').rglob('assets/**/*.css'))) if p.resolve() not in imports]
     ownership = collections.defaultdict(list)
     js_entries = collections.defaultdict(list)
     js_standalone = set()
-    for path in sorted(list((ROOT / 'assets').rglob('module.json')) + list((ROOT / 'App').rglob('assets/module.json'))):
+    for path in sorted(list((ROOT / 'assets').rglob('module.json')) + list((ROOT / 'App').rglob('assets/**/module.json'))):
         for feature in json.loads(path.read_text(encoding='utf-8')):
             for css in feature.get('styles', []):
                 ownership[css].append(dict(manifest=rel(path), routes=feature['routes']))
@@ -135,7 +134,7 @@ def generate():
     for path in imports:
         for owner in ownership.get(rel(path), []):
             lines.append(f"| [{rel(path)}](../../{rel(path)}) | [{owner['manifest']}](../../{owner['manifest']}) | {', '.join(owner['routes'])} |")
-    lines += ['', '## CSS třídy', '', 'Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů není počet duplicit; zahrnuje stavy a breakpointy.', '', '| Třída | Soubory |', '| --- | --- |']
+    lines += ['', '## CSS třídy', '', 'Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů není počet duplicit; zahrnuje stavy a breakpointy.', '', '| Třída | Soubory |', '| --- | --- |']
     for name, rows in sorted(classes.items()):
         files = sorted({r['source'] for r in rows})
         lines.append(f"| `{name}` | " + ', '.join(f'[{p}](../../{p})' for p in files) + ' |')

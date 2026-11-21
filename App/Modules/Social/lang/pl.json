@@ -310,7 +310,6 @@
     "filter_links": "Linki",
     "filter_text": "Tylko tekst",
     "feed_empty_filtered": "Żadne wpisy nie pasują do tego filtra.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} wpis",
       "few": "{count} wpisy",

@@ -1,0 +1,6 @@
+{
+  "id": "example",
+  "label": "Example theme",
+  "layout": "layouts/public.php",
+  "styles": []
+}

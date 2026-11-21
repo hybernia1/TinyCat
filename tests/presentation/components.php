@@ -111,7 +111,7 @@ $assert(str_contains($sourceFilters, 'action="/api/bots/sources"') && str_contai
 $assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source filters preserve their scoped controls and automatic submission.');
 
 $settingsSections = \TinyCat\Core\Settings\Administration::tc_admin_settings_view_sections();
-$iconSprite = (string) file_get_contents(__DIR__ . '/../../assets/icons.svg');
+$iconSprite = (string) file_get_contents(__DIR__ . '/../../App/Core/Ui/assets/icons.svg');
 foreach ($settingsSections as $section) {
     $assert(str_contains($iconSprite, 'id="' . $section['icon'] . '"'), 'Every settings section has a real shared SVG icon: ' . $section['icon']);
 }

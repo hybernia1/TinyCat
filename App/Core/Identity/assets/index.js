@@ -1,5 +1,5 @@
 import "./user-menu.js";
-import "../../../../assets/core/modules.js";
+import "../../Ui/assets/runtime/modules.js";
 import "./avatar-editor.js";
 import "./controller.js";
 import "./email-availability.js";

@@ -93,7 +93,7 @@ $insertEmbedLink = null;
 [$status, $share, $shareHeaders] = $exportRequest('/status/910001/embed-code');
 $dom = new DOMDocument(); @$dom->loadHTML($share); $xpath = new DOMXPath($dom);
 $code = $xpath->evaluate('string(//textarea[@id="embed-code"])');
-$assert($status === 200 && str_contains($code, '<iframe') && str_contains($code, '/assets/embed.js') && $shareHeaders['x-frame-options'] === 'SAMEORIGIN', 'The share page provides a selectable HTML snippet and retains normal frame protection.');
+$assert($status === 200 && str_contains($code, '<iframe') && str_contains($code, '/assets/embed.js') && !str_contains($code, '/App/') && $shareHeaders['x-frame-options'] === 'SAMEORIGIN', 'The share page provides a stable public embed entry URL and retains normal frame protection.');
 [$status, $detail, $detailHeaders] = $exportRequest('/status/910001');
 $dom = new DOMDocument(); @$dom->loadHTML($detail); $xpath = new DOMXPath($dom);
 $discovery = html_entity_decode($xpath->evaluate('string(//link[@type="application/json+oembed"]/@href)'));

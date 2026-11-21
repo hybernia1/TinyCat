@@ -42,8 +42,10 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
 - Serverové HTML a AJAX sdílejí komponentové definice. Modaly, popovery, formuláře,
   navigace, tokeny a dva responzivní režimy dodržují společné UI kontrakty.
 - Stránku předávej `Core/Ui/Page::render()`, které vybírá administraci a téma.
-  Renderer `PageTheme` skládá pouze vlastní veřejný shell; nevybírá znovu téma
-  ani administraci. Zpětné volání rendereru při registraci zůstává lazy.
+  Modul poskytuje obsah a metadata, nikoli registraci tématu nebo vlastní
+  výběr globálního rendereru. Veřejný shell vybírá core.
+  Volitelný [lokální veřejný layout](../development/themes.md) nevyžaduje
+  funkční modul a nepřepisuje komponenty vlastníka ani přihlašovací stránky.
 - Administrační seznamy skládej přes `Core/Ui/Admin/Definitions::page()`.
   Vlastní důvěryhodné HTML akcí může dodat vlastník jako třetí argument;
   titulek, seznam a rám kvůli vlastnímu tlačítku nekopíruj do stránky modulu.

@@ -270,13 +270,13 @@ try {
         if (in_array($retired, $names, true)) { $failures[] = 'Retired updater bridge or asset optimizer in artifact: ' . $retired; }
     }
 
-    foreach (['App/Core/Http/Api.php', 'App/Core/Http/Request.php', 'App/Core/Http/Response.php', 'App/Core/Http/Validator.php', 'App/Core/Database/Connection.php', 'App/Core/Support/Config.php', 'App/Core/Modules/Module.php', 'App/modules.php', 'assets/core/api-client.js', 'assets/core/dom.js', 'assets/ui/form-requests.js', 'assets/ui/dialogs.js'] as $required) {
+    foreach (['App/Core/Http/Api.php', 'App/Core/Http/Request.php', 'App/Core/Http/Response.php', 'App/Core/Http/Validator.php', 'App/Core/Database/Connection.php', 'App/Core/Support/Config.php', 'App/Core/Modules/Module.php', 'App/modules.php', 'App/Core/Ui/assets/runtime/api-client.js', 'App/Core/Ui/assets/runtime/dom.js', 'App/Core/Ui/assets/form-requests.js', 'App/Core/Ui/assets/dialogs.js'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required module infrastructure missing from artifact: {$required}";
         }
     }
 
-    foreach (['App/Modules/Social/src/Profiles/Registration.php', 'App/Modules/Social/src/Profiles/Api.php', 'App/Core/Identity/Avatar.php', 'App/Modules/Social/src/Profiles/Roles.php', 'App/Core/Notifications/ServiceProvider.php', 'App/Core/Notifications/Api.php', 'App/Modules/Social/src/Posts/Registration.php', 'App/Modules/Social/src/Posts/Api.php', 'App/Modules/Social/src/Posts/ImageStorage.php', 'App/Core/Text/LinkParser.php', 'App/Core/Links/Metadata.php', 'assets/ui/component-builders.js', 'App/Modules/Social/assets/users/controller.js', 'App/Modules/Social/assets/status/controller.js', 'App/Core/Notifications/assets/controller.js'] as $required) {
+    foreach (['App/Modules/Social/src/Profiles/Registration.php', 'App/Modules/Social/src/Profiles/Api.php', 'App/Core/Identity/Avatar.php', 'App/Modules/Social/src/Profiles/Roles.php', 'App/Core/Notifications/ServiceProvider.php', 'App/Core/Notifications/Api.php', 'App/Modules/Social/src/Posts/Registration.php', 'App/Modules/Social/src/Posts/Api.php', 'App/Modules/Social/src/Posts/ImageStorage.php', 'App/Core/Text/LinkParser.php', 'App/Core/Links/Metadata.php', 'App/Core/Ui/assets/component-builders.js', 'App/Modules/Social/assets/users/controller.js', 'App/Modules/Social/assets/status/controller.js', 'App/Core/Notifications/assets/controller.js'] as $required) {
         if (!in_array($required, $names, true)) { $failures[] = 'Required domain runtime missing: ' . $required; }
     }
     foreach (['App/Core.php', 'App/functions.php', 'App/Api.php', 'App/Bots.php', 'App/BotAdmin.php', 'App/Captcha.php', 'App/Cache.php', 'App/Minifier.php', 'App/SiteIdentity.php', 'App/Sitemap.php', 'App/PackageManager.php', 'App/Notifications.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $retired) {

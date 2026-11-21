@@ -56,8 +56,9 @@ nikoli PHP adaptéry propojující domény.
 
 - `Core/Modules/Resources` poskytuje tentýž výběr runtime i buildu. Klientské
   závislosti a překladové kanály deklarují vlastní modulové manifesty.
-- Sdílenou prezentaci poskytuje `Core/Ui/Page`. Social vlastní veřejné sociální téma;
-  společné UI nesmí vyžadovat jeho layout. Homepage, témata a dashboardy
+- Sdílenou prezentaci poskytuje `Core/Ui/Page`. Moduly vlastní obsah a komponenty,
+  nikoli globální téma. Volitelné veřejné layouty jsou samostatné v `App/Themes/`;
+  bez vybraného tématu se použije core rám. Homepage a dashboardy
   přispívají pojmenovanými definicemi; `/` a `/admin` vybírá core.
   Core musí fungovat i po vypnutí všech funkčních modulů.
 - Společný HTML dokument, head, metadata, jazykové a consent UI vlastní Core/Ui;
@@ -73,7 +74,7 @@ nikoli PHP adaptéry propojující domény.
 - Textové renderování rozšiřuj pojmenovanými `Core/Text/Policies` a `TextPolicy`.
   Volající předává druh textu explicitně; core nevolí politiku Socialu jako výchozí.
   Pravidla URL a UTM vlastní každý modul; core poskytuje parser a aplikaci pravidel.
-  Sdílené assety v `assets/ui/content` a ID `publishing.*` jsou UI kompatibilita,
+  Sdílené assety v `App/Core/Ui/assets/content` a ID `publishing.*` jsou UI kompatibilita,
   nikoli modul nebo povinná doménová služba. RSS poskytuje Core/Feeds,
   oEmbed hostuje Core/Discovery pro lazy `EmbedSource` vlastníka.
 

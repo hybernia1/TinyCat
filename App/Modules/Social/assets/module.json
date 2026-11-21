@@ -1,7 +1,11 @@
 [
   {
     "routes": [
-      "public"
+      "/",
+      "/social",
+      "/status",
+      "/author",
+      "/tag"
     ],
     "components": [
       "users/following-profile",
@@ -31,7 +35,11 @@
   },
   {
     "routes": [
-      "public"
+      "/",
+      "/social",
+      "/status",
+      "/author",
+      "/tag"
     ],
     "components": [
       "status/card",
@@ -131,9 +139,9 @@
       "status_created": "account.messages.status_created"
     },
     "standalone": [
-      "assets/embed.css",
-      "assets/embed-frame.js",
-      "assets/embed.js"
+      "App/Modules/Social/assets/embed/embed.css",
+      "App/Modules/Social/assets/embed/embed-frame.js",
+      "App/Modules/Social/assets/embed/embed.js"
     ],
     "uses": [
       "publishing.presentation",
@@ -234,7 +242,7 @@
       "status/thread"
     ],
     "entries": [
-      "assets/ui/content/media-preview.js"
+      "App/Core/Ui/assets/content/media-preview.js"
     ],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-header.css",
@@ -304,9 +312,9 @@
       "status_created": "account.messages.status_created"
     },
     "standalone": [
-      "assets/embed.css",
-      "assets/embed-frame.js",
-      "assets/embed.js"
+      "App/Modules/Social/assets/embed/embed.css",
+      "App/Modules/Social/assets/embed/embed-frame.js",
+      "App/Modules/Social/assets/embed/embed.js"
     ],
     "uses": [
       "publishing.media"
@@ -491,7 +499,11 @@
   },
   {
     "routes": [
-      "public"
+      "/",
+      "/social",
+      "/status",
+      "/author",
+      "/tag"
     ],
     "components": [
       "site/sidebar",
@@ -513,12 +525,7 @@
       "App/Modules/Social/assets/site/styles/sidebar-sticky.css",
       "App/Modules/Social/assets/site/styles/sidebar-lists.css"
     ],
-    "translations": [],
-    "messages": {
-      "action_limited": "moderation.messages.action_limited",
-      "captcha_required": "public.search_captcha_required",
-      "search_search_captcha_unlocked": "public.search_captcha_unlocked"
-    }
+    "translations": []
   },
   {
     "routes": [
@@ -530,6 +537,20 @@
     "translations": [],
     "messages": {
       "url_blocker_saved": "moderation.messages.url_blocker_saved"
+    }
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [],
+    "translations": [],
+    "messages": {
+      "action_limited": "moderation.messages.action_limited",
+      "captcha_required": "public.search_captcha_required",
+      "search_search_captcha_unlocked": "public.search_captcha_unlocked"
     }
   }
 ]

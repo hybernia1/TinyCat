@@ -1,5 +1,5 @@
-import "../../../../../assets/core/dom.js";
-import "../../../../../assets/core/lifecycle.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/lifecycle.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat = window.TinyCat || {};

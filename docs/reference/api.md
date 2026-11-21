@@ -1,73 +1,11 @@
 # TinyCat HTTP API
 
-Blog explicitly enables the shared discussion and reaction service for public
-articles. `GET /api/articles/{id}/discussion` returns the authorized target,
-capabilities, reaction count/state and comment tree. `POST /api/articles/{id}/comments`
-accepts `comment` and optional `parent_id`; `PATCH` and `DELETE` on
-`/api/articles/{id}/comments/{commentId}` edit or remove an authorized comment.
-Authenticated `GET` on that comment loads current editor data and authorized
-revisions on demand. `PUT`/`DELETE /api/articles/{id}/likes/me` and
-`PUT`/`DELETE /api/articles/{id}/comments/{commentId}/likes/me` set the desired
-reaction state idempotently. Writes require an active account and CSRF.
-Hidden, future, inactive-author and unavailable-owner targets are rejected;
-comment and parent IDs must belong to the publication in the route. Editing
-requires the comment author or administrator; deletion also permits the
-publication owner. Reactions and parent changes serialize on the publication
-lock. Blog uses the framework limiter independently of Social reputation.
-The existing `/api/statuses/...` inputs remain restricted to `post` targets and
-delegate persistence to the same service. Article interactions do not create
-Social notification types or contribute to Social statistics.
+Core owns authentication, accounts, scheduling, settings and technical endpoints.
+Social is optional and owns profiles, follows, posts, discussions and moderation.
+Blog and its article/source endpoints are absent from current distributions.
+Owners register data resources through the common authorized JSON transport.
 
-An active Blog module provides `GET /api/articles/{id}` and
-administrator-only `POST /api/articles`, `PUT /api/articles/{id}` and
-`DELETE /api/articles/{id}`. Administrator-only `GET /api/articles/management`
-returns the paginated selection with literal search (`q`), visibility (`status`),
-author, sorting and page size. List rows omit article bodies. `GET /api/articles/creation`
-and `GET /api/articles/{id}/management` return current editor data, permissions,
-supported states and limits. The shared client resource loader owns the editor UI;
-these resources contain no HTML or translation identifiers. Writes require CSRF. Article resources contain
-`id`, `title`, plain `body`, `author`, `published_at`, `status`, `url`, `image`,
-text segments and shared link resources;
-public reads exclude hidden/future articles and inactive authors. Invalid
-article input returns 422; invalid fields use the common validation envelope.
-These routes are absent when Blog is inactive. Blog can run alone or alongside
-Social through the supported module lifecycle.
-
-An active Blog also provides administrator-only source management:
-`GET /api/article-sources/management` supports literal `q`, `enabled=0|1`,
-sorting and pagination; `GET /api/article-sources/creation` and
-`GET /api/article-sources/{id}/management` return current source data,
-eligible authors and permissions. `POST /api/article-sources`,
-`PUT /api/article-sources/{id}` and `DELETE /api/article-sources/{id}` manage
-sources. Writes require CSRF. A source selects an active administrator,
-an HTTP(S) feed URL, a check interval of 5–43,200 minutes, `enabled`,
-`import_images` and `publication_status=hidden|published` (default hidden).
-Existing feed URLs are immutable; deleting a source retains its articles.
-`POST /api/article-sources/preview` accepts `feed_url` or a bounded `document`
-and returns prepared article data without successful GUID claims or schedule
-changes. `POST /api/article-sources/{id}/run` uses the shared `article_feeds`
-task runner, lock and persistent history, returning its execution result.
-An existing runner returns 409; an executed failure is described in the result
-and danger message metadata. All these routes are absent when Blog is inactive.
-
-Article writes also accept an optional multipart `image` and `remove_image`.
-The shared client sends multipart PUT as POST with `_method=PUT`; authorization
-and CSRF remain unchanged. Images use the common Core/Files raster validation and owner-specific storage.
-Failed specialization rolls back the database and removes the newly created file;
-replacement/removal deletes the previous file only after a successful commit.
-
-`GET /api/articles/{id}/links/{hash}` resolves only a link actually belonging to
-the currently public article. It returns `url` and `original_url`, with Blog’s own
-UTM policy applied to the destination. `navigate=1` with HTML Accept produces
-a temporary redirect; query parameters cannot supply arbitrary redirect targets.
-The administrator-only `GET/PUT /api/moderation/blocked-urls` endpoint belongs
-to Social and is absent when Social is inactive. Blog uses its own settings keys.
-`GET /blog/feed` exports up to twenty visible articles through the common RSS
-serializer. `/oembed` is a core endpoint which selects a lazy active-owner source
-for a canonical local URL. Blog contributes article summaries, Social its public
-status frames. Foreign origins, hidden/future content and inactive owners are rejected.
-
-Built-in modules register their own API and page routes through `App/modules.php`.
+The mandatory framework registers core routes; explicitly activated modules register their own API and page routes from their manifests.
 `App/Core/Http/Api.php` only receives registrations and handles authentication, CSRF,
 request parsing and JSON serialization. There is no filesystem route discovery.
 
@@ -76,15 +14,12 @@ All application APIs use the same JSON transport. `App/Core.php`,
 Modules own their routes; the entry point only composes and dispatches the app.
 
 `tinycat.accounts` owns authentication, account management, administration and
-avatars under the existing `/api/users/...` URLs. `tinycat.users` owns public
-authors, following and author feeds. An Accounts-only assembly omits social
+avatars under the existing `/api/users/...` URLs. `tinycat.social` owns public profiles and follows under `/api/profiles` and its own author feeds. An Accounts-only assembly omits social
 endpoints and public profile URLs; product composition supplies those URLs when
 available. Account component IDs and API response codes remain stable.
 
 Social owns status persistence, comments, reactions, tags, links and media in
-its own tables. Blog owns complete articles and their relations independently.
-Core supplies technical text, link, feed, file and UI mechanisms without domain
-tables. `/api/statuses/...` and `/api/articles/...` resolve separate ID spaces;
+its own tables. Core supplies technical text, link, feed, file and UI mechanisms without domain tables. Different module resources resolve separate ID spaces;
 the same numeric ID can legitimately exist in both. The former Publishing and
 Status migration stream names remain historical identities, not activatable modules.
 
@@ -135,18 +70,14 @@ CAPTCHA failures include `error.details.captcha` with `enabled`, `provider`,
 
 ## Shared input validation
 
-Editor resources for Blog articles and feed sources expose `data.constraints`,
-derived by `Validator::constraints()` from the owner's server rules. Field data
-contains `type`, `required`, `nullable`, optional `values`, numeric `min`/`max`,
-Unicode `min_length`/`max_length`, array `min_items`/`max_items`, and `max_bytes`.
-Article bodies use UTF-8 bytes; titles and source names use Unicode characters.
+Owner editor resources expose `data.constraints`, derived by
+`Validator::constraints()` from server rules. Field data contains `type`,
+`required`, `nullable`, optional `values`, numeric `min`/`max`, Unicode
+`min_length`/`max_length`, array `min_items`/`max_items`, and `max_bytes`.
 These are data constraints, not component definitions or authorization decisions.
-Social source management resources also expose `constraints`; source names and
-publication templates retain their existing byte limits. Blog discussion and
-comment editor resources publish their owner character constraints. An overlong
-Blog comment returns a field validation error and preserves the stored comment.
-Creation and editing use identical rules. Existing article `limits` and editor
-`statuses` remain available, derived from those rules.
+Social source management publishes its own constraints; source names and
+publication templates retain their byte limits. Creation and editing share
+the same rules, and invalid writes preserve stored content.
 
 Owners prepare payloads before `Validator::validated($rules, $prepared)` and reuse
 the same rules for persistence and imports. `max_bytes` reports a stable
@@ -198,8 +129,7 @@ The task-specific aliases `cleanup_batch` for cleanup and `bot_limit` for feeds
 are also accepted. Supplying both `batch` and its task-specific alias is rejected.
 Task IDs use `[a-z][a-z0-9_.-]{0,39}` consistently in registration, HTTP and
 the CLI `--task=ID` form; `all` is reserved for aggregate execution.
-Each owner declares its optional `batchOption`; Blog's `article_feeds` task
-maps `batch` to `source_limit` (default 20, clamped to 1–100).
+Each owner declares its optional `batchOption` and normalization policy.
 Parameters are normalized once before execution and the effective values are
 stored in run history. Explicit source selectors must be positive integers.
 Other integer cleanup values normalize to 1000, matching POST execution options.
@@ -743,8 +673,9 @@ cannot override the method. Unsupported methods return 405 with `Allow` and
 `error.details.allowed`; unknown paths return 404. Internal failures return JSON
 without exposing exception details in production.
 
-AJAX stays enabled through `assets/core/api-client.js` and domain renderers in
-`assets/modules`. Server pages remain valid initial renders. Tests exercise
+AJAX stays enabled through `App/Core/Ui/assets/runtime/api-client.js` and domain renderers in
+the owning `App/Core/<Feature>/assets` or `App/Modules/<Name>/assets` directory.
+Server pages remain valid initial renders. Tests exercise
 the actual front controller with an isolated database, safe DOM rendering,
 authentication, authorization, CSRF, state writes, pagination, history, recovery
 token reuse, CAPTCHA configuration and rejection of presentation fields.
@@ -754,7 +685,7 @@ token reuse, CAPTCHA configuration and rejection of presentation fields.
 `GET /api/modules` requires an administrator and returns `items`, `groups`,
 `manageable`, and `revision`. Items contain canonical IDs, names, activation,
 installation and required flags, functional dependency IDs and active dependent IDs.
-The built-in inventory contains Social and Blog as individual modules; mandatory
+The built-in functional inventory contains Social; mandatory
 framework capabilities never appear as items. Groups are reserved for explicitly
 declared custom feature groups. The inventory comes
 from the available distribution; it includes inactive owners without executing
@@ -855,7 +786,7 @@ Image and video previews also supply standard oEmbed `thumbnail_url` metadata
 (and dimensions when known).
 
 The iframe is responsive up to its declared width and scrolls for longer content.
-The optional, small `assets/embed.js` helper in the copy/paste snippet adjusts its
+The optional, small `App/Modules/Social/assets/embed/embed.js` helper in the copy/paste snippet adjusts its
 height, checking both message origin and source window. Without that helper the
 iframe remains usable at its declared height. The child frame also implements the
 WordPress `secret`/`height`/`ready`/`link` message protocol for sandboxed discovery.

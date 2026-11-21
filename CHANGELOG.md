@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.0.0 - 2026-11-21
+
+- Make the core-only framework a complete foundation for independent applications, with explicit installation state, stable translation ownership and product-specific update channels. Publish core and Social installation/update packages together.
+- Remove the unused Blog module and its assembly preset. Reject updates that would discard an installed Blog owner before changing files or data.
+- Consolidate Social into Posts, Discussion, Profiles, Bots, Moderation, Search and Site; remove forwarding classes, duplicate presentation paths and obsolete providers without altering published migration history.
+- Separate Identity account APIs under `/api/users` from Social profiles and follows under `/api/profiles`. Retire the duplicate Social search page/API; use `/search/all`, `/api/search/query` and `/api/search/challenges`.
+- Add lightweight, optional public themes with a metadata-only manifest and render-only PHP layout. Keep each theme's CSS, JavaScript and images together; remove module-owned themes and the alternate global page renderer. Saved retired theme IDs fall back to the core layout.
+- Move shared client sources into Core/Ui and retain function-specific assets with their core/module owner. Leave the public asset directory for generated outputs, resolve relative CSS assets consistently, and preserve the public embed-script entry.
+- Select public, administration and installation JavaScript, CSS, components and translations through owner manifests. Remove the central CSS index and prevent core public pages from loading Social feed controllers or administrative list filters.
+- Preserve shared form/dialog behavior, data visibility, cursor ordering, module activation, configuration and uploads. Introduce no database migration; updates require a completed 6.0.10 installation or newer.
+- Breaking extension changes: replace `Contributions::themes`/`PageTheme` with standalone themes, update client source imports to their owner paths, and pass owned application-relative source paths to the asset helper. Deploy matching runtime and generated assets together.
+
 ## 6.3.1 - 2026-11-21
 
 - Unify links without underlines and remove the retired inline-link stylesheet from update installations.

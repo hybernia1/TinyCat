@@ -36,6 +36,10 @@ final class Registration
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
+        // Public embed snippets keep a stable entry URL; its source belongs to Social.
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/assets/embed.js', static function (): never {
+            \TinyCat\Http\Web::redirect(\TinyCat\Support\Assets::asset('App/Modules/Social/assets/embed/embed.js'));
+        });
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed', static fn (string $id) => Embed::page((int) $id), contentType: 'text/plain');
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed-code', static fn (string $id) => Embed::page((int) $id, true), contentType: 'text/plain');
 

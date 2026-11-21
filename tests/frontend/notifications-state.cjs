@@ -59,7 +59,7 @@ function harness() {
   const form = { querySelectorAll: () => [field, fixed], classList: { contains: n => loading.has(n), add: n => loading.add(n), toggle(n, on) { if (on) { loading.add(n); } else { loading.delete(n); } } }, getAttribute: n => attrs[n] ?? null, setAttribute(n, v) { attrs[n] = v; }, removeAttribute(n) { delete attrs[n]; } };
   let finish, fail;
   const formsT = { dom: { all: (_s, root) => root.querySelectorAll() }, api: { request: () => new Promise((yes, no) => { finish = yes; fail = no; }) } };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/ui/form-requests.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window: { TinyCat: formsT }, AbortController: class { constructor() { this.signal = {}; } abort() {} } });
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../App/Core/Ui/assets/form-requests.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window: { TinyCat: formsT }, AbortController: class { constructor() { this.signal = {}; } abort() {} } });
   for (const outcome of ['success', 'error', 'success']) {
     const request = formsT.forms.request(form, '/api/notifications/7', {});
     assert.equal(formsT.forms.request(form, '/api/notifications/7', {}), request, 'Duplicate action submissions share one request');

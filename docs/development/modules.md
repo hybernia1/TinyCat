@@ -25,7 +25,7 @@ spravovaném commitu. Při rollbacku se zahodí. Vnější transakce s takovými
 musí použít `Transactions::run`; samotné PDO `beginTransaction` neslibuje jejich
 doručení. Soubor neodstraňuj před commitem a neukládej nepotvrzené čtení do cache.
 
-Společná prezentace je v `assets/ui/content/`; kompatibilní feature ID
+Společná prezentace je v `App/Core/Ui/assets/content/`; kompatibilní feature ID
 `publishing.discussion-base` a `publishing.discussion` zůstávají zachována.
 URL, `submit_controller` a schopnost `reply_mentions` dodává vlastník.
 Sociální nabídka je volitelné `componentExtensions` rozšíření. Jiný modul nepřebírá
@@ -39,9 +39,9 @@ Společné rozhraní nevytváří druhý ruční renderer modalů či seznamů.
 ## Veřejný dokument a příspěvky UI
 
 Stránka volá `Core/Ui/Page::render()` s obsahem a metadaty. Core připraví dokument,
-head, jazykové menu, uživatelské menu a consent UI. Vlastní téma dodává rozložení
-obsahu přes `PageTheme`; nekopíruje head a vnější dokument. Social poskytuje
-vlastní téma nad týmž dokumentem; modul bez tématu používá výchozí rám.
+head, jazykové menu, uživatelské menu a consent UI. Volitelné
+[samostatné téma](themes.md) dodává veřejné rozložení nad stejným dokumentem.
+Funkční moduly včetně Socialu poskytují obsah; bez tématu používají core rám.
 
 `ProvidesContributions::contributions()` může vrátit tyto lazy příspěvky:
 

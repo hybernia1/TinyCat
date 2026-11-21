@@ -42,8 +42,8 @@ final readonly class Loader
         $definitions = \TinyCat\Core\Runtime\Framework::definitions($root);
         foreach ([
             'support' => ['Support', ['translations' => 'App/Core/Support/lang', 'templates' => 'App/Core/Support/templates', 'migrations' => 'App/Core/Tasks/migrations']],
-            'ui' => ['Core\\Ui', ['assets' => 'assets/ui/module.json', 'components' => 'assets/ui/components.json', 'translations' => 'App/Core/Ui/lang', 'templates' => 'App/Core/Ui/templates']],
-            'admin' => ['Core\\Admin', ['assets' => 'assets/modules/admin/module.json', 'components' => 'assets/modules/admin/components.json']],
+            'ui' => ['Core\\Ui', ['assets' => 'App/Core/Ui/assets/module.json', 'components' => 'App/Core/Ui/assets/components.json', 'translations' => 'App/Core/Ui/lang', 'templates' => 'App/Core/Ui/templates']],
+            'admin' => ['Core\\Admin', ['assets' => 'App/Core/Ui/assets/admin/module.json', 'components' => 'App/Core/Ui/assets/admin/components.json']],
         ] as $id => [$namespace, $resources]) {
             $resources = array_filter($resources, static fn (string $path): bool => file_exists($root . '/' . $path));
             $definitions[] = Definition::fromMetadata((object) ['format' => 1, 'coreApi' => 1, 'id' => 'tinycat.' . $id, 'namespace' => 'TinyCat\\' . $namespace . '\\', 'resources' => (object) $resources], $root);

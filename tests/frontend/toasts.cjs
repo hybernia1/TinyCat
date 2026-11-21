@@ -30,7 +30,7 @@ const window = {TinyCat: T, visualViewport: viewport, innerWidth: 375, innerHeig
   setTimeout(handler, delay) { timers.set(++nextTimer, {handler, delay}); return nextTimer; },
   clearTimeout(id) { timers.delete(id); }
 };
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/ui/toasts.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), {window, document});
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../App/Core/Ui/assets/toasts.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), {window, document});
 T.lifecycle.hooks.init();
 assert.equal(T.toasts.show('   ', 'success'), null);
 assert.equal(stack, undefined, 'Empty messages create no toast stack');

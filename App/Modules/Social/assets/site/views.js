@@ -1,4 +1,4 @@
-import "../../../../../assets/core/component-renderer.js";
+import "../../../../Core/Ui/assets/runtime/component-renderer.js";
 (function () {
   "use strict";
   var T = window.TinyCat;

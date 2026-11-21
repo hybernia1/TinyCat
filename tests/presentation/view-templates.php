@@ -137,7 +137,7 @@ $assert(str_contains($logoutPage, 'method="post"') && str_contains($logoutPage, 
 set_error_handler(static function (int $level, string $message): never { throw new ErrorException($message, 0, $level); });
 try {
     ob_start();
-    \TinyCat\Social\Site\Layout::render(['title' => 'Public <unsafe>', 'current' => '/search', 'meta' => ['description' => 'Description <unsafe>']], '<p id="page-fixture">Prepared content</p>');
+    \TinyCat\Core\Ui\Page::render(['title' => 'Public <unsafe>', 'current' => '/search', 'meta' => ['description' => 'Description <unsafe>']], '<p id="page-fixture">Prepared content</p>');
     $publicLayout = (string) ob_get_clean();
     $assert(substr_count($publicLayout, '<!doctype html>') === 1 && substr_count($publicLayout, '<body') === 1, 'Public shell produces exactly one HTML document.');
     $assert(str_contains($publicLayout, 'class="navbar"') && !str_contains($publicLayout, 'data-admin-shell'), 'Guest pages use the public shell.');
@@ -177,23 +177,50 @@ try {
         \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
     }
     // Social page composition must honor the same selected theme as core pages.
-    $originalRegistries = \TinyCat\Core\Modules\Registrations::current();
+    $themeRoot = $root . '/tests/fixtures/themes';
+    $localTheme = \TinyCat\Core\Ui\Theme::load('example', $themeRoot);
+    $assert($localTheme !== null && \TinyCat\Core\Ui\Theme::choices($themeRoot) === ['example' => 'Example theme'], 'Theme metadata is discovered without a functional module.');
+    $assert(\TinyCat\Core\Ui\Theme::load('../example', $themeRoot) === null && \TinyCat\Core\Ui\Theme::load('missing', $themeRoot) === null, 'Theme selection rejects traversal and tolerates a removed theme.');
+    ob_start();
+    $localTheme?->render(['title' => 'Local theme', 'public' => true, 'current' => '/example'], '<p data-owner-content>Owner content</p>');
+    $localLayout = (string) ob_get_clean();
+    $assert(str_contains($localLayout, 'data-example-theme') && str_contains($localLayout, 'data-owner-content') && substr_count($localLayout, '<!doctype html>') === 1, 'A local PHP layout preserves owner content inside the shared document.');
+    $assert(str_contains($localLayout, 'name="csrf-token"'), 'A local layout uses common assets and document security metadata.');
+    require_once $root . '/tools/support/workspace.php';
+    $manifestRoot = \TinyCat\Tools\Workspace::directory('tests/theme-' . bin2hex(random_bytes(6)));
+    $manifestDirectory = $manifestRoot . '/App/Themes/example';
+    mkdir($manifestDirectory, 0700, true);
+    file_put_contents($manifestDirectory . '/public.php', '<?php throw new RuntimeException("Theme PHP executed during discovery.");');
+    $manifest = ['id' => 'example', 'label' => 'Metadata only', 'layout' => 'public.php'];
+    try {
+        file_put_contents($manifestDirectory . '/theme.json', json_encode($manifest, JSON_THROW_ON_ERROR));
+        $assert(\TinyCat\Core\Ui\Theme::choices($manifestRoot) === ['example' => 'Metadata only'], 'Reading theme choices does not execute layout PHP.');
+        foreach ([['layout' => '../outside.php'], ['id' => 'another'], ['unknown' => true], ['styles' => ['../escape.css']], ['scripts' => 'invalid']] as $invalid) {
+            file_put_contents($manifestDirectory . '/theme.json', json_encode(array_replace($manifest, $invalid), JSON_THROW_ON_ERROR));
+            $rejected = false;
+            try { \TinyCat\Core\Ui\Theme::load('example', $manifestRoot); }
+            catch (\InvalidArgumentException) { $rejected = true; }
+            $assert($rejected, 'Invalid theme declarations are rejected before rendering: ' . (string) array_key_first($invalid));
+        }
+    } finally {
+        unlink($manifestDirectory . '/theme.json');
+        unlink($manifestDirectory . '/public.php');
+        rmdir($manifestDirectory); rmdir(dirname($manifestDirectory)); rmdir(dirname($manifestDirectory, 2)); rmdir($manifestRoot);
+    }
     $originalOptions = \TinyCat\Core\Runtime\Startup::$options;
     try {
-        \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries([
-            'existing' => $originalRegistries->entries,
-            'fixture' => new \TinyCat\Core\Modules\Contributions(themes: [new \TinyCat\Core\Modules\PageTheme('fixture.theme', static function (array $page, string $content): void {
-                \TinyCat\Core\Ui\Document::render($page, '<section data-selected-theme>' . $content . '</section>');
-            })]),
-        ]));
-        \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'site.theme' ? 'fixture.theme' : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
+        \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'site.theme' ? 'tinycat.site.theme' : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
         ob_start();
-        \TinyCat\Social\Site\PublicPages::render('home', ['page' => ['title' => 'Selected theme', 'current' => '/social', 'meta' => ['url' => '/social']], 'context' => []]);
+        \TinyCat\Social\Site\PublicPages::render('home', ['page' => ['title' => 'Core layout', 'current' => '/social', 'meta' => ['url' => '/social']], 'context' => []]);
         $selectedLayout = (string) ob_get_clean();
-        $assert(str_contains($selectedLayout, 'data-selected-theme') && str_contains($selectedLayout, 'data-public-page="home"'), 'Social content renders inside the selected core theme rather than forcing its own theme.');
-        $assert(substr_count($selectedLayout, '<!doctype html>') === 1, 'Selected themes retain one shared document.');
+        $assert(str_contains($selectedLayout, 'data-public-page="home"') && substr_count($selectedLayout, '<!doctype html>') === 1, 'A retired module theme selection falls back to the common document with Social content.');
+        $assert(!str_contains($selectedLayout, '<h1 class="m-0">'), 'The public shell does not duplicate the module page heading.');
+        $themeFields = array_values(array_filter(\TinyCat\Core\Settings\Settings::section_site()['fields'], static fn (array $field): bool => $field['key'] === 'site.theme'));
+        $assert(!isset($themeFields[0]['options']['tinycat.site.theme']), 'Functional modules do not contribute entries to the theme setting.');
+        ob_start();
+        \TinyCat\Core\Ui\Page::render(['title' => 'Login', 'current' => '/login', 'layout' => 'auth'], '<p data-auth-content>Login</p>');
+        $assert(str_contains((string) ob_get_clean(), 'data-auth-content'), 'Authentication retains its common core presentation.');
     } finally {
-        \TinyCat\Core\Modules\Registrations::configure($originalRegistries);
         \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
     }
     \TinyCat\Core\Identity\Authentication::reset(['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'theme' => 'dark'], true);

@@ -13,7 +13,7 @@ final class Document
         $prepared = DocumentData::prepare($page);
         $prepared['content'] = $content;
         $prepared['public'] = (bool) ($page['public'] ?? false);
-        $prepared['hasPublicSidebar'] = false;
+        $prepared['hasPublicSidebar'] = str_contains($content, 'data-public-sidebar-slot') || str_contains($content, 'data-public-sidebar-url');
         self::renderPrepared($prepared, View::render('public-shell', $prepared, __DIR__ . '/templates'));
     }
 
@@ -33,7 +33,9 @@ final class Document
                 'class' => $prepared['bodyClasses'] !== '' ? $prepared['bodyClasses'] : null,
                 'data-application-version' => $prepared['applicationVersion'],
                 'data-current-user-id' => (int) ($prepared['authUser']['id'] ?? 0),
-                'data-icon-sprite' => \TinyCat\Support\Assets::asset('icons.svg'),
+                'data-icon-sprite' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/icons.svg'),
+                'data-fallback-avatar' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/fallback/avatar.svg'),
+                'data-fallback-image' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/fallback/image.svg'),
             ],
             'metadata' => new \TinyCat\Support\Markup(View::render('head', $prepared, __DIR__ . '/templates')),
             'styles' => $prepared['styleUrls'], 'scripts' => $prepared['scriptUrls'], 'flashToasts' => $prepared['flashToasts'],

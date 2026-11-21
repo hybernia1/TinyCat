@@ -51,7 +51,7 @@ App/
         Moderation/
         Search/
         Bots/                    # Botí účty, zdroje a publikační fronty
-        Site/                    # Veřejné stránky a téma
+        Site/                    # Veřejné stránky a příspěvky UI
       migrations/
       templates/
       lang/
@@ -168,11 +168,11 @@ rozlišují technickou podporu od doménového SQL. Souběh ani stejné ID nevyt
 vazbu mezi vlastníky.
 
 Core poskytuje společný dokument, editor, seznamy a dialogy. Moduly přispívají
-stránkami, tématy, homepage a dashboardy. `/` a `/admin` vybírá core z aktivních
+stránkami, homepage a dashboardy. `/` a `/admin` vybírá core z aktivních
 definic; vypnutí jednoho modulu neodstraní účet ani data druhého.
 
 Veřejné stránky Socialu posílají společný komponentový obsah do `Core/Ui/Page`.
-Ten vybere téma; `Site/Layout` je pouze jeho veřejný renderer. Administraci
+Ten vybere [samostatné téma](themes.md), nebo použije core rám. Administraci
 obsluhuje core před výběrem veřejného tématu. Botí seznamy používají společné
 `Admin/Definitions::page()` a dodávají jen vlastní akce, například předání ID bota
 do formuláře nového zdroje. Stejný rám se neskládá podruhé v modulu.

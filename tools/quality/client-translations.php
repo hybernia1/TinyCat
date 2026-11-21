@@ -43,7 +43,7 @@ return static function (array $catalogs): void {
         }
         foreach ($catalogs as $locale => $catalog) {
             $selected = \TinyCat\Support\ClientAssets::catalog($scope, $locale, $catalog['app']);
-            if (in_array('assets/core/dates.js', $sources, true)) {
+            if (in_array('App/Core/Ui/assets/runtime/dates.js', $sources, true)) {
                 $dateKeys = ['relative.now'];
                 foreach (['past', 'future'] as $direction) {
                     foreach (['minute', 'hour', 'day', 'week', 'month', 'year'] as $unit) {

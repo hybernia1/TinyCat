@@ -68,7 +68,7 @@ if ($mode === '--styles') {
     echo json_encode(\TinyCat\Support\AssetGraph::stylesheet(array_values(array_unique($styles))), JSON_THROW_ON_ERROR);
     exit;
 }
-$roots = $mode === '--core' ? ['assets/ui/component-builders.js', 'assets/ui/dialogs.js', 'assets/core/page-navigation.js'] : ($mode === '--validation' ? ['assets/ui/ajax-bindings.js', 'App/Modules/Social/assets/status/form-actions.js', 'App/Modules/Social/assets/moderation/controller.js', 'App/Core/Settings/assets/index.js', 'App/Modules/Social/assets/users/index.js', 'App/Modules/Social/assets/bots/index.js', 'App/Core/Updates/assets/index.js'] : []);
+$roots = $mode === '--core' ? ['App/Core/Ui/assets/component-builders.js', 'App/Core/Ui/assets/dialogs.js', 'App/Core/Ui/assets/runtime/page-navigation.js'] : ($mode === '--validation' ? ['App/Core/Ui/assets/ajax-bindings.js', 'App/Modules/Social/assets/status/form-actions.js', 'App/Modules/Social/assets/moderation/controller.js', 'App/Core/Settings/assets/index.js', 'App/Modules/Social/assets/users/index.js', 'App/Modules/Social/assets/bots/index.js', 'App/Core/Updates/assets/index.js'] : []);
 if ($mode === '--module-settings') {
     \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), [])->catalog);
     require dirname(__DIR__, 2) . '/fixtures/modules/settings.php';
@@ -76,15 +76,15 @@ if ($mode === '--module-settings') {
     exit;
 }
 if ($mode === '--validation') {
-    $roots[] = 'assets/ui/admin-resources.js';
+    $roots[] = 'App/Core/Ui/assets/admin-resources.js';
     $roots[] = 'App/Modules/Social/assets/users/public.js';
-    $roots[] = 'assets/ui/form-constraints.js';
+    $roots[] = 'App/Core/Ui/assets/form-constraints.js';
     $roots[] = 'App/Core/Identity/assets/admin.js';
 }
 if ($mode === '--all') {
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {
-        foreach (\TinyCat\Support\ClientAssets::entries($scope) as $entry) { if ($entry !== 'assets/bootstrap.js') { $roots[] = $entry; } }
+        foreach (\TinyCat\Support\ClientAssets::entries($scope) as $entry) { if ($entry !== 'App/Core/Ui/assets/bootstrap.js') { $roots[] = $entry; } }
     }
 }
-$ordered = $mode === '--bootstrap' ? ['assets/bootstrap.js'] : \TinyCat\Support\AssetGraph::order(array_values(array_unique($roots)));
+$ordered = $mode === '--bootstrap' ? ['App/Core/Ui/assets/bootstrap.js'] : \TinyCat\Support\AssetGraph::order(array_values(array_unique($roots)));
 echo json_encode(array_map(static fn (string $path): array => ['path' => $path, 'source' => \TinyCat\Support\AssetGraph::javascript([$path])], $ordered), JSON_THROW_ON_ERROR);

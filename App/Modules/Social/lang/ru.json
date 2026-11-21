@@ -310,7 +310,6 @@
     "filter_links": "Ссылки",
     "filter_text": "Только текст",
     "feed_empty_filtered": "Нет публикаций по этому фильтру.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} публикация",
       "few": "{count} публикации",

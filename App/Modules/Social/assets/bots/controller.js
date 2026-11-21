@@ -1,14 +1,14 @@
-import "../../../../../assets/ui/content-updates.js";
-import "../../../../../assets/ui/list-navigation.js";
-import "../../../../../assets/core/dates.js";
-import "../../../../../assets/core/component-renderer.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/ui/avatar-rendering.js";
-import "../../../../../assets/ui/dialogs.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/form-state.js";
-import "../../../../../assets/ui/form-requests.js";
-import "../../../../../assets/ui/toasts.js";
+import "../../../../Core/Ui/assets/content-updates.js";
+import "../../../../Core/Ui/assets/list-navigation.js";
+import "../../../../Core/Ui/assets/runtime/dates.js";
+import "../../../../Core/Ui/assets/runtime/component-renderer.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/avatar-rendering.js";
+import "../../../../Core/Ui/assets/dialogs.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/form-state.js";
+import "../../../../Core/Ui/assets/form-requests.js";
+import "../../../../Core/Ui/assets/toasts.js";
 import "./source-preview.js";
 import "./workspace.js";
 (function () {

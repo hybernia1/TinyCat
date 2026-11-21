@@ -7,7 +7,7 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
-Current unreleased sources remove the unused Blog module and its assembly preset.
+Version 7.0.0 removes the unused Blog module and its assembly preset.
 The release-specific sections below retain historical commands and evidence for
 their immutable packages. They do not restore Blog support in current sources.
 An installed Blog owner blocks an update to the new distribution before changes;
@@ -79,6 +79,38 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
+
+## Upgrading to 7.0.0
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This major release consolidates
+the framework and Social registrations, introduces optional standalone public
+themes and moves asset sources to their owners. No database migration is added.
+Configuration, accounts, Social content, uploads and activation are preserved.
+An installation with Blog recorded as an installed owner is rejected before
+changes; removing the owner record or its data is not an upgrade procedure.
+
+Third-party API clients must use `/api/profiles/{id}` and the corresponding
+following endpoints for Social profiles. Identity account management remains
+under `/api/users`. Public search uses `/search/all` and `/api/search/query`;
+the Social CAPTCHA verification endpoint is `/api/search/challenges`. Removed
+search/profile paths are not aliases. See the [API reference](../reference/api.md).
+
+Extensions must replace the removed `PageTheme`/`Contributions::themes` contract
+with [standalone themes](../development/themes.md). The shared asset helper now
+accepts an owned application-relative source path, for example
+`App/Core/Ui/assets/icons.svg`; update old source imports and asset references.
+The signed deletion plan removes retired source paths. Generated, versioned URLs
+remain public; `/assets/embed.js` remains a stable Social-owned embed entry.
+An old saved module theme ID falls back to the core layout without rewriting
+site configuration.
+
+One GitHub release contains both core and production Social update/install trios
+(twelve files), each with its own signed product identity. Build from the same
+clean commit using the [product channel procedure](#product-update-channels).
+Verify each signature/archive and fresh installer, and rehearse the exact Social
+update from both the supported 6.0.10 baseline and the previous 6.3.1 release,
+including cached baseline classes and rollback. Source preflight is separate
+from validation of these concrete signed artifacts.
 
 ## Upgrading to 6.3.1
 

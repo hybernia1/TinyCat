@@ -32,8 +32,9 @@ final class Settings
     private static function choices(string $kind): array
     {
         $options = ['' => \TinyCat\Support\Localization::t('settings.fields.automatic')];
+        if ($kind === 'themes') { return $options + \TinyCat\Core\Ui\Theme::choices(); }
         $entries = \TinyCat\Core\Modules\Registrations::current()->entries;
-        foreach ($kind === 'homepages' ? $entries->homepages : $entries->themes as $entry) { $options[$entry->id] = ($entry->label)(); }
+        foreach ($entries->homepages as $entry) { $options[$entry->id] = ($entry->label)(); }
         return $options;
     }
 

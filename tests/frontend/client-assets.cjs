@@ -31,6 +31,13 @@ function load(route, locale = "en", compiled = false) {
 }
 const publicPage = load("/");
 for (const mode of [false, true, "min"]) {
+  for (const route of ["/login", "/register", "/recovery", "/logout", "/privacy", "/search/all", "/notifications"]) {
+    const page = load(route, "en", mode);
+    check(page.T.accounts && !page.T.status && !page.T.socialUsers && !page.T.site, "Core public pages exclude the Social feed runtime in every delivery variant: " + route);
+    check(!page.T.filters && !page.T.adminDefinitions && !page.T.settings, "Public pages exclude administrative controllers: " + route);
+    check(!page.definitions.includes("status/card") && !page.definitions.includes("bots/sources") && !page.definitions.includes("users/admin-fields"), "Core public catalogs exclude domain and admin views: " + route);
+    check(!Object.keys(page.catalog).some(key => key.startsWith("bots.") || key.startsWith("settings.fields.") || key.startsWith("settings.sections.") || key === "settings.title"), "Core public catalogs exclude administrative editor translations: " + route);
+  }
   const queue = load("/admin/bots/queue", "en", mode);
   check(["status/edit-fields", "status/dialog-form"].every(name => queue.definitions.includes(name)), "Bot queue delivers its complete status editor dependency in every asset variant");
   const profile = load("/author/2", "cs", mode);
@@ -47,6 +54,7 @@ check(typeof publicPage.T.accounts.list === "undefined" && publicPage.T.accounts
 const login = load("/login");
 check(typeof login.T.accounts.list === "undefined" && login.T.accounts.modal, "Login keeps resource authentication dialogs without user-list code");
 check(publicPage.T.status && publicPage.T.socialUsers && !publicPage.T.bots && !publicPage.T.moderation, "Public pages load their own feature scripts");
+check(!publicPage.T.filters, "The public feed does not load administrative list filters");
 check(!publicPage.definitions.includes("users/admin-fields") && !publicPage.definitions.includes("bots/sources"), "Public bundles exclude administration components");
 const users = load("/admin/users");
 check(users.T.adminDefinitions["core.users"].component === "users/list", "User administration loads its declared list");
@@ -65,7 +73,7 @@ check(load("/admin/updates").sources.includes("App/Core/Updates/assets/index.js"
 check(!load("/install").T.status, "Installer boots without public modules");
 check(!load("/install").definitions.includes("ui/modal") && load("/admin").definitions.includes("ui/modal"), "Installer excludes unused dialog catalogs while administration retains them.");
 check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
-check(!load("/install").sources.some(s => s.includes("/Modules/Social/") || s.includes("/ui/ajax-bindings.js")) && load("/install").sources.some(s => s.includes("/ui/form-requests.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
+check(!load("/install").sources.some(s => s.includes("/Modules/Social/") || s === "App/Core/Ui/assets/ajax-bindings.js") && load("/install").sources.includes("App/Core/Ui/assets/form-requests.js"), "Installer uses shared API form transport without feed and administration controllers");
 const schedulerPage = load("/admin/cron/list");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");

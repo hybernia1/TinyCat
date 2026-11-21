@@ -1,4 +1,4 @@
-import "../../../../../assets/core/dom.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
 import "./controller.js";
 (function () {
   "use strict";

@@ -79,7 +79,7 @@ final class DocumentData
         $languageAlternatives = http_response_code() < 400 ? \TinyCat\Http\LocaleRouting::alternatives($current) : [];
         $languageLinks = \TinyCat\Http\LocaleRouting::selector($current, \TinyCat\Http\Request::current()->query());
         $currentLanguageName = (string) (\TinyCat\Support\Languages::language_packages()[\TinyCat\Support\Localization::locale()] ?? \TinyCat\Support\Localization::locale());
-        $languageFlagSprite = \TinyCat\Support\Assets::asset('icons.svg');
+        $languageFlagSprite = \TinyCat\Support\Assets::asset('App/Core/Ui/assets/icons.svg');
         $languageFlagId = 'flag-' . \TinyCat\Support\Localization::locale();
         $languageSuggestion = $authUser === null && http_response_code() < 400
             ? \TinyCat\Http\LocaleRouting::suggestion($languageLinks, (string) ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '')) : null;

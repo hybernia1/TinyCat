@@ -21,7 +21,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
     lifecycle: { register: (name, service) => { services[name] = service; }, dispose: () => { disposed++; }, hydrate() {} },
     components: { render: () => ({ querySelector: () => slot }) }, site: { activateSidebar() {} } };
   const window = { TinyCat: T, location: { href: "http://tinycat.test/", origin: "http://tinycat.test", assign() { assigned++; } }, history: { replaceState(state) { this.state = state; replacements++; }, pushState(state) { this.state = state; pushes++; }, go(distance) { rollbackDistance = distance; } }, matchMedia: () => ({ matches: true }), clearTimeout() {}, setTimeout() {}, addEventListener() {}, scrollTo() {} };
-  for (const file of ["assets/core/navigation.js", "assets/core/page-navigation.js", "assets/ui/document-navigation.js", "App/Modules/Social/assets/site/page-navigation.js"]) {
+  for (const file of ["App/Core/Ui/assets/runtime/navigation.js", "App/Core/Ui/assets/runtime/page-navigation.js", "App/Core/Ui/assets/document-navigation.js", "App/Modules/Social/assets/site/page-navigation.js"]) {
     if (file.startsWith("App/Modules/Social/")) { const register = T.navigation.registerPage; T.navigation.registerPage = r => { route = r; register(r); }; }
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, URL, AbortController });
   }

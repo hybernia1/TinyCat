@@ -1,0 +1,488 @@
+[
+  {
+    "routes": [
+      "*"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/tooltips.js",
+      "App/Core/Ui/assets/toasts.js",
+      "App/Core/Ui/assets/tabs.js",
+      "App/Core/Ui/assets/popovers.js",
+      "App/Core/Ui/assets/image-placeholders.js",
+      "App/Core/Ui/assets/code-copy.js"
+    ],
+    "components": [],
+    "styles": [
+      "App/Core/Ui/assets/styles/tokens.css",
+      "App/Core/Ui/assets/styles/reset.css",
+      "App/Core/Ui/assets/styles/layout.css",
+      "App/Core/Ui/assets/styles/buttons.css",
+      "App/Core/Ui/assets/styles/cards.css",
+      "App/Core/Ui/assets/styles/check-card.css",
+      "App/Core/Ui/assets/styles/disclosure.css",
+      "App/Core/Ui/assets/styles/visibility.css",
+      "App/Core/Ui/assets/styles/field-inline.css",
+      "App/Core/Ui/assets/styles/fields.css",
+      "App/Core/Ui/assets/styles/alerts.css",
+      "App/Core/Ui/assets/styles/badges.css",
+      "App/Core/Ui/assets/styles/badge-danger.css",
+      "App/Core/Ui/assets/styles/content-images.css",
+      "App/Core/Ui/assets/styles/status-indicators.css",
+      "App/Core/Ui/assets/styles/empty-state.css",
+      "App/Core/Ui/assets/styles/filter-menu.css",
+      "App/Core/Ui/assets/styles/content-images-contain.css",
+      "App/Core/Ui/assets/styles/status-indicator-warning.css",
+      "App/Core/Ui/assets/styles/check-line.css",
+      "App/Core/Ui/assets/styles/navbar.css",
+      "App/Core/Ui/assets/styles/hashtags.css",
+      "App/Core/Ui/assets/styles/popovers.css",
+      "App/Core/Ui/assets/styles/context-menu-trigger.css",
+      "App/Core/Ui/assets/styles/context-menu-actions.css",
+      "App/Core/Ui/assets/styles/avatar.css",
+      "App/Core/Ui/assets/styles/avatar-sizes.css",
+      "App/Core/Ui/assets/styles/code-block.css",
+      "App/Core/Ui/assets/styles/brand-logo.css",
+      "App/Core/Ui/assets/styles/tabs.css",
+      "App/Core/Ui/assets/styles/table-identity.css",
+      "App/Core/Ui/assets/styles/modal.css",
+      "App/Core/Ui/assets/styles/modal-layout.css",
+      "App/Core/Ui/assets/styles/input-icon.css",
+      "App/Core/Ui/assets/styles/modal-confirm-buttons.css",
+      "App/Core/Ui/assets/styles/toasts.css",
+      "App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css",
+      "App/Core/Ui/assets/styles/loading.css",
+      "App/Core/Ui/assets/styles/cards-mobile.css",
+      "App/Core/Ui/assets/styles/containers-mobile.css",
+      "App/Core/Ui/assets/styles/section-desktop.css",
+      "App/Core/Ui/assets/styles/split-desktop.css",
+      "App/Core/Ui/assets/styles/field-inline-desktop.css",
+      "App/Core/Ui/assets/styles/grid-desktop.css",
+      "App/Core/Ui/assets/styles/modal-workspace-desktop.css",
+      "App/Core/Ui/assets/styles/reduced-motion.css",
+      "App/Core/Ui/assets/styles/resource-text.css",
+      "App/Core/Ui/assets/styles/tooltip.css",
+      "App/Core/Ui/assets/styles/result-list.css",
+      "App/Core/Ui/assets/styles/identity-rows.css",
+      "App/Core/Ui/assets/styles/load-more.css",
+      "App/Core/Ui/assets/styles/public-workspace.css"
+    ],
+    "translations": [
+      "common.menu",
+      "common.sort",
+      "common.all",
+      "common.cancel",
+      "common.close",
+      "common.confirm",
+      "common.confirm_action",
+      "common.image_prepare_failed",
+      "common.request_failed",
+      "common.copy",
+      "common.copied",
+      "common.copy_failed"
+    ],
+    "standalone": [
+      "App/Core/Ui/assets/icons.svg",
+      "App/Core/Ui/assets/fallback/avatar.svg",
+      "App/Core/Ui/assets/fallback/image.svg"
+    ]
+  },
+  {
+    "routes": [
+      "public",
+      "admin"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/ajax-bindings.js",
+      "App/Core/Ui/assets/confirm-actions.js"
+    ],
+    "components": [
+      "ui/modal",
+      "ui/field",
+      "ui/select",
+      "ui/editor-actions",
+      "ui/account-title"
+    ],
+    "translations": [
+      "common.leave",
+      "common.save",
+      "common.stay",
+      "common.unsaved_message",
+      "common.unsaved_title"
+    ],
+    "messages": {
+      "forbidden": "auth.forbidden",
+      "unauthenticated": "auth.login_required",
+      "unauthorized": "auth.login_required",
+      "bad_request": "common.request_failed",
+      "not_found": "common.not_found",
+      "validation_error": "common.validation_failed",
+      "server_error": "common.request_failed",
+      "error": "common.request_failed",
+      "validation_required": "common.validation_required",
+      "validation_accepted": "common.validation_invalid",
+      "validation_array": "common.validation_invalid",
+      "validation_bool": "common.validation_invalid",
+      "validation_boolean": "common.validation_invalid",
+      "validation_date": "common.validation_invalid",
+      "validation_email": "common.validation_invalid",
+      "validation_float": "common.validation_invalid",
+      "validation_number": "common.validation_invalid",
+      "validation_numeric": "common.validation_invalid",
+      "validation_in": "common.validation_invalid",
+      "validation_int": "common.validation_invalid",
+      "validation_integer": "common.validation_invalid",
+      "validation_max": "common.validation_invalid",
+      "validation_min": "common.validation_invalid",
+      "validation_between": "common.validation_invalid",
+      "validation_string": "common.validation_invalid",
+      "validation_url": "common.validation_invalid",
+      "validation_max_bytes": "common.validation_invalid"
+    },
+    "styles": []
+  },
+  {
+    "id": "ui.form-constraints",
+    "routes": [],
+    "entries": [
+      "App/Core/Ui/assets/form-constraints.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "common.validation_invalid"
+    ]
+  },
+  {
+    "routes": [
+      "public",
+      "admin"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/runtime/dates.js"
+    ],
+    "components": [],
+    "translations": [
+      "relative.future.day.few",
+      "relative.future.day.many",
+      "relative.future.day.one",
+      "relative.future.day.other",
+      "relative.future.day.single",
+      "relative.future.hour.few",
+      "relative.future.hour.many",
+      "relative.future.hour.one",
+      "relative.future.hour.other",
+      "relative.future.hour.single",
+      "relative.future.minute.few",
+      "relative.future.minute.many",
+      "relative.future.minute.one",
+      "relative.future.minute.other",
+      "relative.future.minute.single",
+      "relative.future.month.few",
+      "relative.future.month.many",
+      "relative.future.month.one",
+      "relative.future.month.other",
+      "relative.future.month.single",
+      "relative.future.week.few",
+      "relative.future.week.many",
+      "relative.future.week.one",
+      "relative.future.week.other",
+      "relative.future.week.single",
+      "relative.future.year.few",
+      "relative.future.year.many",
+      "relative.future.year.one",
+      "relative.future.year.other",
+      "relative.future.year.single",
+      "relative.now",
+      "relative.past.day.few",
+      "relative.past.day.many",
+      "relative.past.day.one",
+      "relative.past.day.other",
+      "relative.past.day.single",
+      "relative.past.hour.few",
+      "relative.past.hour.many",
+      "relative.past.hour.one",
+      "relative.past.hour.other",
+      "relative.past.hour.single",
+      "relative.past.minute.few",
+      "relative.past.minute.many",
+      "relative.past.minute.one",
+      "relative.past.minute.other",
+      "relative.past.minute.single",
+      "relative.past.month.few",
+      "relative.past.month.many",
+      "relative.past.month.one",
+      "relative.past.month.other",
+      "relative.past.month.single",
+      "relative.past.week.few",
+      "relative.past.week.many",
+      "relative.past.week.one",
+      "relative.past.week.other",
+      "relative.past.week.single",
+      "relative.past.year.few",
+      "relative.past.year.many",
+      "relative.past.year.one",
+      "relative.past.year.other",
+      "relative.past.year.single"
+    ],
+    "styles": []
+  },
+  {
+    "routes": [
+      "public",
+      "/search/all"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/public.js"
+    ],
+    "components": [
+      "ui/notice",
+      "ui/empty-state"
+    ],
+    "styles": [
+      "App/Core/Ui/assets/styles/global-search-controls.css",
+      "App/Core/Ui/assets/styles/global-search-mobile.css",
+      "App/Core/Ui/assets/styles/global-search.css",
+      "App/Core/Ui/assets/styles/cookie-consent.css",
+      "App/Core/Ui/assets/styles/cookie-consent-mobile.css",
+      "App/Core/Ui/assets/styles/language.css",
+      "App/Core/Ui/assets/styles/navbar-mobile.css"
+    ],
+    "translations": [
+      "auth.login_title",
+      "common.confirm",
+      "common.request_failed",
+      "public.search_captcha_required",
+      "public.search_captcha_title",
+      "public.search_all",
+      "public.search_min",
+      "public.search_empty",
+      "public.search_length",
+      "public.language_available",
+      "public.language_switch"
+    ]
+  },
+  {
+    "routes": [
+      "/admin/modules"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/admin/module-packages.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "modules.packages.upload",
+      "modules.packages.file",
+      "modules.packages.confirm",
+      "modules.packages.help",
+      "modules.packages.install",
+      "common.unsaved_title",
+      "common.unsaved_message",
+      "common.leave",
+      "common.stay",
+      "common.cancel",
+      "common.close"
+    ]
+  },
+  {
+    "routes": [],
+    "entries": [
+      "App/Core/Ui/assets/content/presentation.js"
+    ],
+    "components": [
+      "publishing/segments",
+      "publishing/link",
+      "publishing/attached-image"
+    ],
+    "styles": [
+      "App/Core/Ui/assets/content/styles/status-text.css",
+      "App/Core/Ui/assets/content/styles/status-content.css",
+      "App/Core/Ui/assets/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.status_counter",
+      "account.status_image_add",
+      "account.status_image_remove",
+      "account.translation_continue",
+      "account.translation_failed",
+      "account.translation_hide",
+      "account.translation_machine",
+      "account.translation_preparing",
+      "account.translation_same",
+      "account.translation_translate",
+      "account.translation_unavailable",
+      "public.status_image_alt",
+      "public.status_image_alt_empty",
+      "account.messages.status_image_invalid"
+    ],
+    "id": "publishing.presentation"
+  },
+  {
+    "routes": [],
+    "entries": [
+      "App/Core/Ui/assets/content/editor-entry.js"
+    ],
+    "components": [
+      "publishing/editor",
+      "publishing/image-field"
+    ],
+    "styles": [
+      "App/Core/Ui/assets/content/styles/status-editing.css",
+      "App/Core/Ui/assets/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.status_counter",
+      "account.status_image_add",
+      "account.status_image_remove",
+      "public.status_image_alt",
+      "public.status_image_alt_empty",
+      "account.status_body",
+      "account.messages.status_image_invalid"
+    ],
+    "id": "publishing.editor"
+  },
+  {
+    "id": "publishing.media",
+    "routes": [],
+    "entries": [
+      "App/Core/Ui/assets/content/media-preview.js"
+    ],
+    "components": [
+      "publishing/link",
+      "publishing/attached-image"
+    ],
+    "styles": [
+      "App/Core/Ui/assets/content/styles/status-content.css",
+      "App/Core/Ui/assets/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.messages.status_image_invalid"
+    ]
+  },
+  {
+    "id": "publishing.discussion-base",
+    "routes": [],
+    "uses": [
+      "publishing.editor",
+      "publishing.presentation"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/content/comments.js"
+    ],
+    "components": [
+      "publishing/comment",
+      "publishing/comment-form",
+      "publishing/like",
+      "publishing/comment-history",
+      "publishing/comment-replies"
+    ],
+    "styles": [
+      "App/Core/Ui/assets/content/styles/discussion-content.css",
+      "App/Core/Ui/assets/content/styles/discussion-editing.css",
+      "App/Core/Ui/assets/content/styles/discussion-mobile.css"
+    ],
+    "translations": [
+      "account.status_comment",
+      "account.status_comment_placeholder",
+      "account.status_comments",
+      "account.status_like",
+      "account.status_like_for",
+      "account.status_reply",
+      "account.status_reply_placeholder",
+      "account.status_unlike_for",
+      "common.confirm_action",
+      "common.delete",
+      "common.edit",
+      "common.leave",
+      "common.stay",
+      "common.unsaved_message",
+      "common.unsaved_title",
+      "account.status_comment_history"
+    ]
+  },
+  {
+    "id": "publishing.discussion",
+    "routes": [],
+    "uses": [
+      "publishing.discussion-base"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/content/discussion.js"
+    ],
+    "components": [
+      "publishing/discussion"
+    ],
+    "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "/privacy"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [
+      "App/Core/Ui/assets/styles/information-pages.css"
+    ],
+    "translations": []
+  },
+  {
+    "routes": [
+      "/admin/cache"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/cache-inspection.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "admin.cache.observing",
+      "admin.cache.no_encoding",
+      "admin.cache.observe_error"
+    ]
+  },
+  {
+    "routes": [
+      "/admin"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/dashboard-stats.js"
+    ],
+    "components": [
+      "ui/dashboard-metrics"
+    ],
+    "styles": [
+      "App/Core/Ui/assets/styles/dashboard.css"
+    ],
+    "translations": []
+  },
+  {
+    "id": "ui.tables",
+    "routes": [
+      "admin",
+      "/install"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [
+      "App/Core/Ui/assets/styles/tables.css",
+      "App/Core/Ui/assets/styles/tables-mobile.css"
+    ],
+    "translations": []
+  },
+  {
+    "routes": [
+      "admin"
+    ],
+    "entries": [],
+    "components": [
+      "ui/filter-chip"
+    ],
+    "styles": [
+      "App/Core/Ui/assets/styles/filter-chips.css",
+      "App/Core/Ui/assets/styles/pagination.css",
+      "App/Core/Ui/assets/styles/pagination-desktop.css"
+    ],
+    "translations": []
+  }
+]

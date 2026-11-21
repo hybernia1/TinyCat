@@ -131,8 +131,9 @@ Social má `/social` a dosavadní `/status/{id}`.
 Kořen `/` vybírá core z příspěvků `homepages`: nastavení `site.homepage`
 volí například `tinycat.status.home`. Prázdná hodnota
 vybírá první aktivní nabídku; po vypnutí zvolené nabídky se použije aktivní
-fallback. `site.theme` obdobně vybírá vzhled; bez aktivního tématu je společný
-core rám. Obě volby jsou v editoru nastavení webu. Nastavení, jeho klientské
+fallback. `site.theme` vybírá [samostatné téma](../development/themes.md);
+moduly témata neregistrují. Bez vybraného tématu je společný core rám.
+Obě volby jsou v editoru nastavení webu. Nastavení, jeho klientské
 popisky a e-mailové šablony přispívají pouze aktivní vlastníci.
 
 Předkompilované výstupy obsahují otisk výběru. Při změně aktivace runtime

@@ -1,15 +1,15 @@
 // @component-owned: structure is declared in owner catalogs.
-import "../../../../assets/ui/content-updates.js";
-import "../../../../assets/core/dates.js";
-import "../../../../assets/core/component-renderer.js";
-import "../../../../assets/core/dom.js";
-import "../../../../assets/core/api-client.js";
-import "../../../../assets/core/i18n.js";
-import "../../../../assets/core/lifecycle.js";
-import "../../../../assets/ui/avatar-rendering.js";
-import "../../../../assets/ui/dialogs.js";
-import "../../../../assets/ui/component-builders.js";
-import "../../../../assets/ui/toasts.js";
+import "../../Ui/assets/content-updates.js";
+import "../../Ui/assets/runtime/dates.js";
+import "../../Ui/assets/runtime/component-renderer.js";
+import "../../Ui/assets/runtime/dom.js";
+import "../../Ui/assets/runtime/api-client.js";
+import "../../Ui/assets/runtime/i18n.js";
+import "../../Ui/assets/runtime/lifecycle.js";
+import "../../Ui/assets/avatar-rendering.js";
+import "../../Ui/assets/dialogs.js";
+import "../../Ui/assets/component-builders.js";
+import "../../Ui/assets/toasts.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;

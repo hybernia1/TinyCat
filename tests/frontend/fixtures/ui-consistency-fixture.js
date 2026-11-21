@@ -207,7 +207,7 @@
       const frame = document.createElement('iframe'); frame.src = '/notification-frame';
       await new Promise(resolve => { frame.onload = resolve; document.body.append(frame); });
       const w = frame.contentWindow, d = frame.contentDocument;
-      w.eval(assets.filter(asset => asset.path !== 'assets/bootstrap.js').map(asset => asset.source).join('\n'));
+      w.eval(assets.filter(asset => asset.path !== 'App/Core/Ui/assets/bootstrap.js').map(asset => asset.source).join('\n'));
       const N = w.TinyCat;
       N.components.register(window.notificationTemplates); N.i18n.register('en', window.notificationLabels);
       const list = d.createElement('div'); list.id = 'notifications-list';

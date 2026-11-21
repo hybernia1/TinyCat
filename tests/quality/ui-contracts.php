@@ -8,8 +8,8 @@ use TinyCat\Support\AssetGraph;
 use TinyCat\Support\ClientAssets;
 
 require_once __DIR__ . '/../../tools/assets/status-icons.php';
-$expectedMasks = \TinyCat\Tools\Assets\StatusIcons::css((string) file_get_contents(__DIR__ . '/../../assets/icons.svg'));
-if (!str_contains(str_replace("\r\n", "\n", (string) file_get_contents(__DIR__ . '/../../assets/ui/styles/tokens.css')), $expectedMasks)) { throw new RuntimeException('Regenerate status masks with php tools/assets/status-icons.php --write.'); }
+$expectedMasks = \TinyCat\Tools\Assets\StatusIcons::css((string) file_get_contents(__DIR__ . '/../../App/Core/Ui/assets/icons.svg'));
+if (!str_contains(str_replace("\r\n", "\n", (string) file_get_contents(__DIR__ . '/../../App/Core/Ui/assets/styles/tokens.css')), $expectedMasks)) { throw new RuntimeException('Regenerate status masks with php tools/assets/status-icons.php --write.'); }
 $validate = require __DIR__ . '/../../tools/quality/ui-contracts.php';
 $result = $validate();
 $schemaPath = __DIR__ . '/../../docs/reference/component-catalog.schema.json';
@@ -31,7 +31,7 @@ foreach (["document.createElement('div');", "T.dom.element('label', {});", "U.fi
 $validateModals(['App/Example/controller.js' => "// @component-owned\ndocument.createElement('iframe');"]);
 $validateModals(['App/Example/controller.js' => "// @component-owned\ndocument.createElement( 'iframe' );"]);
 foreach (["T.components.render('ui/modal', {});", '{"component":"ui/modal"}', 'node.className="modal";', 'element.role="dialog";'] as $source) {
-    try { $validateModals(['assets/modules/example/index.js' => $source]); }
+    try { $validateModals(['App/Modules/Example/assets/index.js' => $source]); }
     catch (RuntimeException) { continue; }
     throw new RuntimeException('Modal policy accepted a module-owned frame.');
 }
@@ -131,16 +131,24 @@ $assertStyle = static function (string $route, string $style, bool $expected) us
     $checks++;
 };
 foreach (['/', '/admin/users'] as $route) { $assertStyle($route, 'App/Core/Identity/assets/styles/avatar-upload.css', true); }
+foreach (['/', '/login', '/search/all', '/privacy', '/notifications'] as $route) {
+    foreach (['App/Core/Ui/assets/styles/tables.css', 'App/Core/Ui/assets/styles/tables-mobile.css', 'App/Core/Ui/assets/styles/pagination.css', 'App/Core/Ui/assets/styles/filter-chips.css'] as $style) { $assertStyle($route, $style, false); }
+}
+foreach (['/login', '/search/all', '/privacy', '/notifications'] as $route) {
+    $assertStyle($route, 'App/Modules/Social/assets/status/styles/home-feed.css', false);
+    $assertStyle($route, 'App/Modules/Social/assets/site/styles/public-layout.css', false);
+}
+foreach (['/admin/users', '/install'] as $route) { $assertStyle($route, 'App/Core/Ui/assets/styles/tables.css', true); }
 foreach (['/', '/admin/moderation'] as $route) { $assertStyle($route, 'App/Modules/Social/assets/status/styles/author-meta.css', true); }
 foreach (['/admin', '/install'] as $route) {
     $assertStyle($route, 'App/Modules/Social/assets/status/styles/home-feed.css', false);
-    $assertStyle($route, 'assets/ui/styles/global-search.css', false);
+    $assertStyle($route, 'App/Core/Ui/assets/styles/global-search.css', false);
     $assertStyle($route, 'App/Modules/Social/assets/site/styles/sidebar-lists.css', false);
 }
-foreach (['assets/ui/styles/check-card.css', 'assets/ui/styles/badges.css'] as $style) { $assertStyle('/install', $style, true); }
-foreach (['/install', '/admin/site-health', '/admin/updates'] as $route) { $assertStyle($route, 'assets/ui/styles/result-list.css', true); }
+foreach (['App/Core/Ui/assets/styles/check-card.css', 'App/Core/Ui/assets/styles/badges.css'] as $style) { $assertStyle('/install', $style, true); }
+foreach (['/install', '/admin/site-health', '/admin/updates'] as $route) { $assertStyle($route, 'App/Core/Ui/assets/styles/result-list.css', true); }
 $assertStyle('/admin', 'App/Core/Identity/assets/styles/user-menu.css', true);
 $assertStyle('/install', 'App/Core/Identity/assets/styles/user-menu.css', false);
-foreach (['/', '/install'] as $route) { $assertStyle($route, 'assets/ui/styles/navbar.css', true); }
+foreach (['/', '/install'] as $route) { $assertStyle($route, 'App/Core/Ui/assets/styles/navbar.css', true); }
 $assertStyle('/', 'App/Core/Identity/assets/styles/user-menu.css', true);
 echo "PASS UI catalogs, dependencies, style ownership and delivery scopes ({$result['components']} components, {$checks} checks)\n";

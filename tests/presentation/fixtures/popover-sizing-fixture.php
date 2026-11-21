@@ -17,7 +17,7 @@ $archive = \TinyCat\Support\Components::render('site/archive-filter', ['archive_
 $users = '<details data-popover><summary>Users</summary><div class="popover-panel filter-menu-panel">'
     . \TinyCat\Support\Components::render('users/filter-form', ['filters' => ['updated_from' => '2026-01-01', 'updated_to' => '2026-11-01'], 'pagination' => ['per_page' => 25]])
     . '</div></details>';
-$scripts = \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order(['assets/ui/popovers.js']));
+$scripts = \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order(['App/Core/Ui/assets/popovers.js']));
 $styles = \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles('/'));
 $filters = [];
 foreach (['bots/queue-filter-form', 'bots/post-filter-form', 'bots/run-filter-form', 'moderation/filter-form', 'scheduler/filter-form'] as $name) {
