@@ -191,7 +191,7 @@ $assert($database->query("SELECT status FROM bot_source_runs WHERE started_at = 
 $detail = \TinyCat\Core\Tasks\Administration::runDetail($parentId);
 $assert(count($detail['sources']) === 1 && $detail['sources'][0]['source_name'] === 'Fixture feed', 'Scheduler details expose only the sources belonging to that execution.');
 $html = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $detail]);
-$assert(str_contains($html, 'Fixture feed') && str_contains($html, 'Feed could not be downloaded.'), 'The common run modal renders source diagnostics for all supported feed formats.');
+$assert(str_contains($html, 'Fixture feed') && str_contains($html, 'Feed import failed.') && !str_contains($html, 'Feed could not be downloaded.'), 'The common run modal renders safe source diagnostics without raw exception details when debug is off.');
 $lockResult = 0;
 $before = (int) $database->query('SELECT COUNT(*) FROM bot_source_runs')->fetchColumn();
 \TinyCat\Core\Tasks\Runner::run('feeds', $feedTask, ['mode' => 'admin', 'options' => ['source_id' => 1]]);
@@ -219,11 +219,11 @@ $assert($targeted['options'] === ['bot_limit' => 1, 'source_id' => 1], 'Manual s
 $cleanup = \TinyCat\Core\Tasks\Tasks::context('cleanup', ['options' => ['cleanup_batch' => 7]]);
 $assert($cleanup['options'] === ['cleanup_batch' => 1000], 'Cleanup records the supported batch actually used for an unsupported request.');
 $before = (int) $database->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn();
-$invalid = \TinyCat\Core\Tasks\Runner::run('feeds', $runner, ['options' => ['source_id' => 1]], true);
+$invalid = \TinyCat\Core\Tasks\Runner::run('feeds', $runner, ['options' => ['source_id' => 1]]);
 $assert(!$invalid['ok'] && (int) $database->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn() === $before, 'A source selector outside administrator mode is rejected before execution or history.');
-$invalid = \TinyCat\Core\Tasks\Runner::run('cleanup', $runner, ['options' => ['cleanup_batch' => []]], true);
+$invalid = \TinyCat\Core\Tasks\Runner::run('cleanup', $runner, ['options' => ['cleanup_batch' => []]]);
 $assert(!$invalid['ok'], 'Malformed option values cannot be silently converted into a batch size.');
-$invalid = \TinyCat\Core\Tasks\Runner::run('cleanup', static fn (): array => ['ok' => true], [], true);
+$invalid = \TinyCat\Core\Tasks\Runner::run('cleanup', static fn (): array => ['ok' => true], []);
 $assert(!$invalid['ok'] && $database->query('SELECT status FROM scheduler_runs ORDER BY id DESC LIMIT 1')->fetchColumn() === 'failed', 'A malformed callback result is recorded as a failed execution.');
 $notDue = \TinyCat\Core\Tasks\Runner::run('cleanup', static fn (): array => \TinyCat\Core\Tasks\Tasks::result('not_due'), []);
 $lockResult = 0;

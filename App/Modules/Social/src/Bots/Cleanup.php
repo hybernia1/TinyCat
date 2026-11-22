@@ -36,11 +36,12 @@ final class Cleanup
             );
             $results['successful_run_cap'] = self::pruneSuccessfulRunsPerSource($batch);
         } catch (Throwable $exception) {
+            \TinyCat\Core\Runtime\Failure::report($exception);
             return [
                 'due' => true,
                 'changed' => array_sum($results),
                 'has_more' => false,
-                'error' => $exception->getMessage(),
+                'error' => \TinyCat\Core\Runtime\Failure::message($exception, 'Operation failed.'),
             ];
         }
 

@@ -254,7 +254,7 @@ try {
     }
 
     foreach ($names as $name) {
-        if (str_starts_with($name, 'docs/') && !in_array($name, ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'], true)) {
+        if (str_starts_with($name, 'docs/') && !in_array($name, ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md', 'docs/operations/debugging.md', 'docs/contracts/error-handling.md'], true)) {
             $failures[] = "Internal release evidence in artifact: {$name}";
         }
     }

@@ -24,6 +24,8 @@ final class Pages
         Layout::render([
             'title' => Localization::t('notifications.title'),
             'current' => '/notifications',
+            'surface' => \TinyCat\Core\Ui\PublicWeb::enabled() ? 'public' : 'access',
+            'asset_path' => \TinyCat\Core\Ui\PublicWeb::enabled() ? '/notifications' : '/access/notifications',
             'meta' => [
                 'description' => Localization::t('notifications.meta'),
                 'url' => '/notifications',

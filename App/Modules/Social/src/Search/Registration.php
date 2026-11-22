@@ -12,6 +12,6 @@ final class Registration
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
-        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/search/feed', static fn () => \TinyCat\Social\Posts\Syndication::respond('search'), contentType: 'text/plain');
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/search/feed', static fn () => \TinyCat\Social\Posts\Syndication::respond('search'), contentType: 'text/plain', publicWeb: true);
     }
 }

@@ -48,11 +48,6 @@ final class Site
         return trim((string) \TinyCat\Core\Runtime\Startup::option('site.favicon_url', ''));
     }
 
-    public static function site_footer_html(): string
-    {
-        return trim((string) \TinyCat\Core\Runtime\Startup::option('site.footer_html', ''));
-    }
-
     public static function site_meta_image_url(): string
     {
         return \TinyCat\Core\Ui\Site::site_logo_url() ?: \TinyCat\Core\Ui\Site::site_favicon_url();

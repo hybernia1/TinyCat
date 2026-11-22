@@ -110,6 +110,8 @@ $throws(static fn () => \TinyCat\Http\Response::issue('translation.key', 'Invali
 $throws(static fn () => $normalizeIssues->invoke(null, ['title' => [['code' => 'title_invalid', 'message' => []]]]), LogicException::class);
 $throws(static fn () => $normalizeIssues->invoke(null, ['title' => (object) ['message' => 'Invalid.']]), LogicException::class);
 $pageReads = 0;
+// Route mechanics are independent of the developer installation's web setting.
+Router::configurePublicWeb(static fn (): bool => true);
 Router::registerModule(static function () use (&$pageReads): void {
     Router::page('fixture.pages', '/fixture-page/{id:[1-9][0-9]*}', static fn (string $id): string => $id, static function (string $id) use (&$pageReads): array { $pageReads++; return ['id' => (int) $id]; }, ['q']);
 });

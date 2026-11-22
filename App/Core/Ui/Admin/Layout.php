@@ -10,13 +10,6 @@ use TinyCat\Support\{Assets, ClientAssets, View};
 final class Layout
 {
     /** @param array<string, mixed> $page */
-    public static function handles(array $page): bool
-    {
-        $path = (string) ($page['current'] ?? \TinyCat\Http\Request::current()->path());
-        return empty($page['public']) && (!empty($page['adminShell']) || $path === '/admin' || str_starts_with($path, '/admin/'));
-    }
-
-    /** @param array<string, mixed> $page */
     public static function render(array $page, string $content): void
     {
         $current = (string) ($page['current'] ?? '/admin');
@@ -29,10 +22,11 @@ final class Layout
         $profileUrl = $authUser !== null ? (Integration::profileUrl((int) $authUser['id']) ?? '') : '';
         $profileNeedsEmail = $authUser !== null && trim((string) ($authUser['email'] ?? '')) === '';
         $theme = Profile::theme((string) ($authUser['theme'] ?? 'system'));
-        $nav = Navigation::prepare(\TinyCat\Core\Identity\Roles::isAdmin($authUser) ? Navigation::administration() : [], $current, true);
+        $nav = \TinyCat\Core\Ui\Navigation::prepare(\TinyCat\Core\Identity\Roles::isAdmin($authUser) ? Navigation::administration() : [], $current, true);
         $titleIcon = (string) ($page['title_icon'] ?? Navigation::activeIcon($nav));
-        $styles = ClientAssets::styles($current);
-        $scripts = ClientAssets::scripts($current);
+        $assetPath = \TinyCat\Core\Ui\Surface::Administration->assetPath($page);
+        $styles = ClientAssets::styles($assetPath);
+        $scripts = ClientAssets::scripts($assetPath);
         $csrf = \TinyCat\Core\Security\Csrf::token();
         $dateFormat = (string) Startup::option('datetime.datetime', 'Y-m-d H:i:s');
         $dateRelative = (bool) Startup::option('datetime.relative', false);

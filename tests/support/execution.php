@@ -142,7 +142,7 @@ final class Execution
         self::git(['ls-files', '--cached', '--others', '--exclude-standard', '-z'], $listing);
         $paths = [];
         foreach (explode("\0", (string) file_get_contents($listing)) as $name) {
-            if (preg_match('~^(?:App|Public|assets|lang|tests|tools|\.github|migrations)/~', $name) !== 1 && !in_array($name, ['index.php', 'scheduled-tasks.php', 'composer.json', 'composer.lock', 'phpstan.neon', '.htaccess', '.gitignore', '.gitattributes', 'README.md', 'LICENSE', 'docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'], true)) { continue; }
+            if (preg_match('~^(?:App|Public|assets|lang|tests|tools|\.github|migrations)/~', $name) !== 1 && !in_array($name, ['index.php', 'scheduled-tasks.php', 'composer.json', 'composer.lock', 'phpstan.neon', '.htaccess', '.gitignore', '.gitattributes', 'README.md', 'LICENSE', 'docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md', 'docs/operations/debugging.md', 'docs/contracts/error-handling.md'], true)) { continue; }
             if (is_file($root . '/' . $name) && !is_link($root . '/' . $name)) { $paths[$name] = true; }
         }
         ksort($paths); $names = array_keys($paths);

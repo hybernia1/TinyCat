@@ -1,17 +1,33 @@
 {
+  "/access/notifications": {
+    "raw_js": 162048,
+    "gzip_js": 38912,
+    "raw_css": 32512,
+    "gzip_css": 7168,
+    "scripts": 4,
+    "stylesheets": 1
+  },
   "/admin/site-health": {
-    "raw_js": 245760,
-    "gzip_js": 54784,
+    "raw_js": 246528,
+    "gzip_js": 55040,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/moderation": {
-    "raw_js": 298752,
+    "raw_js": 300032,
     "gzip_js": 61952,
     "raw_css": 63488,
     "gzip_css": 12288,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/access/privacy": {
+    "raw_js": 150528,
+    "gzip_js": 36608,
+    "raw_css": 30208,
+    "gzip_css": 6912,
     "scripts": 4,
     "stylesheets": 1
   },
@@ -24,7 +40,7 @@
     "stylesheets": 1
   },
   "/admin/updates": {
-    "raw_js": 224512,
+    "raw_js": 225536,
     "gzip_js": 51200,
     "raw_css": 47104,
     "gzip_css": 10240,
@@ -32,7 +48,7 @@
     "stylesheets": 1
   },
   "/notifications": {
-    "raw_js": 209920,
+    "raw_js": 210176,
     "gzip_js": 48896,
     "raw_css": 41984,
     "gzip_css": 9216,
@@ -40,15 +56,15 @@
     "stylesheets": 1
   },
   "/admin/cache": {
-    "raw_js": 226048,
-    "gzip_js": 51456,
+    "raw_js": 227072,
+    "gzip_js": 51712,
     "raw_css": 47104,
     "gzip_css": 9728,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/users": {
-    "raw_js": 243712,
+    "raw_js": 244736,
     "gzip_js": 54016,
     "raw_css": 47104,
     "gzip_css": 10240,
@@ -56,7 +72,7 @@
     "stylesheets": 1
   },
   "/admin/bots": {
-    "raw_js": 381696,
+    "raw_js": 382976,
     "gzip_js": 80384,
     "raw_css": 55296,
     "gzip_css": 11264,
@@ -64,7 +80,7 @@
     "stylesheets": 1
   },
   "/admin/cron": {
-    "raw_js": 263680,
+    "raw_js": 264704,
     "gzip_js": 57600,
     "raw_css": 47104,
     "gzip_css": 10240,
@@ -72,7 +88,7 @@
     "stylesheets": 1
   },
   "/search/all": {
-    "raw_js": 209920,
+    "raw_js": 210176,
     "gzip_js": 48896,
     "raw_css": 41984,
     "gzip_css": 9216,
@@ -80,18 +96,26 @@
     "stylesheets": 1
   },
   "/recovery": {
-    "raw_js": 209920,
-    "gzip_js": 48896,
-    "raw_css": 41984,
-    "gzip_css": 9216,
+    "raw_js": 150528,
+    "gzip_js": 36608,
+    "raw_css": 29184,
+    "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
   },
   "/register": {
-    "raw_js": 209920,
-    "gzip_js": 48896,
-    "raw_css": 41984,
-    "gzip_css": 9216,
+    "raw_js": 150528,
+    "gzip_js": 36608,
+    "raw_css": 29184,
+    "gzip_css": 6656,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/account": {
+    "raw_js": 182272,
+    "gzip_js": 43264,
+    "raw_css": 32768,
+    "gzip_css": 7168,
     "scripts": 4,
     "stylesheets": 1
   },
@@ -104,7 +128,7 @@
     "stylesheets": 1
   },
   "/privacy": {
-    "raw_js": 209920,
+    "raw_js": 210176,
     "gzip_js": 48896,
     "raw_css": 43000,
     "gzip_css": 9216,
@@ -112,7 +136,7 @@
     "stylesheets": 1
   },
   "/author": {
-    "raw_js": 366080,
+    "raw_js": 366336,
     "gzip_js": 78080,
     "raw_css": 69632,
     "gzip_css": 13312,
@@ -120,15 +144,15 @@
     "stylesheets": 1
   },
   "/logout": {
-    "raw_js": 209920,
-    "gzip_js": 48896,
-    "raw_css": 41984,
-    "gzip_css": 9216,
+    "raw_js": 150528,
+    "gzip_js": 36608,
+    "raw_css": 29184,
+    "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
   },
   "/social": {
-    "raw_js": 366080,
+    "raw_js": 366336,
     "gzip_js": 78080,
     "raw_css": 69632,
     "gzip_css": 13312,
@@ -136,7 +160,7 @@
     "stylesheets": 1
   },
   "/status": {
-    "raw_js": 366080,
+    "raw_js": 366336,
     "gzip_js": 78080,
     "raw_css": 69632,
     "gzip_css": 13312,
@@ -144,7 +168,7 @@
     "stylesheets": 1
   },
   "/admin": {
-    "raw_js": 223744,
+    "raw_js": 225024,
     "gzip_js": 51200,
     "raw_css": 47104,
     "gzip_css": 10240,
@@ -152,15 +176,15 @@
     "stylesheets": 1
   },
   "/login": {
-    "raw_js": 209920,
-    "gzip_js": 48896,
-    "raw_css": 41984,
-    "gzip_css": 9216,
+    "raw_js": 150528,
+    "gzip_js": 36608,
+    "raw_css": 29184,
+    "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
   },
   "/tag": {
-    "raw_js": 366080,
+    "raw_js": 366336,
     "gzip_js": 78080,
     "raw_css": 69632,
     "gzip_css": 13312,

@@ -41,8 +41,8 @@ fields, missing layouts and escaping paths are rejected. Metadata discovery
 does not execute PHP. Only the explicitly selected local theme is rendered;
 placing a theme on disk never selects it automatically.
 
-Choose its ID through the existing site theme setting (`site.theme`). Only local
-themes appear in this selection. Functional modules do not register themes.
+Choose its ID through the existing site theme setting (`site.theme`). Local themes appear in this selection; an unavailable saved ID is retained
+and marked as unavailable. Functional modules do not register themes.
 Automatic selection uses the core layout; a removed theme or an old saved module
 theme ID also falls back to core without rewriting installation settings.
 
@@ -54,16 +54,18 @@ declare(strict_types=1);
 /** @var string $publicHeader */
 /** @var string $content */
 /** @var string $consent */
+/** @var string $publicFooter */
 ?>
 <?= $publicHeader ?>
 <main id="main-content" class="section" tabindex="-1">
     <div class="container"><?= $content ?></div>
 </main>
 <?= $consent ?>
+<?= $publicFooter ?>
 ```
 
 The renderer supplies prepared document data, including `title`, `appName`, `nav`,
-`authUser`, and the three trusted HTML fragments above. Escape text with the
+`authUser`, and the four trusted HTML fragments above. Escape text with the
 shared HTML helper. Render exactly one `main-content` target and preserve consent
 UI. Layouts must not create a second document or perform data queries. Fragments
 may use the existing PHP view renderer with explicitly supplied data.
@@ -76,8 +78,10 @@ use existing localization for rendered UI.
 There is deliberately no arbitrary PHP override of module components. Initial
 HTML and AJAX continue using the same owner component definitions. The theme
 controls the surrounding layout; modules retain data, permissions and content.
-Projects needing only administration can select the existing Identity login
-homepage and use no theme at all.
+Projects needing only administration disable the public website in settings.
+Login, recovery and account pages use the minimal core access shell and do not
+load the public theme. Installing a module never enables the public website.
+See the [public surface contract](../contracts/public-surface.md).
 
 The executable example is in [theme fixtures](../../tests/fixtures/themes/).
 The [shared presentation guide](partials.md) describes component ownership.

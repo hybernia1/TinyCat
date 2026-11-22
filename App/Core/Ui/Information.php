@@ -25,8 +25,8 @@ final class Information
     public static function register(): void
     {
         Router::route(['GET', 'HEAD'], '/privacy', self::privacy(...));
-        foreach (['/llms.txt', '/llms'] as $path) { Router::route(['GET', 'HEAD'], $path, self::llms(...), 'text/plain'); }
-        Router::route(['GET', 'HEAD'], '/llms-full.txt', static fn () => self::llms(true), 'text/plain');
+        foreach (['/llms.txt', '/llms'] as $path) { Router::route(['GET', 'HEAD'], $path, self::llms(...), 'text/plain', publicWeb: true); }
+        Router::route(['GET', 'HEAD'], '/llms-full.txt', static fn () => self::llms(true), 'text/plain', publicWeb: true);
         Router::route(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/scheduled-tasks.php', static function (): never {
             \TinyCat\Http\Response::error('Use the scheduler API.', 410, 'endpoint_retired', ['endpoint' => '/api/scheduler/executions', 'health_endpoint' => '/api/scheduler/health']);
         });
@@ -36,7 +36,7 @@ final class Information
         $siteName = Site::site_name(); $siteCaptchaEnabled = Site::site_captcha_enabled(); $siteGoogleAnalyticsConfigured = Site::site_google_analytics_configured();
         $sections = new Markup(self::sections('privacy'));
         $url = Site::absolute_url(\TinyCat\Http\LocaleRouting::url('/privacy'));
-        Page::render(['title' => Localization::t('privacy.title'), 'current' => '/privacy', 'public' => true, 'meta' => [
+        Page::render(['title' => Localization::t('privacy.title'), 'current' => '/privacy', 'public' => true, 'surface' => PublicWeb::enabled() ? 'public' : 'access', 'asset_path' => PublicWeb::enabled() ? '/privacy' : '/access/privacy', 'meta' => [
             'url' => $url, 'type' => 'website', 'jsonld' => [
                 '@context' => 'https://schema.org', '@type' => 'WebPage', '@id' => $url . '#webpage',
                 'url' => $url, 'name' => Localization::t('privacy.title'), 'inLanguage' => Localization::locale(),

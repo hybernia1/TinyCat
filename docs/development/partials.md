@@ -28,12 +28,15 @@ vstupy před vykreslením; pouze krok tabulek ověřuje DB. Handler neobsahuje H
 Společný `Core/Ui/Document::frame()` přijímá hotový `Markup`, locale a assety
 bez závislosti na dokončené instalaci. JavaScript
 instalace zajišťuje odesílání formulářů, nikoli druhou definici jejich struktury.
-Veřejný povrch, administrace i instalace používají jediný HTML dokument
+Přístupové stránky, veřejný povrch, administrace i instalace používají jediný HTML dokument
 `Core/Ui/templates/document.php`. `head.php` dodává pouze veřejná metadata,
 nikoli otevření dokumentu nebo doručování assetů. `Document::frame()` nemá
 vlastní načítání nastavení, účtu, session ani databáze. Volající předává
 atributy, metadata, assety, flash zprávy a případný consent pro analytics.
-Veřejnou hlavičku a consent připravuje `DocumentData` s explicitními vstupy;
+Login, recovery a účet používají `Core/Ui/AccessLayout` bez veřejných podkladů;
+autentizace má vlastní klientský modul bez editoru účtu a avataru. Dostupnost
+a výběr assetů popisuje [kontrakt veřejných povrchů](../contracts/public-surface.md).
+Veřejnou hlavičku, patičku a consent připravuje `DocumentData` s explicitními vstupy;
 core i Social shell dostávají hotové fragmenty a nepředávají celý PHP kontext.
 
 Nové struktury formulářů a obsahu patří do katalogu vlastníka. PHP šablona

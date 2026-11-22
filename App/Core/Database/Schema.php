@@ -112,7 +112,8 @@ final class Schema
 
             $status['ready'] = $status['missing_tables'] === [] && $status['account_ready'];
         } catch (Throwable $exception) {
-            $status['error'] = $exception->getMessage();
+            \TinyCat\Core\Runtime\Failure::report($exception);
+            $status['error'] = \TinyCat\Core\Runtime\Failure::message($exception, 'Operation failed.');
         }
 
         return $status;

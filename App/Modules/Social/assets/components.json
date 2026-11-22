@@ -460,7 +460,7 @@
               "value": {"get": "value"},
               "placeholder": {"t": "account.status_body"},
               "comment": false,
-              "suggest_url": "/api/search/suggestions",
+              "suggest_url": {"or": [{"get": "suggest_url"}, "/api/search/suggestions"]},
               "max_characters": {"get": "constraints.body.max_length"}
             }
           },
@@ -3166,9 +3166,8 @@
       },
       {
         "tag": "footer",
-        "attrs": {"class": "public-sidebar-footer stack stack-gap-8 desktop-only"},
+        "attrs": {"class": "public-sidebar-footer desktop-only"},
         "children": [
-          {"rich": {"get": "footer"}, "when": {"get": "footer"}},
           {
             "tag": "a",
             "attrs": {
@@ -4003,6 +4002,7 @@
     "component": "status/composer-body",
     "data": {
       "constraints": {"get": "constraints"},
+      "suggest_url": {"get": "suggest_url"},
       "viewer": {"or": [{"get": "viewer"}, {"get": "item.author"}]},
       "value": {"get": "item.editable_body"},
       "image": {"get": "item.image"},
@@ -4195,6 +4195,11 @@
       "children": [{"t": "privacy.intro", "values": {"site": {"get": "siteName"}}}]
     },
     {
+      "tag": "p",
+      "attrs": {"class": "mb-0"},
+      "children": [{"t": "privacy.data_content", "values": {"site": {"get": "siteName"}}}]
+    },
+    {
       "tag": "div",
       "attrs": {"class": "grid"},
       "children": [
@@ -4279,97 +4284,6 @@
                   "tag": "p",
                   "attrs": {"class": "mb-0"},
                   "children": [{"t": "privacy.feed_no_shadow_bans", "values": {"site": {"get": "siteName"}}}]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "section",
-          "attrs": {"class": "card"},
-          "children": [
-            {
-              "tag": "div",
-              "attrs": {"class": "card-header"},
-              "children": [
-                {
-                  "tag": "h2",
-                  "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                  "children": [{"icon": "database"}, " ", {"t": "privacy.data_title"}]
-                }
-              ]
-            },
-            {
-              "tag": "div",
-              "attrs": {"class": "card-body stack"},
-              "children": [
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_account", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_email", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_content", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_technical", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_server_logs", "values": {"site": {"get": "siteName"}}}]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "section",
-          "attrs": {"class": "card"},
-          "children": [
-            {
-              "tag": "div",
-              "attrs": {"class": "card-header"},
-              "children": [
-                {
-                  "tag": "h2",
-                  "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                  "children": [{"icon": "key"}, " ", {"t": "privacy.recovery_title"}]
-                }
-              ]
-            },
-            {
-              "tag": "div",
-              "attrs": {"class": "card-body stack"},
-              "children": [
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.recovery_email", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.recovery_no_contact", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.recovery_lost", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.recovery_rotation", "values": {"site": {"get": "siteName"}}}]
                 }
               ]
             }

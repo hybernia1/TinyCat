@@ -277,7 +277,7 @@ T.api.registerMessages({ example_saved: "common.save", example_invalid: "common.
 check(T.api.message({ code: "example_saved", params: {}, message: "Server fallback" }) === T.i18n.t("common.save"), "Known message codes use the client catalog.");
 check(T.api.message({ code: "unknown_event", params: {}, message: "Readable fallback" }) === "Readable fallback", "Unknown codes preserve the readable API fallback.");
 check(T.api.errors({ data: { error: { details: { errors: { name: [{ code: "example_invalid", params: {}, message: "Fallback" }] } } } } }).name[0] === T.i18n.t("common.request_failed"), "Field issue codes use the same client message mapping.");
-const countedSidebar = T.site.sidebar({ tags: [], authors: [{ id: 2, username: "Member", url: "/author/2", avatar_url: "", posts_count: 5 }], footer: [] }, "/api/site/sidebar");
+const countedSidebar = T.site.sidebar({ tags: [], authors: [{ id: 2, username: "Member", url: "/author/2", avatar_url: "", posts_count: 5 }] }, "/api/site/sidebar");
 check(countedSidebar.textContent.includes(T.i18n.plural("public.active_user_posts", 5)), "A translation parameter named count is a value binding, not the count operator.");
 const canonicalFieldErrors = T.api.errors;
 const followForm = new Node("form"), followButton = new Node("button"), followAction = new Node("input");
@@ -635,10 +635,10 @@ const reviewedDialog = T.moderation.modal(new URL("https://tinycat.test/api/mode
 check(reviewedDialog.querySelectorAll("form").length === 0, "Reviewed reports preserve their preview without showing stale decisions.");
 check(reviewedDialog.dataset.modalKind === "content" && !reviewedDialog.querySelector(".modal-footer"), "Reviewed evidence remains an ordinary read-only dialog without an editor footer.");
 check(reportRoot.querySelectorAll("img").length === 0 && reportRoot.textContent.includes(unsafe), "Report excerpts never become markup.");
-const footer = new Node("div");
-T.site.rich(footer, [{ type: "text", text: unsafe }, { type: "element", name: "script", children: [] }, { type: "element", name: "a", attributes: { href: "mailto:hello@example.test", onclick: "unsafe" }, children: [{ type: "text", text: "Email" }] }]);
-check(footer.querySelectorAll("script").length === 0 && footer.querySelector("a").getAttribute("onclick") === null && footer.textContent.startsWith(unsafe), "Structured footer rendering ignores executable nodes and event attributes.");
-assert.throws(() => T.site.rich(new Node("div"), [{ type: "element", name: "a", attributes: { href: "javascript:alert(1)" } }])); checks++;
+const richContent = new Node("div");
+T.components.rich(richContent, [{ type: "text", text: unsafe }, { type: "element", name: "script", children: [] }, { type: "element", name: "a", attributes: { href: "mailto:hello@example.test", onclick: "unsafe" }, children: [{ type: "text", text: "Email" }] }]);
+check(richContent.querySelectorAll("script").length === 0 && richContent.querySelector("a").getAttribute("onclick") === null && richContent.textContent.startsWith(unsafe), "Structured content rendering ignores executable nodes and event attributes.");
+assert.throws(() => T.components.rich(new Node("div"), [{ type: "element", name: "a", attributes: { href: "javascript:alert(1)" } }])); checks++;
 const parityFixtures = JSON.parse(fs.readFileSync(path.join(root, "tests/fixtures/components.json"), "utf8"));
 const serverTrees = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php")], { encoding: "utf8" }));
 function semanticTree(rootNode) {

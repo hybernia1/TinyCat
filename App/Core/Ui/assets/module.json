@@ -33,7 +33,6 @@
       "App/Core/Ui/assets/styles/content-images-contain.css",
       "App/Core/Ui/assets/styles/status-indicator-warning.css",
       "App/Core/Ui/assets/styles/check-line.css",
-      "App/Core/Ui/assets/styles/navbar.css",
       "App/Core/Ui/assets/styles/popovers.css",
       "App/Core/Ui/assets/styles/context-menu-trigger.css",
       "App/Core/Ui/assets/styles/context-menu-actions.css",
@@ -41,8 +40,6 @@
       "App/Core/Ui/assets/styles/avatar-sizes.css",
       "App/Core/Ui/assets/styles/code-block.css",
       "App/Core/Ui/assets/styles/brand-logo.css",
-      "App/Core/Ui/assets/styles/tabs.css",
-      "App/Core/Ui/assets/styles/table-identity.css",
       "App/Core/Ui/assets/styles/modal.css",
       "App/Core/Ui/assets/styles/modal-layout.css",
       "App/Core/Ui/assets/styles/input-icon.css",
@@ -59,11 +56,7 @@
       "App/Core/Ui/assets/styles/modal-workspace-desktop.css",
       "App/Core/Ui/assets/styles/reduced-motion.css",
       "App/Core/Ui/assets/styles/resource-text.css",
-      "App/Core/Ui/assets/styles/tooltip.css",
-      "App/Core/Ui/assets/styles/result-list.css",
-      "App/Core/Ui/assets/styles/identity-rows.css",
-      "App/Core/Ui/assets/styles/load-more.css",
-      "App/Core/Ui/assets/styles/public-workspace.css"
+      "App/Core/Ui/assets/styles/tooltip.css"
     ],
     "translations": [
       "common.menu",
@@ -89,6 +82,49 @@
     "routes": [
       "public",
       "admin"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [
+      "App/Core/Ui/assets/styles/tabs.css",
+      "App/Core/Ui/assets/styles/table-identity.css",
+      "App/Core/Ui/assets/styles/public-workspace.css"
+    ],
+    "translations": []
+  },
+  {
+    "id": "ui.identity-rows",
+    "routes": [
+      "public",
+      "admin"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [
+      "App/Core/Ui/assets/styles/identity-rows.css",
+      "App/Core/Ui/assets/styles/load-more.css"
+    ],
+    "translations": []
+  },
+  {
+    "routes": [
+      "public",
+      "admin",
+      "/install"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [
+      "App/Core/Ui/assets/styles/navbar.css",
+      "App/Core/Ui/assets/styles/result-list.css"
+    ],
+    "translations": []
+  },
+  {
+    "routes": [
+      "public",
+      "admin",
+      "access"
     ],
     "entries": [
       "App/Core/Ui/assets/ajax-bindings.js",
@@ -155,7 +191,8 @@
   {
     "routes": [
       "public",
-      "admin"
+      "admin",
+      "access"
     ],
     "entries": [
       "App/Core/Ui/assets/runtime/dates.js"
@@ -286,7 +323,8 @@
   },
   {
     "routes": [
-      "/privacy"
+      "/privacy",
+      "/access/privacy"
     ],
     "entries": [],
     "components": [],

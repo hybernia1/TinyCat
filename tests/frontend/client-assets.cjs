@@ -33,7 +33,7 @@ const publicPage = load("/");
 for (const mode of [false, true, "min"]) {
   for (const route of ["/login", "/register", "/recovery", "/logout", "/privacy", "/search/all", "/notifications"]) {
     const page = load(route, "en", mode);
-    check(page.T.accounts && !page.T.status && !page.T.socialUsers && !page.T.site, "Core public pages exclude the Social feed runtime in every delivery variant: " + route);
+    check(page.T.authentication && !page.T.status && !page.T.socialUsers && !page.T.site, "Core public pages exclude the Social feed runtime in every delivery variant: " + route);
     check(!page.T.filters && !page.T.adminDefinitions && !page.T.settings, "Public pages exclude administrative controllers: " + route);
     check(!page.definitions.includes("status/card") && !page.definitions.includes("bots/sources") && !page.definitions.includes("users/admin-fields"), "Core public catalogs exclude domain and admin views: " + route);
     check(!Object.keys(page.catalog).some(key => key.startsWith("bots.") || key.startsWith("settings.fields.") || key.startsWith("settings.sections.") || key === "settings.title"), "Core public catalogs exclude administrative editor translations: " + route);
@@ -51,8 +51,17 @@ for (const mode of [false, true, "min"]) {
 }
 check(publicPage.T.accounts !== publicPage.T.socialUsers && typeof publicPage.T.accounts.follow === "undefined" && typeof publicPage.T.socialUsers.profiles === "function", "Social relationships never mutate the core account service");
 check(typeof publicPage.T.accounts.list === "undefined" && publicPage.T.accounts.avatarUpload, "Public account controls keep avatar editing without the administrative list adapter");
+for (const mode of [false, true, "min"]) {
+  for (const route of ["/login", "/account", "/access/notifications"]) {
+    const access = load(route, "en", mode);
+    check(!access.sources.some(source => source.startsWith("App/Modules/")), "Access delivery excludes optional module assets in source and compiled variants: " + route);
+    check(!access.T.search && !access.T.siteAnalytics, "Access delivery omits public search and analytics: " + route);
+    check(Boolean(access.T.authentication.modal), "Access delivery preserves lazy account and authentication dialogs: " + route);
+  }
+}
 const login = load("/login");
-check(typeof login.T.accounts.list === "undefined" && login.T.accounts.modal, "Login keeps resource authentication dialogs without user-list code");
+check(!login.sources.some(source => source.endsWith("avatar-editor.js") || source.endsWith("Identity/assets/controller.js")), "Login omits account and avatar editors");
+check(!login.T.accounts && login.T.authentication.modal, "Login keeps resource authentication dialogs without user-list code");
 check(publicPage.T.status && publicPage.T.socialUsers && !publicPage.T.bots && !publicPage.T.moderation, "Public pages load their own feature scripts");
 check(!publicPage.T.filters, "The public feed does not load administrative list filters");
 check(!publicPage.definitions.includes("users/admin-fields") && !publicPage.definitions.includes("bots/sources"), "Public bundles exclude administration components");

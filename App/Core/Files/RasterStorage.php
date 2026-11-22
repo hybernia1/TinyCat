@@ -36,13 +36,16 @@ class RasterStorage
             throw new RuntimeException('WebP image conversion is not available.');
         }
 
+        if (in_array($file['error'] ?? UPLOAD_ERR_NO_FILE, [UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_EXTENSION], true)) {
+            throw new RuntimeException('The server could not receive the uploaded image.');
+        }
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('Uploaded image is not valid.');
+            throw new InvalidImage('Uploaded image is not valid.');
         }
 
         $tmpName = (string) ($file['tmp_name'] ?? '');
         if ($tmpName === '' || !is_uploaded_file($tmpName)) {
-            throw new RuntimeException('Uploaded image is too large or not valid.');
+            throw new InvalidImage('Uploaded image is too large or not valid.');
         }
         return self::storeFile($tmpName, (int) ($file['size'] ?? 0));
     }
@@ -87,7 +90,7 @@ class RasterStorage
         );
 
         if ($sourceError !== '') {
-            throw new RuntimeException(match ($sourceError) {
+            throw new InvalidImage(match ($sourceError) {
                 'size' => 'Uploaded image is too large or has an invalid size.',
                 'not_image', 'mime' => 'Only JPEG, PNG, and WebP images are allowed.',
                 default => 'Image dimensions are too large.',
@@ -95,14 +98,14 @@ class RasterStorage
         }
 
         if (!is_array($info)) {
-            throw new RuntimeException('Only JPEG, PNG, and WebP images are allowed.');
+            throw new InvalidImage('Only JPEG, PNG, and WebP images are allowed.');
         }
 
         $mime = strtolower((string) $info['mime']);
         $source = \TinyCat\Core\Security\Images::image_open($tmpName, $mime);
 
         if (!$source instanceof GdImage) {
-            throw new RuntimeException('Uploaded image could not be read.');
+            throw new InvalidImage('Uploaded image could not be read.');
         }
 
         try { $canvas = self::resize($source); }

@@ -374,7 +374,7 @@ class Manager extends Package
     {
         try {
             return MigrationRegistry::history();
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return [];
         }
     }

@@ -117,7 +117,7 @@ final class Pages
                 try {
                     \TinyCat\Database\Connection::set(Installer::pdo($state['database']));
                     foreach (array_keys($tables) as $table) { $statuses[$table] = Installer::table_exists($table); }
-                } catch (Throwable $exception) { $data['table_error'] = $exception->getMessage(); }
+                } catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); $data['table_error'] = \TinyCat\Core\Runtime\Failure::message($exception, \TinyCat\Support\Localization::t('common.request_failed')); }
             }
             $data['tables'] = [];
             foreach ($tables as $table => $purpose) {

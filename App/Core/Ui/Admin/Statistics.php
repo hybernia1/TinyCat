@@ -16,7 +16,7 @@ final class Statistics
             try {
                 if ($group->visible !== null && !($group->visible)()) { continue; }
                 $result[] = ['id' => $group->id, 'label' => ($group->label)()];
-            } catch (\Throwable) { continue; }
+            } catch (\Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure); continue; }
         }
         return $result;
     }
@@ -28,7 +28,7 @@ final class Statistics
         foreach (Registrations::current()->entries->statistics as $group) {
             if ($group->id !== $id) { continue; }
             try { $visible = $group->visible === null || ($group->visible)(); }
-            catch (\Throwable) { $visible = false; }
+            catch (\Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure); $visible = false; }
             if (!$visible) { break; }
             $data = ($group->load)(); $items = [];
             foreach (array_slice($data['items'] ?? [], 0, 8) as $item) {
@@ -37,7 +37,7 @@ final class Statistics
             }
             return ['id' => $id, 'items' => $items, 'url' => (string) ($data['url'] ?? '')];
         }
-        throw new \DomainException(Localization::t('errors.not_found'), 404);
+        throw new \TinyCat\Http\HttpException(Localization::t('errors.not_found'), 404, 'not_found');
     }
 
     /** Presentation is compiled into the shared component catalog, independently of counts.

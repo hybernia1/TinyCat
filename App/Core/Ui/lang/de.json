@@ -25,7 +25,8 @@
     "not_found_title": "Seite nicht gefunden",
     "not_found_intro": "Diese Adresse führt nicht zu einer Seite. Überprüfen Sie den URL oder fahren Sie von der Homepage fort.",
     "not_found_home": "Gehen Sie zur Startseite",
-    "not_found_search": "Inhalte durchsuchen"
+    "not_found_search": "Inhalte durchsuchen",
+    "no_homepage": "Die Startseite ist noch nicht verfügbar."
   },
   "privacy": {
     "data_title": "Daten und Konto",

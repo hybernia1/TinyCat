@@ -66,8 +66,9 @@ final class ClientAssets
                 foreach ($feature['routes'] ?? [] as $route) {
                     $matches = match ($route) {
                         '*' => true,
-                        'public' => $path !== '/admin' && !str_starts_with($path, '/admin/') && $path !== '/install' && !str_starts_with($path, '/install/'),
-                        'admin' => $path === '/admin' || str_starts_with($path, '/admin/'),
+                        'access' => \TinyCat\Core\Ui\Surface::forPath($path) === \TinyCat\Core\Ui\Surface::Access,
+                        'public' => \TinyCat\Core\Ui\Surface::forPath($path) === \TinyCat\Core\Ui\Surface::PublicWeb,
+                        'admin' => \TinyCat\Core\Ui\Surface::forPath($path) === \TinyCat\Core\Ui\Surface::Administration,
                         default => $path === $route || str_starts_with($path, $route . '/'),
                     };
                     if ($matches) { $selected[] = $feature; break; }
@@ -187,7 +188,7 @@ final class ClientAssets
     /** @return list<string> */
     public static function scopes(): array
     {
-        $paths = ['/', '/admin', '/install'];
+        $paths = ['/', '/admin', '/install', ...\TinyCat\Core\Ui\Surface::ACCESS_PATHS];
         foreach (self::manifests() as $file) {
             foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
                 foreach ($feature['routes'] ?? [] as $route) { if (str_starts_with($route, '/')) { $paths[] = $route; } }

@@ -336,11 +336,7 @@ final class Authentication
      */
     private static function findUserById(mixed $id): ?array
     {
-        try {
-            return Connection::find('users', ['id' => $id]);
-        } catch (Throwable) {
-            return null;
-        }
+        return Connection::find('users', ['id' => $id]);
     }
 
     /**
@@ -348,11 +344,7 @@ final class Authentication
      */
     private static function findUserByUsername(string $username): ?array
     {
-        try {
-            return Connection::find('users', ['username' => trim($username)]);
-        } catch (Throwable) {
-            return null;
-        }
+        return Connection::find('users', ['username' => trim($username)]);
     }
 
     /**
@@ -369,7 +361,7 @@ final class Authentication
                 if ($user !== null) {
                     return $user;
                 }
-            } catch (Throwable) {
+            } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
                 // Older installations may not have the optional email column yet.
             }
         }

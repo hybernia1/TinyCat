@@ -28,7 +28,7 @@ final class Actions
             'db' => ['host' => 'required|string', 'name' => 'required|string', 'user' => 'required|string', 'password' => 'string', 'charset' => 'string', 'port' => 'nullable|integer|min:1|max:65535'],
             'tables' => [],
             'admin' => ['username' => 'required|string', 'password' => 'required|string', 'password_confirm' => 'required|string'],
-            default => throw new \InvalidArgumentException('Unknown installation step.', 400),
+            default => throw new \TinyCat\Http\HttpException('Unknown installation step.', 400, 'bad_request'),
         };
         \TinyCat\Http\Request::current()->validated($rules);
         return match ($step) {
@@ -47,6 +47,14 @@ final class Actions
     private static function failure(string $message, string $step): never
     {
         \TinyCat\Http\Response::error($message, 422, 'installation_step_failed', ['step' => $step]);
+    }
+
+    private static function technicalFailure(Throwable $error, string $step): never
+    {
+        \TinyCat\Core\Runtime\Failure::report($error);
+        // A rejected connection is actionable setup input; schema/write failures are server errors.
+        $status = $step === 'db' && $error instanceof PDOException ? 422 : 500;
+        \TinyCat\Http\Response::error(\TinyCat\Core\Runtime\Failure::message($error, \TinyCat\Support\Localization::t('common.request_failed')), $status, 'installation_step_failed', ['step' => $step]);
     }
 
     /** @param array<string, array{code: string, label: string}> $languages */
@@ -83,7 +91,7 @@ final class Actions
 
             return new \TinyCat\Http\Result(['redirect' => '/install?step=tables', 'step' => 'tables'], \TinyCat\Support\Localization::t('install.messages.db_connected'), [], 'installation_step_completed');
         } catch (Throwable $exception) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]), 'db');
+            self::technicalFailure($exception, 'db');
         }
     }
 
@@ -108,7 +116,7 @@ final class Actions
             $state['tables'] = true;
             return new \TinyCat\Http\Result(['redirect' => '/install?step=admin', 'step' => 'admin'], \TinyCat\Support\Localization::t('install.messages.tables_created'), [], 'installation_step_completed');
         } catch (Throwable $exception) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]), 'tables');
+            self::technicalFailure($exception, 'tables');
         }
     }
 
@@ -123,7 +131,7 @@ final class Actions
         try {
             \TinyCat\Database\Connection::set(Installer::pdo($state['database']));
         } catch (Throwable $exception) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]), 'db');
+            self::technicalFailure($exception, 'db');
         }
 
         $missingTables = Installer::missing_tables();
@@ -167,7 +175,7 @@ final class Actions
 
             return new \TinyCat\Http\Result(['redirect' => '/admin', 'step' => 'done'], \TinyCat\Support\Localization::t('install.messages.admin_created'), [], 'installation_step_completed');
         } catch (Throwable $exception) {
-            self::failure($exception->getMessage(), 'admin');
+            self::technicalFailure($exception, 'admin');
         }
     }
 

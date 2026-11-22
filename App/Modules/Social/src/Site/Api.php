@@ -6,6 +6,7 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
+        $api = $api->forPublicWeb();
 
         $api->get('/site/pages', static function (\TinyCat\Http\Request $request): array {
             $request->validated(['path' => 'string', 'feed' => 'string', 'media' => 'string', 'compact' => 'string']);

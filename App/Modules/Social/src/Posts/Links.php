@@ -54,7 +54,7 @@ class Links extends \TinyCat\Core\Links\Presentation
                     $cached[$hash] = $row;
                 }
             }
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return [];
         }
 
@@ -385,7 +385,7 @@ class Links extends \TinyCat\Core\Links\Presentation
                             )',
                     $chunk
                 );
-            } catch (Throwable) {
+            } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
                 // Link cleanup is opportunistic and must not block saving a post.
             }
         }

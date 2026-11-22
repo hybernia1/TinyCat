@@ -64,6 +64,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
 
         \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('core.users'), static function (): void { Pages::administration(); });
         foreach ([
+            ['GET', '/account', static function (): void { Pages::account(); }],
             ['GET', '/login', static function (): void { Pages::login(); }],
             ['GET', '/logout', static function (): void { Pages::logout(); }],
             ['GET', '/register', static function (): void { Pages::register(); }],

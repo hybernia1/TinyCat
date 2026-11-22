@@ -686,7 +686,8 @@
   },
   {
     "routes": [
-      "/privacy"
+      "/privacy",
+      "/access/privacy"
     ],
     "uses": [
       "ui.tables"

@@ -21,11 +21,11 @@ class Tasks
         $mode = in_array($mode, ['cli', 'http', 'admin'], true) ? $mode : 'cli';
         $input = (array) ($context['options'] ?? []);
         $allowed = $definition->optionKeys($mode);
-        if (array_diff(array_keys($input), $allowed) !== []) { throw new \InvalidArgumentException('Unknown scheduled task option.'); }
+        if (array_diff(array_keys($input), $allowed) !== []) { throw new \TinyCat\Http\HttpException('Unknown scheduled task option.'); }
         foreach ($input as $key => $value) {
-            if (!is_int($value) && !is_string($value)) { throw new \InvalidArgumentException('Task options must be integers.'); }
+            if (!is_int($value) && !is_string($value)) { throw new \TinyCat\Http\HttpException('Task options must be integers.'); }
             $number = filter_var($value, FILTER_VALIDATE_INT);
-            if ($number === false) { throw new \InvalidArgumentException('Task options must be integers.'); }
+            if ($number === false) { throw new \TinyCat\Http\HttpException('Task options must be integers.'); }
             $input[$key] = $number;
         }
         $options = array_replace($definition->options, $input);

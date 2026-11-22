@@ -56,6 +56,12 @@ $insert = $pdo->prepare('INSERT INTO users(username, email, password, role, loca
 foreach ([['Admin', 'admin@example.test', 'admin'], ['Member', 'member@example.test', 'user']] as [$name, $email, $role]) { $insert->execute([$name, $email, password_hash('Secret-123456', PASSWORD_DEFAULT), $role, 'en']); }
 $insert = null;
 $assert(TinyCat\Core\Identity\Readiness::ready(), 'Installed assembly is ready after an account with a password exists');
+$assert((int) $pdo->query('SELECT COUNT(*) FROM settings')->fetchColumn() === 0, 'Fresh settings fixture starts empty');
+TinyCat\Core\Installation\Installer::default_settings(['locale' => 'en']);
+$assert(TinyCat\Core\Settings\Store::setting('site.public_enabled') === false, 'Fresh core-only installation starts without a public website');
+$pdo->exec('DELETE FROM settings');
+TinyCat\Core\Settings\Store::reset();
+TinyCat\Support\Cache::forget('core_autoload_settings');
 $compile = require $workspace . '/tools/assets/compile-assets.php';
 $files = $compile();
 // A framework-only selection still includes identity and security without publication storage.
@@ -166,6 +172,16 @@ try {
         [$status, , $body, $headers] = $request('/?next=' . rawurlencode($next), actor: 'member');
         $assert($status === 200 && !isset($headers['location']) && str_contains($body, 'My account'), 'Authentication and unauthorized next destinations cannot create a homepage loop: ' . $next);
     }
+    [$status] = $request('/api/settings', 'PATCH', ['settings' => ['site.public_enabled' => false]], 'admin');
+    $assert($status === 200, 'Core-only settings can close the public surface');
+    foreach (['' => '/login', 'member' => '/account', 'admin' => '/admin'] as $actor => $target) {
+        [$status, , , $headers] = $request('/', actor: $actor);
+        $assert($status === 302 && $headers['location'] === $target, 'Closed core-only root resolves access without module dependencies: ' . $actor);
+    }
+    [$status, , $body] = $request('/account', actor: 'member');
+    $assert($status === 200 && str_contains($body, 'My account') && !str_contains($body, 'class="navbar"'), 'Closed core-only member account renders the access shell');
+    [$status] = $request('/api/settings', 'PATCH', ['settings' => ['site.public_enabled' => true]], 'admin');
+    $assert($status === 200, 'Core-only settings can reopen the public surface without a build');
     // Use the same physical copy (without Social) to exercise shared inbox/health services.
     \TinyCat\Core\Notifications\Schema::install($pdo);
     $foreignTables = array_column($pdo->query('PRAGMA foreign_key_list(notifications)')->fetchAll(PDO::FETCH_ASSOC), 'table');

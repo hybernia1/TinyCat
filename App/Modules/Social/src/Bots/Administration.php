@@ -184,9 +184,9 @@ final class Administration
             $id = (int) $post['id'];
             $published = (string) $post['published_at'] <= $now;
             return $post + ['source' => Resource::postSource($post, $botId), 'excerpt' => \TinyCat\Support\Text::plain_text_limit((string) $post['body'], 180),
-                'published' => $published, 'url' => $published ? \TinyCat\Social\Posts\Posts::status_url($id) : '',
+                'published' => $published, 'url' => $published && \TinyCat\Core\Ui\PublicWeb::enabled() ? \TinyCat\Social\Posts\Posts::status_url($id) : '',
                 'edit_url' => '/api/bots/accounts/' . $botId . '/posts/' . $id . '/management?panel=edit',
-                'action_url' => '/api/statuses/' . $id, 'published_iso' => \TinyCat\Support\Dates::dateIso((string) $post['published_at'])];
+                'action_url' => '/api/bots/accounts/' . $botId . '/posts/' . $id, 'published_iso' => \TinyCat\Support\Dates::dateIso((string) $post['published_at'])];
         }, $items);
         $sorting = \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Bots\Sorting::LISTS['bot_posts'], $params, $apiUrl, $pageUrl);
         $totalCount = $q === '' && $source === '' && $publication === '' ? (int) $pagination['total'] : (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_posts WHERE kind = \'post\' AND author_id = ?', [$botId]);
@@ -203,13 +203,24 @@ final class Administration
             'navigation' => $navigation];
     }
 
+    /** Validate ownership without evaluating public presentation or account statistics. */
+    public static function requirePost(int $botId, int $postId): void
+    {
+        $owned = \TinyCat\Database\Connection::one("SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.kind = 'post' AND c.id = ? AND c.author_id = ? AND u.role = 'bot'", [$postId, $botId]);
+        if ($owned === null) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
+    }
+
     /** @return array<string, mixed> */
     public static function postManagement(int $botId, int $postId): array
     {
-        $item = \TinyCat\Database\Connection::one(\TinyCat\Social\Posts\Feed::public_status_select_sql() . ' WHERE c.id = ? AND c.author_id = ?', [$postId, $botId]);
+        self::requirePost($botId, $postId);
+        $item = \TinyCat\Database\Connection::one(\TinyCat\Social\Posts\Feed::public_status_select_sql() . ' WHERE c.id = ?', [$postId]);
         if ($item === null) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
         $user = \TinyCat\Core\Identity\Authentication::auth();
         return ['item' => \TinyCat\Social\Posts\Resource::post($item, $user), 'comments' => [],
+            'update_url' => '/api/bots/accounts/' . $botId . '/posts/' . $postId,
+            'suggest_url' => '/api/bots/accounts/' . $botId . '/posts/' . $postId . '/suggestions',
+            'constraints' => \TinyCat\Social\Posts\Resource::constraints(),
             'viewer' => $user !== null ? \TinyCat\Social\Profiles\Profiles::resource($user) : null,
             'options' => ['images_enabled' => \TinyCat\Social\Posts\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Social\Posts\Images::status_image_max_upload_bytes()]];
     }

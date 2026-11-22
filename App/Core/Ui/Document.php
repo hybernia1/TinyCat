@@ -14,7 +14,6 @@ final class Document
         $prepared = DocumentData::prepare($page, $document);
         $prepared['content'] = $content;
         $prepared['public'] = (bool) ($page['public'] ?? false);
-        $prepared['hasPublicSidebar'] = str_contains($content, 'data-public-sidebar-slot') || str_contains($content, 'data-public-sidebar-url');
         self::renderPrepared($prepared, View::render('public-shell', $prepared, __DIR__ . '/templates'));
     }
 
@@ -40,7 +39,6 @@ final class Document
             ],
             'metadata' => new \TinyCat\Support\Markup(View::render('head', $prepared, __DIR__ . '/templates')),
             'styles' => $prepared['styleUrls'], 'scripts' => $prepared['scriptUrls'], 'flashToasts' => $prepared['flashToasts'],
-            'privacyUrl' => !$prepared['isAdminShell'] && !$prepared['hasPublicSidebar'] ? $prepared['privacyUrl'] : '',
             'analyticsMeasurementId' => $prepared['analyticsConfigured'] && $prepared['analyticsConsent'] === 'granted' ? $prepared['googleMeasurementId'] : '',
         ], new \TinyCat\Support\Markup($shell));
         if ((bool) \TinyCat\Core\Runtime\Startup::option('performance.minify_html', false)) { $html = \TinyCat\Support\Minifier::minifyHtml($html); }
@@ -52,7 +50,7 @@ final class Document
     public static function frame(array $data, \TinyCat\Support\Markup $content): string
     {
         $data += ['title' => '', 'csrfToken' => '', 'htmlAttributes' => [], 'bodyAttributes' => [], 'metadata' => new \TinyCat\Support\Markup(''),
-            'styles' => [], 'scripts' => [], 'flashToasts' => [], 'privacyUrl' => '', 'analyticsMeasurementId' => '', 'skipLink' => true, 'colorScheme' => true, 'robots' => ''];
+            'styles' => [], 'scripts' => [], 'flashToasts' => [], 'analyticsMeasurementId' => '', 'skipLink' => true, 'colorScheme' => true, 'robots' => ''];
         foreach (['htmlAttributes', 'bodyAttributes'] as $group) {
             foreach (array_keys($data[$group]) as $name) {
                 if (!is_string($name) || preg_match('/^(?:lang|class|data-[a-z0-9-]+)$/D', $name) !== 1) { throw new \InvalidArgumentException('Unsupported document attribute.'); }

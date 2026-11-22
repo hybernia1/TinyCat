@@ -237,12 +237,14 @@ foreach (['guest', 'user', 'admin'] as $role) {
         foreach (['/fixture-error/', '/admin/fixture-error/'] as $prefix) {
             [$status, $body, $headers] = $exportRequest($prefix . $errorStatus, 'GET', ['X-Test-Role' => $role]);
             $assert($status === $errorStatus && str_contains($body, (string) $errorStatus) && str_contains($headers['cache-control'], 'no-store'), 'HTML error retains its status and no-store policy: ' . $role . ' ' . $prefix . $errorStatus);
-            $assert(!str_contains($body, 'data-admin-shell') && !str_contains($body, 'admin-shell-page') && preg_match('~href="/admin/[^"<>]*"~', $body) !== 1, 'Public error documents exclude administration navigation and shell state: ' . $role . ' ' . $prefix . $errorStatus);
+            $adminError = $prefix === '/admin/fixture-error/' && $role === 'admin' && $errorStatus !== 503;
+            $assert(str_contains($body, 'data-admin-shell') === $adminError, 'Error documents select administration only for authorized admin requests: ' . $role . ' ' . $prefix . $errorStatus);
+            if (!$adminError) { $assert(preg_match('~href="/admin/[^"<>]*"~', $body) !== 1, 'Non-admin errors exclude administration navigation.'); }
             if ($errorStatus !== 503) {
-                $assert(str_contains($body, 'class="navbar"'), 'Error documents retain the public header: ' . $role . ' ' . $prefix . $errorStatus);
+                $assert(str_contains($body, 'class="navbar"') === ($prefix === '/fixture-error/'), 'Error headers follow the failed surface: ' . $role . ' ' . $prefix . $errorStatus);
                 preg_match_all('~<script src="([^"]+)"~', $body, $errorScripts);
                 if ($prefix === '/fixture-error/') { $publicErrorScripts = $errorScripts[1]; }
-                else { $assert($errorScripts[1] === $publicErrorScripts, 'Public errors select public assets regardless of the failed URL: ' . $role . ' ' . $errorStatus); }
+                else { $assert($errorScripts[1] !== $publicErrorScripts, 'Admin and access errors avoid public asset profiles: ' . $role . ' ' . $errorStatus); }
             }
         }
     }

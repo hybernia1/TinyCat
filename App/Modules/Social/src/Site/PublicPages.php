@@ -38,7 +38,7 @@ final class PublicPages
                 return $data !== null ? self::resource($kind, $data) : null;
             }, $query);
         }
-        \TinyCat\Http\Router::route('GET', '/author', static fn () => \TinyCat\Social\Posts\AuthorPages::author());
+        \TinyCat\Http\Router::route('GET', '/author', static fn () => \TinyCat\Social\Posts\AuthorPages::author(), publicWeb: true);
     }
 
     /** @return array<string, mixed> */
@@ -55,7 +55,7 @@ final class PublicPages
     public static function render(string $kind, array $data): void
     {
         $resource = self::resource($kind, $data);
-        \TinyCat\Core\Ui\Page::render($data['page'] + ['public' => true], Components::render('site/public-page', $resource + ['csrf' => \TinyCat\Core\Security\Csrf::token()]), $resource['document']);
+        \TinyCat\Core\Ui\Page::render($data['page'] + ['public' => true, 'surface' => 'public', 'privacyFooter' => false], Components::render('site/public-page', $resource + ['csrf' => \TinyCat\Core\Security\Csrf::token()]), $resource['document']);
     }
 
     /** @param array<string, mixed> $data

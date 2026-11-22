@@ -13,11 +13,7 @@ final class Restrictions
             return 0;
         }
 
-        try {
-            return (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_posts WHERE kind = \'post\' AND author_id = ?', [$userId]);
-        } catch (Throwable) {
-            return 0;
-        }
+        return (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_posts WHERE kind = \'post\' AND author_id = ?', [$userId]);
     }
 
     /**
@@ -79,11 +75,7 @@ final class Restrictions
         if (\TinyCat\Core\Security\RateLimitPolicy::isExempt($user)) { return 0; }
         [$window] = \TinyCat\Social\Moderation\Restrictions::moderation_action_rule($user, $action);
 
-        try {
-            return \TinyCat\Core\Security\RateLimiter::subject_action_count('user:' . (int) ($user['id'] ?? 0), $action, (int) $window);
-        } catch (Throwable) {
-            return 0;
-        }
+        return \TinyCat\Core\Security\RateLimiter::subject_action_count('user:' . (int) ($user['id'] ?? 0), $action, (int) $window);
     }
 
     /**
@@ -163,7 +155,7 @@ final class Restrictions
 
         try {
             \TinyCat\Core\Security\RateLimiter::subject_action_record('user:' . $userId, $action, (int) $window);
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             // Moderation limits must never break the primary action.
         }
     }

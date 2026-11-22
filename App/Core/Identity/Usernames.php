@@ -51,10 +51,6 @@ final class Usernames
             $params['id'] = $ignoreId;
         }
 
-        try {
-            return (int) \TinyCat\Database\Connection::value($sql, $params) > 0;
-        } catch (Throwable) {
-            return false;
-        }
+        return (int) \TinyCat\Database\Connection::value($sql, $params) > 0;
     }
 }

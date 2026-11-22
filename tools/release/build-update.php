@@ -98,7 +98,7 @@ if ($distribution['format'] === 4) {
 }
 \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, \TinyCat\Core\Modules\Distribution::selection($distribution, $distribution['active']))->catalog);
 $rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
-$includedDocumentation = ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'];
+$includedDocumentation = ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md', 'docs/operations/debugging.md', 'docs/contracts/error-handling.md'];
 if ($freshInstall) {
     $allowedRoots = array_values(array_diff($allowedRoots, ['migrations']));
 }

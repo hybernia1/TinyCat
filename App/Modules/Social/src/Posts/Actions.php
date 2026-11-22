@@ -88,14 +88,10 @@ final class Actions
             return;
         }
 
-        try {
-            $rows = \TinyCat\Database\Connection::all(
-                'SELECT id, body FROM social_posts WHERE kind = \'post\' AND author_id = ? AND published_at >= ? ORDER BY id DESC LIMIT 30',
-                [$userId, \TinyCat\Support\Dates::dateDb('-1 day')]
-            );
-        } catch (Throwable) {
-            return;
-        }
+        $rows = \TinyCat\Database\Connection::all(
+            'SELECT id, body FROM social_posts WHERE kind = \'post\' AND author_id = ? AND published_at >= ? ORDER BY id DESC LIMIT 30',
+            [$userId, \TinyCat\Support\Dates::dateDb('-1 day')]
+        );
 
         foreach ($rows as $row) {
             if ((int) ($row['id'] ?? 0) === $ignoreId) {
@@ -142,7 +138,7 @@ final class Actions
             $image = $hasImage ? \TinyCat\Social\Posts\ImageStorage::upload((array) $imageFile) : null;
         } catch (LengthException) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_compression'), 422, 'status_image_compression');
-        } catch (Throwable) {
+        } catch (\TinyCat\Core\Files\InvalidImage $error) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Social\Posts\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid', [], ['size' => \TinyCat\Social\Posts\Images::status_image_max_upload_kb()]);
         }
 
@@ -294,7 +290,7 @@ final class Actions
             $newImage = $hasNewImage ? \TinyCat\Social\Posts\ImageStorage::upload((array) $imageFile) : null;
         } catch (LengthException) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_compression'), 422, 'status_image_compression');
-        } catch (Throwable) {
+        } catch (\TinyCat\Core\Files\InvalidImage $error) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Social\Posts\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid', [], ['size' => \TinyCat\Social\Posts\Images::status_image_max_upload_kb()]);
         }
 

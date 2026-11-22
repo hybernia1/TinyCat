@@ -23,7 +23,7 @@ final class Service
                 $outcome = $check();
                 $status = is_array($outcome) ? $outcome['status'] : $outcome;
                 if (is_array($outcome)) { $metrics = $outcome['metrics']; $limits = $outcome['limits']; }
-            } catch (\Throwable) { $status = 'critical'; }
+            } catch (\Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure); $status = 'critical'; }
             if (!in_array($status, ['ok', 'warning', 'critical', 'skipped'], true)) { $status = 'critical'; }
             $items[] = ['id' => $id, 'status' => $status, 'duration_ms' => max(0, (int) ((hrtime(true) - $start) / 1_000_000)), 'metrics' => $metrics, 'limits' => $limits];
         }

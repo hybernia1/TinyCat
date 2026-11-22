@@ -406,7 +406,7 @@ final class Cache
             }
 
             $versions = $client->getVersion();
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return $metrics;
         }
 
@@ -531,7 +531,7 @@ final class Cache
         try {
             $payload = $client->get(self::memcachedKey($key));
             $result = $client->getResultCode();
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return self::cacheUnavailable();
         }
 
@@ -585,7 +585,7 @@ final class Cache
 
         try {
             return $client->set(self::memcachedKey($key), $payload, time() + max(1, $ttl) + max(0, $staleTtl));
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return false;
         }
     }
@@ -604,7 +604,7 @@ final class Cache
             }
 
             return $client->getResultCode() === \Memcached::RES_NOTFOUND;
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return false;
         }
     }
@@ -619,7 +619,7 @@ final class Cache
 
         try {
             $versions = $client->getVersion() ?: [];
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return false;
         }
 
@@ -665,7 +665,7 @@ final class Cache
             }
 
             return self::$memcachedClient = $client;
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return null;
         }
     }

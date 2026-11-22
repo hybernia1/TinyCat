@@ -25,7 +25,8 @@
     "not_found_title": "Page not found",
     "not_found_intro": "This address does not lead to a page. Check the URL or continue from the homepage.",
     "not_found_home": "Go to homepage",
-    "not_found_search": "Search content"
+    "not_found_search": "Search content",
+    "no_homepage": "The home page is not available yet."
   },
   "privacy": {
     "data_title": "Data and Account",

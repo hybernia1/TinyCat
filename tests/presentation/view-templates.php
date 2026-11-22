@@ -32,6 +32,15 @@ $privacy = \TinyCat\Support\Components::render('ui/privacy-page', [
 ]);
 $intro = \TinyCat\Support\Localization::t('privacy.intro', ['site' => 'Fixture']);
 $assert($intro !== 'privacy.intro' && substr_count(html_entity_decode(strip_tags($privacy)), $intro) === 1, 'The Social privacy introduction appears once inside the core information page.');
+preg_match_all('~<h2\b[^>]*>(.*?)</h2>~s', $privacy, $privacyHeadings);
+$privacyHeadings = array_map(static fn (string $heading): string => trim(html_entity_decode(strip_tags($heading))), $privacyHeadings[1]);
+foreach (['data_title', 'recovery_title'] as $section) {
+    $assert(count(array_keys($privacyHeadings, \TinyCat\Support\Localization::t('privacy.' . $section), true)) === 1, 'Shared privacy sections appear once with Social enabled: ' . $section);
+}
+$socialData = \TinyCat\Support\Localization::t('privacy.data_content', ['site' => 'Fixture']);
+$assert(substr_count(html_entity_decode(strip_tags($privacy)), $socialData) === 1, 'Social retains its own data disclosure without duplicating core account and recovery sections.');
+$sidebar = \TinyCat\Social\Site\Sidebar::resource(['tags' => [], 'authors' => [], 'site_footer_html' => '<strong>Retired custom footer</strong>']);
+$assert(!array_key_exists('footer', $sidebar) && isset($sidebar['privacy_url']), 'Sidebar resources ignore retired footer input and retain the system privacy link.');
 $errorData = ['status' => 500, 'title' => 'Error <unsafe>', 'intro' => 'Try again', 'locale' => 'en', 'homeUrl' => '/nested/', 'homeLabel' => 'Home', 'searchUrl' => '', 'searchLabel' => 'Search'];
 foreach (['error', 'errorFallback'] as $template) {
     $errorHtml = \TinyCat\Support\View::render($template, $errorData, $root . '/App/Core/Ui/templates');
@@ -174,6 +183,7 @@ try {
         $defaultHomepage = \TinyCat\Core\Runtime\EntryPages::homepage()?->id;
         $assert($defaultHomepage === 'tinycat.status.home', 'Adding the login candidate preserves the default Social homepage.');
         $siteFields = \TinyCat\Core\Settings\Settings::section_site()['fields'];
+        $assert(!in_array('site.footer_html', array_column($siteFields, 'key'), true), 'The settings editor no longer exposes the retired custom footer.');
         $homepageFields = array_values(array_filter($siteFields, static fn (array $field): bool => $field['key'] === 'site.homepage'));
         $assert(isset($homepageFields[0]['options']['tinycat.accounts.login']), 'Site settings expose the Identity-owned login homepage choice.');
         \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'site.homepage' ? 'tinycat.accounts.login' : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
@@ -184,6 +194,21 @@ try {
         ($loginHomepage->render)();
         $loginDocument = (string) ob_get_clean();
         $assert(str_contains($loginDocument, 'name="username"') && str_contains($loginDocument, 'name="password"'), 'Selected login homepage renders the existing authentication form with Social active.');
+        $assert(!str_contains($loginDocument, 'class="navbar"') && !str_contains($loginDocument, 'data-notification') && !str_contains($loginDocument, 'googletagmanager'), 'Authentication prepares only the access shell even with Social active.');
+        $accessSources = \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries('/account'));
+        $assert(!str_contains(implode(' ', $accessSources), 'App/Modules/') && !in_array('App/Core/Ui/assets/global-search.js', $accessSources, true) && !in_array('App/Core/Notifications/assets/index.js', $accessSources, true), 'The access asset graph excludes functional modules, global search and inbox previews.');
+        $publicCalls = 0;
+        \TinyCat\Http\Router::page('fixture.public-surface', '/fixture-public-surface', static function () use (&$publicCalls): void { $publicCalls++; }, static function () use (&$publicCalls): array { $publicCalls++; return ['ok' => true]; });
+        \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'site.public_enabled' ? false : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
+        $assert(!\TinyCat\Http\Router::dispatch('/fixture-public-surface', 'GET') && !\TinyCat\Http\Router::dispatch('/fixture-public-surface', 'POST'), 'Disabled public routes are unavailable before handler and method negotiation.');
+        $assert(\TinyCat\Http\Router::pageResource('fixture.public-surface', '/fixture-public-surface') === null && \TinyCat\Http\Router::pageDefinitions('fixture.public-surface') === [] && $publicCalls === 0, 'Disabled public resources and navigation do not evaluate owner callbacks.');
+        $assert(\TinyCat\Core\Identity\Login::auth_safe_next_url('/fixture-public-surface') === '', 'Closed public destinations cannot become a member login landing.');
+        \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
+        $assert(\TinyCat\Http\Router::pageResource('fixture.public-surface', '/fixture-public-surface') === ['ok' => true] && $publicCalls === 1, 'Re-enabling the public surface restores registered resources without registration or build.');
+        \TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default = null): mixed => $key === 'site.homepage' ? 'fixture.missing' : ($originalOptions !== null ? $originalOptions($key, $default) : $default);
+        $assert(\TinyCat\Core\Runtime\EntryPages::homepage() === null, 'A missing selected homepage does not switch to another active module.');
+        $missingField = array_values(array_filter(\TinyCat\Core\Settings\Settings::section_site()['fields'], static fn (array $field): bool => $field['key'] === 'site.homepage'))[0];
+        $assert(isset($missingField['options']['fixture.missing']), 'The editor preserves and identifies an unavailable saved homepage.');
         \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
         $content = "<!-- removable -->\n<div>  <span>Text</span>  </div><pre>  Keep\n spacing</pre><textarea>  Draft\n text</textarea>";
         $renderDocument = static function () use ($content): string {
@@ -247,9 +272,9 @@ try {
         $assert(str_contains($selectedLayout, 'data-public-page="home"') && substr_count($selectedLayout, '<!doctype html>') === 1, 'A retired module theme selection falls back to the common document with Social content.');
         $assert(!str_contains($selectedLayout, '<h1 class="m-0">'), 'The public shell does not duplicate the module page heading.');
         $themeFields = array_values(array_filter(\TinyCat\Core\Settings\Settings::section_site()['fields'], static fn (array $field): bool => $field['key'] === 'site.theme'));
-        $assert(!isset($themeFields[0]['options']['tinycat.site.theme']), 'Functional modules do not contribute entries to the theme setting.');
+        $assert(isset($themeFields[0]['options']['tinycat.site.theme']), 'A retired saved theme is shown as unavailable without registering a module theme.');
         ob_start();
-        \TinyCat\Core\Ui\Page::render(['title' => 'Login', 'current' => '/login', 'layout' => 'auth'], '<p data-auth-content>Login</p>');
+        \TinyCat\Core\Ui\Page::render(['title' => 'Login', 'current' => '/login', 'surface' => 'access'], '<p data-auth-content>Login</p>');
         $assert(str_contains((string) ob_get_clean(), 'data-auth-content'), 'Authentication retains its common core presentation.');
     } finally {
         \TinyCat\Core\Runtime\Startup::$options = $originalOptions;
@@ -270,9 +295,24 @@ try {
     $assert(str_contains($adminLayout, 'open data-active="true"') && str_contains($adminLayout, 'aria-current="page"'), 'Prepared navigation expands and marks the active group.');
     $assert(preg_match('~class="admin-topbar-title".*?<strong>.*?#flag.*?Administration</strong>~s', $adminLayout) === 1, 'The admin title keeps the active section icon after list headers are removed.');
     $assert(str_contains($adminLayout, 'Admin &lt;unsafe&gt;'), 'Prepared administration identity is escaped.');
+    ob_start();
+    \TinyCat\Core\Ui\Page::render(['title' => 'Custom administration', 'current' => '/crm', 'surface' => 'admin'], '<p>Custom administration</p>');
+    $customAdmin = (string) ob_get_clean();
+    preg_match_all('~<script src="([^"]+)"~', $customAdmin, $customScripts);
+    $assert(str_contains($customAdmin, 'data-admin-shell') && $customScripts[1] === \TinyCat\Support\ClientAssets::scripts('/admin'), 'An explicit administration surface renders its matching asset profile outside the admin URL prefix.');
 } finally {
     restore_error_handler();
     \TinyCat\Core\Identity\Authentication::reset(null, true);
+}
+
+$assert(\TinyCat\Core\Ui\Surface::Administration->assetPath(['current' => '/crm']) === '/admin', 'An explicit admin surface selects admin assets on a nonstandard path.');
+$assert(\TinyCat\Core\Ui\Surface::Access->assetPath(['current' => '/private-entry']) === '/login', 'An explicit access surface selects access assets on a nonstandard path.');
+$assert(\TinyCat\Core\Ui\Surface::Administration->assetPath(['asset_path' => '/admin/bots']) === '/admin/bots', 'An owner can select a matching surface asset profile.');
+try {
+    \TinyCat\Core\Ui\Surface::Administration->assetPath(['asset_path' => '/social']);
+    $assert(false, 'Cross-surface explicit asset profiles must be rejected.');
+} catch (\InvalidArgumentException) {
+    $assert(true, 'Cross-surface explicit asset profiles are rejected.');
 }
 
 if ($failures !== []) {

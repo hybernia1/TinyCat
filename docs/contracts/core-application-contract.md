@@ -13,6 +13,7 @@ nebo validační obálky nevznikají.
 | Oblast | Autorita core | Vstup modulu | Závazný kontrakt |
 | --- | --- | --- | --- |
 | HTTP API | Parsing, přístupová politika, CSRF, obálka a serializace | Registrace přes `TinyCat\Http\Api`, data nebo `Result` | [HTTP API](../reference/api.md) |
+| Chyby | Klasifikace, bezpečný výstup a společná diagnostika | Explicitní veřejné odmítnutí nebo předání technické výjimky | [Zpracování chyb](error-handling.md) |
 | Validace | Typy, obecná pravidla, struktura chyb a HTTP 422 | Pravidla pro `Request::validated()`, doménové chyby přes `Response::validation()` | Tento dokument a HTTP API |
 | Dokument a UI | `Core\Ui\Page`, společné komponenty, vykreslení PHP/JS | Data, vlastní komponentové definice, stránky a pojmenovaná rozšíření | [UI komponenty](ui-conventions.md), [administrace](admin-ui-conventions.md) |
 | Dialogy a formuláře | Resource loader, lifecycle, validace, historie a koncept | Autorizovaný resource endpoint a definice formuláře | [Modaly](modal-contract.md) |
@@ -30,6 +31,11 @@ Modul registruje API přes `TinyCat\Http\Api` s explicitní přístupovou politi
 Core autorizuje požadavek a kontroluje CSRF před obsluhou. Modul navíc ověřuje
 oprávnění ke konkrétnímu objektu a jeho viditelnost. Skryté tlačítko ani klientská
 validace toto oprávnění nenahrazují.
+
+Dostupnost veřejného webu je samostatná politika podle
+[kontraktu veřejných povrchů](public-surface.md). Veřejné obsahové endpointy
+ji deklarují nezávisle na svém oprávnění; anonymní přihlašovací API zůstává
+dostupné i při zavřeném webu.
 
 Úspěšný handler vrací data nebo `TinyCat\Http\Result`. Společný transport sestaví
 `ok`, `status`, `code`, `params`, `message`, `data` a `meta`. Modul nepíše vlastní

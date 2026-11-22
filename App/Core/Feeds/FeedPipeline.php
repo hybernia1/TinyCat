@@ -73,8 +73,9 @@ final class FeedPipeline
      * @return array<string, mixed> */
     private function complete(array $source, int $runId, int $seen, array $ids, array $skipped, ?\Throwable $error = null): array
     {
+        if ($error !== null) { \TinyCat\Core\Runtime\Failure::report($error); }
         $status = $error !== null ? 'error' : ($ids !== [] ? 'posted' : 'current');
-        $message = $error !== null ? FeedParser::text($error->getMessage(), 500) : '';
+        $message = $error !== null ? FeedParser::text(\TinyCat\Core\Runtime\Failure::message($error, 'Feed import failed.'), 500) : '';
         $this->store->finish($source, $runId, $status, $seen, $message);
         return ['source_id' => (int) $source['id'], 'status' => $status, 'content_id' => $ids[0] ?? 0, 'content_ids' => $ids, 'imported_count' => count($ids), 'skipped_items' => $skipped] + ($error !== null ? ['error' => $message] : []);
     }

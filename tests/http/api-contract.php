@@ -394,6 +394,7 @@ try {
     require __DIR__ . '/cases/domain-contract-cases.php';
     require __DIR__ . '/cases/module-contract-cases.php';
     require __DIR__ . '/cases/avatar-contract-cases.php';
+    require __DIR__ . '/cases/public-surface-cases.php';
     require __DIR__ . '/cases/rate-limit-cases.php';
     require __DIR__ . '/cases/request-limit-cases.php';
     require __DIR__ . '/cases/system-api-cases.php';

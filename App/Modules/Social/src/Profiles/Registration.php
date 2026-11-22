@@ -10,6 +10,6 @@ final class Registration
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
-        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/author/{author_id:[0-9]+}/feed', static fn (string $author_id) => \TinyCat\Social\Posts\Syndication::respond('author', '', (int) $author_id), contentType: 'text/plain');
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/author/{author_id:[0-9]+}/feed', static fn (string $author_id) => \TinyCat\Social\Posts\Syndication::respond('author', '', (int) $author_id), contentType: 'text/plain', publicWeb: true);
     }
 }

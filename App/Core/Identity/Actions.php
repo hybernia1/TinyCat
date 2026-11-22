@@ -59,7 +59,7 @@ final class Actions
             $result = \TinyCat\Core\Identity\Integration::register($registration);
         } catch (Throwable $exception) {
 
-            error_log('Registration API failed: ' . $exception->getMessage());
+            \TinyCat\Core\Runtime\Failure::report($exception);
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('auth.registration_failed'), 500, 'registration_failed', [
                 'captcha' => \TinyCat\Core\Security\Captcha::configuration('register'),
             ]);

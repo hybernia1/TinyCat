@@ -19,12 +19,12 @@ final class Execution
     public static function contexts(string $task, array $options, string $mode, int $actorId = 0): array
     {
         $definitions = Tasks::definitions();
-        if ($task !== 'all' && !isset($definitions[$task])) { throw new \InvalidArgumentException('Unknown scheduled task.', 400); }
+        if ($task !== 'all' && !isset($definitions[$task])) { throw new \TinyCat\Http\HttpException('Unknown scheduled task.', 400, 'bad_request'); }
         $selected = $task === 'all' ? array_keys($definitions) : [$task];
         $allowed = [];
         foreach ($selected as $name) { $allowed = [...$allowed, ...array_keys($definitions[$name]['options'])]; }
         if ($task !== 'all') { $allowed = [...$allowed, ...\TinyCat\Core\Modules\Registrations::current()->task($task)->optionKeys($mode)]; }
-        if (array_diff(array_keys($options), $allowed) !== []) { throw new \InvalidArgumentException('Unknown scheduled task option.', 400); }
+        if (array_diff(array_keys($options), $allowed) !== []) { throw new \TinyCat\Http\HttpException('Unknown scheduled task option.', 400, 'bad_request'); }
         $contexts = [];
         foreach ($selected as $name) {
             $keys = \TinyCat\Core\Modules\Registrations::current()->task($name)->optionKeys($mode);
@@ -35,12 +35,12 @@ final class Execution
 
     /** @param array<string, mixed> $options
      * @return array<string, mixed> */
-    public static function run(string $task, array $options = [], string $mode = 'http', int $actorId = 0, bool $debug = false): array
+    public static function run(string $task, array $options = [], string $mode = 'http', int $actorId = 0): array
     {
         $contexts = self::contexts($task, $options, $mode, $actorId);
         $definitions = Tasks::definitions();
         $results = [];
-        foreach ($contexts as $name => $context) { $results[$name] = Runner::runPrepared($name, $definitions[$name]['runner'], $context, $debug); }
+        foreach ($contexts as $name => $context) { $results[$name] = Runner::runPrepared($name, $definitions[$name]['runner'], $context); }
         return ['ok' => !array_any($results, static fn (array $result): bool => empty($result['ok'])),
             'service' => 'tinycat_scheduled_tasks', 'mode' => $mode, 'selected_task' => $task,
             'checked_at' => date(DATE_ATOM), 'tasks' => $results];

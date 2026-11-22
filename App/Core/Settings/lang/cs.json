@@ -25,7 +25,6 @@
       "site_meta_description_help": "Používá se jako výchozí meta description; ideální délka je přibližně 150–160 znaků.",
       "site_logo": "Logo webu",
       "site_favicon": "Favicon",
-      "site_footer": "Footer webu",
       "minify_css": "Minifikovat CSS",
       "minify_css_help": "Vytvoří zmenšené a obsahově verzované CSS soubory v runtime cache.",
       "minify_js": "Minifikovat JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Adresa webu",
       "homepage": "Úvodní stránka",
       "theme": "Vzhled stránek",
-      "automatic": "Automaticky"
+      "automatic": "Automaticky",
+      "public_enabled": "Veřejný web",
+      "public_enabled_help": "Zpřístupní veřejné stránky, hledání, feedy a vložený obsah. Přihlášení, účet a administrace fungují i po vypnutí."
     },
     "messages": {
       "saved": "Nastavení bylo uloženo.",

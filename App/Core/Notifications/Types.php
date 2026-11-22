@@ -44,6 +44,11 @@ final class Types
         $provider = self::find((string) ($row['type'] ?? ''));
         if ($provider === null) { return '/notifications'; }
         $url = ($provider->target)($row);
-        return str_starts_with($url, '/') && !str_starts_with($url, '//') && !preg_match('/[\x00-\x1f\\\\]/', $url) ? $url : '/notifications';
+        if (!str_starts_with($url, '/') || str_starts_with($url, '//') || preg_match('/[\x00-\x1f\\\\]/', $url)) { return '/notifications'; }
+        if (!\TinyCat\Http\Router::publicWebEnabled()) {
+            $path = \TinyCat\Http\LocaleRouting::split(\TinyCat\Http\Request::current()->path((string) (parse_url($url, PHP_URL_PATH) ?: '/')))['path'];
+            if ($path === '/' || \TinyCat\Http\Router::isPublicWebPath($path)) { return '/notifications'; }
+        }
+        return $url;
     }
 }

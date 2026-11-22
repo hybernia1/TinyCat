@@ -90,7 +90,7 @@ final class Store
             }
 
             self::cacheAutoloadSettings(self::$settings);
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             self::$settings = [];
         } finally {
             self::$settingsLoading = false;
@@ -167,7 +167,7 @@ final class Store
                 'SELECT setting_value, setting_type FROM settings WHERE setting_key = ? LIMIT 1',
                 [$key]
             );
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             self::$sensitiveSettings[$key] = ['found' => false, 'value' => null];
             return $default;
         }
@@ -211,6 +211,7 @@ final class Store
             'app.url' => true,
             'site.name' => true,
             'site.homepage' => true,
+            'site.public_enabled' => true,
             'site.theme' => true,
             'site.home_title' => true,
             'site.meta_description' => true,
@@ -218,7 +219,6 @@ final class Store
             'site.logo_path' => true,
             'site.favicon_url' => true,
             'site.favicon_path' => true,
-            'site.footer_html' => true,
             'i18n.locale' => true,
             'datetime.timezone' => true,
             'datetime.date' => true,
@@ -255,7 +255,7 @@ final class Store
             Connection::query('SELECT setting_key FROM settings LIMIT 1');
             $ready = true;
             return true;
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return false;
         }
     }

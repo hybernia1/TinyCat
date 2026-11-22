@@ -13,6 +13,7 @@ final class Api
 {
     public static function register(Registrar $api): void
     {
+        $api = $api->forPublicWeb();
         $api->get('/profiles/{id:[0-9]+}', static function (Request $r, array $p): array {
             $user = Repository::public_author_find((int) $p['id']);
             if ($user === null) { Response::error(\TinyCat\Support\Localization::t('public.author_not_found'), 404, 'user_not_found'); }

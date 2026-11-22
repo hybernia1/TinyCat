@@ -25,7 +25,8 @@
     "not_found_title": "Pagina non trovata",
     "not_found_intro": "Questo indirizzo non porta ad una pagina. Controlla il URL o continua dalla home page.",
     "not_found_home": "Vai alla home page",
-    "not_found_search": "Cerca contenuto"
+    "not_found_search": "Cerca contenuto",
+    "no_homepage": "La pagina iniziale non è ancora disponibile."
   },
   "privacy": {
     "data_title": "Dati e Conto",

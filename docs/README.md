@@ -15,6 +15,10 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 
 ## Kontrakty
 
+- [Zpracování chyb, veřejná odmítnutí a diagnostika](contracts/error-handling.md).
+
+- [Veřejný web, přístupové stránky a výběr assetů](contracts/public-surface.md).
+
 - [Autorita core pro API, UI a validace](contracts/core-application-contract.md).
 - [Notifikace, registrace typů a vlastnictví předmětů](contracts/notifications.md).
 - [Modaly](contracts/modal-contract.md) a [popovery](contracts/popover-contract.md).

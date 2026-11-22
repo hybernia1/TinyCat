@@ -138,11 +138,11 @@ final class Request
             try {
                 $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
             } catch (JsonException $exception) {
-                throw new InvalidArgumentException('Invalid JSON request body.', 400, $exception);
+                throw new \TinyCat\Http\HttpException('Invalid JSON request body.', 400, 'bad_request', previous: $exception);
             }
 
             if (!is_array($data)) {
-                throw new InvalidArgumentException('JSON request body must be an object or array.', 400);
+                throw new \TinyCat\Http\HttpException('JSON request body must be an object or array.', 400, 'bad_request');
             }
 
             return $data;
@@ -175,7 +175,7 @@ final class Request
             $this->payload('_method', null),
         ] as $candidate) {
             if ($candidate !== null && !is_string($candidate)) {
-                throw new InvalidArgumentException('Invalid HTTP method override.', 400);
+                throw new \TinyCat\Http\HttpException('Invalid HTTP method override.', 400, 'bad_request');
             }
 
             $candidate = strtoupper(trim((string) $candidate));

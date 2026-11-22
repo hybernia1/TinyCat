@@ -25,7 +25,6 @@
       "site_meta_description_help": "Utilisé comme méta description par défaut et devrait idéalement contenir entre 150 et 160 caractères.",
       "site_logo": "Logo du site",
       "site_favicon": "Icône de favori",
-      "site_footer": "Pied de page",
       "minify_css": "Réduire CSS",
       "minify_css_help": "Crée des fichiers CSS compacts et versionnés dans le cache d'exécution.",
       "minify_js": "Réduire JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Website URL",
       "homepage": "Home page",
       "theme": "Page theme",
-      "automatic": "Automatic"
+      "automatic": "Automatic",
+      "public_enabled": "Site web public",
+      "public_enabled_help": "Active les pages publiques, la recherche, les flux et les contenus intégrés. La connexion, le compte et l’administration restent accessibles après désactivation."
     },
     "messages": {
       "saved": "Les paramètres ont été enregistrés.",

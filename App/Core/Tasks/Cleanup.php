@@ -78,12 +78,13 @@ final class Cleanup
             try {
                 $results[$task] = self::cleanup_task_run($task, $batchSize);
             } catch (Throwable $exception) {
+            \TinyCat\Core\Runtime\Failure::report($exception);
                 $results[$task] = [
                     'task' => $task,
                     'changed' => 0,
                     'has_more' => false,
                     'batch_size' => $batchSize,
-                    'error' => $exception->getMessage(),
+                    'error' => \TinyCat\Core\Runtime\Failure::message($exception, 'Operation failed.'),
                 ];
             }
         }

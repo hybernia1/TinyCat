@@ -42,12 +42,12 @@ $assert(!in_array('content_id', array_column($fresh->query('PRAGMA table_info(no
 
 Connection::set($db);
 Resources::configure(Loader::load($root)->catalog);
-$custom = new NotificationType('fixture.order', static fn (array $rows): array => $rows, static fn (array $row): string => '/orders/' . $row['subject_id'], subject: 'required', message: static fn (array $row): string => 'Order updated');
+$custom = new NotificationType('fixture.order', static fn (array $rows): array => $rows, static fn (array $row): string => $row['target'] ?? '/orders/' . $row['subject_id'], subject: 'required', message: static fn (array $row): string => 'Order updated');
 $social = \TinyCat\Social\Posts\NotificationPresentation::types();
 $registries = new Registries([
     'core.health' => new Contributions(notificationTypes: \TinyCat\Core\Health\Alerts::types()),
     'social' => new Contributions(notificationTypes: $social),
-    'fixture' => new Contributions(notificationInbox: true, notificationTypes: [$custom]),
+    'fixture' => new Contributions(notificationInbox: true, notificationTypes: [$custom], localizedRoutes: [new \TinyCat\Core\Modules\LocalizedRoute('fixture.orders', '^/orders/[0-9]+$')]),
 ]);
 Registrations::configure($registries);
 $reject(static fn () => new NotificationType('bad id', static fn (array $rows): array => $rows, static fn (array $row): string => '/'));
@@ -121,6 +121,13 @@ foreach ($cases as [$label, $type, $subject, $removed]) {
     $exists = Connection::find('notifications', ['notification_key' => 'cleanup:' . $label]) !== null;
     $assert($exists !== $removed, 'Account cleanup preserves subject ownership and ID namespaces: ' . $label);
 }
+\TinyCat\Http\Router::route('GET', '/orders/{id:[0-9]+}', static fn (): null => null, publicWeb: true);
+\TinyCat\Http\Router::configurePublicWeb(static fn (): bool => false);
+$assert(Types::target(['type' => 'fixture.order', 'subject_id' => 10]) === '/notifications', 'Closed public targets fall back to the core inbox without domain lists');
+$assert(Types::target(['type' => 'fixture.order', 'target' => '/en/orders/10?view=full#detail']) === '/notifications', 'Localized notification targets with query and fragment obey public availability');
+$assert(Types::target(['type' => 'fixture.order', 'target' => '/admin/orders/10']) === '/admin/orders/10', 'Internal notification destinations remain available');
+\TinyCat\Http\Router::configurePublicWeb(static fn (): bool => true);
+$assert(Types::target(['type' => 'fixture.order', 'subject_id' => 10]) === '/orders/10', 'Re-enabling public presentation restores the original target');
 Registrations::configure(new Registries());
 $assert(Inbox::open($notice['id'], 1) === '/notifications' && Resource::item($hydrated[0])['type'] === 'generic', 'Inactive owners retain rows and use a safe generic presentation');
 $reject(static fn () => Delivery::record(1, 'fixture.order', 'inactive', subjectId: 10));

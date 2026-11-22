@@ -184,7 +184,7 @@ $assert($status === 403, 'Administrative publication requires CSRF protection.')
 $assert($status === 200 && $published['code'] === 'content_published' && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'published', 'Explicit administrative publication restores visibility.');
 $assert($seed->query('SELECT status FROM content_reports WHERE id = ' . $newReportId)->fetchColumn() === 'resolved' && $seed->query('SELECT status FROM content_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Publishing preserves earlier report outcomes.');
 [$status, $payload] = $request('GET', '/api/site/sidebar');
-$assert($status === 200 && isset($payload['data']['tags'], $payload['data']['authors'], $payload['data']['footer']), 'The sidebar exposes resources and structured footer nodes.');
+$assert($status === 200 && isset($payload['data']['tags'], $payload['data']['authors'], $payload['data']['privacy_url']) && !array_key_exists('footer', $payload['data']), 'The sidebar exposes resources and the privacy link without retired custom footer data.');
 $pure($payload);
 foreach ([['POST', '/api/bots/accounts', ['username' => []]], ['GET', '/api/search?q[]=invalid', null], ['PATCH', '/api/moderation/reports/9000', ['decision' => []]]] as [$verb, $path, $input]) {
     [$status, $payload] = $request($verb, $path, $input, 'admin', $csrf);

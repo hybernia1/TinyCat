@@ -80,6 +80,42 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 8.0.0
+
+Existing installations keep the public website enabled when `site.public_enabled`
+has not been stored. Fresh installations start with it disabled; administrators
+can change it later in site settings without rebuilding assets or activating
+modules. Login, recovery, accounts and administration remain available. Closed
+public routes return 404, discovery is withdrawn and robots disallow crawling.
+Previously public uploads are not made private by this setting.
+
+Runtime diagnostics now use `app.debug`: `'on'`, `'off'` (default), or `'log'`
+(`storage/debug.log`). Existing booleans remain accepted. See
+[runtime diagnostics](debugging.md). Extension authors must use explicit
+`TinyCat\Http\HttpException` for safe public rejections; arbitrary exception
+codes and `InvalidArgumentException` no longer imply a public HTTP status.
+See the [error handling contract](../contracts/error-handling.md).
+
+This is a major extension-contract release. `Router::debug()` and local debug
+arguments of `Http\Api`, `Response::exception()` and `Tasks\Runner::run()` are
+removed. Modules use the installation-wide diagnostic policy instead. Update
+custom modules before deployment, including named arguments and the removed
+presentation flags described below.
+
+Custom themes receive `publicFooter` explicitly. Configurable `site.footer_html`
+and its renderer are removed; an old stored value is inert. Use theme-owned
+render-only markup for a custom footer. Pages select `surface` explicitly or
+use the shared path classification; retired presentation flags do not select
+layouts. Bot management resources now provide internal `update_url` and
+`suggest_url` endpoints independent of public website availability.
+
+No database migration is added. Published migration files, configuration,
+accounts, uploads and module activation are preserved. Use the matching signed
+Core or Social update and matching generated assets; install ZIPs are for new
+sites. PHP 8.4 and completed 6.0.10 or newer remain required. Refresh the private
+rescue launcher before updating from 6.0.10. Follow the 7.1.1 scheduler rollout
+instructions below when updating older workers.
+
 ## Upgrading to 7.1.2
 
 This maintenance release improves client lifecycle recovery, native/AJAX form
@@ -1087,7 +1123,8 @@ This package excludes `migrations/` and update deletions. The installer creates
 all current tables and indexes directly. Use this ZIP only for new installations;
 publish the normal signed update package as the updater release asset.
 The shipped operational documentation includes `docs/reference/api.md`,
-`docs/operations/updates.md` and `docs/operations/module-deployment.md`.
+`docs/operations/updates.md`, `docs/operations/module-deployment.md`,
+`docs/operations/debugging.md` and `docs/contracts/error-handling.md`.
 
 To prepare both variants with a single validated compilation:
 

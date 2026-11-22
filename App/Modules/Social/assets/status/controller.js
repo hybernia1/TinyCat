@@ -24,6 +24,11 @@ import "../../../../Core/Ui/assets/component-builders.js";
     comment: function (item, context, viewer) {
       return T.components.render("status/comment", { item: item, context: context || "", viewer: viewer, show_replies: true, show_reply_form: true });
     },
+    edit: function (data, id, actionUrl) {
+      if (!data.item.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
+      var edit = form(actionUrl, "update", data.item.id, T.components.render("status/edit-fields", data), null, "multipart/form-data");
+      return U.formDialog(id, "account.status_edit", edit, false, { size: "wide" });
+    },
     modal: function (url, response, id) {
       var data = response.data, item = data.item;
       if (url.pathname === "/api/moderation/report-options") {
@@ -59,11 +64,7 @@ import "../../../../Core/Ui/assets/component-builders.js";
         return U.dialog(id, "account.status_comment_history", T.publishing.controllers.comments.historyContent(data.items));
       }
       var panel = url.searchParams.get("panel");
-      if (panel === "edit") {
-        if (!item.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
-        var edit = form(base(item.id), "update", item.id, T.components.render("status/edit-fields", data), null, "multipart/form-data");
-        return U.formDialog(id, "account.status_edit", edit, false, { size: "wide" });
-      }
+      if (panel === "edit") { return T.status.edit(data, id, base(item.id)); }
       if (panel === "comment-edit") {
         var wanted = Number(url.searchParams.get("comment_id")), selected;
         data.comments.forEach(function (comment) { if (comment.id === wanted) { selected = comment; } comment.replies.forEach(function (reply) { if (reply.id === wanted) { selected = reply; } }); });

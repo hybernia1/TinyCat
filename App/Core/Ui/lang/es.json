@@ -25,7 +25,8 @@
     "not_found_title": "Página no encontrada",
     "not_found_intro": "Esta dirección no lleva a ninguna página. Marque URL o continúe desde la página de inicio.",
     "not_found_home": "Ir a la página de inicio",
-    "not_found_search": "Buscar contenido"
+    "not_found_search": "Buscar contenido",
+    "no_homepage": "La página de inicio aún no está disponible."
   },
   "privacy": {
     "data_title": "Datos y cuenta",

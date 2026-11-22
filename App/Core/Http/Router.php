@@ -14,11 +14,23 @@ if (!defined('TINYCAT')) {
 
 final class Router
 {
-    /** @var list<array{methods: array<string>, path: string, handler: callable, contentType: string}> */
+    /** @var list<array{methods: array<string>, path: string, handler: callable, contentType: string, publicWeb: bool}> */
     private static array $routes = [];
     /** @var array<string, true> */
     private static array $routeKeys = [];
-    private static bool $debug = false;
+    /** @var (\Closure(): bool)|null */
+    private static ?\Closure $publicWeb = null;
+
+    public static function configurePublicWeb(\Closure $enabled): void { self::$publicWeb = $enabled; }
+    public static function publicWebEnabled(): bool { return self::$publicWeb === null || (self::$publicWeb)(); }
+
+    public static function isPublicWebPath(string $path): bool
+    {
+        foreach (self::$routes as $route) {
+            if ($route['publicWeb'] && self::routeMatch($route['path'], $path) !== null) { return true; }
+        }
+        return false;
+    }
     /** @var list<array{group: string, path: string, resource: callable, query: list<string>}> */
     private static array $pages = [];
 
@@ -50,7 +62,7 @@ final class Router
     {
         $path = self::routePath($path);
         foreach ($query as $key) { if (preg_match('/^[a-z][a-z0-9_]*$/D', $key) !== 1) { throw new InvalidArgumentException('Invalid page query key.'); } }
-        self::route(['GET', 'HEAD'], $path, $handler);
+        self::route(['GET', 'HEAD'], $path, $handler, publicWeb: true);
         self::$pages[] = compact('group', 'path', 'resource', 'query');
     }
 
@@ -58,6 +70,7 @@ final class Router
     public static function pageResource(string $group, string $path): ?array
     {
         $path = Request::normalizePath($path);
+        if (!self::publicWebEnabled()) { return null; }
         if ($path === '/') { $path = \TinyCat\Core\Runtime\EntryPages::homepage()->path ?? '/'; }
         foreach (self::$pages as $page) {
             if ($page['group'] !== $group) { continue; }
@@ -71,6 +84,7 @@ final class Router
      * @return list<array{pattern: string, query: list<string>}> */
     public static function pageDefinitions(string $group): array
     {
+        if (!self::publicWebEnabled()) { return []; }
         $definitions = []; $home = \TinyCat\Core\Runtime\EntryPages::homepage()?->path;
         foreach (self::$pages as $page) {
             if ($page['group'] !== $group) { continue; }
@@ -91,7 +105,7 @@ final class Router
     /**
      * @param array<mixed>|string $methods
      */
-    public static function route(array|string $methods, string $path, callable $handler, string $contentType = 'text/html'): void
+    public static function route(array|string $methods, string $path, callable $handler, string $contentType = 'text/html', bool $publicWeb = false): void
     {
         $methods = self::normalizeMethods($methods);
         $path = self::routePath($path);
@@ -100,6 +114,7 @@ final class Router
             'path' => $path,
             'handler' => $handler,
             'contentType' => $contentType,
+            'publicWeb' => $publicWeb,
         ];
         foreach ($methods as $method) { self::$routeKeys[$method . ':' . $path] = true; }
     }
@@ -114,7 +129,7 @@ final class Router
     /**
      * @param array<mixed>|string $methods
      */
-    public static function apiRoute(array|string $methods, string $path, callable $handler): void
+    public static function apiRoute(array|string $methods, string $path, callable $handler, bool $publicWeb = false): void
     {
         $path = self::routePath($path);
 
@@ -122,7 +137,7 @@ final class Router
             $path = '/api' . ($path === '/' ? '' : $path);
         }
 
-        self::route($methods, $path, $handler);
+        self::route($methods, $path, $handler, publicWeb: $publicWeb);
     }
 
     public static function dispatch(?string $path = null, ?string $method = null): bool
@@ -133,7 +148,7 @@ final class Router
             $method = strtoupper($method ?? Request::current()->method());
         } catch (Throwable $exception) {
             if (self::isApiPath($path) || Request::current()->wantsJson()) {
-                Response::exception($exception, self::$debug);
+                Response::exception($exception);
             }
 
             throw $exception;
@@ -142,6 +157,7 @@ final class Router
         $allowed = [];
 
         foreach (self::$routes as $route) {
+            if ($route['publicWeb'] && !self::publicWebEnabled()) { continue; }
             $params = self::routeMatch((string) $route['path'], $path);
 
             if ($params === null) {
@@ -167,7 +183,7 @@ final class Router
                 Response::error('Method not allowed.', 405, 'method_not_allowed', ['allowed' => $allowed]);
             }
 
-            throw new \RuntimeException('Method not allowed.', 405);
+            throw new \TinyCat\Http\HttpException('Method not allowed.', 405, 'method_not_allowed');
         }
 
         if (self::isApiPath($path)) {
@@ -281,7 +297,7 @@ final class Router
             echo Values::string($result);
         } catch (Throwable $exception) {
             if (self::isApiPath($path) || Request::current()->wantsJson()) {
-                Response::exception($exception, self::$debug);
+                Response::exception($exception);
             }
 
             throw $exception;
@@ -295,8 +311,4 @@ final class Router
         return $path === '/api' || str_starts_with($path, '/api/');
     }
 
-    public static function debug(bool $enabled): void
-    {
-        self::$debug = $enabled;
-    }
 }

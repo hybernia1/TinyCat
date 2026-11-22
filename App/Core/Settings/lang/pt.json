@@ -25,7 +25,6 @@
       "site_meta_description_help": "Usado como meta descrição padrão e idealmente deve ter entre 150 e 160 caracteres.",
       "site_logo": "Logotipo do site",
       "site_favicon": "Favicon",
-      "site_footer": "Rodapé do site",
       "minify_css": "Minificar CSS",
       "minify_css_help": "Cria arquivos CSS compactos e com versão de conteúdo no cache de tempo de execução.",
       "minify_js": "Minificar JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Website URL",
       "homepage": "Home page",
       "theme": "Page theme",
-      "automatic": "Automatic"
+      "automatic": "Automatic",
+      "public_enabled": "Site público",
+      "public_enabled_help": "Ativa páginas públicas, pesquisa, feeds e conteúdo incorporado. O acesso, a conta e a administração continuam disponíveis quando desativado."
     },
     "messages": {
       "saved": "As configurações foram salvas.",

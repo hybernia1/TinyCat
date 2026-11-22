@@ -110,7 +110,8 @@ final class DuplicateCleanup
             if (!\TinyCat\Support\Storage::write($cursor, json_encode($scan['has_more'] ? $scan['next'] : 0, JSON_THROW_ON_ERROR))) { throw new \RuntimeException('Cannot save duplicate cleanup progress.'); }
             return ['due' => true, 'changed' => $changed, 'has_more' => $scan['has_more']];
         } catch (\Throwable $exception) {
-            return ['due' => true, 'changed' => $changed, 'has_more' => false, 'error' => $exception->getMessage()];
+            \TinyCat\Core\Runtime\Failure::report($exception);
+            return ['due' => true, 'changed' => $changed, 'has_more' => false, 'error' => \TinyCat\Core\Runtime\Failure::message($exception, 'Operation failed.')];
         }
     }
 }

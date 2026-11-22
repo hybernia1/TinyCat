@@ -55,12 +55,12 @@ try {
     if ($cliOptions['health']) {
         \TinyCat\Http\Response::cli(\TinyCat\Core\Tasks\Execution::health($cliOptions['task'], 'cli'), 'scheduler_healthy');
     }
-    $result = \TinyCat\Core\Tasks\Execution::run($cliOptions['task'], $cliOptions['options'], 'cli', debug: (bool) \TinyCat\Core\Settings\Store::config('app.debug', false));
+    $result = \TinyCat\Core\Tasks\Execution::run($cliOptions['task'], $cliOptions['options'], 'cli');
     if (!$result['ok']) { \TinyCat\Http\Response::cli(['execution' => $result], 'scheduler_run_failed', 500, 1); }
     \TinyCat\Http\Response::cli($result, 'scheduler_run_finished');
-} catch (\InvalidArgumentException $exception) {
+} catch (\TinyCat\Http\HttpException $exception) {
     \TinyCat\Http\Response::cli(['message' => $exception->getMessage()], 'bad_request', 400, 2);
 } catch (\Throwable $exception) {
-    error_log('Scheduler CLI failed: ' . $exception->getMessage());
+    \TinyCat\Core\Runtime\Failure::report($exception);
     \TinyCat\Http\Response::cli(['message' => 'Scheduled execution failed.'], 'scheduler_run_failed', 500, 1);
 }

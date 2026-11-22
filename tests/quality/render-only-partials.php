@@ -23,7 +23,6 @@ $forbiddenFunctions = array_fill_keys([
     'public_status_page_limit',
     'render_mentions',
     'render_status_body',
-    'site_footer_html',
     'status_comment_can_delete',
     'status_comment_count',
     'status_comment_like_count',

@@ -25,7 +25,6 @@
       "site_meta_description_help": "Wordt gebruikt als de standaard metabeschrijving en zou idealiter ongeveer 150-160 tekens moeten bevatten.",
       "site_logo": "Site-logo",
       "site_favicon": "Favicon",
-      "site_footer": "Voettekst van site",
       "minify_css": "Verkleinen CSS",
       "minify_css_help": "Creëert compacte CSS-bestanden met inhoudsversie in de runtime-cache.",
       "minify_js": "Verkleinen JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Website URL",
       "homepage": "Home page",
       "theme": "Page theme",
-      "automatic": "Automatic"
+      "automatic": "Automatic",
+      "public_enabled": "Openbare website",
+      "public_enabled_help": "Schakelt openbare pagina’s, zoeken, feeds en ingesloten inhoud in. Inloggen, account en beheer blijven beschikbaar wanneer uitgeschakeld."
     },
     "messages": {
       "saved": "Instellingen zijn opgeslagen.",

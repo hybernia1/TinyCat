@@ -11,6 +11,7 @@ final class Platform
 {
     public static function initialize(): void
     {
+        Router::configurePublicWeb(PublicWeb::enabled(...));
         \TinyCat\Support\LocalUrls::configure(static fn (string $url, ?string $locale = null): string => LocaleRouting::url($url, $locale));
         Startup::$exception = static function (\Throwable $error): void { Errors::exception($error); };
         Startup::provideHttp('tinycat.core', new HttpPolicy(
@@ -48,6 +49,7 @@ final class Platform
             new LocalizedRoute('core.home', '^/$'),
             new LocalizedRoute('core.identity', '^/(?:login|register|logout)$', ['next']),
             new LocalizedRoute('core.recovery', '^/recovery$', ['token']),
+            new LocalizedRoute('core.account', '^/account$'),
             new LocalizedRoute('core.notifications', '^/notifications$'),
             new LocalizedRoute('core.privacy', '^/privacy$', translatedDocument: true),
             new LocalizedRoute('core.search', '^/search/all$', ['q', 'collection']),

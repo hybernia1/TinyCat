@@ -110,6 +110,9 @@ final class Installer
     /** @param array<mixed> $state */
     public static function default_settings(array $state): void
     {
+        if (\TinyCat\Core\Settings\Store::setting('site.public_enabled', null) === null) {
+            \TinyCat\Core\Settings\Store::setSetting('site.public_enabled', false, 'bool', 'site');
+        }
         \TinyCat\Core\Settings\Sections::seed((string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
     }
 
@@ -131,6 +134,7 @@ final class Installer
         unset($database['driver']);
 
         $config = [
+            'app' => ['debug' => 'off'],
             'cache' => [
                 'driver' => 'filesystem',
             ],

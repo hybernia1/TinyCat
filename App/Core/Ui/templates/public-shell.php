@@ -6,6 +6,7 @@ declare(strict_types=1);
 /** @var string $content */
 /** @var string $publicHeader */
 /** @var string $consent */
+/** @var string $publicFooter */
 ?>
 <?= $publicHeader ?>
 <main id="main-content" class="section" tabindex="-1">
@@ -15,3 +16,4 @@ declare(strict_types=1);
     </div>
 </main>
 <?= $consent ?>
+<?= $publicFooter ?>

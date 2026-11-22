@@ -26,9 +26,15 @@ final class Pages
         $next = Login::auth_request_next_url();
         if (Integration::unlocalizedPath(Login::auth_next_path($next)) === '/') { $next = ''; }
         $target = Login::auth_redirect_after_login($user, $next);
-        if (Integration::unlocalizedPath(Login::auth_next_path($target)) !== '/') { Web::redirect($target); }
+        if (!in_array(Integration::unlocalizedPath(Login::auth_next_path($target)), ['/', '/account'], true)) { Web::redirect($target); }
+        self::account();
+    }
+
+    public static function account(): void
+    {
+        $user = Access::requireAuth('/login');
         Integration::render([
-            'title' => Localization::t('account.title'), 'current' => '/', 'public' => true,
+            'title' => Localization::t('account.title'), 'current' => '/account', 'surface' => 'access',
             'meta' => ['robots' => 'noindex,nofollow'],
         ], Components::render('users/account-home', [
             'user' => $user,
@@ -69,7 +75,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.login_title'),
             'current' => '/login',
-            'layout' => 'auth',
+            'surface' => 'access',
             'nav' => [],
             'meta' => [
                 'description' => Localization::t('auth.login_intro'),
@@ -93,7 +99,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.register_title'),
             'current' => '/register',
-            'layout' => 'auth',
+            'surface' => 'access',
             'meta' => [
                 'description' => Localization::t('auth.register_intro'),
                 'url' => '/register',
@@ -110,7 +116,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.logout_title'),
             'current' => '/logout',
-            'layout' => 'auth',
+            'surface' => 'access',
             'meta' => [
                 'description' => Localization::t('auth.logout_intro'),
                 'url' => '/logout',
@@ -126,7 +132,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.recovery_title'),
             'current' => '/recovery',
-            'layout' => 'auth',
+            'surface' => 'access',
             'nav' => [],
             'meta' => [
                 'description' => Localization::t($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro'),

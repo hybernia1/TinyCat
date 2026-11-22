@@ -1,7 +1,7 @@
 # Testy TinyCat
 
 Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitních
-90 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
+92 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 

@@ -14,7 +14,7 @@ final class Dashboard
         $result = [];
         foreach (Registrations::current()->entries->widgets as $widget) {
             try { if ($widget->visible !== null && !($widget->visible)()) { continue; } }
-            catch (\Throwable) { continue; }
+            catch (\Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure); continue; }
             $view = ['id' => $widget->id, 'type' => $widget->type, 'title' => $widget->id, 'icon' => $widget->icon];
             try {
                 if ($widget->title !== null) { $view['title'] = ($widget->title)(); }
@@ -31,7 +31,7 @@ final class Dashboard
                     $view['data'] = $data;
                 }
             } catch (\Throwable $error) {
-                error_log('Dashboard widget ' . $widget->id . ': ' . $error->getMessage());
+                \TinyCat\Core\Runtime\Failure::report($error);
                 $view['type'] = 'status'; $view['data'] = ['text' => Localization::t('common.request_failed'), 'tone' => 'danger'];
             }
             $result[] = $view;

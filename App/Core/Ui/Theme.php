@@ -61,7 +61,6 @@ final readonly class Theme
         $page['scripts'] = array_values(array_unique([...(array) ($page['scripts'] ?? []), ...$this->scripts]));
         $prepared = DocumentData::prepare($page, $document);
         $prepared['content'] = $content;
-        $prepared['hasPublicSidebar'] = str_contains($content, 'data-public-sidebar-slot') || str_contains($content, 'data-public-sidebar-url');
         Document::renderPrepared($prepared, View::render($this->layout, $prepared, $this->directory));
     }
 

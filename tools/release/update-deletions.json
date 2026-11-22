@@ -2359,5 +2359,8 @@
   ],
   "7.1.2": [
     "App/Modules/Social/assets/users/styles/profile-navigation.css"
+  ],
+  "8.0.0": [
+    "App/Core/Support/RichText.php"
   ]
 }

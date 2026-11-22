@@ -15,7 +15,6 @@ final class Sidebar
         return self::resource([
             'tags' => Tags::public_trending_tags(8, 7, $compute),
             'authors' => Repository::public_top_authors(5, 7, $compute),
-            'site_footer_html' => \TinyCat\Core\Ui\Site::site_footer_html(),
         ]);
     }
 
@@ -33,7 +32,6 @@ final class Sidebar
             'tags' => $tags,
             'authors' => array_map(static fn (array $author): array => Profiles::resource($author + ['username' => $author['name'] ?? '']) + ['posts_count' => (int) ($author['posts_count'] ?? 0)], $authors),
             'privacy_url' => \TinyCat\Http\LocaleRouting::url('/privacy'),
-            'footer' => \TinyCat\Support\RichText::nodes((string) ($data['site_footer_html'] ?? '')),
         ];
     }
 }

@@ -15,11 +15,11 @@ final class Runner
      * @param array<string, mixed> $context
      * @return array<string, mixed>
      */
-    public static function run(string $name, callable $runner, array $context, bool $debug = false): array
+    public static function run(string $name, callable $runner, array $context): array
     {
         try { $context = Tasks::context($name, $context); }
-        catch (Throwable $exception) { return Tasks::result('failed', error: $debug ? $exception->getMessage() : $name . ' task failed.'); }
-        return self::runPrepared($name, $runner, $context, $debug);
+        catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); return Tasks::result('failed', error: \TinyCat\Core\Runtime\Failure::message($exception, $name . ' task failed.')); }
+        return self::runPrepared($name, $runner, $context);
     }
 
     /** Execute a context already validated by Execution::contexts or Tasks::context.
@@ -27,7 +27,7 @@ final class Runner
      * @param callable(array<string, mixed>): array<string, mixed> $runner
      * @param array<string, mixed> $context
      * @return array<string, mixed> */
-    public static function runPrepared(string $name, callable $runner, array $context, bool $debug = false): array
+    public static function runPrepared(string $name, callable $runner, array $context): array
     {
         $lockName = '';
         $locked = false;
@@ -71,10 +71,11 @@ final class Runner
             History::finish($runId, $result, (int) ((hrtime(true) - $started) / 1_000_000));
             return $result;
         } catch (Throwable $exception) {
-            $result = Tasks::result('failed', error: $debug ? $exception->getMessage() : $name . ' task failed.');
+            \TinyCat\Core\Runtime\Failure::report($exception);
+            $result = Tasks::result('failed', error: \TinyCat\Core\Runtime\Failure::message($exception, $name . ' task failed.'));
             if ($runId > 0) {
                 try { History::finish($runId, $result, (int) ((hrtime(true) - $started) / 1_000_000)); }
-                catch (Throwable $historyError) { error_log('Scheduler history write failed for run ' . $runId . ': ' . $historyError->getMessage()); }
+                catch (Throwable $historyError) { \TinyCat\Core\Runtime\Failure::report($historyError); }
             }
             return $result;
         } finally {
@@ -82,7 +83,7 @@ final class Runner
             elseif ($locked) {
                 try {
                     Connection::value('SELECT RELEASE_LOCK(?)', [$lockName]);
-                } catch (Throwable) {
+                } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
                     // The connection also releases its advisory locks on close.
                 }
             }

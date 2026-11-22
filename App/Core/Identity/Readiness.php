@@ -19,7 +19,7 @@ final class Readiness
                 ),
                 ['']
             ) > 0;
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return false;
         }
     }

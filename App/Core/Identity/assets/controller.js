@@ -1,3 +1,4 @@
+import "./authentication.js";
 // @component-owned: structure is declared in owner catalogs.
 import "../../Ui/assets/content-updates.js";
 import "../../Ui/assets/runtime/dates.js";
@@ -46,18 +47,13 @@ import "../../Ui/assets/toasts.js";
     var actions = T.components.render("users/avatar-actions", { save_action: save, remove_form: remove });
     return T.components.render("users/avatar-editor", { generated: generated, upload_form: upload, appearance_form: creator, actions: actions });
   }
-  function authentication(data) {
-    return T.components.render("users/auth-content", Object.assign({}, data, { register: data.mode === "register", old: {} }));
-  }
-
   T.accounts = {
 
     modal: function (url, response, id) {
       var data = response.data, path = url.pathname;
       if (path.indexOf("/api/users/") !== 0) { return null; }
       if (path === "/api/users/authentication") {
-        var authContent = authentication(data), authTitle = data.mode === "register" ? "common.register" : "common.login";
-        return authContent.querySelector("form") ? U.formDialog(id, authTitle, authContent, false, { size: "compact", icon: data.mode === "register" ? "user-plus" : "login" }) : U.dialog(id, authTitle, authContent);
+        return T.authentication.modal(url, response, id);
       }
 
       if (/\/avatar$/.test(path)) {

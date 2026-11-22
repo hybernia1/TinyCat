@@ -311,7 +311,7 @@ final class Queries
      */
     public static function collection(string $query, string $type = 'content', array $cursor = [], int $limit = 0, string $media = ''): array
     {
-        if (\TinyCat\Http\Validator::validate($cursor, ['cursor_at' => 'string|max:19', 'cursor_id' => 'integer|min:1', 'cursor_rank' => 'integer|min:0|max:2', 'cursor_name' => 'string|max:120']) !== []) { throw new \InvalidArgumentException('Invalid search cursor.', 422); }
+        if (\TinyCat\Http\Validator::validate($cursor, ['cursor_at' => 'string|max:19', 'cursor_id' => 'integer|min:1', 'cursor_rank' => 'integer|min:0|max:2', 'cursor_name' => 'string|max:120']) !== []) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 422, 'validation_error'); }
         $query = self::public_search_normalize_query($query);
         $media = \TinyCat\Social\Posts\Feed::archive_type($media);
         $type = in_array($type, ['content', 'users', 'tags'], true) ? $type : 'content';

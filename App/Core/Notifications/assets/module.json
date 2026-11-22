@@ -2,7 +2,8 @@
   {
     "routes": [
       "public",
-      "/notifications"
+      "/notifications",
+      "/access/notifications"
     ],
     "components": [
       "notifications/items",
@@ -27,6 +28,9 @@
     "messages": {
       "common_request_failed": "common.request_failed",
       "notification_not_found": "common.not_found"
-    }
+    },
+    "uses": [
+      "ui.identity-rows"
+    ]
   }
 ]

@@ -43,8 +43,8 @@ final class HttpKernel
     public static function exception(\Throwable $error): void
     {
         if (Startup::$exception !== null) { (Startup::$exception)($error); return; }
-        error_log('Application request failed: ' . $error->getMessage());
+        Failure::report($error);
         if (\TinyCat\Http\Router::isApiPath(\TinyCat\Http\Request::current()->path()) || \TinyCat\Http\Request::current()->wantsJson()) { \TinyCat\Http\Response::exception($error); }
-        \TinyCat\Http\Document::error('Request failed.', $error->getCode() >= 400 && $error->getCode() <= 599 ? (int) $error->getCode() : 500);
+        \TinyCat\Http\Document::error(Failure::message($error, 'Request failed.'), Failure::status($error));
     }
 }

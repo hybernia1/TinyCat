@@ -58,8 +58,7 @@ import "./workspace.js";
     modal: function (url, response, id) {
       if (/^\/api\/bots\/accounts\/[0-9]+$/.test(url.pathname) && url.searchParams.get("panel") === "detail") { return T.botDetail.modal(url, response, id); }
       if (/^\/api\/bots\/accounts\/[0-9]+\/posts\/[0-9]+\/management$/.test(url.pathname)) {
-        var editUrl = new URL("/api/statuses/" + response.data.item.id + "?panel=edit", window.location.href);
-        var dialog = T.status.modal(editUrl, response, id);
+        var dialog = T.status.edit(response.data, id, response.data.update_url);
         dialog.addEventListener("tinycat:success", function () {
           refreshPosts();
           var queue = document.querySelector("#bot-queue-list");

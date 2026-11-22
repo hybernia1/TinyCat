@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.0.0 - 2026-11-22
+
+- Control public website availability through settings without reinstalling or enabling modules. Preserve existing sites; fresh installations start with the public website disabled.
+- Separate public, access and administration layouts and asset profiles. Keep login, recovery, accounts and authorized bot editing available when the public website is closed. Restore notification targets after re-enabling public presentation.
+- Keep public themes optional, make the public footer an explicit layout fragment, remove configurable footer HTML and duplicate account/recovery sections from Social privacy.
+- Centralize runtime diagnostics in on/off/log modes and classify expected public failures through HttpException. Unexpected exceptions retain HTTP 500 and safe output; preserve atomic writes and report recoverable technical failures.
+- Remove retired presentation switches and the unused rich-text footer helper. Preserve published migration files, accounts, uploads, configuration and module activation.
+- Breaking extension changes: remove local debug parameters and Router::debug(); expected HTTP errors require HttpException, and page surfaces replace legacy presentation flags. Update custom modules before deployment.
+- No database migration. PHP 8.4 and completed 6.0.10 or newer remain required. Deploy matching runtime and generated assets using the signed Core or Social package.
+
 ## 7.1.2 - 2026-11-22
 
 - Isolate client lifecycle hook failures, retry unfinished initialization and dispose services in reverse hydration order.

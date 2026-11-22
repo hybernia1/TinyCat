@@ -51,7 +51,6 @@ final class Application
         $registries = $modules?->registries() ?? new Registries();
         Config::configure($context->configuration);
         \TinyCat\Support\Dates::configure($context->dateOption(...));
-        Router::debug((bool) $context->configuration->get('app.debug', false));
         if (!self::$initialized) {
             Resources::configure($catalog);
             if ($catalog->has('tinycat.ui')) { \TinyCat\Core\Ui\Platform::initialize(); }

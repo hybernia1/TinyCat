@@ -25,7 +25,8 @@
     "not_found_title": "Page introuvable",
     "not_found_intro": "Cette adresse ne mène pas à une page. Vérifiez le URL ou continuez à partir de la page d'accueil.",
     "not_found_home": "Aller à la page d'accueil",
-    "not_found_search": "Rechercher du contenu"
+    "not_found_search": "Rechercher du contenu",
+    "no_homepage": "La page d’accueil n’est pas encore disponible."
   },
   "privacy": {
     "data_title": "Données et compte",

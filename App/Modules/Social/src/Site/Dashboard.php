@@ -46,7 +46,7 @@ final class Dashboard
                  LIMIT ' . max(1, min(30, $limit))
             );
             return array_map(static fn (array $row): array => $row + ['content_url' => \TinyCat\Social\Posts\Posts::status_url((int) ($row['content_id'] ?? 0))], array_values(array_filter($rows, is_array(...))));
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return [];
         }
     }

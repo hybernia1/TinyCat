@@ -35,9 +35,16 @@ try {
     $expected = $prefix . hash('sha256', \TinyCat\Support\Version::CURRENT . ':' . \TinyCat\Support\Paths::basePath() . ':' . Cache::directory() . ':replacement');
     $expect($key === $expected && is_string($client->get($expected)), 'Primary keys must include the release and isolated test namespace.');
     $expect(Cache::forget('replacement') && Cache::get('replacement') === null, 'Invalidation removes both copies.');
-    Cache::put('expiry', ['stale'], 1, 1);
-    sleep(3);
-    $expect(Cache::read('expiry') === null, 'Memcached expires stale data.');
+    $expect(Cache::put('expiry', ['stale'], 1, 1), 'Expiry fixture write succeeds.');
+    $expiryKey = (new ReflectionMethod(Cache::class, 'memcachedKey'))->invoke(null, 'expiry');
+    $expect(is_string($client->get($expiryKey)), 'Expiry fixture is stored on the real primary.');
+    // The server clock advances in coarse ticks and can lag the PHP clock.
+    $expiryDeadline = hrtime(true) + 10_000_000_000;
+    do {
+        usleep(100000);
+        $expired = Cache::read('expiry') === null;
+    } while (!$expired && hrtime(true) < $expiryDeadline);
+    $expect($expired, 'Memcached expires stale data within the bounded deadline.');
     // Simulate an unavailable primary with a refused loopback port.
     $offline = new Memcached(); $offline->addServer('127.0.0.1', 1);
     (new ReflectionProperty(Cache::class, 'memcachedClient'))->setValue(null, $offline);
@@ -49,10 +56,11 @@ try {
     $primary = (new ReflectionProperty(Cache::class, 'memcachedClient'))->getValue();
     Cache::put('partition', ['old']);
     (new ReflectionProperty(Cache::class, 'memcachedClient'))->setValue(null, $offline);
-    $expect(Cache::put('partition', ['new'], 1, 0), 'Partition replacement persists locally.');
+    // Recovery must not race the one-second filesystem timestamp boundary.
+    $expect(Cache::put('partition', ['new'], 30, 0), 'Partition replacement persists locally.');
     (new ReflectionProperty(Cache::class, 'memcachedClient'))->setValue(null, $primary);
     $expect(Cache::get('partition') === ['new'], 'Recovered primary cannot resurrect an old value.');
-    touch(Cache::file(hash('sha256', 'partition') . '.json'), time() - 3);
+    touch(Cache::file(hash('sha256', 'partition') . '.json'), time() - 33);
     $expect(Cache::get('partition') === null, 'Expired fallback cannot expose the old primary.');
     $expect(Cache::put('partition', ['reconciled']), 'Successful replacement reconciles stores.');
     $expect(Cache::get('partition') === ['reconciled'], 'Reconciled primary is readable.');

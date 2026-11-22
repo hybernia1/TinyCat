@@ -152,12 +152,13 @@
   if (mode === 'queue-edit') {
     document.body.classList.add('admin-shell-page');
     document.documentElement.dataset.uiDensity = 'compact';
-    const data = {item:{id:7,editable_body:'Scheduled post draft',author:{id:2,username:'bot'},capabilities:{edit:true}},constraints:window.socialConstraints,options:{images_enabled:true}};
+    const data = {update_url:'/api/bots/accounts/2/posts/7',suggest_url:'/api/bots/accounts/2/posts/7/suggestions',item:{id:7,editable_body:'Scheduled post draft',author:{id:2,username:'bot'},capabilities:{edit:true}},constraints:window.socialConstraints,options:{images_enabled:true}};
     const dialog = T.modules.modal(new URL('/api/bots/accounts/2/posts/7/management',location.href),{data},'queue-edit-fixture');
     check(dialog && dialog.querySelector('form'), 'The delivered queue bundle opens the bot post editor');
     document.body.append(dialog); T.lifecycle.start(); T.dialog.open(dialog);
     const form = dialog.querySelector('form'), body = form.elements.namedItem('body');
-    check(body.value === data.item.editable_body && form.getAttribute('action') === '/api/statuses/7', 'Queue editing retains the existing draft and canonical write endpoint');
+    check(body.value === data.item.editable_body && form.getAttribute('action') === '/api/bots/accounts/2/posts/7', 'Queue editing retains the existing draft and canonical write endpoint');
+      check(dialog.querySelector('[data-status-editor-source]').dataset.statusSuggestUrl === data.suggest_url, 'Queue editing uses internal suggestions independently of the public website');
     check(T.api.csrfToken() === 'test' && T.status.method(form,'update') === 'PATCH', 'Queue editing retains CSRF and its update method');
     check(dialog.querySelector('[data-status-editor-input]') && dialog.querySelector('input[type="file"]'), 'The delivered editor contains its rich text and image controls');
     const editor = dialog.querySelector('[data-status-editor-input]'), button = dialog.querySelector('button[type="submit"]'), panel = dialog.querySelector('.modal-panel'), modalBody = dialog.querySelector('.modal-body');
@@ -353,12 +354,12 @@
       window.settingsSchema = {sections: window.moduleSettings.sections};
     }
     const schema = window.settingsSchema || {sections:[
-      {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.footer_html',label:'Footer',type:'textarea',value:'Saved footer'}]},
+      {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.meta_description',label:'Description',type:'textarea',value:'Saved description'}]},
       {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',value:{host:'smtp.example.test',port:587}}]}
     ]};
     for (const section of schema.sections) for (const field of section.fields) {
       if (field.key === 'site.name') field.value = 'Current site';
-      if (field.key === 'site.footer_html') field.value = 'Saved footer';
+      if (field.key === 'site.meta_description') field.value = 'Saved description';
       if (field.key === 'email.smtp') field.value = {host:'smtp.example.test',port:587};
     }
     let reads=0, writes=0;
@@ -367,7 +368,7 @@
       if (get) reads++; else writes++;
       if (!get) {
         check(!options.body.has('settings[email.smtp][host]'), 'Saving Site excludes the Email draft');
-        check(options.body.get('settings[site.footer_html]') === 'Edited footer', 'Settings submit the textarea draft');
+        check(options.body.get('settings[site.meta_description]') === 'Edited description', 'Settings submit the textarea draft');
       }
       return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:schema,meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
     };
@@ -376,14 +377,14 @@
     const dialog = await T.settings.open('email');
     check(reads === 1 && dialog.dataset.modalDisposeOnClose === 'true', 'Settings are fetched only when opened and are disposable');
     check(!dialog.querySelector('[data-tab-panel="email"]').hidden && location.hash.includes('modal=settings/editor'), 'Requested section and canonical resource history are shared');
-    const control = name => [...dialog.querySelectorAll('form')].map(item => item.elements.namedItem(name)).find(Boolean), footer = control('settings[site.footer_html]');
+    const control = name => [...dialog.querySelectorAll('form')].map(item => item.elements.namedItem(name)).find(Boolean), description = control('settings[site.meta_description]');
     for (const section of schema.sections) for (const spec of section.fields) {
       const suffix = spec.type === 'email_smtp' ? '[host]' : spec.type === 'email_templates' ? '[_present]' : '';
       check(Boolean(control('settings['+spec.key+']'+suffix)), 'The editor retains the submitted field for '+spec.key);
     }
     check(dialog.querySelectorAll('.image-preview-contain').length === 2 && dialog.querySelector('.grid-span-full'), 'Site images and full-width settings retain shared layout primitives');
     check([...dialog.querySelectorAll('.field > .label')].every(label => label.textContent.trim()), 'Every server field has a client-owned presentation label');
-    check(footer.value === 'Saved footer' && control('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
+    check(description.value === 'Saved description' && control('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
     if (mode === 'settings-module') {
       check([...dialog.querySelectorAll('form')].every(item => item.checkValidity()), 'Unchanged Fixture defaults pass native form validation');
       for (const key of ['fixture.blocked_urls','fixture.links.utm.source','fixture.links.utm.campaign']) {
@@ -392,14 +393,14 @@
       }
       check(control('settings[fixture.links.utm.medium]').required, 'Fixture UTM medium retains required native validation');
     }
-    footer.value='Edited footer'; footer.dispatchEvent(new Event('input',{bubbles:true}));
+    description.value='Edited description'; description.dispatchEvent(new Event('input',{bubbles:true}));
     const emailDraft = control('settings[email.smtp][host]'); emailDraft.value='unsaved.example.test'; emailDraft.dispatchEvent(new Event('input',{bubbles:true}));
     check(T.forms.dirty(dialog).length === 2, 'Settings sections use independent shared draft guards');
     check(dialog.querySelectorAll('[data-tab-dirty]').length === 2, 'Every changed section has a dirty marker');
     check(dialog.querySelector('[data-tab-select] option[value="email"]').textContent.endsWith(' *'), 'Mobile sections show the same dirty marker');
     const confirmation = T.dialog.confirm;
     T.forms.confirmWith(async () => false);
-    check(await T.dialog.requestClose(dialog,{history:false}) === false && dialog.isConnected && footer.value === 'Edited footer', 'Declining close preserves the complete settings draft');
+    check(await T.dialog.requestClose(dialog,{history:false}) === false && dialog.isConnected && description.value === 'Edited description', 'Declining close preserves the complete settings draft');
     try { await T.dialog.refresh(dialog); } catch (error) { check(error.name === 'AbortError', 'Declining refresh cancels resource replacement'); }
     check(reads === 1, 'A rejected refresh does not request data');
     T.forms.confirmWith(confirmation);
@@ -410,7 +411,7 @@
     check(!dialog.querySelector('[data-tab="site"] [data-tab-dirty]') && dialog.querySelector('[data-tab="email"] [data-tab-dirty]'), 'Saving clears only the saved section marker');
     emailDraft.value='smtp.example.test'; emailDraft.dispatchEvent(new Event('input',{bubbles:true}));
     check(!dialog.querySelector('[data-tab-dirty]') && !dialog.querySelector('[data-tab-select] option[value="email"]').textContent.endsWith(' *'), 'Restoring original values clears desktop and mobile markers');
-    check(control('settings[site.footer_html]').value === 'Saved footer', 'Saved controls reconcile the canonical resource');
+    check(control('settings[site.meta_description]').value === 'Saved description', 'Saved controls reconcile the canonical resource');
     const currentHash = location.hash, entries = history.length;
     const refreshed = await T.dialog.refresh(dialog);
     check(reads === 2 && refreshed !== dialog && location.hash === currentHash && history.length === entries && !refreshed.querySelector('[data-tab-panel="site"]').hidden, 'Shared refresh retains tab and history without adding an entry');

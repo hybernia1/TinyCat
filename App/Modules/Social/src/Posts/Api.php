@@ -17,6 +17,7 @@ final class Api
 {
     public static function register(Registrar $api): void
     {
+        $api = $api->forPublicWeb();
         $api->get('/statuses', self::listing(...));
         $api->get('/statuses/{id:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
         $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
@@ -27,8 +28,8 @@ final class Api
         });
         $api->post('/statuses', static fn (): Result => self::write(static fn (): array => Actions::status_json_create(IdentityApi::actor()), 'create'));
         $api->get('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): array => self::detail((int) $p['id']));
-        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_update((int) $p['id'], IdentityApi::actor()), 'update'));
-        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_delete((int) $p['id'], IdentityApi::actor()), 'delete'));
+        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::update((int) $p['id']));
+        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::delete((int) $p['id']));
         $api->get('/statuses/{id:[0-9]+}/comments', static fn (Request $r, array $p): array => ['items' => self::detail((int) $p['id'])['comments']]);
         $api->post('/statuses/{id:[0-9]+}/comments', static function (Request $r, array $p): Result {
             $r->validated(['parent_id' => 'integer|min:0']);
@@ -55,6 +56,17 @@ final class Api
             });
         }
 
+    }
+
+    /** Shared mutation contract; the registrar owns transport access and availability. */
+    public static function update(int $id): Result
+    {
+        return self::write(static fn (): array => Actions::status_json_update($id, IdentityApi::actor()), 'update');
+    }
+
+    public static function delete(int $id): Result
+    {
+        return self::write(static fn (): array => Actions::status_json_delete($id, IdentityApi::actor()), 'delete');
     }
 
     /** JSON clients receive the standard envelope; native link navigation receives a temporary redirect.

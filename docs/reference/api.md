@@ -45,6 +45,13 @@ Messages appear once, in the envelope. Lists use `data.items` and `meta.paginati
 
 Every outcome uses top-level `code` and `params`; `message` is a readable fallback.
 Domain codes are stable API identifiers, independent of translation identifiers.
+Exception classification follows the [error handling contract](../contracts/error-handling.md).
+Only an explicit `TinyCat\Http\HttpException` carries a safe public status,
+code, message and details. Other uncaught exceptions produce HTTP 500 with
+`server_error`; their numeric exception code is not an HTTP status. Expected
+validation continues to use the shared validation response. Technical details
+are exposed only with `app.debug = 'on'` and logged with `'log'`.
+
 Errors add `error.details`. Validation fields live only at
 `error.details.errors`, with lists of `{code, params, message}` issues. Issue params
 include the field name. The former `error.code` path and string-only field issues
@@ -410,6 +417,8 @@ Manual imports of one source use the same feeds task and lock, with
 | GET | `/api/bots/accounts/{id}/runs` | Search, filter by `q`, `source`, `status` (one of the returned status choices), sort and paginate source import history |
 | GET | `/api/bots/accounts/{id}/posts` | Search, sort and paginate the bot's posts, including scheduled posts |
 | GET | `/api/bots/accounts/{id}/posts/{postId}/management` | Administrator payload for the shared post edit modal |
+| PATCH, DELETE | `/api/bots/accounts/{id}/posts/{postId}` | Administrator and CSRF required; update / delete a post owned by the selected bot, independently of public website availability |
+| GET | `/api/bots/accounts/{id}/posts/{postId}/suggestions` | Administrator editor suggestions; validates bot ownership and accepts the shared `q`, `type`, `limit` parameters |
 | GET, POST | `/api/bots/sources` | List / create feed sources |
 | GET | `/api/bots/sources/management` | Defaults and bot choices for source creation |
 | GET | `/api/bots/sources/{id}/management` | Current source fields and bot choices for editing |
@@ -464,8 +473,10 @@ The bot post list accepts `q`, `source` (RSS source ID or `unknown`),
 `publication` (`published` or `queued`), `page`, `per_page`, `sort` (`body`, `source` or `published_at`)
 and `direction` (`asc` or `desc`). Its pagination follows `meta.pagination`.
 The management endpoint verifies that the post belongs to the selected bot.
-Edits and confirmed deletion use the existing status API; editing preserves the
-publication time. Public status reads continue to hide future posts.
+Edits and confirmed deletion use the bot-owned endpoint returned as `update_url`;
+editor suggestions use `suggest_url`. Both remain available when the public
+website is disabled and share post preparation with the status API. Editing
+preserves the publication time. Public status reads continue to hide future posts.
 Bot post and queue resources include `source: {id, name, url}` when the source is
 known, otherwise `source: null`. Unknown-source filters retain access to legacy
 posts and posts whose source has been deleted; they do not infer attribution.
@@ -657,14 +668,14 @@ disposes the editor after the standard unsaved-change guard accepts it.
 | GET | `/api/search/suggestions` | Signed-in editor suggestions; `q`, `type`, `limit` |
 | GET | `/api/search/query` | Shared search collections; `q`, `collection`, `cursor`, `limit` |
 | POST | `/api/search/challenges` | Social search CAPTCHA verification with CSRF |
-| GET | `/api/site/sidebar` | Public tags, author resources and structured footer nodes |
+| GET | `/api/site/sidebar` | Public tags, author resources and `privacy_url` |
 
 CAPTCHA errors contain public widget configuration under `error.details.captcha`,
 never widget markup or provider secrets. `error.details.verify_url` identifies the
 owner's local API endpoint. The client validates that path and renders a fresh
 widget locally; absent or unsafe paths cannot create a verification form.
-The sidebar footer uses allowlisted element/text nodes and safe link attributes.
-Clients never parse an API response as HTML.
+The sidebar carries no configurable footer content. Clients never parse an API
+response as HTML.
 
 All former `/api/admin/*`, `/api/sidebar`, `/api/status-suggest`,
 `/api/search-captcha` and fragment endpoint aliases are removed. Deploy the matching

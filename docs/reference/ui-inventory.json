@@ -1836,6 +1836,7 @@
         "submit_label",
         "submit_name",
         "submit_value",
+        "suggest_url",
         "value",
         "viewer"
       ]
@@ -2349,7 +2350,6 @@
         "author.url",
         "author.username",
         "authors",
-        "footer",
         "privacy_url",
         "tag.name",
         "tag.posts_count",
@@ -2555,6 +2555,7 @@
         "item.editable_body",
         "item.image",
         "options.images_enabled",
+        "suggest_url",
         "viewer"
       ]
     },
@@ -13195,11 +13196,13 @@
   ],
   "php_templates": [
     "App/Core/Ui/Admin/templates/shell.php",
+    "App/Core/Ui/templates/access-shell.php",
     "App/Core/Ui/templates/document.php",
     "App/Core/Ui/templates/error.php",
     "App/Core/Ui/templates/errorFallback.php",
     "App/Core/Ui/templates/head.php",
     "App/Core/Ui/templates/parts/flashes.php",
+    "App/Core/Ui/templates/public-footer.php",
     "App/Core/Ui/templates/public-shell.php",
     "App/Modules/Social/templates/status/embed.php"
   ],
@@ -13284,7 +13287,8 @@
         "manifest": "App/Core/Identity/assets/module.json",
         "routes": [
           "public",
-          "admin"
+          "admin",
+          "/account"
         ]
       }
     ],
@@ -13293,7 +13297,8 @@
         "manifest": "App/Core/Identity/assets/module.json",
         "routes": [
           "public",
-          "admin"
+          "admin",
+          "/account"
         ]
       }
     ],
@@ -13302,7 +13307,8 @@
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
           "public",
-          "/notifications"
+          "/notifications",
+          "/access/notifications"
         ]
       }
     ],
@@ -13311,7 +13317,8 @@
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
           "public",
-          "/notifications"
+          "/notifications",
+          "/access/notifications"
         ]
       }
     ],
@@ -13320,7 +13327,8 @@
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
           "public",
-          "/notifications"
+          "/notifications",
+          "/access/notifications"
         ]
       }
     ],
@@ -13329,7 +13337,8 @@
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
           "public",
-          "/notifications"
+          "/notifications",
+          "/access/notifications"
         ]
       }
     ],
@@ -13338,7 +13347,8 @@
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
           "public",
-          "/notifications"
+          "/notifications",
+          "/access/notifications"
         ]
       }
     ],
@@ -13655,7 +13665,8 @@
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
-          "*"
+          "public",
+          "admin"
         ]
       }
     ],
@@ -13663,7 +13674,8 @@
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
-          "/privacy"
+          "/privacy",
+          "/access/privacy"
         ]
       }
     ],
@@ -13696,7 +13708,8 @@
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
-          "*"
+          "public",
+          "admin"
         ]
       }
     ],
@@ -13761,7 +13774,9 @@
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
-          "*"
+          "public",
+          "admin",
+          "/install"
         ]
       }
     ],
@@ -13793,7 +13808,8 @@
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
-          "*"
+          "public",
+          "admin"
         ]
       }
     ],
@@ -13825,7 +13841,9 @@
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
-          "*"
+          "public",
+          "admin",
+          "/install"
         ]
       }
     ],
@@ -13865,7 +13883,8 @@
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
-          "*"
+          "public",
+          "admin"
         ]
       }
     ],
@@ -13891,7 +13910,8 @@
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
-          "*"
+          "public",
+          "admin"
         ]
       }
     ],
@@ -14552,6 +14572,26 @@
       "standalone": false
     },
     {
+      "source": "App/Core/Identity/assets/authentication.js",
+      "imports": [
+        "App/Core/Ui/assets/runtime/modules.js",
+        "App/Core/Ui/assets/runtime/component-renderer.js",
+        "App/Core/Ui/assets/component-builders.js",
+        "App/Core/Identity/assets/email-availability.js"
+      ],
+      "entries": [
+        {
+          "manifest": "App/Core/Identity/assets/module.json",
+          "routes": [
+            "public",
+            "admin",
+            "access"
+          ]
+        }
+      ],
+      "standalone": false
+    },
+    {
       "source": "App/Core/Identity/assets/avatar-editor.js",
       "imports": [
         "App/Core/Ui/assets/runtime/dom.js",
@@ -14566,6 +14606,7 @@
     {
       "source": "App/Core/Identity/assets/controller.js",
       "imports": [
+        "App/Core/Identity/assets/authentication.js",
         "App/Core/Ui/assets/content-updates.js",
         "App/Core/Ui/assets/runtime/dates.js",
         "App/Core/Ui/assets/runtime/component-renderer.js",
@@ -14606,7 +14647,8 @@
           "manifest": "App/Core/Identity/assets/module.json",
           "routes": [
             "public",
-            "admin"
+            "admin",
+            "/account"
           ]
         }
       ],
@@ -14622,10 +14664,7 @@
           "manifest": "App/Core/Identity/assets/module.json",
           "routes": [
             "public",
-            "/login",
-            "/register",
-            "/recovery",
-            "/logout"
+            "/account"
           ]
         }
       ],
@@ -14685,7 +14724,8 @@
           "manifest": "App/Core/Notifications/assets/module.json",
           "routes": [
             "public",
-            "/notifications"
+            "/notifications",
+            "/access/notifications"
           ]
         }
       ],
@@ -14850,7 +14890,8 @@
           "manifest": "App/Core/Ui/assets/module.json",
           "routes": [
             "public",
-            "admin"
+            "admin",
+            "access"
           ]
         }
       ],
@@ -14945,7 +14986,8 @@
           "manifest": "App/Core/Ui/assets/module.json",
           "routes": [
             "public",
-            "admin"
+            "admin",
+            "access"
           ]
         }
       ],
@@ -15187,7 +15229,8 @@
           "manifest": "App/Core/Ui/assets/module.json",
           "routes": [
             "public",
-            "admin"
+            "admin",
+            "access"
           ]
         }
       ],

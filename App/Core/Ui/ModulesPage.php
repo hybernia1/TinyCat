@@ -16,7 +16,7 @@ final class ModulesPage
             $request->validated(['id' => 'required|string|max:190', 'enabled' => 'required|boolean', 'revision' => 'required|string|max:64']);
             try { $result = Administration::change((string) $request->input('id'), filter_var($request->input('enabled'), FILTER_VALIDATE_BOOL), (string) $request->input('revision')); }
             catch (\DomainException $error) { Response::error(Localization::t($error->getMessage()), $error->getCode(), 'module_change_rejected'); }
-            catch (\Throwable $error) { error_log('Module activation failed: ' . $error->getMessage()); Response::error(Localization::t('modules.failed'), 409, 'module_change_failed'); }
+            catch (\Throwable $error) { \TinyCat\Core\Runtime\Failure::report($error); Response::error(Localization::t('modules.failed'), 409, 'module_change_failed'); }
             \TinyCat\Http\Session::flash('success', Localization::t(
                 filter_var($request->input('enabled'), FILTER_VALIDATE_BOOL) ? 'common.activated' : 'common.deactivated',
                 ['entity' => Administration::name((string) $request->input('id'))],
@@ -28,7 +28,7 @@ final class ModulesPage
             $file = $_FILES['package'] ?? null;
             if (!is_array($file) || !is_string($file['tmp_name'] ?? null) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) { Response::error(Localization::t('modules.packages.failed'), 422, 'module_package_invalid'); }
             try { $result = \TinyCat\Http\Session::withoutLock(static fn (): array => \TinyCat\Core\Modules\ModulePackage::install($file['tmp_name'])); }
-            catch (\Throwable $error) { error_log('Module package installation failed: ' . $error->getMessage()); Response::error(Localization::t('modules.packages.failed'), 422, 'module_package_rejected'); }
+            catch (\Throwable $error) { \TinyCat\Core\Runtime\Failure::report($error); Response::error(Localization::t('modules.packages.failed'), 422, 'module_package_rejected'); }
             return $result + ['redirect' => '/admin/modules'];
         }, 'admin');
         Router::route('GET', '/admin/modules', self::respond(...));

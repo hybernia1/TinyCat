@@ -21,8 +21,8 @@ final class Api
             $batchOption = \TinyCat\Core\Modules\Registrations::current()->task($task)->batchOption;
             $options = [];
             if (array_key_exists('batch', $query)) {
-                if ($batchOption === null) { throw new \InvalidArgumentException('This task does not support a batch.', 400); }
-                if (array_key_exists($batchOption, $query)) { throw new \InvalidArgumentException('Specify only one batch parameter.', 400); }
+                if ($batchOption === null) { throw new \TinyCat\Http\HttpException('This task does not support a batch.', 400, 'bad_request'); }
+                if (array_key_exists($batchOption, $query)) { throw new \TinyCat\Http\HttpException('Specify only one batch parameter.', 400, 'bad_request'); }
                 $options[$batchOption] = $query['batch'];
             } elseif ($batchOption !== null && array_key_exists($batchOption, $query)) {
                 $options[$batchOption] = $query[$batchOption];

@@ -34,10 +34,18 @@ final class Api
             if (Administration::accountById($id) === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
             return Administration::postsPayload($id);
         }, 'admin');
-        $api->get('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}/management', static function (Request $request, array $params): array {
-            $id = (int) $params['id'];
-            if (Administration::accountById($id) === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
-            return Administration::postManagement($id, (int) $params['postId']);
+        $api->get('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}/management', static fn (Request $request, array $params): array => Administration::postManagement((int) $params['id'], (int) $params['postId']), 'admin');
+        $api->get('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}/suggestions', static function (Request $request, array $params): array {
+            Administration::requirePost((int) $params['id'], (int) $params['postId']);
+            return \TinyCat\Social\Search\Api::suggestions($request);
+        }, 'admin');
+        $api->patch('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}', static function (Request $request, array $params): Result {
+            Administration::requirePost((int) $params['id'], (int) $params['postId']);
+            return \TinyCat\Social\Posts\Api::update((int) $params['postId']);
+        }, 'admin');
+        $api->delete('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}', static function (Request $request, array $params): Result {
+            Administration::requirePost((int) $params['id'], (int) $params['postId']);
+            return \TinyCat\Social\Posts\Api::delete((int) $params['postId']);
         }, 'admin');
         $api->get('/bots/accounts/{id:[0-9]+}', static function (Request $r, array $p): array {
             $account = Administration::accountById((int) $p['id']);

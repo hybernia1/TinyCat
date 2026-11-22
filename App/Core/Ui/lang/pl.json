@@ -25,7 +25,8 @@
     "not_found_title": "Nie znaleziono strony",
     "not_found_intro": "Ten adres nie prowadzi do strony. Sprawdź URL lub kontynuuj ze strony głównej.",
     "not_found_home": "Przejdź do strony głównej",
-    "not_found_search": "Przeszukaj zawartość"
+    "not_found_search": "Przeszukaj zawartość",
+    "no_homepage": "Strona główna nie jest jeszcze dostępna."
   },
   "privacy": {
     "data_title": "Dane i konto",

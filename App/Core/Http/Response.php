@@ -125,24 +125,16 @@ final class Response
         return $errors;
     }
 
-    public static function exception(Throwable $exception, bool $debug = false): never
+    public static function exception(Throwable $exception): never
     {
-        $status = (int) $exception->getCode();
-
-        if ($status < 400 || $status > 599) {
-            $status = $exception instanceof InvalidArgumentException ? 400 : 500;
-        }
-
-        $message = $status >= 500 && !$debug ? 'Server error.' : $exception->getMessage();
-        $code = $status >= 500 ? 'server_error' : 'bad_request';
-        $details = [];
-
-        if ($debug) {
-            $details = [
-                'exception' => get_class($exception),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-            ];
+        \TinyCat\Core\Runtime\Failure::report($exception);
+        $debug = \TinyCat\Core\Runtime\Debug::enabled();
+        $status = \TinyCat\Core\Runtime\Failure::status($exception);
+        $message = \TinyCat\Core\Runtime\Failure::message($exception);
+        $code = \TinyCat\Core\Runtime\Failure::code($exception);
+        $details = $exception instanceof HttpException ? $exception->details : [];
+        if ($debug && !$exception instanceof HttpException) {
+            $details = ['exception' => $exception::class, 'file' => $exception->getFile(), 'line' => $exception->getLine()];
         }
 
         self::error($message, $status, $code, $details);

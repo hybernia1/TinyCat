@@ -7,6 +7,13 @@ Podrobnosti doplňují [architektura](core-and-modules.md),
 [transport](modules.md) a [instalace a aktivace](../operations/module-deployment.md).
 Audity a otevřené plány nejsou referencí aktuálního API.
 
+Debug automaticky zajišťuje core podle konfigurace instalace. Modul neregistruje
+vlastní handlery ani lokální debug přepínač. Nečekané výjimky nech projít na
+společnou hranici; pokud po výjimce pokračuješ fallbackem, ohlas ji přes
+`TinyCat\Core\Runtime\Failure::report($error)`. Očekávaná odmítnutí používají
+společnou validaci nebo explicitní veřejnou HTTP chybu podle
+[kontraktu chyb](../contracts/error-handling.md).
+
 ## Co poskytuje core a co vlastní modul
 
 Společné chování a veřejné vstupy určuje [kontrakt core pro API, UI a validace](../contracts/core-application-contract.md).

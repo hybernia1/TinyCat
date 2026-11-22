@@ -68,7 +68,7 @@ final class AuthorStatistics
                 'likes_received' => (int) ($stats['likes_received'] ?? 0),
                 'comments' => (int) ($stats['comments'] ?? 0),
             ];
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return $empty;
         }
     }

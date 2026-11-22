@@ -16,7 +16,7 @@ final class Login
         $target = self::auth_safe_next_url(Integration::landing($user));
         $path = Integration::unlocalizedPath(self::auth_next_path($target));
         if (($path === '/admin' || str_starts_with($path, '/admin/')) && !Roles::isAdmin($user)) { $target = ''; }
-        return $target !== '' ? $target : Integration::localUrl('/');
+        return $target !== '' ? $target : Integration::localUrl(\TinyCat\Core\Ui\PublicWeb::enabled() ? '/' : (Roles::isAdmin($user) ? '/admin' : '/account'));
     }
 
     public static function auth_next_path(string $next): string
@@ -38,6 +38,7 @@ final class Login
         }
 
         $path = Integration::unlocalizedPath(self::auth_next_path($next));
+        if (!\TinyCat\Core\Ui\PublicWeb::enabled() && ($path === '/' || \TinyCat\Http\Router::isPublicWebPath($path))) { return ''; }
 
         if (
             in_array($path, ['/login', '/register', '/install'], true)

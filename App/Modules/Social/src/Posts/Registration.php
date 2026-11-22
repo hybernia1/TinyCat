@@ -39,17 +39,17 @@ final class Registration
         // Public embed snippets keep a stable entry URL; its source belongs to Social.
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/assets/embed.js', static function (): never {
             \TinyCat\Http\Web::redirect(\TinyCat\Support\Assets::asset('App/Modules/Social/assets/embed/embed.js'));
-        });
-        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed', static fn (string $id) => Embed::page((int) $id), contentType: 'text/plain');
-        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed-code', static fn (string $id) => Embed::page((int) $id, true), contentType: 'text/plain');
+        }, publicWeb: true);
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed', static fn (string $id) => Embed::page((int) $id), contentType: 'text/plain', publicWeb: true);
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed-code', static fn (string $id) => Embed::page((int) $id, true), contentType: 'text/plain', publicWeb: true);
 
-        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/tag/{tag}/feed', static fn (string $tag) => Syndication::respond('tag', $tag), contentType: 'text/plain');
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/tag/{tag}/feed', static fn (string $tag) => Syndication::respond('tag', $tag), contentType: 'text/plain', publicWeb: true);
 
         foreach ([
             ['GET', '/status', static function (?int $statusId = null): void { Pages::detail($statusId); }],
             ['GET', '/tag', static function (?string $tag = null): void { Pages::tag($tag); }],
         ] as [$methods, $path, $handler]) {
-            \TinyCat\Http\Router::route($methods, $path, $handler);
+            \TinyCat\Http\Router::route($methods, $path, $handler, publicWeb: true);
         }
     }
 }
