@@ -138,7 +138,7 @@ try {
             'Artifact excludes development and runtime-private path: ' . $relative
         );
         $assert(
-            !str_starts_with($relative, 'docs/') || in_array($relative, ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'], true),
+            !str_starts_with($relative, 'docs/') || in_array($relative, ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md', 'docs/operations/debugging.md', 'docs/contracts/error-handling.md'], true),
             'Artifact excludes internal release evidence: ' . $relative
         );
     }
