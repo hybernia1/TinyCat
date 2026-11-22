@@ -7,10 +7,11 @@ use TinyCat\Support\View;
 /** Shared document structure; each surface supplies explicit data and its shell. */
 final class Document
 {
-    /** @param array<string, mixed> $page */
-    public static function render(array $page, string $content): void
+    /** @param array<string, mixed> $page
+     * @param array<string, mixed>|null $document */
+    public static function render(array $page, string $content, ?array $document = null): void
     {
-        $prepared = DocumentData::prepare($page);
+        $prepared = DocumentData::prepare($page, $document);
         $prepared['content'] = $content;
         $prepared['public'] = (bool) ($page['public'] ?? false);
         $prepared['hasPublicSidebar'] = str_contains($content, 'data-public-sidebar-slot') || str_contains($content, 'data-public-sidebar-url');

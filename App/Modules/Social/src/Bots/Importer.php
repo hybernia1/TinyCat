@@ -81,12 +81,16 @@ final class Importer
         } else {
             $results = self::runDueSources($limit, $runId);
         }
-        return self::scheduledResult($results);
+        $hasMore = $sourceId === 0 && \TinyCat\Database\Connection::value(
+            'SELECT 1 FROM bot_sources bs INNER JOIN users u ON u.id = bs.bot_user_id WHERE bs.enabled = 1 AND u.role = ? AND u.status = ? AND (bs.next_run_at IS NULL OR bs.next_run_at <= ?) LIMIT 1',
+            ['bot', 'active', \TinyCat\Support\Dates::dateDb()]
+        ) !== null;
+        return self::scheduledResult($results, $hasMore);
     }
 
     /** @param list<array<string, mixed>> $results
      * @return array<string, mixed> */
-    private static function scheduledResult(array $results): array
+    private static function scheduledResult(array $results, bool $hasMore = false): array
     {
         $summary = [];
         $skipped = [];
@@ -102,8 +106,8 @@ final class Importer
             }
         }
         return \TinyCat\Core\Tasks\Tasks::result(
-            ($summary['error'] ?? 0) > 0 ? 'failed' : 'completed',
-            count($results), $imported,
+            ($summary['error'] ?? 0) > 0 ? 'failed' : ($hasMore ? 'has_more' : ($results === [] ? 'not_due' : 'completed')),
+            count($results), $imported, $hasMore,
             details: ['summary' => $summary, 'skipped_items' => $skipped],
             error: $error, results: $results
         );

@@ -93,4 +93,27 @@ $assert(str_contains($html, 'href="/?feed=following&amp;media=images"'), 'Render
 $resource['items'] = [];
 $html = \TinyCat\Support\Components::render('site/public-page', $resource);
 $assert(str_contains($html, \TinyCat\Support\Localization::t('public.feed_empty_filtered')) && str_contains($html, 'href="/?feed=following" class="btn btn-secondary btn-sm"'), 'Empty filtered feeds explain the result and allow clearing the filter.');
+foreach (['author' => '/author/1', 'tag' => '/tag/tinycat'] as $kind => $base) {
+    foreach ([false, true] as $compact) {
+        foreach (['', 'images', 'video'] as $media) {
+            $data = ['page' => ['title' => 'Query fixture', 'current' => $base, 'meta' => ['url' => $base]],
+                'context' => ['compact' => $compact, 'archiveType' => $media, 'archiveBaseUrl' => $base]];
+            $result = \TinyCat\Social\Site\PublicPages::resource($kind, $data);
+            parse_str((string) parse_url($result['url'], PHP_URL_QUERY), $query);
+            $expected = ($compact ? ['compact' => '1'] : []) + ($media !== '' ? ['media' => $media] : []);
+            $assert($query === $expected && substr_count($result['url'], '?') <= 1, 'Canonical page resources preserve compact and media independently: ' . $kind);
+            foreach ([$result['archive_options'][1]['url'], $result['clear_filter_url'], $result['all_feed_url'], $result['following_feed_url']] as $link) {
+                parse_str((string) parse_url($link, PHP_URL_QUERY), $linkQuery);
+                $assert(($linkQuery['compact'] ?? '') === ($compact ? '1' : ''), 'Changing or clearing filters preserves compact presentation: ' . $kind);
+            }
+
+        }
+    }
+}
+\TinyCat\Http\LocaleRouting::prepare('/cs/tag/tinycat');
+$localized = \TinyCat\Social\Site\PublicPages::resource('tag', ['page' => ['title' => 'Localized', 'current' => '/tag/tinycat', 'meta' => ['url' => '/tag/tinycat']],
+    'context' => ['compact' => true, 'archiveType' => 'images']]);
+$assert($localized['url'] === '/cs/tag/tinycat?compact=1&media=images', 'Localized navigation retains both query parameters.');
+\TinyCat\Http\LocaleRouting::prepare('/');
+
 echo 'PASS archive and home media filters (' . ($mysql ? 'MySQL' : 'SQLite') . ", {$checks} checks)\n";

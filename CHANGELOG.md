@@ -1,5 +1,15 @@
 # Changelog
 
+## 7.1.1 - 2026-11-22
+
+- Stream database snapshots, batch inserts and validate restore structure before destructive statements. Preserve legacy snapshots, atomic writes and after-commit effects; coalesce Settings invalidation and remove repeated schema checks.
+- Batch Social notification/reaction cleanup, keep sitemap page selection narrow and share canonical database helpers across callers.
+- Decode URL paths once, preserve compact/media filters across native and AJAX navigation, include HEAD in GET method metadata, align PHP/client scalar rendering and reuse prepared document metadata.
+- Prevent stale Memcached values from returning after a connection outage, isolate installation namespaces and hash complete disk keys. Validate package revisions for all compiled clients/catalogs and avoid reading source payloads for compiled asset hits.
+- Require HTTPS for Bearer scheduler credentials, coordinate task locks by database, preserve failed/stale work across skipped invocations, report feed backlog and reject noninteger task defaults.
+- Bound duplicate-post cleanup input windows with resumable progress while retaining exact body/relation checks and transactional merge behavior.
+- No database migration. PHP 8.4 and completed 6.0.10 or newer remain required. Pause external scheduler invocation while upgrading every worker/node; old and new task-lock namespaces must not run together against shared data. Scheduler Bearer clients must use HTTPS. Cache entries may cold-miss after the key namespace change.
+
 ## 7.1.0 - 2026-11-21
 
 - Keep Social publishing/discussion components, controllers, styles and translations with their module; remove retired core presentation classes and duplicate discussion resource preparation. Core public pages no longer depend on these Social resources.

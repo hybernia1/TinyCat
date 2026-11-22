@@ -30,10 +30,6 @@ final class CompiledAssets
         $manifest = self::manifest();
         $name = $manifest['server_components'] ?? null;
         if ($name === null) { return null; }
-        // Package upgrades can change definitions without changing selected module IDs.
-        $packages = Paths::basePath('App/module-packages.json');
-        $revision = is_file($packages) ? hash_file('sha256', $packages) : null;
-        if ($revision === false || ($manifest['server_components_packages'] ?? null) !== $revision) { return null; }
         if (!is_string($name) || preg_match('/^components\.[a-f0-9]{24}\.php$/D', $name) !== 1) { throw new \RuntimeException('Invalid compiled component path.'); }
         return require Paths::basePath('App/Core/Support/compiled/' . $name);
     }

@@ -37,6 +37,25 @@ produkčních modulů proti stejným rozpočtům. Tuto nadmnožinu kontroluje ta
 
 ## Release, data a měření
 
+Lokální Memcached na Windows spravuje [tools/support/memcached.ps1](support/memcached.ps1):
+
+```powershell
+& tools/support/memcached.ps1 start -Executable E:/laragon/bin/memcached/memcached-1.6.8-win64-mingw/memcached.exe
+& tools/support/memcached.ps1 status
+& tools/support/memcached.ps1 stop
+```
+
+Cestu k nainstalované binárce určuje `-Executable`, případně PATH. Nástroj nic
+nestahuje, nemění služby ani PHP konfiguraci. Poslouchá pouze na `127.0.0.1`,
+vypíná UDP; volitelné `-Port` a `-MemoryMB` mají výchozí hodnoty 11211 a 64.
+PID, čas spuštění a logy ukládá přes workspace helper do `.work/tools/memcached/`.
+Zastaví pouze proces se shodnou uloženou identitou; cizí server nepřebírá ani
+neprovádí `flush_all`. Server po skončení příkazu zůstává spuštěný.
+PHP klient vyžaduje rozšíření **memcached**, nikoli **memcache**. Pro jednorázové
+ověření lze použít `php -d extension=memcached --ri memcached`; při testech
+s potomky musí rozšíření načíst také jejich PHP konfigurace. Testovací runner
+používá vlastní klíče, živou konfiguraci kvůli testům nepřepínej.
+
 Živá instalace `tinycat.test` má root `E:/laragon/www/tinycat`, nikoli tento
 checkout. Provozní CLI patří do externí instalace; u vývojových nástrojů
 ověř podporovaný cílový parametr a skutečný root před datovou operací.

@@ -5,13 +5,17 @@ import "./icons.js";
 (function () {
   "use strict";
   var T = window.TinyCat, templates = Object.create(null);
-  function truth(value) { return value !== null && value !== undefined && value !== false && value !== "" && value !== 0 && (!Array.isArray(value) || value.length > 0); }
+  function truth(value) { return value != null && value !== false && value !== "" && value !== 0 && (!Array.isArray(value) || value.length > 0); }
+  function text(value) {
+    if (value == null || value === false) { return ""; }
+    return value === true ? "1" : typeof value === "object" ? JSON.stringify(value) : String(value);
+  }
   function own(object, key) { return Object.prototype.hasOwnProperty.call(object, key); }
   function value(expr, data) {
     if (expr === null || typeof expr !== "object") { return expr; }
     if (Array.isArray(expr)) { return expr.map(function (part) { return value(part, data); }); }
     if (own(expr, "get")) { return expr.get.split(".").reduce(function (result, key) { return result != null && Object.prototype.hasOwnProperty.call(result, key) ? result[key] : null; }, data); }
-    if (own(expr, "string")) { var scalar = value(expr.string, data); return scalar == null ? "" : String(scalar); }
+    if (own(expr, "string")) { return text(value(expr.string, data)); }
     if (own(expr, "json")) { return JSON.stringify(value(expr.json, data)); }
     if (own(expr, "plural")) { return T.i18n.plural(expr.plural, value(expr.count, data), bindings(expr.values || {}, data)); }
     if (own(expr, "count")) { var entries = Object.values(value(expr.count, data) || {}); return expr.where ? entries.filter(function (entry) { return truth(entry[expr.where]); }).length : entries.length; }
@@ -20,14 +24,14 @@ import "./icons.js";
       if (!own(templates, expr.use)) { throw new TypeError("Unknown presentation value: " + expr.use); }
       return value(templates[expr.use], bindings(expr.data || {}, data, true));
     }
-    if (own(expr, "lookup")) { var key = String(value(expr.lookup, data) || ""); return value(own(expr.cases, key) ? expr.cases[key] : (own(expr, "default") ? expr.default : key), data); }
+    if (own(expr, "lookup")) { var key = text(value(expr.lookup, data)); return value(own(expr.cases, key) ? expr.cases[key] : (own(expr, "default") ? expr.default : key), data); }
     if (own(expr, "options")) {
       var items = value(expr.options, data) || [], codes = Array.isArray(items) ? items : Object.keys(items), options = Object.create(null);
       if (expr.all) { options[""] = T.i18n.t("common.all"); }
       codes.forEach(function (code) { options[code] = value(own(expr.cases, code) ? expr.cases[code] : code, data); }); return options;
     }
     if (own(expr, "date")) { return T.dates.format(value(expr.date, data), expr.format); }
-    if (own(expr, "concat")) { return expr.concat.map(function (part) { var result = value(part, data); return result == null ? "" : String(result); }).join(""); }
+    if (own(expr, "concat")) { return expr.concat.map(function (part) { return text(value(part, data)); }).join(""); }
     if (own(expr, "if")) { return value(expr.if[truth(value(expr.if[0], data)) ? 1 : 2], data); }
     if (own(expr, "eq")) { return value(expr.eq[0], data) === value(expr.eq[1], data); }
     if (own(expr, "not")) { return !truth(value(expr.not, data)); }
@@ -61,7 +65,7 @@ import "./icons.js";
     });
   }
   function node(spec, data) {
-    if (spec === null || typeof spec !== "object") { return document.createTextNode(spec == null ? "" : String(spec)); }
+    if (spec === null || typeof spec !== "object") { return document.createTextNode(text(spec)); }
     var fragment;
     if (Array.isArray(spec)) { fragment = document.createDocumentFragment(); spec.forEach(function (child) { fragment.appendChild(node(child, data)); }); return fragment; }
     if (Object.prototype.hasOwnProperty.call(spec, "when") && !truth(value(spec.when, data))) { return document.createDocumentFragment(); }
@@ -71,7 +75,7 @@ import "./icons.js";
     if (spec.csrf) { return T.dom.element("input", { type: "hidden", name: "_csrf", value: T.api.csrfToken() }); }
     if (spec.rich) { fragment = document.createDocumentFragment(); rich(fragment, value(spec.rich, data)); return fragment; }
     if (spec.slot) { var content = value(spec.slot, data); if (!(content instanceof Node)) { throw new TypeError("A browser component slot requires a DOM node."); } return content; }
-    if (!spec.tag) { var text = value(spec, data); return document.createTextNode(text == null ? "" : String(text)); }
+    if (!spec.tag) { return document.createTextNode(text(value(spec, data))); }
     var tag = value(spec.tag, data), root = T.dom.element(tag, value(spec.attrs || {}, data));
     root.appendChild(node(spec.children || [], data));
     if (tag === "textarea") { root.value = root.textContent; }

@@ -43,6 +43,7 @@ final class Request
         self::$current = null;
     }
 
+    /** Decode an encoded URL path once, at the HTTP or resource-input boundary. */
     public function path(?string $path = null): string
     {
         if ($path === null || $path === '') {
@@ -50,7 +51,13 @@ final class Request
             $path = (string) (parse_url($uri, PHP_URL_PATH) ?: '/');
         }
 
-        $path = str_replace('\\', '/', rawurldecode($path));
+        return self::normalizePath(rawurldecode($path));
+    }
+
+    /** Internal paths are already decoded. Repeated normalization preserves literal percent sequences. */
+    public static function normalizePath(string $path): string
+    {
+        $path = str_replace('\\', '/', $path);
         $path = '/' . trim($path, '/');
 
         return $path === '/' ? '/' : rtrim($path, '/');

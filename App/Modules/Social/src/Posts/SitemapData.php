@@ -48,23 +48,21 @@ final class SitemapData
         $limit = max(1, min(1000, $limit));
         $offset = max(0, $offset);
 
+        // The public sitemap contract uses offsets. Skip narrow IDs before fetching display data.
         $rows = match ($section) {
             'tags' => \TinyCat\Database\Connection::all(
-                'SELECT t.id, t.name
-                    FROM social_terms t WHERE ' . self::publicTagPredicate() . '
-                    ORDER BY t.id ASC
-                    LIMIT ' . $limit . ' OFFSET ' . $offset,
+                'SELECT t.id, t.name FROM (
+                    SELECT t.id FROM social_terms t WHERE ' . self::publicTagPredicate() . '
+                    ORDER BY t.id ASC LIMIT ' . $limit . ' OFFSET ' . $offset . '
+                ) selected INNER JOIN social_terms t ON t.id = selected.id ORDER BY t.id ASC',
                 [\TinyCat\Support\Dates::dateDb()]
             ),
             'status' => \TinyCat\Database\Connection::all(
-                'SELECT c.id, ci.path AS image_path
-                    FROM social_posts c
-                    INNER JOIN users u ON u.id = c.author_id
-                    LEFT JOIN social_post_images ci ON ci.content_id = c.id
-                    WHERE u.status = ?
-                        AND c.published_at <= ? AND c.status = \'published\' AND c.kind = \'post\'
-                    ORDER BY c.id ASC
-                    LIMIT ' . $limit . ' OFFSET ' . $offset,
+                'SELECT selected.id, ci.path AS image_path FROM (
+                    SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id
+                    WHERE u.status = ? AND c.published_at <= ? AND c.status = \'published\' AND c.kind = \'post\'
+                    ORDER BY c.id ASC LIMIT ' . $limit . ' OFFSET ' . $offset . '
+                ) selected LEFT JOIN social_post_images ci ON ci.content_id = selected.id ORDER BY selected.id ASC',
                 ['active', \TinyCat\Support\Dates::dateDb()]
             ),
             default => throw new InvalidArgumentException('Sitemap section is not registered: ' . $section),

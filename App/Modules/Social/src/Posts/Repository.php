@@ -15,7 +15,7 @@ final class Repository
     /** @return array<mixed>|null */
     public static function find(int $id): ?array
     {
-        return $id > 0 ? \TinyCat\Database\Query::select('SELECT * FROM social_posts')->where('id = ?', $id)->limit(1)->one() : null;
+        return $id > 0 ? Connection::find('social_posts', ['id' => $id]) : null;
     }
 
     /** @param array<mixed>|null $item
@@ -64,9 +64,7 @@ final class Repository
         $image = Connection::one('SELECT * FROM social_post_images WHERE content_id = ? LIMIT 1', [$id]);
         Transactions::run(static function () use ($id, $beforeDelete, $terms, $links): void {
             if ($beforeDelete !== null) { $beforeDelete(); }
-            foreach (Connection::all('SELECT id FROM social_comments WHERE content_id = ?', [$id]) as $comment) {
-                Connection::delete('social_comment_likes', ['comment_id' => (int) $comment['id']]);
-            }
+            Connection::exec('DELETE FROM social_comment_likes WHERE comment_id IN (SELECT id FROM social_comments WHERE content_id = ?)', [$id]);
             Connection::delete('social_comments', ['content_id' => $id]);
             Connection::delete('social_post_likes', ['content_id' => $id]);
             Interactions::invalidate();

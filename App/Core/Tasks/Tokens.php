@@ -10,15 +10,7 @@ final class Tokens
     /** Compatibility transport for URL-only hosting schedulers. */
     public static function requireBasic(): void
     {
-        $request = \TinyCat\Http\Request::current();
-        header('Cache-Control: no-store, private');
-        header('Vary: Authorization', false);
-        if ($request->requestScheme() !== 'https') {
-            \TinyCat\Http\Response::error('Scheduler credentials require HTTPS.', 426, 'scheduler_https_required');
-        }
-        if ($request->header('Sec-Fetch-Site') === 'cross-site') {
-            \TinyCat\Http\Response::error('Forbidden.', 403, 'forbidden');
-        }
+        $request = self::requireSecureTransport();
         $expected = self::cron_token();
         if ($expected === '') { \TinyCat\Http\Response::error('Scheduler token is not configured.', 503, 'scheduler_not_configured'); }
         $server = $request->server();
@@ -42,6 +34,7 @@ final class Tokens
 
     public static function requireBearer(): void
     {
+        self::requireSecureTransport();
         $expected = self::cron_token();
         if ($expected === '') { \TinyCat\Http\Response::error('Scheduler token is not configured.', 503, 'scheduler_not_configured'); }
         $token = self::cron_request_token();
@@ -49,6 +42,20 @@ final class Tokens
             header('WWW-Authenticate: Bearer realm="TinyCat scheduler"');
             \TinyCat\Http\Response::error('Unauthenticated.', 401, 'unauthenticated');
         }
+    }
+
+    private static function requireSecureTransport(): \TinyCat\Http\Request
+    {
+        $request = \TinyCat\Http\Request::current();
+        header('Cache-Control: no-store, private');
+        header('Vary: Authorization', false);
+        if ($request->requestScheme() !== 'https') {
+            \TinyCat\Http\Response::error('Scheduler credentials require HTTPS.', 426, 'scheduler_https_required');
+        }
+        if ($request->header('Sec-Fetch-Site') === 'cross-site') {
+            \TinyCat\Http\Response::error('Forbidden.', 403, 'forbidden');
+        }
+        return $request;
     }
 
     public static function cron_token(bool $create = false): string

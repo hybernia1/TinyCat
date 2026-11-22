@@ -5,7 +5,12 @@
     "fixture/context-value": {"concat": [{"get": "value"}, "|", {"get": "parent_marker"}]},
     "fixture/context-use": {"tag": "span", "children": [{"use": "fixture/context-value", "data": {"get": "row"}}]},
     "fixture/context-tree": {"tag": "div", "children": [{"get": "title"}, {"each": {"get": "children"}, "as": "child", "children": {"component": "fixture/context-tree", "data": {"get": "child"}}}]},
-    "fixture/context-bindings": {"component": "fixture/context-leaf", "data": {"get": {"string": "literal"}, "value": {"get": "source"}}}
+    "fixture/context-bindings": {"component": "fixture/context-leaf", "data": {"get": {"string": "literal"}, "value": {"get": "source"}}},
+    "fixture/scalar-text": {"tag": "span", "children": [{"string": {"get": "value"}}]},
+    "fixture/scalar-truth": {"tag": "span", "when": {"get": "value"}, "children": ["visible"]},
+    "fixture/scalar-lookup": {"tag": "span", "children": [{"lookup": {"get": "value"}, "cases": {"0": "zero", "": "empty"}, "default": "other"}]},
+    "fixture/scalar-concat": {"tag": "span", "children": [{"concat": [{"get": "value"}, "|", {"get": "other"}]}]},
+    "fixture/numeric-equality": {"tag": "span", "children": [{"if": [{"eq": [{"get": "left"}, {"get": "right"}]}, "equal", "different"]}]}
   },
   "cases": [
     {"component": "fixture/context-object", "data": {"parent_marker": "PRIVATE", "row": {"value": "<unsafe>&", "get": "literal data", "t": "literal data"}}, "text": "<unsafe>&|"},
@@ -22,6 +27,22 @@
     {"component": "fixture/context-object", "data": {"row": [{"value": "not a named object"}]}, "error": "Component context must be a named object."},
     {"component": "fixture/context-object", "data": {"row": {"0": "not", "1": "named"}}, "error": "Component context must be a named object."},
     {"component": "fixture/context-object", "data": {"row": {"constructor": "blocked"}}, "error": "Unsupported component key."},
-    {"component": "fixture/context-use", "data": {"row": {"__proto__": {"value": "blocked"}}}, "error": "Unsupported component key."}
+    {"component": "fixture/context-use", "data": {"row": {"__proto__": {"value": "blocked"}}}, "error": "Unsupported component key."},
+    {"component": "fixture/scalar-text", "data": {"value": true}, "text": "1"},
+    {"component": "fixture/scalar-text", "data": {"value": false}, "text": ""},
+    {"component": "fixture/scalar-text", "data": {"value": 0.0}, "text": "0"},
+    {"component": "fixture/scalar-text", "data": {"value": [0, false, true, null, "x"]}, "text": "[0,false,true,null,\"x\"]"},
+    {"component": "fixture/scalar-text", "data": {"value": {"active": false}}, "text": "{\"active\":false}"},
+    {"component": "fixture/scalar-truth", "data": {"value": 0.0}, "text": ""},
+    {"component": "fixture/scalar-truth", "data": {"value": -0.0}, "text": ""},
+    {"component": "fixture/scalar-truth", "data": {"value": "0"}, "text": "visible"},
+    {"component": "fixture/scalar-truth", "data": {"value": 1.0}, "text": "visible"},
+    {"component": "fixture/scalar-lookup", "data": {"value": 0}, "text": "zero"},
+    {"component": "fixture/scalar-lookup", "data": {"value": 0.0}, "text": "zero"},
+    {"component": "fixture/scalar-lookup", "data": {"value": false}, "text": "empty"},
+    {"component": "fixture/scalar-concat", "data": {"value": true, "other": false}, "text": "1|"},
+    {"component": "fixture/numeric-equality", "data": {"left": 1, "right": 1.0}, "text": "equal"},
+    {"component": "fixture/numeric-equality", "data": {"left": 1, "right": "1"}, "text": "different"},
+    {"component": "fixture/numeric-equality", "data": {"left": 0.0, "right": false}, "text": "different"}
   ]
 }

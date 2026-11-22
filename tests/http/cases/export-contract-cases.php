@@ -132,6 +132,14 @@ foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/pl/status/9
     $assert($listedPost['image']['contentUrl'] === $imageSchema['image']['contentUrl'] && $listedPost['image']['width'] === $imageSchema['image']['width'], 'All contexts use the same attached image URL and dimensions.');
 }
 foreach (['/author/900001', '/tag/exportpublic'] as $filteredPage) {
+    $combinedUrl = $filteredPage . '?compact=1&media=images';
+    [$combinedStatus, $combinedJson] = $exportRequest('/api/site/pages?path=' . rawurlencode($filteredPage) . '&compact=1&media=images');
+    $combined = json_decode($combinedJson, true, 512, JSON_THROW_ON_ERROR)['data'];
+    $assert($combinedStatus === 200 && $combined['url'] === $combinedUrl && $combined['compact'] === true
+        && $combined['archive_type'] === 'images' && !$combined['sidebar'], 'Native owner data reaches navigation with compact and media together.');
+    [$combinedStatus, $combinedHtml] = $exportRequest($combinedUrl);
+    $assert($combinedStatus === 200 && str_contains($combinedHtml, 'data-public-page=') && !str_contains($combinedHtml, '?compact=1?media='), 'The same compact/media URL survives a full document reload.');
+
     $separator = str_contains($filteredPage, '?') ? '&' : '?';
     [$status, $filteredHtml] = $exportRequest($filteredPage . $separator . 'media=images');
     $filteredDom = new DOMDocument();
@@ -207,6 +215,8 @@ foreach (['/uploads/missing.webp', '/assets/missing.js', '/missing-page', '/avat
 }
 [$status, $body, $headers] = $exportRequest('/privacy', 'DELETE');
 $assert($status === 405 && str_contains($body, '405') && !preg_match('/aria-hidden="true">404/', $body) && isset($headers['allow']), 'Method errors render their real status and preserve the Allow header.');
+$assert(array_map('trim', explode(',', $headers['allow'])) === ['GET', 'HEAD'], 'A public GET route advertises its implicit HEAD on 405.');
+
 [$status, $body, $headers] = $exportRequest('/fixture-failure');
 $assert($status === 500 && str_contains($body, '500') && !str_contains($body, 'PRIVATE_') && !str_contains($body, 'Stack trace') && str_contains($headers['cache-control'], 'no-store'), 'Broken-database failures discard partial output and return a safe standalone 500 page.');
 [$status, $body, $headers] = $exportRequest('/fixture-maintenance', 'GET', ['Accept' => 'application/json']);

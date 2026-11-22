@@ -257,6 +257,20 @@ try {
         throw new RuntimeException('The hourly cleanup interval was not recorded.');
     }
 
+    $second = new PDO(sprintf('mysql:host=%s%s;dbname=%s;charset=%s', $host, $port, $databaseName, $charset), (string) ($config['user'] ?? ''), (string) ($config['password'] ?? ''), $options);
+    $expectedLock = 'tinycat_scheduled_' . substr(hash('sha256', 'mysql:' . $databaseName . ':cleanup'), 0, 46);
+    $locked = \TinyCat\Core\Tasks\Runner::run('cleanup', static function () use ($second, $database, $expectedLock): array {
+        $query = $second->prepare('SELECT IS_USED_LOCK(?)'); $query->execute([$expectedLock]);
+        if ($query->fetchColumn() === null) { throw new RuntimeException('Task lock must identify the selected database, not the checkout path.'); }
+        \TinyCat\Database\Connection::set($second);
+        try {
+            $nested = \TinyCat\Core\Tasks\Runner::run('cleanup', static fn (): array => \TinyCat\Core\Tasks\Tasks::result('completed'), []);
+            if ($nested['status'] !== 'already_running') { throw new RuntimeException('Independent connections to the same database must share a task lock.'); }
+        } finally { \TinyCat\Database\Connection::set($database); }
+        return \TinyCat\Core\Tasks\Tasks::result('completed');
+    }, [], true);
+    if (!$locked['ok']) { throw new RuntimeException($locked['error']); }
+
     echo "PASS unified scheduled tasks: orphan data cleaned and current rows retained.\n";
 } finally {
     foreach ([$orphanImageFile ?? '', $storedImageFile ?? ''] as $file) {

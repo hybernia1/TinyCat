@@ -149,7 +149,7 @@ try {
     foreach (['/api/users', '/api/bots/accounts', '/api/bots/sources'] as $path) {
         [$status, $payload, $headers] = $request('PUT', $path);
         $assert($status === 405 && $payload['code'] === 'method_not_allowed', 'Unsupported methods must be rejected before handlers.');
-        $assert(count(array_filter($headers, static fn (string $header): bool => str_starts_with($header, 'Allow: GET, POST'))) === 1, '405 responses must include explicit allowed methods.');
+        $assert(count(array_filter($headers, static fn (string $header): bool => str_starts_with($header, 'Allow: GET, HEAD, POST'))) === 1, '405 responses must include explicit allowed methods.');
     }
     foreach (['/api/users', '/api/bots/sources', '/api/notifications', '/api/statuses'] as $path) {
         [$status, $payload] = $request($path === '/api/statuses' ? 'POST' : 'GET', $path);
@@ -174,7 +174,7 @@ try {
     $schedulerDatabase->prepare('INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)')->execute(['bots.cleanup_last_run', (string) time(), 'int', 'bots']);
     $schedulerDatabase = null;
     [$status, $payload] = $request('POST', '/api/scheduler/tasks/feeds/runs?per_page=50', [], 'admin', $csrf);
-    $assert($status === 201 && $payload['data']['execution']['ok'] && $payload['data']['runs'][0]['status'] === 'completed', 'An authorized run-now request executes and returns its durable history.');
+    $assert($status === 201 && $payload['data']['execution']['ok'] && $payload['data']['runs'][0]['status'] === 'not_due', 'An authorized run-now request executes and returns its durable history.');
     $assert($payload['code'] === 'scheduler_run_finished' && $payload['meta']['pagination']['per_page'] === 50 && !array_key_exists('pagination', $payload['data']), 'Cron POST uses the same pagination metadata and a stable action code.');
     $assert($payload['data']['runs'][0]['mode'] === 'admin' && !str_contains(json_encode($payload), 'Bearer '), 'Manual runs identify their origin without exposing cron credentials.');
     $schedulerRunId = $payload['data']['runs'][0]['id'];

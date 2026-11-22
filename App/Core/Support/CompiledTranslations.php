@@ -26,6 +26,9 @@ final class CompiledTranslations
      * @param array<mixed> $manifest */
     public static function matchesSelection(array $manifest): bool
     {
+        $packages = Paths::basePath('App/module-packages.json');
+        $revision = is_file($packages) ? hash_file('sha256', $packages) : null;
+        if ($revision === false || ($manifest['server_components_packages'] ?? null) !== $revision) { return false; }
         if (isset($manifest['selection']) && class_exists(\TinyCat\Core\Modules\Resources::class)) {
             return $manifest['selection'] === \TinyCat\Core\Modules\Resources::fingerprint();
         }

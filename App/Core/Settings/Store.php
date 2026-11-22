@@ -119,15 +119,16 @@ final class Store
 
         \TinyCat\Database\Connection::upsert('settings', ['setting_key' => $key], $data);
 
-        \TinyCat\Database\Transactions::afterCommit(static function () use ($key): void {
+        \TinyCat\Database\Transactions::afterCommit(static function (): void {
             self::$settings = null;
-            unset(self::$sensitiveSettings[$key]);
+            self::$sensitiveSettings = [];
             self::forgetCachedAutoloadSettings();
-
-            if ($key === 'i18n.locale') {
+        }, 'core.settings.autoload');
+        if ($key === 'i18n.locale') {
+            \TinyCat\Database\Transactions::afterCommit(static function (): void {
                 \TinyCat\Support\Localization::reset();
-            }
-        });
+            }, 'core.settings.locale');
+        }
     }
 
     private static function configSetting(string $key, mixed $default): mixed

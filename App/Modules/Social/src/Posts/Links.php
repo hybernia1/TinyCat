@@ -99,10 +99,7 @@ class Links extends \TinyCat\Core\Links\Presentation
             return null;
         }
 
-        return \TinyCat\Database\Query::select('SELECT * FROM social_links')
-            ->where('url_hash = ?', $hash)
-            ->limit(1)
-            ->one();
+        return \TinyCat\Database\Connection::find('social_links', ['url_hash' => $hash]);
     }
 
     /**

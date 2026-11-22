@@ -107,6 +107,13 @@ $exercise = static function (PDO $db) use ($assert): void {
     $assert($db->query('SELECT path FROM social_post_images WHERE content_id=11')->fetchColumn() === '2026/11/shared.webp', 'The shared attachment stays attached to the keeper.');
     $again = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('duplicate_bot_posts', 500);
     $assert($again['changed'] === 0 && $again['done'], 'The existing cleanup task dispatches this idempotent subtask.');
+    $seed = $db->prepare("INSERT INTO social_posts (id,author_id,body,published_at,status,kind) VALUES (?,1,?,'2000-01-01','published','post')");
+    for ($id = 1000; $id < 1650; $id++) { $seed->execute([$id, 'unique-' . $id]); }
+    $seed->execute([2000, 'unique-1000']);
+    $window = DuplicateCleanup::run(1);
+    $assert($window['changed'] === 0 && $window['has_more'], 'A bounded unique window advances rather than declaring the entire scan finished.');
+    for ($round = 0; $round < 10 && $window['has_more']; $round++) { $window = DuplicateCleanup::run(1); }
+    $assert(!$window['has_more'] && Repository::redirectTarget(2000) === 1000, 'Later duplicate candidates reach their turn and find keepers outside the current window.');
     $db->exec("UPDATE social_posts SET status='hidden' WHERE id=1");
     $assert(Repository::redirectTarget(2) === null, 'Aliases cannot reveal a subsequently moderated post.');
     $db->exec('DELETE FROM social_posts WHERE id=1');

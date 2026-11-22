@@ -14,7 +14,9 @@ return static function (): array {
         $validateClients = require __DIR__ . '/../quality/client-translations.php';
         $validateClients($catalogs);
         $files = [];
-        $server = ['selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'packages' => \TinyCat\Support\TranslationSources::packages(), 'catalogs' => []];
+        $packages = \TinyCat\Support\Paths::basePath('App/module-packages.json');
+        $packageRevision = is_file($packages) ? hash_file('sha256', $packages) : null;
+        $server = ['server_components_packages' => $packageRevision, 'selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'packages' => \TinyCat\Support\TranslationSources::packages(), 'catalogs' => []];
         foreach ($catalogs as $locale => $catalog) {
             // Preserve template order as well as content; all sources were validated above.
             $emails = \TinyCat\Support\TranslationSources::channel('emails', $locale);
@@ -29,8 +31,7 @@ return static function (): array {
         $componentName = 'components.' . substr(hash('sha256', $components), 0, 24) . '.php';
         $files['App/Core/Support/compiled/' . $componentName] = $components;
         $manifest['server_components'] = $componentName;
-        $packages = \TinyCat\Support\Paths::basePath('App/module-packages.json');
-        $manifest['server_components_packages'] = is_file($packages) ? hash_file('sha256', $packages) : null;
+        $manifest['server_components_packages'] = $packageRevision;
         $emit = static function (string $prefix, string $source, string $type = 'js') use (&$files): string {
             $relative = 'assets/build/' . $prefix . '.' . substr(hash('sha256', $source), 0, 24) . '.' . $type;
             $files[$relative] = $source;

@@ -104,3 +104,12 @@ try {
     rmdir($temporary);
 }
 echo "PASS build snapshot/invalidation, ZIP backends and prepared publication ({$checks} checks)\n";
+
+$compile = require $root . '/tools/assets/compile-assets.php';
+$files = $compile();
+$assetManifest = json_decode($files['assets/build/manifest.json'], true, flags: JSON_THROW_ON_ERROR);
+$translationManifest = eval(substr($files['App/Core/Support/compiled/translations.php'], 5));
+$assert(array_key_exists('server_components_packages', $translationManifest), 'Translation build declares its package registry identity.');
+$assert($translationManifest['server_components_packages'] === $assetManifest['server_components_packages'], 'All compiled readers share the same deployment identity.');
+$assert(\TinyCat\Support\CompiledTranslations::matchesSelection($translationManifest), 'Fresh compiled catalogs match the current installation.');
+echo "PASS compiled asset and translation deployment identity\n";

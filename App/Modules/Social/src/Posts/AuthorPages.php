@@ -48,6 +48,7 @@ final class AuthorPages
         $memberSince = (string) ($author['created_at'] ?? '');
         $current = Profiles::author_url($authorId);
         $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $compact = Web::get('compact', '') === '1';
 
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
@@ -117,6 +118,6 @@ final class AuthorPages
                 'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
                 'jsonld' => $authorStructuredData,
             ],
-        ], 'context' => compact('author', 'authUser', 'statusItems', 'feedMore', 'editor', 'bio', 'memberSince', 'followCounts', 'activityStats', 'canEditProfile', 'canFollow', 'isFollowing', 'canPost', 'canSeeMute', 'mutedUntil', 'authorProfileEditModalId', 'authorProfileEditModalUrl', 'authorAvatarEditModalId', 'authorAvatarEditModalUrl', 'authorFollowingModalId', 'authorFollowingModalUrl', 'authorFeedUrl', 'archiveType')];
+        ], 'context' => compact('author', 'authUser', 'statusItems', 'feedMore', 'editor', 'bio', 'memberSince', 'followCounts', 'activityStats', 'canEditProfile', 'canFollow', 'isFollowing', 'canPost', 'canSeeMute', 'mutedUntil', 'authorProfileEditModalId', 'authorProfileEditModalUrl', 'authorAvatarEditModalId', 'authorAvatarEditModalUrl', 'authorFollowingModalId', 'authorFollowingModalUrl', 'authorFeedUrl', 'archiveType', 'compact')];
     }
 }

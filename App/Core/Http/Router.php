@@ -34,7 +34,6 @@ final class Router
             $seen = $beforeKeys;
             foreach (array_slice(self::$routes, count($before)) as $route) {
                 $methods = $route['methods'];
-                if (in_array('GET', $methods, true)) { $methods[] = 'HEAD'; }
                 foreach (array_unique($methods) as $method) {
                     $key = $method . ':' . $route['path'];
                     if (isset($seen[$key])) { throw new InvalidArgumentException('Duplicate module route: ' . $key); }
@@ -49,6 +48,7 @@ final class Router
      * @param list<string> $query */
     public static function page(string $group, string $path, callable $handler, callable $resource, array $query = []): void
     {
+        $path = self::routePath($path);
         foreach ($query as $key) { if (preg_match('/^[a-z][a-z0-9_]*$/D', $key) !== 1) { throw new InvalidArgumentException('Invalid page query key.'); } }
         self::route(['GET', 'HEAD'], $path, $handler);
         self::$pages[] = compact('group', 'path', 'resource', 'query');
@@ -57,6 +57,7 @@ final class Router
     /** @return array<string, mixed>|null */
     public static function pageResource(string $group, string $path): ?array
     {
+        $path = Request::normalizePath($path);
         if ($path === '/') { $path = \TinyCat\Core\Runtime\EntryPages::homepage()->path ?? '/'; }
         foreach (self::$pages as $page) {
             if ($page['group'] !== $group) { continue; }
@@ -82,7 +83,7 @@ final class Router
 
     public static function pattern(string $path): string
     {
-        $pattern = substr(self::routeRegex($path), 1, -2);
+        $pattern = substr(self::routeRegex(self::routePath($path)), 1, -2);
         $pattern = (string) preg_replace('/\(\?P<[^>]+>/', '(?:', $pattern);
         return str_replace(['\\-', '\\#'], ['-', '#'], $pattern);
     }
@@ -93,19 +94,19 @@ final class Router
     public static function route(array|string $methods, string $path, callable $handler, string $contentType = 'text/html'): void
     {
         $methods = self::normalizeMethods($methods);
-        $path = Request::current()->path($path);
+        $path = self::routePath($path);
         self::$routes[] = [
             'methods' => $methods,
             'path' => $path,
             'handler' => $handler,
             'contentType' => $contentType,
         ];
-        if (in_array('GET', $methods, true)) { $methods[] = 'HEAD'; }
         foreach ($methods as $method) { self::$routeKeys[$method . ':' . $path] = true; }
     }
 
     public static function responseType(string $path): string
     {
+        $path = Request::normalizePath($path);
         foreach (self::$routes as $route) { if (self::routeMatch($route['path'], $path) !== null) { return $route['contentType']; } }
         return 'text/html';
     }
@@ -115,7 +116,7 @@ final class Router
      */
     public static function apiRoute(array|string $methods, string $path, callable $handler): void
     {
-        $path = Request::current()->path($path);
+        $path = self::routePath($path);
 
         if ($path !== '/api' && !str_starts_with($path, '/api/')) {
             $path = '/api' . ($path === '/' ? '' : $path);
@@ -126,7 +127,7 @@ final class Router
 
     public static function dispatch(?string $path = null, ?string $method = null): bool
     {
-        $path = Request::current()->path($path);
+        $path = $path === null ? Request::current()->path() : Request::normalizePath($path);
 
         try {
             $method = strtoupper($method ?? Request::current()->method());
@@ -147,7 +148,7 @@ final class Router
                 continue;
             }
 
-            if (!in_array($method, $route['methods'], true) && !($method === 'HEAD' && in_array('GET', $route['methods'], true))) {
+            if (!in_array($method, $route['methods'], true)) {
                 $allowed = array_merge($allowed, $route['methods']);
                 continue;
             }
@@ -199,6 +200,7 @@ final class Router
             }
         }
 
+        if (in_array('GET', $methods, true) && !in_array('HEAD', $methods, true)) { $methods[] = 'HEAD'; }
         return $methods;
     }
 
@@ -211,7 +213,7 @@ final class Router
             return [];
         }
 
-        if (!str_contains($routePath, '{') && !str_contains($routePath, '%')) { return null; }
+        if (!str_contains($routePath, '{')) { return null; }
 
         if (!preg_match(self::routeRegex($routePath), $path, $matches)) {
             return null;
@@ -221,7 +223,7 @@ final class Router
 
         foreach ($matches as $key => $value) {
             if (is_string($key)) {
-                $params[$key] = rawurldecode((string) $value);
+                $params[$key] = (string) $value;
             }
         }
 
@@ -230,8 +232,6 @@ final class Router
 
     private static function routeRegex(string $path): string
     {
-        $path = Request::current()->path($path);
-
         if ($path === '/') {
             return '#^/$#u';
         }
@@ -249,6 +249,12 @@ final class Router
         }
 
         return '#^/' . implode('/', $parts) . '$#u';
+    }
+
+    /** Route regex syntax is trusted structure, never an encoded request URL. */
+    private static function routePath(string $path): string
+    {
+        return '/' . trim($path, '/');
     }
 
     /**
@@ -284,7 +290,7 @@ final class Router
 
     public static function isApiPath(string $path): bool
     {
-        $path = Request::current()->path($path);
+        $path = Request::normalizePath($path);
 
         return $path === '/api' || str_starts_with($path, '/api/');
     }

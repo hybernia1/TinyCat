@@ -55,6 +55,27 @@ foreach ([['bad><injected' => 'value'], ['nested' => ['unexpected']], ['number' 
 $rssItem = ['itemTitle' => 'Audio', 'itemUrl' => 'https://example.test/audio', 'publishedDate' => '', 'creator' => 'Owner', 'creatorUrl' => '', 'categories' => [], 'imageUrl' => '', 'rssBody' => 'Description', 'enclosure' => ['url' => '/audio.mp3', 'type' => 'audio/mpeg', 'length' => 321]];
 $rss = simplexml_load_string(\TinyCat\Core\Feeds\Rss::render('Feed', 'Description', '/', 'https://example.test/feed', [$rssItem]));
 $assert($rss !== false && (string) $rss->channel->item->enclosure['type'] === 'audio/mpeg' && (string) $rss->channel->item->enclosure['length'] === '321', 'Generic RSS preserves owner-supplied enclosure metadata instead of assuming WebP.');
+// Exercise deep offset partitioning with gaps, hidden rows, inactive authors and optional images.
+for ($i = 0; $i < 45; $i++) {
+    $id = 1000 + $i * 2;
+    $db->prepare('INSERT INTO social_posts(id,author_id,body,published_at,status) VALUES (?,?,?,?,?)')->execute(
+        [$id, $i % 7 === 0 ? 2 : 1, 'sitemap fixture', $i % 11 === 0 ? '2999-01-01' : '2020-01-01', $i % 5 === 0 ? 'hidden' : 'published']);
+    if ($i % 3 === 0) { $db->prepare('INSERT INTO social_post_images VALUES (?,?,?)')->execute([$id, '2026/11/' . str_pad(dechex($id), 32, '0', STR_PAD_LEFT) . '.webp', 123]); }
+    $db->prepare('INSERT INTO social_terms VALUES (?,?)')->execute([$id, 'tag' . $i]);
+    $db->prepare('INSERT INTO social_post_tags VALUES (?,?)')->execute([$id, $id]);
+}
+foreach (['status', 'tags'] as $section) {
+    $all = Sitemap::entries($section, 1000, 0);
+    $partitioned = [];
+    for ($offset = 0; $offset < count($all); $offset += 4) {
+        $db->queries = [];
+        $part = Sitemap::entries($section, 4, $offset);
+        $assert(count($db->queries) === 1, 'Sitemap page uses a single SQL statement: ' . $section);
+        array_push($partitioned, ...$part);
+    }
+    $assert($partitioned === $all && count(array_unique(array_column($all, 'url'))) === count($all), 'Deep sitemap pages preserve exact URLs, images, order and partitioning: ' . $section);
+    $assert(Sitemap::entries($section, 4, count($all) + 10) === [], 'An offset past the visible selection stays empty: ' . $section);
+}
 $pages = Sitemap::pageCounts();
 \TinyCat\Core\Modules\Resources::withCatalog(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), [])->catalog, static function () use ($assert): void {
     $assert(Sitemap::sections() === ['pages'] && array_keys(Sitemap::pageCounts()) === ['pages'], 'Changing to core-only registration cannot reuse cached Social sitemap sections.');

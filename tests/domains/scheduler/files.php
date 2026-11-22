@@ -20,11 +20,11 @@ $assert = static function (bool $value, string $message) use (&$checks): void {
 Cache::put('expired', ['old' => true], 300, 0);
 Cache::put('fresh', ['new' => true], 3600, 0);
 Cache::put('stale', ['previous' => true], 300, 3600);
-touch(Cache::file('expired.json'), time() - 301);
-touch(Cache::file('stale.json'), time() - 301);
-Cache::writeFile('legacy.json', '{"legacy":true}');
-Cache::writeFile('legacy-old.json', '{"legacy":true}');
-touch(Cache::file('legacy-old.json'), time() - 604801);
+touch(Cache::file(hash('sha256', 'expired') . '.json'), time() - 301);
+touch(Cache::file(hash('sha256', 'stale') . '.json'), time() - 301);
+Cache::writeFile(hash('sha256', 'legacy') . '.json', '{"legacy":true}');
+Cache::writeFile(hash('sha256', 'legacy-old') . '.json', '{"legacy":true}');
+touch(Cache::file(hash('sha256', 'legacy-old') . '.json'), time() - 604801);
 Cache::writeFile('app.js', 'generated', 'assets');
 Cache::writeFile('active.lock', 'lock', 'locks');
 $removed = 0;
@@ -35,7 +35,7 @@ for ($attempt = 0; $attempt < 20; $attempt++) {
     if (!$result['has_more']) { break; }
 }
 $assert($removed === 2 && !$result['has_more'], 'Resumable cache cleanup completes and removes only expired entries.');
-$assert(!is_file(Cache::file('expired.json')) && !is_file(Cache::file('legacy-old.json')), 'Expired entries and old legacy cache files are removed.');
+$assert(!is_file(Cache::file(hash('sha256', 'expired') . '.json')) && !is_file(Cache::file(hash('sha256', 'legacy-old') . '.json')), 'Expired entries and old legacy cache files are removed.');
 $assert(Cache::read('fresh') === ['new' => true] && Cache::read('stale') === ['previous' => true], 'Fresh data and the stale refresh window survive cleanup.');
 $assert(Cache::read('legacy') === ['legacy' => true], 'Legacy raw JSON remains readable during rollout.');
 $assert(is_file(Cache::file('app.js', 'assets')) && is_file(Cache::file('active.lock', 'locks')), 'Cache cleanup preserves generated assets and active lock files.');
@@ -65,7 +65,15 @@ $feedTask = \TinyCat\Social\Bots\Importer::scheduledTasks()['feeds']['runner'];
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
 $assert(!$result['ok'] && $result['status'] === 'failed' && $result['summary']['summary']['error'] === 1, 'A failed feed import makes the cron result fail instead of claiming success.');
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
-$assert($result['ok'] && $result['count'] === 0, 'A feed whose retry is scheduled in the future is not imported again.');
+$assert($result['ok'] && $result['count'] === 0 && $result['status'] === 'not_due', 'A feed whose retry is scheduled in the future is not imported again.');
+
+$database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, interval_minutes) VALUES (2, 1, 1, 'http://127.0.0.1/blocked-feed', 60)");
+$database->exec('UPDATE bot_sources SET next_run_at = NULL');
+$database->exec('CREATE TRIGGER lose_feed_claim BEFORE UPDATE ON bot_sources BEGIN SELECT RAISE(IGNORE); END');
+$backlog = $feedTask(['options' => ['bot_limit' => 1]]);
+$assert($backlog['status'] === 'has_more' && $backlog['has_more'] && $backlog['count'] === 1, 'A limited batch reports remaining eligible sources even when a claim is lost.');
+$database->exec('DROP TRIGGER lose_feed_claim');
+$database->exec('DELETE FROM bot_sources WHERE id = 2');
 
 $migration = require __DIR__ . '/../../../migrations/20261026_003_scheduler_runs.php';
 $migration($database);
@@ -232,7 +240,7 @@ $assert(json_decode($deferredRecord['options_json'], true) === ['cleanup_batch' 
 $latest = \TinyCat\Core\Tasks\History::latestFor(['cleanup', 'feeds', 'missing']);
 $assert($latest['cleanup']['id'] === $deferredRecord['id'] && !isset($latest['missing']), 'Bulk latest history keeps the greatest ID for each task and omits missing tasks.');
 $successful = \TinyCat\Core\Tasks\History::lastSuccessfulFor(['cleanup', 'feeds']);
-$assert(isset($successful['cleanup']), 'Bulk health history includes successful and not-due runs.');
+$assert(isset($successful['cleanup']), 'Bulk health history includes meaningful successful work.');
 $assert(\TinyCat\Core\Tasks\History::latestFor([]) === [] && \TinyCat\Core\Tasks\History::lastSuccessfulFor([]) === [], 'Empty task selections require no history query.');
 
 $registered = \TinyCat\Core\Modules\Registrations::current();
@@ -264,6 +272,13 @@ try {
     $database->exec('DROP TRIGGER reject_history_finish');
     $assert(\TinyCat\Core\Tasks\History::latest($taskId)['status'] === 'failed', 'History records failure when the completion write fails.');
 } finally { \TinyCat\Core\Modules\Registrations::configure($registered); }
+
+foreach (['invalid', 1.5, true, null] as $invalidDefault) {
+    $rejected = false;
+    try { new \TinyCat\Core\Modules\ScheduledTask('invalid-default', $runner, options: ['batch' => $invalidDefault]); }
+    catch (InvalidArgumentException) { $rejected = true; }
+    $assert($rejected, 'Noninteger defaults fail at registration, before invoking a task.');
+}
 
 foreach (['all', str_repeat('a', 41)] as $invalidTask) {
     $rejected = false;

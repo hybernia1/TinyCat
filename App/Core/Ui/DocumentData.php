@@ -25,9 +25,10 @@ final class DocumentData
     }
 
     /** @param array<mixed> $data
+     * @param array<string, mixed>|null $document
      * @return array<mixed>
      */
-    public static function prepare(array $data): array
+    public static function prepare(array $data, ?array $document = null): array
     {
         extract($data, EXTR_SKIP);
         $applicationVersion = \TinyCat\Support\Version::CURRENT;
@@ -37,7 +38,7 @@ final class DocumentData
         $siteIdentity = \TinyCat\Core\Ui\Branding::metadata();
         $searchQuery = trim((string) ($search_query ?? \TinyCat\Http\Web::get('q', '')));
         $title = (string) ($title ?? $appName);
-        $current = \TinyCat\Http\Request::current()->path((string) ($current ?? \TinyCat\Http\Request::current()->path()));
+        $current = \TinyCat\Http\Request::normalizePath((string) ($current ?? \TinyCat\Http\Request::current()->path()));
         $bodyClass = (string) ($bodyClass ?? '');
         $csrfToken = (string) ($csrfToken ?? \TinyCat\Core\Security\Csrf::token());
         $dateFormat = (string) \TinyCat\Core\Settings\Store::config('datetime.datetime', 'Y-m-d H:i:s');
@@ -71,7 +72,7 @@ final class DocumentData
         $nav = \TinyCat\Core\Ui\Admin\Navigation::prepare($nav, $current, $isAdminShell);
         $titleIcon = $isAdminShell ? (string) ($title_icon ?? \TinyCat\Core\Ui\Admin\Navigation::activeIcon($nav)) : '';
 
-        $document = \TinyCat\Core\Ui\Metadata::document(['title' => $title, 'current' => (string) ($_SERVER['REQUEST_URI'] ?? $current), 'meta' => $meta + ['robots' => $isAdminShell ? 'noindex,nofollow' : '']]);
+        $document ??= \TinyCat\Core\Ui\Metadata::document(['title' => $title, 'current' => (string) ($_SERVER['REQUEST_URI'] ?? $current), 'meta' => $meta + ['robots' => $isAdminShell ? 'noindex,nofollow' : '']]);
         $pageTitle = $document['title'];
         $metaTitle = $document['meta_title'];
         $metaDescription = $document['description'];

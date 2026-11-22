@@ -80,10 +80,20 @@ final class ModuleSchemas
     /** @param array<string, ModuleSchema> $schemas */
     public static function ready(PDO $pdo, array $schemas): bool
     {
+        if ($schemas === []) { return true; }
+        $tables = ['module_installations'];
+        foreach ($schemas as $schema) { array_push($tables, ...$schema->tables); }
+        $existing = array_fill_keys(Schema::existing($pdo, $tables), true);
+        foreach ($tables as $table) { if (!isset($existing[$table])) { return false; } }
+        $states = [];
+        foreach (array_chunk(array_keys($schemas), 500) as $ids) {
+            $query = \TinyCat\Core\Database\Statements::query($pdo,
+                'SELECT module_id, version, status FROM module_installations WHERE module_id IN (' . implode(', ', array_fill(0, count($ids), '?')) . ')', $ids);
+            foreach ($query->fetchAll(PDO::FETCH_ASSOC) as $row) { $states[(string) $row['module_id']] = $row; }
+        }
         foreach ($schemas as $id => $schema) {
-            $state = self::state($pdo, $id);
+            $state = $states[$id] ?? null;
             if ($state === null || $state['status'] !== 'ready' || (int) $state['version'] !== $schema->version) { return false; }
-            foreach ($schema->tables as $table) { if (!self::tableExists($pdo, $table)) { return false; } }
         }
         return true;
     }

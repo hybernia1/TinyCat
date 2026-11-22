@@ -84,10 +84,7 @@ final class Comments
             return null;
         }
 
-        return \TinyCat\Database\Query::select('SELECT * FROM social_comments')
-            ->where('id = ?', $id)
-            ->limit(1)
-            ->one();
+        return \TinyCat\Database\Connection::find('social_comments', ['id' => $id]);
     }
 
     public static function status_comment_count(int $contentId): int
@@ -256,14 +253,8 @@ final class Comments
         }
 
         \TinyCat\Database\Transactions::run(static function () use ($commentId): void {
-            foreach (\TinyCat\Database\Query::select('SELECT id FROM social_comments')->where('parent_id = ?', $commentId)->all() as $child) {
-                $childId = (int) ($child['id'] ?? 0);
-                \TinyCat\Database\Connection::delete('social_comment_likes', ['comment_id' => $childId]);
-                Interactions::removedComment($childId);
-            }
-
-            \TinyCat\Database\Connection::delete('social_comment_likes', ['comment_id' => $commentId]);
-            Interactions::removedComment($commentId);
+            \TinyCat\Database\Connection::exec('DELETE FROM social_comment_likes WHERE comment_id = ? OR comment_id IN (SELECT id FROM social_comments WHERE parent_id = ?)', [$commentId, $commentId]);
+            \TinyCat\Social\Posts\NotificationHistory::removeForCommentTree($commentId);
             \TinyCat\Database\Connection::delete('social_comments', ['parent_id' => $commentId]);
             \TinyCat\Database\Connection::delete('social_comments', ['id' => $commentId]);
         });

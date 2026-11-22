@@ -65,6 +65,13 @@ $db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds'
 $assert($schedulerCheck()['metrics']['feeds'] === 'failed', 'The latest failure is preserved even when an older success exists.');
 $db->exec("UPDATE scheduler_runs SET status = 'interrupted' WHERE task = 'feeds' AND status = 'failed'");
 $assert($schedulerCheck()['metrics']['feeds'] === 'interrupted', 'Interrupted jobs have a distinct diagnostic reason.');
+$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'not_due', datetime('now'))");
+$assert($schedulerCheck()['metrics']['feeds'] === 'interrupted', 'Skipped invocations cannot conceal an unresolved interrupted run.');
+$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'completed', datetime('now'))");
+$assert($schedulerCheck()['metrics']['feeds'] === 'ok', 'Real completion resolves the previous failure.');
+$db->exec("UPDATE scheduler_runs SET started_at = datetime('now', '-2 hours') WHERE task = 'feeds' AND status = 'completed'");
+$db->exec("DELETE FROM scheduler_runs WHERE task = 'feeds' AND status = 'interrupted'");
+$assert($schedulerCheck()['metrics']['feeds'] === 'stale', 'A recent skipped invocation cannot refresh the age of real work.');
 $db->exec("DELETE FROM scheduler_runs WHERE task = 'feeds'");
 $db->exec("DELETE FROM bot_sources");
 $result = Execution::run('site-health');

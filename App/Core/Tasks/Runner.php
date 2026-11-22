@@ -29,19 +29,27 @@ final class Runner
      * @return array<string, mixed> */
     public static function runPrepared(string $name, callable $runner, array $context, bool $debug = false): array
     {
-        $suffix = substr(hash('sha256', Paths::basePath()), 0, 24);
-        $lockName = 'tinycat_scheduled_' . $name . '_' . $suffix;
-        if (strlen($lockName) > 64) { $lockName = 'tinycat_scheduled_' . substr(hash('sha256', $lockName), 0, 46); }
+        $lockName = '';
         $locked = false;
         $runId = 0;
         $fileLock = null;
         $started = hrtime(true);
         try {
             $sqlite = Connection::driver() === 'sqlite';
+            $directory = Paths::basePath('storage/locks/tasks');
+            if ($sqlite) {
+                $main = array_find(Connection::all('PRAGMA database_list'), static fn (array $row): bool => $row['name'] === 'main');
+                $file = (string) ($main['file'] ?? '');
+                $identity = $file !== '' ? (realpath($file) ?: $file) : 'memory:' . getmypid() . ':' . spl_object_id(Connection::get());
+                if ($file !== '') { $directory = dirname($identity) . '/.tinycat-task-locks'; }
+            } else {
+                $identity = (string) Connection::value('SELECT DATABASE()');
+                if ($identity === '') { throw new RuntimeException('Scheduled tasks require a selected database.'); }
+            }
+            $lockName = 'tinycat_scheduled_' . substr(hash('sha256', ($sqlite ? 'sqlite:' : 'mysql:') . $identity . ':' . $name), 0, 46);
             $sqlLock = !$sqlite || Connection::value("SELECT name FROM pragma_function_list WHERE lower(name) = 'get_lock' LIMIT 1") !== null;
             if ($sqlLock) { $lockResult = Connection::value('SELECT GET_LOCK(?, 0)', [$lockName]); }
             else {
-                $directory = Paths::basePath('storage/locks/tasks');
                 if (!\TinyCat\Support\Storage::ensureDirectory($directory)) { throw new RuntimeException('Cannot prepare task locks.'); }
                 $fileLock = fopen($directory . '/' . hash('sha256', $lockName) . '.lock', 'c+b');
                 if ($fileLock === false) { throw new RuntimeException('Cannot open task lock.'); }

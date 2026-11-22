@@ -76,6 +76,51 @@ $assert(Resource::item($hydrated[0])['message'] !== '', 'The type supplies resol
 \TinyCat\Social\Posts\NotificationHistory::removeForContent(10);
 $assert((int) $db->query("SELECT COUNT(*) FROM notifications WHERE type IN ('content_like','comment_like')")->fetchColumn() === 0, 'Deleting a Social post removes its post and comment subjects');
 $assert((int) $db->query("SELECT COUNT(*) FROM notifications WHERE type='fixture.order'")->fetchColumn() === 1, 'Identical IDs in another domain are not deleted');
+$db->exec('ALTER TABLE social_comments ADD COLUMN parent_id INTEGER NULL');
+$db->exec("INSERT INTO social_posts VALUES (12,'Other owner',1,'published','post','2020-01-01'),(13,'Other kind',2,'published','fixture','2020-01-01'),(20,'Overlapping post ID',1,'published','post','2020-01-01')");
+$db->exec("INSERT INTO social_comments(id,content_id,user_id,body,parent_id) VALUES (10,12,1,'Overlapping comment ID',NULL),(30,12,2,'Own comment',NULL),(31,12,1,'Reply to own comment',30),(32,12,1,'Unrelated comment',NULL),(33,13,2,'Other kind comment',NULL)");
+$cases = [
+    ['post-like', 'content_like', 10, true], ['post-mention', 'content_mention', 11, true],
+    ['report-resolved', 'report_resolved', 10, true], ['report-dismissed', 'report_dismissed', 11, true],
+    ['post-comment', 'content_comment', 20, true], ['post-comment-like', 'comment_like', 21, true],
+    ['own-comment', 'comment_mention', 30, true], ['reply-to-own-comment', 'content_comment', 31, true],
+    ['other-domain', 'fixture.order', 10, false], ['other-post', 'content_like', 12, false],
+    ['overlapping-comment', 'comment_like', 10, false], ['overlapping-post', 'content_like', 20, false],
+    ['tree-post-overlap', 'content_like', 30, false],
+    ['unrelated-comment', 'comment_mention', 32, false], ['other-kind-post', 'content_like', 13, false],
+    ['other-kind-comment', 'comment_like', 33, false],
+];
+foreach ($cases as [$label, $type, $subject]) {
+    Connection::insert('notifications', ['user_id' => 1, 'actor_id' => 2, 'type' => $type, 'subject_id' => $subject,
+        'notification_key' => 'cleanup:' . $label, 'created_at' => '2026-01-01', 'updated_at' => '2026-01-01']);
+}
+$beforeCleanup = $db->query('SELECT id FROM notifications ORDER BY id')->fetchAll(PDO::FETCH_COLUMN);
+try {
+    \TinyCat\Database\Transactions::run(static function () use ($assert): void {
+        \TinyCat\Social\Posts\NotificationHistory::removeForCommentTree(30);
+        $assert(Connection::find('notifications', ['notification_key' => 'cleanup:own-comment']) === null
+            && Connection::find('notifications', ['notification_key' => 'cleanup:reply-to-own-comment']) === null, 'Thread cleanup removes parent and direct reply notifications');
+        $assert(Connection::find('notifications', ['notification_key' => 'cleanup:tree-post-overlap']) !== null
+            && Connection::find('notifications', ['notification_key' => 'cleanup:unrelated-comment']) !== null, 'Thread cleanup preserves overlapping post IDs and unrelated comments');
+        \TinyCat\Social\Posts\NotificationHistory::removeForCommentTree(33);
+        $assert(Connection::find('notifications', ['notification_key' => 'cleanup:other-kind-comment']) !== null, 'Thread cleanup does not adopt another publication kind');
+        throw new DomainException('rollback thread cleanup');
+    });
+} catch (DomainException) {}
+$assert($db->query('SELECT id FROM notifications ORDER BY id')->fetchAll(PDO::FETCH_COLUMN) === $beforeCleanup, 'Thread notification cleanup rolls back atomically');
+
+try {
+    \TinyCat\Database\Transactions::run(static function (): void {
+        \TinyCat\Social\Posts\NotificationHistory::prepareAccountDelete(['id' => 2]);
+        throw new DomainException('injected account rollback');
+    });
+} catch (DomainException) {}
+$assert($db->query('SELECT id FROM notifications ORDER BY id')->fetchAll(PDO::FETCH_COLUMN) === $beforeCleanup, 'Set-based account cleanup rolls back all notification removals together');
+\TinyCat\Database\Transactions::run(static function (): void { \TinyCat\Social\Posts\NotificationHistory::prepareAccountDelete(['id' => 2]); });
+foreach ($cases as [$label, $type, $subject, $removed]) {
+    $exists = Connection::find('notifications', ['notification_key' => 'cleanup:' . $label]) !== null;
+    $assert($exists !== $removed, 'Account cleanup preserves subject ownership and ID namespaces: ' . $label);
+}
 Registrations::configure(new Registries());
 $assert(Inbox::open($notice['id'], 1) === '/notifications' && Resource::item($hydrated[0])['type'] === 'generic', 'Inactive owners retain rows and use a safe generic presentation');
 $reject(static fn () => Delivery::record(1, 'fixture.order', 'inactive', subjectId: 10));

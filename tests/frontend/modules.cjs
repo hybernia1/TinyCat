@@ -82,8 +82,8 @@ contextFixture.cases.forEach((item, index) => {
   } else {
     const rendered = T.components.render(item.component, item.data);
     check(rendered.textContent === item.text, 'Forwarded context is explicit, literal and recursion-safe');
-    const escaped = item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    check(contextPhp[index].html.replace(/<[^>]*>/g,'') === escaped, 'PHP preserves the same escaped context text');
+    const escaped = item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    check(contextPhp[index].html.replace(/<[^>]*>/g,'') === escaped, 'PHP preserves the same escaped context text: ' + item.component + ' case ' + index);
   }
 });
 // Minimal DOM fixture covers filter data; native popover interaction has its own browser suite.

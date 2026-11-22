@@ -40,11 +40,12 @@ final class History
 
     /** @param list<string> $tasks
      * @return array<string, array<mixed>> */
-    public static function latestFor(array $tasks): array
+    public static function latestFor(array $tasks, bool $workOnly = false): array
     {
         if ($tasks === []) { return []; }
         $marks = implode(', ', array_fill(0, count($tasks), '?'));
-        $rows = Connection::all('SELECT sr.* FROM scheduler_runs sr INNER JOIN (SELECT task, MAX(id) AS id FROM scheduler_runs WHERE task IN (' . $marks . ') GROUP BY task) latest ON latest.id = sr.id', $tasks);
+        $work = $workOnly ? " AND status NOT IN ('not_due', 'running')" : '';
+        $rows = Connection::all('SELECT sr.* FROM scheduler_runs sr INNER JOIN (SELECT task, MAX(id) AS id FROM scheduler_runs WHERE task IN (' . $marks . ')' . $work . ' GROUP BY task) latest ON latest.id = sr.id', $tasks);
         $result = [];
         foreach ($rows as $row) { $result[(string) $row['task']] = $row; }
         return $result;
@@ -56,7 +57,7 @@ final class History
     {
         if ($tasks === []) { return []; }
         $marks = implode(', ', array_fill(0, count($tasks), '?'));
-        $rows = Connection::all("SELECT task, MAX(started_at) AS started_at FROM scheduler_runs WHERE task IN (" . $marks . ") AND status IN ('completed', 'not_due', 'has_more') GROUP BY task", $tasks);
+        $rows = Connection::all("SELECT task, MAX(started_at) AS started_at FROM scheduler_runs WHERE task IN (" . $marks . ") AND status IN ('completed', 'has_more') GROUP BY task", $tasks);
         $result = [];
         foreach ($rows as $row) { $result[(string) $row['task']] = (string) $row['started_at']; }
         return $result;

@@ -33,6 +33,7 @@ final class Pages
         $userIsMuted = $authUser !== null && Restrictions::user_is_muted($authUser);
         $userMutedUntil = $authUser !== null ? Restrictions::user_muted_until($authUser) : '';
         $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $compact = Web::get('compact', '') === '1';
         $publicHomeFeedData = ViewData::public_home_feed_data($feed, $authUser, null, $archiveType);
         return ['page' => [
             'title' => Presentation::site_home_title(),
@@ -48,7 +49,7 @@ final class Pages
                     'name' => Presentation::site_name(), 'description' => Presentation::site_meta_description(),
                 ],
             ],
-        ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData', 'archiveType')];
+        ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData', 'archiveType', 'compact')];
     }
 
     public static function detail(?int $statusId = null): void
@@ -64,7 +65,7 @@ final class Pages
     {
         $statusId = max(0, $statusId ?? (int) Web::get('id', 0));
         $current = Posts::status_url($statusId);
-        $compact = (string) Web::get('compact', '') === '1';
+        $compact = Web::get('compact', '') === '1';
 
         if ($statusId < 1) {
             return null;
@@ -172,6 +173,7 @@ final class Pages
 
         $current = Tags::tag_url($tag);
         $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $compact = Web::get('compact', '') === '1';
 
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
@@ -210,6 +212,6 @@ final class Pages
                 'robots' => count($indexableItems) >= 2 ? '' : 'noindex,follow',
                 'jsonld' => $tagStructuredData,
             ],
-        ], 'context' => compact('authUser', 'tag', 'statusItems', 'feedMore', 'tagFeedUrl', 'archiveType')];
+        ], 'context' => compact('authUser', 'tag', 'statusItems', 'feedMore', 'tagFeedUrl', 'archiveType', 'compact')];
     }
 }

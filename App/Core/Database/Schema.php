@@ -49,36 +49,32 @@ final class Schema
             return [];
         }
 
-        $driver = \TinyCat\Database\Connection::driver();
-        $placeholders = implode(', ', array_fill(0, count($tables), '?'));
+        return self::existing(Connection::get(), $tables);
+    }
 
-        if ($driver === 'sqlite') {
-            $rows = \TinyCat\Database\Connection::all(
-                'SELECT name FROM sqlite_master WHERE type = ? AND name IN (' . $placeholders . ')',
-                array_merge(['table'], $tables)
-            );
-
-            return array_values(array_map(static fn (array $row): string => (string) ($row['name'] ?? ''), $rows));
+    /** One inventory per batch, shared by HTTP readiness and explicit deployment connections.
+     * @param list<string> $tables
+     * @return list<string> */
+    public static function existing(PDO $pdo, array $tables): array
+    {
+        $tables = array_values(array_unique($tables));
+        foreach ($tables as $table) { \TinyCat\Core\Database\Statements::identifier($table); }
+        $existing = [];
+        $sqlite = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
+        foreach (array_chunk($tables, 500) as $batch) {
+            $placeholders = implode(', ', array_fill(0, count($batch), '?'));
+            $sql = $sqlite
+                ? "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (" . $placeholders . ')'
+                : 'SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN (' . $placeholders . ')';
+            $query = \TinyCat\Core\Database\Statements::query($pdo, $sql, $batch);
+            foreach ($query->fetchAll(PDO::FETCH_COLUMN) as $name) { $existing[] = (string) $name; }
         }
-
-        $rows = \TinyCat\Database\Connection::all(
-            'SELECT TABLE_NAME
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = DATABASE()
-                    AND TABLE_NAME IN (' . $placeholders . ')',
-            $tables
-        );
-
-        return array_values(array_map(static fn (array $row): string => (string) ($row['TABLE_NAME'] ?? ''), $rows));
+        return $existing;
     }
 
     public static function app_sql_identifier(string $identifier): string
     {
-        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $identifier)) {
-            throw new InvalidArgumentException('Invalid SQL identifier: ' . $identifier);
-        }
-
-        return '`' . str_replace('`', '``', $identifier) . '`';
+        return \TinyCat\Core\Database\Statements::quote($identifier);
     }
 
     /**
@@ -97,9 +93,12 @@ final class Schema
         ];
 
         try {
-            \TinyCat\Database\Connection::get()->query('SELECT 1');
-            $status['connected'] = true;
+            // With no required tables there is no schema query to prove connectivity.
+            if ($requiredTables === []) {
+                \TinyCat\Database\Connection::get()->query('SELECT 1');
+            }
             $existingTables = array_flip(\TinyCat\Database\Schema::app_existing_tables(array_map('strval', $requiredTables)));
+            $status['connected'] = true;
 
             foreach ($requiredTables as $table) {
                 if (!isset($existingTables[(string) $table])) {

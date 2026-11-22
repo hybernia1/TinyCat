@@ -7,6 +7,9 @@ use Closure;
 
 final readonly class ScheduledTask
 {
+    /** @var array<string, int> */
+    public array $options;
+
     public const string ID_PATTERN = '[a-z][a-z0-9_.-]{0,39}';
     /** @var Closure(array<string, mixed>): array<string, mixed> */
     public Closure $runner;
@@ -18,19 +21,23 @@ final readonly class ScheduledTask
     public ?Closure $detail;
 
     /** @param callable(array<string, mixed>): array<string, mixed> $runner
-     * @param array<string, int> $options
+     * @param array<string, mixed> $options
      * @param array<string, string> $admin
      * @param array<string, list<string>> $modeOptions
      * @param (callable(array<string, int>): array<string, int>)|null $normalize
      * @param (callable(): (int|null))|null $healthAge
      * @param (callable(array<string, mixed>): array<string, mixed>)|null $detail
      * @param array<string, string> $optionLabels */
-    public function __construct(public string $id, callable $runner, public array $options = [], public array $admin = [], public int $order = 100, public array $modeOptions = [], ?callable $normalize = null, ?callable $healthAge = null, ?callable $detail = null, public ?string $batchOption = null, public array $optionLabels = [])
+    public function __construct(public string $id, callable $runner, array $options = [], public array $admin = [], public int $order = 100, public array $modeOptions = [], ?callable $normalize = null, ?callable $healthAge = null, ?callable $detail = null, public ?string $batchOption = null, public array $optionLabels = [])
     {
         if ($id === 'all' || preg_match('/^' . self::ID_PATTERN . '$/D', $id) !== 1) { throw new \InvalidArgumentException('Invalid scheduled task ID.'); }
-        foreach (array_keys($options) as $key) {
+        $validated = [];
+        foreach ($options as $key => $value) {
+            if (!is_int($value)) { throw new \InvalidArgumentException('Scheduled task defaults must be integers.'); }
             if (preg_match('/^[a-z][a-z0-9_]*$/D', $key) !== 1) { throw new \InvalidArgumentException('Invalid scheduled task default option.'); }
+            $validated[$key] = $value;
         }
+        $this->options = $validated;
         if ($batchOption !== null && !array_key_exists($batchOption, $options)) { throw new \InvalidArgumentException('Unknown scheduled task batch option.'); }
         $this->runner = Closure::fromCallable($runner);
         $this->normalize = $normalize === null ? null : Closure::fromCallable($normalize);

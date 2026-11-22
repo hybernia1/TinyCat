@@ -55,7 +55,7 @@ final class PublicPages
     public static function render(string $kind, array $data): void
     {
         $resource = self::resource($kind, $data);
-        \TinyCat\Core\Ui\Page::render($data['page'] + ['public' => true], Components::render('site/public-page', $resource + ['csrf' => \TinyCat\Core\Security\Csrf::token()]));
+        \TinyCat\Core\Ui\Page::render($data['page'] + ['public' => true], Components::render('site/public-page', $resource + ['csrf' => \TinyCat\Core\Security\Csrf::token()]), $resource['document']);
     }
 
     /** @param array<string, mixed> $data
@@ -71,18 +71,22 @@ final class PublicPages
         $author = $context['author'] ?? null;
         $feedId = $context['feedId'] ?? $home['feed_id'] ?? ($kind === 'author' ? 'status-feed-author-' . (int) ($author['id'] ?? 0) : 'status-feed-tag-' . \TinyCat\Support\Text::slug((string) ($context['tag'] ?? '')));
         $editor = $context['editor'] ?? [];
-        $url = $kind === 'home' ? (string) ($home['current_feed_url'] ?? '/') : (string) $meta['url'] . (!empty($context['compact']) ? '?compact=1' : '');
+        $url = $kind === 'home' ? (string) ($home['current_feed_url'] ?? '/') : (string) $meta['url'];
+        $compactQuery = !empty($context['compact']) ? ['compact' => '1'] : [];
+        $query = $compactQuery;
         $item = $context['item'] ?? null;
         $archiveType = (string) ($context['archiveType'] ?? '');
         $archiveOptions = [];
         if (in_array($kind, ['home', 'tag', 'author'], true)) {
-            if (in_array($kind, ['tag', 'author'], true) && $archiveType !== '') { $url .= '?media=' . rawurlencode($archiveType); }
+            if (in_array($kind, ['tag', 'author'], true) && $archiveType !== '') { $query['media'] = $archiveType; }
             $filterBase = $kind === 'home' && ($context['feed'] ?? '') === 'following' ? \TinyCat\Social\Posts\Feed::homePath() . '?feed=following' : (string) ($context['archiveBaseUrl'] ?? $page['current']);
+            $filterBase = \TinyCat\Core\Links\Tracking::append($filterBase, $compactQuery);
             foreach (['' => 'all', 'images' => 'images', 'video' => 'video', 'audio' => 'audio', 'links' => 'links', 'text' => 'text'] as $type => $label) {
                 $archiveOptions[] = ['url' => \TinyCat\Http\LocaleRouting::url($filterBase . ($type !== '' ? (str_contains($filterBase, '?') ? '&' : '?') . 'media=' . $type : '')),
                     'type' => $label, 'active' => $type === $archiveType];
             }
         }
+        $url = \TinyCat\Core\Links\Tracking::append($url, $query);
         return [
             'constraints' => Posts::constraints(),
             'routes' => \TinyCat\Http\Router::pageDefinitions('tinycat.social'), 'version' => \TinyCat\Support\Version::CURRENT, 'kind' => $kind, 'url' => \TinyCat\Http\LocaleRouting::url($url), 'locale' => Localization::locale(), 'viewer' => $viewer !== null ? Users::resource($viewer) : null,
@@ -109,9 +113,9 @@ final class PublicPages
             'profile_edit_url' => (string) ($context['authorProfileEditModalUrl'] ?? ''), 'profile_edit_id' => (string) ($context['authorProfileEditModalId'] ?? ''),
             'avatar_edit_url' => (string) ($context['authorAvatarEditModalUrl'] ?? ''), 'avatar_edit_id' => (string) ($context['authorAvatarEditModalId'] ?? ''),
             'following_url' => (string) ($context['authorFollowingModalUrl'] ?? ''), 'following_id' => (string) ($context['authorFollowingModalId'] ?? ''),
-            'all_feed_url' => \TinyCat\Http\LocaleRouting::url(\TinyCat\Social\Posts\Feed::homePath() . ($archiveType !== '' ? '?media=' . $archiveType : '')),
-            'following_feed_url' => \TinyCat\Http\LocaleRouting::url(\TinyCat\Social\Posts\Feed::homePath() . '?feed=following' . ($archiveType !== '' ? '&media=' . $archiveType : '')),
-            'clear_filter_url' => \TinyCat\Http\LocaleRouting::url($kind === 'home' && ($context['feed'] ?? '') === 'following' ? \TinyCat\Social\Posts\Feed::homePath() . '?feed=following' : (string) ($context['archiveBaseUrl'] ?? $page['current'])),
+            'all_feed_url' => \TinyCat\Http\LocaleRouting::url(\TinyCat\Core\Links\Tracking::append(\TinyCat\Social\Posts\Feed::homePath() . ($archiveType !== '' ? '?media=' . $archiveType : ''), $compactQuery)),
+            'following_feed_url' => \TinyCat\Http\LocaleRouting::url(\TinyCat\Core\Links\Tracking::append(\TinyCat\Social\Posts\Feed::homePath() . '?feed=following' . ($archiveType !== '' ? '&media=' . $archiveType : ''), $compactQuery)),
+            'clear_filter_url' => \TinyCat\Http\LocaleRouting::url(\TinyCat\Core\Links\Tracking::append($kind === 'home' && ($context['feed'] ?? '') === 'following' ? \TinyCat\Social\Posts\Feed::homePath() . '?feed=following' : (string) ($context['archiveBaseUrl'] ?? $page['current']), $compactQuery)),
             'archive_options' => $archiveOptions,
             'archive_type' => $archiveType,
             'rss_url' => (string) ($context['authorFeedUrl'] ?? $context['tagFeedUrl'] ?? ''),

@@ -7,7 +7,7 @@ final class Assets
 {
     public static function asset(string $path): string
     {
-        $source = AssetGraph::read($path);
+        AssetGraph::validate($path);
         $type = pathinfo($path, PATHINFO_EXTENSION);
         $minify = match ($type) {
             'css' => ClientAssets::option('performance.minify_css'),
@@ -16,6 +16,7 @@ final class Assets
         };
         $compiled = CompiledAssets::asset($path, $minify);
         if ($compiled !== null) { return $compiled; }
+        $source = AssetGraph::read($path);
         if ($type === 'css') { $source = AssetGraph::stylesheet([$path]); }
         if ($type === 'js') { $source = AssetGraph::javascript(AssetGraph::order([$path])); }
         $name = substr((string) preg_replace('/[^a-z0-9_-]+/i', '-', pathinfo($path, PATHINFO_FILENAME)), 0, 100);

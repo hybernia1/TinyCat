@@ -80,6 +80,28 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 7.1.1
+
+This maintenance release improves streaming/batched database snapshots, shared
+CRUD cleanup, once-decoded routing and native/AJAX filter parity. It fixes cache
+recovery after Memcached connection outages and rejects compiled client/catalog
+inventories whose package registry revision no longer matches the installation.
+There is no database migration or change to published migration checksums.
+Existing old snapshot payloads remain readable. Data caches may cold-miss after
+installation/key namespace changes; configuration, media and accounts are retained.
+
+Scheduler Bearer clients now require HTTPS just like Basic hosting triggers;
+proxy scheme detection still uses the shared trusted-proxy policy. During an
+upgrade, pause external scheduler invocation and finish updating all PHP workers
+and nodes before resuming it. The new database-scoped lock namespace cannot
+coordinate with older path-scoped locks during a mixed-version rollout. Skipped
+runs no longer conceal failed or stale work, and feed batches report remaining
+due sources. Exact duplicate-post merging processes resumable bounded windows.
+
+Core and Social update/install artifacts remain separate. Use the matching
+product's signed update for an existing installation. Refresh the inherited
+private rescue launcher before updating from 6.0.10, as required below.
+
 ## Upgrading to 7.1.0
 
 Publish matching core and Social update/install artifacts. The minimum remains a
@@ -1208,6 +1230,21 @@ contains the database snapshot. `backup.json` identifies the source and target
 versions and whether a database backup was required. After restoring the
 available snapshot, remove `storage/maintenance.json` or use the guarded
 maintenance button on the update page.
+
+MySQL snapshots include `database.index.jsonl`. Restoration validates the entire
+index before dropping any current objects: entries must cover the SQL file
+contiguously, end at statement boundaries, and include the opening and completion
+markers. Empty, truncated and structurally incomplete snapshots are rejected
+before changing data or foreign-key enforcement. This is structural validation;
+SQL semantics are still checked by MySQL during restoration, and deployment's
+snapshot hashes remain the integrity check. DDL restoration is not atomic.
+
+Export reads table data without PDO buffering and emits INSERT batches of at
+most 250 rows, targeting 256 KiB per statement and respecting the source server's
+packet limit. A single large row can exceed the target size. Restore groups
+INSERTs in bounded transactions and commits before DDL; historical single-row
+INSERTs and two-field statement indexes remain supported. The caller's buffering
+option and foreign-key enforcement are restored by their respective operations.
 
 Apache installations are protected by the bundled `.htaccess`. Other web
 servers must deny public access to all of `storage/`, including database backups

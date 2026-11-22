@@ -159,6 +159,16 @@ try {
     $assert(substr_count($publicLayout, ' defer></script>') === 4, 'Split layout keeps scoped script delivery.');
     $assert(substr_count($publicLayout, '<title>') === 1 && substr_count($publicLayout, 'name="csrf-token"') === 1, 'The public metadata fragment does not duplicate common head fields.');
     $assert(str_contains($publicLayout, 'rel="canonical"') && str_contains($publicLayout, 'property="og:title"') && str_contains($publicLayout, 'data-interface-routes='), 'Public metadata and locale routing survive document unification.');
+    $metadataPage = ['title' => 'Public <unsafe>', 'current' => '/search', 'meta' => ['description' => 'Description <unsafe>']];
+    $metadata = \TinyCat\Core\Ui\Metadata::document($metadataPage);
+    ob_start();
+    \TinyCat\Core\Ui\Page::render($metadataPage, '<p id="page-fixture">Prepared content</p>', $metadata);
+    $assert((string) ob_get_clean() === $publicLayout, 'Reusing resource metadata preserves the entire default HTML document byte-for-byte.');
+    $metadata['meta_title'] = 'Prepared <metadata>';
+    ob_start();
+    \TinyCat\Core\Ui\Page::render($metadataPage, '<p>Prepared content</p>', $metadata);
+    $reused = (string) ob_get_clean();
+    $assert(str_contains($reused, 'property="og:title" content="Prepared &lt;metadata&gt;"'), 'The shared document consumes supplied metadata rather than recomputing it.');
     $originalOptions = \TinyCat\Core\Runtime\Startup::$options;
     try {
         $defaultHomepage = \TinyCat\Core\Runtime\EntryPages::homepage()?->id;
@@ -200,6 +210,13 @@ try {
     $localLayout = (string) ob_get_clean();
     $assert(str_contains($localLayout, 'data-example-theme') && str_contains($localLayout, 'data-owner-content') && substr_count($localLayout, '<!doctype html>') === 1, 'A local PHP layout preserves owner content inside the shared document.');
     $assert(str_contains($localLayout, 'name="csrf-token"'), 'A local layout uses common assets and document security metadata.');
+    $themePage = ['title' => 'Local theme', 'public' => true, 'current' => '/example'];
+    $themeMetadata = \TinyCat\Core\Ui\Metadata::document($themePage);
+    $themeMetadata['meta_title'] = 'Prepared theme <metadata>';
+    ob_start();
+    $localTheme?->render($themePage, '<p data-owner-content>Owner content</p>', $themeMetadata);
+    $assert(str_contains((string) ob_get_clean(), 'property="og:title" content="Prepared theme &lt;metadata&gt;"'), 'Local themes forward prepared metadata through the same common document.');
+
     require_once $root . '/tools/support/workspace.php';
     $manifestRoot = \TinyCat\Tools\Workspace::directory('tests/theme-' . bin2hex(random_bytes(6)));
     $manifestDirectory = $manifestRoot . '/App/Themes/example';

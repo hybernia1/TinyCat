@@ -112,10 +112,16 @@ created or rotated explicitly through the administrator-only token API.
 | GET | `/api/installation` | Public safe setup status, no credentials |
 | POST | `/api/installation/steps/{step}` | Public, CSRF, installation must be open |
 | GET / HEAD | `/api/scheduler/triggers/{task}` | HTTPS HTTP Basic: username `scheduler`, cron token as password; GET executes one task, optional `batch` for feeds and cleanup; HEAD never executes |
-| GET | `/api/scheduler/health` | Scheduler Bearer token, no execution |
-| POST | `/api/scheduler/executions` | Scheduler Bearer token |
+| GET | `/api/scheduler/health` | HTTPS Scheduler Bearer token, no execution |
+| POST | `/api/scheduler/executions` | HTTPS Scheduler Bearer token |
 | GET | `/api/site-health` | Administrator, latest diagnostic and recent history; no execution |
 | POST | `/api/site-health/checks` | Administrator and CSRF, manual inspection through scheduler execution |
+
+Both scheduler credential transports require HTTPS, reject cross-site browser
+requests and use private no-store responses. Proxy scheme handling follows the
+shared trusted-proxy policy. A feed batch reports `has_more` while eligible due
+sources remain, and `not_due` when no source was selected. Skipped invocations do
+not count as fresh successful work in scheduler health checks.
 
 Hosting web-cron accepts a flat optional `batch` query parameter with the same
 HTTP Basic credentials:

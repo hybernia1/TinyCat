@@ -103,18 +103,15 @@ final class Cache
             return self::filesystemPut($key, $value, $ttl, $staleTtl);
         }
 
-        if (!self::memcachedPut($key, $value, $ttl, $staleTtl)) {
-            // A rejected replacement must not leave an older primary value visible.
-            self::memcachedForget($key);
-            return self::filesystemPut($key, $value, $ttl, $staleTtl);
-        }
-
-        // Do not retain an older filesystem value after a successful primary
-        // write. If Memcached later becomes unavailable, a cache miss is safer
-        // than serving stale data from before the write.
-        self::filesystemForget($key);
-
-        return true;
+        return self::mutate($key, static function () use ($key, $value, $ttl, $staleTtl): bool {
+            if (!self::memcachedPut($key, $value, $ttl, $staleTtl)) {
+                // Persist the primary bypass until a successful mutation reconciles both stores.
+                $marked = self::writeFile(self::jsonFileName($key), '', 'invalidations');
+                self::memcachedForget($key);
+                return self::filesystemPut($key, $value, $ttl, $staleTtl) && $marked;
+            }
+            return self::filesystemForget($key) && self::clearInvalidation($key);
+        });
     }
 
     public static function fresh(string $key, int $ttl = 300): bool
@@ -130,10 +127,34 @@ final class Cache
             return self::filesystemForget($key);
         }
 
-        $memcached = self::memcachedForget($key);
-        $filesystem = self::filesystemForget($key);
+        return self::mutate($key, static function () use ($key): bool {
+            $primary = self::memcachedForget($key);
+            $marked = $primary || self::writeFile(self::jsonFileName($key), '', 'invalidations');
+            $filesystem = self::filesystemForget($key);
+            return $marked && $filesystem && (!$primary || self::clearInvalidation($key));
+        });
+    }
 
-        return $memcached && $filesystem;
+    /** Serialize mutations separately from rememberArray's computation lock. */
+    private static function mutate(string $key, callable $mutation): bool
+    {
+        $directory = self::directory('mutations');
+        if (!Storage::ensureDirectory($directory)) { return false; }
+        $lock = @fopen($directory . DIRECTORY_SEPARATOR . hash('sha256', $key) . '.lock', 'c');
+        if ($lock === false) { return false; }
+        try {
+            if (!flock($lock, LOCK_EX)) { return false; }
+            return $mutation();
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    private static function clearInvalidation(string $key): bool
+    {
+        $file = self::file(self::jsonFileName($key), 'invalidations');
+        return !is_file($file) || @unlink($file);
     }
 
     public static function file(string $fileName, string $namespace = ''): string
@@ -426,6 +447,9 @@ final class Cache
             return self::filesystemLookup($key);
         }
 
+        $marker = self::file(self::jsonFileName($key), 'invalidations');
+        clearstatcache(true, $marker);
+        if (is_file($marker)) { return self::filesystemLookup($key); }
         $lookup = self::memcachedLookup($key);
 
         return $lookup['found'] ? $lookup : self::filesystemLookup($key);
@@ -650,7 +674,7 @@ final class Cache
     {
         $config = self::memcachedConfig();
 
-        return self::memcachedPrefix((string) ($config['prefix'] ?? 'tinycat:')) . hash('sha256', Version::CURRENT . ':' . (getenv('TINYCAT_CACHE_DIRECTORY') ?: '') . ':' . $key);
+        return self::memcachedPrefix((string) ($config['prefix'] ?? 'tinycat:')) . hash('sha256', Version::CURRENT . ':' . Paths::basePath() . ':' . self::directory() . ':' . $key);
     }
 
     private static function memcachedMaxItemBytes(): int
@@ -765,8 +789,6 @@ final class Cache
 
     private static function jsonFileName(string $key): string
     {
-        $safe = preg_replace('/[^A-Za-z0-9_.-]+/', '_', $key) ?: 'cache';
-
-        return $safe . '.json';
+        return hash('sha256', $key) . '.json';
     }
 }

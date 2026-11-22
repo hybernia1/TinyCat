@@ -53,12 +53,13 @@ final readonly class Theme
         return new self($id, $manifest['label'], $directory, $manifest['layout'], $assets['styles'], $assets['scripts']);
     }
 
-    /** @param array<string, mixed> $page */
-    public function render(array $page, string $content): void
+    /** @param array<string, mixed> $page
+     * @param array<string, mixed>|null $document */
+    public function render(array $page, string $content, ?array $document = null): void
     {
         $page['styles'] = array_values(array_unique([...(array) ($page['styles'] ?? []), ...$this->styles]));
         $page['scripts'] = array_values(array_unique([...(array) ($page['scripts'] ?? []), ...$this->scripts]));
-        $prepared = DocumentData::prepare($page);
+        $prepared = DocumentData::prepare($page, $document);
         $prepared['content'] = $content;
         $prepared['hasPublicSidebar'] = str_contains($content, 'data-public-sidebar-slot') || str_contains($content, 'data-public-sidebar-url');
         Document::renderPrepared($prepared, View::render($this->layout, $prepared, $this->directory));

@@ -25,6 +25,22 @@ spravovaném commitu. Při rollbacku se zahodí. Vnější transakce s takovými
 musí použít `Transactions::run`; samotné PDO `beginTransaction` neslibuje jejich
 doručení. Soubor neodstraňuj před commitem a neukládej nepotvrzené čtení do cache.
 
+Po úspěšném commitu se vyhodnotí celá fronta efektů, i když některé selžou.
+`Transactions::run` pak vyhodí `TinyCat\Database\AfterCommitFailed` se seznamem
+`failures` a první příčinou v `getPrevious()`. Tato výjimka znamená, že databáze
+už změny potvrdila; neopakuj kvůli ní celý zápis ani nemaž jeho uložené přílohy
+jako při rollbacku. Výjimka je definována společně s runnerem v
+`App/Core/Database/Transactions.php`. Mazání účtu používá stejnou frontu pro
+úklid všech vlastníků. Efekty mimo transakci se provádějí ihned a jejich
+výjimky se předávají přímo. Fronta není persistentní outbox: pád procesu
+po commitu nezaručuje doručení. Vnořené `run` sdílí vnější transakci bez savepointů.
+
+Volitelný druhý parametr `afterCommit($callback, $key)` sloučí opakovaný efekt:
+první callback se stejným namespacovaným klíčem v dané vnější transakci vyhraje.
+Klíče se zahodí při commitu i rollbacku a neovlivňují další transakce. Mimo
+transakci se callback nadále provede ihned. Používej jej pro společnou invalidaci,
+nikoli pro různé e-maily či soubory, které se musí zpracovat jednotlivě.
+
 Sociální prezentace je v `App/Modules/Social/assets/content/`; její feature ID
 `publishing.discussion-base` a `publishing.discussion` patří Socialu.
 Core nabízí obecné formuláře a dialogy, nikoli univerzální komentářovou doménu.
@@ -37,6 +53,32 @@ kontrola, CSRF a JSON obálka jsou povinné také pro AJAX a multipart `_method`
 Společné rozhraní nevytváří druhý ruční renderer modalů či seznamů.
 
 ## Veřejný dokument a příspěvky UI
+
+### Hranice cest a společná prezentace
+
+`Request::path()` dekóduje cestu z HTTP URL právě jednou. Totéž platí pro explicitní
+zakódovanou cestu přijatou resource endpointem. Interní již dekódovaná cesta
+prochází pouze idempotentním `Request::normalizePath()`. `Router::dispatch($path)`,
+`pageResource()` a `isApiPath()` přijímají tuto interní podobu; router parametry
+po shodě znovu nedekóduje. Doslovné `%2F` vzniklé z URL `%252F` tak nezmění
+význam na oddělovač segmentů. Deklarace tras jsou struktura, nikoli zakódovaná
+URL; zachovávají regexové escape sekvence. GET registrace obsahuje také implicitní
+HEAD, včetně metadat a hlavičky `Allow` při HTTP 405.
+
+Server i klient používají stejná skalární pravidla komponent: číselná nula včetně
+`0.0` je nepravdivá, řetězec `"0"` zůstává pravdivý. Textový převod zachovává
+dosavadní PHP chování (`true` → `"1"`, `false` a `null` → prázdný text);
+lookup nezahodí číselný klíč `0`. Pole a objekty se při explicitním textovém
+převodu serializují jako JSON. Číselné `eq` sjednocuje int/float podle JSON,
+ale nepřevádí číselné řetězce na čísla. Regrese parity používají společnou
+fixture v `tests/fixtures/component-contexts.json`.
+
+Volitelný třetí argument `Page::render($page, $content, $document)` předá již
+připravený výstup `Metadata::document()` pro stejnou stránku. Core i místní téma
+ho použijí místo druhého výpočtu. Nejde o místo pro libovolný JSON od klienta.
+Administrace si zachovává vlastní metadata a robots politiku. Veřejné stránky
+Socialu skládají query parametry společným mechanismem pro URL a zachovávají
+`compact` při změně nebo vyčištění mediálního filtru, v SSR i při AJAX navigaci.
 
 Chybové HTML připravuje `Core/Runtime/Errors` s názvem, stavem a dostupnými
 akcemi. Běžná šablona `Core/Ui/templates/error.php` používá společný veřejný

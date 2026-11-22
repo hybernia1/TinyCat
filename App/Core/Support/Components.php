@@ -188,7 +188,11 @@ final class Components
         }
         if (array_key_exists('concat', $value)) { return implode('', array_map(static fn (mixed $part): string => Values::string(self::value($part, $data)), $value['concat'])); }
         if (array_key_exists('if', $value)) { return self::value($value['if'][self::truth(self::value($value['if'][0], $data)) ? 1 : 2] ?? null, $data); }
-        if (array_key_exists('eq', $value)) { return self::value($value['eq'][0], $data) === self::value($value['eq'][1], $data); }
+        if (array_key_exists('eq', $value)) {
+            $left = self::value($value['eq'][0], $data); $right = self::value($value['eq'][1], $data);
+            // JSON/browser numbers have one type; numeric strings still compare strictly.
+            return (is_int($left) || is_float($left)) && (is_int($right) || is_float($right)) ? $left == $right : $left === $right;
+        }
         if (array_key_exists('not', $value)) { return !self::truth(self::value($value['not'], $data)); }
         if (array_key_exists('and', $value)) { foreach ($value['and'] as $part) { if (!self::truth(self::value($part, $data))) { return false; } } return true; }
         if (array_key_exists('or', $value)) { foreach ($value['or'] as $part) { $result = self::value($part, $data); if (self::truth($result)) { return $result; } } return null; }
@@ -228,7 +232,7 @@ final class Components
 
     private static function truth(mixed $value): bool
     {
-        return $value !== null && $value !== false && $value !== '' && $value !== 0 && $value !== [];
+        return $value !== null && $value !== false && $value !== '' && $value !== 0 && $value !== 0.0 && $value !== [];
     }
 
     /** @param array<mixed> $data */

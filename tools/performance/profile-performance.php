@@ -35,7 +35,7 @@ try {
             $runner->run($urls, $workers, $workers);
             foreach (explode(',', (string) $options['expire']) as $key) {
                 if (preg_match('/^[A-Za-z0-9_.-]+$/D', $key) !== 1) { throw new RuntimeException('Expected safe cache entry names.'); }
-                $entry = $log . '.cache/' . $key . '.json';
+                $entry = $log . '.cache/' . hash('sha256', $key) . '.json';
                 if (!is_file($entry) || !touch($entry, time() - max(1, (int) (json_decode((string) file_get_contents($entry), true)['ttl'] ?? 300)) - 1)) { throw new RuntimeException('Unable to expire the requested cache entry.'); }
             }
         }

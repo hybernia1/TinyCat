@@ -9,11 +9,6 @@ use TinyCat\Support\Dates;
 /** Bounded housekeeping for provably identical public posts of the same bot. */
 final class DuplicateCleanup
 {
-    private static function bodyKey(string $alias): string
-    {
-        return Connection::driver() === 'mysql' ? 'SHA2(' . $alias . '.body,256)' : $alias . '.body COLLATE BINARY';
-    }
-
     /** Compare sets in both directions. Different attachments are deliberately not inferred equal. */
     private static function sameRelations(string $newer, string $older): string
     {
@@ -33,44 +28,41 @@ final class DuplicateCleanup
      * @return array<mixed> */
     public static function candidates(int $limit): array
     {
-        $limit = max(1, min(501, $limit));
+        return self::scan(max(1, min(501, $limit)), 0)['pairs'];
+    }
+
+    /** Bounded input window; keepers can precede it, so cross-window duplicates remain visible.
+     * @return array{pairs: list<array{id: int, keeper_id: int}>, next: int, has_more: bool} */
+    private static function scan(int $limit, int $after): array
+    {
+        $window = max(256, min(1000, $limit * 2));
         $now = Dates::dateDb();
-        $key = self::bodyKey('c');
-        $rows = Connection::all("SELECT id,author_id,body_key FROM (
-            SELECT c.id,c.author_id," . $key . " AS body_key,
-                COUNT(*) OVER (PARTITION BY c.author_id," . $key . ") AS copies
-            FROM social_posts c INNER JOIN users u ON u.id=c.author_id
-            WHERE c.kind='post' AND u.role='bot' AND u.status='active' AND c.status='published' AND c.published_at<=? AND TRIM(c.body)<>''
-            ) grouped WHERE copies>1 ORDER BY id", [$now]);
-        if ($rows === []) { return []; }
-        $metadata = [];
-        foreach (array_chunk(array_column($rows, 'id'), 500) as $ids) {
-            $placeholders = implode(',', array_fill(0, count($ids), '?'));
-            foreach (['social_post_links' => 'link_id', 'social_post_tags' => 'term_id', 'social_post_images' => 'path,width,height,bytes'] as $table => $columns) {
-                foreach (Connection::all('SELECT content_id,' . $columns . ' FROM ' . $table . ' WHERE content_id IN (' . $placeholders . ') ORDER BY content_id,' . $columns, $ids) as $relation) {
-                    $id = (int) $relation['content_id'];
-                    unset($relation['content_id']);
-                    // Normalize numeric PDO values consistently across database drivers.
-                    foreach ($relation as $column => &$value) {
-                        if ($column !== 'path' && $value !== null) { $value = (int) $value; }
-                    }
-                    unset($value);
-                    $metadata[$id][$table][] = $relation;
-                }
-            }
-        }
-        $keepers = [];
-        $pairs = [];
-        foreach ($rows as $row) {
-            $id = (int) $row['id'];
-            $relations = $metadata[$id] ?? [];
-            ksort($relations);
-            $signature = json_encode([(int) $row['author_id'], $row['body_key'], $relations], JSON_THROW_ON_ERROR);
-            if (!isset($keepers[$signature])) { $keepers[$signature] = $id; continue; }
-            $pairs[] = ['id' => $id, 'keeper_id' => $keepers[$signature]];
+        $body = Connection::driver() === 'mysql' ? 'BINARY k.body = BINARY c.body' : 'k.body = c.body COLLATE BINARY';
+        $rows = Connection::all("SELECT c.id,
+            (SELECT k.id FROM social_posts k WHERE k.id<c.id AND k.author_id=c.author_id
+                AND k.kind='post' AND k.status='published' AND k.published_at<=? AND " . $body . '
+                AND ' . self::sameRelations('c', 'k') . " ORDER BY k.id LIMIT 1) AS keeper_id
+            FROM (SELECT p.* FROM social_posts p INNER JOIN users u ON u.id=p.author_id
+                WHERE p.id>? AND p.kind='post' AND u.role='bot' AND u.status='active'
+                    AND p.status='published' AND p.published_at<=? AND TRIM(p.body)<>''
+                ORDER BY p.id LIMIT " . ($window + 1) . ') c ORDER BY c.id', [$now, $after, $now]);
+        $pairs = []; $next = $after; $processed = 0;
+        foreach (array_slice($rows, 0, $window) as $row) {
+            $next = (int) $row['id']; $processed++;
+            if ($row['keeper_id'] !== null) { $pairs[] = ['id' => $next, 'keeper_id' => (int) $row['keeper_id']]; }
             if (count($pairs) >= $limit) { break; }
         }
-        return $pairs;
+        return ['pairs' => $pairs, 'next' => $next, 'has_more' => count($rows) > $processed];
+    }
+
+    private static function cursorFile(): string
+    {
+        if (Connection::driver() === 'mysql') { $identity = 'mysql:' . (string) Connection::value('SELECT DATABASE()'); }
+        else {
+            $main = array_find(Connection::all('PRAGMA database_list'), static fn (array $row): bool => $row['name'] === 'main');
+            $identity = 'sqlite:' . (($main['file'] ?? '') !== '' ? $main['file'] : getmypid() . ':' . spl_object_id(Connection::get()));
+        }
+        return \TinyCat\Support\Cache::file('duplicate-bots-' . hash('sha256', $identity) . '.json', 'maintenance-cursors');
     }
 
     private static function merge(int $oldId, int $keeperId): bool
@@ -109,11 +101,14 @@ final class DuplicateCleanup
         $batch = max(1, min(500, $batch));
         $changed = 0;
         try {
-            $candidates = self::candidates($batch + 1);
-            foreach (array_slice($candidates, 0, $batch) as $row) {
+            $cursor = self::cursorFile();
+            $saved = is_file($cursor) ? json_decode((string) file_get_contents($cursor), true) : null;
+            $scan = self::scan($batch, is_int($saved) ? max(0, $saved) : 0);
+            foreach ($scan['pairs'] as $row) {
                 if (self::merge((int) $row['id'], (int) $row['keeper_id'])) { $changed++; }
             }
-            return ['due' => true, 'changed' => $changed, 'has_more' => count($candidates) > $batch];
+            if (!\TinyCat\Support\Storage::write($cursor, json_encode($scan['has_more'] ? $scan['next'] : 0, JSON_THROW_ON_ERROR))) { throw new \RuntimeException('Cannot save duplicate cleanup progress.'); }
+            return ['due' => true, 'changed' => $changed, 'has_more' => $scan['has_more']];
         } catch (\Throwable $exception) {
             return ['due' => true, 'changed' => $changed, 'has_more' => false, 'error' => $exception->getMessage()];
         }

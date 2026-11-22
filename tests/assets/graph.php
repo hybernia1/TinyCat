@@ -40,6 +40,30 @@ try {
     $compiled = AssetGraph::stylesheet([$relative . '/theme.css'], static fn (string $path): string => '/assets/build/image.fixture.svg');
     if (!str_contains($compiled, '/assets/build/image.fixture.svg')) { throw new RuntimeException('Build CSS does not use the same asset resolver.'); }
     $checks++;
+    $assetsProperty = new ReflectionProperty(\TinyCat\Support\CompiledAssets::class, 'manifest');
+    $translationsProperty = new ReflectionProperty(\TinyCat\Support\CompiledTranslations::class, 'manifest');
+    $oldAssets = $assetsProperty->getValue();
+    $oldTranslations = $translationsProperty->getValue();
+    try {
+        $registry = \TinyCat\Support\Paths::basePath('App/module-packages.json');
+        $revision = is_file($registry) ? hash_file('sha256', $registry) : null;
+        $identity = ['selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'server_components_packages' => $revision];
+        $assetsProperty->setValue(null, $identity + ['assets' => [$relative . '/image.svg' => ['raw' => '/assets/build/probe.svg']]]);
+        if (\TinyCat\Support\Assets::asset($relative . '/image.svg') !== '/assets/build/probe.svg') { throw new RuntimeException('Compiled asset hit was not used.'); }
+        $checks++;
+        $reject(static fn () => \TinyCat\Support\Assets::asset('App/Core/Runtime/Application.php'));
+        $assetsProperty->setValue(null, array_replace($identity, ['server_components_packages' => 'outdated-package', 'assets' => [$relative . '/image.svg' => ['raw' => '/assets/build/old.svg']]]));
+        if (\TinyCat\Support\CompiledAssets::asset($relative . '/image.svg', false) !== null) { throw new RuntimeException('Old package asset accepted.'); }
+        $checks++;
+        $translationsProperty->setValue(null, array_replace($identity, ['server_components_packages' => 'outdated-package', 'packages' => ['en' => 'English']]));
+        if (\TinyCat\Support\CompiledTranslations::packages() !== null || \TinyCat\Support\CompiledTranslations::application('en') !== null || \TinyCat\Support\CompiledTranslations::emails('en') !== null) { throw new RuntimeException('Old package translations accepted.'); }
+        $checks++;
+        if (!\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Current deployment identity rejected.'); }
+        $checks++;
+    } finally {
+        $assetsProperty->setValue(null, $oldAssets);
+        $translationsProperty->setValue(null, $oldTranslations);
+    }
 } finally {
     \TinyCat\Core\Modules\Resources::configure($original);
     unlink($directory . '/a.js');

@@ -99,6 +99,22 @@ try { Lifecycle::delete(3); throw new RuntimeException('Nested deletion was acce
 catch (LogicException) { $assert($pdo->inTransaction(), 'Nested deletion is rejected without touching caller transaction'); }
 $pdo->rollBack();
 
+$cleanupEvents = [];
+$failingCleanup = new Participant(prepareDelete: static fn (array $user): Deletion => new Deletion(
+    afterCommit: static function (): void { throw new RuntimeException('injected file cleanup failure'); },
+));
+$followingCleanup = new Participant(prepareDelete: static function (array $user) use (&$cleanupEvents): Deletion {
+    return new Deletion(afterCommit: static function () use (&$cleanupEvents): void { $cleanupEvents[] = 'remaining owner cleaned'; });
+});
+$pdo->exec("INSERT INTO users (id, role, status) VALUES (99, 'user', 'active')");
+try {
+    Lifecycle::delete(99, ['fixture.failure' => $failingCleanup, 'fixture.following' => $followingCleanup]);
+    throw new LogicException('Cleanup failure was ignored');
+} catch (\TinyCat\Database\AfterCommitFailed $exception) {
+    $assert(count($exception->failures) === 1, 'Account cleanup reports a committed transaction with failed file effects');
+}
+$assert(Connection::find('users', ['id' => 99]) === null && $cleanupEvents === ['remaining owner cleaned'], 'A failing owner does not prevent remaining post-commit account cleanup');
+
 $pdo->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, enabled INTEGER)');
 $pdo->exec('INSERT INTO bot_sources VALUES (1, 2, 1), (2, 3, 1)');
 Lifecycle::setActive(['id' => 2, 'role' => 'bot'], false, ['tinycat.social' => $participants['tinycat.social']]);

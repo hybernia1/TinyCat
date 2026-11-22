@@ -58,6 +58,16 @@ final class AssetGraph
     {
         self::synchronize();
         if (self::$buildSources !== null && isset(self::$buildSources[$path])) { return self::$buildSources[$path]; }
+        $absolute = self::validate($path);
+        $source = (string) file_get_contents($absolute);
+        if (in_array(pathinfo($absolute, PATHINFO_EXTENSION), ['js', 'css', 'svg'], true)) { $source = str_replace(["\r\n", "\r"], "\n", $source); }
+        if (self::$buildSources !== null) { self::$buildSources[$path] = $source; }
+        return $source;
+    }
+
+    /** Validate ownership without reading source bytes on compiled hits. */
+    public static function validate(string $path): string
+    {
         $absolute = realpath(Paths::basePath($path));
         if (!is_string($absolute) || !is_file($absolute)) {
             throw new RuntimeException('Missing or invalid asset: ' . $path);
@@ -69,10 +79,7 @@ final class AssetGraph
             || (!$theme && !\TinyCat\Core\Modules\Resources::ownsModuleAsset($absolute))) {
             throw new RuntimeException('Missing or invalid module asset: ' . $path);
         }
-        $source = (string) file_get_contents($absolute);
-        if (in_array(pathinfo($absolute, PATHINFO_EXTENSION), ['js', 'css', 'svg'], true)) { $source = str_replace(["\r\n", "\r"], "\n", $source); }
-        if (self::$buildSources !== null) { self::$buildSources[$path] = $source; }
-        return $source;
+        return $absolute;
     }
 
     /** @return list<string> */
