@@ -111,8 +111,7 @@ import "./toasts.js";
         if (!await TinyCat.forms.canSubmit(form)) { return; }
         var method = (form.dataset.apiMethod || form.getAttribute("method") || "POST").toUpperCase();
         var action = form.dataset.ajaxAction || form.getAttribute("action") || window.location.href;
-        var body = new FormData(form);
-        if (event.submitter && event.submitter.name) { body.append(event.submitter.name, event.submitter.value || ""); }
+        var body = TinyCat.forms.data(form, event.submitter);
         method = String(form.dataset.apiMethod || body.get("_method") || method).toUpperCase();
         body.delete("_method");
         var url = action, nextHistory = "";

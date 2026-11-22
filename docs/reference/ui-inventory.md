@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-184 definic komponent, 398 CSS tříd, 128 CSS importů, 94 JS souborů, 28 UI služeb, 1 PHP partialů.
+184 definic komponent, 397 CSS tříd, 127 CSS importů, 94 JS souborů, 28 UI služeb, 1 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -214,7 +214,7 @@ Jde o syntaktický seznam; nezahrnuje všechny exporty a nerozhoduje o veřejnos
 - [App/Core/Ui/assets/document-navigation.js](../../App/Core/Ui/assets/document-navigation.js):
 - [App/Core/Ui/assets/filters.js](../../App/Core/Ui/assets/filters.js): `defaults`, `get`, `capture`, `restore`, `remove`, `init`
 - [App/Core/Ui/assets/form-constraints.js](../../App/Core/Ui/assets/form-constraints.js):
-- [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js): `validate`, `setSubmitGuard`, `canSubmit`, `request`, `cancel`, `dispose`, `bind`
+- [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js): `data`, `validate`, `setSubmitGuard`, `canSubmit`, `request`, `cancel`, `dispose`, `bind`
 - [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js):
 - [App/Core/Ui/assets/global-search.js](../../App/Core/Ui/assets/global-search.js):
 - [App/Core/Ui/assets/image-placeholders.js](../../App/Core/Ui/assets/image-placeholders.js):
@@ -268,7 +268,7 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Core/Ui/assets/document-navigation.js](../../App/Core/Ui/assets/document-navigation.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js) | přes importy / společný runtime |
 | [App/Core/Ui/assets/filters.js](../../App/Core/Ui/assets/filters.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/popovers.js](../../App/Core/Ui/assets/popovers.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js) | přes importy / společný runtime |
 | [App/Core/Ui/assets/form-constraints.js](../../App/Core/Ui/assets/form-constraints.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js) | přes importy / společný runtime |
-| [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js) | přes importy / společný runtime |
 | [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js), [App/Core/Ui/assets/tabs.js](../../App/Core/Ui/assets/tabs.js) | přes importy / společný runtime |
 | [App/Core/Ui/assets/global-search.js](../../App/Core/Ui/assets/global-search.js) | [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/avatar-rendering.js](../../App/Core/Ui/assets/avatar-rendering.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/popovers.js](../../App/Core/Ui/assets/popovers.js) | přes importy / společný runtime |
 | [App/Core/Ui/assets/image-placeholders.js](../../App/Core/Ui/assets/image-placeholders.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | * |
@@ -284,7 +284,7 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js) |  | přes importy / společný runtime |
 | [App/Core/Ui/assets/runtime/icons.js](../../App/Core/Ui/assets/runtime/icons.js) |  | přes importy / společný runtime |
 | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) |  | přes importy / společný runtime |
-| [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js) |  | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
 | [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js) | [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
 | [App/Core/Ui/assets/runtime/page-navigation.js](../../App/Core/Ui/assets/runtime/page-navigation.js) | [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
 | [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
@@ -499,7 +499,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Modules/Social/assets/users/styles/profile-details.css](../../App/Modules/Social/assets/users/styles/profile-details.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
 | [App/Modules/Social/assets/users/styles/profile-layout-desktop.css](../../App/Modules/Social/assets/users/styles/profile-layout-desktop.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
 | [App/Modules/Social/assets/users/styles/profile-main-desktop.css](../../App/Modules/Social/assets/users/styles/profile-main-desktop.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
-| [App/Modules/Social/assets/users/styles/profile-navigation.css](../../App/Modules/Social/assets/users/styles/profile-navigation.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
 | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
 
 ## CSS třídy
@@ -723,7 +722,6 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `profile-details` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-edit-toggle` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-editable-text` | [App/Modules/Social/assets/users/styles/profile-details.css](../../App/Modules/Social/assets/users/styles/profile-details.css) |
-| `profile-email-warning` | [App/Modules/Social/assets/users/styles/profile-navigation.css](../../App/Modules/Social/assets/users/styles/profile-navigation.css) |
 | `profile-following-link` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-following-main` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-identity` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
@@ -732,7 +730,6 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `profile-main` | [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css), [App/Modules/Social/assets/users/styles/profile-main-desktop.css](../../App/Modules/Social/assets/users/styles/profile-main-desktop.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-member-since` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-name` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
-| `profile-nav-link` | [App/Modules/Social/assets/users/styles/profile-navigation.css](../../App/Modules/Social/assets/users/styles/profile-navigation.css) |
 | `profile-sidebar` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-sidebar-stack` | [App/Modules/Social/assets/site/styles/sidebar-sticky.css](../../App/Modules/Social/assets/site/styles/sidebar-sticky.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-stat` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
@@ -901,6 +898,7 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `topic-list` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
 | `topic-name` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
 | `user-menu` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |
+| `user-menu-email-warning` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |
 | `user-menu-identity` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |
 | `user-menu-popover` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |
 | `user-menu-theme` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |

@@ -1,9 +1,0 @@
-.profile-nav-link {
-  position: relative;
-}
-
-.profile-email-warning {
-  background: var(--warning);
-  color: var(--on-warning, #1f1700);
-  border-radius: var(--radius-sm);
-}

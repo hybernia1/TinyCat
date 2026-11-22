@@ -1,4 +1,11 @@
+.user-menu-email-warning {
+  background: var(--warning);
+  color: var(--on-warning);
+  border-radius: var(--radius-sm);
+}
+
 .user-menu > .user-menu-trigger {
+  position: relative;
   display: inline-flex;
   width: auto;
   min-height: 38px;

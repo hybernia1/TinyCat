@@ -2356,5 +2356,8 @@
     "App/Core/Ui/assets/content/translation.js",
     "App/Core/Ui/assets/styles/hashtags.css",
     "App/Core/Ui/templates/notFound.php"
+  ],
+  "7.1.2": [
+    "App/Modules/Social/assets/users/styles/profile-navigation.css"
   ]
 }

@@ -5,7 +5,8 @@
 }
 
 .admin-brand strong,
-.admin-user strong {
+.admin-user strong,
+.admin-topbar-title strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -128,12 +129,6 @@
   min-width: 0;
   flex: 1 1 auto;
   gap: 0.1875rem;
-}
-
-.admin-topbar-title strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .admin-topbar-actions {

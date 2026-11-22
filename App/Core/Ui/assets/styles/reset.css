@@ -84,7 +84,7 @@ a:hover {
   z-index: 1100;
   border-radius: var(--radius-sm);
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   padding: 0.625rem 0.875rem;
   font-weight: 700;
   text-decoration: none;
@@ -93,7 +93,6 @@ a:hover {
 
 .skip-link:focus {
   inset-block-start: 12px;
-  color: #fff;
 }
 
 ::selection {

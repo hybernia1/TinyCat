@@ -460,3 +460,26 @@ interactive rows, disclosure summaries, menu items, filter chips and selectable
 cards. Keep semantic selection, unread and severity surfaces distinct; do not
 replace their state colors with hover colors. Reuse existing component selectors
 and global focus outlines instead of adding utility classes or per-page colors.
+
+### Client lifecycle and form boundaries
+
+Lifecycle hooks are isolated: a failing initializer, hydration or disposer reports
+its exception without preventing unrelated hooks from running. Successful
+initializers run once; a subsequent `TinyCat.lifecycle.start()` retries only
+unfinished initialization. Owners must keep retries safe after partial side
+effects. Returning false from an initializer means initialization is incomplete.
+Hydration follows `hydrateOrder`; service disposal reverses that order. Module
+hooks use the same error boundary rather than a second implementation.
+
+Modal sequential traversal excludes explicit negative tabindex, effective
+`:disabled` controls and inert/hidden ancestors. Editable hosts without an
+explicit tabindex remain eligible, including plaintext-only editors; explicit
+negative tabindex still opts them out. Programmatic focus and keyboard traversal
+must not be confused.
+
+`TinyCat.forms.data(form, submitter)` owns native form serialization for the binder
+and delegated AJAX handler, including externally associated submit buttons.
+GET serialization reuses shared navigation URL construction while retaining the
+binder's empty-value behavior. Interactive custom-constraint checks target the
+changed control or its canonical editor source. Hydration and submission retain
+whole-form validation; the byte encoder is reused.

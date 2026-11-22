@@ -702,7 +702,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   window.addEventListener = () => {};
   window.setTimeout = setTimeout;
   context.FormData = class extends FormData {
-    constructor(form) { super(); (form.fields || []).filter(field => !field.disabled).forEach(field => this.append(field.name, field.value)); }
+    constructor(form, submitter) { super(); (form.fields || []).filter(field => !field.disabled).forEach(field => this.append(field.name, field.value)); if(submitter&&submitter.name&&!submitter.disabled)this.append(submitter.name,submitter.value); }
   };
   let sent;
   T.api = { request: async (url, options) => { sent = { url, options }; return { ok: true, data: { action: "react" }, meta: {} }; }, errors: canonicalFieldErrors };
@@ -762,7 +762,8 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   delete document.documentElement.dataset.interfacePrefix;
   delete document.documentElement.dataset.interfaceLocales;
   T.forms.hydrate({ querySelectorAll: () => [untouched] });
-  handlers.change.forEach(callback => callback({ target: { closest: () => untouched } }));
+  const emptyUploadInput = new Node("input"); emptyUploadInput.form = untouched;
+  handlers.change.forEach(callback => callback({ target: emptyUploadInput }));
   check(untouched.dataset.dirty === "false", "An empty upload input with a fresh File timestamp does not mark an unchanged editor dirty.");
   const modalWithSibling = new Node('div'), dirtySibling = new Node('form'), partSave = new Node('form');
   dirtySibling.dataset.confirmUnsaved = 'true'; dirtySibling.dataset.dirty = 'true';

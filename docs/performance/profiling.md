@@ -973,3 +973,286 @@ upcoming release and is run only after source, test and documentation edits end.
 Its separate measured report determines complete source validation; targeted
 passes alone are not presented as release verification. No live job was executed,
 no scheduler token was created and no release was published by these source fixes.
+
+## JavaScript audit, 22 November 2026
+
+Audit of core/Social client sources at release commit `6421a0e2` (7.1.1):
+94 authored JS files, 380,283 bytes on disk in this checkout. This sum is not a
+per-page transfer budget: route-scoped compilation, minification and compression
+produce different payloads. No client source, asset, configuration or live data
+was modified. The following findings are open, with no implementation in this
+stage. Static inspection covered lifecycle, modules, requests, navigation, DOM
+construction, forms, dialogs, media and shared/domain resource ownership; it is
+not a claim of an exhaustive browser-security proof.
+
+### Confirmed findings
+
+1. **Medium: modal keyboard traversal includes elements that are not Tab stops.**
+   [dom.focusables](../../App/Core/Ui/assets/runtime/dom.js) includes native buttons
+   and links through selector branches that do not exclude `tabindex=-1`.
+   Its visibility check also misses effective disabled state inherited from a
+   fieldset and ancestors marked `inert`. Native Chromium returned all four
+   synthetic buttons: negative tabindex, normal, disabled-fieldset and inert;
+   only the normal button was eligible for sequential keyboard traversal.
+   [dialogs](../../App/Core/Ui/assets/dialogs.js) uses this array as the first/last
+   boundary for Tab trapping, while [tabs](../../App/Core/Ui/assets/tabs.js)
+   deliberately assigns -1 to inactive tabs. Distinguish programmatic focus
+   targets from sequentially tabbable controls and regress modal wrapping after
+   changing the selected tab. The probe demonstrates the incorrect traversal
+   list; it does not claim every existing dialog currently loses focus.
+2. **Medium robustness gap: one failing lifecycle hook stops unrelated hooks.**
+   [lifecycle](../../App/Core/Ui/assets/runtime/lifecycle.js) sets `started=true`
+   before initializing all services and stops at the first exception. With three
+   services, an injected failure in the second prevented the third from starting;
+   a second `start()` did nothing. During disposal, a failing middle hook likewise
+   prevented the earlier service from cleaning up. The domain-module dispatcher
+   has the same stop-on-first-error behavior. This can also block shared pending
+   request cancellation, not only cosmetic hydration. Isolate hook failures and
+   expose diagnostics without silently hiding errors; define retry behavior for
+   partial startup. No spontaneous lifecycle exception was observed in the live
+   navigation probe: this finding is demonstrated by controlled fault injection.
+3. **Medium performance opportunity: every input validates the whole form.**
+   [form-constraints](../../App/Core/Ui/assets/form-constraints.js) rescans all
+   constrained fields for `input`, `change` and editor-sync events. Each byte check
+   creates a new `TextEncoder`. One event in a synthetic form with 250 byte-limited
+   fields created 250 encoders and encoded all 250 values, including untouched
+   fields. Scope interactive validation to the changed field and any explicit
+   proxy/dependency; keep full validation for hydration/submission and reuse an
+   encoder. This is an allocation/work-count measurement, not evidence of a
+   measured input-delay regression on the current settings page.
+4. **Lower priority contract gap: generic form binding drops the submitter.**
+   [forms.bind](../../App/Core/Ui/assets/form-requests.js) uses `new FormData(form)`
+   without adding the activated submit button. The main AJAX binding already adds
+   its name/value, so the two shared paths disagree. Native submission of a fixture
+   included `intent=publish`; the bound request contained only the text field.
+   The probe intercepted the API request locally, so no POST reached the server.
+   The sole current application caller is installation, whose buttons do not
+   demonstrate this data loss today. Preserve native submitter semantics before
+   further consumers use this helper; do not add a third serialization path.
+
+### Additional contract recommendations and a rejected leak hypothesis
+
+Hydration sorts by `hydrateOrder`, but disposal reverses registration order.
+With high-order service A registered before low-order B, the observed order was
+hydrate B/A, dispose B/A, rather than reverse hydration. Initialization also uses
+registration order. Define which ordering establishes dependencies and align
+teardown with that contract; no concrete built-in dependency failure was shown.
+
+Sticky layout registers observation for each profile/sidebar node but has no
+lifecycle dispose hook. Eight same-document AJAX transitions left four detached
+profile targets in instrumented observer bookkeeping. An initial strong Set in
+the probe itself could retain those targets, so it was replaced with **WeakRef**
+tracking and followed by two forced garbage collections. Only the connected public
+sidebar remained alive afterward. **A persistent native heap leak was not
+confirmed.** Explicit unobserve/cancel of layout work is a cleanup recommendation,
+not a proven memory-leak finding. Existing mobile viewport cleanup unobserves
+public sidebars; it does not provide a generic profile-subtree disposal hook.
+
+The initial hypothesis about stale language-alternate head links was also not
+confirmed: the live pages did not expose such links. It is not counted as a bug.
+
+### Verification and evidence
+
+- `.work/tests/runs/20261122-091712-7992f32b1a/report.json`: five selected scenarios
+  passed: client lifecycle/disposed asynchronous work, shared UI/API primitives,
+  translation, sidebar viewport cleanup and AJAX races. No skips or source changes.
+  The new probes cover failure/boundary cases missing from those green tests.
+- Native headless Chromium used `https://tinycat.test/` at desktop width and eight
+  AJAX transitions in the same document, then WeakRef/GC inspection. No page errors
+  were observed. Separate native form/focus probes used only temporary DOM and an
+  intercepted fake API call. No live account, content or settings writes occurred.
+- The live document reports an older runtime shell than repository release 7.1.1.
+  Relevant lifecycle/DOM/forms/constraints/sidebar source files were compared with
+  the checkout and match after line-ending normalization; no runtime synchronization
+  was required for these unchanged mechanisms. This does not claim that all 7.1.1
+  runtime changes have been deployed to the live installation.
+- Existing final-commit source CI and artifact verification from release 7.1.1
+  remain the broader successful baseline. They were not rerun without source
+  changes. No new preflight was launched for this read-only JavaScript audit.
+- The source scan found only the shared API client's fetch and the intentionally
+  anonymous same-origin cache-header probe; the latter uses omitted credentials
+  and redirect rejection. The two observed `innerHTML` assignments clear editor
+  suggestion containers. No eval/Function-based code generation was found in the
+  authored JS inventory. These observations are narrower than an XSS guarantee.
+
+All raw evidence is in `.work/performance/javascript-20261122/`: `inventory.json`,
+`audit.json`, `live-navigation.json`, `form-submitter.json`, and
+`live-source-parity.json`, alongside the isolated reproduction scripts. No new
+tracked source file was added; only this existing profiling document was updated.
+
+### JavaScript implementation follow-up
+
+The four confirmed JavaScript findings are fixed in existing shared files.
+Lifecycle catches and reports each service/module hook error, completes unrelated
+hooks and remembers only successful initialization for retries. Disposal now
+reverses hydration ordering. Sequential focus excludes negative tabindex,
+fieldset-disabled and inert controls while preserving implicit editable hosts,
+including plaintext-only editors. Native form serialization includes the actual
+submitter on both shared request paths. Input-time constraint checks validate
+only the changed/canonical control and reuse one encoder; full submission checks
+remain intact. Existing GET empty/repeated query semantics are retained through
+a shared URL serializer. No CSS runtime rule was changed in this stage.
+
+Regressions cover failed startup followed by retry without duplicate good init,
+failed disposal without abandoned cleanup, reverse dependency order, editable
+focus, external submitters serialized once, editor proxy validation and full-form
+submission validation. In the 250-field native fixture, one input now performs
+**one byte encoding instead of 250**; explicit full validation still encodes all
+250 controls. This measures work/allocation reduction, not end-to-end latency.
+
+Initial attempts to retain every old JS budget failed: the shared error/retry
+boundary and native-focus rules added mandatory behavior to a near-full bundle.
+After consolidating module dispatch and GET serialization, the maximum modeled
+payload increase versus the signed 7.1.1 artifact is **557 uncompressed minified
+bytes / 286 gzip bytes** across delivery scopes. Only required JS bounds were
+rounded to the next 256-byte boundary, at most **512 bytes above the previous
+limits**. CSS bounds, script counts, stylesheet counts and unrelated JS bounds
+are unchanged. This explicit adjustment is not presented as a payload speedup.
+Raw comparisons and exact changes: `payload-comparison.json`,
+`after-assets.json`, `budget-adjustments.json` in the JavaScript workspace.
+
+Final targeted frontend report:
+`.work/tests/runs/20261122-094345-cb21031d91/report.json` (ten selected scenarios,
+all passed, no skips/source changes), including native form validation,
+popovers, dialog history, public navigation and compiled client assets. UI/modal
+contracts, module/dependency boundaries, delivery budgets and diff checks passed.
+Earlier failed fixtures were corrected to use the real lifecycle dependency,
+realistic event targets and native two-argument FormData semantics; a malformed
+new fixture branch was also corrected before the final native run.
+
+Live verification synchronized seven backed-up JS sources and canonical generated
+outputs only, then the final editable-focus helper/build correction. Backups and
+manifests are in `javascript-20261122/live-backup/` and `live-backup-final/`.
+Configuration, storage, accounts and uploads were not synchronized. Desktop/mobile
+native probes confirmed exact submitter serialization and valid traversal; eight
+same-document public transitions emitted no page errors. Native probe files with
+`-after` suffix preserve the post-fix evidence. The older live runtime shell was
+retained; this is not a claim that all PHP from release 7.1.1 was deployed.
+No full preflight or new release was run, per the user's stage/release preference.
+
+## CSS audit, 22 November 2026
+
+Read-only follow-up audit: **129 source stylesheets / 101,425 bytes**, with 834
+rule/declaration blocks identified by a lightweight source scanner. This inventory
+includes owner and standalone embed styles, not just a single route's bundle.
+The scanner is a candidate finder, not a full CSS parser or proof that moving a
+rule is safe. Source CSS and generated inventory were not rewritten.
+
+Prioritized findings and consolidation candidates:
+
+1. **Hardcoded contrast and missing semantic tokens.**
+   [reset.css](../../App/Core/Ui/assets/styles/reset.css) sets skip-link text to
+   `#fff` over `--primary` rather than the existing `--on-primary`. Native computed
+   styles confirm 16px white text over `#91b4cf` in dark mode: calculated contrast
+   **2.18:1** (light mode **4.76:1**). The normal-text target is 4.5:1 in
+   [W3C SC 1.4.3](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html).
+   The former Social `profile-navigation.css` stylesheet
+   references `--on-warning`, which has no core declaration and falls back to
+   `#1f1700`. Its computed warning palette is 3.54:1 light / 9.74:1 dark. The current
+   element is an aria-hidden warning symbol with a separate accessible label, so
+   these ratios are not asserted as a normal-text WCAG failure for that widget.
+2. **Core Identity still consumes Social-owned CSS names.**
+   [Identity components](../../App/Core/Identity/assets/components.json) use
+   `profile-nav-link` and `profile-email-warning`, whose relevant rules live in
+   Social's profile stylesheet. Core-only presentation therefore cannot rely on
+   those declarations. Move generic account-menu/warning presentation into the
+   existing core account styles and keep Social profile presentation with Social.
+   This is an ownership correction; do not import Social CSS into core.
+3. **Exact repeated bases: five detected groups of at least three declarations.**
+   The strongest local opportunity is the identical border/radius/surface block
+   for link/video cards and `.status-social-link` in
+   [status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css).
+   The profile and public layout roots also share `display:grid; gap:18px;
+   align-items:start` in separate Social stylesheets. Confirm route dependency
+   selection before sharing their declaration in an existing owner stylesheet.
+   Truncation repeats in five core/Social regions, including two rules within the
+   same admin stylesheet. Prefer combining local selectors or existing component
+   variants; a global cross-owner utility is not automatically an improvement.
+4. **Repeated dimensions need semantic review, not blanket tokenization.**
+   The scan found 12px 36 times, 8px 34 times and 10px 30 times in non-custom-property
+   declarations. These counts include different purposes and are not defect counts.
+   Review navbar/filter control geometry against existing `--control-height` and
+   related tokens; e.g. 40px literals coexist with rem-scaled control dimensions.
+   Shared layout gaps can use a meaningful owner variable where consumers really
+   agree. Keep deliberate hairlines, image geometry and media ratios distinct.
+   The 899/900px boundary also coordinates JavaScript media queries: CSS custom
+   properties cannot simply replace native media-query conditions.
+5. **Standalone embed palette repeats literal colors.**
+   [embed.css](../../App/Modules/Social/assets/embed/embed.css) repeats muted
+   `#687180` in four light-mode rules and duplicates its dark counterpart. Extract
+   local embed palette variables inside that same file and keep this independent
+   document independent of the full core theme. Identical iframe/thumb geometry
+   across embed and feed is not sufficient reason to load one into the other.
+6. **Notation and near-duplicates.**
+   [cookie-consent.css](../../App/Core/Ui/assets/styles/cookie-consent.css) contains
+   four leading-dot unit values (`.8rem`, `.2rem`, `.875rem`, `.5rem`) while the
+   surrounding core styles use leading zeroes. Unify touched authoring syntax,
+   including standalone opacity shorthand, without manually editing build output.
+   Four rule pairs had at least 80% declaration overlap. For example `.check-line`
+   and `.content-image-preview-empty` differ only in font weight but represent
+   different components; similarity alone does not justify a new micro-utility.
+
+The five `!important` declarations found are hidden-state enforcement and reduced
+motion policy. They are not cleanup defects merely because they use importance.
+No CSS size, render-time or visual improvement is claimed before implementation.
+Next CSS stage should preserve cascade order, owner selection, responsive rules,
+focus/hover states and theme contrast; verify affected public/admin surfaces,
+mobile/desktop geometry, shared UI contracts and asset reports. Do not split the
+styles into more source files.
+
+Evidence: `.work/performance/css-20261122/audit.json`, `token-contrast.json` and
+`theme-probe.json`, with scanner/native probe scripts alongside. The theme probe
+used temporary DOM/style changes in headless Chromium on the existing Laragon
+site, with no saved theme setting or user-data mutation. Rules/at-rule contexts
+were retained when grouping candidates; all highlighted examples were read in
+source before being recommended. CSS optimization itself remains unimplemented.
+
+### CSS implementation and icon alert review ? 2026-11-22
+
+Implemented the reviewed CSS corrections without adding source files:
+
+- Skip-link foreground uses `--on-primary`; native dark contrast is now 7.51:1
+  instead of 2.18:1. The light palette is unchanged.
+- Account trigger positioning and the warning badge belong to existing Identity
+  user-menu styles. Identity no longer references Social profile classes. The
+  now-empty Social stylesheet and its manifest entry were removed. `--on-warning`
+  is declared alongside the shared warning palette.
+- Combined the exact local card and admin truncation bases, normalized leading
+  zeroes, and consolidated the standalone embed palette in its existing file.
+  Native Chromium comparison preserved all sampled embed colors and geometry in
+  light and dark modes (36 elements). Separate owner layouts and near-duplicates
+  remain separate: they do not have an established shared component contract.
+  Fixed media/image dimensions and coordinated breakpoints retain their semantics.
+- Regenerated the UI inventory and reviewed CSS rule snapshot: 784 to 781 rules.
+  CSS delivery limits were not increased. These are maintainability and contrast
+  corrections; no render-time speedup is claimed.
+
+Targeted verification: UI ownership/contracts, dependency and module boundaries,
+asset budgets (22 scopes), standalone Accounts presentation/build, component
+presentation and asset graph passed. Six selected frontend scenarios passed in
+`.work/tests/runs/20261122-095533-bc87e4eaa7/report.json`; its seventh scenario
+(styles) initially reported the expected old inventory. After reviewing the
+changed rules and updating the existing baseline, the isolated styles rerun
+passed in `.work/tests/runs/20261122-095718-6d1ac6397e/report.json`. PHP checks:
+`.work/tests/runs/20261122-095720-7be9f1b569/report.json`. No preflight was run.
+
+Only changed runtime files and canonical build outputs were synchronized to
+Laragon with backups under `.work/performance/css-20261122/`. Native 390px/1280px
+light/dark screenshots checked the actual guest login and 404 surfaces, focus and
+horizontal overflow. Guest `/` resolves to login and `/author/1` returns 404;
+authenticated live feed/admin visual inspection was unavailable. Actual account,
+admin and other component behavior was exercised by native isolated fixtures.
+Live evidence: `live-after.json`; embed equivalence script/screenshots and before/
+after CSS scans are in the same work directory. No user setting or data was saved.
+
+GitHub [CodeQL alert 17](https://github.com/hybernia1/TinyCat/security/code-scanning/17)
+is the relocated occurrence of previously dismissed alert 4, with no linked PR.
+The reviewed code creates SVG nodes using `createElementNS` and writes the sprite
+reference with `setAttribute`; it does not interpret the string as HTML. The icon
+name is allowlisted, the owned sprite URL comes from `Assets::asset`, and document
+attributes are escaped by the shared template. Native live metacharacter probes
+on both viewports produced only a single SVG `use` child and rejected invalid
+icon names, with no injected element or execution. This occurrence is assessed as
+a false positive under the current source contract, not fixed by double-escaping
+an attribute. The alert was left unchanged on GitHub. See the
+[CodeQL rule explanation](https://codeql.github.com/codeql-query-help/javascript/js-xss-through-dom/).

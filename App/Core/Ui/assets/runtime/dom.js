@@ -7,7 +7,7 @@ import "./urls.js";
   function isFocusableVisible(element) {
     var style;
 
-    if (!element || element.disabled || element.hidden || element.closest('[hidden], [aria-hidden="true"]')) {
+    if (!element || element.disabled || element.matches(':disabled') || element.hidden || element.closest('[hidden], [inert], [aria-hidden="true"]')) {
       return false;
     }
 
@@ -17,7 +17,7 @@ import "./urls.js";
   TinyCat.dom = {
     visible: isFocusableVisible,
     focusables: function (root) {
-      return TinyCat.dom.all('a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), iframe, [contenteditable="true"], [tabindex]:not([tabindex="-1"])', root).filter(isFocusableVisible);
+      return TinyCat.dom.all('a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), iframe, [contenteditable]:not([contenteditable="false"]), [tabindex]:not([tabindex="-1"])', root).filter(function (element) { return (element.tabIndex >= 0 || (!element.hasAttribute("tabindex") && element.isContentEditable && !(element.parentElement && element.parentElement.isContentEditable))) && isFocusableVisible(element); });
     },
     focusFirst: function (root, fallbackSelector) {
       var items = TinyCat.dom.focusables(root);

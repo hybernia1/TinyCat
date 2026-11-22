@@ -61,6 +61,7 @@
   --success: light-dark(#15803d, #9ac59b);
   --success-soft: light-dark(#e9f8ef, #253428);
   --warning: light-dark(#b45309, #dbbc7d);
+  --on-warning: light-dark(#ffffff, #1f1700);
   --warning-soft: light-dark(#fff4e5, #373024);
   --info: light-dark(#64748b, #91b4cf);
   --info-soft: light-dark(#eef2f6, #29343c);

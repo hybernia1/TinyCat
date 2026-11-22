@@ -6,31 +6,14 @@ import "./lifecycle.js";
   "use strict";
   var T = window.TinyCat, routes = new Map(), helpUrl = null, pageRoute = null, overlay = null, beforeLeave = function () { return true; };
   var initial = new URL(window.location.href), renderedPage = initial.pathname + initial.search;
-  function urlWithFormData(action, formData, omit) {
+  function urlWithFormData(action, formData, omit, keepEmpty) {
     var url = new URL(action || window.location.href, window.location.href);
     var ignored = omit || [];
-    var keys = [];
-
-    formData.forEach(function (_value, key) {
-      if (keys.indexOf(key) === -1) {
-        keys.push(key);
-      }
-    });
-
-    keys.forEach(function (key) {
-      url.searchParams.delete(key);
-    });
-
+    new Set(formData.keys()).forEach(function (key) { url.searchParams.delete(key); });
     formData.forEach(function (value, key) {
-      var stringValue = String(value || "");
-
-      if (ignored.indexOf(key) !== -1 || stringValue === "") {
-        return;
-      }
-
-      url.searchParams.append(key, stringValue);
+      var text = String(value || "");
+      if (!ignored.includes(key) && (keepEmpty || text !== "")) { url.searchParams.append(key, text); }
     });
-
     return T.navigation.compact(url);
   }
   function historyUrl(source, fallback, formData) {

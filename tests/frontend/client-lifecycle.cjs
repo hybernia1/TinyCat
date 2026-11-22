@@ -9,7 +9,7 @@ function lifecycle() {
     translation:{hydrate() {}, dispose() {}}, editor:{hydrate() {calls.hydrate++;}, hideSuggestions() {calls.editorDispose++;}}
   }}, status:{result() {}, navigation:{}, controllers:{feed:{initStatusFeedLazy() {}, dispose() {}},actions:{prepareForms() {}},comments:{}}}};
   const context = vm.createContext({window:{TinyCat:T},document:{}});
-  for (const file of ['App/Core/Ui/assets/runtime/modules.js','App/Modules/Social/assets/content/presentation.js','App/Modules/Social/assets/content/editor-entry.js','App/Modules/Social/assets/content/index.js','App/Modules/Social/assets/status/index.js']) load(context,file);
+  for (const file of ['App/Core/Ui/assets/runtime/lifecycle.js','App/Core/Ui/assets/runtime/modules.js','App/Modules/Social/assets/content/presentation.js','App/Modules/Social/assets/content/editor-entry.js','App/Modules/Social/assets/content/index.js','App/Modules/Social/assets/status/index.js']) load(context,file);
   T.modules.hydrate({}); T.modules.dispose({});
   assert.deepEqual(calls,{hydrate:1,editorDispose:1,imageDispose:1,mediaDispose:1},'Each shared capability has exactly one lifecycle owner');
 }
@@ -57,10 +57,26 @@ async function upload(outcome) {
   else {reject(new Error('failed'));await Promise.resolve();reject(new Error('retry failed'));}
   await pending; assert.equal(replacements,0);assert.equal(toasts,0);
 }
+function faultIsolation() {
+  const errors=[],calls=[],context=vm.createContext({window:{reportError:error=>errors.push(error.message)},document:{}});
+  load(context,'App/Core/Ui/assets/runtime/lifecycle.js');load(context,'App/Core/Ui/assets/runtime/modules.js');
+  const T=context.window.TinyCat;let attempts=0;
+  T.modules.register('first',{init(){calls.push('first');},dispose(){calls.push('dispose-first');}});
+  T.modules.register('retry',{init(){attempts++;if(attempts===1)throw Error('injected-init');},dispose(){throw Error('injected-dispose');}});
+  T.modules.register('last',{init(){calls.push('last');},dispose(){calls.push('dispose-last');}});
+  T.lifecycle.register('modules',{init:T.modules.init,hydrate:T.modules.hydrate,dispose:T.modules.dispose});
+  T.lifecycle.start();assert.deepEqual(calls,['first','last']);assert.equal(T.lifecycle.preparing(),false);
+  T.lifecycle.start();T.lifecycle.start();assert.equal(attempts,2);assert.equal(calls.length,2,'Successful initializers run once while failed initialization retries');
+  T.lifecycle.dispose({});assert.ok(calls.includes('dispose-first')&&calls.includes('dispose-last'),'One failed disposer cannot block unrelated cleanup');
+  assert.deepEqual(errors,['injected-init','injected-dispose']);
+  const order=[];T.lifecycle.register('high',{hydrateOrder:20,hydrate(){order.push('high');},dispose(){order.push('dispose-high');}});
+  T.lifecycle.register('low',{hydrateOrder:-20,hydrate(){order.push('low');},dispose(){order.push('dispose-low');}});
+  T.lifecycle.hydrate({});T.lifecycle.dispose({});assert.deepEqual(order,['low','high','dispose-high','dispose-low']);
+}
 let completed = false;
 process.on("beforeExit", () => { if (!completed && !process.exitCode) { console.error("Lifecycle regression did not finish"); process.exitCode = 1; } });
 (async()=>{
-  lifecycle();
+  lifecycle();faultIsolation();
   for(const outcome of ['success','error']) {await avatar(outcome);await composer(outcome);await upload(outcome);}
   await avatar('success',true);
   completed = true;

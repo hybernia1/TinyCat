@@ -3,14 +3,14 @@ import "./runtime/lifecycle.js";
 import "./form-state.js";
 (function () {
   "use strict";
-  var TinyCat = window.TinyCat, qsa = TinyCat.dom.all;
+  var TinyCat = window.TinyCat, qsa = TinyCat.dom.all, encoder, selector = "[data-max-bytes], [data-max-length], [data-min-length]";
   function syncConstraints(scope) {
-    qsa('[data-max-bytes], [data-max-length], [data-min-length]', scope).forEach(function (field) {
+    (scope && scope.matches && scope.matches(selector) ? [scope] : qsa(selector, scope)).forEach(function (field) {
       if (typeof field.setCustomValidity !== "function") { return; }
       var value = String(field.value || ""), length = field.hasAttribute("data-max-length") || field.hasAttribute("data-min-length") ? Array.from(value).length : 0;
       var invalid = (field.hasAttribute("data-max-length") && length > Number(field.dataset.maxLength))
         || (field.hasAttribute("data-min-length") && length < Number(field.dataset.minLength))
-        || (field.hasAttribute("data-max-bytes") && new TextEncoder().encode(value).length > Number(field.dataset.maxBytes));
+        || (field.hasAttribute("data-max-bytes") && (encoder || (encoder = new TextEncoder())).encode(value).length > Number(field.dataset.maxBytes));
       if (invalid || field.dataset.tinycatConstraintInvalid === "true") {
         field.setCustomValidity(invalid ? TinyCat.i18n.t("common.validation_invalid", { field: field.name }) : "");
         if (invalid) { field.dataset.tinycatConstraintInvalid = "true"; } else { delete field.dataset.tinycatConstraintInvalid; }
@@ -21,7 +21,7 @@ import "./form-state.js";
     ["input", "change", "tinycat:editor-sync"].forEach(function (name) {
       document.addEventListener(name, function (event) {
         var field = event.target, form = field.form || (field.closest && field.closest("form"));
-        if (form) { syncConstraints(form); }
+        if (form) { syncConstraints((field.dataset.validationFor && form.elements.namedItem(field.dataset.validationFor)) || field); }
       });
     });
     document.addEventListener("click", function (event) {

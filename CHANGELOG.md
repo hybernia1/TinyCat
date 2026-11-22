@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.1.2 - 2026-11-22
+
+- Isolate client lifecycle hook failures, retry unfinished initialization and dispose services in reverse hydration order.
+- Preserve native submitter values and repeated/empty GET fields through shared form handling; preserve disabled states while loading.
+- Validate only changed controls during input and reuse the UTF-8 encoder, retaining whole-form validation before submission.
+- Correct keyboard traversal for negative tabindex, inert ancestors, disabled fieldsets and editable hosts.
+- Keep account-menu styles in core Identity, consolidate local CSS duplicates and the independent embed palette, and fix dark-theme skip-link contrast.
+- No database migration. PHP 8.4 and completed 6.0.10 or newer remain required. Use matching signed Core or Social packages.
+
 ## 7.1.1 - 2026-11-22
 
 - Stream database snapshots, batch inserts and validate restore structure before destructive statements. Preserve legacy snapshots, atomic writes and after-commit effects; coalesce Settings invalidation and remove repeated schema checks.

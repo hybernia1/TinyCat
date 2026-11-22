@@ -10,7 +10,7 @@ function setup() {
   const T = {
     dom: { find: () => target, emit() {} }, lifecycle: { register: (name, value) => { services[name] = value; }, hydrate() {} },
     api: { unwrap: data => data.data, errors: error => error.fields, details: () => ({}), request: (url, options) => new Promise((resolve, reject) => { pending.push({ url, options, resolve, reject }); }) },
-    forms: { clearErrors() {}, applyErrors: (_, value) => { errors.push(value); return value; }, focusInvalid: field => { if (field) focused.push(field); }, reset() {}, markClean() {}, loading: (source, busy) => { loading.push([source, busy]); }, dirty: () => [], confirmDiscard: async () => true },
+    forms: { data: (form, submitter) => new FormData(form, submitter), clearErrors() {}, applyErrors: (_, value) => { errors.push(value); return value; }, focusInvalid: field => { if (field) focused.push(field); }, reset() {}, markClean() {}, loading: (source, busy) => { loading.push([source, busy]); }, dirty: () => [], confirmDiscard: async () => true },
     i18n: { label: key => key }, actions: { confirm: source => confirmation.run(source) }, dialog: {},
     modules: { result: (source, response) => { applied.push(response.data); } }, toasts: { show: message => { toasts.push(message); } }
   };

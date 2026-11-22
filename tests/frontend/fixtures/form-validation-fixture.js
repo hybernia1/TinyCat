@@ -4,7 +4,27 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
-  if (mode === 'code-copy') {
+  if (mode === 'javascript-audit') {
+    T.lifecycle.start();
+    const root=document.createElement('div');root.innerHTML='<button tabindex="-1">Inactive</button><button id="audit-active">Active</button><fieldset disabled><button>Disabled</button></fieldset><div inert><button>Inert</button></div>';
+    document.body.append(root);check(T.dom.focusables(root).length===1&&T.dom.focusables(root)[0].id==='audit-active','Traversal excludes negative tabindex, disabled fieldsets and inert ancestors');root.remove();
+    const editing=document.createElement('div');editing.contentEditable='plaintext-only';document.body.append(editing);check(T.dom.focusables(document.body).includes(editing),'Editable hosts remain tabbable without an explicit tabindex');editing.tabIndex=-1;check(!T.dom.focusables(document.body).includes(editing),'An explicit negative tabindex still excludes an editable host');editing.remove();
+    const form=document.createElement('form');form.id='audit-form';form.action='/api/local-audit';form.method='post';
+    for(let i=0;i<250;i++){const field=document.createElement('input');field.name='value'+i;field.dataset.maxBytes='100';field.value='sample';form.append(field);}
+    const submit=document.createElement('button');submit.type='submit';submit.name='intent';submit.value='publish';submit.setAttribute('form',form.id);document.body.append(form,submit);
+    const encode=TextEncoder.prototype.encode;let encoded=0;TextEncoder.prototype.encode=function(...args){encoded++;return encode.apply(this,args);};
+    try {
+      form.elements[0].dispatchEvent(new Event('input',{bubbles:true}));check(encoded===1,'One input validates only the changed field');
+      const proxy=document.createElement('div');proxy.dataset.validationFor='value0';form.append(proxy);encoded=0;proxy.dispatchEvent(new Event('input',{bubbles:true}));check(encoded===1,'Editor proxy validates its canonical source');
+      encoded=0;T.forms.syncConstraints(form);check(encoded===250,'Full-form validation remains available before submission');
+    } finally {TextEncoder.prototype.encode=encode;}
+    const request=T.api.request;let sent;
+    try {
+      T.api.request=async(url,options)=>{check(new URL(url,location.href).pathname==='/api/local-audit','Fixture request stays intercepted');sent=options.body;return {data:{}};};
+      await new Promise((resolve,reject)=>{T.forms.bind(form,{apply:resolve,error:reject});form.requestSubmit(submit);});
+      check(sent.get('intent')==='publish'&&sent.getAll('intent').length===1,'Associated submitter is serialized once by bound forms');
+    } finally {T.forms.dispose(form);form.remove();submit.remove();T.api.request=request;}
+  } else if (mode === 'code-copy') {
     const value='  echo "žluťoučký <b>& test";\n\tsecond line\n';
     const form=T.ui.form('/api/copy-fixture','POST'),pre=document.createElement('pre'),code=document.createElement('code'),inline=document.createElement('code'),editor=document.createElement('div'),link=document.createElement('a');
     code.textContent=value;pre.append(code);inline.textContent='inline <value>';

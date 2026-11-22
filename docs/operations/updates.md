@@ -80,6 +80,21 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 7.1.2
+
+This maintenance release improves client lifecycle recovery, native/AJAX form
+parity, interactive validation and keyboard focus traversal. Account-menu styles
+now belong to core Identity, local CSS duplicates are consolidated, and the
+skip-link uses its theme foreground token. The standalone embed retains its own
+palette and does not load the core theme.
+
+No database migration is added. PHP 8.4 and completed 6.0.10 or newer remain
+required. Configuration, accounts, uploads, module activation and published
+migration history are preserved. Use the matching signed Core or Social update;
+install ZIPs are for new sites. Refresh the private rescue launcher before an
+update from 6.0.10. When updating from before 7.1.1, also follow its scheduler
+HTTPS and coordinated worker-rollout instructions below.
+
 ## Upgrading to 7.1.1
 
 This maintenance release improves streaming/batched database snapshots, shared

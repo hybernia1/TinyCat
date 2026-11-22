@@ -5,7 +5,8 @@
 }
 
 .status-link-card,
-.status-video-card {
+.status-video-card,
+.status-social-link {
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -238,13 +239,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.status-social-link {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
 }
 
 .status-social-link > .status-link-card {

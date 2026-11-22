@@ -1,5 +1,6 @@
 import "./runtime/dom.js";
 import "./runtime/api-client.js";
+import "./runtime/navigation.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat = window.TinyCat || {};
@@ -15,32 +16,25 @@ import "./runtime/api-client.js";
   }
 
   function setLoading(element, loading) {
-    if (!element) {
-      return;
-    }
-
+    if (!element) { return; }
     element.classList.toggle("is-loading", loading);
-    element.setAttribute("aria-busy", loading ? "true" : "false");
-
+    element.setAttribute("aria-busy", String(loading));
     controls(element).forEach(function (field) {
-      if (loading) {
-        field.dataset.tinycatWasDisabled = field.disabled ? "true" : "false";
-        field.disabled = true;
-      } else if (field.dataset.tinycatWasDisabled !== "true") {
-        field.disabled = false;
-        delete field.dataset.tinycatWasDisabled;
-      }
+      if (loading && field.dataset.tinycatWasDisabled === undefined) { field.dataset.tinycatWasDisabled = String(field.disabled); }
+      field.disabled = loading || field.dataset.tinycatWasDisabled === "true";
+      if (!loading) { delete field.dataset.tinycatWasDisabled; }
     });
   }
 
   TinyCat.forms = {
+    loading: setLoading,
+    data: function (form, submitter) { return new FormData(form, submitter || undefined); },
     validate: function (form) {
       if (TinyCat.forms.syncConstraints) { TinyCat.forms.syncConstraints(form); }
       return form.reportValidity();
     },
     setSubmitGuard: function (form, guard) { submitGuards.set(form, guard); },
     canSubmit: function (form) { var guard = submitGuards.get(form); return !guard || guard(); },
-    loading: setLoading,
     request: function (form, url, options) {
       if (requests.has(form)) { return requests.get(form).promise; }
       var controller = new AbortController(), previousBusy = form.getAttribute("aria-busy");
@@ -85,16 +79,10 @@ import "./runtime/api-client.js";
         try {
           if (!await TinyCat.forms.canSubmit(form) || disposed) { return; }
           var method = String(settings.method || form.method || "POST").toUpperCase();
-          var body = new FormData(form);
+          var body = TinyCat.forms.data(form, event.submitter);
           var url = new URL(settings.url || form.action, window.location.href);
           if (method === "GET") {
-            var names = new Set();
-            body.forEach(function (value, name) {
-              if (typeof value === "string") {
-                if (!names.has(name)) { url.searchParams.delete(name); names.add(name); }
-                url.searchParams.append(name, value);
-              }
-            });
+            url = new URL(TinyCat.navigation.formUrl(url.href, body, [], true), window.location.href);
           }
           var result = await TinyCat.forms.request(form, url.href, {
             method: method,

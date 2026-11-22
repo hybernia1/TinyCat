@@ -14,7 +14,6 @@
       "users/follow-label"
     ],
     "styles": [
-      "App/Modules/Social/assets/users/styles/profile-navigation.css",
       "App/Modules/Social/assets/users/styles/profile-avatar.css",
       "App/Modules/Social/assets/users/styles/profile.css",
       "App/Modules/Social/assets/users/styles/profile-details.css",

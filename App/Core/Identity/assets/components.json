@@ -1308,7 +1308,7 @@
       {
         "tag": "summary",
         "attrs": {
-          "class": "nav-link user-menu-trigger profile-nav-link",
+          "class": "nav-link user-menu-trigger",
           "aria-label": {"t": "account.profile_settings"},
           "title": {"get": "displayName"}
         },
@@ -1317,7 +1317,7 @@
           {"icon": "chevron-down"},
           {
             "tag": "span",
-            "attrs": {"class": "notification-badge profile-email-warning", "aria-hidden": "true"},
+            "attrs": {"class": "notification-badge user-menu-email-warning", "aria-hidden": "true"},
             "when": {"get": "profileNeedsEmail"},
             "children": ["!"]
           },
