@@ -515,6 +515,14 @@
       ]
     },
     {
+      "name": "installation/recovery",
+      "source": "App/Core/Installation/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "operation"
+      ]
+    },
+    {
       "name": "installation/page",
       "source": "App/Core/Installation/assets/components.json",
       "dependencies": [
@@ -522,6 +530,7 @@
         "installation/database",
         "installation/done",
         "installation/language",
+        "installation/recovery",
         "installation/steps",
         "installation/tables"
       ],
@@ -531,6 +540,7 @@
         "error",
         "languages",
         "locale",
+        "operation",
         "password_max",
         "required_tables",
         "steps",
@@ -1811,6 +1821,7 @@
       "inputs": [
         "comment",
         "comments",
+        "comments_next_url",
         "context",
         "item.constraints",
         "item.id",
@@ -2387,6 +2398,7 @@
         "can_follow",
         "clear_filter_url",
         "comments",
+        "comments_next_url",
         "compact",
         "composer",
         "constraints",
@@ -2580,6 +2592,7 @@
       ],
       "inputs": [
         "comments",
+        "comments_next_url",
         "item",
         "page_path",
         "viewer"
@@ -2884,6 +2897,7 @@
         "item.capabilities.interact",
         "item.content_id",
         "item.created_at",
+        "item.has_replies",
         "item.id",
         "item.likes_count",
         "item.parent_id",
@@ -15677,6 +15691,25 @@
         "App/Core/Ui/assets/runtime/component-renderer.js"
       ],
       "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "App/Modules/Social/assets/status/comment-pagination.js",
+      "imports": [
+        "App/Modules/Social/assets/status/comments.js"
+      ],
+      "entries": [
+        {
+          "manifest": "App/Modules/Social/assets/module.json",
+          "routes": [
+            "/",
+            "/social",
+            "/status",
+            "/author",
+            "/tag"
+          ]
+        }
+      ],
       "standalone": false
     },
     {

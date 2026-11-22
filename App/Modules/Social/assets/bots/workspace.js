@@ -22,8 +22,8 @@ import "../../../../Core/Ui/assets/tabs.js";
   function refreshMetadata(state) {
     var serial = state.metadataRevision = (state.metadataRevision || 0) + 1;
     return request(state, "/api/bots/accounts/" + state.id).then(function (response) {
-      if (state.dialog.isConnected && state.metadataRevision === serial) { metadata(state, response.data); }
-    }).catch(function (error) { if (state.dialog.isConnected && state.metadataRevision === serial) { failed(error); } });
+      if (!state.disposed && state.dialog.isConnected && state.metadataRevision === serial) { metadata(state, response.data); }
+    }).catch(function (error) { if (!state.disposed && state.dialog.isConnected && state.metadataRevision === serial) { failed(error); } });
   }
   function footer(state) {
     var content = state.active === "account" ? state.actions : state.pagers[state.active];
@@ -71,13 +71,13 @@ import "../../../../Core/Ui/assets/tabs.js";
     root.dataset.loading = "true"; root.setAttribute("aria-busy", "true");
     var url = name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl, generation = root.dataset.apiGeneration;
     request(state, url).then(function (response) {
-      if (!state.dialog.isConnected || generation !== root.dataset.apiGeneration || url !== (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) { return; }
+      if (state.disposed || !state.dialog.isConnected || generation !== root.dataset.apiGeneration || url !== (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) { return; }
       if (name === "sources") { scopedSources(state, response); }
       else if (name === "history") { scopedRuns(state, response); }
       else { T.bots.posts(root, response); root.dataset.loaded = "true"; }
       T.lifecycle.hydrate(root);
     }).catch(function (error) {
-      if (error.name !== "AbortError" && state.dialog.isConnected && generation === root.dataset.apiGeneration && url === (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) {
+      if (!state.disposed && error.name !== "AbortError" && state.dialog.isConnected && generation === root.dataset.apiGeneration && url === (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) {
         var retry = T.components.render("bots/workspace-retry", {});
         retry.addEventListener("click", function () { load(state, name, true); });
         T.content.replaceChildren(root, retry); delete state.pagers[name];
@@ -168,9 +168,9 @@ import "../../../../Core/Ui/assets/tabs.js";
     dispose: function (root) {
       var state = states.get(root);
       if (!state) { return; }
+      state.disposed = true;
       state.requests.forEach(function (controller) { controller.abort(); });
-      T.filters.remove("bot-detail-posts-filter-modal");
-      T.filters.remove("bot-detail-runs-filter-modal");
+      T.filters.dispose(root);
       states.delete(root);
     }
   };

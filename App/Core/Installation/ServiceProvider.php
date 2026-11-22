@@ -12,5 +12,6 @@ final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Co
     {
         Api::register($api);
         \TinyCat\Http\Router::route('GET', '/install', static function (): void { Pages::page(); });
+        \TinyCat\Http\Router::route('GET', '/install/recovery', static function (): void { Pages::recovery(); });
     }
 }

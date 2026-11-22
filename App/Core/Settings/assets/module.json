@@ -6,6 +6,7 @@
     "entries": [
       "App/Core/Settings/assets/index.js"
     ],
+    "uses": ["ui.form-constraints"],
     "components": [
       "settings/sections",
       "settings/editor-form"

@@ -32,12 +32,33 @@ final class Cleanup
         return in_array($size, $allowed, true) ? $size : 1000;
     }
 
+    /** Active tasks plus explicitly opted-in recovery for installed inactive data owners.
+     * @return array<string, \TinyCat\Core\Modules\MaintenanceTask> */
+    private static function maintenanceTasks(): array
+    {
+        $active = \TinyCat\Core\Modules\Registrations::current();
+        $result = [];
+        foreach ($active->entries->maintenance as $task) { $result[$task->id] = $task; }
+        $owners = \TinyCat\Core\Files\References::owners();
+        $state = \TinyCat\Core\Modules\Deployment::read(\TinyCat\Support\Paths::basePath());
+        if ($state === null) { return $result; }
+        $installed = $owners->registries();
+        foreach ($installed->entries->maintenance as $task) {
+            $owner = $installed->owner('maintenance', $task->id);
+            if (!$task->whenInactive || isset($result[$task->id]) || in_array($owner, $state['active'], true)) { continue; }
+            $catalog = $owners->catalog;
+            $result[$task->id] = new \TinyCat\Core\Modules\MaintenanceTask($task->id, static fn (int $batch): array => \TinyCat\Core\Modules\ModuleAutoload::withCatalog($catalog, static fn (): array => ($task->run)($batch)), $task->order, whenInactive: true);
+        }
+        uasort($result, static fn (\TinyCat\Core\Modules\MaintenanceTask $a, \TinyCat\Core\Modules\MaintenanceTask $b): int => $a->order <=> $b->order);
+        return $result;
+    }
+
     /**
      * @return array<mixed>
      */
     public static function cron_cleanup_tasks(): array
     {
-        return array_map(static fn (\TinyCat\Core\Modules\MaintenanceTask $task): string => $task->id, \TinyCat\Core\Modules\Registrations::current()->entries->maintenance);
+        return array_values(array_map(static fn (\TinyCat\Core\Modules\MaintenanceTask $task): string => $task->id, self::maintenanceTasks()));
     }
 
     /**
@@ -112,7 +133,9 @@ final class Cleanup
     {
         $batchSize = self::cleanup_batch_size($batchSize);
         $startedAt = hrtime(true);
-        $result = (\TinyCat\Core\Modules\Registrations::current()->maintenance($task)->run)($batchSize);
+        $entries = self::maintenanceTasks();
+        $definition = $entries[$task] ?? throw new \InvalidArgumentException('Unknown maintenance task: ' . $task);
+        $result = ($definition->run)($batchSize);
         $error = (string) ($result['error'] ?? '');
         $changed = $result['changed'];
         $hasMore = $result['has_more'];

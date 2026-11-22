@@ -16,7 +16,7 @@ final class AvatarHttp
         if (!Usernames::valid($username)) { return null; }
         try { $user = Connection::find('users', ['username' => $username]); }
         catch (\Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure); $user = null; }
-        $url = Avatar::url((int) ($user['id'] ?? 0), (int) ($user['avatar_exists'] ?? 0) === 1, $user['updated_at'] ?? null, $user['avatar_appearance'] ?? null);
+        $url = Avatar::url((int) ($user['id'] ?? 0), (int) ($user['avatar_exists'] ?? 0) === 1, $user['updated_at'] ?? null, $user['avatar_appearance'] ?? null, $user['avatar_version'] ?? null);
         return $url !== '' ? $url : null;
     }
 

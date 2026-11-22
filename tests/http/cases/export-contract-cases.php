@@ -83,7 +83,7 @@ $assert($headXPath->evaluate('string(//link[@type="application/rss+xml"]/@href)'
 $navigationDocument = json_decode($navigationBody, true, 512, JSON_THROW_ON_ERROR)['data']['document'];
 $assert($status === 200 && $navigationDocument['tags'] === ['exportpublic'] && $navigationDocument['author'] === $postSchema['author']['url'] && $navigationDocument['rss'] === 'http://localhost/author/900001/feed', 'Client navigation carries the same article tags, author URL and RSS discovery as HTML.');
 $commentSchema = $postSchema['comment'][0];
-$assert(count($postSchema['comment']) === 1 && $commentSchema['text'] === 'Visible comment <b>literal</b>' && $commentSchema['comment'][0]['text'] === 'Visible reply', 'JSON-LD includes visible comments and keeps reply nesting.');
+$assert(count($postSchema['comment']) === 1 && $commentSchema['text'] === 'Visible comment <b>literal</b>' && !isset($commentSchema['comment']) && $postSchema['interactionStatistic'][1]['userInteractionCount'] === 2, 'JSON-LD contains the loaded root excerpt and total visible comment count.');
 $assert($commentSchema['author']['url'] === $postSchema['author']['url'] && $commentSchema['datePublished'] === '2020-01-02T00:00:00+00:00' && $commentSchema['url'] === $postSchema['url'], 'Comment JSON-LD has canonical author and page URLs and its actual publication date.');
 $assert(!str_contains(json_encode($postSchema), 'HIDDEN-COMMENT-SECRET') && !str_contains($postHtml, 'ORPHAN-REPLY-SECRET'), 'Structured data excludes hidden comments and replies missing their visible parent.');
 $assert(!str_contains((string) $feed->channel->item->title, 'https://') && !str_contains((string) $feed->channel->item->title, '<script>'), 'RSS titles omit long URLs and HTML markup.');

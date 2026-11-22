@@ -10,8 +10,8 @@
   function editor(id, persistent) {
     const layout = T.ui.tabbedContent(id, [{name:'account',label:'Account',icon:'user'}, {name:'history',label:'History',icon:'clock'}], 'account', 'Editor');
     const form = T.ui.form('/api/test', 'PATCH'); form.id = id + '-form';
-    form.append(T.dom.element('input', {name:'bio',value:'Saved'})); layout.panels.account.append(form);
-    const dialog = T.ui.dialog(id, 'Editor', layout.content, persistent, null, {kind:'editor'});
+    form.append(T.dom.element('input', {name:'bio',value:'Saved'}), T.ui.button('Save',{type:'submit'})); layout.panels.account.append(form);
+    const dialog = T.ui.formDialog(id, 'Editor', layout.content, persistent);
     T.ui.pinDialogTabs(dialog, layout.content); return dialog;
   }
   T.api.request = (url, options) => {
@@ -37,7 +37,18 @@
   T.lifecycle.start(); await pause();
   const base = location.pathname + location.search;
   const count = () => history.length;
-  if (mode === 'confirm') {
+  if (mode === 'replacement') {
+    const opener = document.getElementById('opener'); opener.focus();
+    const first = await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    check(first.querySelectorAll('[data-modal-resource-refresh]').length===1, 'Ordinary resource editors retain Refresh by default');
+    const switcher = T.dom.element('button',{'data-modal-open':first.id,'data-modal-url':'/api/users/7/avatar'},'Switch');
+    first.querySelector('.modal-body').append(switcher); switcher.focus(); switcher.click();
+    await wait(() => modal() && modal()!==first, 'A resource link replaces its dialog through the shared loader');
+    check(location.hash.includes('modal=users/7/avatar') && modal().contains(document.activeElement), 'Replacement updates history and focuses its dialog');
+    modal().querySelector('[data-modal-close]').click();
+    await wait(() => !modal() && !location.hash, 'Closing replacement consumes its history entry');
+    check(document.activeElement===opener, 'Link replacement restores focus to the original page opener');
+  } else if (mode === 'confirm') {
     await T.navigation.go(base + '&other=1');
     let decision;
     T.dialog.confirm({message:'Confirm test action'}).then(value => { decision = value; });

@@ -72,6 +72,7 @@ import "./workspace.js";
       return null;
     },
     result: function (source, response, target) {
+      if (source.matches && source.matches('form[data-status-form]')) { return false; }
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
       if (!url.pathname.startsWith("/api/bots/")) { return false; }
       var detail = T.botDetail.result(source, response, target);

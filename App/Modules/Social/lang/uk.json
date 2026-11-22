@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Написати відповідь...",
     "status_like_for": "Подобається – {context}",
     "status_unlike_for": "На відміну від – {context}",
+    "status_more_comments": "Завантажити більше коментарів",
+    "status_more_replies": "Завантажити відповіді",
     "status_comments": "Коментарі",
     "status_comment_history": "Історія редагування",
     "status_comment_history_empty": "Цей коментар ще не відредаговано.",

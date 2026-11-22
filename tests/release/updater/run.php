@@ -214,6 +214,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Core\Settings\Schema::install($database);
         $checksum = str_repeat('a', 64);
 
         $expect(!\TinyCat\Core\Updates\MigrationRegistry::hasPending([]));
@@ -236,6 +237,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Core\Settings\Schema::install($database);
         \TinyCat\Core\Updates\MigrationRegistry::ensure();
         \TinyCat\Database\Connection::insert('migrations', [
             'kind' => 'global', 'stream' => 'tinycat',

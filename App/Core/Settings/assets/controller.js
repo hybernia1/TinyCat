@@ -19,8 +19,6 @@ import "../../Ui/assets/runtime/modules.js";
         var childValue = child.type === "password" ? "" : value[child.key] == null ? child.value : value[child.key];
         return prepareField(Object.assign({}, child, { value: childValue }), name + "[" + child.key + "]", key + "." + child.key);
       });
-    } else if (type === "email_smtp") {
-      throw new Error("Missing settings group fields: " + spec.key);
     } else if (kind === "templates") {
       model.options = (spec.options || []).map(function (option) {
         return { name: name + "[" + option.value + "]", value: option.value, selected: Boolean(value[option.value]),
@@ -37,11 +35,12 @@ import "../../Ui/assets/runtime/modules.js";
       });
     } else if (kind === "textarea") {
       model.value = String(value);
-      model.attributes = { "class": "textarea", name: name, rows: "8", maxlength: spec.max || 5000, placeholder: U.text("settings.footer_placeholder") };
+      model.attributes = { "class": "textarea", name: name, rows: "8", "data-max-length": spec.max, placeholder: U.text("settings.footer_placeholder") };
     } else if (kind === "input") {
       var inputType = { int: "number", email: "email", site_url: "url", password: "password" }[type] || "text";
       model.attributes = { "class": "input", name: name, type: inputType, value: model.value,
-        required: !spec.optional && (type === "text" || type === "int"), maxlength: type === "int" ? null : spec.max || (type === "site_url" ? 2048 : 190),
+        required: !spec.optional && (type === "text" || type === "int"), "data-max-length": type === "int" || type === "site_url" ? null : spec.max,
+        "data-max-bytes": type === "site_url" ? spec.max : null,
         min: type === "int" ? spec.min ?? null : null, max: type === "int" ? spec.max ?? null : null,
         autocomplete: type === "password" ? "new-password" : type === "site_url" ? "url" : null, placeholder: type === "site_url" ? "https://example.com" : null };
     }

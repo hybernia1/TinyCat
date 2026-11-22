@@ -10,7 +10,7 @@ final class Queries
     public static function query(): \TinyCat\Database\Query
     {
         return Archive::visible(new \TinyCat\Database\Query('SELECT c.*, u.username AS author_username,
-            u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance,
+            u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version,
             ci.path AS image_path, ci.width AS image_width, ci.height AS image_height, ci.bytes AS image_bytes
             FROM social_posts c INNER JOIN users u ON u.id = c.author_id LEFT JOIN social_post_images ci ON ci.content_id = c.id'))
             ->where('u.status = ?', 'active');

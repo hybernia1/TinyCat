@@ -7,12 +7,25 @@ use TinyCat\Core\Identity\Usernames;
 final class Setup
 {
     /** @param array<string, mixed> $input
+     * @return array<string, string> */
+    public static function issues(array $input): array
+    {
+        foreach (['username', 'password', 'password_confirm'] as $field) { if (!is_string($input[$field] ?? null)) { return [$field => 'install.messages.required_fields']; } }
+        $username = Usernames::normalize($input['username']);
+        if ($username === '' || $input['password'] === '') { return ['username' => 'install.messages.required_fields']; }
+        if (!Usernames::valid($username)) { return ['username' => 'install.messages.invalid_username']; }
+        if (strlen($input['password']) < Passwords::minLength()) { return ['password' => 'install.messages.password_length']; }
+        if (Passwords::tooLong($input['password'])) { return ['password' => 'account.messages.password_too_long']; }
+        if ($input['password'] !== $input['password_confirm']) { return ['password_confirm' => 'install.messages.password_mismatch']; }
+        return [];
+    }
+
+    /** @param array<string, mixed> $input
      * @return array{username: string, password: string, locale: string} */
     public static function input(array $input): array
     {
-        foreach (['username', 'password', 'password_confirm'] as $field) { if (!is_string($input[$field] ?? null)) { throw new \InvalidArgumentException('Missing administrator field.'); } }
+        if (self::issues($input) !== []) { throw new \InvalidArgumentException('Invalid administrator credentials.'); }
         $username = Usernames::normalize($input['username']);
-        if (!Usernames::valid($username) || Passwords::fieldErrors($input['password'], $input['password_confirm']) !== []) { throw new \InvalidArgumentException('Invalid administrator credentials.'); }
         $locale = $input['locale'] ?? \TinyCat\Support\Config::get('i18n.locale', 'en');
         if (!is_string($locale) || !isset(\TinyCat\Support\TranslationSources::packages()[$locale])) { throw new \InvalidArgumentException('Invalid administrator locale.'); }
         return ['username' => $username, 'password' => $input['password'], 'locale' => $locale];

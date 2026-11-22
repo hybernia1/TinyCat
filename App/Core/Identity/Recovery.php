@@ -12,11 +12,14 @@ final class Recovery
     {
         $email = Email::normalize($email);
         if (!Email::valid($email)) { return; }
-        $user = \TinyCat\Database\Connection::one('SELECT id, username FROM users WHERE email = ? AND status = ? LIMIT 1', [$email, 'active']);
-        if ($user === null) { return; }
         $token = bin2hex(random_bytes(32));
-        self::replaceToken((int) $user['id'], hash('sha256', $token), \TinyCat\Support\Dates::dateDb('+60 minutes'));
-        $deliver((int) $user['id'], $token);
+        $userId = \TinyCat\Database\Transactions::run(static function () use ($email, $token): int {
+            $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT id FROM users WHERE email = ? AND status = ? LIMIT 1'), [$email, 'active']);
+            if ($user === null) { return 0; }
+            self::replaceToken((int) $user['id'], hash('sha256', $token), \TinyCat\Support\Dates::dateDb('+60 minutes'));
+            return (int) $user['id'];
+        });
+        if ($userId > 0) { $deliver($userId, $token); }
     }
 
     /** @return array<string, list<string>> */
@@ -39,6 +42,8 @@ final class Recovery
         }
 
         \TinyCat\Database\Transactions::run(static function () use ($userId, $tokenHash, $expiresAt): void {
+            $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT id FROM users WHERE id = ?'), [$userId]);
+            if ($user === null) { return; }
             \TinyCat\Database\Connection::delete('password_reset_tokens', ['user_id' => $userId]);
             \TinyCat\Database\Connection::insert('password_reset_tokens', [
                 'user_id' => $userId,
@@ -59,6 +64,8 @@ final class Recovery
         }
 
         return \TinyCat\Database\Transactions::run(static function () use ($userId, $tokenHash, $passwordHash, $usedAt): bool {
+            // All credential operations lock the account before its reset tokens.
+            $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [$userId]);
             $consumed = \TinyCat\Database\Connection::exec(
                 'UPDATE password_reset_tokens
                     SET used_at = ?
@@ -70,14 +77,10 @@ final class Recovery
                 return false;
             }
 
-            $updated = \TinyCat\Database\Connection::exec(
-                'UPDATE users SET password = ? WHERE id = ? AND status = ?',
-                [$passwordHash, $userId, 'active']
-            );
-
-            if ($updated !== 1) {
+            if ($user === null || ($user['status'] ?? '') !== 'active') {
                 throw new RuntimeException('Password recovery user changed before token consumption.');
             }
+            Passwords::persist($userId, ['password' => $passwordHash]);
 
             return true;
         });

@@ -31,14 +31,17 @@ final readonly class PostCreation
 
     public static function fromText(string $text, string $kind = 'post'): self
     {
-        $body = \TinyCat\Support\Text::plain_text_limit(PostText::normalize(\TinyCat\Support\Text::strip_html_tags_preserving_text($text)), self::BODY_MAX_LENGTH);
+        $policy = \TinyCat\Core\Text\Policies::policy($kind);
+        $body = PostText::normalize(\TinyCat\Support\Text::strip_html_tags_preserving_text($text));
+        if ($policy->prepare !== null) { $body = ($policy->prepare)($body); }
+        $body = \TinyCat\Support\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);
         $host = Policy::blockedHost($body);
         $rejection = $host !== ''
             ? ['code' => 'blocked_url', 'message_key' => 'moderation.messages.blocked_url', 'params' => ['host' => $host]]
             : self::tagRejection($body);
         if ($rejection !== null) { return new self($body, [], [], $rejection); }
 
-        $normalize = \TinyCat\Core\Text\Policies::policy($kind)->normalize;
+        $normalize = $policy->normalize;
         $body = $normalize !== null ? $normalize($body) : $body;
         $body = Tags::normalize_tags_for_storage($body);
         $body = \TinyCat\Support\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);

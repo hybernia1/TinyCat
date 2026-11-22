@@ -79,8 +79,18 @@ final class Settings
                 'label' => ['t' => 'settings.sections.analytics'],
                 'icon' => 'chart',
                 'fields' => [
-                    ['key' => 'analytics.google_measurement_id', 'label' => ['t' => 'settings.fields.google_measurement_id'], 'type' => 'optional_text', 'default' => '', 'max' => 40, 'help' => ['t' => 'settings.fields.google_measurement_id_help']],
+                    ['key' => 'analytics.google_measurement_id', 'label' => ['t' => 'settings.fields.google_measurement_id'], 'type' => 'optional_text', 'default' => '', 'max' => 40, 'help' => ['t' => 'settings.fields.google_measurement_id_help'], 'normalize' => self::normalizeMeasurement(...)],
                 ],
         ];
+    }
+
+    /** @return array{string, string} */
+    private static function normalizeMeasurement(mixed $raw): array
+    {
+        $field = self::section_analytics()['fields'][0];
+        unset($field['normalize']);
+        [$value] = Administration::tc_admin_settings_value_from_post($field, [$field['key'] => $raw]);
+        if ($value !== '' && preg_match('/^G-[A-Z0-9]+$/i', $value) !== 1) { throw new \InvalidArgumentException('Google Analytics Measurement ID must look like G-XXXXXXXXXX.'); }
+        return [$value, 'string'];
     }
 }

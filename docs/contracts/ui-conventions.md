@@ -409,7 +409,7 @@ authorization, stable cursors and canonical URLs remain owned by the source.
 No domain IDs or source list belong in the shared workspace or core search host.
 
 Social batches visible selected IDs through its feed hydration and reuses
-`status/card`. Blog search and public listing share `blog/article-summary`.
+`status/card`.
 Optional owner assets must cover `/search/all` when that presentation needs them.
 Empty results use one `ui/empty-state`; the header remains the only query input.
 

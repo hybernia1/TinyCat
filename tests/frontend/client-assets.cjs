@@ -22,7 +22,7 @@ function load(route, locale = "en", compiled = false) {
   const emptyRoot = { dataset: {}, classList: { add() {}, remove() {}, toggle() {} }, querySelectorAll() { return []; }, querySelector() { return null; } };
   const document = { readyState: "loading", body: emptyRoot, documentElement: emptyRoot, addEventListener() {}, querySelectorAll() { return []; }, querySelector() { return null; }, getElementById() { throw new Error("Catalogs must not be read from DOM"); } };
   const window = { TinyCat: {}, location: new URL("https://tinycat.test" + route), addEventListener() {}, setInterval() {} };
-  const context = vm.createContext({ window, document, URL, URLSearchParams, console, Set, Map });
+  const context = vm.createContext({ window, document, URL, URLSearchParams, TextEncoder, console, Set, Map });
   for (const asset of bundle.assets) vm.runInContext(asset.source, context, { filename: asset.url });
   window.TinyCat.init();
   check(window.TinyCat.modules.navigationUrl({ dataset: {}, getAttribute() { return null; }, closest() { return null; } }) === "", "Non-status navigation does not require the status module: " + route);
@@ -31,13 +31,18 @@ function load(route, locale = "en", compiled = false) {
 }
 const publicPage = load("/");
 for (const mode of [false, true, "min"]) {
-  for (const route of ["/login", "/register", "/recovery", "/logout", "/privacy", "/search/all", "/notifications"]) {
+  for (const route of ["/login", "/register", "/recovery", "/logout", "/privacy", "/notifications"]) {
     const page = load(route, "en", mode);
     check(page.T.authentication && !page.T.status && !page.T.socialUsers && !page.T.site, "Core public pages exclude the Social feed runtime in every delivery variant: " + route);
     check(!page.T.filters && !page.T.adminDefinitions && !page.T.settings, "Public pages exclude administrative controllers: " + route);
     check(!page.definitions.includes("status/card") && !page.definitions.includes("bots/sources") && !page.definitions.includes("users/admin-fields"), "Core public catalogs exclude domain and admin views: " + route);
     check(!Object.keys(page.catalog).some(key => key.startsWith("bots.") || key.startsWith("settings.fields.") || key.startsWith("settings.sections.") || key === "settings.title"), "Core public catalogs exclude administrative editor translations: " + route);
   }
+  const search = load("/search/all", "en", mode);
+  check(search.T.status && !search.T.socialUsers && search.definitions.includes("search/posts") && search.definitions.includes("status/card"), "Search delivers the owner's SSR card and interactive dependencies in every delivery variant");
+  check(search.sources.includes("App/Modules/Social/assets/status/index.js"), "Search cards use the same status controller as feed cards");
+  check(search.style_sources.includes("App/Modules/Social/assets/status/styles/status-header.css") && search.style_sources.includes("App/Modules/Social/assets/status/styles/status-content-mobile.css"), "Search SSR cards receive the owner's desktop and mobile styles");
+  check(new Set(search.sources).size===search.sources.length && new Set(search.style_sources).size===search.style_sources.length, "Search dependencies are initialized and styled once");
   const queue = load("/admin/bots/queue", "en", mode);
   check(["status/edit-fields", "status/dialog-form"].every(name => queue.definitions.includes(name)), "Bot queue delivers its complete status editor dependency in every asset variant");
   const profile = load("/author/2", "cs", mode);
@@ -83,6 +88,13 @@ check(!load("/install").T.status, "Installer boots without public modules");
 check(!load("/install").definitions.includes("ui/modal") && load("/admin").definitions.includes("ui/modal"), "Installer excludes unused dialog catalogs while administration retains them.");
 check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
 check(!load("/install").sources.some(s => s.includes("/Modules/Social/") || s === "App/Core/Ui/assets/ajax-bindings.js") && load("/install").sources.includes("App/Core/Ui/assets/form-requests.js"), "Installer uses shared API form transport without feed and administration controllers");
+check(load("/install").sources.includes("App/Core/Ui/assets/form-constraints.js") && !load("/install").sources.includes("App/Core/Ui/assets/form-state.js"), "Installer shares byte constraints without loading draft management");
+{
+  const installer = load('/install').T;
+  const field = {value:'éééé', name:'password', dataset:{minBytes:'8'}, matches:()=>true, hasAttribute:name=>name==='data-min-bytes', setCustomValidity(message){this.error=message;}};
+  installer.forms.syncConstraints(field); check(!field.error, 'Installer accepts the eight-byte Unicode boundary');
+  field.value='ééé'; installer.forms.syncConstraints(field); check(Boolean(field.error), 'Installer rejects a password below the byte boundary');
+}
 const schedulerPage = load("/admin/cron/list");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");

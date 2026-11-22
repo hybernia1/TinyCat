@@ -27,12 +27,12 @@ $assert(\TinyCat\Social\Posts\Outbound::tagged($url) === $url, 'UTM tagging can 
 $assert(\TinyCat\Social\Posts\Outbound::tagged($url) === $url, 'No source domain is invented from request headers.');
 $assert(ContentLinks::url(2, '/status/3') === '/status/3', 'Internal and unsupported destinations do not become external navigation endpoints.');
 $db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$db->exec('CREATE TABLE users (id INTEGER, status TEXT); CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER, author_id INTEGER, body TEXT, published_at TEXT); CREATE TABLE social_comments (id INTEGER, content_id INTEGER, user_id INTEGER, body TEXT); CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER); CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash TEXT)');
+$db->exec('CREATE TABLE users (id INTEGER, status TEXT); CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER, author_id INTEGER, body TEXT, published_at TEXT); CREATE TABLE social_comments (id INTEGER, content_id INTEGER, parent_id INTEGER, user_id INTEGER, body TEXT); CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER); CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash TEXT)');
 $db->exec("INSERT INTO users VALUES (1, 'active'), (2, 'inactive')");
 $raw = 'https://target.example/path?utm_source=original&x=1#fragment';
 $insert = $db->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
 $insert->execute([1, 1, $raw, '2000-01-01']); $insert->execute([2, 1, $raw, '2999-01-01']); $insert->execute([3, 2, $raw, '2000-01-01']);
-$db->prepare('INSERT INTO social_comments VALUES (10, 1, 1, ?)')->execute([$raw]);
+$db->prepare('INSERT INTO social_comments (id, content_id, parent_id, user_id, body) VALUES (10, 1, NULL, 1, ?), (11, 1, NULL, 2, ?), (12, 1, 11, 1, ?)')->execute([$raw, $raw, $raw]);
 $db->exec('ALTER TABLE social_posts ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT \'published\'');
 \TinyCat\Database\Connection::set($db);
 $redirectMigration = require __DIR__ . '/../../../migrations/20261102_001_compact_content_redirects.php';
@@ -45,6 +45,7 @@ $assert(ContentLinks::resolve(1, $hash)['original_url'] === $raw, 'Resolution pr
 $assert(ContentLinks::resolve(2, $hash) === null && ContentLinks::resolve(3, $hash) === null, 'Future content and inactive authors are not exposed.');
 $assert(ContentLinks::resolve(1, str_repeat('0', 64)) === null, 'An unrelated destination hash cannot be resolved.');
 $assert(ContentLinks::resolve(1, $hash, 10) !== null && ContentLinks::resolve(2, $hash, 10) === null, 'Comment links are bound to their own visible parent.');
+$assert(ContentLinks::resolve(1, $hash, 12) === null, 'An active reply beneath an inactive root cannot expose its link.');
 $db->exec("UPDATE social_posts SET status = 'hidden' WHERE id = 1");
 $assert(ContentLinks::resolve(1, $hash) === null && ContentLinks::resolve(1, $hash, 10) === null, 'Hidden post and comment links cannot be resolved.');
 $db->exec('UPDATE social_posts SET status = \'published\' WHERE id = 1');

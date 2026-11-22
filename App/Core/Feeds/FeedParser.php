@@ -354,7 +354,7 @@ final class FeedParser
         ) ?? '';
         $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
         $value = preg_replace('/\s+([.,;:!?])/u', '$1', $value) ?? $value;
-        $value = \TinyCat\Core\Text\PostText::normalize(trim($value));
+        $value = \TinyCat\Core\Text\PostText::cleanImportBoilerplate(trim($value));
 
         return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
     }

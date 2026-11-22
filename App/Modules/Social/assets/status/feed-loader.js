@@ -382,7 +382,7 @@ import "../../../../Core/Ui/assets/toasts.js";
         inserted.forEach(function (node) { if (node.isConnected !== false) { hydrateDynamic(node); } });
       }
 
-      if (!payload.next_url || payload.done === true || Number(payload.count || 0) < 1) {
+      if (!payload.next_url || payload.done === true) {
         if (target.dataset.statusFeedPruned === "true") {
           control.hidden = true;
           return;

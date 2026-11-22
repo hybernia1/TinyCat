@@ -11,6 +11,7 @@
     "entries": [
       "App/Core/Identity/assets/authentication.js"
     ],
+    "uses": ["ui.form-constraints"],
     "styles": [],
     "translations": [
       "account.email_notifications",

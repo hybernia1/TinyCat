@@ -31,6 +31,7 @@ $api->post('/_sessions', static function (Request $request): array {
     return ['id' => Authentication::auth('id'), 'csrf' => TinyCat\Core\Security\Csrf::token()];
 }, 'public', 200);
 $api->post('/_logout', static function (): array { Authentication::authLogout(); return ['logged_out' => true]; }, 'user', 200);
+$api->post('/_password', static fn (): array => TinyCat\Core\Identity\Actions::user_password_update_request(Authentication::auth()), 'user', 200);
 $api->get('/_user', static fn (): array => ['id' => $api->actor()['id']], 'user');
 $api->get('/_admin', static fn (): array => ['id' => $api->actor()['id']], 'admin');
 $api->get('/_access', static fn (): array => ['id' => TinyCat\Core\Identity\Access::require_admin()['id']]);

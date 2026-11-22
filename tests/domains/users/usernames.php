@@ -33,6 +33,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $insert->execute([$id, $name]);
     }
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    \TinyCat\Core\Settings\Schema::install($database);
     $assert(\TinyCat\Core\Identity\Usernames::taken('ŽANETA.NOVÁK'), 'A differently cased username must remain taken.');
     $assert(!\TinyCat\Core\Identity\Usernames::taken('ŽANETA.NOVÁK', 1), 'The current account must be excluded from duplicate checks.');
     $assert(

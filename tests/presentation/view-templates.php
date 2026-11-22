@@ -147,12 +147,12 @@ $disabledRegistration = \TinyCat\Core\Identity\AuthResource::make('register', ''
 $disabledRegistration['registration_enabled'] = false;
 $disabledRegistration = \TinyCat\Support\Components::render('users/auth-page', $disabledRegistration);
 $assert(!str_contains($disabledRegistration, '<form') && str_contains($disabledRegistration, 'alert-info'), 'Disabled registration renders its notice without a form.');
-$recoveryData = ['reset' => false, 'token' => '', 'password_max' => \TinyCat\Core\Identity\Passwords::maxLength(), 'captcha' => ['enabled' => false], 'login_url' => '/pl/login', 'privacy_url' => '/pl/privacy'];
+$recoveryData = ['reset' => false, 'token' => '', 'password_max' => \TinyCat\Core\Identity\Passwords::maxLength(), 'password_min' => \TinyCat\Core\Identity\Passwords::minLength(), 'captcha' => ['enabled' => false], 'login_url' => '/pl/login', 'privacy_url' => '/pl/privacy'];
 $recoveryPage = \TinyCat\Support\Components::render('users/recovery-page', $recoveryData);
 $assert(str_contains($recoveryPage, 'action="/api/users/password-resets"') && str_contains($recoveryPage, 'type="email"') && !str_contains($recoveryPage, 'name="password"'), 'Recovery requests use the email form.');
 $resetPage = \TinyCat\Support\Components::render('users/recovery-page', array_replace($recoveryData, ['reset' => true, 'token' => '"><unsafe>']));
 $assert(str_contains($resetPage, 'action="/api/users/password-resets/confirm"') && str_contains($resetPage, '&quot;&gt;&lt;unsafe&gt;') && substr_count($resetPage, 'autocomplete="new-password"') === 2, 'Password resets preserve the escaped token and both constrained password fields.');
-$assert(substr_count($resetPage, 'maxlength="' . \TinyCat\Core\Identity\Passwords::maxLength() . '"') === 2 && str_contains($resetPage, 'href="/pl/login"'), 'Recovery shares password constraints and localized navigation.');
+$assert(substr_count($resetPage, 'data-max-bytes="' . \TinyCat\Core\Identity\Passwords::maxLength() . '"') === 2 && substr_count($resetPage, 'data-min-bytes="' . \TinyCat\Core\Identity\Passwords::minLength() . '"') === 2 && str_contains($resetPage, 'href="/pl/login"'), 'Recovery shares byte-based password constraints and localized navigation.');
 $logoutPage = \TinyCat\Support\Components::render('users/logout-page');
 $assert(str_contains($logoutPage, 'method="post"') && str_contains($logoutPage, 'data-api-method="DELETE"') && str_contains($logoutPage, 'data-confirm-variant="danger"') && str_contains($logoutPage, 'name="_csrf"'), 'Logout retains server CSRF, DELETE transport and the shared confirmation lifecycle.');
 

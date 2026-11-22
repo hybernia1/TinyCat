@@ -69,6 +69,17 @@ try {
         if ($fresh) { $command[] = '--fresh-install'; }
         [$exit, $text, $error] = $run($command, $candidate);
         $assert($exit === 0, 'Signed fixture product build: ' . $text . $error);
+        $kind = $fresh ? 'install' : 'update';
+        $directory = $output . '/' . $kind;
+        $manifest = json_decode((string) file_get_contents($directory . '/fixture.lifecycle-' . $kind . '.json'), true, 512, JSON_THROW_ON_ERROR);
+        $helper = 'App/Core/Installation/configuration-windows.ps1';
+        $assert(isset($manifest['files'][$helper]) && $manifest['files'][$helper] === hash_file('sha256', $candidate . '/' . $helper), 'Signed ' . $kind . ' manifest includes the exact Windows configuration helper.');
+        $zip = new ZipArchive();
+        $assert($zip->open($directory . '/' . $manifest['package']) === true, 'Open the existing signed ' . $kind . ' ZIP for helper verification.');
+        try {
+            $bytes = $zip->getFromName($helper);
+            $assert(is_string($bytes) && hash_equals($manifest['files'][$helper], hash('sha256', $bytes)), 'Signed ' . $kind . ' ZIP contains the helper bytes declared by its manifest.');
+        } finally { $zip->close(); }
     };
     $initialVersionFile = $candidate . '/App/Core/Support/Version.php';
     file_put_contents($initialVersionFile, preg_replace("/CURRENT = '[^']+'/", "CURRENT = '" . $versions[0] . "'", (string) file_get_contents($initialVersionFile)));
@@ -88,6 +99,15 @@ try {
     [$exit, $text, $error] = $console(['install'], $administrator); $assert($exit === 0, 'Fresh artifact CLI installation: ' . $text . $error);
     [$exit, $text, $error] = $console(['rescue']); $assert($exit === 0 && is_file($root . '/storage/updates/console.php'), 'Private rescue launcher is available without dev tools: ' . $text . $error);
     $entry = $root . '/storage/updates/console.php';
+    foreach (['App/distribution.json', 'App/module-packages.json'] as $metadataFile) {
+        $path = $root . '/' . $metadataFile;
+        $original = is_file($path) ? file_get_contents($path) : null;
+        file_put_contents($path, '{broken');
+        [$exit] = $console(['help']); $assert($exit === 0, 'Help remains available with corrupt ' . $metadataFile);
+        [$exit] = $console(['rescue']); $assert($exit === 0, 'Rescue remains available with corrupt ' . $metadataFile);
+        [$exit] = $console(['status']); $assert($exit !== 0, 'Normal status rejects corrupt ' . $metadataFile);
+        if ($original === null) { unlink($path); } else { file_put_contents($path, $original); }
+    }
     $pdo = new PDO('sqlite:' . $root . '/database.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
     $assert(count($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 8, 'Fresh signed fixture product creates exactly its declared tables: ' . implode(', ', $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll(PDO::FETCH_COLUMN)));
     $assert(password_verify('Module-Regression-42', (string) $pdo->query('SELECT password FROM users')->fetchColumn()), 'CLI uses the shared account password writer');
@@ -207,7 +227,14 @@ try {
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]);
     $assert($exit !== 0 && str_contains($error, 'snapshot destination'), 'Rollback refuses a changed database destination');
     file_put_contents($root . '/config.php', $configBytes);
-    [$exit, $text, $error] = $console(['rollback', $operation['backup']]); $assert($exit === 0, 'Interrupted operation restores through the CLI: ' . $text . $error);
+    $descriptor = file_get_contents($root . '/App/distribution.json');
+    $registryPath = $root . '/App/module-packages.json';
+    $registry = is_file($registryPath) ? file_get_contents($registryPath) : null;
+    file_put_contents($root . '/App/distribution.json', '{broken');
+    file_put_contents($registryPath, '{broken');
+    [$exit, $text, $error] = $console(['rollback', $operation['backup']]); $assert($exit === 0, 'Interrupted operation restores despite corrupt module metadata: ' . $text . $error);
+    file_put_contents($root . '/App/distribution.json', $descriptor);
+    if ($registry === null) { unlink($registryPath); } else { file_put_contents($registryPath, $registry); }
     $assert(!$pdo->query("SELECT name FROM sqlite_master WHERE name = 'interrupted_module'")->fetchColumn() && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Rollback removes introduced tables and preserves original bytes');
     $assert(!is_file($root . '/storage/maintenance.json') && hash_file('sha256', $root . '/config.php') === $configHash, 'Recovery clears maintenance and leaves private configuration unchanged');
     echo "PASS signed product distribution, module activation, inactive upgrades, tasks and recovery ({$checks} checks)\n";

@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace TinyCat\Core\Settings;
 use TinyCat\Core\Settings\Store;
 
-final class ServiceProvider implements \TinyCat\Core\Modules\ProvidesManagedSchema, \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Runtime\InitializesModule
+final class ServiceProvider implements \TinyCat\Core\Modules\ProvidesFileReferences, \TinyCat\Core\Modules\ProvidesManagedSchema, \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Runtime\InitializesModule
 {
     public static function schema(): \TinyCat\Core\Modules\ModuleSchema { return Schema::schema(); }
 
@@ -20,9 +20,18 @@ final class ServiceProvider implements \TinyCat\Core\Modules\ProvidesManagedSche
             new \TinyCat\Core\Modules\ComponentLookup('settings.sections', Sections::sectionLookup(...)),
             new \TinyCat\Core\Modules\ComponentLookup('settings.fields', Sections::fieldLookup(...)),
             new \TinyCat\Core\Modules\ComponentLookup('settings.formats', Sections::formatLookup(...)),
-        ], settings: Settings::sections(), temporaryDirectories: [new \TinyCat\Core\Modules\TemporaryDirectory('branding', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/site'), 40)], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.settings.admin', static fn (): array => [
+        ], maintenance: [new \TinyCat\Core\Modules\MaintenanceTask('orphan_branding_files', \TinyCat\Core\Ui\Branding::cleanupOrphans(...), 60)], settings: Settings::sections(), temporaryDirectories: [new \TinyCat\Core\Modules\TemporaryDirectory('branding', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/site'), 40)], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.settings.admin', static fn (): array => [
             'modal' => 'modal-settings-editor', 'modal_url' => '/api/settings/editor', 'icon' => 'settings', 'label' => \TinyCat\Support\Localization::t('settings.title'),
         ], 80)]);
+    }
+
+    /** @param list<string> $candidates
+     * @return list<string> */
+    public static function fileReferences(string $group, array $candidates): array
+    {
+        if ($group !== 'branding' || $candidates === []) { return []; }
+        $rows = \TinyCat\Database\Connection::all("SELECT setting_value FROM settings WHERE setting_key IN ('site.logo_path', 'site.favicon_path', 'site.logo_url', 'site.favicon_url')");
+        return array_values(array_intersect($candidates, array_map(static fn (array $row): string => str_starts_with((string) $row['setting_value'], '/uploads/site/') ? substr((string) $row['setting_value'], 14) : (string) $row['setting_value'], $rows)));
     }
 
     /** @return list<string> */

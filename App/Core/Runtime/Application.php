@@ -25,6 +25,12 @@ final class Application
     public static function start(?Configuration $configuration = null, ?Loader $modules = null): Api
     {
         if (self::$booted) { throw new \LogicException('The application is already booted.'); }
+        if (\TinyCat\Core\Updates\Manager::installationPending()) {
+            $request = \TinyCat\Http\Request::current();
+            $allowed = PHP_SAPI !== 'cli' && (($request->method() === 'GET' && $request->path() === '/install/recovery') || ($request->method() === 'POST' && $request->path() === '/api/installation/recover'));
+            if (!$allowed || !\TinyCat\Core\Updates\Manager::installationRecoveryAllowed()) { throw new \TinyCat\Http\HttpException('Installation recovery is required.', 503, 'installation_recovery_required'); }
+            $modules = Loader::fromSelection(\TinyCat\Support\Paths::basePath(), []);
+        }
         if ($configuration !== null) { Config::configure($configuration); }
         else { Config::load(); }
         $modules ??= Loader::load(\TinyCat\Support\Paths::basePath());

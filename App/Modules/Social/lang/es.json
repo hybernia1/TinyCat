@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Escribe una respuesta...",
     "status_like_for": "Me gusta – {context}",
     "status_unlike_for": "A diferencia de – {context}",
+    "status_more_comments": "Cargar más comentarios",
+    "status_more_replies": "Cargar respuestas",
     "status_comments": "Comentarios",
     "status_comment_history": "Editar historial",
     "status_comment_history_empty": "Este comentario aún no ha sido editado.",

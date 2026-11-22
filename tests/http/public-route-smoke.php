@@ -126,7 +126,7 @@ if (!is_array($admin) || (int) ($admin['id'] ?? 0) < 1) {
 }
 session_id('tinycatsmoke' . getmypid());
 session_start();
-$_SESSION['auth_user_id'] = (int) $admin['id'];
+TinyCat\Core\Identity\Authentication::authLogin((int) $admin['id']);
 require __ENTRY__;
 PHP;
 $adminScript = str_replace(['__BOOTSTRAP__', '__ENTRY__'], [$bootstrap, $entry], $adminScript);

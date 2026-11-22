@@ -55,7 +55,7 @@ $assert(TinyCat\Core\Identity\Participants::fromModules($modules, new TinyCat\Co
 $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 Connection::set($pdo);
 $pdo->exec('PRAGMA foreign_keys = ON');
-$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT, role TEXT, created_at TEXT DEFAULT '2026-01-01 00:00:00')");
+$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT, role TEXT, avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), created_at TEXT DEFAULT '2026-01-01 00:00:00')");
 $pdo->exec("INSERT INTO users (id, status, role) VALUES (1, 'active', 'user'), (2, 'active', 'bot'), (3, 'active', 'user')");
 Lifecycle::setActive(['id' => 1, 'role' => 'user'], false);
 $assert(Connection::value('SELECT status FROM users WHERE id = 1') === 'ban', 'Accounts works with only its table');
@@ -145,6 +145,7 @@ mkdir($root . '/uploads/status-images/2026/11', 0700, true);
 mkdir($root . '/uploads/avatars', 0700, true);
 $imageFile = $root . '/uploads/status-images/' . $imagePath;
 $avatarFile = $root . '/uploads/avatars/2.webp';
+$pdo->exec('UPDATE users SET avatar_exists = 1 WHERE id = 2');
 file_put_contents($imageFile, 'fixture image');
 file_put_contents($avatarFile, 'fixture avatar');
 $pdo->prepare('INSERT INTO social_post_images VALUES (10, ?)')->execute([$imagePath]);

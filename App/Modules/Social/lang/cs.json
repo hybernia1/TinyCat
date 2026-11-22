@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Napsat odpověď...",
     "status_like_for": "Označit, že se mi líbí – {context}",
     "status_unlike_for": "Odebrat označení To se mi líbí – {context}",
+    "status_more_comments": "Načíst další komentáře",
+    "status_more_replies": "Načíst odpovědi",
     "status_comments": "Komentáře",
     "status_comment_history": "Historie úprav",
     "status_comment_history_empty": "Tento komentář zatím nebyl upraven.",

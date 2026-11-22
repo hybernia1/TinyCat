@@ -31,7 +31,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
     {
         return new \TinyCat\Core\Identity\Participant(prepareDelete: static fn (array $user): \TinyCat\Core\Identity\Deletion => new \TinyCat\Core\Identity\Deletion(
-            afterCommit: static function () use ($user): void { Avatar::delete((int) $user['id']); },
+            afterCommit: static function () use ($user): void { Avatar::delete((int) $user['id'], $user['avatar_version'] ?? null); },
         ));
     }
 

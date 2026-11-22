@@ -7,6 +7,7 @@ final class Api
     public static function register(\TinyCat\Http\Api $api): void
     {
         $api->get('/installation', static fn (): array => Actions::status());
+        $api->post('/installation/recover', static fn (): \TinyCat\Http\Result => Actions::recover(), 'public', 200);
         $api->post('/installation/steps/{step:[a-z]+}', static fn (\TinyCat\Http\Request $request, array $params): \TinyCat\Http\Result => Actions::run($params['step']), 'public', 200);
     }
 }

@@ -129,6 +129,58 @@ final class Branding
         }
     }
 
+    /** Delete only complete, unreferenced owner sets. All references resolve before unlink.
+     * @param list<string> $paths
+     * @param list<string>|null $onlyFiles Restrict scheduled scans to their visited batch. */
+    public static function deleteUnused(array $paths, ?array $onlyFiles = null): int
+    {
+        $paths = array_values(array_unique(array_filter($paths, static fn (string $path): bool => preg_match('~^[0-9]{4}/[0-9]{2}/[a-z0-9_-]+\.webp$~iD', $path) === 1)));
+        $retained = \TinyCat\Core\Files\References::retained('branding', $paths);
+        $allowed = $onlyFiles === null ? null : array_fill_keys(array_map(static fn (string $file): string => str_replace(DIRECTORY_SEPARATOR, '/', $file), $onlyFiles), true);
+        $changed = 0;
+        foreach (array_diff($paths, $retained) as $path) {
+            $absolute = \TinyCat\Support\Paths::basePath('uploads/site/' . $path);
+            $base = realpath(\TinyCat\Support\Paths::basePath('uploads/site'));
+            $directory = realpath(dirname($absolute));
+            if ($base === false || $directory === false || !str_starts_with($directory, $base . DIRECTORY_SEPARATOR)) { throw new RuntimeException('Branding path escapes upload storage.'); }
+            // Refuse symlinked year/month parents as well as symlinked files.
+            if (is_link(dirname(dirname($absolute))) || is_link(dirname($absolute))) { throw new RuntimeException('Branding directory is a symlink.'); }
+            foreach ([$absolute, ...array_map(static fn (array $variant): string => self::variantPath($absolute, $variant['suffix']), self::VARIANTS)] as $file) {
+                if ($allowed !== null && !isset($allowed[str_replace(DIRECTORY_SEPARATOR, '/', $file)])) { continue; }
+                if (is_link($file)) { throw new RuntimeException('Branding file is a symlink.'); }
+                if (\TinyCat\Support\FileSweep::remove($file)) { $changed++; }
+            }
+        }
+        return $changed;
+    }
+
+    /** @return array{changed: int, has_more: bool} */
+    public static function cleanupOrphans(int $limit): array
+    {
+        $base = \TinyCat\Support\Paths::basePath('uploads/site');
+        return \TinyCat\Support\FileSweep::run($base, $limit, static function (array $files) use ($base): array {
+            $paths = [];
+            foreach ($files as $file) {
+                if ($file->getMTime() > time() - 3600) { continue; }
+                $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($base) + 1));
+                if (str_ends_with($relative, '.png')) {
+                    $suffix = '';
+                    foreach (self::VARIANTS as $variant) {
+                        if (strlen($variant['suffix']) > strlen($suffix) && str_ends_with($relative, $variant['suffix'])) { $suffix = $variant['suffix']; }
+                    }
+                    if ($suffix !== '') { $relative = substr($relative, 0, -strlen($suffix)) . '.webp'; }
+                }
+                if (preg_match('~^[0-9]{4}/[0-9]{2}/[a-z0-9_-]+\.webp$~iD', $relative) !== 1) { continue; }
+                // Protect an active preparation even when the encountered variant is older.
+                $set = $base . '/' . $relative;
+                $members = [$set, ...array_map(static fn (array $variant): string => self::variantPath($set, $variant['suffix']), self::VARIANTS)];
+                if (array_any($members, static fn (string $path): bool => is_file($path) && filemtime($path) > time() - 3600)) { continue; }
+                $paths[$relative] = $relative;
+            }
+            return ['changed' => self::deleteUnused(array_values($paths), array_map(static fn (\SplFileInfo $file): string => $file->getPathname(), $files)), 'has_more' => false];
+        });
+    }
+
     public static function respondIcon(string $kind): never
     {
         $variant = self::variant($kind);

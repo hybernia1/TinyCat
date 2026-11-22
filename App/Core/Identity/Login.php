@@ -133,7 +133,7 @@ final class Login
                 'remember' => (string) \TinyCat\Http\Request::current()->input('remember', '') === '1',
             ],
             'register' => [
-                'username' => \TinyCat\Core\Identity\Usernames::normalize(\TinyCat\Core\Identity\Login::auth_form_text_input('username', 32)),
+                'username' => \TinyCat\Core\Identity\Usernames::normalize(\TinyCat\Core\Identity\Login::auth_form_text_input('username', \TinyCat\Core\Identity\Usernames::maxLength())),
                 'email' => \TinyCat\Core\Identity\Email::normalize(\TinyCat\Core\Identity\Login::auth_form_text_input('email', \TinyCat\Core\Identity\Email::maxLength())),
                 'platform_terms' => (string) \TinyCat\Http\Request::current()->input('platform_terms', '') === '1',
             ],

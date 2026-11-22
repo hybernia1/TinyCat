@@ -21,7 +21,7 @@ final class Platform
                     && in_array(Request::current()->method(), ['GET', 'HEAD'], true)) {
                     \TinyCat\Http\Web::redirect(LocaleRouting::url('/') . (!empty($_SERVER['QUERY_STRING']) ? '?' . (string) $_SERVER['QUERY_STRING'] : ''), 301);
                 }
-                if (self::installation($path) && \TinyCat\Core\Installation\Installer::isComplete()) { Errors::respond(404); return null; }
+                if (self::installation($path) && !\TinyCat\Core\Updates\Manager::installationPending() && \TinyCat\Core\Installation\Installer::isComplete()) { Errors::respond(404); return null; }
                 return $path;
             }, maintenanceExempt: static fn (string $path): bool => Branding::handles($path),
             databaseExempt: static fn (string $path): bool => self::installation($path) || Branding::handles($path) || (bool) Startup::option('install.complete', false),

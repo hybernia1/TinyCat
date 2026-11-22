@@ -109,7 +109,7 @@ final class Following
             'SELECT u.id,
                     u.username,
                     u.username AS name,
-                    u.avatar_exists, u.avatar_appearance,
+                    u.avatar_exists, u.avatar_appearance, u.avatar_version,
                     u.updated_at,
                     uf.created_at AS followed_at
                 FROM user_followers uf
@@ -160,7 +160,7 @@ final class Following
 
         $ids = array_map(
             static fn (array $row): int => (int) ($row['user_id'] ?? 0),
-            \TinyCat\Database\Connection::all('SELECT user_id FROM user_followers WHERE follower_id = ?', [$userId])
+            \TinyCat\Database\Connection::all('SELECT user_id FROM user_followers WHERE follower_id = ? LIMIT 1001', [$userId])
         );
         $ids[] = $userId;
         $ids = array_values(array_unique(array_filter($ids, static fn (int $id): bool => $id > 0)));

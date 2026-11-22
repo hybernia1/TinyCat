@@ -67,6 +67,8 @@ import "../../../../Core/Ui/assets/dialogs.js";
 
     TinyCat.__commentReplyEventsBound = true;
 
+    document.addEventListener("tinycat:form-reset", function (event) { resetStatusCommentForm(event.target); });
+
     document.addEventListener("toggle", function (event) {
       var details = event.target;
       var editorRoot;
@@ -172,7 +174,7 @@ import "../../../../Core/Ui/assets/dialogs.js";
     var details;
     var parentField;
 
-    if (!form || String((form.elements.namedItem("action") || {}).value || "") === "") {
+    if (!form || !form.elements || String((form.elements.namedItem("action") || {}).value || "") === "") {
       return;
     }
 
@@ -183,7 +185,6 @@ import "../../../../Core/Ui/assets/dialogs.js";
       if (!details && replyContainer && replyContainer.previousElementSibling) {
         details = qs(".status-reply-details", replyContainer.previousElementSibling);
       }
-      form.reset();
       fields = qsa("textarea.status-comment-input", form);
       fields.forEach(function (field) {
         field.value = "";
@@ -191,12 +192,6 @@ import "../../../../Core/Ui/assets/dialogs.js";
         field.dispatchEvent(new Event("input", { bubbles: true }));
         field.dispatchEvent(new Event("change", { bubbles: true }));
       });
-      qsa("[data-status-editor]", form).forEach(function (root) {
-        if (TinyCat.publishing.controllers.editor.reset) {
-          TinyCat.publishing.controllers.editor.reset(root);
-        }
-      });
-
       if (details && parseInt((parentField && parentField.value) || "0", 10) > 0) {
         details.open = false;
       }

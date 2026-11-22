@@ -58,7 +58,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 - [Sdílený Publishing a obsahové politiky: etapa 2](audits/social-core-stage2-2026-11-13.md).
 - [Společné diskuse a reakce: etapa 3](audits/social-core-stage3-2026-11-13.md).
 - [Společné feedové importy pro Social a Blog: etapa 4](audits/social-core-stage4-2026-11-14.md).
-- [Správa zdrojů článků a feedové importy](operations/feed-imports.md).
+- [Feedové importy Socialu](operations/feed-imports.md).
 - [Živá testovací instalace a Laragon](development/local-environment.md).
 - [Závazný kontrakt funkčních modulů](contracts/module-contract.md).
 - [Instalace, aktivace modulů a obnova produktové distribuce](operations/module-deployment.md).

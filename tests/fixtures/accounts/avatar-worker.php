@@ -11,7 +11,7 @@ use TinyCat\Http\Router;
 $workspace = getenv('TINYCAT_AVATAR_WORKSPACE');
 if (!is_string($workspace) || !is_file($workspace . '/avatar.sqlite')) { throw new RuntimeException('Missing avatar fixture.'); }
 $path = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-if (preg_match('~^/uploads/avatars/[1-9][0-9]*[.]webp$~D', $path) && is_file($workspace . $path)) { return false; }
+if (preg_match('~^/uploads/avatars/[1-9][0-9]*(?:-[a-f0-9]{32})?[.]webp$~D', $path) && is_file($workspace . $path)) { return false; }
 define('TINYCAT', true);
 require $workspace . '/App/Core/Runtime/autoload.php';
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($workspace, [

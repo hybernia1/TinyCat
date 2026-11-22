@@ -29,6 +29,20 @@ final class Runner
      * @return array<string, mixed> */
     public static function runPrepared(string $name, callable $runner, array $context): array
     {
+        // Deployment admission precedes the task lock, history and owner callback.
+        try {
+            return \TinyCat\Core\Updates\Manager::runTask(static fn (): array => self::runLocked($name, $runner, $context));
+        } catch (Throwable $exception) {
+            \TinyCat\Core\Runtime\Failure::report($exception);
+            return Tasks::result('failed', error: \TinyCat\Core\Runtime\Failure::message($exception, $name . ' task failed.'));
+        }
+    }
+
+    /** @param callable(array<string, mixed>): array<string, mixed> $runner
+     * @param array<string, mixed> $context
+     * @return array<string, mixed> */
+    private static function runLocked(string $name, callable $runner, array $context): array
+    {
         $lockName = '';
         $locked = false;
         $runId = 0;

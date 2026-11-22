@@ -86,6 +86,7 @@ final class Pages
         $detail = ViewData::status_prepare_detail_view($item, $authUser);
         $item = $detail['item'];
         $comments = $detail['comments'];
+        $commentsNextUrl = $detail['comments_next_url'];
 
         $statusTitle = ViewData::status_meta_title($item);
         $statusImageUrl = \TinyCat\Social\Posts\Images::status_image_url($item);
@@ -127,7 +128,7 @@ final class Pages
                     ],
                 ], static fn (mixed $value): bool => $value !== null),
             ],
-        ], 'context' => compact('authUser', 'item', 'comments', 'compact')];
+        ], 'context' => compact('authUser', 'item', 'comments', 'commentsNextUrl', 'compact')];
     }
     /** @param array<int, array<string, mixed>> $comments
      * @return list<array<string, mixed>> */
@@ -177,7 +178,7 @@ final class Pages
 
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
-        $statusItems = Feed::public_status_items_by_tag($tag, $statusLimit, '', 0, $archiveType);
+        $statusItems = Feed::public_status_items_by_tag($tag, $statusLimit, '', 0, $archiveType, $selection);
         $indexableItems = $statusLimit >= 2 ? $statusItems : Feed::public_status_items_by_tag($tag, 2);
         $authUser = Authentication::auth();
         $statusItems = ViewData::status_prepare_items_view($statusItems, $authUser);
@@ -187,7 +188,8 @@ final class Pages
             $statusItems,
             $statusLimit,
             ['tag' => $tag, 'media' => $archiveType],
-            $nextStatusLimit
+            $nextStatusLimit,
+            $selection
         );
         $pageUrl = $current;
         $tagStructuredData = [

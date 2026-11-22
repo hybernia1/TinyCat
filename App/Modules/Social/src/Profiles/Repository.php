@@ -26,6 +26,7 @@ final class Repository
                     theme,
                     avatar_exists,
                     avatar_appearance,
+                    avatar_version,
                     updated_at,
                     bio,
                     muted_until,
@@ -56,21 +57,21 @@ final class Repository
     {
         $limit = max(1, min(20, $limit));
         $days = max(1, min(365, $days));
-        $cacheKey = 'public_top_authors_ranked_' . $limit . '_' . $days;
+        $cacheKey = 'public_top_authors_ranked_ids_v2_' . $limit . '_' . $days;
 
         $cached = \TinyCat\Support\Cache::get($cacheKey, 3600);
 
         if (is_array($cached)) {
-            return $cached;
+            return self::hydrateRankedAuthors($cached);
         }
 
         if (!$compute) {
             $stale = \TinyCat\Support\Cache::read($cacheKey);
 
-            return is_array($stale) ? $stale : [];
+            return is_array($stale) ? self::hydrateRankedAuthors($stale) : [];
         }
 
-        return \TinyCat\Support\Cache::rememberArray($cacheKey, 3600, static function () use ($limit, $days): array {
+        $ranked = \TinyCat\Support\Cache::rememberArray($cacheKey, 3600, static function () use ($limit, $days): array {
             $feedIndex = \TinyCat\Database\Connection::driver() === 'mysql'
                 ? ' FORCE INDEX (content_feed_index)'
                 : '';
@@ -78,11 +79,6 @@ final class Repository
             $rolePlaceholders = implode(', ', array_fill(0, count($rankedRoles), '?'));
             $authors = \TinyCat\Database\Query::select(
                 'SELECT u.id,
-                        u.username,
-                        u.username AS name,
-                        u.avatar_exists, u.avatar_appearance,
-                        u.updated_at,
-                        u.bio,
                         COUNT(*) AS posts_count,
                         MAX(c.published_at) AS latest_at
                     FROM social_posts c' . $feedIndex . '
@@ -93,13 +89,33 @@ final class Repository
                 ->where('c.published_at <= ? AND c.status = \'published\'', \TinyCat\Support\Dates::dateDb())
                 ->where('u.status = ?', 'active')
                 ->where('u.role IN (' . $rolePlaceholders . ')', ...$rankedRoles)
-                ->group('u.id, u.username, u.avatar_exists, u.avatar_appearance, u.updated_at, u.bio')
+                ->group('u.id, u.username')
                 ->order('posts_count DESC, latest_at DESC, u.username ASC')
                 ->limit($limit)
                 ->all();
 
             return $authors;
         });
+        return self::hydrateRankedAuthors($ranked);
+    }
+
+    /** @param array<mixed> $ranked
+     * @return list<array<mixed>> */
+    private static function hydrateRankedAuthors(array $ranked): array
+    {
+        $ranked = array_slice($ranked, 0, 20);
+        $ids = array_values(array_unique(array_filter(array_map(static fn (array $row): int => (int) ($row['id'] ?? 0), $ranked))));
+        if ($ids === []) { return []; }
+        $roles = Roles::rolesWith('appears_in_people_rankings');
+        if ($roles === []) { return []; }
+        $rows = \TinyCat\Database\Connection::all('SELECT id, username, username AS name, avatar_exists, avatar_appearance, avatar_version, updated_at, bio FROM users WHERE status = ? AND id IN (' . implode(', ', array_fill(0, count($ids), '?')) . ') AND role IN (' . implode(', ', array_fill(0, count($roles), '?')) . ')', ['active', ...$ids, ...$roles]);
+        $current = array_column($rows, null, 'id');
+        $result = [];
+        foreach ($ranked as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            if (isset($current[$id])) { $result[] = $current[$id] + ['posts_count' => (int) ($row['posts_count'] ?? 0), 'latest_at' => (string) ($row['latest_at'] ?? '')]; }
+        }
+        return $result;
     }
 
     public static function sitemapCount(): int { return (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM users WHERE status = ?', ['active']); }

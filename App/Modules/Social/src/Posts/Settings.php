@@ -42,8 +42,17 @@ final class Settings
                 'label' => ['t' => 'settings.sections.security'],
                 'icon' => 'shield',
                 'fields' => [
-                    ['key' => 'moderation.blocked_urls', 'label' => ['t' => 'moderation.url_blocker_label'], 'type' => 'textarea', 'default' => '', 'span' => true, 'placeholder' => ['t' => 'moderation.url_blocker_placeholder'], 'help' => ['t' => 'moderation.url_blocker_help'], 'normalize' => static fn (mixed $raw): array => [implode(', ', \TinyCat\Core\Security\UrlRules::rules((string) $raw)), 'string']],
+                    ['key' => 'moderation.blocked_urls', 'label' => ['t' => 'moderation.url_blocker_label'], 'type' => 'textarea', 'default' => '', 'span' => true, 'placeholder' => ['t' => 'moderation.url_blocker_placeholder'], 'help' => ['t' => 'moderation.url_blocker_help'], 'normalize' => self::normalizeBlocked(...)],
                 ],
         ];
+    }
+
+    /** @return array{string, string} */
+    private static function normalizeBlocked(mixed $raw): array
+    {
+        $field = self::section_security()['fields'][0];
+        unset($field['normalize']);
+        [$value] = \TinyCat\Core\Settings\Administration::tc_admin_settings_value_from_post($field, [$field['key'] => $raw]);
+        return [implode(', ', \TinyCat\Core\Security\UrlRules::rules($value)), 'string'];
     }
 }

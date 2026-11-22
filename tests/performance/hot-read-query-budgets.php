@@ -99,7 +99,8 @@ function runScenario(string $scenario): void
 
     if (in_array($scenario, ['status', 'json-status'], true)) {
         \TinyCat\Http\Session::start();
-        $_SESSION['auth_user_id'] = 2;
+        \TinyCat\Core\Identity\Authentication::authLogin(2);
+        \TinyCat\Core\Identity\Authentication::reset();
     }
 
     $database->resetQueryCount();
@@ -139,7 +140,7 @@ function configureTestCore(PDO $database): void
 function createFixture(PDO $database): void
 {
     foreach ([
-        'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT, avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_appearance TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT, updated_at TEXT)',
+        'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT, avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT, updated_at TEXT)',
         'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, body TEXT NOT NULL, author_id INTEGER NOT NULL, published_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT \'published\')',
         'CREATE TABLE social_post_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)',
         'CREATE TABLE social_post_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (content_id, user_id))',

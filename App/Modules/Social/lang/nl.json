@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Schrijf een antwoord...",
     "status_like_for": "Vind ik leuk – {context}",
     "status_unlike_for": "In tegenstelling tot – {context}",
+    "status_more_comments": "Meer reacties laden",
+    "status_more_replies": "Antwoorden laden",
     "status_comments": "Opmerkingen",
     "status_comment_history": "Geschiedenis bewerken",
     "status_comment_history_empty": "Deze opmerking is nog niet bewerkt.",

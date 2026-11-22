@@ -34,6 +34,7 @@ $tests = [
     'Content link resolution and UTM policy' => 'tests/domains/status/content-links.php',
     'Rate limiter isolation' => 'tests/domains/security/rate-limiter.php',
     'MySQL rate limiter' => 'tests/domains/security/rate-limiter-mysql.php',
+    'Concurrent Social status writes' => 'tests/domains/status/write-concurrency.php',
     'Write-path integrity' => 'tests/domains/status/write-path-integrity.php',
     'Shared post text and historical cleanup' => 'tests/domains/status/post-text.php',
     'Moderation status migration' => 'tests/domains/moderation/moderation-migration.php',
@@ -49,6 +50,7 @@ $tests = [
     'Standalone account identity' => 'tests/domains/accounts/identity.php',
     'Standalone registration and recovery' => 'tests/domains/accounts/onboarding.php',
     'Standalone account profile' => 'tests/domains/accounts/profile.php',
+    'Immutable avatar storage and crash recovery' => 'tests/domains/accounts/avatar-storage.php',
     'Standalone account administration' => 'tests/domains/accounts/administration.php',
     'Standalone account resources and avatars' => 'tests/domains/accounts/avatars.php',
     'Standalone Accounts module and presentation' => 'tests/domains/accounts/module.php',
@@ -68,6 +70,10 @@ $tests = [
     'Hot-read query budgets' => 'tests/performance/hot-read-query-budgets.php',
     'SQL execution profiler' => 'tests/tools/performance-profiler.php',
     'Cache' => 'tests/infrastructure/cache/run.php',
+    'Settings pre-DB and transaction cache boundaries' => 'tests/infrastructure/cache/settings-boot.php',
+    'Settings read-fill invalidation race' => 'tests/infrastructure/cache/settings-consistency.php',
+    'Installed inactive file recovery' => 'tests/domains/scheduler/file-recovery.php',
+    'Current public profile cache' => 'tests/domains/users/public-profile-cache.php',
     'Memcached integration' => 'tests/infrastructure/cache/memcached.php',
     'Concurrent cache refresh' => 'tests/infrastructure/cache/concurrency.php',
     'Asset optimizer' => 'tests/assets/run.php',
@@ -84,6 +90,7 @@ $tests = [
     'Signed product module lifecycle' => 'tests/release/module-lifecycle.php',
     'MySQL migration registry' => 'tests/release/updater/mysql-registry.php',
     'Scheduled file cleanup' => 'tests/domains/scheduler/files.php',
+    'Task deployment admission' => 'tests/domains/scheduler/deployment.php',
     'Cleanup retention and bounded scans' => 'tests/domains/scheduler/retention.php',
     'Site health and system notifications' => 'tests/domains/health/health.php',
     'Registered notification subjects' => 'tests/domains/notifications/inbox.php',
@@ -119,7 +126,7 @@ $items = $explicit ? \TinyCatTests\Execution::select($allItems) : array_flip($te
 foreach ($allTests as $label => $relative) {
     if (!isset($items[$relative])) { continue; }
     echo "\n=== {$label} ===\n";
-    $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative));
+    $command = [PHP_BINARY, $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative)];
     // Each group owns its fixture cache; its HTTP workers still inherit it.
     $parentCache = getenv('TINYCAT_CACHE_DIRECTORY');
     putenv('TINYCAT_CACHE_DIRECTORY');

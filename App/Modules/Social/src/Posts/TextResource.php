@@ -69,7 +69,7 @@ final class TextResource
             'display_url' => $displayUrl,
             'provider' => !empty($link['provider']) && $link['provider'] !== 'web' ? $link['provider'] : null,
             'link_type' => in_array($link['link_type'], ['video', 'audio'], true) ? $link['link_type'] : 'web',
-            'description' => PostText::normalize((string) ($link['description'] ?? '')), 'image_url' => $image,
+            'description' => PostText::cleanImportBoilerplate((string) ($link['description'] ?? '')), 'image_url' => $image,
             'audio_url' => (string) ($link['audio_url'] ?? ''),
             'embed_url' => $embedUrl, 'embed_allowed' => Providers::embedAllowed($embedUrl), 'embed_origin' => $embedUrl !== '' ? 'https://' . parse_url($embedUrl, PHP_URL_HOST) : '',
             'thumbnail_url' => (string) ($thumbnails['fallback'] ?? ''), 'thumbnail_webp_url' => (string) ($thumbnails['webp'] ?? ''),

@@ -13,7 +13,7 @@ use TinyCat\Support\Localization;
 TinyCat\Core\Identity\Authentication::reset(null, true);
 Localization::locale('cs');
 $db = new PDO('sqlite::memory:');
-$db->exec('CREATE TABLE users (id INTEGER, username TEXT, role TEXT, avatar_exists INTEGER DEFAULT 0, avatar_appearance TEXT, updated_at TEXT)');
+$db->exec('CREATE TABLE users (id INTEGER, username TEXT, role TEXT, avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at TEXT)');
 $db->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER, body TEXT, published_at TEXT)');
 $db->exec('CREATE TABLE social_comments (id INTEGER, content_id INTEGER, user_id INTEGER, body TEXT, created_at TEXT)');
 $db->exec('CREATE TABLE social_links (id INTEGER)');

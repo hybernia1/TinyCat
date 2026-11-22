@@ -6,6 +6,7 @@
     "entries": [
       "App/Core/Installation/assets/index.js"
     ],
+    "uses": ["ui.form-constraints"],
     "components": [],
     "styles": [],
     "translations": [

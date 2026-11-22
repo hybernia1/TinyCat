@@ -7,6 +7,16 @@ use InvalidArgumentException;
 
 final class Administration
 {
+    /** @param array<mixed> $field */
+    public static function fieldMaximum(array $field): ?int
+    {
+        if (isset($field['max'])) { return (int) $field['max']; }
+        return match ($field['type'] ?? 'text') {
+            'textarea' => 5000, 'site_url' => 2048,
+            'text', 'optional_text', 'password', 'email' => 190,
+            default => null,
+        };
+    }
     /**
      * @return array<mixed>
      */
@@ -48,12 +58,12 @@ final class Administration
                     continue;
                 }
                 $raw = $posted[$field['key']];
-                $nested = in_array($field['type'], ['email_smtp', 'email_templates'], true);
-                if (($nested && (!is_array($raw) || array_filter($raw, static fn (mixed $value): bool => !is_scalar($value) && $value !== null) !== []))
-                    || (!$nested && !is_scalar($raw) && $raw !== null)) {
-                    \TinyCat\Http\Response::validation(['settings' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
+                $nested = isset($field['fields']) || in_array($field['type'], ['email_smtp', 'email_templates'], true);
+                if (!(($field['normalize'] ?? null) instanceof \Closure) && (($nested && (!is_array($raw) || array_filter($raw, static fn (mixed $value): bool => !is_scalar($value) && $value !== null) !== []))
+                    || (!$nested && !is_scalar($raw) && $raw !== null))) {
+                    \TinyCat\Http\Response::validation(['settings[' . $field['key'] . ']' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
                 }
-                if (($field['type'] ?? '') === 'password' && trim((string) (($posted[(string) $field['key']] ?? ''))) === '') {
+                if (($field['type'] ?? '') === 'password' && is_string($raw) && trim($raw) === '') {
                     continue;
                 }
                 if ($field['type'] === 'site_image') { $images[] = [$field, (string) $group]; continue; }
@@ -65,13 +75,27 @@ final class Administration
                 $updates[] = [(string) $field['key'], $value, $type, (string) $group];
             }
         }
-        \TinyCat\Database\Transactions::run(static function () use ($updates, $images, $posted): void {
+        $preparedPaths = [];
+        try {
             foreach ($images as [$field, $group]) {
-                [$value, $type] = self::tc_admin_settings_value_from_post($field, $posted);
+                [$value, $type, $path] = self::tc_admin_settings_site_image_value($field, (string) ($posted[$field['key']] ?? ''));
                 $updates[] = [(string) $field['key'], $value, $type, $group];
+                $pathKey = (string) ($field['path_key'] ?? '');
+                if ($path !== null && $pathKey !== '') { $updates[] = [$pathKey, $path, 'string', $group]; }
+                if ($path !== null && $path !== '') { $preparedPaths[] = $path; }
             }
-            foreach ($updates as [$key, $value, $type, $group]) { Store::setSetting($key, $value, $type, $group); }
-        });
+            \TinyCat\Database\Transactions::run(static function () use ($updates): void {
+                foreach ($updates as [$key, $value, $type, $group]) { Store::setSetting($key, $value, $type, $group); }
+            });
+        } catch (\TinyCat\Database\AfterCommitFailed $error) {
+            // Data is committed; retaining a freshly published reference is mandatory.
+            \TinyCat\Core\Runtime\Failure::report($error);
+        } catch (\Throwable $error) {
+            try { \TinyCat\Core\Ui\Branding::deleteUnused($preparedPaths); }
+            catch (\Throwable $cleanup) { \TinyCat\Core\Runtime\Failure::report($cleanup); }
+            throw $error;
+        }
+
     }
 
     /**
@@ -87,45 +111,22 @@ final class Administration
 
         if (($field['normalize'] ?? null) instanceof \Closure) { return ($field['normalize'])($raw); }
 
-        if ($type === 'bool') {
-            return [in_array($raw, [true, 1, '1', 'on'], true), 'bool'];
-        }
-
-        if ($type === 'email_templates') {
-            $states = is_array($raw) ? $raw : [];
+        if (isset($field['fields'])) {
+            if (!is_array($raw)) { throw new InvalidArgumentException(\TinyCat\Support\Localization::t('common.request_failed')); }
             $value = [];
-
-            foreach (\TinyCat\Core\Mail\Templates::email_template_keys() as $templateKey) {
-                $value[$templateKey] = array_key_exists($templateKey, $states);
+            foreach ($field['fields'] as $child) {
+                if (array_key_exists($child['key'], $raw)) { $value[$child['key']] = self::tc_admin_settings_value_from_post($child, $raw)[0]; }
             }
-
             return [$value, 'json'];
         }
 
-        if ($type === 'email_smtp') {
-            $smtp = is_array($raw) ? $raw : [];
-            $current = \TinyCat\Core\Mail\Smtp::email_smtp_config();
-            $host = trim((string) ($smtp['host'] ?? ''));
-            $username = trim((string) ($smtp['username'] ?? ''));
-            $password = (string) ($smtp['password'] ?? '');
-            $encryption = strtolower(trim((string) ($smtp['encryption'] ?? 'tls')));
-            $fromAddress = trim((string) ($smtp['from_address'] ?? ''));
-            $fromName = trim((string) ($smtp['from_name'] ?? 'TinyCat'));
-
-            if ($fromAddress !== '' && !\TinyCat\Core\Identity\Email::valid($fromAddress)) {
-                throw new InvalidArgumentException(\TinyCat\Support\Localization::t('account.messages.email_invalid'));
-            }
-
-            return [[
-                'host' => \TinyCat\Support\Text::plain_text_limit($host, 190),
-                'port' => max(1, min(65535, (int) ($smtp['port'] ?? 587))),
-                'username' => \TinyCat\Support\Text::plain_text_limit($username, 190),
-                'password' => $password !== '' ? \TinyCat\Support\Text::plain_text_limit($password, 190) : $current['password'],
-                'encryption' => \TinyCat\Support\Text::plain_text_limit($encryption, 20),
-                'from_address' => \TinyCat\Support\Text::plain_text_limit($fromAddress, 190),
-                'from_name' => \TinyCat\Support\Text::plain_text_limit($fromName, 120),
-            ], 'json'];
+        if ($type === 'bool') {
+            if (!in_array($raw, [true, false, 0, 1, '0', '1', 'on', 'off'], true)) { throw new InvalidArgumentException(\TinyCat\Support\Localization::t('common.request_failed')); }
+            return [in_array($raw, [true, 1, '1', 'on'], true), 'bool'];
         }
+
+        if (!is_string($raw) && !is_int($raw) && !is_bool($raw)) { throw new InvalidArgumentException(\TinyCat\Support\Localization::t('common.request_failed')); }
+        if ($type !== 'int' && !is_string($raw)) { throw new InvalidArgumentException(\TinyCat\Support\Localization::t('common.request_failed')); }
 
         if ($type === 'language') {
             $code = \TinyCat\Support\Languages::language_code((string) $raw);
@@ -174,11 +175,12 @@ final class Administration
         }
 
         if ($type === 'int') {
-            $value = (int) $raw;
+            if (!is_int($raw) && !is_string($raw)) { throw new InvalidArgumentException(\TinyCat\Support\Localization::t('common.request_failed')); }
+            $value = filter_var($raw, FILTER_VALIDATE_INT);
             $min = (int) ($field['min'] ?? PHP_INT_MIN);
             $max = (int) ($field['max'] ?? PHP_INT_MAX);
-
-            return [max($min, min($max, $value)), 'int'];
+            if ($value === false || $value < $min || $value > $max) { throw new InvalidArgumentException(\TinyCat\Support\Localization::t('common.request_failed')); }
+            return [$value, 'int'];
         }
 
         if ($type === 'site_image') {
@@ -187,26 +189,26 @@ final class Administration
 
         if ($type === 'textarea') {
             $value = trim((string) $raw);
-            $max = (int) ($field['max'] ?? 5000);
+            $max = self::fieldMaximum($field) ?? 5000;
 
-            return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
+            return [self::checkedLength($value, $max), 'string'];
         }
 
         if (in_array($type, ['password', 'email'], true)) {
             $value = trim((string) $raw);
-            $max = (int) ($field['max'] ?? 190);
+            $max = self::fieldMaximum($field) ?? 190;
             if ($type === 'email' && $value !== '' && !\TinyCat\Core\Identity\Email::valid($value)) {
                 throw new InvalidArgumentException(\TinyCat\Support\Localization::t('account.messages.email_invalid'));
             }
 
-            return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
+            return [self::checkedLength($value, $max), 'string'];
         }
 
         if ($type === 'site_url') {
             $value = trim((string) $raw);
             if ($value === '') { return ['', 'string']; }
             $parts = parse_url($value);
-            if (strlen($value) > 2048 || !is_array($parts) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+            if (strlen($value) > (self::fieldMaximum($field) ?? 2048) || !is_array($parts) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
                 || empty($parts['host']) || filter_var($value, FILTER_VALIDATE_URL) === false
                 || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])
                 || preg_match('/[\x00-\x20\x7f\\\\]/', $value)) {
@@ -217,21 +219,24 @@ final class Administration
 
         if ($type === 'optional_text') {
             $value = trim((string) $raw);
-            $max = (int) ($field['max'] ?? 190);
-            if ($key === 'analytics.google_measurement_id' && $value !== '' && preg_match('/^G-[A-Z0-9]+$/i', $value) !== 1) {
-                throw new InvalidArgumentException('Google Analytics Measurement ID must look like G-XXXXXXXXXX.');
-            }
-            return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
+            $max = self::fieldMaximum($field) ?? 190;
+            return [self::checkedLength($value, $max), 'string'];
         }
 
         $value = trim((string) $raw);
-        $max = (int) ($field['max'] ?? 190);
+        $max = self::fieldMaximum($field) ?? 190;
 
-        if ($value === '') {
+        if ($value === '' && !($field['optional'] ?? false)) {
             throw new InvalidArgumentException(\TinyCat\Support\Localization::t('settings.messages.required'));
         }
 
-        return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
+        return [self::checkedLength($value, $max), 'string'];
+    }
+
+    private static function checkedLength(string $value, int $max): string
+    {
+        if (mb_strlen($value, 'UTF-8') > $max) { throw new InvalidArgumentException(\TinyCat\Support\Localization::t('common.request_failed')); }
+        return $value;
     }
 
     /**
@@ -261,30 +266,19 @@ final class Administration
     public static function tc_admin_settings_site_image_value(array $field, string $currentUrl): array
     {
         $key = (string) $field['key'];
-        $pathKey = (string) ($field['path_key'] ?? '');
         $variant = (string) ($field['variant'] ?? 'logo');
         $uploadedFile = \TinyCat\Core\Settings\Administration::tc_admin_settings_uploaded_file($key);
         $remove = \TinyCat\Http\Request::current()->input('settings_remove', []);
 
-        if (is_array($remove) && isset($remove[$key])) {
-            if ($pathKey !== '') {
-                \TinyCat\Core\Settings\Store::setSetting($pathKey, '', 'string', 'site');
-            }
-
-            return ['', 'string'];
-        }
+        if (is_array($remove) && isset($remove[$key])) { return ['', 'string', '']; }
 
         if (is_array($uploadedFile) && (int) ($uploadedFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
             \TinyCat\Core\Security\RequestLimits::requireAllowed('upload', (int) (\TinyCat\Core\Identity\Authentication::auth()['id'] ?? 0));
-            $uploaded = \TinyCat\Core\Security\Images::site_image_upload($uploadedFile, (string) ($field['label'] ?? $variant), $variant);
+            $uploaded = \TinyCat\Core\Security\Images::site_image_upload($uploadedFile, $variant, $variant);
 
-            if ($pathKey !== '') {
-                \TinyCat\Core\Settings\Store::setSetting($pathKey, (string) ($uploaded['path'] ?? ''), 'string', 'site');
-            }
-
-            return [(string) ($uploaded['url'] ?? ''), 'string'];
+            return [(string) ($uploaded['url'] ?? ''), 'string', (string) ($uploaded['path'] ?? '')];
         }
 
-        return [trim($currentUrl), 'string'];
+        return [trim($currentUrl), 'string', null];
     }
 }

@@ -59,11 +59,49 @@ class Manager extends Package
     {
         $file = self::updateRoot() . '/operation.json';
         $state = is_file($file) ? self::decodeJson((string) file_get_contents($file), 'deployment operation') : [];
-        if (self::maintenanceActive() || in_array($state['phase'] ?? '', ['applying', 'failed', 'restoring'], true)) { throw new RuntimeException('Restore the interrupted deployment backup before continuing.'); }
+        if (self::maintenanceActive() || in_array($state['phase'] ?? '', ['applying', 'failed', 'restoring'], true) || self::unfinishedInstallation($state)) { throw new RuntimeException('Restore the interrupted deployment backup before continuing.'); }
     }
 
-    /** @param callable(): array<string, mixed> $run
-     * @return array<string, mixed> */
+    /** @param array<mixed> $state */
+    private static function unfinishedInstallation(array $state): bool
+    {
+        return ($state['kind'] ?? null) === 'installation' && !in_array($state['phase'] ?? null, ['complete', 'rolled_back', 'aborted'], true);
+    }
+
+    /** Read-only boot admission; it does not acquire or alter deployment state. */
+    public static function installationPending(): bool
+    {
+        $file = self::updateRoot() . '/operation.json';
+        if (!is_file($file)) { return false; }
+        return self::unfinishedInstallation(self::decodeJson((string) file_get_contents($file), 'deployment operation'));
+    }
+
+    /** The recovery session is bound to the current installation operation. */
+    public static function installationRecoveryAllowed(): bool
+    {
+        $file = self::updateRoot() . '/operation.json';
+        if (!is_file($file)) { return false; }
+        $state = self::decodeJson((string) file_get_contents($file), 'deployment operation');
+        if (!self::unfinishedInstallation($state) || !is_string($state['recovery_hash'] ?? null)) { return false; }
+        \TinyCat\Http\Session::start();
+        $token = $_SESSION['tc_install']['recovery_token'] ?? null;
+        return is_string($token) && hash_equals($state['recovery_hash'], hash('sha256', $token));
+    }
+
+    /** @return array<string, mixed> */
+    public static function installationRecoveryState(): array
+    {
+        if (!self::installationRecoveryAllowed()) { throw new RuntimeException('Installation recovery authorization failed.'); }
+        $state = self::decodeJson((string) file_get_contents(self::updateRoot() . '/operation.json'), 'deployment operation');
+        return array_intersect_key($state, array_flip(['id', 'phase', 'step', 'backup']));
+    }
+
+    /** Shared admission for task execution and retention; never upgrade this lock.
+     * The caller acquires its own work lock only after admission. Nested shared
+     * admission is allowed; exclusive deployment operations remain nonblocking.
+     * @template T of array<string, mixed>
+     * @param callable(): T $run
+     * @return T */
     public static function runTask(callable $run): array
     {
         $lock = self::operationLock(true);
@@ -74,28 +112,51 @@ class Manager extends Package
     /** @param callable(): array<string, mixed> $apply
      * @param callable(): void|null $preflight
      * @param array{stage: string, files: array<string, string>, delete: list<string>}|null $changes
+     * @param array{step: string, recovery_hash: string}|null $installation
      * @return array<string, mixed> */
-    public static function runLifecycle(callable $apply, bool $databaseBackup, ?callable $preflight = null, ?array $changes = null): array
+    public static function runLifecycle(callable $apply, bool $databaseBackup, ?callable $preflight = null, ?array $changes = null, ?array $installation = null): array
     {
-        $lock = self::operationLock(); $started = false; $ownedMaintenance = false;
+        $lock = self::operationLock(); $started = false; $ownedMaintenance = false; $committed = false;
+        $operation = ['kind' => 'modules'];
+        $result = [];
+        $backup = '';
         try {
             self::assertIdle();
             if ($preflight !== null) { $preflight(); }
             if ($changes !== null) { self::preflightManagedTargets($changes); }
+            if ($installation !== null) {
+                if (!in_array($installation['step'], ['tables', 'admin'], true) || preg_match('/^[a-f0-9]{64}$/D', $installation['recovery_hash']) !== 1) { throw new RuntimeException('Invalid installation operation.'); }
+                $operation = ['kind' => 'installation', 'id' => bin2hex(random_bytes(16)), 'step' => $installation['step'], 'recovery_hash' => $installation['recovery_hash']];
+                self::writeOperationPhase($operation, 'preparing');
+            }
             self::enableMaintenance(\TinyCat\Support\Version::CURRENT);
             $ownedMaintenance = true;
             $backup = self::createBackup($changes ?? ['files' => [], 'delete' => []], \TinyCat\Support\Version::CURRENT, $databaseBackup);
+            if ($installation !== null) {
+                \TinyCat\Core\Installation\Installer::snapshotConfiguration($backup);
+                self::writeJsonFile($backup . '/installation.json', $operation);
+            }
             if ($databaseBackup) { self::backupDatabase($backup); }
-            self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'applying', 'backup' => basename($backup), 'kind' => 'modules']);
+            $operation['backup'] = basename($backup);
+            self::writeOperationPhase($operation, 'applying');
             $started = true;
             if ($changes !== null) { self::applyFiles($changes['stage'], $changes); }
             $result = $apply();
             if ($changes !== null) { self::deleteLegacyFiles($changes); }
-            self::completeOperation($backup, \TinyCat\Support\Version::CURRENT);
+            self::completeOperation($backup, \TinyCat\Support\Version::CURRENT, $committed);
             return $result + ['backup' => basename($backup)];
         } catch (Throwable $error) {
-            if ($started) { self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'failed', 'backup' => basename($backup ?? ''), 'kind' => 'modules']); }
-            elseif ($ownedMaintenance) { self::disableMaintenance(); }
+            if (!$committed) {
+                if ($started) { self::writeOperationPhase($operation, 'failed'); }
+                elseif ($ownedMaintenance) {
+                    self::disableMaintenance();
+                    if ($installation !== null) { self::writeOperationPhase($operation, 'aborted'); }
+                }
+            }
+            if ($committed && $installation !== null) {
+                \TinyCat\Core\Runtime\Failure::report($error);
+                return $result + ['backup' => basename($backup), 'cleanup_pending' => true];
+            }
             throw $error;
         } finally { flock($lock, LOCK_UN); fclose($lock); }
     }
@@ -126,7 +187,7 @@ class Manager extends Package
         \TinyCat\Core\Modules\PackageRegistry::protect(\TinyCat\Support\Paths::basePath(), array_values(array_filter([...array_keys($manifest['files']), ...$manifest['delete']], is_string(...))));
         self::preflightManagedTargets($manifest);
         $pending = self::hasPendingMigrations($manifest, $stage);
-        $changed = false;
+        $changed = false; $committed = false;
         try {
             self::enableMaintenance((string) $manifest['version']);
             $backup = self::createBackup($manifest, (string) $manifest['version'], $pending);
@@ -137,36 +198,75 @@ class Manager extends Package
             $migrations = self::applyMigrations($stage, $manifest);
             if (is_array($plan)) { \TinyCat\Core\Modules\Lifecycle::applyPackage($plan, $stage, (string) $manifest['version']); }
             self::deleteLegacyFiles($manifest);
-            self::completeOperation($backup, (string) $manifest['version']);
+            self::completeOperation($backup, (string) $manifest['version'], $committed);
             return ['updated' => true, 'version' => $manifest['version'], 'backup' => self::relativeStoragePath($backup), 'migrations' => $migrations, 'message' => 'TinyCat was updated successfully.'];
         } catch (Throwable $error) {
-            if ($changed) { self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'failed', 'backup' => basename($backup ?? ''), 'kind' => 'package']); }
-            else { self::disableMaintenance(); }
-            throw new RuntimeException($changed ? 'Deployment stopped after changes. Restore the recorded backup. ' . $error->getMessage() : $error->getMessage(), 0, $error);
+            if (!$committed) {
+                if ($changed) { self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'failed', 'backup' => basename($backup ?? ''), 'kind' => 'package']); }
+                else { self::disableMaintenance(); }
+            }
+            throw new RuntimeException($committed ? 'Deployment committed; finish cleanup before continuing. ' . $error->getMessage() : ($changed ? 'Deployment stopped after changes. Restore the recorded backup. ' . $error->getMessage() : $error->getMessage()), 0, $error);
         }
     }
 
-    private static function completeOperation(string $backup, string $version): void
+    private static function completeOperation(string $backup, string $version, bool &$committed): void
     {
         self::clearRuntimeCache(); \TinyCat\Support\Cache::resetOpcache();
         self::writeJsonFile($backup . '/completed.json', ['version' => $version, 'completed_at' => date(DATE_ATOM)]);
-        self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'complete', 'backup' => basename($backup)]);
+        $operation = self::decodeJson((string) file_get_contents(self::updateRoot() . '/operation.json'), 'deployment operation');
+        if (($operation['backup'] ?? null) !== basename($backup)) { throw new RuntimeException('Deployment operation changed before commit.'); }
+        self::writeOperationPhase($operation, 'complete');
+        $committed = true;
         self::disableMaintenance(); \TinyCat\Support\Cache::forget(self::CACHE_KEY);
+    }
+
+    /** Retry cleanup only for the latest committed operation, under its deployment lock. */
+    public static function finishCommittedOperation(string $id): void
+    {
+        $lock = self::operationLock();
+        try {
+            $operation = self::decodeJson((string) @file_get_contents(self::updateRoot() . '/operation.json'), 'deployment operation');
+            if (($operation['phase'] ?? null) !== 'complete' || ($operation['backup'] ?? null) !== $id) { throw new RuntimeException('Only the latest committed operation can finish cleanup.'); }
+            self::disableMaintenance(); \TinyCat\Support\Cache::forget(self::CACHE_KEY);
+        } finally { flock($lock, LOCK_UN); fclose($lock); }
+    }
+
+    /** @param array<mixed> $operation */
+    private static function writeOperationPhase(array $operation, string $phase): void
+    {
+        $operation['phase'] = $phase;
+        self::writeJsonFile(self::updateRoot() . '/operation.json', $operation);
     }
 
     /** Restore exactly the managed changes, database and activation state recorded by this runtime.
      * @return array<string, mixed> */
-    public static function rollback(string $id): array
+    public static function rollback(string $id, ?string $installationToken = null, bool $installationCli = false, ?string $operationId = null): array
     {
-        if (preg_match('/^[A-Za-z0-9._-]+$/D', $id) !== 1) { throw new RuntimeException('Invalid backup ID.'); }
+        if ($id !== '' && preg_match('/^[A-Za-z0-9._-]+$/D', $id) !== 1) { throw new RuntimeException('Invalid backup ID.'); }
         $lock = self::operationLock();
         try {
             $operation = self::decodeJson((string) @file_get_contents(self::updateRoot() . '/operation.json'), 'deployment operation');
-            if (($operation['backup'] ?? null) !== $id || !in_array($operation['phase'] ?? '', ['applying', 'failed', 'complete', 'restoring'], true)) { throw new RuntimeException('Only the latest deployment operation can be restored.'); }
+            $installing = ($operation['kind'] ?? null) === 'installation';
+            if ($installing) {
+                if (!(PHP_SAPI === 'cli' && $installationCli) && ($installationToken === null || $operationId !== ($operation['id'] ?? null) || !hash_equals((string) ($operation['recovery_hash'] ?? ''), hash('sha256', $installationToken)))) { throw new RuntimeException('Installation recovery authorization failed.'); }
+                if (($operation['phase'] ?? '') === 'preparing') {
+                    self::disableMaintenance(); self::writeOperationPhase($operation, 'aborted');
+                    return ['restored' => true, 'step' => $operation['step'] ?? 'tables', 'backup' => ''];
+                }
+            }
+            if (($operation['backup'] ?? null) !== $id || !in_array($operation['phase'] ?? '', ['applying', 'failed', 'complete', 'restoring', 'rolled_back'], true)) { throw new RuntimeException('Only the latest deployment operation can be restored.'); }
+            if ($operation['phase'] === 'rolled_back') { self::disableMaintenance(); return ['restored' => true, 'backup' => $id, 'step' => $operation['step'] ?? '']; }
+            if ($installing && $operation['phase'] === 'complete') { throw new RuntimeException('The installation committed; finish deployment cleanup instead.'); }
             $base = realpath(self::updateRoot() . '/backups'); $backup = realpath(self::updateRoot() . '/backups/' . $id);
             if ($base === false || $backup === false || !\TinyCat\Core\Modules\ModuleAutoload::inside($backup, $base)) { throw new RuntimeException('Unknown deployment backup.'); }
             $metadata = self::decodeJson((string) file_get_contents($backup . '/backup.json'), 'backup');
+            if ($installing) {
+                $identity = self::decodeJson((string) @file_get_contents($backup . '/installation.json'), 'installation backup');
+                foreach (['id', 'kind', 'step', 'recovery_hash'] as $field) { if (!isset($identity[$field]) || $identity[$field] !== ($operation[$field] ?? null)) { throw new RuntimeException('Installation backup identity mismatch.'); } }
+                \TinyCat\Core\Installation\Installer::validateConfigurationSnapshot($backup);
+            }
             if (($metadata['format'] ?? null) !== 2 || !is_array($metadata['files'] ?? null) || !is_array($metadata['new_files'] ?? null) || !array_key_exists('deployment', $metadata)) { throw new RuntimeException('This backup requires the documented manual restoration procedure.'); }
+            if ($installing && (($metadata['database_backup_required'] ?? null) !== true || $metadata['files'] !== [] || $metadata['new_files'] !== [] || $metadata['deployment'] !== null)) { throw new RuntimeException('Invalid fresh installation backup metadata.'); }
             foreach ($metadata['files'] as $path => $hash) {
                 $source = self::pathBelow($backup . '/files', (string) $path);
                 self::assertNoManagedSymlink($source, (string) $path);
@@ -183,7 +283,7 @@ class Manager extends Package
             }
             if (!empty($metadata['database_backup_required']) && ($metadata['database_identity'] ?? null) !== \TinyCat\Database\Snapshots::identity(\TinyCat\Database\Connection::get())) { throw new RuntimeException('Database configuration no longer points to the snapshot destination.'); }
             self::enableMaintenance((string) $metadata['from_version']);
-            self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'restoring', 'backup' => $id]);
+            self::writeOperationPhase($operation, 'restoring');
             if (!empty($metadata['database_backup_required'])) { \TinyCat\Database\Snapshots::restore(\TinyCat\Database\Connection::get(), $backup); }
             foreach ($metadata['files'] as $path => $hash) {
                 $source = self::pathBelow($backup . '/files', (string) $path); $target = self::pathBelow(\TinyCat\Support\Paths::basePath(), (string) $path);
@@ -194,10 +294,11 @@ class Manager extends Package
             $stateFile = \TinyCat\Support\Paths::basePath('storage/deployment.json');
             if ($metadata['deployment'] === null) { if (is_file($stateFile) && !unlink($stateFile)) { throw new RuntimeException('Cannot restore absent activation state.'); } }
             elseif (!is_array($metadata['deployment']) || !\TinyCat\Support\Storage::write($stateFile, is_string($metadata['deployment_source'] ?? null) ? $metadata['deployment_source'] : json_encode($metadata['deployment'], JSON_THROW_ON_ERROR) . "\n")) { throw new RuntimeException('Cannot restore activation state.'); }
+            if ($installing) { \TinyCat\Core\Installation\Installer::restoreConfiguration($backup); }
             self::clearRuntimeCache(); \TinyCat\Support\Cache::resetOpcache();
-            self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'rolled_back', 'backup' => $id]);
+            self::writeOperationPhase($operation, 'rolled_back');
             self::disableMaintenance();
-            return ['restored' => true, 'version' => $metadata['from_version'], 'backup' => $id];
+            return ['restored' => true, 'version' => $metadata['from_version'], 'backup' => $id] + ($installing ? ['step' => $operation['step']] : []);
         } finally { flock($lock, LOCK_UN); fclose($lock); }
     }
 

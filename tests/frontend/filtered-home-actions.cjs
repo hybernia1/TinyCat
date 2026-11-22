@@ -1,13 +1,13 @@
 "use strict";
 const assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), vm = require("node:vm");
 (async function () {
-  let prepended = 0, reset = 0, clean = 0, restored = [], action = "create", toolbar = true, removed = 0, cards = [];
-  const feed = { prepend() { prepended++; } };
+  let prepended = 0, reset = 0, clean = 0, hydrated = 0, inserted, restored = [], action = "create", toolbar = true, removed = 0, cards = [];
+  const feed = { prepend(node) { prepended++; inserted = node; } };
   const form = { closest: () => null, reset() { reset++; } };
   const T = {
     dom: { find: selector => selector === ".home-feed-toolbar" ? toolbar : selector === "[data-status-feed]" ? feed : null, all: selector => selector === ".status-card" ? cards : [], emit() {} },
     content: { remove() { removed++; cards = []; } },
-    lifecycle: { hydrate() {} }, i18n: {}, api: { unwrap: data => data.data }, actions: {},
+    lifecycle: { hydrate() { hydrated++; } }, i18n: {}, api: { unwrap: data => data.data }, actions: {},
     forms: { markClean() { clean++; } }, dialog: { close() {} },
     navigation: { async restore(event) { assert.ok(clean > 0, "The form is clean before shared navigation runs"); restored.push(event.state); } },
     publishing: { controllers: { editor: {} } },
@@ -18,7 +18,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   const handle = T.status.controllers.actions.handleStatusJsonResponse;
   await handle(form, { data: { action, item: { id: 20 } } });
   assert.equal(prepended, 0, "Filtered results are determined by the server after publishing");
-  assert.equal(reset, 1);
+  assert.equal(reset, 0, "The shared AJAX binder owns successful form reset after applying the result");
   assert.equal(restored.length, 1);
   assert.equal(restored[0].pageIndex, 3);
   assert.deepEqual(Array.from(restored[0].scroll), [0, 480]);
@@ -26,8 +26,10 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   await handle(form, { data: { action, item: { id: 20 } } });
   assert.equal(restored.length, 2, "Editing also rechecks membership through shared navigation");
   window.location.href = "https://tinycat.test/"; action = "create";
-  await handle(form, { data: { action, item: { id: 21 } } });
+  const roots = await handle(form, { data: { action, item: { id: 21 } } });
   assert.equal(prepended, 1, "Unfiltered feeds retain immediate insertion");
+  assert.equal(roots.length, 1); assert.equal(roots[0], inserted);
+  assert.equal(hydrated, 0, "Mutation handler returns only the inserted card for the binder to hydrate");
   assert.equal(restored.length, 2);
   window.location.href = "https://tinycat.test/author/2?media=images"; toolbar = false;
   await handle(form, { data: { action: "react", status: null } });

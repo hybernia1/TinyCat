@@ -34,6 +34,7 @@ import "./form-requests.js";
         body: options.content, body_class: "modal-body", has_footer: options.footer instanceof Node, footer: options.footer
       });
       document.body.appendChild(root);
+      if (options.refresh === false) root.dataset.modalRefreshable = "false";
       return root;
     }
   };
@@ -366,7 +367,7 @@ import "./form-requests.js";
 
     modal.dataset.remoteLoaded = "true";
     modal.dataset.modalUrl = url;
-    if (modal.dataset.modalKind === "editor") {
+    if (modal.dataset.modalKind === "editor" && modal.dataset.modalRefreshable !== "false") {
       var actions = modal.querySelector(".modal-editor-actions");
       if (actions) actions.prepend(TinyCat.components.render("ui/editor-refresh", { id: target, url: url }));
     }
@@ -389,7 +390,7 @@ import "./form-requests.js";
   };
   TinyCat.dialog.refresh = async function (target) {
     var modal = getModal(target);
-    if (!modal || modal.dataset.remoteLoaded !== "true") { return null; }
+    if (!modal || modal.dataset.remoteLoaded !== "true" || modal.dataset.modalRefreshable === "false") { return null; }
     if (modal.querySelector('form[data-api-busy="true"]')) { return null; }
     var active = qs('[data-tab][aria-selected="true"]', modal);
     return TinyCat.dialog.openResource(modal.id, modal.dataset.modalUrl, { refresh: true, tab: active && active.dataset.tab, history: false });
@@ -407,10 +408,12 @@ import "./form-requests.js";
     setLoading(trigger, true);
 
     try {
-      var current = getModal(target);
+      var current = getModal(target), opener = current && current.__tinycatPreviousFocus;
       if (force && current && current.contains(trigger)) return await TinyCat.dialog.refresh(current);
       modal = await loadRemoteModal(target, url, host, force, trigger);
-      return TinyCat.dialog.open(modal);
+      TinyCat.dialog.open(modal);
+      if (opener) modal.__tinycatPreviousFocus = opener;
+      return modal;
     } finally {
       delete trigger.dataset.modalBusy;
       setLoading(trigger, false);

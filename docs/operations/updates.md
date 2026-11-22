@@ -7,6 +7,105 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Interrupted web installation
+
+The table and administrator steps each run as an exclusive deployment operation.
+Before changes, the installer persists its recovery session and records a
+`preparing` installation journal. It then snapshots the dedicated target database,
+deployment state and the original configuration (including explicit absence).
+The database must be dedicated to this installation: restoration also removes
+changes made by other writers after the snapshot. Creating an empty database in
+the connection step is outside these operations; recovery never drops that database.
+
+Only the journal's `complete` phase commits a step. Publishing the deployment or
+`install.complete` configuration flag alone does not commit it. An unfinished
+installation blocks normal HTTP and scheduled entry points even without a
+maintenance file. The installer redirects a failed step to `/install/recovery`.
+The recovery page and POST require the original session, shared CSRF protection
+and the exact operation identity, rechecked under the deployment lock.
+
+Recovery of a table step restores the database before that step; recovery of an
+administrator step restores the tables but removes its account, settings and
+deployment changes. Configuration bytes and POSIX mode are restored from a
+separate private snapshot, outside the package's managed-file namespace. Missing
+or corrupt snapshots and a different target database are rejected before restore.
+An interrupted restore retains its operation identity and can be repeated.
+
+If the session is lost, the private rescue console accepts:
+
+```text
+php storage/updates/console.php rollback BACKUP_ID --installation-stdin < PRIVATE_DATABASE_JSON
+```
+
+The private input outside the web root contains a `database` object with `host`,
+`name`, `user`, `password`, and optional `port` and `charset`. It is parsed as
+bounded JSON, never executed as PHP; credentials are not command arguments or
+journal fields. A `preparing` operation has not changed application data: use
+`-` as its backup ID to abort preparation. A committed operation must instead
+use `finish-deployment BACKUP_ID` if maintenance cleanup was interrupted.
+
+Windows automatic installation and configuration restoration require Windows
+PowerShell 5.1 (.NET Framework), PHP `proc_open`, and local NTFS on a Fixed or
+Removable drive without reparse paths. Network shares, SMB, ReFS and other
+filesystems are rejected. The runtime
+[`configuration-windows.ps1`](../../App/Core/Installation/configuration-windows.ps1)
+helper is part of both installation and update distributions. It checks root,
+storage, updates and backup directory ownership and rejects mutating Allow rights
+for identities other than the runtime SID, SYSTEM and Administrators. Existing
+directory ACLs are not changed. Missing capabilities or unsuitable permissions
+cause rejection before installation mutations.
+
+Configuration and private snapshot files receive a protected DACL granting
+FullControl only to the runtime SID, SYSTEM and Administrators before secret
+content is written. Same-volume publication is followed by verification of the
+resulting file identity and DACL. Restoration deliberately normalizes NTFS ACLs
+to this policy instead of preserving the original ACL; different service
+identities cannot read the result. See [filesystem storage](../development/storage.md).
+Secret staging uses only `storage/updates/installation-private`; the installer
+protects this directory when creating it and leaves existing directory ACLs
+unchanged. Input is bounded before parsing and errors do not echo secret data.
+POSIX configuration publication stages private bytes on the same filesystem,
+then renames without a copy/unlink fallback. The guarantees cover process
+interruption, not power-loss durability. Deployment-specific web protection and
+local filesystem permissions remain required; directory ACLs alone do not prove
+the protection of a renamed file.
+
+## Tasks and deployment admission
+
+Every task execution enters the deployment guard in `Core/Tasks/Runner`, before
+its per-task lock, history writes and owner callback. This applies to Console,
+scheduled CLI, scheduler HTTP triggers/executions, administration and health runs,
+including direct Runner calls. Read-only scheduler health/HEAD probes run no tasks.
+The existing task result and transport envelopes remain in use; denied admission
+is a failed task without a new history row.
+
+Tasks hold a shared `storage/updates/update.lock`; updates, lifecycle snapshots
+and rollback require its exclusive mode. Different tasks may run concurrently,
+while each task retains its own exclusive lock. Lock acquisition is nonblocking.
+Maintenance or an operation journal in `applying`, `failed` or `restoring` also
+denies admission after an interrupted deployment releases its process lock.
+Restore the recorded backup before resuming work; removing a lock file is not
+recovery and can break exclusion with a running owner.
+
+If the operation journal already says `complete` but cleanup failed, do not
+restore the backup merely to finish cleanup. Run
+`php storage/updates/console.php finish-deployment BACKUP_ID` with the backup
+ID from the journal. The command takes the deployment lock and accepts only
+the latest committed operation. It is safe to repeat for that operation.
+
+Update retention enters the same shared guard before its exclusive
+`storage/updates/cleanup.lock`, including when called directly. It never upgrades
+the shared deployment lock. Competing sweeps or closed deployment admission defer
+retention. Recovery backups remain protected by the completion/retention rules;
+rollback reads and restores its backup under the exclusive deployment lock.
+Nested runs of a different task may acquire another shared guard; deployment
+operations from inside a task are rejected instead of waiting for a lock upgrade.
+Locks are released on normal completion, failure and process exit. A later task
+lock owner marks abandoned history interrupted, using the existing recovery rule.
+
+The isolated regression is
+`php tests/run.php --only=tests/domains/scheduler/deployment.php`.
+
 Version 7.0.0 removes the unused Blog module and its assembly preset.
 The release-specific sections below retain historical commands and evidence for
 their immutable packages. They do not restore Blog support in current sources.
@@ -79,6 +178,27 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
+
+## Upgrading to 8.0.1
+
+Requires PHP 8.4 and a completed 6.0.10 or newer installation. Publish matching
+signed Core and Social update/install packages. The account stream adds the
+nullable `users.avatar_version` column; existing avatars retain their legacy
+paths until replaced. Fresh installations use the new account fresh-v2 baseline.
+Published migration files and checksums remain unchanged. Configuration, media,
+accounts and module activation are preserved.
+
+Credential changes invalidate stale sessions and reset tokens. Deployment admission
+now coordinates tasks and installation recovery; finish updating all workers before
+resuming external scheduler invocation. The Windows configuration helper is a
+required runtime file. On 6.0.10, refresh and verify the private rescue launcher
+before applying the update, as described under the supported baseline above.
+
+This release also fixes transactional Social writes, avatar/profile/settings cache
+consistency, feed cursors, discussion pagination, shared form constraints and
+authentication modal switching. Deploy the matching generated assets; search cards
+now include their Social status dependencies. Authentication dialogs explicitly omit
+Refresh while ordinary resource editors retain it.
 
 ## Upgrading to 8.0.0
 

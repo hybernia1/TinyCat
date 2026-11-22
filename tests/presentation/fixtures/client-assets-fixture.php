@@ -39,6 +39,7 @@ if (($argv[3] ?? '') === '--compiled' || ($argv[3] ?? '') === '--compiled-min') 
     }
     echo json_encode(['locale' => $locale, 'assets' => $assets,
         'styles' => \TinyCat\Support\ClientAssets::styles($path),
+        'style_sources' => \TinyCat\Support\ClientAssets::sourceStyles($path),
         'sources' => \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($path)),
         'catalog' => \TinyCat\Support\ClientAssets::catalog($path, $locale),
         'definitions' => array_keys(\TinyCat\Support\ClientAssets::definitions($path)),

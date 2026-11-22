@@ -31,7 +31,7 @@ final class Embed
     /** @return array<string, mixed>|null */
     private static function find(int $id): ?array
     {
-        return Connection::one('SELECT c.id, c.body, c.published_at, c.author_id, u.username AS author_name, u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.updated_at AS author_updated_at,
+        return Connection::one('SELECT c.id, c.body, c.published_at, c.author_id, u.username AS author_name, u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version, u.updated_at AS author_updated_at,
             ci.path AS image_path, ci.width AS image_width, ci.height AS image_height
             FROM social_posts c INNER JOIN users u ON u.id = c.author_id
             LEFT JOIN social_post_images ci ON ci.content_id = c.id

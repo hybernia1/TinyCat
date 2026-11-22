@@ -432,6 +432,17 @@
         ]
       },
       {
+        "tag": "button",
+        "attrs": {
+          "type": "button",
+          "class": "btn btn-secondary btn-sm",
+          "data-comment-page": {"get": "comments_next_url"},
+          "data-comment-parent": "0"
+        },
+        "when": {"get": "comments_next_url"},
+        "children": [{"t": "account.status_more_comments"}]
+      },
+      {
         "tag": "a",
         "attrs": {
           "class": "btn btn-secondary btn-sm",
@@ -3611,6 +3622,7 @@
                 "data": {
                   "item": {"get": "item"},
                   "comments": {"get": "comments"},
+                  "comments_next_url": {"get": "comments_next_url"},
                   "viewer": {"get": "viewer"},
                   "context": {"concat": ["status-", {"get": "item.id"}]}
                 },
@@ -4045,6 +4057,7 @@
         "data": {
           "item": {"get": "item"},
           "comments": {"get": "comments"},
+          "comments_next_url": {"get": "comments_next_url"},
           "viewer": {"get": "viewer"},
           "context": "modal"
         }
@@ -4959,6 +4972,7 @@
         ]
       },
       "data-comment-id": {"get": "item.id"},
+      "data-comment-created-at": {"get": "item.created_at"},
       "data-content-id": {"get": "item.content_id"},
       "data-parent-id": {"get": "item.parent_id"}
     },
@@ -5079,6 +5093,17 @@
                 }
               }
             ]
+          },
+          {
+            "tag": "button",
+            "attrs": {
+              "type": "button",
+              "class": "btn btn-secondary btn-sm",
+              "data-comment-page": {"concat": [{"get": "api_base"}, "/comments?parent_id=", {"get": "item.id"}]},
+              "data-comment-parent": {"get": "item.id"}
+            },
+            "when": {"and": [{"get": "show_replies"}, {"get": "item.has_replies"}, {"not": {"get": "preview"}}]},
+            "children": [{"t": "account.status_more_replies"}]
           },
           {
             "tag": "div",

@@ -16,6 +16,7 @@ TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelec
 $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 Connection::set($pdo);
 $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT UNIQUE COLLATE NOCASE, password TEXT, role TEXT, status TEXT, bio TEXT, locale TEXT, theme TEXT, email_notifications INTEGER)');
+$pdo->exec('CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)');
 $password = 'Profile-fixture-42';
 $hash = Authentication::authPassword($password);
 $insert = $pdo->prepare("INSERT INTO users VALUES (?, ?, ?, ?, ?, 'active', 'Original bio', 'en', 'light', 1)");
@@ -45,18 +46,23 @@ $assert($row(2)['role'] === 'user' && $row(2)['username'] === 'Member' && $row(2
 $assert(TinyCat\Support\Localization::locale() === 'en', 'Domain profile write does not switch request language');
 $partial = Profile::update($row(2), $member, ['theme' => 'light'], ['en', 'cs']);
 $assert($partial['bio'] === 'Hello world' && $partial['locale'] === 'cs' && $partial['email'] === 'member@example.test' && $partial['email_notifications'] === 1, 'Theme-only update preserves other fields and notification preference');
-$nulls = Profile::update($row(2), $member, ['bio' => null, 'theme' => null, 'email' => null, 'email_notifications' => null], ['en', 'cs']);
-$assert($nulls['bio'] === '' && $nulls['theme'] === 'system' && $nulls['email'] === 'member@example.test' && $nulls['email_notifications'] === 1, 'Explicit null fields preserve existing request semantics');
-$invalid(static fn () => Profile::update($row(2), $member, ['locale' => null, 'email' => 'invalid'], ['en', 'cs']), ['locale' => ['settings.messages.invalid_language'], 'email' => ['account.messages.email_invalid']]);
+$beforeInvalid = $row(2);
+$invalid(static fn () => Profile::update($row(2), $member, ['bio' => null], ['en', 'cs']), ['bio' => ['common.request_failed']]);
+$invalid(static fn () => Profile::update($row(2), $member, ['locale' => null], ['en', 'cs']), ['locale' => ['common.request_failed']]);
 $invalid(static fn () => Profile::update($row(2), $member, ['locale' => 'de'], ['en', 'cs']), ['locale' => ['settings.messages.invalid_language']]);
 $invalid(static fn () => Profile::update($row(2), $member, ['email' => 'OTHER@EXAMPLE.TEST'], ['en', 'cs']), ['email' => ['account.messages.email_taken']]);
-$assert($row(2) === $nulls, 'Invalid writes do not partially apply');
-$long = Profile::update($row(2), $member, ['bio' => str_repeat('ž', 550)], ['en', 'cs']);
-$assert(preg_match_all('/./u', $long['bio']) === 500, 'Bio limit preserves complete Unicode characters');
+$assert($row(2) === $beforeInvalid, 'Invalid writes do not partially apply');
+$long = Profile::update($row(2), $member, ['bio' => str_repeat('😀', 500)], ['en', 'cs']);
+$assert(mb_strlen($long['bio'], 'UTF-8') === 500, 'Bio accepts 500 Unicode code points');
+$invalid(static fn () => Profile::update($row(2), $member, ['bio' => str_repeat('😀', 501)], ['en', 'cs']), ['bio' => ['common.request_failed']]);
+$invalid(static fn () => Profile::update($row(2), $member, ['bio' => ['invalid']], ['en', 'cs']), ['bio' => ['common.request_failed']]);
+$invalid(static fn () => Profile::update($row(2), $member, ['email_notifications' => ['invalid']], ['en', 'cs']), ['email_notifications' => ['common.request_failed']]);
 $adminEdit = Profile::update($row(2), $admin, ['bio' => 'Edited by admin'], ['en', 'cs']);
 $assert($adminEdit['bio'] === 'Edited by admin' && $row(1) === $admin, 'Administrator edits target only the selected account');
+$pdo->exec("INSERT INTO password_reset_tokens (id, user_id, token_hash) VALUES (1, 2, 'old-email-token')");
 $changedEmail = Profile::email($row(2), $member, ['email' => ' NEW@EXAMPLE.TEST ', 'email_notifications' => '0', 'role' => 'admin']);
 $assert($changedEmail['email'] === 'new@example.test' && $changedEmail['email_notifications'] === 0 && $changedEmail['role'] === 'user', 'Email write normalizes and whitelists fields');
+$assert((int) Connection::value('SELECT COUNT(*) FROM password_reset_tokens') === 0, 'Changing recovery email revokes issued reset tokens');
 $kept = Profile::email($row(2), $member, ['email' => 'new@example.test']);
 $assert($kept['email_notifications'] === 0, 'Omitted preference remains unchanged');
 $enabled = Profile::email($row(2), $member, ['email' => 'new@example.test', 'email_notifications' => '1']);
@@ -71,13 +77,22 @@ $invalid(static fn () => Profile::password($row(2), $member, ['current_password'
 $invalid(static fn () => Profile::password($row(2), $member, ['current_password' => str_repeat('x', 1025), 'password' => 'New-fixture-43', 'password_confirm' => 'New-fixture-43']), ['current_password' => ['account.messages.current_password_invalid']]);
 $invalid(static fn () => Profile::password($row(2), $member, ['current_password' => $password, 'password' => 'New-fixture-43', 'password_confirm' => 'different']), ['password_confirm' => ['account.messages.password_mismatch']]);
 $assert($row(2)['password'] === $hash, 'Invalid password input leaves stored credentials unchanged');
+$pdo->exec("INSERT INTO password_reset_tokens (id, user_id, token_hash) VALUES (2, 2, 'old-password-token')");
 $beforePassword = $row(2);
 Profile::password($beforePassword, $member, ['current_password' => $password, 'password' => 'New-fixture-43', 'password_confirm' => 'New-fixture-43']);
 $newHash = $row(2)['password'];
+$assert((int) Connection::value('SELECT COUNT(*) FROM password_reset_tokens') === 0, 'Changing password revokes issued reset tokens');
 $assert($newHash !== $hash && password_verify('New-fixture-43', $newHash), 'Password write stores a new hash');
 $assert(array_diff_assoc($row(2), $beforePassword) === ['password' => $newHash], 'Password change cannot alter unrelated fields');
 $invalid(static fn () => Profile::password($beforePassword, $member, ['current_password' => $password, 'password' => 'Stale-fixture-44', 'password_confirm' => 'Stale-fixture-44']), ['current_password' => ['account.messages.current_password_invalid']]);
 $assert($row(2)['password'] === $newHash, 'Stale credentials cannot overwrite a concurrent password change');
+$pdo->exec("INSERT INTO password_reset_tokens (id, user_id, token_hash) VALUES (3, 2, 'rollback-token')");
+$pdo->exec("CREATE TRIGGER reject_token_revoke BEFORE DELETE ON password_reset_tokens BEGIN SELECT RAISE(ABORT, 'injected revocation failure'); END");
+try { Profile::password($row(2), $member, ['current_password' => 'New-fixture-43', 'password' => 'Rollback-fixture-44', 'password_confirm' => 'Rollback-fixture-44']); throw new LogicException('Revocation failure was ignored'); }
+catch (PDOException) { $assert($row(2)['password'] === $newHash && Connection::value('SELECT token_hash FROM password_reset_tokens') === 'rollback-token', 'Revocation failure rolls password and reset-token changes back together'); }
+$pdo->exec('DROP TRIGGER reject_token_revoke');
+Profile::update($row(2), $member, ['email' => 'updated@example.test'], ['en', 'cs']);
+$assert((int) Connection::value('SELECT COUNT(*) FROM password_reset_tokens') === 0, 'General profile update also revokes tokens when recovery email changes');
 $pdo->exec("CREATE TRIGGER reject_profile_write BEFORE UPDATE ON users BEGIN SELECT RAISE(ABORT, 'injected profile SQL failure'); END");
 try { Profile::update($row(2), $member, ['bio' => 'Failed SQL write'], ['en', 'cs']); throw new LogicException('SQL failure was ignored'); }
 catch (PDOException) { $assert($row(2)['bio'] === 'Edited by admin', 'SQL failure leaves stored profile unchanged'); }
@@ -85,6 +100,6 @@ $pdo->exec('DROP TRIGGER reject_profile_write');
 foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration', 'TinyCat\\Core\\Notifications\\ServiceProvider', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) {
     $assert(!class_exists($class, false), 'Domain profile writes did not load ' . $class);
 }
-$assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table'"), 'name') === ['users'], 'Profile management needs only account storage');
+$assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table'"), 'name') === ['users', 'password_reset_tokens'], 'Profile management needs only account storage');
 
 echo "PASS standalone account profile, permissions, field selection and credential races ({$checks} checks)\n";

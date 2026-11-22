@@ -48,7 +48,7 @@ final class Resource
     /** @return array<string, mixed> */
     public static function options(): array
     {
-        return ['languages' => \TinyCat\Support\Languages::language_packages(), 'themes' => ['system', 'light', 'dark'], 'username_pattern' => Usernames::pattern(), 'password_max_length' => Passwords::maxLength()];
+        return ['languages' => \TinyCat\Support\Languages::language_packages(), 'themes' => ['system', 'light', 'dark'], 'username_pattern' => Usernames::pattern(), 'username_min_length' => Usernames::minLength(), 'username_max_length' => Usernames::maxLength(), 'email_max_bytes' => Email::maxLength(), 'bio_max_length' => Profile::BIO_MAX_LENGTH, 'password_min_bytes' => Passwords::minLength(), 'password_max_length' => Passwords::maxLength()];
     }
 
     /** @param array<mixed>|null $user

@@ -22,12 +22,12 @@ import "../content/translation.js";
   TinyCat.status.dispose = function (root) { C.feed.dispose(root); };
 
   TinyCat.status.init = function () {
-    C.comments.initCommentReplies(); C.actions.initStatusForms();
+    C.comments.initCommentReplies(); if (C.comments.initCommentPagination) C.comments.initCommentPagination(); C.actions.initStatusForms();
   };
   var feedResult = TinyCat.status.result;
   TinyCat.status.result = function (source, response, target) {
     if (!source.matches("form[data-status-form]")) { return feedResult(source, response, target); }
-    return C.actions.handleStatusJsonResponse(source, response).then(function () { C.actions.prepareForms(document); return []; });
+    return C.actions.handleStatusJsonResponse(source, response).then(function (roots) { C.actions.prepareForms(source); return roots; });
   };
   TinyCat.modules.register("status", TinyCat.status);
   TinyCat.navigation.register("/", {

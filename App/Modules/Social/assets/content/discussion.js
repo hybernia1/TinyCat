@@ -18,6 +18,7 @@ import "./editor-entry.js";
     all("[data-discussion-form]", root).forEach(function (form) {
       form.dataset.ajaxForm = "";
       var action = (form.elements.namedItem("action") || {}).value;
+      form.dataset.reset = action === "comment" ? "true" : "false";
       if (action === "react" || action === "comment_like") {
         var button = form.querySelector("[aria-pressed]");
         form.dataset.apiMethod = button && button.getAttribute("aria-pressed") === "true" ? "DELETE" : "PUT";
@@ -37,7 +38,6 @@ import "./editor-entry.js";
         var parent = item.parent_id && thread.querySelector('.status-comment[data-comment-id="' + Number(item.parent_id) + '"] .status-comment-main');
         var list = parent ? C.comments.ensureCommentReplies(parent.closest(".status-comment")) : thread.querySelector("[data-status-comment-list]");
         if (list) { var node = render(item, thread); list.appendChild(node); roots.push(node); }
-        C.comments.resetStatusCommentForm(source);
       } else if (data.action === "comment_update" && item) {
         all('.status-comment[data-comment-id="' + Number(item.id) + '"] .status-comment-body', thread).forEach(function (body) { body.replaceChildren(T.components.render("publishing/segments", { segments: item.segments })); });
       } else if (data.action === "comment_delete") {

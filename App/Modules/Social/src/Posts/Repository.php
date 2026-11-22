@@ -32,14 +32,23 @@ final class Repository
     }
 
     /** Prepared links and image files must exist before entering the transaction.
+     * The caller deletes the returned superseded path only after the outer commit.
      * @param list<array<mixed>> $links
      * @param array<mixed>|null $image
-     * @param array<mixed>|null $existingImage */
-    public static function update(int $id, PostCreation $draft, array $links, ?array $image, bool $removeImage, ?array $existingImage): string
+     * @param array<mixed> $actor */
+    public static function update(int $id, PostCreation $draft, array $links, ?array $image, bool $removeImage, array $actor): string
     {
-        if ($draft->rejection !== null || $id < 1 || (trim($draft->body) === '' && $image === null && ($removeImage || $existingImage === null))) { throw new \InvalidArgumentException('An update requires accepted text or an image.'); }
+        if ($draft->rejection !== null || $id < 1) { throw new \InvalidArgumentException('An update requires accepted text or an image.'); }
         $payload = $draft->payload();
-        return Transactions::run(static function () use ($id, $payload, $links, $image, $removeImage, $existingImage): string {
+        return Transactions::run(static function () use ($id, $payload, $links, $image, $removeImage, $actor): string {
+            $current = Connection::one(Connection::lockingSelect('SELECT * FROM social_posts WHERE id = ?'), [$id]);
+            if (!Posts::status_can_edit($current, $actor)) {
+                throw new \TinyCat\Http\HttpException(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden');
+            }
+            $existingImage = Connection::one(Connection::lockingSelect('SELECT * FROM social_post_images WHERE content_id = ?'), [$id]);
+            if (trim($payload['body']) === '' && $image === null && ($removeImage || $existingImage === null)) {
+                throw new \TinyCat\Http\HttpException(\TinyCat\Support\Localization::t('account.messages.status_required'), 422, 'status_required', ['errors' => ['body' => [\TinyCat\Support\Localization::t('account.messages.status_required')]]]);
+            }
             Connection::update('social_posts', ['body' => $payload['body']], ['id' => $id]);
             Tags::status_sync_tags($id, $payload['tags']);
             Links::persistLinks($id, $links);
@@ -60,9 +69,11 @@ final class Repository
     {
         if ($id < 1) { return ''; }
         if ($deleteImageFile && Connection::get()->inTransaction()) { throw new \LogicException('The outer transaction owner must defer image deletion until commit.'); }
-        $terms = Tags::status_term_ids_for_content($id); $links = Links::status_link_ids_for_content($id);
-        $image = Connection::one('SELECT * FROM social_post_images WHERE content_id = ? LIMIT 1', [$id]);
-        Transactions::run(static function () use ($id, $beforeDelete, $terms, $links): void {
+        $path = Transactions::run(static function () use ($id, $beforeDelete): string {
+            // Serialize with image replacement before reading any cleanup references.
+            Connection::one(Connection::lockingSelect('SELECT id FROM social_posts WHERE id = ?'), [$id]);
+            $terms = Tags::status_term_ids_for_content($id); $links = Links::status_link_ids_for_content($id);
+            $image = Connection::one(Connection::lockingSelect('SELECT * FROM social_post_images WHERE content_id = ?'), [$id]);
             if ($beforeDelete !== null) { $beforeDelete(); }
             Connection::exec('DELETE FROM social_comment_likes WHERE comment_id IN (SELECT id FROM social_comments WHERE content_id = ?)', [$id]);
             Connection::delete('social_comments', ['content_id' => $id]);
@@ -71,8 +82,8 @@ final class Repository
             foreach (['social_post_tags', 'social_post_links', 'social_post_images'] as $table) { Connection::delete($table, ['content_id' => $id]); }
             Tags::status_cleanup_unused_term_ids($terms); Links::status_cleanup_unused_link_ids($links);
             Connection::delete('social_posts', ['id' => $id]);
+            return (string) ($image['path'] ?? '');
         });
-        $path = (string) ($image['path'] ?? '');
         if ($deleteImageFile) { ImageStorage::delete($path); }
         return $path;
     }

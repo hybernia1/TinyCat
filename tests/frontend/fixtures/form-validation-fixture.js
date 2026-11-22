@@ -4,6 +4,38 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
+  if (mode === 'auth-switch') {
+    const reads = [], opener = T.dom.element('button',{type:'button'},'Login'), confirm = T.dialog.confirm;
+    document.body.append(opener);
+    opener.dataset.modalOpen = 'auth-modal'; opener.dataset.modalUrl = '/api/users/authentication?mode=login&next=%2Fsocial';
+    T.api.request = async url => {
+      const address = new URL(url,location.href), mode = address.searchParams.get('mode');
+      check(address.pathname === '/api/users/authentication', 'Authentication switches only read their authorized resource');
+      reads.push(mode);
+      const other = mode === 'login' ? 'register' : 'login';
+      return {data:{mode,next:'/social',registration_enabled:true,options:{},captcha:{enabled:false},switch_url:'/'+other,switch_modal_url:'/api/users/authentication?mode='+other+'&next=%2Fsocial'}};
+    };
+    T.lifecycle.start(); opener.focus(); opener.click();
+    await wait(() => !!T.dialog.current(), 'Login is created on demand');
+    let modal = T.dialog.current();
+    check(!modal.querySelector('[data-modal-resource-refresh]') && await T.dialog.refresh(modal)===null, 'Login explicitly omits resource refresh');
+    const username = modal.querySelector('[name="username"]'); username.value='PreservedDraft'; username.dispatchEvent(new Event('input',{bubbles:true}));
+    T.forms.confirmWith(async () => false);
+    modal.querySelector('[data-modal-open="auth-modal"]').click(); await pause();
+    check(reads.join(',')==='login' && username.value==='PreservedDraft' && modal.isConnected, 'Declining a switch preserves the draft and avoids a resource read');
+    T.forms.confirmWith(async () => true);
+    modal.querySelector('[data-modal-open="auth-modal"]').click();
+    await wait(() => reads.includes('register') && T.dialog.current()!==modal, 'Switch requests register mode instead of refreshing login');
+    modal = T.dialog.current();
+    check(!modal.querySelector('[data-modal-resource-refresh]') && await T.dialog.refresh(modal)===null, 'Registration explicitly omits resource refresh');
+    check(!!modal.querySelector('[name="email"]') && location.hash.includes('mode=register') && modal.contains(document.activeElement), 'Registration fields, focus and history follow the selected resource');
+    modal.querySelector('[data-modal-open="auth-modal"]').click();
+    await wait(() => reads.join(',')==='login,register,login' && T.dialog.current()!==modal, 'Registration switches back through the same loader');
+    T.forms.confirmWith(confirm);
+    T.dialog.close(T.dialog.current(),{history:false});
+    check(document.activeElement===opener, 'Closing returns focus to the original opener');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
   if (mode === 'javascript-audit') {
     T.lifecycle.start();
     const root=document.createElement('div');root.innerHTML='<button tabindex="-1">Inactive</button><button id="audit-active">Active</button><fieldset disabled><button>Disabled</button></fieldset><div inert><button>Inert</button></div>';
@@ -172,7 +204,16 @@
       check(body.value===data.item.editable_body, 'Changing the UI scale preserves the editor draft: '+scale);
     }
     document.documentElement.style.removeProperty('--ui-scale');
-    T.dialog.close(dialog,{history:false});
+    const card = document.createElement('div'); card.className='status-card'; card.dataset.statusId='7'; document.body.append(card);
+    const originalCard = T.status.card, hydrated = [];
+    T.status.card = () => { const node = document.createElement('div'); node.className='status-card'; node.dataset.statusId='7'; return node; };
+    T.lifecycle.register('test-bot-mutation-hydration', {hydrate: root => { hydrated.push(root); }});
+    window.fetch = async () => new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:{action:'update',item:{id:7}},meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
+    button.click(); await wait(() => !card.isConnected && !form.dataset.apiBusy, 'Bot post edit applies its mutation');
+    const replacement = document.querySelector('.status-card[data-status-id="7"]');
+    check(hydrated.length === 1 && hydrated[0] === replacement, 'Bot post edit hydrates only its replacement once through the shared binder: '+JSON.stringify(hydrated.map(node=>node.className || node.nodeName)));
+    T.status.card = originalCard; replacement.remove();
+    if (dialog.isConnected) T.dialog.close(dialog,{history:false});
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
   if (mode === 'health-shell') {
@@ -296,7 +337,7 @@
     text.value = 'synced'; checkbox.checked = false; T.filters.defaults(defaults, ['name']); defaults.reset();
     check(text.value === 'synced' && checkbox.checked, 'Partial filter synchronization preserves unrelated reset defaults');
     T.filters.remove('fixture-filter-defaults');
-    const options = {username_pattern:'[A-Za-z][A-Za-z0-9_]+',password_max_length:1024,roles:['admin','user'],statuses:['active','ban']};
+    const options = {username_pattern:'[A-Za-z][A-Za-z0-9_]+',username_min_length:2,username_max_length:32,email_max_bytes:254,bio_max_length:500,password_min_bytes:8,password_max_length:1024,roles:['admin','user'],statuses:['active','ban']};
     const listing = {items:[],filters:{},options,roles:['admin','user'],statuses:['active','ban']};
     const reads = {};
     window.fetch = async (url, config) => {
@@ -312,12 +353,31 @@
     }});
     T.lifecycle.start();
     check(initBlocked && !document.querySelector('.modal'), 'Initialization cannot construct a hidden modal');
+    const install = T.components.render('installation/admin', {username_pattern:options.username_pattern,username_hint:'',password_min:options.password_min_bytes,password_max:options.password_max_length});
+    document.body.append(install); T.lifecycle.hydrate(install);
+    const installPassword = install.querySelector('[name="password"]');
+    installPassword.value='éééé'; T.forms.syncConstraints(installPassword);
+    check(installPassword.checkValidity() && !installPassword.hasAttribute('minlength'), 'Pre-database installer accepts the eight-byte Unicode password boundary');
+    installPassword.value='ééé'; T.forms.syncConstraints(installPassword);
+    check(!installPassword.checkValidity(), 'Pre-database installer rejects a password below the byte minimum');
+    T.lifecycle.dispose(install); install.remove();
+    const profileForm = T.components.render('users/account-form', {dialog_id:'identity-constraints',user:{id:2,bio:'',locale:'en',theme:'system'},languages:{en:'English'},options});
+    document.body.append(profileForm); T.lifecycle.hydrate(profileForm);
+    const bio = profileForm.elements.namedItem('bio'); bio.value = '😀'.repeat(options.bio_max_length);
+    T.forms.syncConstraints(bio); check(bio.checkValidity() && !bio.hasAttribute('maxlength'), 'Bio accepts the Unicode code point boundary without a UTF-16 limit');
+    bio.value += '😀'; T.forms.syncConstraints(bio);
+    check(!bio.checkValidity() && Array.from(bio.value).length === options.bio_max_length + 1, 'An overlong bio is rejected without truncating the draft');
+    T.lifecycle.dispose(profileForm); profileForm.remove();
     const list = T.dom.element('div',{id:'users-list'}); document.body.append(list);
     T.modules.result({dataset:{apiMethod:"GET"},getAttribute:name=>name==="href"?"/api/users":null},{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}},list);
     T.lifecycle.hydrate(list);
     check(!document.querySelector('.modal') && !Object.keys(reads).length, 'List hydration contains filters but no creation modal or resource read');
     const editor = await T.dialog.openResource('modal-users-creation','/api/users/creation');
     const username = editor.querySelector('[name="username"]'); username.value='UnsentAccount'; username.dispatchEvent(new Event('input',{bubbles:true}));
+    check(username.dataset.minLength === String(options.username_min_length) && username.dataset.maxLength === String(options.username_max_length) && !username.hasAttribute('maxlength'), 'Account creation derives Unicode username bounds from Identity.');
+    const pass = editor.querySelector('[name="password"]'); pass.value = 'éééé'; T.forms.syncConstraints(pass);
+    check(pass.checkValidity() && !pass.hasAttribute('minlength'), 'An eight-byte Unicode password passes the owner byte minimum.');
+    pass.value = 'ééé'; T.forms.syncConstraints(pass); check(!pass.checkValidity(), 'A seven-or-fewer-byte password fails the same minimum.'); pass.value = '';
     T.modules.result({dataset:{apiMethod:"GET"},getAttribute:name=>name==="href"?"/api/users":null},{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}},list); T.lifecycle.hydrate(list);
     check(document.getElementById('modal-users-creation') === editor && username.value === 'UnsentAccount', 'Refreshing the list preserves an open creation draft');
     const confirmation = T.dialog.confirm; T.forms.confirmWith(async () => false);

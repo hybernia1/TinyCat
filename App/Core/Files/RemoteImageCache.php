@@ -120,8 +120,10 @@ final class RemoteImageCache
             throw new \RuntimeException('Link image directory escapes upload storage.');
         }
         return \TinyCat\Support\FileSweep::run($directory, $limit, static function (array $files) use ($base): array {
-            $paths = [];
+            $paths = []; $temporary = [];
             foreach ($files as $file) {
+                if ($file->getMTime() < time() - 172800 && preg_match('/^\.(?:image-|tinycat-write-)[A-Za-z0-9]+$/D', $file->getFilename()) === 1) { $temporary[] = $file->getPathname(); }
+
                 $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($base) + 1));
                 if ($file->getMTime() <= time() - 3600 && preg_match('~^[0-9]{4}/[0-9]{2}/[a-f0-9]{40}\.webp$~D', $relative) === 1) {
                     $paths['/uploads/links/' . $relative] = $file->getPathname();
@@ -133,6 +135,11 @@ final class RemoteImageCache
                 clearstatcache(true, $path);
                 $modified = @filemtime($path);
                 if (!isset($stored[$url]) && $modified !== false && $modified <= time() - 3600 && \TinyCat\Support\FileSweep::remove($path)) { $changed++; }
+            }
+            foreach ($temporary as $path) {
+                clearstatcache(true, $path);
+                $modified = @filemtime($path);
+                if ($modified !== false && $modified < time() - 172800 && \TinyCat\Support\FileSweep::remove($path)) { $changed++; }
             }
             return ['changed' => $changed, 'has_more' => false];
         });

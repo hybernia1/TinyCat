@@ -53,6 +53,9 @@
     "image_remove": "Afbeelding verwijderen"
   },
   "install": {
+    "recovery_title": "Installatie herstellen",
+    "recovery_warning": "Herstel de database en configuratie van vóór de onderbroken installatiestap. Wijzigingen sinds die back-up gaan verloren.",
+    "recovery_restore": "Back-up herstellen",
     "purpose_migrations": "Migratiegeschiedenis, volgorde en controlesommen.",
     "language_label": "Nederlands",
     "title": "Installeer TinyCat CMS",
@@ -102,7 +105,7 @@
       "invalid_database": "De databasenaam mag alleen letters, cijfers en onderstrepingstekens bevatten.",
       "required_fields": "Vul alle verplichte velden in.",
       "invalid_username": "Gebruik 2–32 letters (inclusief accenten), cijfers, punten, koppeltekens of onderstrepingstekens. Begin met een letter of cijfer; eindig niet met een punt of koppelteken. De naam mag niet alleen cijfers bevatten.",
-      "password_length": "Het wachtwoord moet minimaal 8 tekens lang zijn.",
+      "password_length": "Het wachtwoord moet minimaal {min} UTF-8-bytes bevatten.",
       "password_mismatch": "De wachtwoorden komen niet overeen.",
       "config_write_failed": "Kan config.php niet schrijven.",
       "db_failed": "Databaseverbinding mislukt: {message}"

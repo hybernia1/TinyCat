@@ -53,7 +53,7 @@ final class AuthorPages
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
         $pageUrl = $current;
-        $statusItems = Feed::public_status_items_by_author_cursor($authorId, $statusLimit, '', 0, $archiveType);
+        $statusItems = Feed::public_status_items_by_author_cursor($authorId, $statusLimit, '', 0, $archiveType, $selection);
         $authUser = Authentication::auth();
         $statusItems = StatusViewData::status_prepare_items_view($statusItems, $authUser);
         $feedMore = StatusViewData::status_feed_more_view_data(
@@ -62,7 +62,8 @@ final class AuthorPages
             $statusItems,
             $statusLimit,
             ['author_id' => $authorId, 'media' => $archiveType],
-            $nextStatusLimit
+            $nextStatusLimit,
+            $selection
         );
         $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
         $editor = $canPost ? StatusViewData::status_editor_view_data() : [];

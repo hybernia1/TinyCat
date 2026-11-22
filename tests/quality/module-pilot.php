@@ -52,6 +52,9 @@ try {
     $tables = $modules->register(new \TinyCat\Http\Api());
     $assert(!class_exists(\TinyCat\Database\Connection::class, false), 'Manifest providers and routes are discovered without connecting to a database');
     $assert(!class_exists(\TinyCat\Core\Settings\Store::class, false), 'Manifest discovery does not load application settings');
+    foreach ([true, false, [], 1.5] as $invalidInteger) {
+        $reject(static fn () => \TinyCat\Core\Settings\Administration::tc_admin_settings_value_from_post(['key' => 'fixture.count', 'type' => 'int', 'min' => 0, 'max' => 10], ['fixture.count' => $invalidInteger]), 'Integer settings reject non-integer types');
+    }
     $assert(in_array('pilot_notes', $tables, true) && in_array('migrations', $tables, true), 'Selected schema tables join the readiness inventory');
     $assert($registries->owner('task', 'pilot.notes.refresh') === 'demo.notes', 'Manifest contribution provider is registered');
     $assert($registries->owner('widget', 'social.comments') === 'tinycat.social' && $registries->owner('dashboard-stats', 'social.content') === 'tinycat.social', 'Internal Social registrars retain one actual module owner');
@@ -152,6 +155,7 @@ PHP;
     $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC];
     $sqliteConfig = ['dsn' => 'sqlite:' . $directory . '/http.sqlite'];
     $pdo = new PDO($sqliteConfig['dsn'], null, null, $options);
+    $pdo->exec('CREATE TABLE settings (id INTEGER PRIMARY KEY AUTOINCREMENT, setting_key TEXT UNIQUE NOT NULL, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER DEFAULT 1)');
     $old = new PDO('sqlite::memory:', null, null, $options);
     $structure = static function (PDO $connection): array {
         if ($connection->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
@@ -216,12 +220,12 @@ PHP;
     $server = proc_open([PHP_BINARY, '-d', 'session.save_path=' . $directory . '/sessions', '-S', $address, $worker], [0 => ['pipe', 'r'], 1 => ['file', $directory . '/server.log', 'a'], 2 => ['file', $directory . '/server.log', 'a']], $pipes, $root, $environment);
     if (!is_resource($server)) { throw new RuntimeException('Cannot start pilot HTTP server.'); }
     fclose($pipes[0]);
-    $request = static function (string $path, ?array $payload = null, bool $admin = false, string $csrf = '') use ($address, $directory): array {
+    $request = static function (string $path, ?array $payload = null, bool $admin = false, string $csrf = '', string $method = 'POST') use ($address, $directory): array {
         $handle = curl_init('http://' . $address . $path);
         $headers = ['Accept: application/json'];
         if ($admin) { $headers[] = 'Authorization: Bearer pilot-admin'; }
         if ($csrf !== '') { $headers[] = 'X-CSRF-Token: ' . $csrf; }
-        if ($payload !== null) { $headers[] = 'Content-Type: application/json'; curl_setopt($handle, CURLOPT_POSTFIELDS, json_encode($payload, JSON_THROW_ON_ERROR)); }
+        if ($payload !== null) { $headers[] = 'Content-Type: application/json'; curl_setopt($handle, CURLOPT_POSTFIELDS, json_encode($payload, JSON_THROW_ON_ERROR)); curl_setopt($handle, CURLOPT_CUSTOMREQUEST, $method); }
         curl_setopt_array($handle, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_COOKIEJAR => $directory . '/cookies', CURLOPT_COOKIEFILE => $directory . '/cookies', CURLOPT_HTTPHEADER => $headers]);
         $body = curl_exec($handle); $status = curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
         return ['status' => $status, 'body' => is_string($body) ? $body : '', 'json' => is_string($body) ? json_decode($body, true) : null];
@@ -239,6 +243,11 @@ PHP;
     $assert($request('/api/pilot/notes', ['title' => 'forbidden'])['status'] === 401, 'API write requires an authenticated actor');
     $assert($request('/api/pilot/notes', ['title' => 'forbidden'], true)['status'] === 403, 'API write retains shared CSRF protection');
     $token = $request('/_pilot/csrf')['json']['data']['token'];
+    $badGroup = $request('/api/settings', ['settings' => ['pilot.notes.options' => ['name' => ['bad']]]], true, $token, 'PATCH');
+    $assert($badGroup['status'] === 422 && isset($badGroup['json']['error']['details']['errors']['settings[pilot.notes.options]']), 'Module-owned structured settings reject invalid values with field errors');
+    $goodGroup = $request('/api/settings', ['settings' => ['pilot.notes.options' => ['name' => '  demo  ']]], true, $token, 'PATCH');
+    $savedGroup = json_decode((string) $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'pilot.notes.options'")->fetchColumn(), true);
+    $assert($goodGroup['status'] === 200 && $savedGroup === ['name' => 'demo'], 'Independent module normalizes and persists a structured settings group through HTTP');
     $assert($request('/api/pilot/notes', ['title' => ''], true, $token)['status'] === 422, 'Module validation uses the common JSON errors');
     foreach (['one', 'two', '<script>alert(1)</script>'] as $title) { $assert($request('/api/pilot/notes', ['title' => $title, 'created_by' => 999], true, $token)['status'] === 201, 'Authorized note creation'); }
     $items = $request('/api/pilot/notes')['json']['data']['items'];

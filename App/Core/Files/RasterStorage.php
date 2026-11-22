@@ -176,8 +176,10 @@ class RasterStorage
         }
 
         return \TinyCat\Support\FileSweep::run($directory, $limit, static function (array $files) use ($pathPrefix, $directory): array {
-            $paths = [];
+            $paths = []; $temporary = [];
             foreach ($files as $file) {
+                if ($file->getMTime() < time() - 172800 && preg_match('/^\.(?:image-|tinycat-write-)[A-Za-z0-9]+$/D', $file->getFilename()) === 1) { $temporary[] = $file->getPathname(); }
+
                 if ($file->getMTime() > time() - self::ORPHAN_MINIMUM_AGE) { continue; }
                 $relative = self::normalizePath($pathPrefix . str_replace('\\', '/', substr($file->getPathname(), strlen($directory) + 1)));
                 if ($relative !== '') { $paths[$relative] = $file->getPathname(); }
@@ -188,6 +190,11 @@ class RasterStorage
                 clearstatcache(true, $path);
                 $modified = @filemtime($path);
                 if (!isset($stored[$relative]) && $modified !== false && $modified <= time() - self::ORPHAN_MINIMUM_AGE && !is_link($path) && self::deletePath($relative)) { $changed++; }
+            }
+            foreach ($temporary as $path) {
+                clearstatcache(true, $path);
+                $modified = @filemtime($path);
+                if ($modified !== false && $modified < time() - 172800 && \TinyCat\Support\FileSweep::remove($path)) { $changed++; }
             }
             return ['changed' => $changed, 'has_more' => false];
         });

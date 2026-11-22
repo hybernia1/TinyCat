@@ -18,6 +18,7 @@ TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelec
 $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 Connection::set($pdo);
 $pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE COLLATE NOCASE, email TEXT UNIQUE COLLATE NOCASE, password TEXT, role TEXT, status TEXT, bio TEXT DEFAULT '', locale TEXT DEFAULT 'en', theme TEXT DEFAULT 'system', created_at TEXT DEFAULT '2026-11-11 00:00:00')");
+$pdo->exec('CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)');
 $hash = Authentication::authPassword('Admin-fixture-42');
 $insert = $pdo->prepare("INSERT INTO users (id, username, email, password, role, status, bio, created_at) VALUES (?, ?, ?, ?, ?, 'active', 'Original bio', ?)");
 foreach ([[1, 'Primary', 'primary@example.test', $hash, 'admin', '2026-01-01'], [2, 'Admin', 'admin@example.test', $hash, 'admin', '2026-02-01'], [3, 'Member', 'member@example.test', $hash, 'user', '2026-03-01'], [4, 'Bot', null, $hash, 'bot', '2026-04-01'], [5, 'Older', null, $hash, 'user', '2025-01-01']] as $data) { $insert->execute($data); }
@@ -52,6 +53,8 @@ $invalid(static fn () => Administration::create($actor, array_replace($input, ['
 $invalid(static fn () => Administration::create($actor, array_replace($input, ['email' => 'MEMBER@EXAMPLE.TEST'])), ['email' => ['account.messages.email_taken']]);
 $invalid(static fn () => Administration::create($actor, array_replace($input, ['password' => ''])), ['password' => ['users.validation.password_required']]);
 $invalid(static fn () => Administration::create($actor, array_replace($input, ['password' => 'short'])), ['password' => ['users.validation.password_min']]);
+$unicodePassword = Administration::prepare($actor, array_replace($input, ['password' => 'éééé']));
+$assert(password_verify('éééé', $unicodePassword['password']), 'Administrator creation accepts an eight-byte Unicode password');
 $invalid(static fn () => Administration::create($actor, array_replace($input, ['password' => str_repeat('x', 1025)])), ['password' => ['users.validation.password_max']]);
 $created = Administration::create($actor, $input + ['id' => 999, 'theme' => 'dark', 'locale' => 'cs', 'avatar_exists' => 1]);
 $new = $row($created);
@@ -61,7 +64,9 @@ $assert($new['password'] !== $input['password'] && password_verify($input['passw
 $updated = Administration::update($actor, 3, ['role' => 'user', 'username' => 'Renamed', 'password' => '', 'theme' => 'dark']);
 $assert($updated['username'] === 'Member' && $updated['email'] === $member['email'] && $updated['status'] === 'active' && $updated['password'] === $hash, 'Update keeps immutable username and omitted values');
 $assert($updated['bio'] === '' && $updated['theme'] === 'system', 'Legacy bio default and field selection remain stable');
+$pdo->exec("INSERT INTO password_reset_tokens (id, user_id, token_hash) VALUES (1, 3, 'old-admin-token')");
 $reset = Administration::update($actor, 3, ['role' => 'user', 'password' => 'Admin-reset-44', 'status' => 'waiting', 'email' => '']);
+$assert((int) Connection::value('SELECT COUNT(*) FROM password_reset_tokens') === 0, 'Administrative credential reset revokes issued reset tokens');
 $assert($reset['email'] === null && $reset['status'] === 'waiting' && password_verify('Admin-reset-44', $reset['password']), 'Administrative reset does not require the owner password');
 $denied(static fn () => Administration::update($actor, 4, ['role' => 'user']), 'user_not_found');
 $protected = ['role' => ['users.messages.super_admin_protected'], 'status' => ['users.messages.super_admin_protected']];
@@ -80,6 +85,7 @@ try { $invalid(static fn () => Administration::persist($actor, $row(5), $prepare
 finally { $pdo->rollBack(); }
 $assert($row(5)['role'] === 'admin' && $row(5)['status'] === 'active', 'Previously prepared changes cannot demote the new primary inside a file transaction');
 $prepared = Administration::prepare($actor, ['role' => 'user', 'bio' => 'Prepared'], $row(3));
+$invalid(static fn () => Administration::prepare($actor, ['role' => 'user', 'bio' => null], $row(3)), ['bio' => ['common.request_failed']]);
 try { Administration::persist($actor, $row(3), $prepared); throw new RuntimeException('Missing transaction was accepted'); }
 catch (LogicException) { $assert(true, 'Prepared persistence requires a caller-owned transaction'); }
 $pdo->beginTransaction();
@@ -100,7 +106,7 @@ $deleted = Administration::delete($actor, $created, ['fixture' => $participant])
 $assert((int) $deleted['id'] === $created && Connection::find('users', ['id' => $created]) === null && $guardCallbacks === 1, 'Administrative deletion uses registered domain effects');
 $assert(Administration::delete($actor, $created) === null, 'Repeated deletion remains harmless');
 foreach (['TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) { $assert(!class_exists($class, false), 'Administrative domain did not load ' . $class); }
-$assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'sqlite_sequence'"), 'name') === ['users'], 'Administrative services need only the account table');
+$assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'sqlite_sequence'"), 'name') === ['users', 'password_reset_tokens'], 'Administrative services need only account storage');
 TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $actor) : void {
 $assert(array_keys(TinyCat\Support\AdminViews::admin_user_statuses()) === Administration::statuses(), 'UI status labels match domain status policy');
 });

@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Napisz odpowiedź...",
     "status_like_for": "Lubię – {context}",
     "status_unlike_for": "Inaczej – {context}",
+    "status_more_comments": "Wczytaj więcej komentarzy",
+    "status_more_replies": "Wczytaj odpowiedzi",
     "status_comments": "Komentarze",
     "status_comment_history": "Edytuj historię",
     "status_comment_history_empty": "Ten komentarz nie był jeszcze edytowany.",

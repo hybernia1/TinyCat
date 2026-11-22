@@ -19,6 +19,12 @@ $assert(str_contains($nativeHeaders[0], '302') && in_array('Location: https://ta
 $assert(in_array('Cache-Control: private, no-store', $nativeHeaders, true), 'Redirects are not cached across content edits and policy changes.');
 [$status] = $request('GET', '/api/statuses/980001/comments/980001/links/' . $outboundHash);
 $assert($status === 200, 'Comment links use the same normalized resolution API.');
+$outboundDb->exec("INSERT INTO users (id, username, role, status) VALUES (980002, 'outboundinactive', 'user', 'inactive')");
+$outboundDb->prepare('INSERT INTO social_comments (id, content_id, parent_id, user_id, body, created_at) VALUES (980002, 980001, NULL, 980002, ?, ?), (980003, 980001, 980002, 980001, ?, ?)')->execute([$outboundRaw, '2000-01-01', $outboundRaw, '2000-01-01']);
+[$status] = $request('GET', '/api/statuses/980001/comments/980003/links/' . $outboundHash);
+$assert($status === 404, 'Links in replies to inactive roots are not exposed.');
+[$status] = $request('GET', '/api/statuses/980001/comments/980003/revisions', null, 'admin');
+$assert($status === 404, 'Hidden replies cannot expose their revision history.');
 [$status] = $request('GET', '/api/statuses/980002/comments/980001/links/' . $outboundHash);
 $assert($status === 404, 'Comment links cannot cross content boundaries.');
 [$status] = $request('GET', '/api/statuses/980001/links/' . str_repeat('0', 64));
@@ -37,5 +43,5 @@ $outboundDb->exec("UPDATE social_posts SET published_at = '2999-01-01' WHERE id 
 [$status] = $request('GET', $outboundPath);
 $assert($status === 404, 'A previously visible link is revoked when its post becomes unpublished.');
 $outboundDb->exec('DELETE FROM social_post_redirects WHERE old_id=980002');
-$outboundDb->exec('DELETE FROM social_comments WHERE id = 980001; DELETE FROM social_posts WHERE id = 980001; DELETE FROM users WHERE id = 980001');
+$outboundDb->exec('DELETE FROM social_comments WHERE content_id = 980001; DELETE FROM social_posts WHERE id = 980001; DELETE FROM users WHERE id IN (980001, 980002)');
 $outboundDb = null;

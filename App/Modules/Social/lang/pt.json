@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Escreva uma resposta...",
     "status_like_for": "Curtir – {context}",
     "status_unlike_for": "Ao contrário – {context}",
+    "status_more_comments": "Carregar mais comentários",
+    "status_more_replies": "Carregar respostas",
     "status_comments": "Comentários",
     "status_comment_history": "Editar histórico",
     "status_comment_history_empty": "Este comentário ainda não foi editado.",

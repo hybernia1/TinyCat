@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Написать ответ...",
     "status_like_for": "Нравится – {context}",
     "status_unlike_for": "В отличие от – {context}",
+    "status_more_comments": "Загрузить ещё комментарии",
+    "status_more_replies": "Загрузить ответы",
     "status_comments": "Комментарии",
     "status_comment_history": "Редактировать историю",
     "status_comment_history_empty": "Этот комментарий еще не редактировался.",

@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Write a reply...",
     "status_like_for": "Like – {context}",
     "status_unlike_for": "Unlike – {context}",
+    "status_more_comments": "Load more comments",
+    "status_more_replies": "Load replies",
     "status_comments": "Comments",
     "status_comment_history": "Edit history",
     "status_comment_history_empty": "This comment has not been edited yet.",

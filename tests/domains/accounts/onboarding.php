@@ -39,6 +39,8 @@ foreach ([['username' => '123'], ['email' => 'invalid'], ['password' => 'short']
 }
 $assert(isset(Registration::input(array_replace($input, ['password' => str_repeat('x', 1025)]))['field_errors']['password']), 'Registration enforces the password byte limit');
 $assert(Passwords::fieldErrors(str_repeat('x', 1024), str_repeat('x', 1024)) === [], 'Maximum password length remains accepted');
+$assert(Passwords::fieldErrors('éééé', 'éééé') === [] && Passwords::fieldErrors('ééé', 'ééé') !== [], 'Password minimum counts UTF-8 bytes consistently');
+$assert(TinyCat\Core\Identity\Setup::issues(['username' => 'Example', 'password' => 'éééé', 'password_confirm' => 'éééé']) === [], 'Installer shares the Identity password byte minimum');
 $assert(Email::maxLength() === 254 && !Email::valid(str_repeat('x', 255) . '@example.test'), 'Email length and format policy is shared');
 $assert(Usernames::valid('Žaneta.Novák') && !Usernames::valid('123'), 'Account identifier grammar preserves Unicode and numeric reservations');
 $created = Registration::create($valid + ['role' => 'admin', 'status' => 'active', 'theme' => 'dark'], false, 'cs');

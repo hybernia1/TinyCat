@@ -7,6 +7,12 @@ use Throwable;
 
 final class Pages
 {
+    public static function recovery(): void
+    {
+        $operation = \TinyCat\Core\Updates\Manager::installationRecoveryState();
+        self::render('recovery', [], ['operation' => (string) ($operation['id'] ?? '')]);
+    }
+
     public static function page(): void
     {
         if (Installer::isComplete()) {
@@ -73,7 +79,7 @@ final class Pages
      * @param array<mixed> $state */
     public static function render(string $step, array $languages, array $state): void
     {
-        $data = self::prepare($step, $languages, $state);
+        $data = $step === 'recovery' ? ['current' => 'recovery', 'steps' => [], 'operation' => $state['operation'] ?? ''] : self::prepare($step, $languages, $state);
         $data['error'] = \TinyCat\Http\Session::flash('error');
         $data['success'] = \TinyCat\Http\Session::flash('success');
         echo \TinyCat\Core\Ui\Document::frame([
@@ -124,7 +130,7 @@ final class Pages
                 $data['tables'][] = ['name' => $table, 'purpose' => \TinyCat\Support\Localization::t($purpose), 'exists' => (bool) ($statuses[$table] ?? false)];
             }
         } elseif ($step === 'admin') {
-            $data += ['username_pattern' => \TinyCat\Core\Identity\Usernames::pattern(), 'username_hint' => \TinyCat\Core\Identity\Usernames::hint(), 'password_max' => \TinyCat\Core\Identity\Passwords::maxLength()];
+            $data += ['username_pattern' => \TinyCat\Core\Identity\Usernames::pattern(), 'username_hint' => \TinyCat\Core\Identity\Usernames::hint(), 'password_min' => \TinyCat\Core\Identity\Passwords::minLength(), 'password_max' => \TinyCat\Core\Identity\Passwords::maxLength()];
         } elseif ($step === 'done') {
             $data['required_tables'] = implode(', ', \TinyCat\Database\Schema::app_required_tables());
         }

@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
-// Only the avatar fixture's numeric WebP assets may bypass the front controller.
+// Only legacy or immutable avatar fixture WebP assets bypass the front controller.
 $assetPath = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-if (preg_match('~^/uploads/avatars/[0-9]+[.]webp$~', $assetPath) === 1
+if (preg_match('~^/uploads/avatars/[0-9]+(?:-[a-f0-9]{32})?[.]webp$~', $assetPath) === 1
     && is_file(dirname(__DIR__, 3) . $assetPath)) {
     return false;
 }

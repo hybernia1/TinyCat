@@ -200,25 +200,28 @@ final class Images
 
         $base = \TinyCat\Support\Text::slug($name);
         $base = $base !== '' ? $base : $variant;
-        $filename = $base . '.webp';
-        $target = $directory . DIRECTORY_SEPARATOR . $filename;
-        $counter = 2;
-
-        while (is_file($target)) {
-            $filename = $base . '-' . $counter . '.webp';
+        do {
+            $token = bin2hex(random_bytes(16));
+            $filename = $base . '-' . $token . '.webp';
             $target = $directory . DIRECTORY_SEPARATOR . $filename;
-            $counter++;
-        }
+            $reservation = $directory . DIRECTORY_SEPARATOR . '.branding-' . $token;
+            $reserved = @fopen($reservation, 'x');
+        } while ($reserved === false && is_file($reservation));
+        if ($reserved === false) { imagedestroy($source); imagedestroy($canvas); throw new RuntimeException('Could not reserve site image.'); }
+        fclose($reserved);
 
+        $ownedTarget = !file_exists($target);
         try {
+            if (!$ownedTarget) { throw new RuntimeException('Site image identity already exists.'); }
             self::image_write_webp($canvas, $target);
             if ($variant === 'favicon') {
                 \TinyCat\Core\Ui\Branding::writeVariants($source, $directory, pathinfo($filename, PATHINFO_FILENAME));
             }
         } catch (Throwable $exception) {
-            if (is_file($target)) { @unlink($target); }
+            if ($ownedTarget && is_file($target)) { @unlink($target); }
             throw $exception;
         } finally {
+            @unlink($reservation);
             imagedestroy($source);
             imagedestroy($canvas);
         }

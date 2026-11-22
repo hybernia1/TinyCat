@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Bir yanıt yazın...",
     "status_like_for": "Beğen – {context}",
     "status_unlike_for": "Farklı – {context}",
+    "status_more_comments": "Daha fazla yorum yükle",
+    "status_more_replies": "Yanıtları yükle",
     "status_comments": "Yorumlar",
     "status_comment_history": "Geçmişi düzenle",
     "status_comment_history_empty": "Bu yorum henüz düzenlenmedi.",

@@ -66,6 +66,9 @@ foreach (['/api/users/creation' => 'roles', '/api/bots/accounts/creation' => 'us
     $assert($status === 200 && isset($creation['data']['options'][$option]), 'Creation metadata loads through an authorized resource: ' . $endpoint);
     $pure($creation);
 }
+[$status, $createdUnicode] = $request('POST', '/api/users', ['username' => 'UnicodeFixture', 'role' => 'user', 'status' => 'active', 'password' => 'éééé'], 'admin', $csrf);
+$assert($status === 201, 'Administrator creation accepts a password of exactly eight UTF-8 bytes.');
+$seed->exec("DELETE FROM users WHERE username = 'UnicodeFixture'");
 foreach (['/admin/users' => 'modal-users-creation', '/admin/bots/accounts' => 'modal-bots-accounts-creation'] as $page => $id) {
     $html = file_get_contents('http://' . $address . $page, false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
     $assert(str_contains($html, 'data-modal-open="' . $id . '"') && !str_contains($html, 'id="' . $id . '"') && !str_contains($html, 'class="modal"'), 'Creation pages contain resource triggers, never hidden dialogs: ' . $page);
@@ -95,6 +98,15 @@ foreach ([['settings' => 'invalid'], ['settings' => ['site.name' => []]], ['sett
     [$status, $payload] = $request('PATCH', '/api/settings', $invalid, 'admin', $csrf);
     $assert($status === 422 && isset($payload['error']['details']['errors']), 'Malformed settings receive the shared validation envelope.');
 }
+$smtpBefore = $seed->query("SELECT setting_value FROM settings WHERE setting_key = 'email.smtp'")->fetchColumn();
+foreach ([['port' => 'invalid'], ['port' => '65536'], ['port' => true], ['port' => []], ['port' => 1.5], ['host' => str_repeat('a', 191)]] as $invalidSmtp) {
+    [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['email.smtp' => $invalidSmtp]], 'admin', $csrf);
+    $assert($status === 422 && isset($payload['error']['details']['errors']['settings[email.smtp]']), 'SMTP owner rejects invalid values without coercion or truncation.');
+}
+$assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'email.smtp'")->fetchColumn() === $smtpBefore, 'Rejected SMTP input does not mutate saved settings.');
+[$status] = $request('PATCH', '/api/settings', ['settings' => ['email.templates' => ['_present' => '1']]], 'admin', $csrf);
+$templateStates = json_decode((string) $seed->query("SELECT setting_value FROM settings WHERE setting_key = 'email.templates'")->fetchColumn(), true);
+$assert($status === 200 && is_array($templateStates) && !in_array(true, $templateStates, true), 'An empty template selection clears every owner-defined option.');
 [$status, $payload] = $request('POST', '/api/scheduler/tokens', [], 'admin', $csrf);
 $assert($status === 201 && strlen($payload['data']['token']) >= 32, 'Token rotation returns the new token directly to its administrator.');
 $pure($payload);

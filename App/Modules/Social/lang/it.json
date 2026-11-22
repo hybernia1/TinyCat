@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Scrivi una risposta...",
     "status_like_for": "Mi piace – {context}",
     "status_unlike_for": "A differenza di – {context}",
+    "status_more_comments": "Carica altri commenti",
+    "status_more_replies": "Carica risposte",
     "status_comments": "Commenti",
     "status_comment_history": "Modifica cronologia",
     "status_comment_history_empty": "Questo commento non è stato ancora modificato.",

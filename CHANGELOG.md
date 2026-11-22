@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.0.1 - 2026-11-22
+
+- Revoke stale sessions and reset tokens after credential changes; share account validation and preserve server authorization.
+- Coordinate scheduled tasks with deployment admission, recover interrupted installation steps and keep rescue paths available with damaged metadata. Protect Windows configuration publication through the bundled private-file helper.
+- Make concurrent Social writes and file cleanup transaction-aware. Give avatar uploads immutable versioned URLs and invalidate account/profile/settings caches after committed changes.
+- Preserve feed cursors across concurrent changes, paginate discussions and count only visible comments. Keep domain text preparation and form constraints consistent across manual publishing, API and feed imports.
+- Preserve form drafts and canonical values through shared editor lifecycle handling. Fix login/registration resource switching and opener focus; omit Refresh from authentication dialogs through an explicit shared option.
+- Deliver the existing Social status card components, styles and controller on search pages, including source and compiled asset variants.
+- Add the nullable users.avatar_version migration and current fresh-v2 account schema. Keep published migrations, existing media, configuration and module activation unchanged. PHP 8.4 and completed 6.0.10 or newer remain required.
+
 ## 8.0.0 - 2026-11-22
 
 - Control public website availability through settings without reinstalling or enabling modules. Preserve existing sites; fresh installations start with the public website disabled.

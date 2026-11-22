@@ -104,6 +104,14 @@ import "./form-requests.js";
       if (form) { T.forms.dispose(form); form.remove(); }
       forms.delete(id);
     },
+    dispose: function (root) {
+      if (!root) { return; }
+      Array.from(forms.entries()).forEach(function (entry) {
+        var id = entry[0], form = entry[1];
+        var panel = Array.from(root.querySelectorAll ? root.querySelectorAll('[data-filter-panel]') : []).find(function (item) { return item.dataset.filterPanel === id; });
+        if (root === form || (root.contains && root.contains(form)) || panel || (root.dataset && root.dataset.filterPanel === id)) { T.filters.remove(id); }
+      });
+    },
     hydrate: hydrate,
     init: function () {
       document.addEventListener("click", function (event) {
@@ -144,6 +152,7 @@ import "./form-requests.js";
   T.lifecycle.register("filters", {
     hydrateOrder: 5,
     init: T.filters.init,
-    hydrate: hydrate
+    hydrate: hydrate,
+    dispose: T.filters.dispose
   });
 }());

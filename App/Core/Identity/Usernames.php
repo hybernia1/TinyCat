@@ -7,6 +7,8 @@ use Throwable;
 
 final class Usernames
 {
+    public static function maxLength(): int { return 32; }
+    public static function minLength(): int { return 2; }
     public static function normalize(string $username): string
     {
         return trim($username);
@@ -22,7 +24,7 @@ final class Usernames
     public static function pattern(): string
     {
         // Numeric-only names would collide with the existing @user-ID storage format.
-        return '(?!\p{N}+$)[\p{L}\p{N}][\p{L}\p{N}\p{M}_.\-]{0,30}[\p{L}\p{N}\p{M}_]';
+        return '(?!\p{N}+$)[\p{L}\p{N}][\p{L}\p{N}\p{M}_.\-]{' . (self::minLength() - 2) . ',' . (self::maxLength() - 2) . '}[\p{L}\p{N}\p{M}_]';
     }
 
     public static function valid(string $username): bool

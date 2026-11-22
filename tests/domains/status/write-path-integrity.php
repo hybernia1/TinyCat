@@ -25,7 +25,20 @@ require_once $root . '/App/Core/Text/LinkParser.php';
 require_once $root . '/App/Core/Links/Metadata.php';
 require_once $root . '/App/Modules/Social/src/Profiles/Roles.php';
 
-$database = new PDO('sqlite::memory:');
+// Inject an external effect through the real managed commit queue.
+final class StatusFailurePDO extends PDO
+{
+    public bool $failStatusEffect = false;
+    public function commit(): bool
+    {
+        if ($this->failStatusEffect) {
+            $this->failStatusEffect = false;
+            \TinyCat\Database\Transactions::afterCommit(static function (): void { throw new RuntimeException('injected status delivery failure'); });
+        }
+        return parent::commit();
+    }
+}
+$database = new StatusFailurePDO('sqlite::memory:');
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 $completed = false;
@@ -47,6 +60,7 @@ $config->setValue(null, [
 \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 // Reactions and discussion writes enforce the real account action budget.
 \TinyCat\Core\Security\Schema::install($database);
+\TinyCat\Core\Settings\Schema::install($database);
 \TinyCat\Core\Modules\Loader::load(\TinyCat\Support\Paths::basePath())->initialize();
 
 $checks = 0;
@@ -80,7 +94,7 @@ $database->rollBack();
 
 
 foreach ([
-    'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, theme TEXT, avatar_exists INTEGER DEFAULT 0, avatar_appearance TEXT, updated_at TEXT, role TEXT NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT, muted_until TEXT)',
+    'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, theme TEXT, avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at TEXT, role TEXT NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT, muted_until TEXT)',
     "CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INTEGER PRIMARY KEY, body TEXT NOT NULL DEFAULT '', author_id INTEGER NOT NULL, published_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', status TEXT NOT NULL DEFAULT 'published')",
     'CREATE TABLE social_post_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL)',
     'CREATE TABLE social_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT)',
@@ -485,6 +499,39 @@ $assert($value('SELECT body FROM social_posts WHERE id = ' . $botPost) === 'Bot 
 $deletedStatus = \TinyCat\Social\Posts\Actions::status_json_delete($createdStatusId, $actor);
 $assert((int) ($deletedStatus['deleted_status_id'] ?? 0) === $createdStatusId, 'Status deletion returns the deleted aggregate identity.');
 $assert((int) $value("SELECT COUNT(*) FROM social_posts WHERE id = {$createdStatusId}") === 0, 'Status deletion removes the created aggregate.');
+
+// A durable inbox failure rolls publication and its relations back together.
+$beforeStatusFailure = (int) $value('SELECT COUNT(*) FROM social_posts');
+$database->exec("CREATE TRIGGER reject_status_notification BEFORE INSERT ON notifications BEGIN SELECT RAISE(ABORT, 'injected status inbox failure'); END");
+$_POST = ['body' => 'Atomic publication @owner #atomic-failure'];
+\TinyCat\Http\Request::reset();
+try { \TinyCat\Social\Posts\Actions::status_json_create($actor); $assert(false, 'Inbox failure must abort create.'); }
+catch (PDOException) {
+    $assert((int) $value('SELECT COUNT(*) FROM social_posts') === $beforeStatusFailure, 'Inbox failure rolls back the status.');
+    $assert(!$value("SELECT id FROM social_terms WHERE name = 'atomic-failure'"), 'Inbox failure rolls back new taxonomy.');
+}
+$beforeStatusBody = $value('SELECT body FROM social_posts WHERE id = 300');
+$_POST = ['body' => 'Atomic edited publication @owner #edit-failure'];
+\TinyCat\Http\Request::reset();
+try { \TinyCat\Social\Posts\Actions::status_json_update(300, $actor); $assert(false, 'Inbox failure must abort update.'); }
+catch (PDOException) { $assert($value('SELECT body FROM social_posts WHERE id = 300') === $beforeStatusBody && !$value("SELECT id FROM social_terms WHERE name = 'edit-failure'"), 'Inbox failure restores the edited body and taxonomy.'); }
+$database->exec('DROP TRIGGER reject_status_notification');
+$diagnostics = \TinyCat\Tools\Workspace::directory('tests/status-effects-' . bin2hex(random_bytes(5)));
+\TinyCat\Core\Runtime\Debug::configure('log', $diagnostics);
+$database->failStatusEffect = true;
+$_POST = ['body' => 'Committed despite delivery failure @owner'];
+\TinyCat\Http\Request::reset();
+$committedStatus = \TinyCat\Social\Posts\Actions::status_json_create($actor);
+$committedStatusId = (int) $committedStatus['status_id'];
+$assert($committedStatus['code'] === 'status_created' && $value('SELECT body FROM social_posts WHERE id = ' . $committedStatusId) !== false, 'Post-commit delivery failure still returns successful create and its ID.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id = ' . $committedStatusId) === 1, 'Post-commit failure retains the durable inbox record.');
+$assert(str_contains((string) file_get_contents($diagnostics . '/debug.log'), 'AfterCommitFailed'), 'Post-commit delivery failure is diagnosed.');
+$database->failStatusEffect = true;
+$_POST = ['body' => 'Committed edited text'];
+\TinyCat\Http\Request::reset();
+$committedEdit = \TinyCat\Social\Posts\Actions::status_json_update($committedStatusId, $actor);
+$assert($committedEdit['code'] === 'status_saved' && $value('SELECT body FROM social_posts WHERE id = ' . $committedStatusId) === 'Committed edited text', 'Post-commit failure does not report an unsuccessful edit.');
+\TinyCat\Core\Runtime\Debug::configure('off', $diagnostics);
 
 $_POST = ['body' => 'Immediate publication @owner', 'schedule_post' => '1', 'scheduled_at' => '2099-01-01T12:00'];
 \TinyCat\Http\Request::reset();

@@ -46,7 +46,7 @@ import "./dialogs.js";
     },
     dialog: function (id, title, content, persistent, footer, options) {
       options = options || {};
-      var dialog = T.dialog.create({ id: id, title: T.ui.text(title), closeLabel: T.ui.text("common.close"), closeIcon: T.ui.icon("close"), content: content, footer: footer, disposeOnClose: persistent !== true, kind: options.kind, size: options.size, mobile: options.mobile, icon: options.icon });
+      var dialog = T.dialog.create({ id: id, title: T.ui.text(title), closeLabel: T.ui.text("common.close"), closeIcon: T.ui.icon("close"), content: content, footer: footer, disposeOnClose: persistent !== true, kind: options.kind, size: options.size, mobile: options.mobile, icon: options.icon, refresh: options.refresh });
       return dialog;
     },
 

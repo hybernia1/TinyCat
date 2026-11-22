@@ -53,6 +53,9 @@
     "image_remove": "Remover imagem"
   },
   "install": {
+    "recovery_title": "Recuperação da instalação",
+    "recovery_warning": "Restaura a base de dados e a configuração anteriores ao passo interrompido. As alterações posteriores à cópia serão perdidas.",
+    "recovery_restore": "Restaurar cópia",
     "purpose_migrations": "Histórico de migrações, ordem e somas de verificação.",
     "language_label": "Português",
     "title": "Instalar TinyCat CMS",
@@ -102,7 +105,7 @@
       "invalid_database": "O nome do banco de dados pode conter apenas letras, números e sublinhados.",
       "required_fields": "Preencha todos os campos obrigatórios.",
       "invalid_username": "Use de 2 a 32 letras (incluindo acentos), números, pontos, hífens ou sublinhados. Comece com uma letra ou número; não termine com ponto ou hífen. O nome não pode conter apenas números.",
-      "password_length": "A senha deve ter pelo menos 8 caracteres.",
+      "password_length": "A senha deve ter pelo menos {min} bytes UTF-8.",
       "password_mismatch": "As senhas não coincidem.",
       "config_write_failed": "Não foi possível escrever config.php.",
       "db_failed": "Falha na conexão com o banco de dados: {message}"

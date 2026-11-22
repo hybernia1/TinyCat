@@ -125,7 +125,8 @@ svůj vlastní formát; doménové obálky a stránky používají komponenty.
 Hotový formulář z katalogu lze předat do `TinyCat.ui.form(url, method, view)`.
 Factory ověří kořen `FORM`, doplní společný transport, třídu `stack` a ochranu
 neuložených změn. Struktura polí a atributy konkrétního editoru patří katalogu.
-Statusové formuláře si zachovávají vlastní existující transport.
+Statusové formuláře používají společný AJAX transport; Social vlastní přípravu
+svých akcí a zpracování doménové odpovědi.
 
 Controllery s označením `@component-owned` kontroluje modalový build guard proti
 návratu běžných ručních DOM builderů. Jde o cílenou kontrolu konvence, nikoli

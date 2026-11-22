@@ -325,7 +325,13 @@ and `done`, retaining the filter. Public page navigation accepts the same
 `media` parameter through `/api/site/pages`. Posts return author data, literal
 and editable body, typed text/mention/tag/link segments, image/link/video
 metadata, counts and capabilities.
-Details include a comment tree. Comment history contains plain `from`/`to` text.
+Details include the first page of root comments and `comments_next_url`; replies
+are loaded separately. `GET /api/statuses/{id}/comments` accepts `parent_id`
+(zero for roots), `limit` (1–50, default `public.status_limit`), `cursor_at` and
+`cursor_id`. Roots and direct replies use ascending creation time and ID;
+`data.items` and `meta.pagination` carry the page and continuation. Roots expose
+`has_replies`; only active authors and direct replies to active roots are visible.
+The comment count includes all visible roots and direct replies. Comment history contains plain `from`/`to` text.
 Nested IDs and reply parents must belong to the status in the path. New posts
 are published immediately using the server's current publication time.
 

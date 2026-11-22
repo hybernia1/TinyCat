@@ -398,8 +398,8 @@
                         "name": "password",
                         "type": "password",
                         "autocomplete": "new-password",
-                        "minlength": 8,
-                        "maxlength": {"get": "password_max"},
+                        "data-min-bytes": {"get": "password_min"},
+                        "data-max-bytes": {"get": "password_max"},
                         "required": true
                       },
                       "help": null
@@ -414,8 +414,8 @@
                         "name": "password_confirm",
                         "type": "password",
                         "autocomplete": "new-password",
-                        "minlength": 8,
-                        "maxlength": {"get": "password_max"},
+                        "data-min-bytes": {"get": "password_min"},
+                        "data-max-bytes": {"get": "password_max"},
                         "required": true
                       },
                       "help": null
@@ -531,6 +531,33 @@
       }
     ]
   },
+  "installation/recovery": {
+    "tag": "section",
+    "attrs": {"class": "card"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body stack"},
+        "children": [
+          {"tag": "h1", "children": [{"t": "install.recovery_title"}]},
+          {"tag": "p", "children": [{"t": "install.recovery_warning"}]},
+          {
+            "tag": "form",
+            "attrs": {"method": "post", "action": "/api/installation/recover", "data-installation-form": true},
+            "children": [
+              {"csrf": true},
+              {"tag": "input", "attrs": {"type": "hidden", "name": "operation", "value": {"get": "operation"}}},
+              {
+                "tag": "button",
+                "attrs": {"type": "submit", "class": "btn btn-danger"},
+                "children": [{"t": "install.recovery_restore"}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "installation/page": [
     {
       "tag": "header",
@@ -559,6 +586,11 @@
           "attrs": {"class": "container-sm stack stack-gap-24"},
           "children": [
             {"component": "installation/steps", "data": {"steps": {"get": "steps"}}},
+            {
+              "component": "installation/recovery",
+              "data": {"operation": {"get": "operation"}},
+              "when": {"eq": [{"get": "current"}, "recovery"]}
+            },
             {
               "tag": "div",
               "attrs": {"class": "alert alert-danger"},
@@ -591,6 +623,7 @@
               "data": {
                 "username_pattern": {"get": "username_pattern"},
                 "username_hint": {"get": "username_hint"},
+                "password_min": {"get": "password_min"},
                 "password_max": {"get": "password_max"}
               },
               "when": {"eq": [{"get": "current"}, "admin"]}

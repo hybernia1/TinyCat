@@ -17,7 +17,7 @@ final class FileCleanup
             $result = FileSweep::run($directory, max(1, intdiv($limit, count($directories))), static function (array $files): array {
                 $changed = 0;
                 foreach ($files as $file) {
-                    if (preg_match('/^\.(?:image-|tinycat-write-|health-probe-|avatar-(?!backup-))[A-Za-z0-9]+$/D', $file->getFilename()) !== 1) { continue; }
+                    if (preg_match('/^\.(?:image-|branding-|tinycat-write-|health-probe-|avatar-(?!backup-))[A-Za-z0-9]+$/D', $file->getFilename()) !== 1) { continue; }
                     clearstatcache(true, $file->getPathname());
                     $modified = @filemtime($file->getPathname());
                     if ($modified !== false && $modified < time() - 172800 && FileSweep::remove($file->getPathname())) { $changed++; }

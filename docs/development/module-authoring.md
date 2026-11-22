@@ -247,9 +247,10 @@ v JavaScriptu. Společné prvky vybírej z `ui/*` a `publishing/*`.
 
 JS a CSS cesty zde jsou relativní ke kořeni repozitáře, například
 `App/Modules/Notes/assets/index.js`. `routes` vybírá konkrétní URL prefix
-nebo skupinu `public` či `admin`. Přes `uses` vybírej pojmenované schopnosti,
-například `publishing.presentation`, `publishing.editor`, `publishing.media`
-a `publishing.discussion`; nekopíruj jejich seznamy interních souborů.
+nebo skupinu `public` či `admin`. Přes `uses` vybírej pojmenované schopnosti
+deklarované jejich vlastníky. `publishing.*` vlastní Social a samostatný modul
+na ně nesmí spoléhat bez explicitní závislosti na Socialu; nejde o služby core.
+Nekopíruj seznamy interních souborů těchto schopností.
 
 Ukázka `lang/cs.json`:
 
@@ -274,8 +275,16 @@ Modul bez vlastních tabulek nepotřebuje schema provider. Pro vlastní data
 implementuj `ProvidesSchema`, deklaruj provider `schema` v manifestu a vrať
 `ModuleSchema`: aktuální verzi, vlastněné tabulky, fresh instalaci a úplnou
 posloupnost `SchemaMigration` od verze 1. Soubory patří do vlastního
-`migrations/`, deklarovaného v `resources`. Minimální spustitelný příklad nabízí
-[testovací Notes](../../tests/fixtures/modules/notes/src/Module.php).
+`migrations/`, deklarovaného v `resources`. [Testovací Notes](../../tests/fixtures/modules/notes/src/Module.php)
+ověřuje lifecycle modulu; není vzorem úplného CRUD editoru.
+
+Existují dvě cesty čerstvého schématu. Přímá `ModuleSchemas::install` volá
+instalační callback `ModuleSchema::install` a zaznamená historii. Podepsaný
+deployment používá `ModuleSchemas::synchronize` bez načítání nového provideru:
+spustí samostatnou executable `baseline`, je-li deklarována, jinak postupně
+všechny migrační soubory. Obě cesty musí vytvořit stejné aktuální schéma a
+semena. Archivovaný prefix s `file: null` vyžaduje executable baseline;
+neřetěz ji s historickými datovými převody. Publikované migrace neměň.
 
 Používej vlastní prefix, například `notes_entries`. Modul vlastní celý záznam
 a jeho vztahy; neodkazuje na univerzální `content` ani nerozlišuje cizí entity
@@ -319,6 +328,40 @@ Závazné podrobnosti: [administrace](../contracts/admin-ui-conventions.md),
 [modaly](../contracts/modal-contract.md), [popovery](../contracts/popover-contract.md)
 a [výběr dat](../contracts/query-selection-standard.md).
 
+Pro běžný CRUD není nutný Social controller. Modul v asset scope deklaruje
+`admin` definici s `path`, `endpoint`, `api`, `target`, `component`, `filter`,
+`filterId`, `title` a `icon`. Její `editor` může obsahovat `creation` (URL
+creation resource), `management` (URL s jedním `{id}`), `fields` (vlastní
+komponenta polí), `title`, případně `method` a `submit`. Core `admin-resources`
+načte resource při otevření, sestaví společný formulář, pro vytvoření použije
+POST na `api` a pro úpravu `method` na `api/{id}`; `item.id` v resource
+rozlišuje editaci. Vlastník dodá autorizované endpointy, validaci, data seznamu,
+komponenty a jejich assetové a překladové závislosti. Mazání a doménově zvláštní
+chování vyžaduje vlastní autorizovaný endpoint a odpovídající deklarovanou akci.
+
+Například položka `admin` uvnitř scope vlastního `assets/module.json` může být:
+
+```json
+{
+  "example.records": {
+    "path": "/admin/records", "endpoint": "/api/records", "api": "/api/records",
+    "target": "#records-list", "component": "example/records-list",
+    "filter": "example/records-filter", "filterId": "records-filter",
+    "title": "example.records", "icon": "list",
+    "editor": {
+      "creation": "/api/records/creation", "management": "/api/records/{id}/management",
+      "fields": "example/record-fields", "title": "example.new_record", "method": "PATCH"
+    }
+  }
+}
+```
+
+Tuto mapu vlož pod klíč `admin` do scope, který deklaruje použité komponenty
+a překlady. Modul registruje routy a dodá seznamový resource i oba editovací
+resources; `Definitions::page()` vykreslí společný seznamový rám. Komponenta
+polí dostane data resource a `dialog_id`. `endpoint` řídí čtení a navigaci
+seznamu, `api` základní URL zápisu; parametr `target` určuje obnovovaný seznam.
+
 ## 6. Další příspěvky a inicializace
 
 `contributions()` vrací `Contributions`. Přidávej pouze používané části;
@@ -355,6 +398,13 @@ Pro runtime rozšíření implementuj `InitializesModule`, deklaruj provider
 Inicializace nenahrazuje instalaci nebo migrace. Životní cyklus účtu rozšiřuje
 `ProvidesLifecycle`; cleanup musí fungovat i pro nainstalovaného neaktivního
 vlastníka. Jednoduché vazby mohou uklízet databázové kaskády.
+
+Souborový orphan cleanup může výslovně deklarovat
+`new MaintenanceTask('owner_file_orphans', $cleanup, whenInactive: true)`.
+Výchozí hodnota je `false`; opt-in není zapnutí běžných úloh vypnutého modulu.
+Callback musí být opakovatelný, omezený, chránit čerstvé přípravy a před mazáním
+vyhodnotit reference všech nainstalovaných vlastníků. Podrobnosti určuje
+[kontrakt modulu](../contracts/module-contract.md#zdroje-a-životní-cyklus).
 
 ## 7. Ověření a nasazení
 

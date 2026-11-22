@@ -146,7 +146,7 @@ replacementField.setAttribute('name', 'status'); replacementField.focus = () => 
 T.ui.filterPanel('filter-panel-fixture', replacementFilter);
 T.filters.restore(openFilterState);
 check(filterMenuFixture.open && replacementField.restoredFocus && T.filters.get('filter-panel-fixture') === replacementFilter, 'Filters whose forms are regenerated restore the open state and focus to the new control.');
-T.filters.remove('filter-panel-fixture'); filterMenuFixture.remove();
+T.filters.dispose(filterMenuFixture); T.filters.dispose(filterMenuFixture); filterMenuFixture.remove();
 check(!T.filters.get('filter-panel-fixture') && !document.getElementById('filter-panel-fixture'), 'Disposing scoped filters removes both their form and stored reference.');
 {
   const summary = T.components.render('ui/list-summary', { target: '#summary-fixture', pagination: { total: 12 }, filters: { q: '<needle>' } });
@@ -875,12 +875,17 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   check(inactiveFooterReplacements === 0 && workspaceFooter.querySelector('[type="submit"]') && detailDraft.value === 'Unsaved account draft', 'Refreshing an inactive list keeps the active account actions mounted and preserves its draft.');
   workspaceFooter.replaceChildren = savedFooterReplace;
 
-  const modalSignals = [];
-  T.api.request = (_url, options) => { modalSignals.push(options.signal); return new Promise(() => {}); };
+  const modalSignals = [], lateResponses = [];
+  T.api.request = (_url, options) => { modalSignals.push(options.signal); return new Promise(resolve => lateResponses.push(resolve)); };
   const sourceChange = new Node('form'); sourceChange.dataset.apiMethod = 'PATCH';
   T.botDetail.result(sourceChange, { data: {} }, detailSources);
   T.botDetail.dispose(workspace);
+  T.botDetail.dispose(workspace);
   check(modalSignals.length === 4 && modalSignals.every(signal => signal.aborted) && !document.getElementById('bot-detail-runs-filter-modal'), "Disposing the workspace cancels pending list and metadata requests and removes the history filter dialog.");
+  const disposedText = workspace.textContent;
+  lateResponses.forEach(resolve => resolve({data:{item:{status:'late'}}}));
+  await new Promise(resolve => setTimeout(resolve, 0));
+  check(workspace.textContent === disposedText && detailDraft.value === 'Unsaved account draft', 'Late responses after repeated disposal cannot modify the connected workspace or its draft.');
   workspace.remove(); parentFilter.remove();
   const backgroundReads = [], backgroundList = {isConnected:true, dataset:{}};
   document.querySelector = selector => selector === '#bot-accounts-list' ? backgroundList : null;

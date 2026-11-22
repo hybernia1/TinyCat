@@ -19,10 +19,11 @@ final class Console
             $command = $arguments[1] ?? 'help';
             $root = \TinyCat\Support\Paths::basePath();
             \TinyCat\Support\Config::load();
-            $plan = Distribution::read($root);
+            if (!in_array($command, ['help', 'rescue', 'rollback', 'finish-deployment'], true) && \TinyCat\Core\Updates\Manager::installationPending()) { throw new \RuntimeException('Installation recovery is required.'); }
             if ($command === 'help') {
-                echo "php App/Console.php status|install|upgrade|rescue|activate ID...|deactivate ID...|task ID [name=integer ...]|module-install ZIP|update MANIFEST SIGNATURE ZIP|rollback BACKUP_ID\n";
+                echo "php App/Console.php status|install|upgrade|rescue|activate ID...|deactivate ID...|task ID [name=integer ...]|module-install ZIP|update MANIFEST SIGNATURE ZIP|rollback BACKUP_ID|finish-deployment BACKUP_ID\n";
                 echo "Install reads the selected setup providers' JSON input from stdin. Configure config.php first.\n";
+                echo "Installation recovery: rollback BACKUP_ID --installation-stdin reads a database JSON object from private stdin.\n";
                 return 0;
             }
             if ($command === 'rescue') {
@@ -31,7 +32,25 @@ final class Console
                 if (!\TinyCat\Support\Storage::write($file, $bootstrap)) { throw new \RuntimeException('Cannot prepare the private rescue launcher.'); }
                 $result = ['launcher' => 'storage/updates/console.php'];
             }
-            elseif ($command === 'rollback') { $result = \TinyCat\Core\Updates\Manager::rollback($arguments[2] ?? ''); }
+            elseif ($command === 'rollback') {
+                $installation = ($arguments[3] ?? '') === '--installation-stdin';
+                if ($installation) {
+                    if (count($arguments) !== 4 || stream_isatty(STDIN)) { throw new \RuntimeException('Supply installation database JSON through private stdin.'); }
+                    $source = stream_get_contents(STDIN, 65537);
+                    if (!is_string($source) || strlen($source) > 65536) { throw new \RuntimeException('Invalid installation recovery input.'); }
+                    $input = json_decode($source, true, 16, JSON_THROW_ON_ERROR);
+                    $database = is_array($input) ? ($input['database'] ?? null) : null;
+                    if (!is_array($database) || array_diff(array_keys($database), ['host', 'port', 'name', 'user', 'password', 'charset']) !== []) { throw new \RuntimeException('Invalid installation recovery database.'); }
+                    foreach ($database as $key => $value) { if (!is_string($value) && !($key === 'port' && is_int($value))) { throw new \RuntimeException('Invalid installation recovery database field.'); } }
+                    \TinyCat\Database\Connection::set(\TinyCat\Core\Installation\Installer::pdo($database));
+                } elseif (count($arguments) !== 3) { throw new \RuntimeException('Rollback requires a backup ID.'); }
+                $result = \TinyCat\Core\Updates\Manager::rollback($arguments[2], installationCli: $installation);
+            }
+            elseif ($command === 'finish-deployment') {
+                if (count($arguments) !== 3) { throw new \TinyCat\Http\HttpException('Finishing deployment requires a backup ID.'); }
+                \TinyCat\Core\Updates\Manager::finishCommittedOperation($arguments[2]);
+                $result = ['finished' => true, 'backup' => $arguments[2]];
+            }
             elseif ($command === 'module-install') {
                 if (count($arguments) !== 3) { throw new \TinyCat\Http\HttpException('Module installation requires a ZIP path.'); }
                 $result = \TinyCat\Core\Modules\ModulePackage::install($arguments[2]);
@@ -40,6 +59,7 @@ final class Console
                 if (count($arguments) !== 5) { throw new \TinyCat\Http\HttpException('Update requires manifest, signature and package paths.'); }
                 $result = \TinyCat\Core\Updates\Manager::installLocalPackage($arguments[2], $arguments[3], $arguments[4]);
             } else {
+                $plan = Distribution::read($root);
                 if ($plan === null) { throw new \RuntimeException('This operation requires a built product descriptor. Build and extract the selected distribution first.'); }
                 if ($command === 'status') {
                     $state = Deployment::read($root);
@@ -58,9 +78,7 @@ final class Console
                         $options[$parts[0]] = $value;
                     }
                     Application::start();
-                    $result = \TinyCat\Core\Updates\Manager::runTask(static function () use ($name, $options): array {
-                        return \TinyCat\Core\Tasks\Execution::run($name, $options, 'cli');
-                    });
+                    $result = \TinyCat\Core\Tasks\Execution::run($name, $options, 'cli');
                 } elseif ($command === 'install') {
                     Resources::configure(Loader::fromSelection($root, Distribution::selection($plan, $plan['active']))->catalog);
                     $setup = [];
@@ -87,7 +105,7 @@ final class Console
                 } else { throw new \TinyCat\Http\HttpException('Unknown command; use help.'); }
             }
             echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
-            return 0;
+            return $command === 'task' && empty($result['ok']) ? 1 : 0;
         } catch (\Throwable $error) { Failure::report($error); fwrite(STDERR, Failure::message($error, 'Command failed.') . "\n"); return 1; }
     }
 }

@@ -532,8 +532,7 @@ other widgets usable. Registration never executes these callbacks. No client
 widget registry, hidden dialog, HTML domain resource or persistence table exists.
 
 Identity contributes account statistics, Health supplies its latest stored inspection
-without running a probe, Social supplies five recent comments and Blog five
-recent articles. Inactive owners contribute nothing. The previous aggregate
+without running a probe, and Social supplies five recent comments. Inactive owners contribute nothing. The previous aggregate
 Social statistics table and its view-data adapter are retired.
 
 Cache uses the same grid and card primitives. Single state values belong beside

@@ -13,6 +13,11 @@ final class HttpKernel
             \TinyCat\Http\Web::securityHeaders();
             $policy = Startup::http();
             $path = \TinyCat\Http\Request::current()->path();
+            if (\TinyCat\Core\Updates\Manager::installationPending()) {
+                $method = \TinyCat\Http\Request::current()->method();
+                $allowed = ($method === 'GET' && $path === '/install/recovery') || ($method === 'POST' && $path === '/api/installation/recover');
+                if (!$allowed || !\TinyCat\Core\Updates\Manager::installationRecoveryAllowed()) { throw new \TinyCat\Http\HttpException('Installation recovery is required.', 503, 'installation_recovery_required'); }
+            }
             if ($policy->prepare !== null) { $path = ($policy->prepare)($path); }
             if ($path === null) { return; }
             if ($policy->maintenanceExempt === null || !($policy->maintenanceExempt)($path)) { \TinyCat\Core\Updates\Manager::enforceMaintenance($path); }

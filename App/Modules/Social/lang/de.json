@@ -75,6 +75,8 @@
     "status_reply_placeholder": "Schreibe eine Antwort...",
     "status_like_for": "Gefällt mir – {context}",
     "status_unlike_for": "Im Gegensatz zu – {context}",
+    "status_more_comments": "Weitere Kommentare laden",
+    "status_more_replies": "Antworten laden",
     "status_comments": "Kommentare",
     "status_comment_history": "Verlauf bearbeiten",
     "status_comment_history_empty": "Dieser Kommentar wurde noch nicht bearbeitet.",

@@ -32,7 +32,7 @@ final class Avatars
             $userId = (int) ($user[$idKey] ?? 0);
 
             if ($userId > 0) {
-                return \TinyCat\Core\Identity\Avatar::url($userId, (int) ($user[$existsKey] ?? 0) === 1, $user[$updatedAtKey] ?? null, $user[str_replace('avatar_exists', 'avatar_appearance', $existsKey)] ?? null);
+                return \TinyCat\Core\Identity\Avatar::url($userId, (int) ($user[$existsKey] ?? 0) === 1, $user[$updatedAtKey] ?? null, $user[str_replace('avatar_exists', 'avatar_appearance', $existsKey)] ?? null, $user[str_replace('avatar_exists', 'avatar_version', $existsKey)] ?? null);
             }
         }
 
@@ -46,7 +46,7 @@ final class Avatars
     {
         $updatedAt = \TinyCat\Support\Dates::dateDb();
 
-        return $updatedAt > (string) ($user['updated_at'] ?? '') ? $updatedAt : \TinyCat\Support\Dates::dateDb('+1 second');
+        return $updatedAt > (string) ($user['updated_at'] ?? '') ? $updatedAt : \TinyCat\Support\Dates::dateDb((new \DateTimeImmutable((string) $user['updated_at'], \TinyCat\Support\Dates::timezone()))->modify('+1 second'));
     }
 
     /**
@@ -152,12 +152,8 @@ final class Avatars
                 throw new InvalidArgumentException(\TinyCat\Support\Localization::t('account.messages.avatar_invalid'), 0, $exception);
             }
         }
-        return Avatar::replace((int) $user['id'], $prepared, $remove, static function (array $locked) use ($payload, $prepared, $remove, $afterWrite, $write): array {
+        return Avatar::replace((int) $user['id'], $prepared, $remove, static function (array $locked) use ($payload, $afterWrite, $write): array {
             $updated = $write !== null ? $write($locked) : $locked;
-            if ($prepared !== null || $remove) {
-                $payload['avatar_exists'] = $prepared !== null ? 1 : 0;
-                $payload['updated_at'] = self::user_avatar_updated_at($locked);
-            }
             if ($payload !== []) { \TinyCat\Database\Connection::update('users', $payload, ['id' => (int) $locked['id']]); }
             if ($afterWrite !== null) { $afterWrite(); }
             return array_replace($updated, $payload);

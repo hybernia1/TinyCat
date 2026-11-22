@@ -27,6 +27,7 @@ try {
     Connection::set($pdo);
     $assert(!Readiness::ready(), 'Missing schema is not ready');
     $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT COLLATE NOCASE, email TEXT COLLATE NOCASE, password TEXT, role TEXT, status TEXT)');
+    $pdo->exec('CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)');
     $assert(!Readiness::ready(), 'Empty accounts are not ready');
     $password = 'Identity-fixture-42';
     $hash = Authentication::authPassword($password);
@@ -112,6 +113,9 @@ try {
     [, $identity] = $request('/api/_identity', $expired);
     $assert($identity['data']['id'] === null, 'Expired remember credentials are rejected');
     $pdo->prepare('UPDATE users SET password = ? WHERE id = 1')->execute([Authentication::authPassword('Changed-fixture-43')]);
+    $oldSession = $guest;
+    [, $identity] = $request('/api/_identity', $oldSession);
+    $assert($identity['data']['id'] === null && !isset($oldSession['tinycat_remember']), 'Password change revokes an established session and its remember cookie');
     $revoked = ['tinycat_remember' => $remember];
     [, $identity] = $request('/api/_identity', $revoked);
     $assert($identity['data']['id'] === null, 'Password change revokes previous remember credentials');
@@ -127,6 +131,19 @@ try {
     [$status] = $request('/api/_user', $member); $assert($status === 200, 'Member identity authorizes user resources');
     [$status] = $request('/api/_admin', $member); $assert($status === 403, 'Member cannot access administrator resources');
     [$status] = $request('/api/_access', $member); $assert($status === 403, 'Accounts admin guard preserves authorization');
+    $otherSession = [];
+    [, $identity] = $request('/api/_identity', $otherSession);
+    [$status] = $request('/api/_sessions', $otherSession, 'POST', ['username' => 'Member', 'password' => $password], $identity['data']['csrf']);
+    $assert($status === 200, 'Second browser logs in independently');
+    $oldSessionId = $member[$sessionName];
+    $pdo->exec("INSERT INTO password_reset_tokens VALUES (1, 2, 'issued-before-change', '2030-01-01', NULL)");
+    [$status] = $request('/api/_password', $member, 'POST', ['current_password' => $password, 'password' => 'Own-change-43', 'password_confirm' => 'Own-change-43'], $login['data']['csrf']);
+    $assert($status === 200 && $member[$sessionName] !== $oldSessionId, 'Own password change rotates the current session');
+    [, $identity] = $request('/api/_identity', $member);
+    $assert($identity['data']['id'] === 2, 'Current browser remains authenticated with the changed credential');
+    [, $identity] = $request('/api/_identity', $otherSession);
+    $assert($identity['data']['id'] === null, 'Own password change revokes the other browser session');
+    $assert((int) $pdo->query('SELECT COUNT(*) FROM password_reset_tokens')->fetchColumn() === 0, 'HTTP password change revokes outstanding recovery tokens');
     [$status] = $request('/api/_logout', $member, 'POST', [], $login['data']['csrf']); $assert($status === 200, 'Logout uses the shared CSRF transport');
     [, $identity] = $request('/api/_identity', $member); $assert($identity['data']['id'] === null, 'Logout clears the identity');
     Authentication::reset(['id' => 9, 'role' => 'admin'], true);
@@ -134,7 +151,7 @@ try {
     TinyCat\Core\Identity\Authentication::reset(['id' => 10, 'role' => 'user'], true);
     $assert(Authentication::auth('id') === 10 && !TinyCat\Core\Identity\Authentication::authIs('admin'), 'Legacy reset updates canonical state');
     $assert(TinyCat\Social\Profiles\Roles::receivesNotifications('admin') && !TinyCat\Social\Profiles\Roles::receivesNotifications('bot'), 'Social role capabilities retain their own policy');
-    $assert(array_column($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(PDO::FETCH_ASSOC), 'name') === ['users'], 'No social or settings schema was created');
+    $assert(array_column($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(PDO::FETCH_ASSOC), 'name') === ['users', 'password_reset_tokens'], 'No social or settings schema was created');
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     Connection::set(new PDO('sqlite::memory:')); unset($insert); $pdo = null;

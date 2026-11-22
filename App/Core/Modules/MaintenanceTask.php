@@ -17,7 +17,7 @@ final readonly class MaintenanceTask
     /** @param callable(int): array{changed: int, has_more: bool, error?: string} $run
      * @param (callable(int): int)|null $delete
      * @param (callable(): bool)|null $pending */
-    public function __construct(public string $id, callable $run, public int $order = 100, ?callable $delete = null, ?callable $pending = null, public bool $initial = false)
+    public function __construct(public string $id, callable $run, public int $order = 100, ?callable $delete = null, ?callable $pending = null, public bool $initial = false, public bool $whenInactive = false)
     {
         $this->run = Closure::fromCallable($run);
         $this->delete = $delete === null ? null : Closure::fromCallable($delete);

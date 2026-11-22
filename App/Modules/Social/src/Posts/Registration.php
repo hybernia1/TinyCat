@@ -17,8 +17,8 @@ final class Registration
             maintenance: [
             \TinyCat\Database\Retention::task('orphan_terms', 'social_terms', 'NOT EXISTS (SELECT 1 FROM social_post_tags ct WHERE ct.term_id = social_terms.id)', static fn (): array => [], 10),
             \TinyCat\Database\Retention::task('orphan_links', 'social_links', 'NOT EXISTS (SELECT 1 FROM social_post_links cl WHERE cl.link_id = social_links.id)', static fn (): array => [], 20),
-            new \TinyCat\Core\Modules\MaintenanceTask('orphan_status_image_files', static fn (int $batch): array => ImageStorage::cleanupOrphans($batch), 30),
-            new \TinyCat\Core\Modules\MaintenanceTask('orphan_link_image_files', static fn (int $batch): array => Links::cleanupOrphanImages($batch), 40),
+            new \TinyCat\Core\Modules\MaintenanceTask('orphan_status_image_files', static fn (int $batch): array => ImageStorage::cleanupOrphans($batch), 30, whenInactive: true),
+            new \TinyCat\Core\Modules\MaintenanceTask('orphan_link_image_files', static fn (int $batch): array => Links::cleanupOrphanImages($batch), 40, whenInactive: true),
             ],
             embeds: [new \TinyCat\Core\Modules\EmbedSource('social.posts', static fn (string $path, int $width, int $height): ?array => Embed::data($path, $width, $height))],
             sitemaps: [new \TinyCat\Core\Modules\SitemapSection('status', static fn (): int => SitemapData::count('status'), static fn (int $limit, int $offset): array => SitemapData::entries('status', $limit, $offset), 30), new \TinyCat\Core\Modules\SitemapSection('tags', static fn (): int => SitemapData::count('tags'), static fn (int $limit, int $offset): array => SitemapData::entries('tags', $limit, $offset), 40)],
@@ -30,7 +30,7 @@ final class Registration
     public static function initialize(): void
     {
         \TinyCat\Social\Discussion\Interactions::invalidate();
-        \TinyCat\Core\Text\Policies::provide('tinycat.social', 'post', new \TinyCat\Core\Text\TextPolicy(Mentions::normalize_mentions_for_storage(...), InlinePresentation::segments(...), ContentLinks::navigation(...)));
+        \TinyCat\Core\Text\Policies::provide('tinycat.social', 'post', new \TinyCat\Core\Text\TextPolicy(Mentions::normalize_mentions_for_storage(...), InlinePresentation::segments(...), ContentLinks::navigation(...), prepare: \TinyCat\Core\Text\PostText::cleanImportBoilerplate(...)));
     }
 
     public static function register(\TinyCat\Http\Api $api): void

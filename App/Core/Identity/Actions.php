@@ -176,7 +176,8 @@ final class Actions
     public static function user_password_update_request(array $user): array
     {
         $actor = \TinyCat\Core\Identity\Authentication::auth();
-        self::profileWrite($user, static fn () => \TinyCat\Core\Identity\Profile::password($user, is_array($actor) ? $actor : [], (array) \TinyCat\Http\Request::current()->input()));
+        $hash = self::profileWrite($user, static fn (): string => \TinyCat\Core\Identity\Profile::password($user, is_array($actor) ? $actor : [], (array) \TinyCat\Http\Request::current()->input()));
+        if (!\TinyCat\Core\Identity\Authentication::authLogin((int) $user['id'], expectedPassword: $hash)) { \TinyCat\Core\Identity\Authentication::authLogout(); }
         return ['message' => \TinyCat\Support\Localization::t('account.messages.password_saved'), 'code' => 'password_saved'];
     }
     /**
@@ -285,7 +286,11 @@ final class Actions
                         'account.messages.current_password_invalid' => 'current_password_invalid',
                         default => 'invalid_value',
                     };
-                    $params = $key === 'users.validation.password_max' ? ['max' => (string) \TinyCat\Core\Identity\Passwords::maxLength()] : [];
+                    $params = match ($key) {
+                        'users.validation.password_max' => ['max' => (string) \TinyCat\Core\Identity\Passwords::maxLength()],
+                        'users.validation.password_min', 'account.messages.password_short' => ['min' => (string) \TinyCat\Core\Identity\Passwords::minLength()],
+                        default => [],
+                    };
                     $errors[$field][] = \TinyCat\Http\Response::issue($code, \TinyCat\Support\Localization::t($key, $params), $params);
                 }
             }
@@ -300,7 +305,7 @@ final class Actions
     /** @return array<mixed> */
     private static function adminUserInput(?int $id = null): array
     {
-        $passwordRule = 'nullable|string|min:8|max:' . \TinyCat\Core\Identity\Passwords::maxLength();
+        $passwordRule = 'nullable|string';
         $rules = [
             'email' => 'nullable|string|max:' . \TinyCat\Core\Identity\Email::maxLength(),
             'password' => $passwordRule,
@@ -309,12 +314,12 @@ final class Actions
         ];
 
         if ($id === null) {
-            $rules = ['username' => 'required|string|max:32'] + $rules;
+            $rules = ['username' => 'required|string|max:' . \TinyCat\Core\Identity\Usernames::maxLength()] + $rules;
         }
 
         $data = \TinyCat\Http\Request::current()->validated($rules, \TinyCat\Core\Identity\ReadModel::tc_admin_user_validation_messages());
 
-        $data['bio'] = (string) \TinyCat\Http\Request::current()->input('bio', '');
+        $data['bio'] = \TinyCat\Http\Request::current()->input('bio', '');
         return $data;
     }
 

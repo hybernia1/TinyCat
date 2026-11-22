@@ -16,6 +16,7 @@ $database->exec('CREATE TABLE social_post_images (content_id INTEGER, path TEXT)
 $database->exec('CREATE TABLE social_post_likes (content_id INTEGER, user_id INTEGER)');
 $database->exec('CREATE TABLE social_comment_likes (comment_id INTEGER, user_id INTEGER)');
 \TinyCat\Database\Connection::set($database);
+\TinyCat\Core\Settings\Schema::install($database);
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $admin = ['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'avatar_exists' => 0];
 $member = ['id' => 2, 'username' => 'Member', 'role' => 'user', 'status' => 'active', 'avatar_exists' => 0];

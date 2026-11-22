@@ -1,0 +1,26 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/../../support/cache-isolation.php'; define('TINYCAT', true); require dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
+use TinyCat\Database\Connection;
+use TinyCat\Social\Profiles\Repository;
+use TinyCat\Support\Cache;
+(new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
+(new ReflectionProperty(TinyCat\Support\Config::class, 'config'))->setValue(null, ['datetime' => ['timezone' => 'UTC']]);
+$db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]); Connection::set($db);
+TinyCat\Core\Identity\Schema::install($db); TinyCat\Social\Posts\Schema::install($db);
+$db->exec("INSERT INTO users (id, username, role, status, bio) VALUES (1, 'Ranked', 'user', 'active', 'Old personal data')");
+TinyCat\Social\Posts\PostCreation::create(1, TinyCat\Social\Posts\PostCreation::fromText('Public ranking'), []);
+$checks = 0; $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
+$rows = Repository::public_top_authors(); $assert(count($rows) === 1 && $rows[0]['bio'] === 'Old personal data', 'Ranking hydrates a currently public profile');
+$key = 'public_top_authors_ranked_ids_v2_5_7'; $cached = Cache::read($key);
+$assert(!isset($cached[0]['bio'], $cached[0]['username'], $cached[0]['avatar_version']), 'Persistent ranking cache contains no personal projection');
+Connection::update('users', ['bio' => 'Current bio', 'username' => 'Renamed', 'avatar_exists' => 1, 'avatar_version' => str_repeat('a', 32)], ['id' => 1]);
+$rows = Repository::public_top_authors(compute: false);
+$assert($rows[0]['bio'] === 'Current bio' && $rows[0]['username'] === 'Renamed' && $rows[0]['avatar_version'] === str_repeat('a', 32), 'A warm ranking rehydrates current identity and immutable avatar');
+Connection::update('users', ['status' => 'ban'], ['id' => 1]);
+$assert(Repository::public_top_authors() === [], 'A warm ranking never exposes an inactive account');
+Connection::update('users', ['status' => 'active', 'role' => 'bot'], ['id' => 1]);
+$assert(Repository::public_top_authors() === [], 'A warm ranking respects current ranking role policy');
+Connection::delete('users', ['id' => 1]);
+$assert(Repository::public_top_authors(compute: false) === [], 'A stale ranking never resurrects a deleted personal profile');
+echo "PASS current public profile hydration from cached ranking ($checks checks)\n";

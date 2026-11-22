@@ -136,10 +136,12 @@ foreach (['/', '/login', '/search/all', '/privacy', '/notifications'] as $route)
     foreach (['App/Core/Ui/assets/styles/pagination.css', 'App/Core/Ui/assets/styles/filter-chips.css'] as $style) { $assertStyle($route, $style, false); }
 }
 foreach (['/login', '/search/all', '/privacy', '/notifications'] as $route) {
-    $assertStyle($route, 'App/Modules/Social/assets/status/styles/home-feed.css', false);
+    $assertStyle($route, 'App/Modules/Social/assets/status/styles/home-feed.css', $route === '/search/all');
     $assertStyle($route, 'App/Modules/Social/assets/site/styles/public-layout.css', false);
 }
 foreach (['/admin/users', '/install'] as $route) { $assertStyle($route, 'App/Core/Ui/assets/styles/tables.css', true); }
+$assertStyle('/search/all', 'App/Modules/Social/assets/status/styles/status-header.css', true);
+$assertStyle('/search/all', 'App/Modules/Social/assets/status/styles/status-content-mobile.css', true);
 foreach (['/', '/admin/moderation'] as $route) { $assertStyle($route, 'App/Modules/Social/assets/status/styles/author-meta.css', true); }
 foreach (['/admin', '/install'] as $route) {
     $assertStyle($route, 'App/Modules/Social/assets/status/styles/home-feed.css', false);

@@ -38,9 +38,11 @@
       "/social",
       "/status",
       "/author",
-      "/tag"
+      "/tag",
+      "/search/all"
     ],
     "components": [
+      "search/posts",
       "status/card",
       "status/thread",
       "status/composer-body",
@@ -55,7 +57,8 @@
       "status/feed-empty"
     ],
     "entries": [
-      "App/Modules/Social/assets/status/index.js"
+      "App/Modules/Social/assets/status/index.js",
+      "App/Modules/Social/assets/status/comment-pagination.js"
     ],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-email-notice.css",
@@ -91,6 +94,8 @@
       "account.translation_same",
       "account.translation_continue",
       "account.translation_failed",
+      "account.status_more_comments",
+      "account.status_more_replies",
       "account.status_comment_history",
       "account.status_comment_placeholder",
       "account.status_edit",

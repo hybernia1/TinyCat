@@ -36,7 +36,7 @@ final class ContentLinks
             return $canonicalId === null ? null : self::resolve($canonicalId, $hash, $commentId);
         }
         if ($commentId > 0) {
-            $comment = \TinyCat\Database\Connection::one('SELECT cc.body FROM social_comments cc INNER JOIN users u ON u.id = cc.user_id WHERE cc.id = ? AND cc.content_id = ? AND u.status = ?', [$commentId, $contentId, 'active']);
+            $comment = \TinyCat\Database\Connection::one('SELECT cc.body FROM social_comments cc WHERE cc.id = ? AND cc.content_id = ? AND ' . \TinyCat\Social\Discussion\Comments::visiblePredicate(), [$commentId, $contentId]);
             if ($comment === null) { return null; }
             $item = $comment;
         }

@@ -141,7 +141,7 @@ final class Pages
                 'robots' => 'noindex,nofollow',
             ],
         ], Components::render('users/recovery-page', [
-            'reset' => $recoveryToken !== '', 'token' => $recoveryToken, 'password_max' => Passwords::maxLength(),
+            'reset' => $recoveryToken !== '', 'token' => $recoveryToken, 'password_min' => Passwords::minLength(), 'password_max' => Passwords::maxLength(),
             'captcha' => Captcha::configuration('recovery'), 'login_url' => Integration::localUrl('/login'), 'privacy_url' => Integration::privacyUrl(),
         ]));
     }

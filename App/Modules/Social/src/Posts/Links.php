@@ -80,7 +80,7 @@ class Links extends \TinyCat\Core\Links\Presentation
             'provider' => \TinyCat\Support\Text::plain_text_limit($taxonomy['provider'], 40),
             'link_type' => $taxonomy['link_type'],
             'title' => \TinyCat\Support\Text::plain_text_limit((string) ($link['title'] ?? ''), 255),
-            'description' => \TinyCat\Support\Text::plain_text_limit(PostText::normalize((string) ($link['description'] ?? '')), 500),
+            'description' => \TinyCat\Support\Text::plain_text_limit(PostText::cleanImportBoilerplate((string) ($link['description'] ?? '')), 500),
             'image_url' => Providers::youtubeThumbnails($normalizedUrl) !== [] ? '' : \TinyCat\Support\Text::plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
             'video_id' => \TinyCat\Support\Text::plain_text_limit((string) ($link['video_id'] ?? ''), 80),
             'audio_url' => \TinyCat\Support\Text::plain_text_limit((string) ($link['audio_url'] ?? ''), 2048),

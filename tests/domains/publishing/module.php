@@ -85,10 +85,10 @@ catch (PDOException) { $assert((int) Connection::value('SELECT COUNT(*) FROM soc
 $pdo->exec('DROP TRIGGER reject_link');
 $pdo->beginTransaction(); $outer = PostCreation::create(1, PostCreation::fromText('Outer transaction'), []); $assert($pdo->inTransaction(), 'Creation preserves the caller transaction'); $pdo->rollBack();
 $assert(Repository::find($outer) === null, 'Caller rollback removes publication');
-$update = PostCreation::fromText('Updated #replacement'); Repository::update($id, $update, [], null, false, null);
+$update = PostCreation::fromText('Updated #replacement'); Repository::update($id, $update, [], null, false, $writer);
 $assert(Repository::find($id)['body'] === $update->body && count(Queries::page(tag: 'replacement')) === 1, 'Updates share the accepted preparation and relation writer');
 $pdo->exec("CREATE TRIGGER reject_update BEFORE UPDATE ON social_posts BEGIN SELECT RAISE(ABORT, 'injected write failure'); END");
-try { Repository::update($id, PostCreation::fromText('Rejected #change'), [], null, false, null); $assert(false, 'Update must fail'); }
+try { Repository::update($id, PostCreation::fromText('Rejected #change'), [], null, false, $writer); $assert(false, 'Update must fail'); }
 catch (PDOException) { $assert(Repository::find($id)['body'] === $update->body, 'Failed update preserves original social_posts'); }
 $pdo->exec('DROP TRIGGER reject_update');
 $originalOptions = TinyCat\Core\Runtime\Startup::$options;

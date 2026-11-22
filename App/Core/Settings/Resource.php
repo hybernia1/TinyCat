@@ -23,17 +23,15 @@ final class Resource
     private static function editorField(array $field): array
     {
         $value = $field['value'];
+        $maximum = Administration::fieldMaximum($field);
+        if ($maximum !== null) { $field['max'] = $maximum; }
         if ($field['type'] === 'language') { $field['value'] = \TinyCat\Support\Languages::language_code((string) $value); }
         if ($field['type'] === 'password') { $field['value'] = ''; }
-        if ($field['type'] === 'email_smtp') {
-            $field['value'] = array_intersect_key(is_array($value) ? $value : [], array_fill_keys(['host', 'port', 'username', 'encryption', 'from_address', 'from_name'], true)) + ['password' => ''];
-        }
         $field['options'] = match ($field['type']) {
             'language' => array_map(static fn (string $code, string $name): array => ['value' => $code, 'name' => $name], array_keys(\TinyCat\Support\Languages::language_packages()), array_values(\TinyCat\Support\Languages::language_packages())),
             'timezone' => self::timezones((string) $value),
             'date_format', 'time_format', 'datetime_format' => self::formats($field['type']),
-            'email_templates' => array_map(static fn (string $name): array => ['value' => $name], \TinyCat\Core\Mail\Templates::email_template_keys()),
-            'select' => array_map(static fn (int|string $option, mixed $name): array => ['value' => (string) $option, 'name' => $name], array_keys($field['options']), array_values($field['options'])),
+            'email_templates', 'select' => array_map(static fn (int|string $option, mixed $name): array => ['value' => (string) $option, 'name' => $name], array_keys($field['options']), array_values($field['options'])),
             default => [],
         };
         if (isset($field['fields'])) {
@@ -41,8 +39,11 @@ final class Resource
             $children = [];
             foreach ($field['fields'] as $child) {
                 $child['value'] = $values[$child['key']] ?? $child['default'] ?? '';
-                $children[] = self::editorField($child);
+                $child = self::editorField($child);
+                $values[$child['key']] = $child['value'];
+                $children[] = $child;
             }
+            $field['value'] = array_intersect_key($values, array_fill_keys(array_column($children, 'key'), true));
             $field['fields'] = $children;
         }
         unset($field['label'], $field['help'], $field['placeholder'], $field['span'], $field['path_key'], $field['variant'], $field['default'], $field['normalize']);

@@ -158,17 +158,18 @@ final class ViewData
     /**
      * @param array<string, mixed> $item
      * @param array<string, mixed>|null $user
-     * @return array{item: array<string, mixed>, comments: array<int, array<string, mixed>>}
+     * @return array{item: array<string, mixed>, comments: array<int, array<string, mixed>>, comments_next_url: string}
      */
     public static function status_prepare_detail_view(array $item, ?array $user): array
     {
         $items = \TinyCat\Social\Posts\ViewData::status_prepare_items_view([$item], $user);
         $prepared = $items[0] ?? $item;
-        $comments = \TinyCat\Social\Discussion\Comments::status_comments((int) ($item['id'] ?? 0));
+        $page = \TinyCat\Social\Discussion\Comments::page((int) ($item['id'] ?? 0));
 
         return [
             'item' => $prepared,
-            'comments' => \TinyCat\Social\Posts\ViewData::status_prepare_comments_view($comments, $user),
+            'comments' => \TinyCat\Social\Posts\ViewData::status_prepare_comments_view($page['items'], $user),
+            'comments_next_url' => $page['next_url'],
         ];
     }
 
@@ -282,6 +283,7 @@ final class ViewData
     /**
      * @param array<int, array<string, mixed>> $items
      * @param array<string, mixed> $params
+     * @param array<string, mixed>|null $selection
      * @return array<string, mixed>
      */
     public static function status_feed_more_view_data(
@@ -290,17 +292,18 @@ final class ViewData
         array $items,
         int $limit,
         array $params = [],
-        ?int $nextLimit = null
+        ?int $nextLimit = null,
+        ?array $selection = null
     ): array {
         $loaded = count($items);
-        $params += \TinyCat\Social\Posts\Feed::status_feed_cursor_params($items);
+        $params += $selection['cursor'] ?? \TinyCat\Social\Posts\Feed::status_feed_cursor_params($items);
         $nextLimit = $nextLimit === null ? $limit : max(1, min(50, $nextLimit));
 
         return [
             'feed_id' => $feedId,
             'loaded' => $loaded,
             'limit' => $limit,
-            'next_url' => $loaded >= $limit ? \TinyCat\Social\Posts\Feed::status_feed_next_url($context, $nextLimit, $params) : '',
+            'next_url' => ($selection['count'] ?? $loaded) >= $limit ? \TinyCat\Social\Posts\Feed::status_feed_next_url($context, $nextLimit, $params) : '',
         ];
     }
 
@@ -320,12 +323,13 @@ final class ViewData
         $limit = \TinyCat\Social\Posts\Feed::public_status_initial_page_limit();
         $nextLimit = \TinyCat\Social\Posts\Feed::public_status_page_limit();
 
+        $selection = null;
         if ($items === null) {
             $items = $followingLoginRequired
                 ? []
                 : ($feed === 'following'
-                    ? \TinyCat\Social\Posts\Feed::public_status_items_for_user_cursor((int) ($user['id'] ?? 0), $limit, '', 0, $type)
-                    : \TinyCat\Social\Posts\Feed::public_status_items_cursor($limit, '', 0, $type));
+                    ? \TinyCat\Social\Posts\Feed::public_status_items_for_user_cursor((int) ($user['id'] ?? 0), $limit, '', 0, $type, $selection)
+                    : \TinyCat\Social\Posts\Feed::public_status_items_cursor($limit, '', 0, $type, $selection));
         }
 
         $feedId = 'status-feed-' . $feed;
@@ -345,7 +349,8 @@ final class ViewData
                 $items,
                 $limit,
                 ['feed' => $feed, 'media' => $type],
-                $nextLimit
+                $nextLimit,
+                $selection
             ),
         ];
     }

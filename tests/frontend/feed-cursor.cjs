@@ -24,6 +24,10 @@ const source = fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/as
     assert.deepEqual(target.children.map(n => n.dataset.feedId || n.dataset.statusId), ["1", "2"]); checks++;
     assert.equal(control.dataset.statusFeedUrl, response.meta.pagination.next_url); checks++;
     assert.equal(renders[0], kind === "entities" ? "fixture/items" : "status"); checks++;
+    response = { data: { items: [] }, meta: { pagination: { next_url: "/api/statuses?cursor_id=3", done: false } } };
+    await feed.loadStatusFeedMore(control);
+    assert.equal(control.isConnected, true); checks++;
+    assert.equal(control.dataset.statusFeedUrl, response.meta.pagination.next_url); checks++;
     response = { data: { items: [{ id: 3 }] }, meta: { pagination: { next_url: "", done: true } } };
     await feed.loadStatusFeedMore(control);
     assert.equal(control.isConnected, false); checks++;

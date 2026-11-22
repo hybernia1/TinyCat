@@ -90,6 +90,23 @@ final class Cache
         }
     }
 
+    /** Coordinate a read/compute/fill with its owner's invalidation on this node.
+     * Unlike rememberArray, this never serves stale data or computes without the lock.
+     * @template T
+     * @param callable(): T $operation
+     * @return T */
+    public static function synchronized(string $key, callable $operation): mixed
+    {
+        $directory = self::directory('coordination');
+        if (!Storage::ensureDirectory($directory)) { throw new \RuntimeException('Cannot create cache coordination directory.'); }
+        $lock = @fopen($directory . DIRECTORY_SEPARATOR . hash('sha256', $key) . '.lock', 'c');
+        if ($lock === false) { throw new \RuntimeException('Cannot open cache coordination lock.'); }
+        try {
+            if (!flock($lock, LOCK_EX)) { throw new \RuntimeException('Cannot acquire cache coordination lock.'); }
+            return $operation();
+        } finally { flock($lock, LOCK_UN); fclose($lock); }
+    }
+
     public static function read(string $key): mixed
     {
         $lookup = self::lookup($key);

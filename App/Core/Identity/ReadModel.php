@@ -97,7 +97,7 @@ class ReadModel
             'username.max' => \TinyCat\Support\Localization::t('users.validation.username_max'),
             'password.required' => \TinyCat\Support\Localization::t('users.validation.password_required'),
             'password.string' => \TinyCat\Support\Localization::t('users.validation.password_required'),
-            'password.min' => \TinyCat\Support\Localization::t('users.validation.password_min'),
+            'password.min' => \TinyCat\Support\Localization::t('users.validation.password_min', ['min' => (string) \TinyCat\Core\Identity\Passwords::minLength()]),
             'password.max' => \TinyCat\Support\Localization::t('users.validation.password_max', ['max' => (string) \TinyCat\Core\Identity\Passwords::maxLength()]),
             'role.required' => \TinyCat\Support\Localization::t('users.validation.role_required'),
             'role.string' => \TinyCat\Support\Localization::t('users.validation.role_invalid'),

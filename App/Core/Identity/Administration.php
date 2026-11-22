@@ -5,7 +5,6 @@ namespace TinyCat\Core\Identity;
 
 use TinyCat\Database\Connection;
 use TinyCat\Database\Transactions;
-use TinyCat\Support\Text;
 
 /** Administrative account policy and writes, independent of HTTP and avatar storage. */
 final class Administration
@@ -80,10 +79,10 @@ final class Administration
         self::requireEmail($email, $id);
         $password = (string) ($input['password'] ?? '');
         if ($creating && $password === '') { throw new ValidationException(['password' => ['users.validation.password_required']]); }
-        if ($password !== '' && strlen($password) < 8) { throw new ValidationException(['password' => ['users.validation.password_min']]); }
+        if ($password !== '' && strlen($password) < Passwords::minLength()) { throw new ValidationException(['password' => ['users.validation.password_min']]); }
         if (Passwords::tooLong($password)) { throw new ValidationException(['password' => ['users.validation.password_max']]); }
         if ($existing !== null) { self::protectChange($existing, $role, $status); }
-        $data = ['role' => $role, 'bio' => Text::plain_text_limit((string) ($input['bio'] ?? ''), 500)];
+        $data = ['role' => $role, 'bio' => Profile::prepareBio(array_key_exists('bio', $input) ? $input['bio'] : '')];
         if ($creating || array_key_exists('status', $input)) { $data['status'] = $status; }
         if ($creating || $emailProvided) { $data['email'] = $email !== '' ? $email : null; }
         if ($creating) { $data['username'] = $username; }
@@ -130,7 +129,7 @@ final class Administration
         if (array_key_exists('email', $data)) { self::requireEmail((string) $data['email'], (int) $locked['id']); }
         if (array_key_exists('password', $data) && (!is_string($data['password']) || password_get_info($data['password'])['algo'] === null)) { throw new \LogicException('Administrative persistence requires a password hash.'); }
         self::protectChange($locked, $role, $status);
-        Connection::update('users', $data, ['id' => (int) $locked['id']]);
+        Passwords::persist((int) $locked['id'], $data);
         return array_replace($locked, $data);
     }
 

@@ -50,13 +50,15 @@ try {
         . '--' . $boundary . "\r\nContent-Disposition: form-data; name=\"avatar\"; filename=\"avatar.png\"\r\nContent-Type: image/png\r\n\r\n" . $png . "\r\n--" . $boundary . "--\r\n";
     $fixtureOwnsAvatar = true;
     [$status, $payload] = $request('POST', '/api/users/' . $avatarId . '/avatar', $multipart, 'admin', $csrf + ['Content-Type' => 'multipart/form-data; boundary=' . $boundary]);
-    $assert($status === 200 && is_file($avatarFile), 'Multipart avatar upload writes its WebP image.');
+    $avatarUrl = (string) ($payload['data']['user']['avatar_url'] ?? '');
+    if (preg_match('~^/uploads/avatars/' . $avatarId . '-[a-f0-9]{32}\.webp$~D', $avatarUrl) === 1) { $avatarFile = $root . $avatarUrl; }
+    $assert($status === 200 && is_file($avatarFile), 'Multipart avatar upload writes its immutable WebP image.');
     $dimensions = getimagesize($avatarFile);
     $assert($dimensions[0] === 200 && $dimensions[1] === 200, 'Real avatar uploads retain their 200 by 200 crop.');
     [$appearanceStatus] = $request('PATCH', '/api/users/' . $avatarId . '/avatar', ['appearance' => ['gender' => 'male']], 'admin', $csrf);
     $assert($appearanceStatus === 422, 'Uploaded avatars cannot be customized as generated cats.');
     $avatarUrl = $payload['data']['user']['avatar_url'];
-    $assert(str_starts_with($avatarUrl, '/uploads/avatars/' . $avatarId . '.webp?v='), 'Upload returns the new cache-versioned avatar resource.');
+    $assert(preg_match('~^/uploads/avatars/' . $avatarId . '-[a-f0-9]{32}\.webp$~D', $avatarUrl) === 1, 'Upload returns the immutable versioned avatar resource.');
     $assert((int) $seed->query('SELECT avatar_exists FROM users WHERE id = ' . $avatarId)->fetchColumn() === 1, 'Successful upload persists avatar availability.');
     [$status, $payload] = $request('GET', '/api/profiles/' . $avatarId);
     $assert($status === 200 && $payload['data']['user']['avatar_url'] === $avatarUrl, 'Subsequent public resources preserve the uploaded avatar URL.');
@@ -95,7 +97,10 @@ try {
     $assert($seed->query('SELECT status FROM users WHERE id = ' . $avatarId)->fetchColumn() === 'active', 'A bot side effect failure rolls back the account status.');
     $seed->exec('DROP TRIGGER fail_bot_avatar_sources');
     [$status, $payload] = $request('POST', '/api/bots/accounts/' . $avatarId, $multipartBody(['_method' => 'PATCH', 'status' => 'active'], $redPng), 'admin', $multipartHeaders);
-    $assert($status === 200 && hash_file('sha256', $avatarFile) !== $originalHash, 'A successful bot update commits the new avatar through the shared writer.');
+    $version = (string) $seed->query('SELECT avatar_version FROM users WHERE id = ' . $avatarId)->fetchColumn();
+    $newAvatarFile = $root . '/uploads/avatars/' . $avatarId . '-' . $version . '.webp';
+    $assert($status === 200 && !is_file($avatarFile) && is_file($newAvatarFile) && hash_file('sha256', $newAvatarFile) !== $originalHash, 'A successful bot update switches to a new immutable avatar and cleans the legacy file.');
+    $avatarFile = $newAvatarFile;
     $assert(array_diff(glob($root . '/uploads/avatars/.avatar-*') ?: [], $stagedBefore) === [], 'Successful and failed changes clean up their staged files and backups.');
     $seed->exec("UPDATE users SET role = 'user' WHERE id = " . $avatarId);
     [$status] = $request('DELETE', '/api/users/' . $avatarId . '/avatar', [], 'admin', $csrf);

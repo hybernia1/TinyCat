@@ -5,11 +5,21 @@ namespace TinyCat\Social\Discussion;
 
 final class Comments
 {
+    public static function visiblePredicate(string $alias = 'cc'): string
+    {
+        return "(SELECT visible_author.status FROM users visible_author WHERE visible_author.id = {$alias}.user_id) = 'active'"
+            . " AND ({$alias}.parent_id IS NULL OR {$alias}.parent_id = 0 OR EXISTS (SELECT 1 FROM social_comments root INNER JOIN users ru ON ru.id = root.user_id WHERE root.id = {$alias}.parent_id AND root.content_id = {$alias}.content_id AND (root.parent_id IS NULL OR root.parent_id = 0) AND ru.status = 'active'))";
+    }
 
     public static function status_comments_query(string $kind = 'post'): \TinyCat\Database\Query
     {
-        return \TinyCat\Database\Query::select(
-            'SELECT cc.id,
+        return \TinyCat\Database\Query::select(self::status_comments_sql())
+            ->where('c.kind = ?', $kind)->where(self::visiblePredicate());
+    }
+
+    private static function status_comments_sql(): string
+    {
+        return 'SELECT cc.id,
                     cc.content_id,
                     cc.parent_id,
                     cc.user_id,
@@ -19,9 +29,10 @@ final class Comments
                     u.username AS author_name,
                     u.role AS author_role,
                     u.username AS author_username,
-                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance,
+                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version,
                     u.updated_at AS author_updated_at,
                     c.author_id AS content_author_id,
+                    EXISTS (SELECT 1 FROM social_comments reply INNER JOIN users reply_author ON reply_author.id = reply.user_id WHERE reply.content_id = cc.content_id AND reply.parent_id = cc.id AND reply_author.status = \'active\') AS has_replies,
                     (
                         SELECT COUNT(*)
                         FROM social_comment_likes cl
@@ -29,10 +40,7 @@ final class Comments
                     ) AS likes_count
                 FROM social_comments cc
                 INNER JOIN users u ON u.id = cc.user_id
-                INNER JOIN social_posts c ON c.id = cc.content_id'
-        )
-            ->where('c.kind = ?', $kind)->where('u.status = ?', 'active')
-            ->where("(cc.parent_id IS NULL OR cc.parent_id = 0 OR EXISTS (SELECT 1 FROM social_comments root INNER JOIN users ru ON ru.id = root.user_id WHERE root.id = cc.parent_id AND root.content_id = cc.content_id AND (root.parent_id IS NULL OR root.parent_id = 0) AND ru.status = 'active'))");
+                INNER JOIN social_posts c ON c.id = cc.content_id';
     }
 
     /**
@@ -40,24 +48,43 @@ final class Comments
      */
     public static function status_comments(int $contentId, string $kind = 'post'): array
     {
-        if ($contentId < 1) {
-            return [];
+        return self::page($contentId, 0, '', 0, $kind)['items'];
+    }
+
+    /** @return array{items: array<mixed>, next_url: string} */
+    public static function page(int $contentId, int $parentId = 0, string $cursorAt = '', int $cursorId = 0, string $kind = 'post', ?int $limit = null): array
+    {
+        $limit = max(1, min(50, $limit ?? \TinyCat\Social\Posts\Feed::public_status_page_limit()));
+        if ($contentId < 1) { return ['items' => [], 'next_url' => '']; }
+        $params = [];
+        $mysql = \TinyCat\Database\Connection::driver() === 'mysql';
+        $index = $mysql ? ' FORCE INDEX (content_comments_content_index)' : '';
+        $join = $mysql ? ' STRAIGHT_JOIN ' : ' INNER JOIN ';
+        $parents = $parentId > 0 ? ['reply'] : ['cc.parent_id IS NULL', 'cc.parent_id = 0'];
+        $branches = [];
+        foreach ($parents as $indexNumber => $parentSql) {
+            if ($parentId > 0) { $params[] = $parentId; }
+            $params[] = $contentId;
+            $cursorSql = '';
+            if ($cursorAt !== '' && $cursorId > 0) { $cursorSql = ' AND (cc.created_at > ? OR (cc.created_at = ? AND cc.id > ?))'; array_push($params, $cursorAt, $cursorAt, $cursorId); }
+            if ($parentId > 0) {
+                $from = 'social_comments root' . $join . "users ru ON ru.id = root.user_id AND ru.status = 'active'" . $join . 'social_comments cc' . $index . ' ON cc.parent_id = root.id AND cc.content_id = root.content_id' . $join . "users u ON u.id = cc.user_id AND u.status = 'active'";
+                $where = 'root.id = ? AND root.content_id = ? AND (root.parent_id IS NULL OR root.parent_id = 0)';
+            } else {
+                $from = 'social_comments cc' . $index . $join . "users u ON u.id = cc.user_id AND u.status = 'active'";
+                $where = 'cc.content_id = ? AND ' . $parentSql;
+            }
+            $branches[] = 'SELECT * FROM (SELECT cc.id, cc.created_at FROM ' . $from . ' WHERE ' . $where . $cursorSql . ' ORDER BY cc.created_at ASC, cc.id ASC LIMIT ' . $limit . ') comment_branch_' . $indexNumber;
         }
-
-        if (\TinyCat\Database\Connection::get()->inTransaction()) { return \TinyCat\Social\Discussion\ThreadTree::fromRows(self::status_comments_query($kind)->where('cc.content_id = ?', $contentId)->order('cc.created_at ASC, cc.id ASC')->all()); }
-
-        $cache =& \TinyCat\Social\Discussion\Comments::status_comments_cache();
-
-        if (!array_key_exists($kind . ":" . $contentId, $cache)) {
-            $cache[$kind . ":" . $contentId] = \TinyCat\Social\Discussion\ThreadTree::fromRows(
-                \TinyCat\Social\Discussion\Comments::status_comments_query($kind)
-                    ->where('cc.content_id = ?', $contentId)
-                    ->order('cc.created_at ASC, cc.id ASC')
-                    ->all()
-            );
-        }
-
-        return $cache[$kind . ":" . $contentId];
+        $selected = 'SELECT id FROM (' . implode(' UNION ALL ', $branches) . ') comment_candidates ORDER BY created_at ASC, id ASC LIMIT ' . $limit;
+        $query = new \TinyCat\Database\Query(self::status_comments_sql() . ' INNER JOIN (' . $selected . ') selected_comments ON selected_comments.id = cc.id', $params);
+        $rows = $query->where('c.kind = ?', $kind)->where('cc.content_id = ?', $contentId)->where(self::visiblePredicate())->order('cc.created_at ASC, cc.id ASC')->all();
+        $last = $rows === [] ? null : end($rows);
+        $next = count($rows) === $limit && is_array($last)
+            ? '/api/statuses/' . $contentId . '/comments?' . http_build_query(['parent_id' => $parentId, 'cursor_at' => $last['created_at'], 'cursor_id' => $last['id'], 'limit' => $limit]) : '';
+        foreach ($rows as &$row) { $row['replies'] = []; }
+        unset($row);
+        return ['items' => $rows, 'next_url' => $next];
     }
 
     /**
@@ -93,7 +120,8 @@ final class Comments
             return 0;
         }
 
-        return \TinyCat\Database\Connection::count('social_comments', ['content_id' => $contentId]);
+        $row = \TinyCat\Database\Connection::one('SELECT COUNT(*) AS total FROM social_comments cc WHERE cc.content_id = ? AND ' . self::visiblePredicate(), [$contentId]);
+        return (int) ($row['total'] ?? 0);
     }
 
     /**

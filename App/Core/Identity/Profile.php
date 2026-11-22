@@ -3,13 +3,21 @@ declare(strict_types=1);
 
 namespace TinyCat\Core\Identity;
 
-use TinyCat\Database\Connection;
 use TinyCat\Support\Languages;
 use TinyCat\Support\Text;
 
 /** Account profile writes; transport, session and presentation are caller responsibilities. */
 final class Profile
 {
+    public const BIO_MAX_LENGTH = 500;
+
+    public static function prepareBio(mixed $value): string
+    {
+        if (!is_string($value)) { throw new ValidationException(['bio' => ['common.request_failed']]); }
+        $value = str_replace(["\r\n", "\r"], "\n", $value);
+        if (mb_strlen($value, 'UTF-8') > self::BIO_MAX_LENGTH) { throw new ValidationException(['bio' => ['common.request_failed']]); }
+        return trim(Text::strip_html_tags_preserving_text($value));
+    }
     /** @param array<mixed>|null $target
      * @param array<mixed>|null $actor */
     public static function canEdit(?array $target, ?array $actor): bool
@@ -34,6 +42,11 @@ final class Profile
     {
         self::requireEdit($user, $actor);
         $input = array_replace(['bio' => $user['bio'] ?? '', 'locale' => $user['locale'] ?? '', 'theme' => $user['theme'] ?? 'system'], $input);
+        foreach (['bio', 'locale', 'theme', 'email'] as $field) {
+            if (array_key_exists($field, $input) && !is_string($input[$field]) && !($field === 'email' && $input[$field] === null)) {
+                throw new ValidationException([$field => ['common.request_failed']]);
+            }
+        }
         $id = (int) $user['id'];
         $emailProvided = ($input['email'] ?? null) !== null;
         $email = Email::normalize((string) ($emailProvided ? $input['email'] : ($user['email'] ?? '')));
@@ -42,10 +55,10 @@ final class Profile
         if ($locale === '' || !in_array($locale, $availableLocales, true)) { $errors['locale'] = ['settings.messages.invalid_language']; }
         $errors += self::emailIssues($email, $id, $emailProvided);
         if ($errors !== []) { throw new ValidationException($errors); }
-        $data = ['bio' => Text::plain_text_limit((string) $input['bio'], 500), 'locale' => $locale, 'theme' => self::theme((string) $input['theme'])];
+        $data = ['bio' => self::prepareBio($input['bio']), 'locale' => $locale, 'theme' => self::theme((string) $input['theme'])];
         if ($emailProvided) { $data['email'] = $email !== '' ? $email : null; }
         $data += self::notifications($input, $email, $emailProvided);
-        Connection::update('users', $data, ['id' => $id]);
+        Passwords::persist($id, $data);
         return array_replace($user, $data);
     }
 
@@ -57,18 +70,19 @@ final class Profile
     {
         self::requireEdit($user, $actor);
         $id = (int) $user['id'];
+        if (isset($input['email']) && !is_string($input['email'])) { throw new ValidationException(['email' => ['account.messages.email_invalid']]); }
         $email = Email::normalize((string) ($input['email'] ?? ''));
         $errors = self::emailIssues($email, $id, true);
         if ($errors !== []) { throw new ValidationException($errors); }
         $data = ['email' => $email !== '' ? $email : null] + self::notifications($input, $email, true);
-        Connection::update('users', $data, ['id' => $id]);
+        Passwords::persist($id, $data);
         return array_replace($user, $data);
     }
 
     /** @param array<mixed> $user
      * @param array<mixed> $actor
      * @param array<mixed> $input */
-    public static function password(array $user, array $actor, array $input): void
+    public static function password(array $user, array $actor, array $input): string
     {
         self::requireEdit($user, $actor);
         if ((int) $actor['id'] !== (int) $user['id']) { throw new \DomainException('forbidden'); }
@@ -80,8 +94,10 @@ final class Profile
         $errors += Passwords::issueKeys($password, (string) ($input['password_confirm'] ?? ''));
         if ($errors !== []) { throw new ValidationException($errors); }
         // A previously loaded credential must not overwrite a concurrent password change.
-        $changed = Connection::update('users', ['password' => Authentication::authPassword($password)], ['id' => (int) $user['id'], 'password' => $hash]);
+        $newHash = Authentication::authPassword($password);
+        $changed = Passwords::persist((int) $user['id'], ['password' => $newHash], $hash);
         if ($changed !== 1) { throw new ValidationException(['current_password' => ['account.messages.current_password_invalid']]); }
+        return $newHash;
     }
 
     /** @param array<mixed> $user
@@ -103,7 +119,11 @@ final class Profile
      * @return array<string, int> */
     private static function notifications(array $input, string $email, bool $emailProvided): array
     {
-        if (($input['email_notifications'] ?? null) !== null) { return ['email_notifications' => $email !== '' && (string) $input['email_notifications'] === '1' ? 1 : 0]; }
+        if (($input['email_notifications'] ?? null) !== null) {
+            $value = $input['email_notifications'];
+            if (!in_array($value, [true, false, 1, 0, '1', '0'], true)) { throw new ValidationException(['email_notifications' => ['common.request_failed']]); }
+            return ['email_notifications' => $email !== '' && in_array($value, [true, 1, '1'], true) ? 1 : 0];
+        }
         return $emailProvided && $email === '' ? ['email_notifications' => 0] : [];
     }
 }

@@ -36,10 +36,12 @@ foreach (['TinyCat\\Support\\Config', 'TinyCat\\Core\\Settings\\Store', 'TinyCat
 $assert(session_status() === PHP_SESSION_NONE, 'Registry collection did not open a session');
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->tasks) === ['feeds', 'cleanup', 'site-health'], 'Existing task IDs and order remain stable');
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->health) === ['http', 'database', 'cache', 'storage', 'uploads', 'disk', 'runtime', 'scheduler', 'updates'], 'Existing probe IDs and order remain stable');
-$assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->maintenance) === [
+$maintenanceIds = array_map(static fn ($entry): string => $entry->id, $registries->entries->maintenance);
+$assert(array_values(array_diff($maintenanceIds, ['orphan_branding_files'])) === [
     'orphan_terms', 'orphan_links', 'orphan_status_image_files', 'orphan_link_image_files', 'orphan_avatar_files', 'temporary_files', 'update_files', 'expired_cache_files',
     'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications', 'old_scheduler_runs', 'bot_history', 'duplicate_bot_posts',
 ], 'Existing maintenance IDs and order remain stable');
+$assert(in_array('orphan_branding_files', $maintenanceIds, true) && $registries->owner('maintenance', 'orphan_branding_files') === 'tinycat.settings', 'Branding adds one owner-declared orphan task');
 $assert($registries->initialMaintenance() === 'update_files', 'The existing initial cleanup cursor is preserved by its owner');
 $assert($registries->owner('task', 'feeds') === 'tinycat.social' && $registries->owner('maintenance', 'old_password_reset_tokens') === 'tinycat.accounts', 'Tasks and retention have explicit owners');
 $assert($registries->task('feeds')->options === ['bot_limit' => 20], 'Feed defaults remain stable');

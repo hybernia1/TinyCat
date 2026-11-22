@@ -12,7 +12,7 @@ import "./email-availability.js";
       var data = response.data, register = data.mode === "register";
       var content = T.components.render("users/auth-content", Object.assign({}, data, { register: register, old: {} }));
       var title = register ? "common.register" : "common.login";
-      return content.querySelector("form") ? T.ui.formDialog(id, title, content, false, { size: "compact", icon: register ? "user-plus" : "login" }) : T.ui.dialog(id, title, content);
+      return content.querySelector("form") ? T.ui.formDialog(id, title, content, false, { size: "compact", icon: register ? "user-plus" : "login", refresh: false }) : T.ui.dialog(id, title, content);
     }
   };
   T.modules.register("authentication", T.authentication);

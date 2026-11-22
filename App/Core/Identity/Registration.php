@@ -9,9 +9,9 @@ final class Registration
      * @return array<mixed> */
     public static function input(array $input): array
     {
-        $username = Usernames::normalize((string) ($input['username'] ?? ''));
-        $email = Email::normalize((string) ($input['email'] ?? ''));
-        $password = (string) ($input['password'] ?? '');
+        $username = Usernames::normalize(is_string($input['username'] ?? null) ? $input['username'] : '');
+        $email = Email::normalize(is_string($input['email'] ?? null) ? $input['email'] : '');
+        $password = is_string($input['password'] ?? null) ? $input['password'] : '';
         $fieldErrors = [];
 
         if (!Usernames::valid($username)) {
@@ -20,7 +20,7 @@ final class Registration
             $fieldErrors['username'][] = \TinyCat\Support\Localization::t('account.messages.username_taken');
         }
 
-        if ($email !== '' && !Email::valid($email)) {
+        if (isset($input['email']) && !is_string($input['email']) || $email !== '' && !Email::valid($email)) {
             $fieldErrors['email'][] = \TinyCat\Support\Localization::t('account.messages.email_invalid');
         } elseif ($email !== '' && Email::taken($email)) {
             $fieldErrors['email'][] = \TinyCat\Support\Localization::t('account.messages.email_taken');
@@ -28,10 +28,10 @@ final class Registration
 
         $fieldErrors = array_merge(
             $fieldErrors,
-            Passwords::fieldErrors($password, (string) ($input['password_confirm'] ?? ''))
+            Passwords::fieldErrors($password, is_string($input['password_confirm'] ?? null) ? $input['password_confirm'] : '')
         );
 
-        if ((string) ($input['platform_terms'] ?? '') !== '1') {
+        if (($input['platform_terms'] ?? '') !== '1') {
             $fieldErrors['platform_terms'][] = \TinyCat\Support\Localization::t('auth.platform_terms_required');
         }
 

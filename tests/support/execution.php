@@ -76,11 +76,13 @@ final class Execution
         }
     }
 
-    public static function run(string $id, string $label, string $command): int
+    /** @param string|list<string> $command */
+    public static function run(string $id, string $label, string|array $command): int
     {
         self::initialize();
         $parent = self::parent(); $start = hrtime(true); $log = self::$directory . '/' . hash('sha256', ($parent ?? '') . ':' . $id) . '.log';
-        self::event(['type' => 'started', 'id' => $id, 'parent' => $parent, 'command' => $command, 'started_at' => gmdate(DATE_ATOM)]);
+        $displayCommand = is_array($command) ? implode(' ', array_map(escapeshellarg(...), $command)) : $command;
+        self::event(['type' => 'started', 'id' => $id, 'parent' => $parent, 'command' => $displayCommand, 'started_at' => gmdate(DATE_ATOM)]);
         $environment = array_merge(getenv(), ['TINYCAT_TEST_PARENT' => $id]);
         $process = proc_open($command, [0 => STDIN, 1 => ['file', $log, 'a'], 2 => ['file', $log, 'a']], $pipes, null, $environment);
         $exit = 1;

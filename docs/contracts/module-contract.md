@@ -54,6 +54,14 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
 - Publikované ID a checksumy migrací jsou neměnné. Změna má novou migraci a
   odpovídající fresh schéma. Vypnutí zachovává data; jejich nainstalovaný vlastník
   dál poskytuje potřebný úklid účtu a reference souborů.
+- `MaintenanceTask::whenInactive` má výchozí hodnotu `false`. Vlastník může
+  výslovně povolit svůj omezený orphan úklid souborů i po deaktivaci. Core přibírá
+  pouze tyto příspěvky nainstalovaných neaktivních vlastníků, každé ID nejvýše
+  jednou; nespouští jejich inicializaci, routy ani ostatní callbacky. Odinstalovaný
+  vlastník se nezapojuje jen proto, že jeho zdroje zůstaly na disku. Úklid běží
+  přes chráněný core runner, kontroluje reference všech nainstalovaných vlastníků
+  a stáří příprav a zachovává rozpočty i checkpointy. Chybějící manifest nebo PHP
+  provider zastaví mazací část před prvním unlink; neúplná mapa není prázdná mapa.
 
 ## Povinné ověření
 

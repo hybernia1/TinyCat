@@ -110,7 +110,11 @@ validation, successful-save state and canonical values apply only to that form.
 Other section drafts remain unchanged. Sections remain available without an extra
 resource request on every tab switch.
 
-The common resource loader adds Refresh to editor footers. `dialog.refresh(modal)`
+The common resource loader adds Refresh to editor footers by default. Owners may
+pass `refresh: false` through the shared dialog factory for forms such as login
+and registration where reloading the resource is not useful. The loader then
+omits Refresh and `dialog.refresh(modal)` does not reload that dialog.
+`dialog.refresh(modal)`
 and `openResource(id, url, {refresh: true})` use the same guarded loader as explicit
 resource triggers. Refresh preserves the selected tab, opener and history entry.
 It asks before discarding any draft and does not run during a pending save. Editing,
