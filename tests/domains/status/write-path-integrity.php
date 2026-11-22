@@ -45,6 +45,8 @@ $config->setValue(null, [
     'moderation' => ['blocked_urls' => 'blocked.example'],
 ]);
 \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+// Reactions and discussion writes enforce the real account action budget.
+\TinyCat\Core\Security\Schema::install($database);
 \TinyCat\Core\Modules\Loader::load(\TinyCat\Support\Paths::basePath())->initialize();
 
 $checks = 0;
