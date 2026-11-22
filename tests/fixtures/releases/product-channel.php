@@ -9,6 +9,7 @@ if (isset($options['network'])) {
 define('TINYCAT', true);
 require $options['root'] . '/App/Core/Runtime/autoload.php';
 \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([
+    'app' => ['debug' => 'on'], // This isolated worker asserts injected technical failures.
     'database' => ['dsn' => 'sqlite::memory:'], 'install' => ['locale' => 'en', 'complete' => false],
     'updates' => ['public_key' => $options['public_key']],
 ]));

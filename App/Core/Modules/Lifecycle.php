@@ -51,6 +51,7 @@ final class Lifecycle
         if (Deployment::read($root) !== null) { throw new \RuntimeException('An installed deployment cannot be replaced by fresh installation.'); }
         $schemas = Distribution::schemas($plan, $root, $plan['active']);
         if ($schemas !== [] && !ModuleSchemas::ready(Connection::get(), $schemas)) { throw new \RuntimeException('Installation schemas are not ready.'); }
+        \TinyCat\Core\Installation\Installer::default_public_web();
         Deployment::write($root, $plan, $plan['active'], $plan['active'], \TinyCat\Support\Version::CURRENT);
         return ['installed' => $plan['active'], 'active' => $plan['active']];
     }

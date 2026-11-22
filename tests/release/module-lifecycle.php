@@ -79,7 +79,8 @@ try {
     $assert(isset($installManifest['files']['scheduled-tasks.php']) && isset($installManifest['files']['App/Console.php']), 'fixture product has a working production CLI instead of a missing social scheduler');
     $root = $workspace . '/installation'; mkdir($root, 0700);
     $zip = new ZipArchive(); $zip->open($workspace . '/v1/install/' . $installManifest['package']); $zip->extractTo($root); $zip->close();
-    $config = ['database' => ['dsn' => 'sqlite:' . $root . '/database.sqlite'], 'updates' => ['public_key' => base64_encode($public)], 'i18n' => ['locale' => 'en']];
+    // Failure-injection cases below assert technical diagnostics explicitly.
+    $config = ['app' => ['debug' => 'on'], 'database' => ['dsn' => 'sqlite:' . $root . '/database.sqlite'], 'updates' => ['public_key' => base64_encode($public)], 'i18n' => ['locale' => 'en']];
     file_put_contents($root . '/config.php', '<?php return ' . var_export($config, true) . ';'); $configHash = hash_file('sha256', $root . '/config.php');
     $entry = $root . '/App/Console.php';
     $console = static function (array $args, string $input = '') use ($run, $root, &$entry): array { return $run([PHP_BINARY, $entry, ...$args], $root, $input); };
@@ -90,6 +91,10 @@ try {
     $pdo = new PDO('sqlite:' . $root . '/database.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
     $assert(count($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 8, 'Fresh signed fixture product creates exactly its declared tables: ' . implode(', ', $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll(PDO::FETCH_COLUMN)));
     $assert(password_verify('Module-Regression-42', (string) $pdo->query('SELECT password FROM users')->fetchColumn()), 'CLI uses the shared account password writer');
+    $assert($pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'site.public_enabled'")->fetchColumn() === '0', 'Fresh signed products keep public presentation disabled until explicitly enabled');
+    $publicSetup = 'define("TINYCAT", true); require ' . var_export($root . '/App/Core/Runtime/autoload.php', true) . '; \\TinyCat\\Core\\Settings\\Store::setSetting("site.public_enabled", true, "bool", "site");';
+    [$exit, $text, $error] = $run([PHP_BINARY, '-r', $publicSetup], $root);
+    $assert($exit === 0, 'Public asset lifecycle scenarios explicitly enable the website: ' . $text . $error);
     [$exit] = $console(['install'], $administrator); $assert($exit !== 0 && (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() === 1, 'Fresh installer refuses to adopt existing data');
     $packagePhase = 'install'; require $fixture . '/package-cases.php';
     [$exit] = $console(['deactivate', 'tinycat.accounts']); $assert($exit !== 0, 'Required product modules cannot be disabled');
@@ -113,7 +118,7 @@ try {
     $insert = $pdo->prepare('INSERT INTO lifecycle_notes(body) VALUES (?)'); $insert->execute([$body]);
     [$status, $json] = $request('/api/fixture/notes'); $assert($status === 200 && str_contains($json, 'Unicode'), 'Activation registers the real authorized product API');
     [$status, $html] = $request('/fixture/notes'); $assert($status === 200 && str_contains($html, 'Selected notes'), 'Activation adds module-owned translations');
-    [$status, $html] = $request('/'); $assert($status === 200, 'fixture product HTTP boot remains ready after optional activation');
+    [$status, $html] = $request('/fixture/notes'); $assert($status === 200, 'fixture product public HTTP boot remains ready after optional activation');
     $assert(preg_match_all('~(?:src|href)="(/cache/assets/[^"?]+)~', $html, $assetMatches) > 0, 'Changed selection falls back from stale compiled assets');
     $delivered = '';
     foreach ($assetMatches[1] as $url) { [$assetStatus, $asset] = $request(html_entity_decode($url)); $assert($assetStatus === 200, 'Selected fallback asset is served'); $delivered .= $asset; }

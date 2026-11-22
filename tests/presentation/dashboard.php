@@ -74,7 +74,7 @@ $check(count(TinyCat\Core\Ui\Admin\Statistics::groups()) === 2 && count(TinyCat\
 $resource = TinyCat\Core\Ui\Admin\Statistics::resource('fixture.group1');
 $check($loads === [0, 1] && $resource['items'] === [['key' => 'fixture.group1.count', 'value' => 7]], 'Only the selected owner loads canonical counts.');
 $missing = false;
-try { TinyCat\Core\Ui\Admin\Statistics::resource('fixture.missing'); } catch (DomainException $error) { $missing = $error->getCode() === 404; }
+try { TinyCat\Core\Ui\Admin\Statistics::resource('fixture.missing'); } catch (TinyCat\Http\HttpException $error) { $missing = $error->getCode() === 404; }
 $check($missing && $loads === [0, 1], 'Unknown groups do not load another owner.');
 TinyCat\Core\Modules\Registrations::configure($registries);
 $cache = TinyCat\Core\Ui\Admin\Diagnostics::render();
