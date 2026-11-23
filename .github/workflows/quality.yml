@@ -19,7 +19,7 @@ jobs:
     name: PHP 8.4 release preflight
     # Keep the reviewed Playwright 1.52 / WebKit 18.4 regression environment.
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     services:
       mysql:
@@ -58,6 +58,11 @@ jobs:
 
       - name: Install WebKit regression browser
         run: |
+          for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+            if [ -f "$source_file" ]; then
+              sudo sed -i -E 's#https?://[a-zA-Z0-9.-]+\.ec2\.archive\.ubuntu\.com/ubuntu/?#http://archive.ubuntu.com/ubuntu/#g' "$source_file"
+            fi
+          done
           npm install --prefix "$RUNNER_TEMP/tinycat-webkit" --no-audit --no-fund playwright@1.52.0 axe-core@4.10.3
           node "$RUNNER_TEMP/tinycat-webkit/node_modules/playwright/cli.js" install --with-deps webkit
           echo "TINYCAT_TEST_PLAYWRIGHT_MODULE=$RUNNER_TEMP/tinycat-webkit/node_modules/playwright" >> "$GITHUB_ENV"
