@@ -5,7 +5,6 @@ import "../../../../Core/Ui/assets/runtime/i18n.js";
 import "../../../../Core/Ui/assets/runtime/lifecycle.js";
 import "../../../../Core/Ui/assets/runtime/navigation.js";
 import "./comments.js";
-import "../content/editor.js";
 import "./feed-loader.js";
 import "./form-context.js";
 import "./controller.js";

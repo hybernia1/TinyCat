@@ -130,7 +130,10 @@ $assertStyle = static function (string $route, string $style, bool $expected) us
     if (in_array($style, ClientAssets::sourceStyles($route), true) !== $expected) { throw new RuntimeException('Wrong CSS scope: ' . $route . ' -> ' . $style); }
     $checks++;
 };
-foreach (['/', '/admin/users'] as $route) { $assertStyle($route, 'App/Core/Identity/assets/styles/avatar-upload.css', true); }
+foreach (['/', '/admin/users'] as $route) {
+    $assertStyle($route, 'App/Core/Identity/assets/styles/avatar-upload.css', false);
+    if (!in_array('App/Core/Identity/assets/styles/avatar-upload.css', ClientAssets::sourceStyles($route, true), true)) { throw new RuntimeException('Missing deferred avatar styles.'); }
+}
 foreach (['/', '/login', '/search/all', '/privacy', '/notifications'] as $route) {
     foreach (['App/Core/Ui/assets/styles/tables.css', 'App/Core/Ui/assets/styles/tables-mobile.css'] as $style) { $assertStyle($route, $style, $route === '/privacy'); }
     foreach (['App/Core/Ui/assets/styles/pagination.css', 'App/Core/Ui/assets/styles/filter-chips.css'] as $style) { $assertStyle($route, $style, false); }

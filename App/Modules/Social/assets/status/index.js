@@ -5,7 +5,6 @@ import "../../../../Core/Ui/assets/runtime/modules.js";
 import "../../../../Core/Ui/assets/runtime/navigation.js";
 import "./form-actions.js";
 import "./comments.js";
-import "../content/editor.js";
 import "./feed-loader.js";
 import "./form-context.js";
 import "../content/media.js";

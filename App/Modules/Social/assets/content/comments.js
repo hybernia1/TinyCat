@@ -2,7 +2,6 @@ import "../../../../Core/Ui/assets/component-builders.js";
 import "../../../../Core/Ui/assets/runtime/dates.js";
 import "../../../../Core/Ui/assets/content-updates.js";
 import "../../../../Core/Ui/assets/runtime/dom.js";
-import "./editor.js";
 
 import "./runtime.js";
 import "../../../../Core/Ui/assets/dialogs.js";
@@ -69,7 +68,7 @@ import "../../../../Core/Ui/assets/dialogs.js";
 
     document.addEventListener("tinycat:form-reset", function (event) { resetStatusCommentForm(event.target); });
 
-    document.addEventListener("toggle", function (event) {
+    document.addEventListener("toggle", async function (event) {
       var details = event.target;
       var editorRoot;
       var input;
@@ -80,6 +79,11 @@ import "../../../../Core/Ui/assets/dialogs.js";
       }
 
       editorRoot = qs("[data-status-editor]", details.closest(".status-comment-main"));
+      if (editorRoot && !TinyCat.publishing.controllers.editor && TinyCat.deferred) {
+        try { await TinyCat.deferred.resource(new URL("/api/statuses", window.location.href)); }
+        catch (error) { TinyCat.toasts.show(error.message, "danger"); return; }
+        if (!details.open || details.isConnected === false) { return; }
+      }
       input = (editorRoot ? TinyCat.publishing.controllers.editor.getInput(editorRoot) : null) || qs(".status-reply-form-container .status-comment-input", details.closest(".status-comment-main"));
 
       if (!input) {

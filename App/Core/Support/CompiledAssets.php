@@ -34,14 +34,16 @@ final class CompiledAssets
         return require Paths::basePath('App/Core/Support/compiled/' . $name);
     }
 
-    /** @return array{scripts: list<string>, style: string}|null */
+    /** @return array{scripts: list<string>, style: string, deferred: array<string, mixed>}|null */
     public static function client(string $path, string $locale, bool $minifyJs = false, bool $minifyCss = false): ?array
     {
         foreach (self::manifest()['clients'] ?? [] as $prefix => $client) {
             if ($prefix !== '/' && $path !== $prefix && !str_starts_with($path, $prefix . '/')) { continue; }
             if (!isset($client['catalogs'][$locale])) { return null; }
             $js = $minifyJs ? 'min' : 'raw';
-            return ['scripts' => [$client['runtime'][$js], $client['components'], $client['catalogs'][$locale], $client['app'][$js]], 'style' => $client['styles'][$minifyCss ? 'min' : 'raw']];
+            $key = $js . '-' . ($minifyCss ? 'min' : 'raw');
+            $catalog = $client['catalog_variants'][$locale][$key] ?? $client['catalogs'][$locale];
+            return ['scripts' => [$client['runtime'][$js], $client['components'], $catalog, $client['app'][$js]], 'style' => $client['styles'][$minifyCss ? 'min' : 'raw'], 'deferred' => $client['deferred'][$locale][$key] ?? []];
         }
         return null;
     }

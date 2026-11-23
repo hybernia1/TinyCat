@@ -19,7 +19,8 @@ const inputConstraints = JSON.parse(execFileSync(php, [path.join(root,'tests/pre
 const healthBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/site-health','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
 const healthAction = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--health-action'], {encoding:'utf8'}));
 const healthSource = healthBundle.assets.map(asset => asset.source).join('\n');
-const healthCs = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/site-health','cs','--compiled-min'], {encoding:'utf8',maxBuffer:8e6})).assets.map(asset => asset.source).join('\n');
+const healthCsBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/site-health','cs','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
+const healthCs = healthCsBundle.assets.map(asset => asset.source).join('\n');
 const schedulerMarkup = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--scheduler-help'], {encoding:'utf8',maxBuffer:8e6}));
 const schedulerSource = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/cron','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6})).assets.map(asset => asset.source).join('\n');
 const publicBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/author/2','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
@@ -40,7 +41,9 @@ ${fixture}</script></body></html>`;
   fs.writeFileSync(file, fixtureHtml);
   const publicHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="csrf-token" content="test"><style>${css}</style></head><body><pre id="validation-test-results"></pre><script>${publicSource}\n${fixture}</script></body></html>`;
   const queueHtml = publicHtml.replace(publicSource, () => queueSource + '\nwindow.socialConstraints=' + JSON.stringify(socialConstraints) + ';');
-  server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{res.setHeader("Content-Type","text/html");res.end(fs.readFileSync(process.argv[1]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', file], {stdio:['ignore','pipe','pipe']});
+  const assetFile = path.join(temporary, 'deferred-assets.json');
+  fs.writeFileSync(assetFile, JSON.stringify(Object.assign({}, healthBundle.deferred_assets, healthCsBundle.deferred_assets, publicBundle.deferred_assets, queueBundle.deferred_assets)));
+  server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{const assets=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));const asset=assets[req.url];res.setHeader("Content-Type",asset!==undefined?(req.url.endsWith(".css")?"text/css":"application/javascript"):"text/html");res.end(asset!==undefined?asset:fs.readFileSync(process.argv[1]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', file, assetFile], {stdio:['ignore','pipe','pipe']});
   const port = await new Promise((resolve,reject) => { server.once('error',reject); server.stdout.once('data',data=>resolve(Number(String(data).trim()))); });
   let checks = 0;
   for (const mode of ['auth-switch','javascript-audit','code-copy','scheduler-help','field-types','help-info','help-info-cs','queue-edit','health-shell','social-forms','social-constraints','constraints','creation','settings','settings-module','moderation','report','server','native','success','scroll','summary','nested','proxy']) {
@@ -50,7 +53,7 @@ ${fixture}</script></body></html>`;
     const match = output.match(/<pre id="validation-test-results">([\s\S]*?)<\/pre>/);
     assert.ok(match && match[1], 'The native validation fixture must finish: '+mode);
     const result = JSON.parse(match[1].replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'));
-    assert.ok(result.ok, JSON.stringify(result)); checks += result.checks.length;
+    assert.ok(result.ok, mode + ': ' + JSON.stringify(result)); checks += result.checks.length;
   }
   console.log(`PASS native modal validation (${checks} checks)`);
 } finally {

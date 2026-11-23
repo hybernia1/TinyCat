@@ -141,6 +141,25 @@ Shared infrastructure lives in `App/Core/Ui/assets/runtime`, UI primitives in `A
 
 Owner manifests define stylesheet order; there is no central CSS import index. Selected styles are composed into one CSS asset. Pages receive four JavaScript assets: shared runtime, selected component definitions, locale catalog and application bundle. Public, administration and installer scopes include their own dependencies. Release compilation produces immutable content hashes and raw/minified variants; development uses the same graph through the asset cache.
 
+Owner features may declare `defer: {"resources": ["/api/users"], "selectors": ["[data-avatar-upload]"]}`.
+`resources` contains same-origin API path prefixes, matched on segment boundaries;
+`selectors` identifies inline controls requiring the feature. Deferred features keep
+their own entries, component roots, translations, styles and `uses` dependencies.
+They are excluded from the initial selection and combined into one additive editor
+payload per delivery scope and locale, plus an optional stylesheet. Sources and
+component definitions already delivered initially are excluded from that payload.
+Dependencies explicitly selected by an initial feature remain eager.
+
+The locale script declares the immutable editor URLs. The common resource-dialog
+loader waits for the authorized JSON response and then for matching editor assets,
+while retaining request cancellation and draft guards. Inline editors request the
+same payload during hydration. Concurrent requests share one load; failed network
+loads can retry. Late modules initialize once and hydrate the existing document,
+preserving current field values. JSON resources never carry asset URLs or UI definitions.
+The release compiler and development fallback use the same selection. Component
+catalog URLs remain independent of language. `ClientAssets`' complete selection is
+used by source reachability and translation checks, including deferred code.
+
 Run `php tools/preflight.php`. Frontend tests exercise source and compiled bundles, minified delivery, scoped ownership and parity against the reviewed CSS baseline. `tests/assets/graph.php` checks graph ordering and invalid imports.
 
 `php tools/assets/asset-report.php` reports release payload sizes for each scope, using the largest locale and the sum of separately gzipped minified JavaScript responses. Icons are reported separately by the browser and are outside the JS/CSS budgets. `--check` rejects unreachable JS/CSS sources, changed scopes and exceeded limits from `tests/fixtures/asset-budgets.json`. Limits allow approximately 15% growth rounded up to KiB; changing them requires reviewing the size report. This detects unreachable files, not unused branches or selectors, which require behavior-aware review.

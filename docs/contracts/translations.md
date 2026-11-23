@@ -112,6 +112,12 @@ use those PHP arrays; email templates load the compiled server-only section.
 OPcache can cache these arrays without runtime JSON parsing or source discovery.
 The signed package includes both compiled outputs and modular source files.
 
+Deferred editor features contribute an additive locale catalog to their on-demand
+payload. Its translations and component definitions are registered before the
+editor code executes. The initial locale script carries the payload descriptor;
+server catalogs and email channels remain complete. Translation declaration checks
+validate both the initial and complete feature selections, including deferred contributions.
+
 Development checkouts without compiled catalogs read module sources. Localization
 memoizes parsed and flattened catalogs within a request. Generated server catalogs
 are ignored by Git and excluded from source collection during package builds,

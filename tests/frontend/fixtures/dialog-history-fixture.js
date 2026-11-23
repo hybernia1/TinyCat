@@ -37,7 +37,25 @@
   T.lifecycle.start(); await pause();
   const base = location.pathname + location.search;
   const count = () => history.length;
-  if (mode === 'replacement') {
+  if (mode === 'deferred') {
+    await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    history.back(); await wait(() => !modal() && !location.hash, 'Close before restoring a dialog with deferred assets');
+    let releaseAssets;
+    T.deferred = {resource: () => new Promise(resolve => { releaseAssets = resolve; })};
+    history.forward(); await wait(() => !!releaseAssets, 'Restoring a dialog waits for deferred assets after its resource read');
+    history.back(); await wait(() => !location.hash, 'Back cancels a dialog while its asset load is pending');
+    releaseAssets(); await pause();
+    check(!modal() && !document.body.dataset.dialogError, 'Late assets cannot resurrect a cancelled dialog');
+    T.deferred = null;
+    const current = await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    releaseAssets = null;
+    T.deferred = {resource: () => new Promise(resolve => { releaseAssets = resolve; })};
+    const refresh = T.dialog.refresh(current).catch(error => { check(error.name === 'AbortError', 'A deferred refresh reports cancellation'); });
+    await wait(() => !!releaseAssets, 'Refresh retains its draft guard while awaiting assets');
+    const input = current.querySelector('input'); input.value = 'Draft entered during asset loading'; input.dispatchEvent(new Event('input', {bubbles:true}));
+    releaseAssets(); await refresh;
+    check(modal() === current && input.value === 'Draft entered during asset loading', 'Deferred refresh preserves edits made after the resource response');
+  } else if (mode === 'replacement') {
     const opener = document.getElementById('opener'); opener.focus();
     const first = await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
     check(first.querySelectorAll('[data-modal-resource-refresh]').length===1, 'Ordinary resource editors retain Refresh by default');

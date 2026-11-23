@@ -21,7 +21,9 @@ import "../../../../Core/Ui/assets/toasts.js";
   var statusFeedMaxCards = 120;
   var statusFeedKeepCards = 96;
   var statusFeedPruneMargin = 700;
-  var statusFeedLastScrollY = window.scrollY || 0;
+  // Reading scrollY during bundle evaluation can flush pending style/layout work.
+  // The first scroll checks conservatively, including a restored page position.
+  var statusFeedLastScrollY = Infinity;
   var statusFeedScrollQueued = false;
   var statusFeedRequests = new Map();
   var statusFeedAutoLoadQueued = new Map();

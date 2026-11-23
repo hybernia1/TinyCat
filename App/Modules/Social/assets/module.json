@@ -44,16 +44,7 @@
     "components": [
       "search/posts",
       "status/card",
-      "status/thread",
-      "status/composer-body",
-      "publishing/editor",
       "status/feed-more",
-      "status/dialog-form",
-      "status/report-fields",
-      "status/edit-fields",
-      "status/comment-edit-fields",
-      "status/thread-dialog",
-      "status/embed-content",
       "status/feed-empty"
     ],
     "entries": [
@@ -149,7 +140,6 @@
     ],
     "uses": [
       "publishing.presentation",
-      "publishing.editor",
       "publishing.discussion-base",
       "ui.form-constraints"
     ]
@@ -164,7 +154,9 @@
       "status/dialog-form"
     ],
     "entries": [
-      "App/Modules/Social/assets/status/index.js"
+      "App/Modules/Social/assets/status/index.js",
+      "App/Modules/Social/assets/content/editor-entry.js",
+      "App/Modules/Social/assets/status/dialog-controller.js"
     ],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-editing.css"
@@ -637,7 +629,6 @@
     "id": "publishing.discussion-base",
     "routes": [],
     "uses": [
-      "publishing.editor",
       "publishing.presentation"
     ],
     "entries": [
@@ -701,5 +692,43 @@
     "components": [],
     "styles": [],
     "translations": []
+  },
+  {
+    "routes": [
+      "/",
+      "/social",
+      "/status",
+      "/author",
+      "/tag",
+      "/search/all"
+    ],
+    "defer": {
+      "resources": [
+        "/api/statuses",
+        "/api/moderation/report-options"
+      ],
+      "selectors": [
+        "[data-status-editor]"
+      ]
+    },
+    "entries": [
+      "App/Modules/Social/assets/status/dialog-controller.js"
+    ],
+    "components": [
+      "status/thread",
+      "status/composer-body",
+      "publishing/editor",
+      "status/dialog-form",
+      "status/report-fields",
+      "status/edit-fields",
+      "status/comment-edit-fields",
+      "status/thread-dialog",
+      "status/embed-content"
+    ],
+    "styles": [],
+    "translations": [],
+    "uses": [
+      "publishing.editor"
+    ]
   }
 ]

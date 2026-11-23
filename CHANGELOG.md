@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.2 - 2026-11-23
+
+- Defer account/avatar and Social dialog editors, their component definitions, translations and styles until a resource dialog or inline editor needs them. Reduce initial asset delivery on home, tag, author and search pages.
+- Share deferred asset selection between source fallback and signed builds, retain independent JS/CSS minification settings and language-independent component URLs, and report initial and deferred payload sizes separately.
+- Coalesce concurrent editor loads and allow failed requests to retry. Preserve administration extensions, inline reply focus, drafts, resource refresh cancellation and Back/Forward history while assets load.
+- Avoid reading scroll position during feed bundle evaluation, removing a source of forced layout on initial page load.
+- No new database migration or configuration change. PHP 8.4 and completed 6.0.10 or newer remain required. Deploy matching signed Core or Social runtime and generated assets.
+
 ## 8.0.1 - 2026-11-22
 
 - Revoke stale sessions and reset tokens after credential changes; share account validation and preserve server authorization.

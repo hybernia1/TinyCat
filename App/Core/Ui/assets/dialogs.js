@@ -331,7 +331,10 @@ import "./form-requests.js";
     var changedDuringRead = false, replacementEvents = ["input", "change", "submit", "tinycat:tab"];
     function changed() { changedDuringRead = true; controller.abort(); }
     if (modal) replacementEvents.forEach(function (name) { modal.addEventListener(name, changed); });
-    try { data = await TinyCat.api.request(url, { method: "GET", signal: controller.signal }); }
+    try {
+      data = await TinyCat.api.request(url, { method: "GET", signal: controller.signal });
+      if (!controller.signal.aborted && TinyCat.deferred) { await TinyCat.deferred.resource(address); }
+    }
     finally {
       if (pending.get(target) === controller) { pending.delete(target); }
       if (modal) replacementEvents.forEach(function (name) { modal.removeEventListener(name, changed); });

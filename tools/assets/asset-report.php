@@ -31,12 +31,12 @@ foreach (ClientAssets::manifests() as $file) {
         AssetGraph::stylesheet($feature['styles'] ?? []);
     }
 }
-$report = ['scopes' => [], 'unreachable' => []];
+$report = ['scopes' => [], 'deferred' => [], 'unreachable' => []];
 foreach ($manifest['clients'] as $scope => $client) {
-    foreach (AssetGraph::order(ClientAssets::entries($scope)) as $source) { $reachable[$source] = true; }
-    foreach (ClientAssets::sourceStyles($scope) as $source) { $reachable[$source] = true; }
+    foreach (AssetGraph::order(ClientAssets::entries($scope, true)) as $source) { $reachable[$source] = true; }
+    foreach (ClientAssets::sourceStyles($scope, true) as $source) { $reachable[$source] = true; }
     $largest = ['raw_js' => 0, 'gzip_js' => 0];
-    foreach ($client['catalogs'] as $catalog) {
+    foreach ($client['catalogs'] as $locale => $catalog) {
         $scripts = [$client['runtime']['min'], $client['components'], $catalog, $client['app']['min']];
         $raw = 0;
         $gzip = 0;
@@ -50,6 +50,17 @@ foreach ($manifest['clients'] as $scope => $client) {
     }
     $css = $files[ltrim($client['styles']['min'], '/')];
     $report['scopes'][$scope] = [...$largest, 'raw_css' => strlen($css), 'gzip_css' => strlen((string) gzencode($css, 9)), 'scripts' => 4, 'stylesheets' => 1];
+    $deferred = ['raw_js' => 0, 'gzip_js' => 0, 'raw_css' => 0, 'gzip_css' => 0];
+    foreach ($client['deferred'] ?? [] as $variants) {
+        $payload = $variants['min-min'];
+        foreach (['script' => 'js', 'style' => 'css'] as $key => $type) {
+            if (!isset($payload[$key])) { continue; }
+            $source = $files[ltrim($payload[$key], '/')];
+            $deferred['raw_' . $type] = max($deferred['raw_' . $type], strlen($source));
+            $deferred['gzip_' . $type] = max($deferred['gzip_' . $type], strlen((string) gzencode($source, 9)));
+        }
+    }
+    $report['deferred'][$scope] = $deferred;
 }
 $root = dirname(__DIR__, 2);
 $assetRoots = array_unique([$root . '/assets', ...array_map(dirname(...), array_values(\TinyCat\Core\Modules\Resources::catalog()->resources('assets')))]);

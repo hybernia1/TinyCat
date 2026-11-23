@@ -64,7 +64,7 @@ if ($mode === '--catalog') {
 }
 if ($mode === '--styles') {
     $styles = [];
-    foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) { $styles = [...$styles, ...\TinyCat\Support\ClientAssets::sourceStyles($scope)]; }
+    foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) { $styles = [...$styles, ...\TinyCat\Support\ClientAssets::sourceStyles($scope, true)]; }
     echo json_encode(\TinyCat\Support\AssetGraph::stylesheet(array_values(array_unique($styles))), JSON_THROW_ON_ERROR);
     exit;
 }
@@ -76,6 +76,9 @@ if ($mode === '--module-settings') {
     exit;
 }
 if ($mode === '--validation') {
+    $roots[] = 'App/Modules/Social/assets/content/editor-entry.js';
+    $roots[] = 'App/Modules/Social/assets/status/dialog-controller.js';
+    $roots[] = 'App/Core/Identity/assets/avatar-entry.js';
     $roots[] = 'App/Core/Ui/assets/admin-resources.js';
     $roots[] = 'App/Modules/Social/assets/users/public.js';
     $roots[] = 'App/Core/Ui/assets/form-constraints.js';
@@ -83,7 +86,7 @@ if ($mode === '--validation') {
 }
 if ($mode === '--all') {
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {
-        foreach (\TinyCat\Support\ClientAssets::entries($scope) as $entry) { if ($entry !== 'App/Core/Ui/assets/bootstrap.js') { $roots[] = $entry; } }
+        foreach (\TinyCat\Support\ClientAssets::entries($scope, true) as $entry) { if ($entry !== 'App/Core/Ui/assets/bootstrap.js') { $roots[] = $entry; } }
     }
 }
 $ordered = $mode === '--bootstrap' ? ['App/Core/Ui/assets/bootstrap.js'] : \TinyCat\Support\AssetGraph::order(array_values(array_unique($roots)));

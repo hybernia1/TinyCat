@@ -6,10 +6,26 @@ const T = { dom: { find: (_, scope) => scope === section ? feed : null, all: () 
   api: { unwrap: response => response.data }, ui: { text: () => "", pagination: () => ({}) }, lifecycle: { register() {}, hydrate() {}, dispose() {} },
   content: { replaceChildren() {}, remove() {} }, components: { render: () => ({}) }, navigation: { compact: url => url.pathname + url.search }, i18n: {}, notifications: {} };
 const window = { TinyCat: T, location: new URL("https://tinycat.test/"), clearTimeout() {} };
+Object.defineProperty(window, "scrollY", { configurable: true, get() { throw new Error("Feed initialization must not force layout by reading scrollY"); } });
 const context = vm.createContext({ window, document: {}, URL, AbortController });
 for (const file of ["App/Core/Ui/assets/runtime/request-lifecycle.js", "App/Modules/Social/assets/status/controller.js", "App/Modules/Social/assets/status/feed-loader.js"]) vm.runInContext(fs.readFileSync(path.join(__dirname, "../../", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
 T.status.fragment = () => ({ content: {} });
 const C = T.status.controllers.feed;
+const scrollFrames = [];
+let onScroll, scrollY = 480;
+Object.defineProperty(window, "scrollY", { get: () => scrollY });
+window.requestAnimationFrame = callback => scrollFrames.push(callback);
+window.addEventListener = (name, callback) => { if (name === "scroll") onScroll = callback; };
+context.document.addEventListener = () => {};
+C.initStatusFeedLazy(context.document);
+onScroll();
+assert.equal(scrollFrames.length, 1, "The first scroll checks pruned feeds even at a restored nonzero position.");
+scrollFrames.shift()();
+scrollY = 500; onScroll();
+assert.equal(scrollFrames.length, 0, "Scrolling down does not schedule a pruned-feed refresh.");
+scrollY = 460; onScroll();
+assert.equal(scrollFrames.length, 1, "Scrolling back up still schedules a pruned-feed refresh.");
+scrollFrames.shift()();
 const old = C.statusFeedStartRequest(feed, "more");
 T.status.feed(section, { data: { items: [], feed: "following" }, meta: {} });
 assert.equal(old.lease.signal.aborted, true, "Resetting a retained feed cancels its old cursor request.");

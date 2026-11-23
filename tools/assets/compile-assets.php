@@ -67,7 +67,16 @@ return static function (): array {
                 'styles' => $variants('styles', \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles($path), $asset), 'css'),
             ];
             foreach ($catalogs as $locale => $catalog) {
-                $client['catalogs'][$locale] = $emit('i18n-' . $locale, 'window.TinyCat.i18n.register(' . \TinyCat\Support\ClientAssets::encode($locale) . ',' . \TinyCat\Support\ClientAssets::encode((object) \TinyCat\Support\ClientAssets::catalog($path, $locale, $catalog['app'])) . ');');
+                $deferred = \TinyCat\Support\ClientAssets::deferred($path, $locale, $variants, $catalog['app'], $asset);
+                foreach (['raw', 'min'] as $js) {
+                    foreach (['raw', 'min'] as $css) {
+                        $key = $js . '-' . $css;
+                        $selected = $deferred === [] ? [] : array_replace($deferred, ['script' => $deferred['script'][$js], 'style' => $deferred['style'][$css] ?? null]);
+                        $client['deferred'][$locale][$key] = $selected;
+                        $client['catalog_variants'][$locale][$key] = $emit('i18n-' . $locale, \TinyCat\Support\ClientAssets::catalogScript($path, $locale, $catalog['app'], $selected));
+                    }
+                }
+                $client['catalogs'][$locale] = $client['catalog_variants'][$locale]['min-min'];
             }
             $manifest['clients'][$path] = $client;
         }

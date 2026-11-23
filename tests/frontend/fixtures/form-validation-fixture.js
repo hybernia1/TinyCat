@@ -248,6 +248,9 @@
     return;
   }
   if (mode === 'social-forms') {
+    check(!T.publishing.controllers.editor && !T.accounts.avatarUpload, 'The public bundle initially excludes editor implementations');
+    await T.deferred.resource(new URL('/api/moderation/report-options', location.href));
+    check(T.publishing.controllers.editor && T.accounts.avatarUpload, 'The native browser loads editor implementations on demand');
     const follow=T.dom.element('form',{method:'post',action:'/api/profiles/2/followers/me','data-follow-form':'','data-author-id':'2'});
     follow.append(T.ui.hidden('action','follow'),T.ui.button('public.follow',{type:'submit'})); document.body.append(follow);
     const react=T.dom.element('form',{method:'post',action:'/api/statuses/7/likes/me','data-status-form':'','data-status-id':'7'});
@@ -261,7 +264,7 @@
       const data=isFollow?{author_id:2,following:method==='PUT',followers_count:method==='PUT'?1:0}:{action:'react',status:{id:7,liked:method==='PUT',likes_count:method==='PUT'?1:0}};
       return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data,meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
     };
-    T.lifecycle.start(); follow.querySelector('button').click(); await wait(()=>!!release,'Social forms reach the shared transport');
+    T.lifecycle.start(); T.lifecycle.hydrate(document); follow.querySelector('button').click(); await wait(()=>!!release,'Social forms reach the shared transport');
     follow.requestSubmit(); await pause(); check(calls.length===1,'A pending follow cannot send a second mutation'); release();
     await wait(()=>follow.elements.namedItem('action').value==='unfollow'&&!follow.dataset.apiBusy,'Following updates the domain state and releases the shared lock');
     follow.querySelector('button').click(); await wait(()=>calls.length===2&&!follow.dataset.apiBusy,'Unfollowing uses the current state after the first result');

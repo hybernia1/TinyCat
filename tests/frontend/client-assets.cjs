@@ -27,7 +27,7 @@ function load(route, locale = "en", compiled = false) {
   window.TinyCat.init();
   check(window.TinyCat.modules.navigationUrl({ dataset: {}, getAttribute() { return null; }, closest() { return null; } }) === "", "Non-status navigation does not require the status module: " + route);
   check(window.TinyCat.i18n.locale() === locale, route + " boots the requested locale with external assets in delivery order");
-  return { ...bundle, T: window.TinyCat };
+  return { ...bundle, T: window.TinyCat, context, document };
 }
 const publicPage = load("/");
 for (const mode of [false, true, "min"]) {
@@ -55,7 +55,7 @@ for (const mode of [false, true, "min"]) {
   check(handled, "The actual public module chain delivers follow results to Social");
 }
 check(publicPage.T.accounts !== publicPage.T.socialUsers && typeof publicPage.T.accounts.follow === "undefined" && typeof publicPage.T.socialUsers.profiles === "function", "Social relationships never mutate the core account service");
-check(typeof publicPage.T.accounts.list === "undefined" && publicPage.T.accounts.avatarUpload, "Public account controls keep avatar editing without the administrative list adapter");
+check(typeof publicPage.T.accounts.list === "undefined" && !publicPage.T.accounts.avatarUpload && publicPage.T.deferredAssets.script, "Public account controls defer avatar editing without the administrative list adapter");
 for (const mode of [false, true, "min"]) {
   for (const route of ["/login", "/account", "/access/notifications"]) {
     const access = load(route, "en", mode);
@@ -129,3 +129,37 @@ check(i18n.t("missing.translation") === "missing.translation", "Unknown translat
 i18n.register("test", { "test.label": "Test" });
 check(!i18n.has("common.close") && i18n.t("test.label") === "Test", "Changing locales clears stale messages");
 console.log("PASS scoped external client assets and translation runtime (" + checks + " checks)");
+
+(async function () {
+  for (const mode of [false, true, "min"]) {
+    for (const route of ["/", "/tag/games", "/author/8"]) {
+      const page = load(route, "cs", mode), T = page.T;
+      check(!T.publishing.controllers.editor && !T.accounts.avatarUpload, "Reading a public page excludes editor implementations: " + route);
+      if (mode) check(T.deferredAssets.script.includes("-min.") === (mode === "min") && T.deferredAssets.style.includes("-min.") === (mode === "min"), "Deferred compiled assets respect JS and CSS minification settings");
+      let requests = 0, failOnce = route.startsWith("/author");
+      page.document.createElement = tag => ({ tagName: tag, remove() {} });
+      page.document.head = { appendChild(node) {
+        requests++;
+        Promise.resolve().then(() => {
+          if (node.src && failOnce) { failOnce = false; node.onerror(); return; }
+          if (node.src) vm.runInContext(page.deferred_assets[new URL(node.src).pathname], page.context);
+          node.onload();
+        });
+      } };
+      await T.deferred.resource(new URL("https://tinycat.test/api/users-other/8/avatar"));
+      check(requests === 0, "Resource prefixes match complete path segments");
+      const resource = new URL("https://tinycat.test" + (route.startsWith("/tag") ? "/api/moderation/report-options" : route.startsWith("/author") ? "/api/users/8/avatar" : "/api/statuses/8"));
+      if (failOnce) {
+        await assert.rejects(T.deferred.resource(resource));
+        check(!T.accounts.avatarUpload, "A failed script load does not initialize editor modules");
+      }
+      await Promise.all([T.deferred.resource(resource), T.deferred.resource(resource)]);
+      check(T.publishing.controllers.editor && T.accounts.avatarUpload, "Editor implementations become available on demand: " + route);
+      check(T.components.render && T.i18n.t("account.avatar_edit") !== "account.avatar_edit", "Deferred editors retain their locale and component runtime");
+      const previous = requests;
+      await T.deferred.resource(new URL("https://tinycat.test/api/users/8/avatar"));
+      check(requests === previous && requests === (route.startsWith("/author") ? 3 : 2), "Concurrent editor opens share assets and failed scripts can retry without reloading CSS");
+    }
+  }
+  console.log("PASS deferred editor loading in source, compiled and minified public bundles");
+})().catch(error => { console.error(error); process.exitCode = 1; });

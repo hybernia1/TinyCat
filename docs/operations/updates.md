@@ -179,6 +179,24 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 8.0.2
+
+Requires PHP 8.4 and a completed 6.0.10 or newer installation. Publish matching
+signed Core and Social update/install packages. This release adds no database
+migration or configuration change; existing migration history, accounts, uploads
+and module activation are preserved.
+
+Account/avatar and Social dialog editors load additively with their components,
+locale messages and styles. Inline editors request the same payload when present.
+Source fallback and compiled releases share selection, minification and dependency
+rules. Deploy the matching runtime and generated inventory together. Existing
+resource authorization, drafts, refresh cancellation and dialog history remain in
+the common loader; no resource API embeds presentation or asset URLs.
+
+Feed initialization no longer reads scroll position while the application bundle
+is being evaluated. Public home, tag, author and search pages receive smaller
+initial bundles. Core administration and account extensions remain available.
+
 ## Upgrading to 8.0.1
 
 Requires PHP 8.4 and a completed 6.0.10 or newer installation. Publish matching

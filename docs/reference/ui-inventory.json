@@ -96,8 +96,13 @@
       ],
       "inputs": [
         "create",
+        "options.bio_max_length",
+        "options.email_max_bytes",
         "options.password_max_length",
+        "options.password_min_bytes",
         "options.roles",
+        "options.username_max_length",
+        "options.username_min_length",
         "options.username_pattern",
         "protected",
         "user",
@@ -169,7 +174,11 @@
         "old.platform_terms",
         "old.remember",
         "old.username",
+        "options.email_max_bytes",
         "options.password_max_length",
+        "options.password_min_bytes",
+        "options.username_max_length",
+        "options.username_min_length",
         "options.username_pattern",
         "register"
       ]
@@ -257,6 +266,7 @@
         "captcha",
         "login_url",
         "password_max",
+        "password_min",
         "privacy_url",
         "reset",
         "token"
@@ -291,6 +301,7 @@
       "inputs": [
         "dialog_id",
         "languages",
+        "options.bio_max_length",
         "original_locale",
         "user.bio",
         "user.locale",
@@ -307,6 +318,7 @@
       "inputs": [
         "dialog_id",
         "has_password",
+        "options.email_max_bytes",
         "user.bio",
         "user.email",
         "user.email_notifications",
@@ -323,7 +335,8 @@
       ],
       "inputs": [
         "dialog_id",
-        "options.password_max_length"
+        "options.password_max_length",
+        "options.password_min_bytes"
       ]
     },
     {
@@ -501,6 +514,7 @@
       ],
       "inputs": [
         "password_max",
+        "password_min",
         "username_hint",
         "username_pattern"
       ]
@@ -542,6 +556,7 @@
         "locale",
         "operation",
         "password_max",
+        "password_min",
         "required_tables",
         "steps",
         "success",
@@ -13067,8 +13082,12 @@
           "line": 102
         },
         {
+          "name": "dispose",
+          "line": 107
+        },
+        {
           "name": "init",
-          "line": 108
+          "line": 116
         }
       ]
     },
@@ -14161,7 +14180,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14179,7 +14199,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14197,7 +14218,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14209,7 +14231,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14221,7 +14244,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14233,7 +14257,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14245,7 +14270,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14257,7 +14283,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14269,7 +14296,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14281,7 +14309,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14293,7 +14322,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14305,7 +14335,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14323,7 +14354,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14341,7 +14373,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14359,7 +14392,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14383,7 +14417,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14395,7 +14430,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14407,7 +14443,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14419,7 +14456,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       }
     ],
@@ -14431,7 +14469,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14449,7 +14488,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14467,7 +14507,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14485,7 +14526,8 @@
           "/social",
           "/status",
           "/author",
-          "/tag"
+          "/tag",
+          "/search/all"
         ]
       },
       {
@@ -14618,6 +14660,25 @@
       "standalone": false
     },
     {
+      "source": "App/Core/Identity/assets/avatar-entry.js",
+      "imports": [
+        "App/Core/Identity/assets/editor-controller.js",
+        "App/Core/Identity/assets/avatar-editor.js",
+        "App/Core/Ui/assets/runtime/lifecycle.js"
+      ],
+      "entries": [
+        {
+          "manifest": "App/Core/Identity/assets/module.json",
+          "routes": [
+            "public",
+            "admin",
+            "/account"
+          ]
+        }
+      ],
+      "standalone": false
+    },
+    {
       "source": "App/Core/Identity/assets/controller.js",
       "imports": [
         "App/Core/Identity/assets/authentication.js",
@@ -14632,6 +14693,26 @@
         "App/Core/Ui/assets/dialogs.js",
         "App/Core/Ui/assets/component-builders.js",
         "App/Core/Ui/assets/toasts.js"
+      ],
+      "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "App/Core/Identity/assets/editor-controller.js",
+      "imports": [
+        "App/Core/Identity/assets/authentication.js",
+        "App/Core/Ui/assets/content-updates.js",
+        "App/Core/Ui/assets/runtime/dates.js",
+        "App/Core/Ui/assets/runtime/component-renderer.js",
+        "App/Core/Ui/assets/runtime/dom.js",
+        "App/Core/Ui/assets/runtime/api-client.js",
+        "App/Core/Ui/assets/runtime/i18n.js",
+        "App/Core/Ui/assets/runtime/lifecycle.js",
+        "App/Core/Ui/assets/avatar-rendering.js",
+        "App/Core/Ui/assets/dialogs.js",
+        "App/Core/Ui/assets/component-builders.js",
+        "App/Core/Ui/assets/toasts.js",
+        "App/Core/Identity/assets/controller.js"
       ],
       "entries": [],
       "standalone": false
@@ -14652,7 +14733,6 @@
       "imports": [
         "App/Core/Identity/assets/user-menu.js",
         "App/Core/Ui/assets/runtime/modules.js",
-        "App/Core/Identity/assets/avatar-editor.js",
         "App/Core/Identity/assets/controller.js",
         "App/Core/Identity/assets/email-availability.js"
       ],
@@ -15083,7 +15163,7 @@
       "imports": [
         "App/Core/Ui/assets/runtime/dom.js",
         "App/Core/Ui/assets/runtime/lifecycle.js",
-        "App/Core/Ui/assets/form-state.js"
+        "App/Core/Ui/assets/form-requests.js"
       ],
       "entries": [
         {
@@ -15248,6 +15328,15 @@
           ]
         }
       ],
+      "standalone": false
+    },
+    {
+      "source": "App/Core/Ui/assets/runtime/deferred.js",
+      "imports": [
+        "App/Core/Ui/assets/runtime/lifecycle.js",
+        "App/Core/Ui/assets/runtime/modules.js"
+      ],
+      "entries": [],
       "standalone": false
     },
     {
@@ -15453,7 +15542,6 @@
         "App/Core/Ui/assets/runtime/dates.js",
         "App/Core/Ui/assets/content-updates.js",
         "App/Core/Ui/assets/runtime/dom.js",
-        "App/Modules/Social/assets/content/editor.js",
         "App/Modules/Social/assets/content/runtime.js",
         "App/Core/Ui/assets/dialogs.js"
       ],
@@ -15492,6 +15580,12 @@
       "entries": [
         {
           "manifest": "App/Modules/Social/assets/module.json",
+          "routes": [
+            "/admin/bots"
+          ]
+        },
+        {
+          "manifest": "App/Modules/Social/assets/module.json",
           "routes": []
         }
       ],
@@ -15513,8 +15607,7 @@
     {
       "source": "App/Modules/Social/assets/content/index.js",
       "imports": [
-        "App/Modules/Social/assets/content/presentation.js",
-        "App/Modules/Social/assets/content/editor-entry.js"
+        "App/Modules/Social/assets/content/presentation.js"
       ],
       "entries": [],
       "standalone": false
@@ -15706,7 +15799,8 @@
             "/social",
             "/status",
             "/author",
-            "/tag"
+            "/tag",
+            "/search/all"
           ]
         }
       ],
@@ -15733,6 +15827,39 @@
         "App/Core/Ui/assets/component-builders.js"
       ],
       "entries": [],
+      "standalone": false
+    },
+    {
+      "source": "App/Modules/Social/assets/status/dialog-controller.js",
+      "imports": [
+        "App/Modules/Social/assets/content/comments.js",
+        "App/Modules/Social/assets/content/runtime.js",
+        "App/Core/Ui/assets/content-updates.js",
+        "App/Core/Ui/assets/runtime/dates.js",
+        "App/Core/Ui/assets/runtime/component-renderer.js",
+        "App/Core/Ui/assets/runtime/dom.js",
+        "App/Core/Ui/assets/component-builders.js",
+        "App/Modules/Social/assets/status/controller.js"
+      ],
+      "entries": [
+        {
+          "manifest": "App/Modules/Social/assets/module.json",
+          "routes": [
+            "/admin/bots"
+          ]
+        },
+        {
+          "manifest": "App/Modules/Social/assets/module.json",
+          "routes": [
+            "/",
+            "/social",
+            "/status",
+            "/author",
+            "/tag",
+            "/search/all"
+          ]
+        }
+      ],
       "standalone": false
     },
     {
@@ -15763,7 +15890,6 @@
         "App/Core/Ui/assets/runtime/lifecycle.js",
         "App/Core/Ui/assets/runtime/navigation.js",
         "App/Modules/Social/assets/status/comments.js",
-        "App/Modules/Social/assets/content/editor.js",
         "App/Modules/Social/assets/status/feed-loader.js",
         "App/Modules/Social/assets/status/form-context.js",
         "App/Modules/Social/assets/status/controller.js",
@@ -15795,7 +15921,6 @@
         "App/Core/Ui/assets/runtime/navigation.js",
         "App/Modules/Social/assets/status/form-actions.js",
         "App/Modules/Social/assets/status/comments.js",
-        "App/Modules/Social/assets/content/editor.js",
         "App/Modules/Social/assets/status/feed-loader.js",
         "App/Modules/Social/assets/status/form-context.js",
         "App/Modules/Social/assets/content/media.js",
@@ -15810,7 +15935,8 @@
             "/social",
             "/status",
             "/author",
-            "/tag"
+            "/tag",
+            "/search/all"
           ]
         },
         {
