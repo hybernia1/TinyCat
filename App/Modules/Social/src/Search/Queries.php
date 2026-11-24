@@ -207,7 +207,7 @@ final class Queries
             ? "CONCAT_WS(' ', l.normalized_url, l.title, l.description)"
             : "COALESCE(l.normalized_url, '') || ' ' || COALESCE(l.title, '') || ' ' || COALESCE(l.description, '')";
         [$link, $linkParams] = self::textPredicate($query, 'l.normalized_url, l.title, l.description', '(' . $linkText . ')');
-        [$mediaSql, $mediaParams] = \TinyCat\Social\Posts\Feed::archive_predicate($media);
+        [$mediaSql, $mediaParams] = \TinyCat\Social\Posts\Archive::predicate($media);
         if ($mediaSql !== '') {
             $body = '(' . $body . ') AND ' . $mediaSql;
             $link = '(' . $link . ') AND ' . $mediaSql;
@@ -215,7 +215,7 @@ final class Queries
             $linkParams = [...$linkParams, ...$mediaParams];
         }
         $now = \TinyCat\Support\Dates::dateDb();
-        [$cursorSql, $cursorParams] = \TinyCat\Social\Posts\Feed::public_status_cursor_condition($cursorAt, $cursorId);
+        [$cursorSql, $cursorParams] = \TinyCat\Social\Posts\Archive::cursor($cursorAt, $cursorId);
         $cursorSql = $cursorSql === '' ? '' : ' AND ' . $cursorSql;
         // A source ORDER/LIMIT can make MySQL choose a full chronological scan
         // for rare literal LIKE terms. Keep their selective plan; still limit
@@ -262,7 +262,7 @@ final class Queries
         );
         $selection->whereIn('ct.term_id', $ids)->where('u.status = ?', 'active');
         $counts = [];
-        foreach (\TinyCat\Social\Posts\Feed::public_status_apply_visibility($selection)->group('ct.term_id')->all() as $row) {
+        foreach (\TinyCat\Social\Posts\Archive::visible($selection)->group('ct.term_id')->all() as $row) {
             $counts[(int) $row['term_id']] = (int) $row['posts_count'];
         }
         foreach ($rows as &$row) { $row['posts_count'] = $counts[(int) $row['id']] ?? 0; }
@@ -313,7 +313,7 @@ final class Queries
     {
         if (\TinyCat\Http\Validator::validate($cursor, ['cursor_at' => 'string|max:19', 'cursor_id' => 'integer|min:1', 'cursor_rank' => 'integer|min:0|max:2', 'cursor_name' => 'string|max:120']) !== []) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 422, 'validation_error'); }
         $query = self::public_search_normalize_query($query);
-        $media = \TinyCat\Social\Posts\Feed::archive_type($media);
+        $media = \TinyCat\Social\Posts\Archive::type($media);
         $type = in_array($type, ['content', 'users', 'tags'], true) ? $type : 'content';
         $limit = $limit > 0 ? min(50, $limit) : \TinyCat\Social\Posts\Feed::public_status_page_limit();
         $minimum = $type === 'content' ? 3 : 2;

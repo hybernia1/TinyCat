@@ -12,6 +12,7 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     $checks++;
     if (!$condition) { throw new RuntimeException($message); }
 };
+$assert(\TinyCat\Core\Links\Providers::titleIsPlaceholder('  YOUTUBE VIDEO  ') && !\TinyCat\Core\Links\Providers::titleIsPlaceholder('A recorded concert'), 'Provider fallback titles remain distinguishable from fetched publication titles.');
 foreach ([
     'https://example.com/search?tag=a&tag=b' => 'https://example.com/search?tag=a&tag=b',
     'https://example.com/?a.b=1&a+b=2&a_b=3' => 'https://example.com?a.b=1&a+b=2&a_b=3',

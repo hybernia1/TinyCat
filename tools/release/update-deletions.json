@@ -2362,5 +2362,26 @@
   ],
   "8.0.0": [
     "App/Core/Support/RichText.php"
+  ],
+  "8.0.3": [
+    "App/Core/Identity/AuthResource.php",
+    "App/Core/Identity/EmailAvailability.php",
+    "App/Core/Identity/Initialization.php",
+    "App/Core/Identity/Sorting.php",
+    "App/Core/Settings/Actions.php",
+    "App/Core/Tasks/RunResource.php",
+    "App/Core/Tasks/Sorting.php",
+    "App/Core/Ui/templates/parts/flashes.php",
+    "App/Modules/Social/src/Bots/AccountLifecycle.php",
+    "App/Modules/Social/src/Bots/FeedPreparation.php",
+    "App/Modules/Social/src/Bots/Registration.php",
+    "App/Modules/Social/src/Moderation/Actions.php",
+    "App/Modules/Social/src/Moderation/Registration.php",
+    "App/Modules/Social/src/Posts/FileReferences.php",
+    "App/Modules/Social/src/Posts/Outbound.php",
+    "App/Modules/Social/src/Posts/Registration.php",
+    "App/Modules/Social/src/Profiles/Registration.php",
+    "App/Modules/Social/src/Search/Registration.php",
+    "App/Modules/Social/src/Site/Registration.php"
   ]
 }

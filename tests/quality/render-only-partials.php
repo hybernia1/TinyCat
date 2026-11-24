@@ -39,6 +39,8 @@ $forbiddenFunctions = array_fill_keys([
     'status_user_liked',
     'status_video_embed_allowed',
     'status_video_embed_url',
+    'embedAllowed',
+    'embedUrl',
     'status_video_thumbnail_sources',
 ], true);
 $forbiddenStaticOwners = array_fill_keys([

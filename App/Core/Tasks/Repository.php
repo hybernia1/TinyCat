@@ -7,6 +7,12 @@ use TinyCat\Database\Query;
 
 final class Repository
 {
+    /** @return array{string, string, string, array<string, string>, string, string} */
+    public static function sorting(): array
+    {
+        return \TinyCat\Core\Ui\Admin\Definitions::sorting('core.scheduler-runs', ['task' => 'task', 'started_at' => 'started_at', 'status' => 'status', 'duration_ms' => 'duration_ms'], 'id DESC', 'id');
+    }
+
     /** @param array<string, mixed> $filters
      * @param list<string> $taskAliases
      * @return array{runs: array<mixed>, pagination: array<string, int>}
@@ -28,7 +34,7 @@ final class Repository
         $last = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($last, $page));
         return [
-            'runs' => $selection->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Core\Tasks\Sorting::runs(), $filters))->limit($perPage, ($page - 1) * $perPage)->all(),
+            'runs' => $selection->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Core\Tasks\Repository::sorting(), $filters))->limit($perPage, ($page - 1) * $perPage)->all(),
             'pagination' => ['page' => $page, 'last_page' => $last, 'total' => $total, 'per_page' => $perPage, 'from' => $total > 0 ? ($page - 1) * $perPage + 1 : 0, 'to' => min($total, $page * $perPage)],
         ];
     }

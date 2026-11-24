@@ -30,7 +30,7 @@ $assert(!method_exists(\TinyCat\Core\Discovery\Sitemap::class, 'registerExtensio
 
 $assert(\TinyCat\Social\Bots\Importer::feedSourceHash('https://EXAMPLE.com:443/feed/') === \TinyCat\Social\Bots\Importer::feedSourceHash('https://example.com/feed'), 'Equivalent feed URLs must share a duplicate key.');
 $assert(\TinyCat\Social\Bots\Importer::feedSourceHash('file:///private/feed.xml') === '', 'Feed sources require HTTP or HTTPS.');
-$tags = \TinyCat\Social\Bots\FeedPreparation::renderPost(['post_template' => '#{categories}'], ['categories' => array_map(static fn (int $n): string => 'Category ' . $n, range(1, 12))]);
+$tags = \TinyCat\Social\Bots\FeedPublication::renderPost(['post_template' => '#{categories}'], ['categories' => array_map(static fn (int $n): string => 'Category ' . $n, range(1, 12))]);
 $assert(substr_count($tags, '#category-') === 12, 'All feed category tags must survive.');
 $assert(\TinyCat\Core\Feeds\FeedParser::parse( '<invalid') === [], 'Invalid XML must not produce posts.');
 
@@ -80,11 +80,11 @@ foreach (['en', 'cs'] as $code) {
     $assert(\TinyCat\Support\Localization::t('cron.tasks.feeds', [], $code) !== 'cron.tasks.feeds', 'Feed scheduler translations must ship in core: ' . $code);
 }
 
-$assert(!str_contains(\TinyCat\Social\Bots\Importer::defaultSourceTemplate(), '{{image}}'), 'Image uploads remain opt-in.');
-$assert(\TinyCat\Social\Bots\FeedPreparation::prepareImage(['post_template' => '{{image}}'], ['url' => 'https://youtu.be/abc123', 'image_urls' => ['https://example.com/thumbnail.jpg']]) === null, 'YouTube feeds do not download thumbnails as post attachments, even with an image placeholder.');
+$assert(!str_contains(\TinyCat\Social\Bots\FeedPublication::defaultSourceTemplate(), '{{image}}'), 'Image uploads remain opt-in.');
+$assert(\TinyCat\Social\Bots\FeedPublication::prepareImage(['post_template' => '{{image}}'], ['url' => 'https://youtu.be/abc123', 'image_urls' => ['https://example.com/thumbnail.jpg']]) === null, 'YouTube feeds do not download thumbnails as post attachments, even with an image placeholder.');
 $imageOnly = \TinyCat\Core\Feeds\FeedParser::parse('<rss><channel><item><enclosure type="image/png" url="https://93.184.216.34/photo.png"/></item></channel></rss>');
 $assert(count($imageOnly) === 1 && $imageOnly[0]['guid'] === $imageOnly[0]['image_url'], 'Image-only RSS entries receive stable image identity without a title or article URL.');
-$assert(\TinyCat\Social\Bots\FeedPreparation::renderPost(['post_template' => "{{title}}\n{{image}}"], ['title' => 'Photo']) === 'Photo', 'Image placeholders do not appear in post text.');
+$assert(\TinyCat\Social\Bots\FeedPublication::renderPost(['post_template' => "{{title}}\n{{image}}"], ['title' => 'Photo']) === 'Photo', 'Image placeholders do not appear in post text.');
 
 require __DIR__ . '/formats.php';
 echo "PASS built-in Bots ({$checks} checks)\n";

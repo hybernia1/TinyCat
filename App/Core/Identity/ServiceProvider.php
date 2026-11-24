@@ -5,7 +5,7 @@ use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Readiness;
 use TinyCat\Core\Identity\Participants;
 use TinyCat\Core\Identity\Integration;
-use TinyCat\Core\Identity\Initialization;
+use TinyCat\Core\Identity\Setup;
 
 final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle, \TinyCat\Core\Runtime\InitializesModule, \TinyCat\Core\Modules\ProvidesManagedSchema, \TinyCat\Core\Modules\ProvidesSetup
 {
@@ -16,7 +16,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     public static function completeSetup(array $input): void
     {
         $data = Setup::input($input + ['password_confirm' => $input['password'] ?? '']);
-        Initialization::administrator($data['username'], $data['password'], $data['locale']);
+        Setup::administrator($data['username'], $data['password'], $data['locale']);
     }
     public static function schema(): \TinyCat\Core\Modules\ModuleSchema { return Schema::schema(); }
 

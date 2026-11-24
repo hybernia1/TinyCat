@@ -45,14 +45,6 @@ final class Repository
     /**
      * @return array<mixed>
      */
-    public static function author_activity_stats(int $authorId): array
-    {
-        return \TinyCat\Social\Posts\AuthorStatistics::author_activity_stats($authorId);
-    }
-
-    /**
-     * @return array<mixed>
-     */
     public static function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true): array
     {
         $limit = max(1, min(20, $limit));

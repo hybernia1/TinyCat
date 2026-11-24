@@ -13224,9 +13224,7 @@
       ]
     }
   ],
-  "php_partials": [
-    "App/Core/Ui/templates/parts/flashes.php"
-  ],
+  "php_partials": [],
   "php_templates": [
     "App/Core/Ui/Admin/templates/shell.php",
     "App/Core/Ui/templates/access-shell.php",
@@ -13234,7 +13232,6 @@
     "App/Core/Ui/templates/error.php",
     "App/Core/Ui/templates/errorFallback.php",
     "App/Core/Ui/templates/head.php",
-    "App/Core/Ui/templates/parts/flashes.php",
     "App/Core/Ui/templates/public-footer.php",
     "App/Core/Ui/templates/public-shell.php",
     "App/Modules/Social/templates/status/embed.php"

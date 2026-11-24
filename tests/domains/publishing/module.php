@@ -122,8 +122,14 @@ $compile = require $workspace . '/tools/assets/compile-assets.php'; $built = $co
 $assert(isset($built['assets/build/manifest.json']) && count(TinyCat\Support\TranslationSources::packages()) === 12, 'Selected services and Accounts build all locale assets without product sources');
 $feed = TinyCat\Core\Feeds\FeedParser::parse('<rss version="2.0"><channel><item><title>Standalone</title><link>https://example.com/post</link><description>Feed body</description><category>News</category></item></channel></rss>');
 $assert(count($feed) === 1 && $feed[0]['title'] === 'Standalone', 'Publishing parses feeds without Bots sources');
-$rendered = TinyCat\Social\Bots\FeedPreparation::renderPost(['name' => 'Feed'], $feed[0]);
+$rendered = TinyCat\Social\Bots\FeedPublication::renderPost(['name' => 'Feed'], $feed[0]);
 $assert(str_contains($rendered, 'Standalone') && str_contains($rendered, '#news'), 'Shared import prepares feed text and category tags');
-$assert(TinyCat\Social\Bots\FeedPreparation::prepareImage([], $feed[0]) === null, 'Text-only imports do not load bot or social media adapters');
+$assert(TinyCat\Social\Bots\FeedPublication::prepareImage([], $feed[0]) === null, 'Text-only imports do not load bot or social media adapters');
+$target = new TinyCat\Social\Bots\FeedPublication();
+$beforePreparation = (int) Connection::value('SELECT COUNT(*) FROM social_posts');
+$entry = $target->prepare(['post_template' => '{{title}}'], ['title' => 'Standalone preparation']);
+$attachments = $target->attachments([], [], $entry);
+$assert($entry->body === 'Standalone preparation' && $attachments === ['links' => [], 'image' => null], 'Text and attachment preparation are independently callable without bot tables');
+$assert((int) Connection::value('SELECT COUNT(*) FROM social_posts') === $beforePreparation, 'Preparation does not publish; absent bot tables also prevent scheduling or GUID side effects');
 foreach (get_declared_classes() as $class) { $assert(!preg_match('/^TinyCat\\\\(?:Status|Users|Bots|Notifications|Moderation|Settings|Site|Search)\\\\/', $class), 'No product class loaded: ' . $class); }
 echo "PASS Social-owned content schema, preparation, reads, writes, rollback and build ({$checks} checks)\n";

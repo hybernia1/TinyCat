@@ -7,14 +7,6 @@ final class Posts
 {
     public const REPORT_NOTE_MAX_LENGTH = 1000;
 
-    /**
-     * @return array<mixed>
-     */
-    public static function status_session_interval_rule(string $action): array
-    {
-        return \TinyCat\Social\Moderation\ActionPolicy::cooldown($action);
-    }
-
     public static function status_anchor(int $id): string
     {
         return $id > 0 ? 'status-' . $id : '';

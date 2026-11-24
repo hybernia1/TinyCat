@@ -13,7 +13,7 @@ final class Actions
 {
     public static function status_json_require_session_interval(string $action): void
     {
-        [$key, $intervalMs] = \TinyCat\Social\Posts\Posts::status_session_interval_rule($action);
+        [$key, $intervalMs] = \TinyCat\Social\Moderation\ActionPolicy::cooldown($action);
         $retryAfter = \TinyCat\Core\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs, false);
 
         if ($retryAfter > 0) {

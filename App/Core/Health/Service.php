@@ -58,7 +58,7 @@ final class Service
         $history = [];
         $report = null;
         foreach ($records as $record) {
-            $run = \TinyCat\Core\Tasks\RunResource::make($record);
+            $run = \TinyCat\Core\Tasks\Resource::run($record);
             $health = $run['summary']['health'] ?? null;
             if ($report === null && is_array($health)) { $report = $health; }
             $http = null;

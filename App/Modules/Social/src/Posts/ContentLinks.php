@@ -7,7 +7,6 @@ use TinyCat\Core\Text\LinkParser;
 
 use TinyCat\Social\Posts\Links;
 
-use TinyCat\Core\Settings\Store;
 
 /** Resolve only links belonging to currently public content, never arbitrary redirect targets. */
 final class ContentLinks
@@ -40,6 +39,16 @@ final class ContentLinks
             if ($comment === null) { return null; }
             $item = $comment;
         }
-        return \TinyCat\Social\Posts\Outbound::resolve($hash, (string) $item['body'], $commentId === 0 ? static fn (): array => \TinyCat\Database\Connection::all('SELECT l.normalized_url, l.url_hash FROM social_post_links cl INNER JOIN social_links l ON l.id = cl.link_id WHERE cl.content_id = ?', [$contentId]) : null);
+        return \TinyCat\Core\Links\Outbound::resolve($hash, (string) $item['body'], $commentId === 0 ? static fn (): array => \TinyCat\Database\Connection::all('SELECT l.normalized_url, l.url_hash FROM social_post_links cl INNER JOIN social_links l ON l.id = cl.link_id WHERE cl.content_id = ?', [$contentId]) : null, self::tagged(...));
+    }
+
+    public static function tagged(string $url): string
+    {
+        if (!(bool) \TinyCat\Core\Runtime\Startup::option('content_links.utm.enabled', true)) { return $url; }
+        $source = trim((string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.source', ''));
+        if ($source === '') { $source = (string) parse_url((string) \TinyCat\Core\Runtime\Startup::option('app.url', ''), PHP_URL_HOST); }
+        if ($source === '') { return $url; }
+        $values = ['utm_source' => $source, 'utm_medium' => (string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.medium', 'referral'), 'utm_campaign' => (string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.campaign', '')];
+        return \TinyCat\Core\Links\Tracking::append($url, $values);
     }
 }

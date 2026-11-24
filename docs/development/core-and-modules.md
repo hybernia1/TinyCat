@@ -84,11 +84,19 @@ vlastnosti rolí; přihlašování a správa účtů používají `Core/Identity
 Klientský Social přispívá do core navigace načtením a vykreslením stránky;
 historii, scroll a řízení souběžných přechodů vlastní společný mechanismus.
 
-`Social/Module` je jediný poskytovatel modulových kontraktů. Vnitřní
-`Registration` jsou pomocné třídy bez vlastních
-modulových rozhraní. Jediným zdrojem inventáře tabulek jsou příslušná `Schema`;
+`Social/Module` je jediný poskytovatel modulových kontraktů. Registrace profilů,
+příspěvků, botů, moderace, hledání a webu vlastní jeho pojmenované privátní
+metody; doménové `Api` zůstávají oddělené. Šest sad příspěvků skládá přes
+`Registries`, které ověřují duplicity a pořadí.
+Jediným zdrojem inventáře tabulek jsou příslušná `Schema`;
 hlavní modul z nich skládá úplný seznam. Aktivační stav účtu mění
 `Core/Identity/Administration`, Social připojuje lazy callback pro své botí zdroje.
+Reference souborů poskytuje přímo `Module::fileReferences()` i pro instalovaný
+vypnutý Social; SQL běží až při volání. `Posts/ContentLinks` vlastní sociální UTM
+politiku a předává ověřený obsah společnému resolveru. `Bots/FeedPublication`
+poskytuje samostatně volatelné `defaultSourceTemplate()`, `renderPost()`,
+`prepareImage()`, `prepare()` a `attachments()`; příprava nepublikuje ani nemění
+plánování či GUID. `Importer` vlastní běh zdrojů a tyto metody nepřeposílá.
 Historické migrační streamy, baseline soubory a checksumy se tím nemění.
 
 Profily neposkytují účtové stránky, administrativní view data ani obálku

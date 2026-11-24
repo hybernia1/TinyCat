@@ -97,7 +97,7 @@ $pdo->exec("CREATE TRIGGER reject_profile_write BEFORE UPDATE ON users BEGIN SEL
 try { Profile::update($row(2), $member, ['bio' => 'Failed SQL write'], ['en', 'cs']); throw new LogicException('SQL failure was ignored'); }
 catch (PDOException) { $assert($row(2)['bio'] === 'Edited by admin', 'SQL failure leaves stored profile unchanged'); }
 $pdo->exec('DROP TRIGGER reject_profile_write');
-foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration', 'TinyCat\\Core\\Notifications\\ServiceProvider', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) {
+foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Core\\Notifications\\ServiceProvider', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) {
     $assert(!class_exists($class, false), 'Domain profile writes did not load ' . $class);
 }
 $assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table'"), 'name') === ['users', 'password_reset_tokens'], 'Profile management needs only account storage');

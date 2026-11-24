@@ -59,7 +59,7 @@ final class ViewData
 
             $title = \TinyCat\Core\Ui\Site::meta_text((string) ($link['title'] ?? ''), $limit);
 
-            if ($title !== '' && !\TinyCat\Social\Posts\Links::status_link_title_is_placeholder($title)) {
+            if ($title !== '' && !\TinyCat\Core\Links\Providers::titleIsPlaceholder($title)) {
                 return $title;
             }
         }
@@ -316,7 +316,7 @@ final class ViewData
     {
         $user ??= \TinyCat\Core\Identity\Authentication::auth();
         $feed = $feed === 'following' ? 'following' : 'all';
-        $type = Feed::archive_type($type);
+        $type = Archive::type($type);
         $currentFeedUrl = Feed::homePath() . ($feed === 'following' ? '?feed=following' : '');
         if ($type !== '') { $currentFeedUrl .= ($feed === 'following' ? '&' : '?') . 'media=' . $type; }
         $followingLoginRequired = $feed === 'following' && $user === null;

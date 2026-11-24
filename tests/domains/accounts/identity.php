@@ -38,7 +38,7 @@ try {
     $assert(Readiness::ready(), 'Accounts readiness needs only the users table');
     $assert(Roles::rolesWith('allows_login') === ['admin', 'user'] && Roles::rolesWith('managed_by_core_admin') === ['admin', 'user'], 'Account capabilities retain order and meaning');
     $assert(!Roles::allowsLogin('bot') && !Roles::allowsLogin('unknown'), 'Noninteractive and unknown roles cannot log in');
-    foreach (['TinyCat\\Social\\Profiles\\Roles', 'TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration', 'TinyCat\\Core\\Settings\\Store'] as $class) {
+    foreach (['TinyCat\\Social\\Profiles\\Roles', 'TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Core\\Settings\\Store'] as $class) {
         $assert(!class_exists($class, false), 'Standalone identity did not load ' . $class);
     }
     $socket = stream_socket_server('tcp://127.0.0.1:0', $error, $message);

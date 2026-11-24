@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-185 definic komponent, 397 CSS tříd, 127 CSS importů, 100 JS souborů, 28 UI služeb, 1 PHP partialů.
+185 definic komponent, 397 CSS tříd, 127 CSS importů, 100 JS souborů, 28 UI služeb, 0 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -337,7 +337,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 
 ## PHP partialy
 
-- [App/Core/Ui/templates/parts/flashes.php](../../App/Core/Ui/templates/parts/flashes.php)
 
 ## PHP renderery
 
@@ -355,7 +354,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Core/Ui/templates/error.php](../../App/Core/Ui/templates/error.php)
 - [App/Core/Ui/templates/errorFallback.php](../../App/Core/Ui/templates/errorFallback.php)
 - [App/Core/Ui/templates/head.php](../../App/Core/Ui/templates/head.php)
-- [App/Core/Ui/templates/parts/flashes.php](../../App/Core/Ui/templates/parts/flashes.php)
 - [App/Core/Ui/templates/public-footer.php](../../App/Core/Ui/templates/public-footer.php)
 - [App/Core/Ui/templates/public-shell.php](../../App/Core/Ui/templates/public-shell.php)
 - [App/Modules/Social/templates/status/embed.php](../../App/Modules/Social/templates/status/embed.php)

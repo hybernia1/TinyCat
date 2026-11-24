@@ -24,6 +24,12 @@ $document = \TinyCat\Core\Ui\Document::frame([
 $assert(substr_count($document, '<!doctype html>') === 1 && substr_count($document, '<html') === 1 && substr_count($document, '<head>') === 1 && substr_count($document, '<body') === 1, 'The shared frame owns one complete document before database setup.');
 $assert(str_contains($document, '<title>&lt;Setup&gt;</title>') && str_contains($document, '&quot;&gt;&lt;unsafe&gt;'), 'Document text and attributes are escaped.');
 $assert(!str_contains($document, '</template><script>unsafe') && str_contains($document, 'data-tinycat-flashes'), 'Flash serialization cannot escape its template.');
+$flashItems = [['message' => 'Žluťoučký </template> & "quoted" / path', 'type' => 'info'], ['message' => 'Second message', 'type' => 'success']];
+$flashDocument = \TinyCat\Core\Ui\Document::frame(['flashToasts' => $flashItems, 'skipLink' => false], new \TinyCat\Support\Markup(''));
+preg_match('~<template data-tinycat-flashes>(.*?)</template>~s', $flashDocument, $flashMatch);
+$assert(substr_count($flashDocument, 'data-tinycat-flashes') === 1 && json_decode($flashMatch[1] ?? '', true, 512, JSON_THROW_ON_ERROR) === $flashItems, 'Flash messages preserve Unicode, unsafe text, types and order in one JSON template.');
+$emptyDocument = \TinyCat\Core\Ui\Document::frame(['flashToasts' => [], 'skipLink' => false], new \TinyCat\Support\Markup(''));
+$assert(!str_contains($emptyDocument, 'data-tinycat-flashes'), 'An empty flash list does not emit a template.');
 $assert(substr_count($document, 'src="/fixture.js"') === 1 && substr_count($document, 'href="/fixture.css"') === 1, 'Assets are emitted once by the frame.');
 $assert(!str_contains($document, 'skip-link') && !str_contains($document, 'color-scheme') && !str_contains($document, 'googletagmanager'), 'Installation can omit public document policies.');
 try {

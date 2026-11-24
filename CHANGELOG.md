@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.3 - 2026-11-24
+
+- Consolidate internal Core handlers, account setup, resources and sorting definitions; remove forwarding methods and preserve shared HTML/API preparation.
+- Register Social through its single module entry, consolidate feed publication preparation and outbound-link policy, and call canonical archive, moderation and statistics implementations directly.
+- Inline the flash-data partial without changing document output. Preserve the publicFooter contract for external themes and lazy maintenance for installed inactive modules.
+- Retire 18 internal classes and one partial through signed update deletions. Custom integrations referencing retired internal helpers must use their canonical owners.
+- No new database migration or configuration change. PHP 8.4 and completed 6.0.10 or newer remain required; use matching signed Core or Social packages.
+
 ## 8.0.2 - 2026-11-23
 
 - Defer account/avatar and Social dialog editors, their component definitions, translations and styles until a resource dialog or inline editor needs them. Reduce initial asset delivery on home, tag, author and search pages.

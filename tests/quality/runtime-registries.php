@@ -33,6 +33,10 @@ $registries = $modules->registries();
 foreach (['TinyCat\\Support\\Config', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Database\\Connection', 'TinyCat\\Http\\Session'] as $class) {
     $assert(!class_exists($class, false), 'Registry collection did not load ' . $class);
 }
+$participant = \TinyCat\Social\Module::accountLifecycle();
+$assert($participant instanceof \TinyCat\Core\Identity\Participant, 'Social lifecycle callback can be assembled without SQL');
+$assert(\TinyCat\Social\Module::fileReferences('unknown', ['candidate']) === [] && \TinyCat\Social\Module::fileReferences('link-images', []) === [], 'Empty or unrelated reference lookups do not load the database');
+$assert(!class_exists(\TinyCat\Database\Connection::class, false), 'Lifecycle and empty file references remain lazy');
 $assert(session_status() === PHP_SESSION_NONE, 'Registry collection did not open a session');
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->tasks) === ['feeds', 'cleanup', 'site-health'], 'Existing task IDs and order remain stable');
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->health) === ['http', 'database', 'cache', 'storage', 'uploads', 'disk', 'runtime', 'scheduler', 'updates'], 'Existing probe IDs and order remain stable');

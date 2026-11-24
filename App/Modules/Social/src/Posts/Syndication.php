@@ -13,7 +13,7 @@ final class Syndication
     {
         $request = \TinyCat\Http\Request::current();
         $request->validated(['media' => 'string']);
-        $media = Feed::archive_type((string) $request->input('media', ''));
+        $media = Archive::type((string) $request->input('media', ''));
         $rssTitle = '';
         $rssDescription = '';
         $rssLink = '/';
@@ -28,7 +28,7 @@ final class Syndication
                 \TinyCat\Http\Document::notFound('Feed not found.');
                 return;
             }
-            $media = Feed::archive_type((string) $request->input('media', ''));
+            $media = Archive::type((string) $request->input('media', ''));
             $params = http_build_query(['q' => $query, ...($media !== '' ? ['media' => $media] : [])]);
             $rssTitle = \TinyCat\Support\Localization::t('public.search_title_query', ['query' => $query]);
             $rssDescription = $rssTitle;

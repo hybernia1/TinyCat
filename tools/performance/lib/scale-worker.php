@@ -151,7 +151,7 @@ try {
             \TinyCat\Social\Profiles\Repository::public_author_find($authorId);
             \TinyCat\Social\Posts\Feed::public_status_items_by_author_cursor($authorId, 24);
             \TinyCat\Social\Profiles\Following::author_follow_counts($authorId);
-            \TinyCat\Social\Profiles\Repository::author_activity_stats($authorId);
+            \TinyCat\Social\Posts\AuthorStatistics::author_activity_stats($authorId);
         },
         'search' => static function (): void {
             \TinyCat\Social\Search\Queries::collection('performance');

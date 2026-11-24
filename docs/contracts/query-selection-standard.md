@@ -22,7 +22,7 @@ Sonda musí mít omezenou velikost a zdokumentovanou cenu neúspěchu. Levná ko
 
 V TinyCat mechanismus vlastní `Status\Feed::recent_ids()`: tagy používají okno `max(256, limit × 16)`, mediální home feed `max(256, limit × 32)`, limit je nejvýše 100. Fallback pozitivních home filtrů nevynucuje chronologický index. Tyto velikosti jsou omezený kompromis ověřovaný na datech, nikoli záruka optimálního plánu pro každou distribuci.
 
-Pro feedy, odvozená okna a obsahové hledání existuje jedna definice kurzoru `Feed::public_status_cursor_condition()` s aliasem `c`. `public_status_apply_cursor()` ji aplikuje do query builderu. Nevytváříme další globální správce dotazů ani oddělený cursor parser pro každou větev.
+Pro feedy, odvozená okna a obsahové hledání existuje jedna definice kurzoru `Posts/Archive::cursor()` s aliasem `c`. `Feed::public_status_apply_cursor()` ji aplikuje do query builderu. Normalizaci filtru, jeho predikát a viditelnost vlastní přímo `Posts/Archive::type()`, `predicate()` a `visible()`. Nevytváříme další globální správce dotazů ani oddělený cursor parser pro každou větev.
 
 ## Podmínky přijetí změny
 

@@ -30,4 +30,14 @@ final class Setup
         if (!is_string($locale) || !isset(\TinyCat\Support\TranslationSources::packages()[$locale])) { throw new \InvalidArgumentException('Invalid administrator locale.'); }
         return ['username' => $username, 'password' => $input['password'], 'locale' => $locale];
     }
+
+    /** Trusted initial-account write for installation transports; validate input explicitly before calling. */
+    public static function administrator(string $username, string $password, string $locale): int
+    {
+        $username = Usernames::normalize($username);
+        $existing = \TinyCat\Database\Connection::one('SELECT id FROM users WHERE username = ?', [$username]);
+        $data = ['username' => $username, 'password' => Authentication::authPassword($password), 'role' => 'admin', 'status' => 'active', 'locale' => $locale, 'theme' => 'system'];
+        if ($existing !== null) { \TinyCat\Database\Connection::update('users', $data, ['id' => $existing['id']]); return (int) $existing['id']; }
+        return (int) \TinyCat\Database\Connection::insert('users', $data);
+    }
 }

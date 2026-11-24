@@ -47,7 +47,7 @@ final class AuthorPages
         $avatarUrl = Avatars::user_avatar_url($author);
         $memberSince = (string) ($author['created_at'] ?? '');
         $current = Profiles::author_url($authorId);
-        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $archiveType = Archive::type((string) Web::get('media', ''));
         $compact = Web::get('compact', '') === '1';
 
         $statusLimit = Feed::public_status_initial_page_limit();
@@ -73,7 +73,7 @@ final class AuthorPages
         $canFollow = $authUser !== null && (int) ($authUser['id'] ?? 0) !== $authorId;
         $isFollowing = $canFollow && Following::author_is_followed((int) ($authUser['id'] ?? 0), $authorId);
         $followCounts = Following::author_follow_counts($authorId);
-        $activityStats = Repository::author_activity_stats($authorId);
+        $activityStats = AuthorStatistics::author_activity_stats($authorId);
         $publicPostCount = (int) ($activityStats['posts'] ?? 0);
         $authorEntityId = Presentation::absolute_url($current) . '#author';
         $authorStructuredData = [

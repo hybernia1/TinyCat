@@ -26,7 +26,7 @@ $assert(TinyCat\Social\Profiles\Following::author_is_followed(1, 2), 'Following 
 $following = TinyCat\Social\Posts\Feed::public_status_items_for_user_cursor(1, 10);
 $assert(array_column($following, 'id') === [$post, $own], 'Following feed uses relationships and publishing visibility');
 $modules->initialize();
-$assert(TinyCat\Social\Profiles\Repository::author_activity_stats(2)['posts'] === 1, 'Selected social composition supplies author activity without loading absent providers');
+$assert(TinyCat\Social\Posts\AuthorStatistics::author_activity_stats(2)['posts'] === 1, 'Selected social composition supplies author activity without loading absent providers');
 $assert(PostCreation::fromText('https://outside.example/story')->rejection === null, 'Selected mention policy does not import absent Site or Moderation');
 TinyCat\Social\Profiles\Following::author_follow(3, 2); TinyCat\Social\Profiles\Following::author_follow(3, 2);
 $assert((int) Connection::value('SELECT COUNT(*) FROM user_followers WHERE user_id = 2 AND follower_id = 3') === 1, 'Following remains idempotent without notification tables');

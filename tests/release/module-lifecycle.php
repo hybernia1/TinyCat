@@ -86,7 +86,7 @@ try {
     $build($versions[0], $workspace . '/v1', true);
     $installManifest = json_decode((string) file_get_contents($workspace . '/v1/install/fixture.lifecycle-install.json'), true, 512, JSON_THROW_ON_ERROR);
     $assert($installManifest['distribution']['product'] === 'fixture.lifecycle' && $installManifest['minimum_version'] === $versions[0], 'Signed identity prevents old updaters from applying module packages');
-    $assert($installManifest['migrations'] === [] && !isset($installManifest['files']['App/Modules/Social/src/Posts/Registration.php']) && isset($installManifest['files']['App/Core/Settings/Store.php']) && isset($installManifest['files']['App/Modules/Notes/src/Module.php']), 'fixture product package contains only available product owners, including inactive modules');
+    $assert($installManifest['migrations'] === [] && !isset($installManifest['files']['App/Modules/Social/src/Module.php']) && isset($installManifest['files']['App/Core/Settings/Store.php']) && isset($installManifest['files']['App/Modules/Notes/src/Module.php']), 'fixture product package contains only available product owners, including inactive modules');
     $assert(isset($installManifest['files']['scheduled-tasks.php']) && isset($installManifest['files']['App/Console.php']), 'fixture product has a working production CLI instead of a missing social scheduler');
     $root = $workspace . '/installation'; mkdir($root, 0700);
     $zip = new ZipArchive(); $zip->open($workspace . '/v1/install/' . $installManifest['package']); $zip->extractTo($root); $zip->close();

@@ -3,7 +3,6 @@ declare(strict_types=1);
 namespace TinyCat\Social\Site;
 
 use TinyCat\Http\Request;
-use TinyCat\Social\Moderation\Restrictions;
 use TinyCat\Support\Cache;
 use TinyCat\Support\Localization;
 use TinyCat\Support\Components;
@@ -24,7 +23,7 @@ final class Pages
             'normal' => Localization::t('privacy.reputation_normal'),
             'trusted' => Localization::t('privacy.reputation_trusted'),
         ];
-        $rules = Restrictions::moderation_action_rules();
+        $rules = \TinyCat\Social\Moderation\ActionPolicy::moderationRules();
         $rows = [];
 
         foreach ($labels as $key => $label) {

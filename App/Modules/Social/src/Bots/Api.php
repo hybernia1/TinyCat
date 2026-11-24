@@ -13,7 +13,7 @@ final class Api
         $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-queue', 'endpoint'), static fn (): Result => Queue::listing(), 'admin');
         $api->post('/bots/queue/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Queue::publish((int) $p['id']), 'admin');
 
-        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'endpoint'), static fn (): Result => Result::from(Actions::adminBotAccounts()), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'endpoint'), static fn (): Result => Result::from(Administration::accountsPayload()), 'admin');
         $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'editor.creation'), static fn (): array => Resource::creation(), 'admin');
         $api->post('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccountCreate()), 'admin');
         $api->get('/bots/accounts/{id:[0-9]+}/runs', static function (Request $r, array $p): Result {
@@ -54,10 +54,10 @@ final class Api
         }, 'admin');
         $api->patch('/bots/accounts/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotAccountUpdate((int) $p['id'])), 'admin');
         $api->delete('/bots/accounts/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotAccountDelete((int) $p['id'])), 'admin');
-        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-sources', 'endpoint'), static fn (): Result => Result::from(Actions::adminBotSources()), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-sources', 'endpoint'), static fn (): Result => Result::from(Administration::payload()), 'admin');
         $api->get('/bots/sources/management', static function (): array {
             $data = Administration::sourceFormData(null);
-            return ['item' => $data['source'] + ['post_template' => Importer::defaultSourceTemplate(), 'enabled' => true], 'bots' => $data['bots'], 'constraints' => $data['constraints']];
+            return ['item' => $data['source'] + ['post_template' => FeedPublication::defaultSourceTemplate(), 'enabled' => true], 'bots' => $data['bots'], 'constraints' => $data['constraints']];
         }, 'admin');
         $api->get('/bots/sources/{id:[0-9]+}/management', static function (Request $request, array $params): array {
             $source = Importer::findSource((int) $params['id']);

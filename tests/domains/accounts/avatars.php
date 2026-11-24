@@ -129,7 +129,7 @@ try {
     clearstatcache(true, $file);
     $assert($status === 200 && !is_file($file) && (int) Connection::value('SELECT avatar_exists FROM users WHERE id = 1') === 0, 'Removal preserves generated identity and clears the physical upload');
     $assert((glob($workspace . '/uploads/avatars/.avatar-*') ?: []) === [], 'Successful and failed mutations leave no staged avatar files');
-    foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration', 'TinyCat\\Social\\Moderation\\Restrictions', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Runtime\\Errors'] as $class) { $assert(!class_exists($class, false), 'Account resources did not load ' . $class); }
+    foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Social\\Moderation\\Restrictions', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Runtime\\Errors'] as $class) { $assert(!class_exists($class, false), 'Account resources did not load ' . $class); }
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     Connection::set(new PDO('sqlite::memory:')); $pdo = null;

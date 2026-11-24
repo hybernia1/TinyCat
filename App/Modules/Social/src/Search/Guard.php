@@ -23,19 +23,11 @@ final class Guard
     /**
      * @return array<mixed>
      */
-    public static function public_search_guest_limits(): array
-    {
-        return \TinyCat\Core\Security\RateLimitPolicy::guestSearch();
-    }
-
-    /**
-     * @return array<mixed>
-     */
     public static function public_search_guest_state(bool $increment = false): array
     {
         \TinyCat\Http\Session::start();
 
-        $limits = \TinyCat\Social\Search\Guard::public_search_guest_limits();
+        $limits = \TinyCat\Core\Security\RateLimitPolicy::guestSearch();
         $now = time();
         $state = $_SESSION['_tinycat_search_guard'] ?? [];
 
@@ -70,7 +62,7 @@ final class Guard
     {
         \TinyCat\Http\Session::start();
 
-        $limits = \TinyCat\Social\Search\Guard::public_search_guest_limits();
+        $limits = \TinyCat\Core\Security\RateLimitPolicy::guestSearch();
         $_SESSION['_tinycat_search_guard'] = [
             'started_at' => time(),
             'count' => 0,
@@ -118,7 +110,7 @@ final class Guard
             return null;
         }
 
-        $limits = \TinyCat\Social\Search\Guard::public_search_guest_limits();
+        $limits = \TinyCat\Core\Security\RateLimitPolicy::guestSearch();
         $state = \TinyCat\Social\Search\Guard::public_search_guest_state($increment);
         $now = time();
 

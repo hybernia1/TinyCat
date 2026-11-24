@@ -122,7 +122,7 @@ final class Installer
 
     public static function create_admin_account(string $username, string $password, string $locale): int
     {
-        return \TinyCat\Core\Identity\Initialization::administrator($username, $password, $locale);
+        return \TinyCat\Core\Identity\Setup::administrator($username, $password, $locale);
     }
 
     /** @param callable(): array<string, mixed> $apply

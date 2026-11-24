@@ -10,14 +10,6 @@ final class Actions
     /**
      * @return array<mixed>
      */
-    public static function adminBotAccounts(): array
-    {
-        return \TinyCat\Social\Bots\Administration::accountsPayload();
-    }
-
-    /**
-     * @return array<mixed>
-     */
     public static function adminBotAccountCreate(): array
     {
         $id = (int) \TinyCat\Database\Connection::insert('users', \TinyCat\Social\Bots\Administration::accountCreatePayload());
@@ -74,14 +66,6 @@ final class Actions
 
         \TinyCat\Core\Identity\Lifecycle::delete($id, \TinyCat\Core\Identity\Participants::current(true));
         return \TinyCat\Social\Bots\Administration::accountsPayload() + ['message' => \TinyCat\Support\Localization::t('bots.messages.account_deleted'), 'code' => 'bot_account_deleted'];
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function adminBotSources(): array
-    {
-        return \TinyCat\Social\Bots\Administration::payload();
     }
 
     /**

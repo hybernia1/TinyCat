@@ -7,21 +7,10 @@ final class Feed
 {
     public static function homePath(): string { return \TinyCat\Core\Runtime\EntryPages::publicPath('tinycat.status.home'); }
 
-    public static function archive_type(string $type): string
-    {
-        return \TinyCat\Social\Posts\Archive::type($type);
-    }
-
     private static function archive_query(\TinyCat\Database\Query $query, string $type): \TinyCat\Database\Query
     {
-        [$condition, $params] = self::archive_predicate($type);
+        [$condition, $params] = Archive::predicate($type);
         return $condition !== '' ? $query->where($condition, ...$params) : $query;
-    }
-
-    /** @return array{string, list<string>} */
-    public static function archive_predicate(string $type): array
-    {
-        return \TinyCat\Social\Posts\Archive::predicate($type);
     }
 
     public static function public_status_select_sql(): string
@@ -55,18 +44,13 @@ final class Feed
                 LEFT JOIN social_post_images ci ON ci.content_id = c.id";
     }
 
-    public static function public_status_apply_visibility(\TinyCat\Database\Query $query): \TinyCat\Database\Query
-    {
-        return \TinyCat\Social\Posts\Archive::visible($query);
-    }
-
     public static function public_status_id_query(bool $ordered = true): \TinyCat\Database\Query
     {
         $feedIndex = $ordered && \TinyCat\Database\Connection::driver() === 'mysql'
             ? ' FORCE INDEX (content_feed_index)'
             : '';
 
-        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
+        return Archive::visible(\TinyCat\Database\Query::select(
             'SELECT c.id, c.published_at FROM social_posts c' . $feedIndex . ' INNER JOIN users u ON u.id = c.author_id'
         )->where('u.status = ?', 'active'));
     }
@@ -77,7 +61,7 @@ final class Feed
             ? ' FORCE INDEX (content_author_index)'
             : '';
 
-        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
+        return Archive::visible(\TinyCat\Database\Query::select(
             'SELECT c.id, c.published_at FROM social_posts c' . $authorIndex . ' INNER JOIN users u ON u.id = c.author_id'
         )->where('u.status = ?', 'active'));
     }
@@ -85,7 +69,7 @@ final class Feed
     public static function public_status_tag_id_query(int $termId): \TinyCat\Database\Query
     {
         // Let selective tags start with (term_id, content_id), without forcing a global feed scan.
-        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
+        return Archive::visible(\TinyCat\Database\Query::select(
             'SELECT c.id, c.published_at FROM social_post_tags ct INNER JOIN social_posts c ON c.id = ct.content_id INNER JOIN users u ON u.id = c.author_id'
         )->where('ct.term_id = ?', $termId)->where('u.status = ?', 'active'));
     }
@@ -103,7 +87,7 @@ final class Feed
             $enough = ' AND EXISTS (SELECT 1 FROM social_post_tags enough WHERE enough.term_id = ? LIMIT 1 OFFSET ' . ($limit - 1) . ')';
             $params[] = $termId;
         }
-        [$cursor, $cursorParams] = self::public_status_cursor_condition($cursorAt, $cursorId);
+        [$cursor, $cursorParams] = Archive::cursor($cursorAt, $cursorId);
         array_push($params, ...$cursorParams);
         $window = max(256, $limit * ($termId === null ? 32 : 16));
         $query = (new \TinyCat\Database\Query(
@@ -121,7 +105,7 @@ final class Feed
 
     public static function public_status_query(): \TinyCat\Database\Query
     {
-        return self::public_status_apply_visibility(
+        return Archive::visible(
             \TinyCat\Database\Query::select(self::public_status_select_sql())->where('u.status = ?', 'active')
         );
     }
@@ -150,17 +134,9 @@ final class Feed
         return self::public_status_items_by_ids(self::public_status_ids_page(self::public_status_apply_cursor($query, $cursorAt, $cursorId), $limit, $selection));
     }
 
-    /** Shared c.published_at/c.id predicate for selections and derived windows.
-     * @return array{0: string, 1: list<string|int>}
-     */
-    public static function public_status_cursor_condition(string $cursorAt = '', int $cursorId = 0): array
-    {
-        return \TinyCat\Social\Posts\Archive::cursor($cursorAt, $cursorId);
-    }
-
     public static function public_status_apply_cursor(\TinyCat\Database\Query $query, string $cursorAt = '', int $cursorId = 0): \TinyCat\Database\Query
     {
-        [$condition, $params] = self::public_status_cursor_condition($cursorAt, $cursorId);
+        [$condition, $params] = Archive::cursor($cursorAt, $cursorId);
         if ($condition !== '') { $query->where($condition, ...$params); }
         return $query;
     }
@@ -171,7 +147,7 @@ final class Feed
      */
     public static function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = '', ?array &$selection = null): array
     {
-        $type = self::archive_type($type);
+        $type = Archive::type($type);
         $limit = max(1, min(100, $limit));
         $media = in_array($type, ['images', 'links', 'video', 'audio'], true);
         if ($media && \TinyCat\Database\Connection::driver() === 'mysql') {
@@ -284,7 +260,7 @@ final class Feed
         }
 
         $limit = max(1, min(100, $limit));
-        $type = self::archive_type($type);
+        $type = Archive::type($type);
         if (\TinyCat\Database\Connection::driver() === 'mysql' && ($type === '' || $type === 'text')) {
             $ids = self::recent_ids($limit, $cursorAt, $cursorId, $type, $termId, $selection);
             if (count($ids) === $limit) { return self::public_status_items_by_ids($ids); }
@@ -423,7 +399,7 @@ final class Feed
         $user ??= \TinyCat\Core\Identity\Authentication::auth();
         $cursorAt = trim((string) ($params['cursor_at'] ?? ''));
         $cursorId = max(0, (int) ($params['cursor_id'] ?? 0));
-        $type = self::archive_type((string) ($params['media'] ?? ''));
+        $type = Archive::type((string) ($params['media'] ?? ''));
 
         if ($context === 'author') {
             $authorId = max(0, (int) ($params['author_id'] ?? 0));

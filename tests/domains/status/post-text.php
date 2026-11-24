@@ -35,7 +35,7 @@ foreach ($cases as $before => $after) {
 }
 $assert(PostText::normalize('An excerpt. Continue reading') === 'An excerpt. Continue reading');
 $assert(PostText::normalize('The post Story appeared first on Site.') === 'The post Story appeared first on Site.');
-TinyCat\Social\Posts\Registration::initialize();
+TinyCat\Social\Module::initialize();
 $assert(TinyCat\Social\Posts\PostCreation::fromText(str_repeat("The post X appeared first on Site.\n", 100) . 'Preserved tail')->body === 'Preserved tail');
 $assert(TinyCat\Social\Posts\PostCreation::fromText('An excerpt. Continue reading')->body === 'An excerpt.');
 $assert(PostText::isReadMore('READ MORE »'));

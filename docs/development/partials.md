@@ -47,7 +47,7 @@ až pro doloženou potřebu více konzumentů; složité výpočty patří do p�
 Účtové stránky volají přímo komponenty `users/auth-page`, `users/recovery-page`,
 `users/logout-page` a `users/account-home` z katalogu Identity. Přihlášení
 a registrace skládají existující `users/auth-content` a `users/auth-form`,
-takže stránka i dialog zachovávají tentýž formulář. `AuthResource::make()`
+takže stránka i dialog zachovávají tentýž formulář. `Resource::authenticationForm()`
 připravuje kanonické vstupy; mezi handlerem a komponentou není PHP partial
 ani průchozí `Views::authContent()` / `Views::authForm()`. Obnova hesla používá
 společná pole a `ui/captcha`, bez skládání důvěryhodných HTML řetězců.

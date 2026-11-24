@@ -17,6 +17,17 @@ final class Resource
         return ['user' => [], 'options' => self::options() + ['roles' => Roles::rolesWith('managed_by_core_admin'), 'statuses' => Administration::statuses()]];
     }
 
+    /** @return array<string, mixed> */
+    public static function authenticationForm(string $mode, string $next): array
+    {
+        $mode = Login::auth_modal_mode($mode);
+        $next = Login::auth_safe_next_url($next);
+        $other = $mode === 'register' ? 'login' : 'register';
+        return self::authentication($mode, $next, Login::auth_url_with_next('/' . $other, $next), Login::auth_modal_url($other, $next),
+            Integration::registrationEnabled(),
+            \TinyCat\Core\Security\Captcha::configuration($mode, $mode === 'register' || \TinyCat\Core\Security\Captcha::loginRequired()));
+    }
+
     /** @param array<mixed> $captcha
      * @return array<string, mixed> */
     public static function authentication(string $mode, string $next, string $switchUrl, string $switchModalUrl, bool $registrationEnabled, array $captcha): array
@@ -86,7 +97,7 @@ final class Resource
         $navigation = \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $params, 'page', 2, $definition['path']);
         unset($navigation['target']);
         return array_replace($data, [
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Core\Identity\Sorting::users(), $params),
+            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Core\Identity\ReadModel::sorting(), $params),
             'items' => $items, 'pagination' => $pagination,
             'options' => self::options(),
             'roles' => array_keys($roles),

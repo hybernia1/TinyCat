@@ -42,7 +42,7 @@ use TinyCat\Support\Html;
             gtag('config','<?= \TinyCat\Support\Html::e($analyticsMeasurementId) ?>');
         </script>
     <?php endif; ?>
-    <?= \TinyCat\Support\View::part('Ui/flashes', ['items' => $flashToasts]) ?>
+    <?php if ($flashToasts !== []): ?><template data-tinycat-flashes><?= json_encode($flashToasts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></template><?php endif; ?>
 </head>
 <body<?php foreach ($bodyAttributes as $name => $value): ?><?php if ($value !== null): ?> <?= Html::e($name) ?>="<?= Html::e($value) ?>"<?php endif; ?><?php endforeach; ?>>
     <?php if ($skipLink): ?><a class="skip-link" href="#main-content"><?= Html::et('common.skip_to_content') ?></a><?php endif; ?>

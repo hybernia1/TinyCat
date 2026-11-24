@@ -206,13 +206,6 @@ final class Login
         ];
     }
 
-    public static function auth_password_max_length(): int { return \TinyCat\Core\Identity\Passwords::maxLength(); }
-    public static function auth_password_too_long(string $password): bool { return \TinyCat\Core\Identity\Passwords::tooLong($password); }
-    /** @return array<mixed> */
-    public static function auth_password_validation_field_errors(string $password, string $passwordConfirm): array { return \TinyCat\Core\Identity\Passwords::fieldErrors($password, $passwordConfirm); }
-    /** @return array<mixed> */
-    public static function auth_password_validation_errors(string $password, string $passwordConfirm): array { return \TinyCat\Core\Identity\Passwords::errors($password, $passwordConfirm); }
-
     public static function auth_modal_id(): string
     {
         return 'auth-modal';

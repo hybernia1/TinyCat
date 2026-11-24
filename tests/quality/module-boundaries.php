@@ -49,10 +49,53 @@ foreach (glob($root . '/App/Modules/Social/*/module.json') ?: [] as $internalMan
     $metadata = json_decode((string) file_get_contents($internalManifest), true, 512, JSON_THROW_ON_ERROR);
     $assert(!isset($metadata['coreApi'], $metadata['id']), 'Social internals are not independently selectable modules');
 }
+// Strip only the bodies of explicitly approved Social runtime callbacks. Token
+// nesting keeps signatures, neighbouring code and all registration bodies visible.
+$registrationSource = static function (string $source, bool $social): string {
+    $result = ''; $depth = 0; $method = ''; $expectName = false; $skipDepth = null;
+    foreach (PhpToken::tokenize($source, TOKEN_PARSE) as $token) {
+        $opens = $token->is('{') || in_array($token->id, [T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES], true);
+        if ($skipDepth !== null) {
+            if ($opens) { $depth++; }
+            elseif ($token->is('}')) {
+                $depth--;
+                if ($depth < $skipDepth) { $skipDepth = null; $result .= '}'; }
+            }
+            continue;
+        }
+        if ($token->id === T_FUNCTION && $depth === 1) { $expectName = true; $method = ''; }
+        elseif ($expectName && $token->id === T_STRING) { $method = $token->text; $expectName = false; }
+        if ($opens) {
+            if ($depth === 1 && $social && in_array($method, ['fileReferences', 'accountStatusChanged'], true)) { $skipDepth = $depth + 1; }
+            $depth++;
+        } elseif ($token->is('}')) { $depth--; }
+        // Constant retention predicates declare lazy SQL; they do not execute it.
+        if ($token->id !== T_CONSTANT_ENCAPSED_STRING) { $result .= $token->text; }
+    }
+    return $result;
+};
+$hasPersistence = static fn (string $source): bool => preg_match('/\\\\(?:Connection|Transactions)::|\\\\PDO\b|\b(?:SELECT|INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE)\b/', $source) === 1;
+$socialEntry = str_replace('\\', '/', $root . '/App/Modules/Social/src/Module.php');
 foreach (glob($root . '/App/Modules/*/src/Module.php') ?: [] as $moduleEntry) {
     $entrySource = (string) file_get_contents($moduleEntry);
-    $assert(preg_match('/\\\\(?:Connection|Transactions)::|\\\\PDO\\b|\\b(?:SELECT|INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE)\\b/', $entrySource) !== 1, 'Module entry delegates persistence to its domain owner: ' . $moduleEntry);
+    $social = str_replace('\\', '/', $moduleEntry) === $socialEntry;
+    $assert(!$hasPersistence($registrationSource($entrySource, $social)), 'Module entry delegates persistence to its domain owner: ' . $moduleEntry);
 }
+// Mutate source in memory: never execute the injected call or alter the checkout.
+$socialSource = (string) file_get_contents($socialEntry);
+foreach ((new ReflectionClass(\TinyCat\Social\Module::class))->getMethods() as $method) {
+    if (in_array($method->name, ['fileReferences', 'accountStatusChanged'], true)) { continue; }
+    $start = strpos($socialSource, 'function ' . $method->name . '(');
+    $body = strpos($socialSource, '{', $start === false ? 0 : $start);
+    $assert($start !== false && $body !== false, 'Registration mutation locates ' . $method->name);
+    if ($start === false || $body === false) { continue; }
+    $mutated = substr_replace($socialSource, ' \\TinyCat\\Database\\Connection::get(); ', $body + 1, 0);
+    $assert($hasPersistence($registrationSource($mutated, true)), 'Persistence is still rejected in Social::' . $method->name);
+}
+// Even code sharing a line with an approved closing brace stays outside its body.
+$probe = '<?php class Probe { public static function fileReferences() { \\TinyCat\\Database\\Connection::get(); } public static function register() { \\TinyCat\\Database\\Connection::get(); } }';
+$assert($hasPersistence($registrationSource($probe, true)), 'An approved body cannot hide an adjacent registration on the same line');
+$assert($hasPersistence($registrationSource($socialSource, false)), 'The runtime exceptions are restricted to the Social entry');
 $securityModule = (string) file_get_contents($root . '/App/Core/Security/ServiceProvider.php');
 $assert(!str_contains($securityModule, 'Api::register') && !str_contains($securityModule, 'Search\\'), 'Technical Security does not activate consumer challenge routes');
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/App', FilesystemIterator::SKIP_DOTS)) as $file) {

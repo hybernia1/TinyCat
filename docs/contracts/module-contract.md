@@ -27,7 +27,8 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
   HTTP, Tasks, Settings, Mail a UI mechanismy. Nepřidává jejich lokální kopie.
 - `Api` registruje transport, aplikační služba provádí operaci, `Pages` připravuje
   stránku a komponenty vykreslují. HTTP resource nevrací HTML ani definice UI.
-- U modulu členěného na oblasti skládá `Registration` jejich API a HTML routy;
+- U modulu členěného na oblasti skládá `Module` pojmenovanými privátními metodami
+  jejich API a HTML routy;
   vlastní JSON endpointy deklaruje příslušná `Api`. Nemíchej další endpointy do
   registračních pomocníků. Sociální profily používají `/api/profiles`, správu
   identity poskytuje core pod `/api/users`. Sdílené hledání hostuje core;
@@ -76,7 +77,9 @@ ověř podle dopadu v [pravidlech repozitáře](../../AGENTS.md#ověření).
 
 ## Aktuální Social
 
-`Module.php` skládá `Registration` tříd vnitřních částí. `Posts` vlastní příspěvek,
+`Module.php` vlastní registraci vnitřních částí v pojmenovaných privátních metodách.
+Šest sad `Contributions` dál skládá přes `Registries`, včetně kontroly duplicit
+a pořadí. `Posts` vlastní příspěvek,
 jeho zápis, čtení, feed, tagy, odkazy a přílohy; `Discussion` komentáře a reakce;
 `Profiles` veřejné profily a sledování, `Bots` importy a boty, `Moderation` moderaci,
 `Search` hledání a `Site` veřejné téma a stránky. Toto členění nevytváří

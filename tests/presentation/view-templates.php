@@ -141,9 +141,9 @@ if (class_exists(DOMDocument::class)) {
 }
 
 // Account pages compose the same form definitions as resource-loaded dialogs.
-$loginPage = \TinyCat\Support\Components::render('users/auth-page', \TinyCat\Core\Identity\AuthResource::make('login', '/search') + ['old' => ['username' => '<Member>'], 'error' => '<Failed>']);
+$loginPage = \TinyCat\Support\Components::render('users/auth-page', \TinyCat\Core\Identity\Resource::authenticationForm('login', '/search') + ['old' => ['username' => '<Member>'], 'error' => '<Failed>']);
 $assert(str_contains($loginPage, 'action="/api/users/sessions"') && str_contains($loginPage, '&lt;Member&gt;') && str_contains($loginPage, '&lt;Failed&gt;'), 'The direct login page preserves canonical endpoints, previous input and escaped errors.');
-$disabledRegistration = \TinyCat\Core\Identity\AuthResource::make('register', '');
+$disabledRegistration = \TinyCat\Core\Identity\Resource::authenticationForm('register', '');
 $disabledRegistration['registration_enabled'] = false;
 $disabledRegistration = \TinyCat\Support\Components::render('users/auth-page', $disabledRegistration);
 $assert(!str_contains($disabledRegistration, '<form') && str_contains($disabledRegistration, 'alert-info'), 'Disabled registration renders its notice without a form.');

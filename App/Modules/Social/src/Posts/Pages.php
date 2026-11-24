@@ -32,7 +32,7 @@ final class Pages
 
         $userIsMuted = $authUser !== null && Restrictions::user_is_muted($authUser);
         $userMutedUntil = $authUser !== null ? Restrictions::user_muted_until($authUser) : '';
-        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $archiveType = Archive::type((string) Web::get('media', ''));
         $compact = Web::get('compact', '') === '1';
         $publicHomeFeedData = ViewData::public_home_feed_data($feed, $authUser, null, $archiveType);
         return ['page' => [
@@ -173,7 +173,7 @@ final class Pages
         }
 
         $current = Tags::tag_url($tag);
-        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $archiveType = Archive::type((string) Web::get('media', ''));
         $compact = Web::get('compact', '') === '1';
 
         $statusLimit = Feed::public_status_initial_page_limit();

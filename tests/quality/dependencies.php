@@ -48,8 +48,6 @@ foreach ($graph as $owner => $targets) {
             $integrations = [
                 'Social\\Profiles\\Profiles' => 'Social\\Posts\\Archive',
                 'Social\\Profiles\\Following' => 'Social\\Posts\\NotificationEvents',
-                'Social\\Profiles\\Registration' => 'Social\\Posts\\Syndication',
-                'Social\\Profiles\\Repository' => 'Social\\Posts\\AuthorStatistics',
             ];
             if (($integrations[$owner] ?? null) !== $target) { $failures[] = "Profiles import another internal data owner: {$owner} -> {$target}"; }
         }

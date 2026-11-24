@@ -145,11 +145,6 @@ final class Importer
             && (int) ($exception->errorInfo[1] ?? 0) === 1062;
     }
 
-    public static function defaultSourceTemplate(): string
-    {
-        return \TinyCat\Social\Bots\FeedPreparation::defaultSourceTemplate();
-    }
-
     /** Legacy or incomplete source payloads receive the same default as the schema.
      * @param array<string, mixed> $source */
     public static function publicationInterval(array $source): int
@@ -257,15 +252,6 @@ final class Importer
             \TinyCat\Database\Connection::delete('bot_source_runs', ['source_id' => $sourceId]);
             \TinyCat\Database\Connection::delete('bot_sources', ['id' => $sourceId]);
         });
-    }
-
-    /**
-     * @param array<string, mixed> $source
-     * @param array<string, mixed> $item
-     */
-    public static function renderPost(array $source, array $item): string
-    {
-        return \TinyCat\Social\Bots\FeedPreparation::renderPost($source, $item);
     }
 
     /**

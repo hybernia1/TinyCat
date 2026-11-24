@@ -142,10 +142,10 @@ $assert(\TinyCat\Social\Posts\Tags::status_tag_normalize(str_repeat('a', 33)) ==
 
 $youtube = \TinyCat\Core\Text\LinkParser::fromRaw('https://youtu.be/abc123');
 $assert(is_array($youtube) && !array_key_exists('embed_url', $youtube), 'Video parser retains only the canonical video identifier.');
-$assert(\TinyCat\Social\Posts\Links::status_video_embed_url(['provider' => 'youtube', 'video_id' => 'abc123']) === 'https://www.youtube.com/embed/abc123', 'YouTube embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Social\Posts\Links::status_video_embed_url(['provider' => 'vimeo', 'video_id' => '987654']) === 'https://player.vimeo.com/video/987654', 'Vimeo embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Social\Posts\Links::status_video_embed_url(['provider' => 'dailymotion', 'video_id' => 'x9demo']) === 'https://www.dailymotion.com/embed/video/x9demo', 'Dailymotion embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Social\Posts\Links::status_video_embed_url(['provider' => 'unknown', 'video_id' => 'abc123']) === '', 'Unknown video providers cannot produce an embed URL.');
+$assert(\TinyCat\Core\Links\Providers::embedUrl(['provider' => 'youtube', 'video_id' => 'abc123']) === 'https://www.youtube.com/embed/abc123', 'YouTube embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Core\Links\Providers::embedUrl(['provider' => 'vimeo', 'video_id' => '987654']) === 'https://player.vimeo.com/video/987654', 'Vimeo embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Core\Links\Providers::embedUrl(['provider' => 'dailymotion', 'video_id' => 'x9demo']) === 'https://www.dailymotion.com/embed/video/x9demo', 'Dailymotion embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Core\Links\Providers::embedUrl(['provider' => 'unknown', 'video_id' => 'abc123']) === '', 'Unknown video providers cannot produce an embed URL.');
 $assert(!array_key_exists('embed_url', \TinyCat\Social\Posts\Links::status_link_data((array) $youtube)), 'Link persistence excludes the derived embed URL.');
 
 

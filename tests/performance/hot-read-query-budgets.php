@@ -246,7 +246,7 @@ function exerciseAuthor(): void
     \TinyCat\Social\Profiles\Repository::public_author_find(1);
     $items = \TinyCat\Social\Posts\Feed::public_status_items_by_author_cursor(1, 20);
     \TinyCat\Social\Profiles\Following::author_follow_counts(1);
-    $stats = \TinyCat\Social\Profiles\Repository::author_activity_stats(1);
+    $stats = \TinyCat\Social\Posts\AuthorStatistics::author_activity_stats(1);
 
     if ($stats !== [
         'posts' => 24,

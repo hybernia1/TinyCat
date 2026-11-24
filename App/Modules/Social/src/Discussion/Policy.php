@@ -40,7 +40,7 @@ final class Policy
     {
         $commentId = (int) ($data['comment_id'] ?? 0);
         if (($data['explicit'] ?? false) && in_array($action, ['react', 'comment_like'], true)) {
-            [$key, $interval] = Posts::status_session_interval_rule($action);
+            [$key, $interval] = \TinyCat\Social\Moderation\ActionPolicy::cooldown($action);
             \TinyCat\Database\Transactions::afterCommit(static function () use ($key, $interval): void { \TinyCat\Core\Security\RateLimiter::session_action_retry_after('status_' . $key, $interval); });
         }
         if ($action === 'comment_removed') { NotificationHistory::removeForComment($commentId); return; }

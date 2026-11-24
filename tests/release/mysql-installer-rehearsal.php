@@ -254,7 +254,7 @@ try {
             'name' => 'Preserved source',
             'feed_url' => 'https://93.184.216.34/feed',
             'feed_hash' => $feedHash,
-            'post_template' => \TinyCat\Social\Bots\Importer::defaultSourceTemplate(),
+            'post_template' => \TinyCat\Social\Bots\FeedPublication::defaultSourceTemplate(),
             'next_run_at' => date('Y-m-d H:i:s', time() + 86400),
         ]);
         $historyHash = hash('sha256', 'existing-item');

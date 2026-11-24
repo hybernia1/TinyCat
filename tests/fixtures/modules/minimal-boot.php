@@ -50,7 +50,7 @@ $assert($matched && ob_get_clean() === 'kernel', 'The minimal app dispatches a t
 $assert($identityCalls === 0, 'Public routing does not resolve an identity.');
 $resolver = (new ReflectionProperty($api, 'currentUser'))->getValue($api);
 $assert($resolver()['id'] === 7 && $identityCalls === 1, 'The API receives the supplied identity resolver.');
-foreach (['TinyCat\\Social\\Profiles\\Registration', 'TinyCat\\Core\\Identity\\Authentication', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Bots\\Registration', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Http\\Session'] as $class) {
+foreach (['TinyCat\\Social\\Profiles\\Api', 'TinyCat\\Core\\Identity\\Authentication', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Http\\Session'] as $class) {
     $assert(!class_exists($class, false), 'Minimal runtime did not load ' . $class);
 }
 $configFile = str_replace('\\', '/', dirname(__DIR__, 3) . '/config.php');

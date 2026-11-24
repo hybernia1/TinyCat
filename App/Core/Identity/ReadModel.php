@@ -5,6 +5,12 @@ namespace TinyCat\Core\Identity;
 
 class ReadModel
 {
+    /** @return array{string, string, string, array<string, string>, string, string} */
+    public static function sorting(): array
+    {
+        return \TinyCat\Core\Ui\Admin\Definitions::sorting('core.users', ['username' => 'username', 'role' => 'role', 'status' => 'status', 'updated_at' => 'updated_at'], 'id DESC', 'id');
+    }
+
     public static function tc_admin_user_filter_date(string $value): string
     {
         $value = trim($value);

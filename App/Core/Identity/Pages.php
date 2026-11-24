@@ -83,7 +83,7 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,follow',
             ],
-        ], Components::render('users/auth-page', AuthResource::make('login', $next) + ['old' => $old, 'error' => (string) $error, 'message' => (string) $message]));
+        ], Components::render('users/auth-page', Resource::authenticationForm('login', $next) + ['old' => $old, 'error' => (string) $error, 'message' => (string) $message]));
     }
 
     public static function register(): void
@@ -106,7 +106,7 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,follow',
             ],
-        ], Components::render('users/auth-page', AuthResource::make('register', $next) + ['old' => $old]));
+        ], Components::render('users/auth-page', Resource::authenticationForm('register', $next) + ['old' => $old]));
     }
 
     public static function logout(): void

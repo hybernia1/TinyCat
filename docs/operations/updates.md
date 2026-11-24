@@ -179,6 +179,22 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 8.0.3
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This maintenance release
+consolidates internal Core and Social PHP implementations without a new database
+migration or configuration change. Signed update deletions retire 18 internal
+classes and the flash-data partial. Existing accounts, content, files, module
+activation, task IDs and migration histories are preserved.
+
+Custom integrations that called removed internal helpers must use their canonical
+owners: Identity resources/setup/read-model sorting, Tasks resources/repository
+sorting, Core password and link-provider methods, and Social archive, moderation,
+author-statistics and feed-publication implementations. Social registration now
+belongs entirely to its module entry. The documented publicFooter theme fragment
+remains supported. Deploy matching signed Core or Social packages and generated
+assets; update and install variants remain separate.
+
 ## Upgrading to 8.0.2
 
 Requires PHP 8.4 and a completed 6.0.10 or newer installation. Publish matching

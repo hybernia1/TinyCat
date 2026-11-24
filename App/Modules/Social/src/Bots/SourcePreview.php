@@ -18,7 +18,7 @@ final class SourcePreview
         $request->validated(['feed_url' => 'string', 'document' => 'string', 'post_template' => 'string', 'name' => 'string']);
         $url = trim((string) $request->input('feed_url', ''));
         $body = (string) $request->input('document', '');
-        $template = (string) $request->input('post_template', Importer::defaultSourceTemplate());
+        $template = (string) $request->input('post_template', FeedPublication::defaultSourceTemplate());
         $rules = array_intersect_key(Administration::sourceRules(), array_flip(['feed_url', 'post_template']));
         $rules = array_map(static fn (string $rule): string => str_replace('required|', '', $rule), $rules);
         if (\TinyCat\Http\Validator::validate(['feed_url' => $url, 'post_template' => $template], $rules) !== [] || strlen($body) > 2097152

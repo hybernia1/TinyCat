@@ -43,28 +43,15 @@ final class Restrictions
     }
 
     /**
-     * @return array<mixed>
-     */
-    public static function moderation_action_rules(): array
-    {
-        return ActionPolicy::moderationRules();
-    }
-
-    /**
      * @param array<mixed> $user
      * @return array<mixed>
      */
     public static function moderation_action_rule(array $user, string $action): array
     {
-        $rules = \TinyCat\Social\Moderation\Restrictions::moderation_action_rules();
+        $rules = \TinyCat\Social\Moderation\ActionPolicy::moderationRules();
         $level = \TinyCat\Social\Moderation\Restrictions::moderation_user_reputation($user);
 
         return $rules[$level][$action] ?? $rules['normal'][$action] ?? [3600, 60];
-    }
-
-    public static function moderation_bucket_start(int $window): string
-    {
-        return \TinyCat\Core\Security\RateLimiter::bucketStart($window);
     }
 
     /**

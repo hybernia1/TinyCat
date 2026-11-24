@@ -8,7 +8,6 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 use TinyCat\Database\Connection;
 use TinyCat\Social\Moderation\Restrictions;
 use TinyCat\Core\Security\RateLimiter;
-use TinyCat\Social\Posts\Posts;
 
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     echo "SKIP rate limiter: pdo_sqlite unavailable.\n";
@@ -48,18 +47,18 @@ $assert(RateLimiter::subject_action_count('user:1', 'expired') === 0, 'Expired b
 $assert(RateLimiter::window_retry_after(3600) >= 1 && RateLimiter::window_retry_after(3600) <= 3600, 'Wait time stays within the fixed window.');
 \TinyCat\Http\Session::start();
 $_SESSION['_action_timestamps'] = [];
-[$create, $interval] = Posts::status_session_interval_rule('create');
+[$create, $interval] = \TinyCat\Social\Moderation\ActionPolicy::cooldown('create');
 $assert(RateLimiter::session_action_retry_after('status_' . $create, $interval, false) === 0, 'A new action passes the preflight check.');
 $assert(empty($_SESSION['_action_timestamps']), 'Preflight does not consume a cooldown when validation fails.');
 RateLimiter::session_action_retry_after('status_' . $create, $interval);
 $assert(RateLimiter::session_action_retry_after('status_' . $create, $interval, false) > 0, 'Successful actions start a cooldown.');
 foreach (['update', 'delete', 'comment', 'comment_update', 'comment_delete'] as $action) {
-    [$key, $ms] = Posts::status_session_interval_rule($action);
+    [$key, $ms] = \TinyCat\Social\Moderation\ActionPolicy::cooldown($action);
     $assert(RateLimiter::session_action_retry_after('status_' . $key, $ms, false) === 0, 'Publishing does not block ' . $action . '.');
 }
-[$comment] = Posts::status_session_interval_rule('comment');
-[$edit] = Posts::status_session_interval_rule('comment_update');
-[$delete] = Posts::status_session_interval_rule('comment_delete');
+[$comment] = \TinyCat\Social\Moderation\ActionPolicy::cooldown('comment');
+[$edit] = \TinyCat\Social\Moderation\ActionPolicy::cooldown('comment_update');
+[$delete] = \TinyCat\Social\Moderation\ActionPolicy::cooldown('comment_delete');
 $assert(count(array_unique([$comment, $edit, $delete])) === 3, 'Comment creation, editing and deletion use separate cooldowns.');
 session_write_close();
 $assert(RateLimiter::consume('user:1', 'atomic', 3600, 2), 'The first reservation is accepted.');
