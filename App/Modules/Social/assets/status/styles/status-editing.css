@@ -2,26 +2,26 @@
 
 .status-compose-row {
   display: grid;
-  grid-template-columns: 38px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 2.375rem minmax(0, 1fr);
+  gap: 0.625rem;
 }
 
 .status-compose-main {
   display: grid;
-  gap: 7px;
+  gap: 0.4375rem;
 }
 
 .status-compose-main .btn {
   justify-self: end;
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: 2.375rem;
+  padding: 0.5rem 0.75rem;
 }
 
 .status-compose-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .status-compose-counter {
@@ -41,13 +41,13 @@
 .status-compose-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
   justify-content: flex-end;
 }
 
 .status-compose-actions > .btn-icon {
-  width: 38px;
-  min-height: 38px;
+  width: 2.375rem;
+  min-height: 2.375rem;
   padding-inline: 0;
 }
 
@@ -56,8 +56,8 @@
 }
 
 .status-compose-actions .status-image-preview {
-  width: 38px;
-  height: 38px;
+  width: 2.375rem;
+  height: 2.375rem;
 }
 
 .status-compose-main .status-image-picker {
@@ -69,8 +69,8 @@
   object-fit: cover;
 }
 
-.status-modal-form { display: grid; gap: 16px; min-width: 0; }
+.status-modal-form { display: grid; gap: 1rem; min-width: 0; }
 
 .status-modal-form > .label { margin-bottom: -8px; }
 
-.status-modal-form .status-editor-input { min-height: 130px; background: var(--surface-soft); }
+.status-modal-form .status-editor-input { min-height: 8.125rem; background: var(--surface-soft); }

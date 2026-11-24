@@ -7,8 +7,8 @@ hydratace výchozí hodnoty nemění. Po explicitní synchronizaci části exist
 filtru použij `TinyCat.filters.defaults(form, names)` pouze pro změněná jména;
 nesmí tím být potvrzen rozepsaný vstup v nesouvisejících polích.
 
-Interaktivní ukotvené panely mají jednu implementaci: `assets/ui/popovers.js`
-a společný povrch v `assets/ui/styles/popovers.css`. Platí pro notifikace,
+Interaktivní ukotvené panely mají jednu implementaci: `App/Core/Ui/assets/popovers.js`
+a společný povrch v `App/Core/Ui/assets/styles/popovers.css`. Platí pro notifikace,
 filtry seznamů, archiv, účet, výběr jazyka, našeptávání i akce příspěvků a komentářů.
 Doménový modul dodává obsah a jeho akce; nespravuje otevírání ani pozici.
 

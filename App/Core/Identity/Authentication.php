@@ -58,8 +58,9 @@ final class Authentication
 
         $user = self::findUserById($id);
 
-        if ($user === null || !self::userIsActive($user)) {
-            unset($_SESSION['auth_user_id']);
+        if ($user === null || !self::userIsActive($user) || !hash_equals(self::sessionCredential($user), (string) ($_SESSION['auth_credential'] ?? ''))) {
+            unset($_SESSION['auth_user_id'], $_SESSION['auth_credential']);
+            self::authForget();
             self::$authResolved = true;
             self::$authUser = null;
 
@@ -108,22 +109,24 @@ final class Authentication
         }
 
         if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
-            $hash = self::authPassword($password);
-            Connection::update(
+            $newHash = self::authPassword($password);
+            $changed = Connection::update(
                 'users',
-                ['password' => $hash],
-                ['id' => $user['id']]
+                ['password' => $newHash],
+                ['id' => $user['id'], 'password' => $hash]
             );
+            if ($changed !== 1) { return false; }
+            $hash = $newHash;
             $user['password'] = $hash;
         }
 
-        return self::authLogin($user, $remember);
+        return self::authLogin($user, $remember, $hash);
     }
 
     /**
      * @param array<mixed> $user
      */
-    public static function authLogin(array|int|string $user, bool $remember = false): bool
+    public static function authLogin(array|int|string $user, bool $remember = false, ?string $expectedPassword = null): bool
     {
         $id = is_array($user) ? ($user['id'] ?? null) : $user;
 
@@ -133,12 +136,13 @@ final class Authentication
 
         $user = self::findUserById($id);
 
-        if ($user === null || !self::userIsActive($user)) {
+        if ($user === null || !self::userIsActive($user) || ($expectedPassword !== null && !hash_equals($expectedPassword, (string) ($user['password'] ?? '')))) {
             return false;
         }
 
         Session::start();
         $_SESSION['auth_user_id'] = $id;
+        $_SESSION['auth_credential'] = self::sessionCredential($user);
         session_regenerate_id(true);
         self::$authResolved = true;
         self::$authUser = $user;
@@ -155,7 +159,7 @@ final class Authentication
     public static function authLogout(): void
     {
         Session::start();
-        unset($_SESSION['auth_user_id']);
+        unset($_SESSION['auth_user_id'], $_SESSION['auth_credential']);
         self::$authResolved = true;
         self::$authUser = null;
         self::authForget();
@@ -226,6 +230,7 @@ final class Authentication
 
         Session::start();
         $_SESSION['auth_user_id'] = $user['id'] ?? $id;
+        $_SESSION['auth_credential'] = self::sessionCredential($user);
         session_regenerate_id(true);
         self::authRemember($user);
 
@@ -298,6 +303,12 @@ final class Authentication
         return hash_hmac('sha256', $id . '|' . $expires, $key);
     }
 
+    /** @param array<mixed> $user */
+    private static function sessionCredential(array $user): string
+    {
+        return hash('sha256', 'tinycat-session|' . (string) ($user['id'] ?? '') . '|' . (string) ($user['password'] ?? ''));
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -336,11 +347,7 @@ final class Authentication
      */
     private static function findUserById(mixed $id): ?array
     {
-        try {
-            return Connection::find('users', ['id' => $id]);
-        } catch (Throwable) {
-            return null;
-        }
+        return Connection::find('users', ['id' => $id]);
     }
 
     /**
@@ -348,11 +355,7 @@ final class Authentication
      */
     private static function findUserByUsername(string $username): ?array
     {
-        try {
-            return Connection::find('users', ['username' => trim($username)]);
-        } catch (Throwable) {
-            return null;
-        }
+        return Connection::find('users', ['username' => trim($username)]);
     }
 
     /**
@@ -369,7 +372,7 @@ final class Authentication
                 if ($user !== null) {
                     return $user;
                 }
-            } catch (Throwable) {
+            } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
                 // Older installations may not have the optional email column yet.
             }
         }

@@ -69,17 +69,14 @@ final class Resources
         return $ui === null ? array_values($paths) : [$ui, ...array_values($paths)];
     }
 
-    /** @return array<string, string> Compatibility owner name => selected source directory. */
+    /** @return array<string, string> Stable module ID/resource kind => selected source directory. */
     public static function translations(?string $root = null): array
     {
         $catalog = self::catalog($root);
         $directories = [];
         foreach (['translations', 'emails'] as $kind) {
             foreach ($catalog->resources($kind) as $id => $path) {
-                $namespace = $catalog->get($id)->namespace;
-                $segments = explode('\\', trim($namespace, '\\'));
-                $owner = end($segments) . ($kind === 'emails' ? 'Emails' : '');
-                if (isset($directories[$owner])) { throw new \LogicException('Duplicate translation owner: ' . $owner); }
+                $owner = $id . '/' . $kind;
                 $directories[$owner] = str_replace('\\', '/', $path);
             }
         }
@@ -100,12 +97,12 @@ final class Resources
 
     public static function translationDomain(string $owner, ?string $root = null): string
     {
-        $paths = self::translations($root);
-        foreach (self::catalog($root)->definitions() as $definition) {
-            if (isset($definition->resources['emails']) && ($paths[$owner] ?? null) === str_replace('\\', '/', $definition->resources['emails'])) { return 'emails'; }
-            if (isset($definition->resources['translations']) && ($paths[$owner] ?? null) === str_replace('\\', '/', $definition->resources['translations'])) { return $definition->translationDomain; }
-        }
-        throw new \InvalidArgumentException('Unknown translation owner.');
+        [$id, $kind] = array_pad(explode('/', $owner, 2), 2, '');
+        $catalog = self::catalog($root);
+        if (!in_array($kind, ['translations', 'emails'], true) || !$catalog->has($id)) { throw new \InvalidArgumentException('Unknown translation owner.'); }
+        $definition = $catalog->get($id);
+        if (!isset($definition->resources[$kind])) { throw new \InvalidArgumentException('Unknown translation owner.'); }
+        return $kind === 'emails' ? 'emails' : $definition->translationDomain;
     }
 
     public static function templateDirectory(string $owner): string

@@ -14,7 +14,9 @@ return static function (): array {
         $validateClients = require __DIR__ . '/../quality/client-translations.php';
         $validateClients($catalogs);
         $files = [];
-        $server = ['selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'packages' => \TinyCat\Support\TranslationSources::packages(), 'catalogs' => []];
+        $packages = \TinyCat\Support\Paths::basePath('App/module-packages.json');
+        $packageRevision = is_file($packages) ? hash_file('sha256', $packages) : null;
+        $server = ['server_components_packages' => $packageRevision, 'selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'packages' => \TinyCat\Support\TranslationSources::packages(), 'catalogs' => []];
         foreach ($catalogs as $locale => $catalog) {
             // Preserve template order as well as content; all sources were validated above.
             $emails = \TinyCat\Support\TranslationSources::channel('emails', $locale);
@@ -29,8 +31,7 @@ return static function (): array {
         $componentName = 'components.' . substr(hash('sha256', $components), 0, 24) . '.php';
         $files['App/Core/Support/compiled/' . $componentName] = $components;
         $manifest['server_components'] = $componentName;
-        $packages = \TinyCat\Support\Paths::basePath('App/module-packages.json');
-        $manifest['server_components_packages'] = is_file($packages) ? hash_file('sha256', $packages) : null;
+        $manifest['server_components_packages'] = $packageRevision;
         $emit = static function (string $prefix, string $source, string $type = 'js') use (&$files): string {
             $relative = 'assets/build/' . $prefix . '.' . substr(hash('sha256', $source), 0, 24) . '.' . $type;
             $files[$relative] = $source;
@@ -43,24 +44,41 @@ return static function (): array {
             return ['raw' => $emit($prefix, $source, $type), 'min' => $emit($prefix . '-min', $minified[$key], $type)];
         };
         $runtime = $variants('runtime', \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\ClientAssets::runtime()));
-        $icon = $emit('icons', \TinyCat\Support\AssetGraph::read('assets/icons.svg'), 'svg');
-        $manifest['assets']['icons.svg'] = ['raw' => $icon, 'min' => $icon];
+        $asset = static function (string $path) use (&$asset, &$manifest, $emit, $variants): string {
+            if (isset($manifest['assets'][$path])) { return $manifest['assets'][$path]['raw']; }
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $source = match ($type) {
+                'css' => \TinyCat\Support\AssetGraph::stylesheet([$path], $asset),
+                'js' => \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order([$path])),
+                default => \TinyCat\Support\AssetGraph::read($path),
+            };
+            if (in_array($type, ['css', 'js'], true)) { $output = $variants('standalone-' . pathinfo($path, PATHINFO_FILENAME), $source, $type); }
+            else { $url = $emit('asset-' . pathinfo($path, PATHINFO_FILENAME), $source, $type); $output = ['raw' => $url, 'min' => $url]; }
+            $manifest['assets'][$path] = $output;
+            return $output['raw'];
+        };
+        foreach (\TinyCat\Support\ClientAssets::standalone() as $path) { $asset($path); }
         foreach (\TinyCat\Support\ClientAssets::scopes() as $path) {
             $client = [
                 'runtime' => $runtime,
                 'app' => $variants('app', \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($path), \TinyCat\Support\ClientAssets::runtime()))),
                 'components' => $emit('components', \TinyCat\Support\ClientAssets::componentScript($path)),
                 'catalogs' => [],
-                'styles' => $variants('styles', \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles($path)), 'css'),
+                'styles' => $variants('styles', \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles($path), $asset), 'css'),
             ];
             foreach ($catalogs as $locale => $catalog) {
-                $client['catalogs'][$locale] = $emit('i18n-' . $locale, 'window.TinyCat.i18n.register(' . \TinyCat\Support\ClientAssets::encode($locale) . ',' . \TinyCat\Support\ClientAssets::encode((object) \TinyCat\Support\ClientAssets::catalog($path, $locale, $catalog['app'])) . ');');
+                $deferred = \TinyCat\Support\ClientAssets::deferred($path, $locale, $variants, $catalog['app'], $asset);
+                foreach (['raw', 'min'] as $js) {
+                    foreach (['raw', 'min'] as $css) {
+                        $key = $js . '-' . $css;
+                        $selected = $deferred === [] ? [] : array_replace($deferred, ['script' => $deferred['script'][$js], 'style' => $deferred['style'][$css] ?? null]);
+                        $client['deferred'][$locale][$key] = $selected;
+                        $client['catalog_variants'][$locale][$key] = $emit('i18n-' . $locale, \TinyCat\Support\ClientAssets::catalogScript($path, $locale, $catalog['app'], $selected));
+                    }
+                }
+                $client['catalogs'][$locale] = $client['catalog_variants'][$locale]['min-min'];
             }
             $manifest['clients'][$path] = $client;
-        }
-        foreach (\TinyCat\Support\ClientAssets::standalone() as $path) {
-            $type = pathinfo($path, PATHINFO_EXTENSION);
-            $manifest['assets'][substr($path, strlen('assets/'))] = $variants('standalone-' . pathinfo($path, PATHINFO_FILENAME), \TinyCat\Support\AssetGraph::read($path), $type);
         }
         $files['assets/build/manifest.json'] = \TinyCat\Support\ClientAssets::encode($manifest);
         ksort($files);

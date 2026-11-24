@@ -25,7 +25,6 @@
       "site_meta_description_help": "Používá se jako výchozí meta description; ideální délka je přibližně 150–160 znaků.",
       "site_logo": "Logo webu",
       "site_favicon": "Favicon",
-      "site_footer": "Footer webu",
       "minify_css": "Minifikovat CSS",
       "minify_css_help": "Vytvoří zmenšené a obsahově verzované CSS soubory v runtime cache.",
       "minify_js": "Minifikovat JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Adresa webu",
       "homepage": "Úvodní stránka",
       "theme": "Vzhled stránek",
-      "automatic": "Automaticky"
+      "automatic": "Automaticky",
+      "public_enabled": "Veřejný web",
+      "public_enabled_help": "Zpřístupní veřejné stránky, hledání, feedy a vložený obsah. Přihlášení, účet a administrace fungují i po vypnutí."
     },
     "messages": {
       "saved": "Nastavení bylo uloženo.",
@@ -52,6 +53,9 @@
     "image_remove": "Odebrat obrázek"
   },
   "install": {
+    "recovery_title": "Obnova instalace",
+    "recovery_warning": "Obnoví databázi a konfiguraci ze zálohy před přerušeným krokem instalace. Změny provedené od této zálohy budou ztraceny.",
+    "recovery_restore": "Obnovit zálohu",
     "purpose_migrations": "Historie migrací, jejich pořadí a kontrolní součty.",
     "language_label": "Čeština",
     "title": "Instalace TinyCat CMS",
@@ -101,7 +105,7 @@
       "invalid_database": "Název databáze může obsahovat jen písmena, čísla a podtržítka.",
       "required_fields": "Vyplň všechna povinná pole.",
       "invalid_username": "Použij 2–32 znaků: písmena včetně diakritiky, číslice, tečku, pomlčku nebo podtržítko. Začni písmenem nebo číslicí, nekonči tečkou či pomlčkou. Jméno nesmí být jen číselné.",
-      "password_length": "Heslo musí mít alespoň 8 znaků.",
+      "password_length": "Heslo musí mít alespoň {min} bajtů UTF-8.",
       "password_mismatch": "Hesla se neshodují.",
       "config_write_failed": "Nepodařilo se zapsat config.php.",
       "db_failed": "Připojení k databázi selhalo: {message}"

@@ -1,14 +1,14 @@
-import "../../../../../assets/core/request-lifecycle.js";
-import "../../../../../assets/ui/content-updates.js";
-import "../../../../../assets/core/dom.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/core/i18n.js";
-import "../../../../../assets/core/lifecycle.js";
-import "../../../../../assets/core/navigation.js";
+import "../../../../Core/Ui/assets/runtime/request-lifecycle.js";
+import "../../../../Core/Ui/assets/content-updates.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/runtime/i18n.js";
+import "../../../../Core/Ui/assets/runtime/lifecycle.js";
+import "../../../../Core/Ui/assets/runtime/navigation.js";
 import "./controller.js";
-import "../../../../../assets/ui/dialogs.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/toasts.js";
+import "../../../../Core/Ui/assets/dialogs.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/toasts.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;
@@ -21,7 +21,9 @@ import "../../../../../assets/ui/toasts.js";
   var statusFeedMaxCards = 120;
   var statusFeedKeepCards = 96;
   var statusFeedPruneMargin = 700;
-  var statusFeedLastScrollY = window.scrollY || 0;
+  // Reading scrollY during bundle evaluation can flush pending style/layout work.
+  // The first scroll checks conservatively, including a restored page position.
+  var statusFeedLastScrollY = Infinity;
   var statusFeedScrollQueued = false;
   var statusFeedRequests = new Map();
   var statusFeedAutoLoadQueued = new Map();
@@ -98,8 +100,6 @@ import "../../../../../assets/ui/toasts.js";
     next.searchParams.delete("offset");
     next.searchParams.delete("cursor_at");
     next.searchParams.delete("cursor_id");
-    next.searchParams.delete("cursor_rank");
-    next.searchParams.delete("cursor_name");
 
     return compactUrl(next);
   }
@@ -384,7 +384,7 @@ import "../../../../../assets/ui/toasts.js";
         inserted.forEach(function (node) { if (node.isConnected !== false) { hydrateDynamic(node); } });
       }
 
-      if (!payload.next_url || payload.done === true || Number(payload.count || 0) < 1) {
+      if (!payload.next_url || payload.done === true) {
         if (target.dataset.statusFeedPruned === "true") {
           control.hidden = true;
           return;

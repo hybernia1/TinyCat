@@ -1,11 +1,11 @@
-import "../../../../../assets/core/dom.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/core/request-lifecycle.js";
-import "../../../../../assets/core/i18n.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/runtime/request-lifecycle.js";
+import "../../../../Core/Ui/assets/runtime/i18n.js";
 import "./controller.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/form-requests.js";
-import "../../../../../assets/ui/toasts.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/form-requests.js";
+import "../../../../Core/Ui/assets/toasts.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

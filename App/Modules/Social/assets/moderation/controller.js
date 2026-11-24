@@ -1,10 +1,10 @@
 // @component-owned: structure is declared in owner catalogs.
-import "../../../../../assets/ui/content-updates.js";
-import "../../../../../assets/core/dates.js";
-import "../../../../../assets/core/component-renderer.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/dialogs.js";
-import "../../../../../assets/core/dom.js";
+import "../../../../Core/Ui/assets/content-updates.js";
+import "../../../../Core/Ui/assets/runtime/dates.js";
+import "../../../../Core/Ui/assets/runtime/component-renderer.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/dialogs.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
 (function () {
   "use strict";
   var T = window.TinyCat;

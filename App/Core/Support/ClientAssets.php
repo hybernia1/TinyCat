@@ -51,10 +51,11 @@ final class ClientAssets
     /**
      * @return list<array<mixed>>
      */
-    private static function features(string $path): array
+    private static function features(string $path, bool $complete = false): array
     {
         self::synchronize();
-        if (isset(self::$features[$path])) { return self::$features[$path]; }
+        $cacheKey = $path . ($complete ? '@complete' : '');
+        if (isset(self::$features[$cacheKey])) { return self::$features[$cacheKey]; }
         $selected = []; $definitions = [];
         foreach (self::manifests() as $file) {
             foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
@@ -66,11 +67,12 @@ final class ClientAssets
                 foreach ($feature['routes'] ?? [] as $route) {
                     $matches = match ($route) {
                         '*' => true,
-                        'public' => $path !== '/admin' && !str_starts_with($path, '/admin/') && $path !== '/install' && !str_starts_with($path, '/install/'),
-                        'admin' => $path === '/admin' || str_starts_with($path, '/admin/'),
+                        'access' => \TinyCat\Core\Ui\Surface::forPath($path) === \TinyCat\Core\Ui\Surface::Access,
+                        'public' => \TinyCat\Core\Ui\Surface::forPath($path) === \TinyCat\Core\Ui\Surface::PublicWeb,
+                        'admin' => \TinyCat\Core\Ui\Surface::forPath($path) === \TinyCat\Core\Ui\Surface::Administration,
                         default => $path === $route || str_starts_with($path, $route . '/'),
                     };
-                    if ($matches) { $selected[] = $feature; break; }
+                    if ($matches) { if ($complete || !isset($feature['defer'])) { $selected[] = $feature; } break; }
                 }
             }
         }
@@ -88,16 +90,16 @@ final class ClientAssets
             if ($id !== null) { unset($visiting[$id]); $loaded[$id] = true; }
         };
         foreach ($selected as $feature) { $visit($feature); }
-        return self::$features[$path] = $features;
+        return self::$features[$cacheKey] = $features;
     }
 
     /** @return array<string, mixed> */
-    public static function definitions(string $path): array
+    public static function definitions(string $path, bool $complete = false): array
     {
         self::synchronize();
-        if (self::$buildDefinitions !== null && isset(self::$buildDefinitions[$path])) { return self::$buildDefinitions[$path]; }
+        if (self::$buildDefinitions !== null && isset(self::$buildDefinitions[$path . ($complete ? '@complete' : '')])) { return self::$buildDefinitions[$path . ($complete ? '@complete' : '')]; }
         $roots = [];
-        foreach (self::features($path) as $feature) {
+        foreach (self::features($path, $complete) as $feature) {
             foreach ($feature['components'] ?? [] as $root) { $roots[] = (string) $root; }
             foreach ($feature['admin'] ?? [] as $definition) {
                 foreach ([$definition['component'] ?? null, $definition['filter'] ?? null, $definition['editor']['fields'] ?? null] as $component) {
@@ -106,7 +108,7 @@ final class ClientAssets
             }
         }
         $definitions = Components::select(array_values(array_unique($roots)));
-        if (self::$buildDefinitions !== null) { self::$buildDefinitions[$path] = $definitions; }
+        if (self::$buildDefinitions !== null) { self::$buildDefinitions[$path . ($complete ? '@complete' : '')] = $definitions; }
         return $definitions;
     }
 
@@ -114,23 +116,23 @@ final class ClientAssets
      * @param array<string, string>|null $dictionary Validated source data during a build.
      * @return array<string, string>
      */
-    public static function catalog(string $path, string $locale, ?array $dictionary = null): array
+    public static function catalog(string $path, string $locale, ?array $dictionary = null, bool $complete = false): array
     {
         self::synchronize();
         $dictionary ??= Localization::catalog($locale);
-        $keys = self::$buildKeys[$path] ?? null;
+        $keys = self::$buildKeys[$path . ($complete ? '@complete' : '')] ?? null;
         if ($keys === null) {
-            $keys = array_fill_keys(Components::labels(self::definitions($path)), true);
+            $keys = array_fill_keys(Components::labels(self::definitions($path, $complete)), true);
             foreach (self::administration($path) as $definition) {
                 foreach ([$definition['title'] ?? null, $definition['editor']['title'] ?? null, isset($definition['editor']) ? ($definition['editor']['submit'] ?? 'common.save') : null, isset($definition['editor']['management']) ? 'common.edit' : null] as $key) {
                     if (is_string($key)) { $keys[$key] = true; }
                 }
             }
-            foreach (self::features($path) as $feature) {
+            foreach (self::features($path, $complete) as $feature) {
                 foreach ($feature['translations'] ?? [] as $key) { $keys[(string) $key] = true; }
                 foreach ($feature['messages'] ?? [] as $key) { $keys[(string) $key] = true; }
             }
-            if (self::$buildKeys !== null) { self::$buildKeys[$path] = $keys; }
+            if (self::$buildKeys !== null) { self::$buildKeys[$path . ($complete ? '@complete' : '')] = $keys; }
         }
         $catalog = [];
         foreach ($keys as $key => $_) {
@@ -142,10 +144,10 @@ final class ClientAssets
     }
 
     /** @return array<string, string> Stable API code => module-owned translation identifier. */
-    public static function messages(string $path): array
+    public static function messages(string $path, bool $complete = false): array
     {
         $messages = [];
-        foreach (self::features($path) as $feature) {
+        foreach (self::features($path, $complete) as $feature) {
             foreach ($feature['messages'] ?? [] as $code => $key) {
                 if (isset($messages[$code]) && $messages[$code] !== $key) { throw new RuntimeException('Conflicting API message code: ' . $code); }
                 $messages[$code] = $key;
@@ -187,7 +189,7 @@ final class ClientAssets
     /** @return list<string> */
     public static function scopes(): array
     {
-        $paths = ['/', '/admin', '/install'];
+        $paths = ['/', '/admin', '/install', ...\TinyCat\Core\Ui\Surface::ACCESS_PATHS];
         foreach (self::manifests() as $file) {
             foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
                 foreach ($feature['routes'] ?? [] as $route) { if (str_starts_with($route, '/')) { $paths[] = $route; } }
@@ -201,24 +203,27 @@ final class ClientAssets
     /** @return list<string> */
     public static function runtime(): array
     {
-        return AssetGraph::order(['assets/core/component-renderer.js']);
+        return AssetGraph::order(['App/Core/Ui/assets/runtime/component-renderer.js']);
     }
 
     /** @return list<string> */
-    public static function entries(string $path): array
+    public static function entries(string $path, bool $complete = false): array
     {
         $entries = [];
-        foreach (self::features($path) as $feature) {
+        foreach (self::features($path, $complete) as $feature) {
             foreach ($feature['entries'] ?? [] as $entry) { $entries[] = $entry; }
         }
-        return array_values(array_unique([...$entries, 'assets/bootstrap.js']));
+        foreach (self::features($path, true) as $feature) {
+            if (isset($feature['defer'])) { $entries[] = 'App/Core/Ui/assets/runtime/deferred.js'; break; }
+        }
+        return array_values(array_unique([...$entries, 'App/Core/Ui/assets/bootstrap.js']));
     }
 
     /** @return list<string> */
-    public static function sourceStyles(string $path): array
+    public static function sourceStyles(string $path, bool $complete = false): array
     {
         $styles = [];
-        foreach (self::features($path) as $feature) {
+        foreach (self::features($path, $complete) as $feature) {
             foreach ($feature['styles'] ?? [] as $style) { $styles[] = $style; }
         }
         return array_values(array_unique($styles));
@@ -231,11 +236,11 @@ final class ClientAssets
     {
         $locale = Localization::locale();
         $minify = self::option('performance.minify_js');
-        $compiled = CompiledAssets::client($path, $locale, $minify);
+        $compiled = CompiledAssets::client($path, $locale, $minify, self::option('performance.minify_css'));
         $urls = $compiled !== null ? $compiled['scripts'] : [
             self::bundle('runtime', AssetGraph::javascript(self::runtime()), 'js', $minify),
             self::bundle('components', self::componentScript($path)),
-            self::bundle('i18n-' . strtolower($locale), 'window.TinyCat.i18n.register(' . self::encode($locale) . ',' . self::encode((object) self::catalog($path, $locale)) . ');'),
+            self::bundle('i18n-' . strtolower($locale), self::catalogScript($path, $locale)),
             self::bundle('app', AssetGraph::javascript(AssetGraph::order(self::entries($path), self::runtime())), 'js', $minify),
         ];
         foreach ($extraScripts as $script) { $urls[] = Assets::asset($script); }
@@ -258,12 +263,59 @@ final class ClientAssets
             foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
                 foreach ($feature['standalone'] ?? [] as $source) {
                     AssetGraph::read($source);
-                    if (!in_array(pathinfo($source, PATHINFO_EXTENSION), ['js', 'css'], true)) { throw new RuntimeException('Invalid standalone asset: ' . $source); }
+                    if (!in_array(pathinfo($source, PATHINFO_EXTENSION), Minifier::ASSET_TYPES, true)) { throw new RuntimeException('Invalid standalone asset: ' . $source); }
                     $sources[] = $source;
                 }
             }
         }
         return array_values(array_unique($sources));
+    }
+
+    /** @param array<string, string>|null $dictionary
+     * @param array<string, mixed>|null $deferred */
+    public static function catalogScript(string $path, string $locale, ?array $dictionary = null, ?array $deferred = null): string
+    {
+        $deferred ??= self::deferred($path, $locale, null, $dictionary);
+        return 'window.TinyCat.i18n.register(' . self::encode($locale) . ',' . self::encode((object) self::catalog($path, $locale, $dictionary)) . ');'
+            . ($deferred !== [] ? 'window.TinyCat.deferredAssets=' . self::encode($deferred) . ';' : '');
+    }
+
+    /** Build one additive editor payload per delivery scope, excluding the initial graph.
+     * @param array<string, string>|null $dictionary
+     * @param (callable(string, string, string): (string|array{raw: string, min: string}))|null $emit
+     * @param (callable(string): string)|null $asset
+     * @return array<string, mixed>
+     */
+    public static function deferred(string $path, string $locale, ?callable $emit = null, ?array $dictionary = null, ?callable $asset = null): array
+    {
+        $resources = []; $selectors = [];
+        foreach (self::features($path, true) as $feature) {
+            if (!isset($feature['defer'])) { continue; }
+            foreach (['resources', 'selectors'] as $kind) {
+                $values = $feature['defer'][$kind] ?? [];
+                if (!is_array($values) || !array_is_list($values)) { throw new RuntimeException('Invalid deferred asset triggers.'); }
+                foreach ($values as $value) {
+                    if (!is_string($value) || $value === '') { throw new RuntimeException('Invalid deferred asset trigger.'); }
+                    if ($kind === 'resources') {
+                        if (!str_starts_with($value, '/api/') || str_contains($value, '?') || str_contains($value, '#')) { throw new RuntimeException('Deferred resources require API path prefixes.'); }
+                        $resources[] = $value;
+                    } else { $selectors[] = $value; }
+                }
+            }
+        }
+        if ($resources === [] && $selectors === []) { return []; }
+        $emit ??= static fn (string $kind, string $source, string $type): string => self::bundle($kind, $source, $type, self::option($type === 'css' ? 'performance.minify_css' : 'performance.minify_js'));
+        $definitions = array_diff_key(self::definitions($path, true), self::definitions($path));
+        $catalog = array_diff_key(self::catalog($path, $locale, $dictionary, true), self::catalog($path, $locale, $dictionary));
+        $messages = array_diff_key(self::messages($path, true), self::messages($path));
+        $source = 'window.TinyCat.components.register(' . self::encode((object) $definitions) . ');'
+            . 'window.TinyCat.i18n.register(' . self::encode($locale) . ',' . self::encode((object) $catalog) . ');'
+            . 'window.TinyCat.api.registerMessages(' . self::encode((object) $messages) . ');'
+            . AssetGraph::javascript(AssetGraph::order(self::entries($path, true), AssetGraph::order(self::entries($path))));
+        $styles = array_values(array_diff(self::sourceStyles($path, true), self::sourceStyles($path)));
+        return ['resources' => array_values(array_unique($resources)), 'selectors' => array_values(array_unique($selectors)),
+            'script' => $emit('editors-' . $locale, $source, 'js'),
+            'style' => $styles === [] ? null : $emit('editor-styles', AssetGraph::stylesheet($styles, $asset), 'css')];
     }
 
     public static function encode(mixed $value): string

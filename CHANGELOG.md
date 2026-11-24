@@ -1,5 +1,110 @@
 # Changelog
 
+## 8.0.3 - 2026-11-24
+
+- Consolidate internal Core handlers, account setup, resources and sorting definitions; remove forwarding methods and preserve shared HTML/API preparation.
+- Register Social through its single module entry, consolidate feed publication preparation and outbound-link policy, and call canonical archive, moderation and statistics implementations directly.
+- Inline the flash-data partial without changing document output. Preserve the publicFooter contract for external themes and lazy maintenance for installed inactive modules.
+- Retire 18 internal classes and one partial through signed update deletions. Custom integrations referencing retired internal helpers must use their canonical owners.
+- No new database migration or configuration change. PHP 8.4 and completed 6.0.10 or newer remain required; use matching signed Core or Social packages.
+
+## 8.0.2 - 2026-11-23
+
+- Defer account/avatar and Social dialog editors, their component definitions, translations and styles until a resource dialog or inline editor needs them. Reduce initial asset delivery on home, tag, author and search pages.
+- Share deferred asset selection between source fallback and signed builds, retain independent JS/CSS minification settings and language-independent component URLs, and report initial and deferred payload sizes separately.
+- Coalesce concurrent editor loads and allow failed requests to retry. Preserve administration extensions, inline reply focus, drafts, resource refresh cancellation and Back/Forward history while assets load.
+- Avoid reading scroll position during feed bundle evaluation, removing a source of forced layout on initial page load.
+- No new database migration or configuration change. PHP 8.4 and completed 6.0.10 or newer remain required. Deploy matching signed Core or Social runtime and generated assets.
+
+## 8.0.1 - 2026-11-22
+
+- Revoke stale sessions and reset tokens after credential changes; share account validation and preserve server authorization.
+- Coordinate scheduled tasks with deployment admission, recover interrupted installation steps and keep rescue paths available with damaged metadata. Protect Windows configuration publication through the bundled private-file helper.
+- Make concurrent Social writes and file cleanup transaction-aware. Give avatar uploads immutable versioned URLs and invalidate account/profile/settings caches after committed changes.
+- Preserve feed cursors across concurrent changes, paginate discussions and count only visible comments. Keep domain text preparation and form constraints consistent across manual publishing, API and feed imports.
+- Preserve form drafts and canonical values through shared editor lifecycle handling. Fix login/registration resource switching and opener focus; omit Refresh from authentication dialogs through an explicit shared option.
+- Deliver the existing Social status card components, styles and controller on search pages, including source and compiled asset variants.
+- Add the nullable users.avatar_version migration and current fresh-v2 account schema. Keep published migrations, existing media, configuration and module activation unchanged. PHP 8.4 and completed 6.0.10 or newer remain required.
+
+## 8.0.0 - 2026-11-22
+
+- Control public website availability through settings without reinstalling or enabling modules. Preserve existing sites; fresh installations start with the public website disabled.
+- Separate public, access and administration layouts and asset profiles. Keep login, recovery, accounts and authorized bot editing available when the public website is closed. Restore notification targets after re-enabling public presentation.
+- Keep public themes optional, make the public footer an explicit layout fragment, remove configurable footer HTML and duplicate account/recovery sections from Social privacy.
+- Centralize runtime diagnostics in on/off/log modes and classify expected public failures through HttpException. Unexpected exceptions retain HTTP 500 and safe output; preserve atomic writes and report recoverable technical failures.
+- Remove retired presentation switches and the unused rich-text footer helper. Preserve published migration files, accounts, uploads, configuration and module activation.
+- Breaking extension changes: remove local debug parameters and Router::debug(); expected HTTP errors require HttpException, and page surfaces replace legacy presentation flags. Update custom modules before deployment.
+- No database migration. PHP 8.4 and completed 6.0.10 or newer remain required. Deploy matching runtime and generated assets using the signed Core or Social package.
+
+## 7.1.2 - 2026-11-22
+
+- Isolate client lifecycle hook failures, retry unfinished initialization and dispose services in reverse hydration order.
+- Preserve native submitter values and repeated/empty GET fields through shared form handling; preserve disabled states while loading.
+- Validate only changed controls during input and reuse the UTF-8 encoder, retaining whole-form validation before submission.
+- Correct keyboard traversal for negative tabindex, inert ancestors, disabled fieldsets and editable hosts.
+- Keep account-menu styles in core Identity, consolidate local CSS duplicates and the independent embed palette, and fix dark-theme skip-link contrast.
+- No database migration. PHP 8.4 and completed 6.0.10 or newer remain required. Use matching signed Core or Social packages.
+
+## 7.1.1 - 2026-11-22
+
+- Stream database snapshots, batch inserts and validate restore structure before destructive statements. Preserve legacy snapshots, atomic writes and after-commit effects; coalesce Settings invalidation and remove repeated schema checks.
+- Batch Social notification/reaction cleanup, keep sitemap page selection narrow and share canonical database helpers across callers.
+- Decode URL paths once, preserve compact/media filters across native and AJAX navigation, include HEAD in GET method metadata, align PHP/client scalar rendering and reuse prepared document metadata.
+- Prevent stale Memcached values from returning after a connection outage, isolate installation namespaces and hash complete disk keys. Validate package revisions for all compiled clients/catalogs and avoid reading source payloads for compiled asset hits.
+- Require HTTPS for Bearer scheduler credentials, coordinate task locks by database, preserve failed/stale work across skipped invocations, report feed backlog and reject noninteger task defaults.
+- Bound duplicate-post cleanup input windows with resumable progress while retaining exact body/relation checks and transactional merge behavior.
+- No database migration. PHP 8.4 and completed 6.0.10 or newer remain required. Pause external scheduler invocation while upgrading every worker/node; old and new task-lock namespaces must not run together against shared data. Scheduler Bearer clients must use HTTPS. Cache entries may cold-miss after the key namespace change.
+
+## 7.1.0 - 2026-11-21
+
+- Keep Social publishing/discussion components, controllers, styles and translations with their module; remove retired core presentation classes and duplicate discussion resource preparation. Core public pages no longer depend on these Social resources.
+- Make privacy, sitemap, crawler documents and feed discovery reflect registered active owners. Remove duplicate site descriptions, missing translation keys and Social-specific guidance from core-only sites.
+- Unify HTTP error presentation, HEAD/error cache policy, generated-avatar delivery and compressed ETag validation. Validate flat oEmbed XML, derive RSS enclosure metadata from its owner and simplify TXT exports.
+- Share guarded resource-editor refresh, active-tab/history restoration and independent section drafts. Settings save only their selected section, validate before atomic database writes, invalidate caches after commit and reconcile canonical values through the original components.
+- Mark unsaved editor tabs and mobile options with an asterisk, clearing only saved or manually restored drafts.
+- Limit update deletion manifests to module roots owned by each distribution. Core updates preserve independently installed modules; runtime ownership protection remains strict even for absent deletion targets.
+- No database migration. PHP 8.4 and completed 6.0.10 or newer remain required. Extension authors must update imports of moved Social UI helpers. Settings PATCH now returns the password-safe editor `sections` resource rather than the retired saved/images summary.
+
+## 7.0.0 - 2026-11-21
+
+- Make the core-only framework a complete foundation for independent applications, with explicit installation state, stable translation ownership and product-specific update channels. Publish core and Social installation/update packages together.
+- Remove the unused Blog module and its assembly preset. Reject updates that would discard an installed Blog owner before changing files or data.
+- Consolidate Social into Posts, Discussion, Profiles, Bots, Moderation, Search and Site; remove forwarding classes, duplicate presentation paths and obsolete providers without altering published migration history.
+- Separate Identity account APIs under `/api/users` from Social profiles and follows under `/api/profiles`. Retire the duplicate Social search page/API; use `/search/all`, `/api/search/query` and `/api/search/challenges`.
+- Add lightweight, optional public themes with a metadata-only manifest and render-only PHP layout. Keep each theme's CSS, JavaScript and images together; remove module-owned themes and the alternate global page renderer. Saved retired theme IDs fall back to the core layout.
+- Move shared client sources into Core/Ui and retain function-specific assets with their core/module owner. Leave the public asset directory for generated outputs, resolve relative CSS assets consistently, and preserve the public embed-script entry.
+- Select public, administration and installation JavaScript, CSS, components and translations through owner manifests. Remove the central CSS index and prevent core public pages from loading Social feed controllers or administrative list filters.
+- Preserve shared form/dialog behavior, data visibility, cursor ordering, module activation, configuration and uploads. Introduce no database migration; updates require a completed 6.0.10 installation or newer.
+- Breaking extension changes: replace `Contributions::themes`/`PageTheme` with standalone themes, update client source imports to their owner paths, and pass owned application-relative source paths to the asset helper. Deploy matching runtime and generated assets together.
+
+## 6.3.1 - 2026-11-21
+
+- Unify links without underlines and remove the retired inline-link stylesheet from update installations.
+- Use subtle table striping, neutral hover/keyboard feedback and italic inactive descriptions; keep sticky header cells opaque while scrolling.
+- Refine dark mode with graphite surfaces, restrained semantic colors and shared primary-button fill tokens; remove button hover movement.
+- Reuse neutral interaction surfaces across disclosures, menus, filters and clickable identity rows. Link bot feed names directly to their source URL.
+- Simplify installation with compact step tabs, a native language selector and separate action footers, with Back on the left and the primary action on the right.
+- Preserve data, module activation, API contracts and the completed 6.0.10 update baseline; introduce no database migrations.
+
+## 6.3.0 - 2026-11-21
+
+- Replace the administration overview with typed, owner-registered dashboard widgets and a shared statistics selector that loads only the selected group.
+- Move cache diagnostics to a dedicated grid showing runtime cache state, asset generation, minification, configured browser policies and anonymously observed HTTP cache/compression headers.
+- Share scalable avatar and content-icon rows across user/bot tables, other administration lists and dashboard widgets; display table states as readable badges.
+- Generate decorative badge, alert and toast symbols through CSS masks from the canonical icon sprite, reducing repeated SVG markup and notification JavaScript.
+- Fix the stylesheet boundary that removed spacing between the homepage feed switch and its first card; remove duplicate discussion-button styling and obsolete dashboard presentation code.
+- Preserve module independence, API authorization, form drafts and notification lifecycle. Introduce no database migration and retain the completed 6.0.10 update baseline.
+
+## 6.2.0 - 2026-11-20
+
+- Introduce shared UI scale and density tokens for typography, controls, dialogs, pagination and toasts. Use compact, flat administration with a distinct dark navigation panel and accessible light/dark colours.
+- Standardize mobile below 900px and desktop from 900px; remove intermediate layout breakpoints. Keep desktop table headers and pagination fixed while table content scrolls, with normal page scrolling on mobile.
+- Unify dialog kinds, sizes, viewport handling and toast tones; preserve lazy resources, draft guards, focus, history and native touch behavior. Restore module-activation and Site Health flash feedback.
+- Replace field help blocks with contextual information controls, normalize typed input icons and validation, and add localized copy controls to read-only code.
+- Derive settings presentation from lazy owner component lookups instead of embedding a settings catalog in each admin document. Translate only presentation properties and preserve defaults and options as data.
+- Add a reusable public sidebar workspace with source navigation from active search registrations. Social results reuse post cards; Blog search and listing share article summaries. Preserve independent owner data, visibility, canonical API responses and stable cursors.
+- Simplify bot account editors and dashboard summaries; preserve avatar editing, existing accounts and module activation. Introduce no database migrations and retain the completed 6.0.10 update baseline.
+
 ## 6.1.4 - 2026-11-19
 
 - Consolidate product pages, menus and editor bodies in owner component catalogs. Retire seventeen redundant PHP templates while retaining document, layout, error and embed boundaries.

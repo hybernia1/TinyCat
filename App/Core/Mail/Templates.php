@@ -18,7 +18,7 @@ final class Templates
 
         try {
             return \TinyCat\Database\Connection::one('SELECT id, username, email, email_notifications, locale FROM users WHERE id = ? LIMIT 1', [$userId]);
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return null;
         }
     }
@@ -100,7 +100,7 @@ final class Templates
             $subject = \TinyCat\Support\Localization::format($subject, $vars);
             $body = \TinyCat\Support\Localization::format($body, $vars);
             return \TinyCat\Core\Mail\Smtp::email_smtp_send($address, $subject, $body);
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return false;
         }
     }

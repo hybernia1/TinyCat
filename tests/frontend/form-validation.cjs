@@ -7,41 +7,53 @@ if (!browser) { console.log('SKIP native form validation: set TINYCAT_TEST_CHROM
 const root = path.resolve(__dirname, '../..'), php = process.env.TINYCAT_TEST_PHP || 'php';
 const assets = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--validation'], {encoding:'utf8',maxBuffer:8e6}));
 const templates = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--templates'], {encoding:'utf8',maxBuffer:8e6}));
+Object.assign(templates, JSON.parse(require('node:child_process').execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.resolve(__dirname,'../presentation/fixtures/component-parity.php'), '--settings-templates'], {encoding:'utf8',maxBuffer:8e6})));
 const source = assets.map(asset => asset.source).join('\n');
 const css = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--styles'], {encoding:'utf8',maxBuffer:8e6}));
 const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/form-validation-fixture.js'),'utf8');
 const settingsSchema = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--settings'], {encoding:'utf8',maxBuffer:8e6}));
-const settingsPresentation = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--settings-presentation'], {encoding:'utf8',maxBuffer:8e6}));
 const adminDefinitions = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--admin-definitions'], {encoding:'utf8'}));
-const blogSettings = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--blog-settings'], {encoding:'utf8',maxBuffer:8e6}));
+const moduleSettings = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--module-settings'], {encoding:'utf8',maxBuffer:8e6}));
 const socialConstraints = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--social-constraints'], {encoding:'utf8'}));
 const inputConstraints = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--constraints'], {encoding:'utf8',maxBuffer:8e6}));
 const healthBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/site-health','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
 const healthAction = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--health-action'], {encoding:'utf8'}));
 const healthSource = healthBundle.assets.map(asset => asset.source).join('\n');
+const healthCsBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/site-health','cs','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
+const healthCs = healthCsBundle.assets.map(asset => asset.source).join('\n');
+const schedulerMarkup = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--scheduler-help'], {encoding:'utf8',maxBuffer:8e6}));
+const schedulerSource = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/cron','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6})).assets.map(asset => asset.source).join('\n');
+const publicBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/author/2','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
+const publicSource = publicBundle.assets.map(asset => asset.source).join('\n');
+const queueBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/bots/queue','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
+const queueSource = queueBundle.assets.map(asset => asset.source).join('\n');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(),'tinycat-form-validation-'));
 let server;
 (async function () {
 try {
   const file = path.join(temporary,'fixture.html');
-  const fixtureHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="csrf-token" content="test"><style>${css}</style></head><body><button id="opener">Open</button><pre id="validation-test-results"></pre><script>window.TinyCat = {adminDefinitions: ${JSON.stringify(adminDefinitions).replace(/</g,'\\u003c')}};\n document.body.dataset.settingsPresentation = ${JSON.stringify(JSON.stringify(settingsPresentation)).replace(/</g,'\\u003c')};\n${source}\nTinyCat.components.register(${JSON.stringify(templates).replace(/</g,'\\u003c')});\nwindow.settingsSchema = ${JSON.stringify(settingsSchema).replace(/</g,'\\u003c')};\nwindow.inputConstraints = ${JSON.stringify(inputConstraints)}; window.socialConstraints = ${JSON.stringify(socialConstraints)};
-window.blogSettings = ${JSON.stringify(blogSettings).replace(/</g,'\\u003c')};\n${fixture}</script></body></html>`;
-  const healthHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="csrf-token" content="test"><style>${css}</style></head><body><pre id="validation-test-results"></pre>${healthAction}<script>document.body.dataset.settingsPresentation=${JSON.stringify(JSON.stringify(settingsPresentation)).replace(/</g,'\\u003c')};
+  const fixtureHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="csrf-token" content="test"><style>${css}</style></head><body><button id="opener">Open</button><pre id="validation-test-results"></pre><script>window.TinyCat = {adminDefinitions: ${JSON.stringify(adminDefinitions).replace(/</g,'\\u003c')}};\n${source}\nTinyCat.components.register(${JSON.stringify(templates).replace(/</g,'\\u003c')});\nwindow.settingsSchema = ${JSON.stringify(settingsSchema).replace(/</g,'\\u003c')};\nwindow.inputConstraints = ${JSON.stringify(inputConstraints)}; window.socialConstraints = ${JSON.stringify(socialConstraints)};
+window.moduleSettings = ${JSON.stringify(moduleSettings).replace(/</g,'\\u003c')};\n${fixture}</script></body></html>`;
+  const healthHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="csrf-token" content="test"><style>${css}</style></head><body><pre id="validation-test-results"></pre>${healthAction}<script>
 ${healthSource}
 window.settingsSchema=${JSON.stringify(settingsSchema).replace(/</g,'\\u003c')};
 ${fixture}</script></body></html>`;
   fs.writeFileSync(file, fixtureHtml);
-  server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{res.setHeader("Content-Type","text/html");res.end(fs.readFileSync(process.argv[1]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', file], {stdio:['ignore','pipe','pipe']});
+  const publicHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="csrf-token" content="test"><style>${css}</style></head><body><pre id="validation-test-results"></pre><script>${publicSource}\n${fixture}</script></body></html>`;
+  const queueHtml = publicHtml.replace(publicSource, () => queueSource + '\nwindow.socialConstraints=' + JSON.stringify(socialConstraints) + ';');
+  const assetFile = path.join(temporary, 'deferred-assets.json');
+  fs.writeFileSync(assetFile, JSON.stringify(Object.assign({}, healthBundle.deferred_assets, healthCsBundle.deferred_assets, publicBundle.deferred_assets, queueBundle.deferred_assets)));
+  server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{const assets=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));const asset=assets[req.url];res.setHeader("Content-Type",asset!==undefined?(req.url.endsWith(".css")?"text/css":"application/javascript"):"text/html");res.end(asset!==undefined?asset:fs.readFileSync(process.argv[1]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', file, assetFile], {stdio:['ignore','pipe','pipe']});
   const port = await new Promise((resolve,reject) => { server.once('error',reject); server.stdout.once('data',data=>resolve(Number(String(data).trim()))); });
   let checks = 0;
-  for (const mode of ['health-shell','social-forms','social-constraints','constraints','creation','settings','settings-blog','moderation','report','server','native','success','scroll','summary','nested','proxy']) {
-    fs.writeFileSync(file, mode === 'health-shell' ? healthHtml : fixtureHtml);
+  for (const mode of ['auth-switch','javascript-audit','code-copy','scheduler-help','field-types','help-info','help-info-cs','queue-edit','health-shell','social-forms','social-constraints','constraints','creation','settings','settings-module','moderation','report','server','native','success','scroll','summary','nested','proxy']) {
+    fs.writeFileSync(file, mode === 'scheduler-help' ? healthHtml.replace(healthSource, () => schedulerSource).replace(healthAction, () => schedulerMarkup) : mode === 'help-info-cs' ? healthHtml.replace(healthSource, () => healthCs) : mode === 'queue-edit' ? queueHtml : ['health-shell','help-info'].includes(mode) ? healthHtml : ['auth-switch','social-forms','code-copy'].includes(mode) ? publicHtml : fixtureHtml);
     const url = new URL('http://127.0.0.1:'+port+'/fixture.html'); url.searchParams.set('case',mode);
     const output = execFileSync(browser, ['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-sync','--hide-scrollbars','--window-size=375,812','--virtual-time-budget=15000','--user-data-dir='+path.join(temporary,'profile-'+mode),'--dump-dom',url.href], {encoding:'utf8',timeout:30000,maxBuffer:8e6,stdio:['ignore','pipe','pipe']});
     const match = output.match(/<pre id="validation-test-results">([\s\S]*?)<\/pre>/);
     assert.ok(match && match[1], 'The native validation fixture must finish: '+mode);
     const result = JSON.parse(match[1].replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'));
-    assert.ok(result.ok, JSON.stringify(result)); checks += result.checks.length;
+    assert.ok(result.ok, mode + ': ' + JSON.stringify(result)); checks += result.checks.length;
   }
   console.log(`PASS native modal validation (${checks} checks)`);
 } finally {

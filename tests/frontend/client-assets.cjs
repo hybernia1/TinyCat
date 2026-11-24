@@ -22,19 +22,53 @@ function load(route, locale = "en", compiled = false) {
   const emptyRoot = { dataset: {}, classList: { add() {}, remove() {}, toggle() {} }, querySelectorAll() { return []; }, querySelector() { return null; } };
   const document = { readyState: "loading", body: emptyRoot, documentElement: emptyRoot, addEventListener() {}, querySelectorAll() { return []; }, querySelector() { return null; }, getElementById() { throw new Error("Catalogs must not be read from DOM"); } };
   const window = { TinyCat: {}, location: new URL("https://tinycat.test" + route), addEventListener() {}, setInterval() {} };
-  const context = vm.createContext({ window, document, URL, URLSearchParams, console, Set, Map });
+  const context = vm.createContext({ window, document, URL, URLSearchParams, TextEncoder, console, Set, Map });
   for (const asset of bundle.assets) vm.runInContext(asset.source, context, { filename: asset.url });
   window.TinyCat.init();
   check(window.TinyCat.modules.navigationUrl({ dataset: {}, getAttribute() { return null; }, closest() { return null; } }) === "", "Non-status navigation does not require the status module: " + route);
   check(window.TinyCat.i18n.locale() === locale, route + " boots the requested locale with external assets in delivery order");
-  return { ...bundle, T: window.TinyCat };
+  return { ...bundle, T: window.TinyCat, context, document };
 }
 const publicPage = load("/");
+for (const mode of [false, true, "min"]) {
+  for (const route of ["/login", "/register", "/recovery", "/logout", "/privacy", "/notifications"]) {
+    const page = load(route, "en", mode);
+    check(page.T.authentication && !page.T.status && !page.T.socialUsers && !page.T.site, "Core public pages exclude the Social feed runtime in every delivery variant: " + route);
+    check(!page.T.filters && !page.T.adminDefinitions && !page.T.settings, "Public pages exclude administrative controllers: " + route);
+    check(!page.definitions.includes("status/card") && !page.definitions.includes("bots/sources") && !page.definitions.includes("users/admin-fields"), "Core public catalogs exclude domain and admin views: " + route);
+    check(!Object.keys(page.catalog).some(key => key.startsWith("bots.") || key.startsWith("settings.fields.") || key.startsWith("settings.sections.") || key === "settings.title"), "Core public catalogs exclude administrative editor translations: " + route);
+  }
+  const search = load("/search/all", "en", mode);
+  check(search.T.status && !search.T.socialUsers && search.definitions.includes("search/posts") && search.definitions.includes("status/card"), "Search delivers the owner's SSR card and interactive dependencies in every delivery variant");
+  check(search.sources.includes("App/Modules/Social/assets/status/index.js"), "Search cards use the same status controller as feed cards");
+  check(search.style_sources.includes("App/Modules/Social/assets/status/styles/status-header.css") && search.style_sources.includes("App/Modules/Social/assets/status/styles/status-content-mobile.css"), "Search SSR cards receive the owner's desktop and mobile styles");
+  check(new Set(search.sources).size===search.sources.length && new Set(search.style_sources).size===search.style_sources.length, "Search dependencies are initialized and styled once");
+  const queue = load("/admin/bots/queue", "en", mode);
+  check(["status/edit-fields", "status/dialog-form"].every(name => queue.definitions.includes(name)), "Bot queue delivers its complete status editor dependency in every asset variant");
+  const profile = load("/author/2", "cs", mode);
+  const followForm = { dataset: {}, getAttribute: name => name === "action" ? "/api/profiles/2/followers/me" : null };
+  const response = { data: { author_id: 2, following: true, followers_count: 1, following_count: 0 } };
+  check(profile.T.accounts.result(followForm, response, null) === false, "Core accounts leave relationship responses to their owner in every public asset variant");
+  let handled = false;
+  profile.T.socialUsers.result = (source, result) => { handled = source === followForm && result === response; return []; };
+  profile.T.modules.result(followForm, response, null);
+  check(handled, "The actual public module chain delivers follow results to Social");
+}
 check(publicPage.T.accounts !== publicPage.T.socialUsers && typeof publicPage.T.accounts.follow === "undefined" && typeof publicPage.T.socialUsers.profiles === "function", "Social relationships never mutate the core account service");
-check(typeof publicPage.T.accounts.list === "undefined" && publicPage.T.accounts.avatarUpload, "Public account controls keep avatar editing without the administrative list adapter");
+check(typeof publicPage.T.accounts.list === "undefined" && !publicPage.T.accounts.avatarUpload && publicPage.T.deferredAssets.script, "Public account controls defer avatar editing without the administrative list adapter");
+for (const mode of [false, true, "min"]) {
+  for (const route of ["/login", "/account", "/access/notifications"]) {
+    const access = load(route, "en", mode);
+    check(!access.sources.some(source => source.startsWith("App/Modules/")), "Access delivery excludes optional module assets in source and compiled variants: " + route);
+    check(!access.T.search && !access.T.siteAnalytics, "Access delivery omits public search and analytics: " + route);
+    check(Boolean(access.T.authentication.modal), "Access delivery preserves lazy account and authentication dialogs: " + route);
+  }
+}
 const login = load("/login");
-check(typeof login.T.accounts.list === "undefined" && login.T.accounts.modal, "Login keeps resource authentication dialogs without user-list code");
+check(!login.sources.some(source => source.endsWith("avatar-editor.js") || source.endsWith("Identity/assets/controller.js")), "Login omits account and avatar editors");
+check(!login.T.accounts && login.T.authentication.modal, "Login keeps resource authentication dialogs without user-list code");
 check(publicPage.T.status && publicPage.T.socialUsers && !publicPage.T.bots && !publicPage.T.moderation, "Public pages load their own feature scripts");
+check(!publicPage.T.filters, "The public feed does not load administrative list filters");
 check(!publicPage.definitions.includes("users/admin-fields") && !publicPage.definitions.includes("bots/sources"), "Public bundles exclude administration components");
 const users = load("/admin/users");
 check(users.T.adminDefinitions["core.users"].component === "users/list", "User administration loads its declared list");
@@ -53,7 +87,14 @@ check(load("/admin/updates").sources.includes("App/Core/Updates/assets/index.js"
 check(!load("/install").T.status, "Installer boots without public modules");
 check(!load("/install").definitions.includes("ui/modal") && load("/admin").definitions.includes("ui/modal"), "Installer excludes unused dialog catalogs while administration retains them.");
 check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
-check(!load("/install").sources.some(s => s.includes("/Modules/Social/") || s.includes("/ui/ajax-bindings.js")) && load("/install").sources.some(s => s.includes("/ui/form-requests.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
+check(!load("/install").sources.some(s => s.includes("/Modules/Social/") || s === "App/Core/Ui/assets/ajax-bindings.js") && load("/install").sources.includes("App/Core/Ui/assets/form-requests.js"), "Installer uses shared API form transport without feed and administration controllers");
+check(load("/install").sources.includes("App/Core/Ui/assets/form-constraints.js") && !load("/install").sources.includes("App/Core/Ui/assets/form-state.js"), "Installer shares byte constraints without loading draft management");
+{
+  const installer = load('/install').T;
+  const field = {value:'éééé', name:'password', dataset:{minBytes:'8'}, matches:()=>true, hasAttribute:name=>name==='data-min-bytes', setCustomValidity(message){this.error=message;}};
+  installer.forms.syncConstraints(field); check(!field.error, 'Installer accepts the eight-byte Unicode boundary');
+  field.value='ééé'; installer.forms.syncConstraints(field); check(Boolean(field.error), 'Installer rejects a password below the byte boundary');
+}
 const schedulerPage = load("/admin/cron/list");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");
@@ -88,3 +129,37 @@ check(i18n.t("missing.translation") === "missing.translation", "Unknown translat
 i18n.register("test", { "test.label": "Test" });
 check(!i18n.has("common.close") && i18n.t("test.label") === "Test", "Changing locales clears stale messages");
 console.log("PASS scoped external client assets and translation runtime (" + checks + " checks)");
+
+(async function () {
+  for (const mode of [false, true, "min"]) {
+    for (const route of ["/", "/tag/games", "/author/8"]) {
+      const page = load(route, "cs", mode), T = page.T;
+      check(!T.publishing.controllers.editor && !T.accounts.avatarUpload, "Reading a public page excludes editor implementations: " + route);
+      if (mode) check(T.deferredAssets.script.includes("-min.") === (mode === "min") && T.deferredAssets.style.includes("-min.") === (mode === "min"), "Deferred compiled assets respect JS and CSS minification settings");
+      let requests = 0, failOnce = route.startsWith("/author");
+      page.document.createElement = tag => ({ tagName: tag, remove() {} });
+      page.document.head = { appendChild(node) {
+        requests++;
+        Promise.resolve().then(() => {
+          if (node.src && failOnce) { failOnce = false; node.onerror(); return; }
+          if (node.src) vm.runInContext(page.deferred_assets[new URL(node.src).pathname], page.context);
+          node.onload();
+        });
+      } };
+      await T.deferred.resource(new URL("https://tinycat.test/api/users-other/8/avatar"));
+      check(requests === 0, "Resource prefixes match complete path segments");
+      const resource = new URL("https://tinycat.test" + (route.startsWith("/tag") ? "/api/moderation/report-options" : route.startsWith("/author") ? "/api/users/8/avatar" : "/api/statuses/8"));
+      if (failOnce) {
+        await assert.rejects(T.deferred.resource(resource));
+        check(!T.accounts.avatarUpload, "A failed script load does not initialize editor modules");
+      }
+      await Promise.all([T.deferred.resource(resource), T.deferred.resource(resource)]);
+      check(T.publishing.controllers.editor && T.accounts.avatarUpload, "Editor implementations become available on demand: " + route);
+      check(T.components.render && T.i18n.t("account.avatar_edit") !== "account.avatar_edit", "Deferred editors retain their locale and component runtime");
+      const previous = requests;
+      await T.deferred.resource(new URL("https://tinycat.test/api/users/8/avatar"));
+      check(requests === previous && requests === (route.startsWith("/author") ? 3 : 2), "Concurrent editor opens share assets and failed scripts can retry without reloading CSS");
+    }
+  }
+  console.log("PASS deferred editor loading in source, compiled and minified public bundles");
+})().catch(error => { console.error(error); process.exitCode = 1; });

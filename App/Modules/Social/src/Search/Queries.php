@@ -24,12 +24,6 @@ final class Queries
         return self::length($query) < 2 || self::length($query) > self::MAX_QUERY_LENGTH;
     }
 
-    /** @return array<string, mixed> */
-    public static function public_search_empty_result(string $query): array
-    {
-        return ['query' => $query, 'tags' => [], 'users' => [], 'content' => []];
-    }
-
     public static function public_search_excerpt(string $text, string $query, int $limit = 120): string
     {
         $text = trim((string) preg_replace('/\s+/u', ' ', $text));
@@ -138,7 +132,7 @@ final class Queries
         $users = [];
 
         foreach (\TinyCat\Database\Query::select(
-            'SELECT u.id, u.username, u.username AS name, u.avatar_exists, u.avatar_appearance, u.updated_at, u.bio
+            'SELECT u.id, u.username, u.username AS name, u.avatar_exists, u.avatar_appearance, u.avatar_version, u.updated_at, u.bio
                 FROM users u'
         )
             ->where('u.status = ?', 'active')
@@ -164,27 +158,6 @@ final class Queries
 
         return $users;
     }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function public_search_suggestions(string $query, int $limit = 5): array
-    {
-        $query = \TinyCat\Social\Search\Queries::public_search_normalize_query($query);
-        $limit = max(1, min(5, $limit));
-
-        if ($query === '' || \TinyCat\Social\Search\Queries::public_search_query_too_short($query)) {
-            return \TinyCat\Social\Search\Queries::public_search_empty_result($query);
-        }
-
-        return [
-            'query' => $query,
-            'tags' => \TinyCat\Social\Search\Queries::public_search_suggestion_tags($query, $limit),
-            'users' => \TinyCat\Social\Search\Queries::public_search_suggestion_users($query, $limit),
-            'content' => [],
-        ];
-    }
-
 
     /**
      * Match all words in one source (post body or an attached link).
@@ -234,7 +207,7 @@ final class Queries
             ? "CONCAT_WS(' ', l.normalized_url, l.title, l.description)"
             : "COALESCE(l.normalized_url, '') || ' ' || COALESCE(l.title, '') || ' ' || COALESCE(l.description, '')";
         [$link, $linkParams] = self::textPredicate($query, 'l.normalized_url, l.title, l.description', '(' . $linkText . ')');
-        [$mediaSql, $mediaParams] = \TinyCat\Social\Posts\Feed::archive_predicate($media);
+        [$mediaSql, $mediaParams] = \TinyCat\Social\Posts\Archive::predicate($media);
         if ($mediaSql !== '') {
             $body = '(' . $body . ') AND ' . $mediaSql;
             $link = '(' . $link . ') AND ' . $mediaSql;
@@ -242,7 +215,7 @@ final class Queries
             $linkParams = [...$linkParams, ...$mediaParams];
         }
         $now = \TinyCat\Support\Dates::dateDb();
-        [$cursorSql, $cursorParams] = \TinyCat\Social\Posts\Feed::public_status_cursor_condition($cursorAt, $cursorId);
+        [$cursorSql, $cursorParams] = \TinyCat\Social\Posts\Archive::cursor($cursorAt, $cursorId);
         $cursorSql = $cursorSql === '' ? '' : ' AND ' . $cursorSql;
         // A source ORDER/LIMIT can make MySQL choose a full chronological scan
         // for rare literal LIKE terms. Keep their selective plan; still limit
@@ -254,7 +227,7 @@ final class Queries
         $selection = new \TinyCat\Database\Query(
             'SELECT c.id, c.body, c.author_id, c.published_at, matches.link_excerpt,
                     u.username AS author_name, u.username AS author_username,
-                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.updated_at AS author_updated_at
+                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version, u.updated_at AS author_updated_at
              FROM (SELECT id, published_at, MAX(link_excerpt) AS link_excerpt FROM (
                  SELECT * FROM (SELECT c.id, c.published_at, NULL AS link_excerpt FROM social_posts c INNER JOIN users u ON u.id = c.author_id
                  WHERE u.status = ? AND c.published_at <= ? AND c.status = \'published\' AND c.kind = \'post\' AND ' . $body . $cursorSql . '
@@ -289,7 +262,7 @@ final class Queries
         );
         $selection->whereIn('ct.term_id', $ids)->where('u.status = ?', 'active');
         $counts = [];
-        foreach (\TinyCat\Social\Posts\Feed::public_status_apply_visibility($selection)->group('ct.term_id')->all() as $row) {
+        foreach (\TinyCat\Social\Posts\Archive::visible($selection)->group('ct.term_id')->all() as $row) {
             $counts[(int) $row['term_id']] = (int) $row['posts_count'];
         }
         foreach ($rows as &$row) { $row['posts_count'] = $counts[(int) $row['id']] ?? 0; }
@@ -309,7 +282,7 @@ final class Queries
         $column = $tag ? 'name' : 'username';
         $table = $tag ? 'social_terms' : 'users';
         $where = $tag ? '' : "status = 'active' AND ";
-        $sql = 'SELECT * FROM (SELECT ' . ($tag ? 'id, name' : 'id, username, bio, avatar_exists, avatar_appearance, updated_at')
+        $sql = 'SELECT * FROM (SELECT ' . ($tag ? 'id, name' : 'id, username, bio, avatar_exists, avatar_appearance, avatar_version, updated_at')
             . ', CASE WHEN ' . $column . ' = ? THEN 0 WHEN ' . $column . " LIKE ? ESCAPE '!' THEN 1 ELSE 2 END AS search_rank"
             . ' FROM ' . $table . ' WHERE ' . $where . $column . " LIKE ? ESCAPE '!') matches";
         $params = [$needle, Connection::escapeLike($needle) . '%', '%' . Connection::escapeLike($needle) . '%'];
@@ -338,8 +311,9 @@ final class Queries
      */
     public static function collection(string $query, string $type = 'content', array $cursor = [], int $limit = 0, string $media = ''): array
     {
+        if (\TinyCat\Http\Validator::validate($cursor, ['cursor_at' => 'string|max:19', 'cursor_id' => 'integer|min:1', 'cursor_rank' => 'integer|min:0|max:2', 'cursor_name' => 'string|max:120']) !== []) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 422, 'validation_error'); }
         $query = self::public_search_normalize_query($query);
-        $media = \TinyCat\Social\Posts\Feed::archive_type($media);
+        $media = \TinyCat\Social\Posts\Archive::type($media);
         $type = in_array($type, ['content', 'users', 'tags'], true) ? $type : 'content';
         $limit = $limit > 0 ? min(50, $limit) : \TinyCat\Social\Posts\Feed::public_status_page_limit();
         $minimum = $type === 'content' ? 3 : 2;
@@ -361,8 +335,7 @@ final class Queries
         $items = array_slice($items, 0, $limit);
         foreach ($items as &$item) { unset($item['cursor_rank'], $item['cursor_name']); }
         unset($item);
-        $next = $done ? '' : '/api/search/results?' . http_build_query(['q' => $query, 'type' => $type, ...($media !== '' ? ['media' => $media] : []), 'limit' => \TinyCat\Social\Posts\Feed::public_status_page_limit(), ...$nextCursor]);
-        return ['query' => $query, 'type' => $type, 'items' => $items, 'next_url' => $next, 'done' => $done,
+        return ['query' => $query, 'type' => $type, 'items' => $items, 'cursor' => $done ? [] : $nextCursor, 'done' => $done,
             'minimum_length' => $minimum, 'valid_query' => $valid];
     }
 }

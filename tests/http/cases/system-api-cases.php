@@ -9,7 +9,7 @@ $assert($status === 404, 'Installed setup endpoints are hidden even without a CS
 [$status, $locked] = $request('POST', '/api/installation/steps/language', ['locale' => 'en'], '', $csrf);
 $assert($status === 404 && $locked['code'] === 'not_found', 'Installed sites hide setup writes even with a valid CSRF token.');
 $systemDb->exec("DELETE FROM settings WHERE setting_key = 'cron.token'");
-[$status, $unconfigured] = $request('GET', '/api/scheduler/health');
+[$status, $unconfigured] = $request('GET', '/api/scheduler/health', null, '', ['X-Forwarded-Proto' => 'https']);
 $assert($status === 503 && $unconfigured['code'] === 'scheduler_not_configured', 'Scheduler authorization requires an explicitly configured token.');
 [$status] = $exportRequest('/admin/cron', 'GET', ['X-Test-Role' => 'admin']);
 $assert($status === 200 && (int) $systemDb->query("SELECT COUNT(*) FROM settings WHERE setting_key = 'cron.token'")->fetchColumn() === 0, 'Viewing scheduler settings does not create a token over GET.');
@@ -17,12 +17,17 @@ $assert($status === 200 && (int) $systemDb->query("SELECT COUNT(*) FROM settings
 $token = $createdToken['data']['token'];
 $assert($status === 201 && strlen($token) === 64, 'Scheduler credentials are created explicitly through the admin API.');
 foreach ([[], ['Authorization' => 'Bearer invalid'], ['X-TinyCat-Cron' => $token]] as $headers) {
-    [$status] = $request('GET', '/api/scheduler/health', null, 'admin', $headers);
+    [$status] = $request('GET', '/api/scheduler/health', null, 'admin', $headers + ['X-Forwarded-Proto' => 'https']);
     $assert($status === 401, 'A session or a nonstandard token header cannot replace Bearer authorization.');
 }
-[$status] = $request('GET', '/api/scheduler/health?bearer=' . $token);
+[$status] = $request('GET', '/api/scheduler/health?bearer=' . $token, null, '', ['X-Forwarded-Proto' => 'https']);
 $assert($status === 401, 'Query-string credentials are not accepted.');
-$bearer = ['Authorization' => 'Bearer ' . $token];
+$plainBearer = ['Authorization' => 'Bearer ' . $token];
+foreach (['GET' => '/api/scheduler/health', 'POST' => '/api/scheduler/executions'] as $method => $endpoint) {
+    [$status, $insecure] = $request($method, $endpoint, null, '', $plainBearer);
+    $assert($status === 426 && $insecure['code'] === 'scheduler_https_required', 'Both Bearer transports require HTTPS before execution.');
+}
+$bearer = $plainBearer + ['X-Forwarded-Proto' => 'https'];
 $before = (int) $systemDb->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn();
 [$status, $health] = $request('GET', '/api/scheduler/health', null, '', $bearer);
 $assert($status === 200 && $health['code'] === 'scheduler_healthy' && $health['data']['available_tasks'] === ['feeds', 'cleanup', 'site-health'], 'Authenticated scheduler health uses the standard resource envelope.');
@@ -107,6 +112,8 @@ $assert($status === 200 && !str_contains($healthPage, 'Undefined array key') && 
 $assert($status === 409, 'Concurrent manual diagnostics use the same scheduler lock.');
 [$status, $manualHealth] = $request('POST', '/api/site-health/checks', [], 'admin', $csrf);
 $assert($status === 201 && $manualHealth['code'] === 'health_check_finished' && $manualHealth['data']['redirect'] === '/admin/site-health', 'Manual diagnostics use the canonical API and return resource data with a page redirect.');
+$healthyInspection = ($manualHealth['data']['execution']['tasks']['site-health']['summary']['health']['status'] ?? 'unknown') === 'ok';
+$assert(is_string($manualHealth['message']) && $manualHealth['message'] !== '' && $manualHealth['meta']['type'] === ($healthyInspection ? 'success' : 'warning'), 'Completed inspections carry a localized message and distinguish completion from health problems.');
 [$status, $healthSnapshot] = $request('GET', '/api/site-health', null, 'admin');
 $assert($status === 200 && count($healthSnapshot['data']['report']['checks']) === 9 && !$healthSnapshot['data']['stale'], 'The health resource exposes persisted check outcomes without executing new work.');
 [$status, $healthPage] = $exportRequest('/admin/site-health', 'GET', ['X-Test-Role' => 'admin']);

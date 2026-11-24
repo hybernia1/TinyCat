@@ -103,4 +103,44 @@ final class NotificationHistory
             \TinyCat\Database\Connection::exec("DELETE FROM notifications WHERE type IN ('content_comment','comment_like','comment_mention') AND subject_id=?", [$commentId]);
         }
     }
+
+    /** Match the same parent plus direct replies removed by Discussion; IDs remain type-scoped. */
+    public static function removeForCommentTree(int $commentId): void
+    {
+        if ($commentId < 1 || !\TinyCat\Core\Notifications\Delivery::available()) { return; }
+        self::removeSubjects('social_comments cc INNER JOIN social_posts c ON c.id = cc.content_id', 'cc.id',
+            "c.kind = 'post' AND (cc.id = ? OR cc.parent_id = ?)", [$commentId, $commentId],
+            ['content_comment', 'comment_like', 'comment_mention']);
+    }
+
+    /** @param array<mixed> $user */
+    public static function prepareAccountDelete(array $user): \TinyCat\Core\Identity\Deletion
+    {
+        $id = (int) $user['id'];
+        if ($id < 1 || !\TinyCat\Core\Notifications\Delivery::available()) { return new \TinyCat\Core\Identity\Deletion(); }
+        self::removeSubjects('social_posts c', 'c.id', "c.kind = 'post' AND c.author_id = ?", [$id],
+            ['content_like', 'content_mention', 'report_resolved', 'report_dismissed']);
+        self::removeSubjects('social_comments cc INNER JOIN social_posts c ON c.id = cc.content_id LEFT JOIN social_comments parent ON parent.id = cc.parent_id', 'cc.id',
+            "c.kind = 'post' AND (c.author_id = ? OR cc.user_id = ? OR parent.user_id = ?)", [$id, $id, $id],
+            ['content_comment', 'comment_like', 'comment_mention']);
+        return new \TinyCat\Core\Identity\Deletion();
+    }
+
+    /** SQL fragments are fixed owner definitions, never request input.
+     * MySQL DELETE subqueries can become dependent scans; a join uses the same subject indexes directly.
+     * @param list<mixed> $params
+     * @param non-empty-list<string> $types */
+    private static function removeSubjects(string $from, string $subject, string $where, array $params, array $types): void
+    {
+        if (\TinyCat\Database\Connection::driver() === 'mysql') {
+            // Equality on the first index column permits a ref lookup on (type, subject_id).
+            // An IN list here can turn the delete target into a repeated full scan.
+            $sql = 'DELETE n FROM ' . $from . ' INNER JOIN notifications n ON n.subject_id = ' . $subject . ' AND n.type = ? WHERE ' . $where;
+            foreach ($types as $type) { \TinyCat\Database\Connection::exec($sql, [$type, ...$params]); }
+            return;
+        }
+        $marks = implode(', ', array_fill(0, count($types), '?'));
+        \TinyCat\Database\Connection::exec('DELETE FROM notifications WHERE type IN (' . $marks . ') AND subject_id IN (SELECT ' . $subject . ' FROM ' . $from . ' WHERE ' . $where . ')', [...$types, ...$params]);
+    }
+
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 $sourceRoot = dirname(__DIR__, 3);
 if (($argv[1] ?? '') !== '--isolated') {
     $workspace = sys_get_temp_dir() . '/tinycat-account-module-' . bin2hex(random_bytes(10));
-    $excluded = ['App/Modules/Social', 'App/Modules/Blog', 'App/Core/Support/compiled', 'assets/build'];
+    $excluded = ['App/Modules/Social', 'App/Core/Support/compiled', 'assets/build'];
     $copy = static function (string $relative) use (&$copy, $sourceRoot, $workspace, $excluded): void {
         if (in_array($relative, $excluded, true)) { return; }
         $source = $sourceRoot . '/' . $relative; $target = $workspace . '/' . $relative;
@@ -56,6 +56,12 @@ $insert = $pdo->prepare('INSERT INTO users(username, email, password, role, loca
 foreach ([['Admin', 'admin@example.test', 'admin'], ['Member', 'member@example.test', 'user']] as [$name, $email, $role]) { $insert->execute([$name, $email, password_hash('Secret-123456', PASSWORD_DEFAULT), $role, 'en']); }
 $insert = null;
 $assert(TinyCat\Core\Identity\Readiness::ready(), 'Installed assembly is ready after an account with a password exists');
+$assert((int) $pdo->query('SELECT COUNT(*) FROM settings')->fetchColumn() === 0, 'Fresh settings fixture starts empty');
+TinyCat\Core\Installation\Installer::default_settings(['locale' => 'en']);
+$assert(TinyCat\Core\Settings\Store::setting('site.public_enabled') === false, 'Fresh core-only installation starts without a public website');
+$pdo->exec('DELETE FROM settings');
+TinyCat\Core\Settings\Store::reset();
+TinyCat\Support\Cache::forget('core_autoload_settings');
 $compile = require $workspace . '/tools/assets/compile-assets.php';
 $files = $compile();
 // A framework-only selection still includes identity and security without publication storage.
@@ -70,6 +76,8 @@ foreach (TinyCat\Support\ClientAssets::scopes() as $scope) {
 }
 $definitions = TinyCat\Support\ClientAssets::definitions('/admin/users');
 $assert(isset($definitions['users/admin-fields'], $definitions['users/auth-content']) && !isset($definitions['users/following-profile']), 'Accounts builds shared account components without following UI');
+$assert(array_filter(array_keys($definitions), static fn (string $name): bool => str_starts_with($name, 'publishing/')) === [], 'Core has no publication, comment or reaction component definitions');
+$assert(!is_file($workspace . '/App/Core/Ui/DiscussionResource.php') && !is_dir($workspace . '/App/Core/Ui/assets/content'), 'Core distribution carries no Social formatter or publication assets');
 foreach ($files as $path => $content) { $target = $workspace . '/' . $path; if (!is_dir(dirname($target))) { mkdir(dirname($target), 0700, true); } file_put_contents($target, $content); }
 mkdir($workspace . '/sessions', 0700);
 $server = null;
@@ -98,6 +106,25 @@ try {
     };
     for ($attempt = 0; $attempt < 50; $attempt++) { [$status, $data] = $request('/api/_accounts'); if ($status === 200) { break; } usleep(100_000); }
     $assert($status === 200, 'Selected Accounts module starts over HTTP'); $csrf = $data['data']['csrf'];
+    foreach ([400, 404, 500, 503] as $errorStatus) {
+        [$status, , $errorHtml, $errorHeaders] = $request('/fixture-error/' . $errorStatus);
+        $assert($status === $errorStatus && str_contains($errorHeaders['cache-control'] ?? '', 'no-store') && !str_contains($errorHtml, '/search/all') && str_contains($errorHtml, (string) $errorStatus), 'Core error actions and emergency fallback work without registered search: ' . $errorStatus);
+    }
+    [$status, , $privacy] = $request('/privacy');
+    $assert($status === 200 && str_contains($privacy, 'Data and Account') && !str_contains($privacy, 'privacy.intro'), 'Core privacy renders its own account policy without a Social translation or section');
+    [$status, , $llms, $llmsHeaders] = $request('/llms.txt');
+    $assert($status === 200 && !str_contains($llms, '/author/') && !str_contains($llms, '/tag/') && !str_contains($llms, '## Social') && str_contains($llmsHeaders['cache-control'] ?? '', 'max-age=0, must-revalidate'), 'Core LLM document has no Social claims and revalidates after module changes');
+    [$status, , $body] = $request('/llms.txt', extraHeaders: ['If-None-Match: ' . $llmsHeaders['etag']]);
+    $assert($status === 304 && $body === '', 'Unchanged LLM documents retain conditional caching');
+    foreach (['/sitemap.xml', '/sitemap-pages-1.xml', '/robots.txt', '/llms-full.txt'] as $path) {
+        [$status, , $body, $headers] = $request($path);
+        $assert($status === 200 && str_contains($headers['cache-control'] ?? '', 'max-age=0, must-revalidate') && !str_contains($body, '/author/') && !str_contains($body, '/tag/') && !str_contains($body, 'sitemap-status-'), 'Core discovery stays available without Social and revalidates: ' . $path);
+        if ($path === '/sitemap-pages-1.xml') { $assert(str_contains($body, '/privacy</loc>'), 'Core owns its public information URLs'); }
+    }
+    foreach (['/sitemap-authors-1.xml', '/sitemap-tags-1.xml', '/sitemap-status-1.xml', '/author/2/feed', '/tag/example/feed', '/search/feed?q=example'] as $path) {
+        [$status, , , $headers] = $request($path, extraHeaders: ['If-None-Match: "old-module-document"']);
+        $assert($status === 404 && str_contains($headers['cache-control'] ?? '', 'no-store'), 'Unregistered owner routes cannot return cached module content: ' . $path);
+    }
     foreach (['/login', '/register', '/recovery'] as $path) {
         [$status, , $html] = $request($path);
         $assert($status === 200 && str_contains($html, '<form') && str_contains($html, 'csrf-token') && str_contains($html, 'assets/build/'), 'Real HTML and compiled assets: ' . $path);
@@ -145,6 +172,16 @@ try {
         [$status, , $body, $headers] = $request('/?next=' . rawurlencode($next), actor: 'member');
         $assert($status === 200 && !isset($headers['location']) && str_contains($body, 'My account'), 'Authentication and unauthorized next destinations cannot create a homepage loop: ' . $next);
     }
+    [$status] = $request('/api/settings', 'PATCH', ['settings' => ['site.public_enabled' => false]], 'admin');
+    $assert($status === 200, 'Core-only settings can close the public surface');
+    foreach (['' => '/login', 'member' => '/account', 'admin' => '/admin'] as $actor => $target) {
+        [$status, , , $headers] = $request('/', actor: $actor);
+        $assert($status === 302 && $headers['location'] === $target, 'Closed core-only root resolves access without module dependencies: ' . $actor);
+    }
+    [$status, , $body] = $request('/account', actor: 'member');
+    $assert($status === 200 && str_contains($body, 'My account') && !str_contains($body, 'class="navbar"'), 'Closed core-only member account renders the access shell');
+    [$status] = $request('/api/settings', 'PATCH', ['settings' => ['site.public_enabled' => true]], 'admin');
+    $assert($status === 200, 'Core-only settings can reopen the public surface without a build');
     // Use the same physical copy (without Social) to exercise shared inbox/health services.
     \TinyCat\Core\Notifications\Schema::install($pdo);
     $foreignTables = array_column($pdo->query('PRAGMA foreign_key_list(notifications)')->fetchAll(PDO::FETCH_ASSOC), 'table');
@@ -178,7 +215,7 @@ try {
     [$status] = $request('/api/users/1', 'DELETE', [], 'admin'); $assert($status === 409, 'Primary administrator remains protected');
     [$status] = $request('/api/users/2', 'DELETE', [], 'admin'); $assert($status === 200, 'Selected account lifecycle supports deletion without social tables');
     $assert((int) TinyCat\Database\Connection::value('SELECT COUNT(*) FROM password_reset_tokens WHERE user_id = 2') === 0, 'Recovery records follow account deletion');
-    [$status] = $request('/api/users/2/following', actor: 'member'); $assert($status === 404, 'Social endpoints are absent');
+    [$status] = $request('/api/profiles/2/following', actor: 'member'); $assert($status === 404, 'Social endpoints are absent');
     [$status, , $svg] = $request('/avatar/generated/v1/2.svg'); $assert($status === 200 && str_starts_with($svg, '<svg'), 'Avatar route is owned by Accounts');
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }

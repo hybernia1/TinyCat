@@ -37,8 +37,15 @@ if (($argv[3] ?? '') === '--compiled' || ($argv[3] ?? '') === '--compiled-min') 
         $compiled = $compiledFiles[ltrim((string) parse_url($url, PHP_URL_PATH), '/')] ?? null;
         $assets[] = ['url' => $url, 'source' => $compiled ?? (string) file_get_contents($file)];
     }
-    echo json_encode(['locale' => $locale, 'assets' => $assets,
+    $compiledClient = \TinyCat\Support\CompiledAssets::client($path, $locale, \TinyCat\Support\ClientAssets::option('performance.minify_js'), \TinyCat\Support\ClientAssets::option('performance.minify_css'));
+    $deferred = $compiledClient['deferred'] ?? \TinyCat\Support\ClientAssets::deferred($path, $locale);
+    $deferredAssets = [];
+    foreach (array_filter([$deferred['script'] ?? null, $deferred['style'] ?? null]) as $url) {
+        $deferredAssets[$url] = $compiledFiles[ltrim($url, '/')] ?? (string) file_get_contents(\TinyCat\Support\Cache::file(basename($url), 'assets'));
+    }
+    echo json_encode(['locale' => $locale, 'assets' => $assets, 'deferred_assets' => $deferredAssets,
         'styles' => \TinyCat\Support\ClientAssets::styles($path),
+        'style_sources' => \TinyCat\Support\ClientAssets::sourceStyles($path),
         'sources' => \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($path)),
         'catalog' => \TinyCat\Support\ClientAssets::catalog($path, $locale),
         'definitions' => array_keys(\TinyCat\Support\ClientAssets::definitions($path)),

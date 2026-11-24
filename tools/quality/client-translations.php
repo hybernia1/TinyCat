@@ -31,36 +31,38 @@ return static function (array $catalogs): void {
     }
     $sourceChecks = [];
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {
-        \TinyCat\Support\ClientAssets::messages($scope);
-        $sources = \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($scope));
-        foreach ($sources as $source) {
-            if (isset($sourceChecks[$source])) { continue; }
-            $text = \TinyCat\Support\AssetGraph::read($source);
-            preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.(?:text|button|field|select)\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $text, $matches);
-            preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.dialog\(\s*[^,\r\n]+,\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $text, $dialogTitles);
-            preg_match_all('/\b(?:T|TinyCat)\.i18n\.plural\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $text, $plurals);
-            $sourceChecks[$source] = ['messages' => array_merge($matches[1], $dialogTitles[1]), 'plurals' => $plurals[1]];
-        }
-        foreach ($catalogs as $locale => $catalog) {
-            $selected = \TinyCat\Support\ClientAssets::catalog($scope, $locale, $catalog['app']);
-            if (in_array('assets/core/dates.js', $sources, true)) {
-                $dateKeys = ['relative.now'];
-                foreach (['past', 'future'] as $direction) {
-                    foreach (['minute', 'hour', 'day', 'week', 'month', 'year'] as $unit) {
-                        foreach (['single', 'one', 'few', 'many', 'other'] as $form) { $dateKeys[] = "relative.{$direction}.{$unit}.{$form}"; }
+        foreach ([false, true] as $complete) {
+            \TinyCat\Support\ClientAssets::messages($scope, $complete);
+            $sources = \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($scope, $complete));
+            foreach ($sources as $source) {
+                if (isset($sourceChecks[$source])) { continue; }
+                $text = \TinyCat\Support\AssetGraph::read($source);
+                preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.(?:text|button|field|select)\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $text, $matches);
+                preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.dialog\(\s*[^,\r\n]+,\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $text, $dialogTitles);
+                preg_match_all('/\b(?:T|TinyCat)\.i18n\.plural\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $text, $plurals);
+                $sourceChecks[$source] = ['messages' => array_merge($matches[1], $dialogTitles[1]), 'plurals' => $plurals[1]];
+            }
+            foreach ($catalogs as $locale => $catalog) {
+                $selected = \TinyCat\Support\ClientAssets::catalog($scope, $locale, $catalog['app'], $complete);
+                if (in_array('App/Core/Ui/assets/runtime/dates.js', $sources, true)) {
+                    $dateKeys = ['relative.now'];
+                    foreach (['past', 'future'] as $direction) {
+                        foreach (['minute', 'hour', 'day', 'week', 'month', 'year'] as $unit) {
+                            foreach (['single', 'one', 'few', 'many', 'other'] as $form) { $dateKeys[] = "relative.{$direction}.{$unit}.{$form}"; }
+                        }
+                    }
+                    foreach ($dateKeys as $key) {
+                        if (!array_key_exists($key, $selected)) { throw new RuntimeException("Missing date translation {$locale} {$key} in {$scope}"); }
                     }
                 }
-                foreach ($dateKeys as $key) {
-                    if (!array_key_exists($key, $selected)) { throw new RuntimeException("Missing date translation {$locale} {$key} in {$scope}"); }
-                }
-            }
-            foreach ($sources as $source) {
-                foreach ($sourceChecks[$source]['messages'] as $key) {
-                    if (!array_key_exists($key, $selected)) { throw new RuntimeException($source . ': undeclared ' . $locale . ' translation ' . $key . ' in ' . $scope); }
-                }
-                foreach ($sourceChecks[$source]['plurals'] as $key) {
-                    foreach (['one', 'few', 'many', 'other'] as $form) {
-                        if (!array_key_exists($key . '.' . $form, $selected)) { throw new RuntimeException($source . ': undeclared plural ' . $key . '.' . $form . ' in ' . $scope); }
+                foreach ($sources as $source) {
+                    foreach ($sourceChecks[$source]['messages'] as $key) {
+                        if (!array_key_exists($key, $selected)) { throw new RuntimeException($source . ': undeclared ' . $locale . ' translation ' . $key . ' in ' . $scope); }
+                    }
+                    foreach ($sourceChecks[$source]['plurals'] as $key) {
+                        foreach (['one', 'few', 'many', 'other'] as $form) {
+                            if (!array_key_exists($key . '.' . $form, $selected)) { throw new RuntimeException($source . ': undeclared plural ' . $key . '.' . $form . ' in ' . $scope); }
+                        }
                     }
                 }
             }

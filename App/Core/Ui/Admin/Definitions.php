@@ -79,12 +79,12 @@ final class Definitions
     }
 
     /** @param array<string, mixed> $data */
-    public static function page(string $id, array $data): void
+    public static function page(string $id, array $data, ?string $actions = null): void
     {
         \TinyCat\Core\Identity\Access::require_admin();
         $definition = self::get($id); $title = Localization::t($definition['title']);
         $content = AdminViews::listCard($title, $definition['icon'], substr($definition['target'], 1), $definition['filterId'], new Markup(Components::render($definition['component'], $data + ['state' => $data])), primary: true);
-        $actions = isset($definition['editor']) ? AdminViews::modalAction(\TinyCat\Core\Ui\Admin\Definitions::modalId($definition['editor']['creation']), Localization::t($definition['editor']['title']), 'plus', $definition['editor']['creation']) : '';
+        $actions ??= isset($definition['editor']) ? AdminViews::modalAction(\TinyCat\Core\Ui\Admin\Definitions::modalId($definition['editor']['creation']), Localization::t($definition['editor']['title']), 'plus', $definition['editor']['creation']) : '';
         \TinyCat\Core\Ui\Page::render(['title' => $title, 'current' => $definition['path'], 'actions' => $actions], $content);
     }
 

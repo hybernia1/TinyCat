@@ -3,10 +3,114 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
-TinyCat 6.0.2 provides signed product identities, selective
-distributions and independently owned Blog and Social storage. See the
+TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
+
+## Interrupted web installation
+
+The table and administrator steps each run as an exclusive deployment operation.
+Before changes, the installer persists its recovery session and records a
+`preparing` installation journal. It then snapshots the dedicated target database,
+deployment state and the original configuration (including explicit absence).
+The database must be dedicated to this installation: restoration also removes
+changes made by other writers after the snapshot. Creating an empty database in
+the connection step is outside these operations; recovery never drops that database.
+
+Only the journal's `complete` phase commits a step. Publishing the deployment or
+`install.complete` configuration flag alone does not commit it. An unfinished
+installation blocks normal HTTP and scheduled entry points even without a
+maintenance file. The installer redirects a failed step to `/install/recovery`.
+The recovery page and POST require the original session, shared CSRF protection
+and the exact operation identity, rechecked under the deployment lock.
+
+Recovery of a table step restores the database before that step; recovery of an
+administrator step restores the tables but removes its account, settings and
+deployment changes. Configuration bytes and POSIX mode are restored from a
+separate private snapshot, outside the package's managed-file namespace. Missing
+or corrupt snapshots and a different target database are rejected before restore.
+An interrupted restore retains its operation identity and can be repeated.
+
+If the session is lost, the private rescue console accepts:
+
+```text
+php storage/updates/console.php rollback BACKUP_ID --installation-stdin < PRIVATE_DATABASE_JSON
+```
+
+The private input outside the web root contains a `database` object with `host`,
+`name`, `user`, `password`, and optional `port` and `charset`. It is parsed as
+bounded JSON, never executed as PHP; credentials are not command arguments or
+journal fields. A `preparing` operation has not changed application data: use
+`-` as its backup ID to abort preparation. A committed operation must instead
+use `finish-deployment BACKUP_ID` if maintenance cleanup was interrupted.
+
+Windows automatic installation and configuration restoration require Windows
+PowerShell 5.1 (.NET Framework), PHP `proc_open`, and local NTFS on a Fixed or
+Removable drive without reparse paths. Network shares, SMB, ReFS and other
+filesystems are rejected. The runtime
+[`configuration-windows.ps1`](../../App/Core/Installation/configuration-windows.ps1)
+helper is part of both installation and update distributions. It checks root,
+storage, updates and backup directory ownership and rejects mutating Allow rights
+for identities other than the runtime SID, SYSTEM and Administrators. Existing
+directory ACLs are not changed. Missing capabilities or unsuitable permissions
+cause rejection before installation mutations.
+
+Configuration and private snapshot files receive a protected DACL granting
+FullControl only to the runtime SID, SYSTEM and Administrators before secret
+content is written. Same-volume publication is followed by verification of the
+resulting file identity and DACL. Restoration deliberately normalizes NTFS ACLs
+to this policy instead of preserving the original ACL; different service
+identities cannot read the result. See [filesystem storage](../development/storage.md).
+Secret staging uses only `storage/updates/installation-private`; the installer
+protects this directory when creating it and leaves existing directory ACLs
+unchanged. Input is bounded before parsing and errors do not echo secret data.
+POSIX configuration publication stages private bytes on the same filesystem,
+then renames without a copy/unlink fallback. The guarantees cover process
+interruption, not power-loss durability. Deployment-specific web protection and
+local filesystem permissions remain required; directory ACLs alone do not prove
+the protection of a renamed file.
+
+## Tasks and deployment admission
+
+Every task execution enters the deployment guard in `Core/Tasks/Runner`, before
+its per-task lock, history writes and owner callback. This applies to Console,
+scheduled CLI, scheduler HTTP triggers/executions, administration and health runs,
+including direct Runner calls. Read-only scheduler health/HEAD probes run no tasks.
+The existing task result and transport envelopes remain in use; denied admission
+is a failed task without a new history row.
+
+Tasks hold a shared `storage/updates/update.lock`; updates, lifecycle snapshots
+and rollback require its exclusive mode. Different tasks may run concurrently,
+while each task retains its own exclusive lock. Lock acquisition is nonblocking.
+Maintenance or an operation journal in `applying`, `failed` or `restoring` also
+denies admission after an interrupted deployment releases its process lock.
+Restore the recorded backup before resuming work; removing a lock file is not
+recovery and can break exclusion with a running owner.
+
+If the operation journal already says `complete` but cleanup failed, do not
+restore the backup merely to finish cleanup. Run
+`php storage/updates/console.php finish-deployment BACKUP_ID` with the backup
+ID from the journal. The command takes the deployment lock and accepts only
+the latest committed operation. It is safe to repeat for that operation.
+
+Update retention enters the same shared guard before its exclusive
+`storage/updates/cleanup.lock`, including when called directly. It never upgrades
+the shared deployment lock. Competing sweeps or closed deployment admission defer
+retention. Recovery backups remain protected by the completion/retention rules;
+rollback reads and restores its backup under the exclusive deployment lock.
+Nested runs of a different task may acquire another shared guard; deployment
+operations from inside a task are rejected instead of waiting for a lock upgrade.
+Locks are released on normal completion, failure and process exit. A later task
+lock owner marks abandoned history interrupted, using the existing recovery rule.
+
+The isolated regression is
+`php tests/run.php --only=tests/domains/scheduler/deployment.php`.
+
+Version 7.0.0 removes the unused Blog module and its assembly preset.
+The release-specific sections below retain historical commands and evidence for
+their immutable packages. They do not restore Blog support in current sources.
+An installed Blog owner blocks an update to the new distribution before changes;
+do not bypass ownership checks or erase its data to force an update.
 
 ## Supported update baseline
 
@@ -74,6 +178,229 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
+
+## Upgrading to 8.0.3
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This maintenance release
+consolidates internal Core and Social PHP implementations without a new database
+migration or configuration change. Signed update deletions retire 18 internal
+classes and the flash-data partial. Existing accounts, content, files, module
+activation, task IDs and migration histories are preserved.
+
+Custom integrations that called removed internal helpers must use their canonical
+owners: Identity resources/setup/read-model sorting, Tasks resources/repository
+sorting, Core password and link-provider methods, and Social archive, moderation,
+author-statistics and feed-publication implementations. Social registration now
+belongs entirely to its module entry. The documented publicFooter theme fragment
+remains supported. Deploy matching signed Core or Social packages and generated
+assets; update and install variants remain separate.
+
+## Upgrading to 8.0.2
+
+Requires PHP 8.4 and a completed 6.0.10 or newer installation. Publish matching
+signed Core and Social update/install packages. This release adds no database
+migration or configuration change; existing migration history, accounts, uploads
+and module activation are preserved.
+
+Account/avatar and Social dialog editors load additively with their components,
+locale messages and styles. Inline editors request the same payload when present.
+Source fallback and compiled releases share selection, minification and dependency
+rules. Deploy the matching runtime and generated inventory together. Existing
+resource authorization, drafts, refresh cancellation and dialog history remain in
+the common loader; no resource API embeds presentation or asset URLs.
+
+Feed initialization no longer reads scroll position while the application bundle
+is being evaluated. Public home, tag, author and search pages receive smaller
+initial bundles. Core administration and account extensions remain available.
+
+## Upgrading to 8.0.1
+
+Requires PHP 8.4 and a completed 6.0.10 or newer installation. Publish matching
+signed Core and Social update/install packages. The account stream adds the
+nullable `users.avatar_version` column; existing avatars retain their legacy
+paths until replaced. Fresh installations use the new account fresh-v2 baseline.
+Published migration files and checksums remain unchanged. Configuration, media,
+accounts and module activation are preserved.
+
+Credential changes invalidate stale sessions and reset tokens. Deployment admission
+now coordinates tasks and installation recovery; finish updating all workers before
+resuming external scheduler invocation. The Windows configuration helper is a
+required runtime file. On 6.0.10, refresh and verify the private rescue launcher
+before applying the update, as described under the supported baseline above.
+
+This release also fixes transactional Social writes, avatar/profile/settings cache
+consistency, feed cursors, discussion pagination, shared form constraints and
+authentication modal switching. Deploy the matching generated assets; search cards
+now include their Social status dependencies. Authentication dialogs explicitly omit
+Refresh while ordinary resource editors retain it.
+
+## Upgrading to 8.0.0
+
+Existing installations keep the public website enabled when `site.public_enabled`
+has not been stored. Fresh installations start with it disabled; administrators
+can change it later in site settings without rebuilding assets or activating
+modules. Login, recovery, accounts and administration remain available. Closed
+public routes return 404, discovery is withdrawn and robots disallow crawling.
+Previously public uploads are not made private by this setting.
+
+Runtime diagnostics now use `app.debug`: `'on'`, `'off'` (default), or `'log'`
+(`storage/debug.log`). Existing booleans remain accepted. See
+[runtime diagnostics](debugging.md). Extension authors must use explicit
+`TinyCat\Http\HttpException` for safe public rejections; arbitrary exception
+codes and `InvalidArgumentException` no longer imply a public HTTP status.
+See the [error handling contract](../contracts/error-handling.md).
+
+This is a major extension-contract release. `Router::debug()` and local debug
+arguments of `Http\Api`, `Response::exception()` and `Tasks\Runner::run()` are
+removed. Modules use the installation-wide diagnostic policy instead. Update
+custom modules before deployment, including named arguments and the removed
+presentation flags described below.
+
+Custom themes receive `publicFooter` explicitly. Configurable `site.footer_html`
+and its renderer are removed; an old stored value is inert. Use theme-owned
+render-only markup for a custom footer. Pages select `surface` explicitly or
+use the shared path classification; retired presentation flags do not select
+layouts. Bot management resources now provide internal `update_url` and
+`suggest_url` endpoints independent of public website availability.
+
+No database migration is added. Published migration files, configuration,
+accounts, uploads and module activation are preserved. Use the matching signed
+Core or Social update and matching generated assets; install ZIPs are for new
+sites. PHP 8.4 and completed 6.0.10 or newer remain required. Refresh the private
+rescue launcher before updating from 6.0.10. Follow the 7.1.1 scheduler rollout
+instructions below when updating older workers.
+
+## Upgrading to 7.1.2
+
+This maintenance release improves client lifecycle recovery, native/AJAX form
+parity, interactive validation and keyboard focus traversal. Account-menu styles
+now belong to core Identity, local CSS duplicates are consolidated, and the
+skip-link uses its theme foreground token. The standalone embed retains its own
+palette and does not load the core theme.
+
+No database migration is added. PHP 8.4 and completed 6.0.10 or newer remain
+required. Configuration, accounts, uploads, module activation and published
+migration history are preserved. Use the matching signed Core or Social update;
+install ZIPs are for new sites. Refresh the private rescue launcher before an
+update from 6.0.10. When updating from before 7.1.1, also follow its scheduler
+HTTPS and coordinated worker-rollout instructions below.
+
+## Upgrading to 7.1.1
+
+This maintenance release improves streaming/batched database snapshots, shared
+CRUD cleanup, once-decoded routing and native/AJAX filter parity. It fixes cache
+recovery after Memcached connection outages and rejects compiled client/catalog
+inventories whose package registry revision no longer matches the installation.
+There is no database migration or change to published migration checksums.
+Existing old snapshot payloads remain readable. Data caches may cold-miss after
+installation/key namespace changes; configuration, media and accounts are retained.
+
+Scheduler Bearer clients now require HTTPS just like Basic hosting triggers;
+proxy scheme detection still uses the shared trusted-proxy policy. During an
+upgrade, pause external scheduler invocation and finish updating all PHP workers
+and nodes before resuming it. The new database-scoped lock namespace cannot
+coordinate with older path-scoped locks during a mixed-version rollout. Skipped
+runs no longer conceal failed or stale work, and feed batches report remaining
+due sources. Exact duplicate-post merging processes resumable bounded windows.
+
+Core and Social update/install artifacts remain separate. Use the matching
+product's signed update for an existing installation. Refresh the inherited
+private rescue launcher before updating from 6.0.10, as required below.
+
+## Upgrading to 7.1.0
+
+Publish matching core and Social update/install artifacts. The minimum remains a
+completed 6.0.10 installation with PHP 8.4; no database migration is added.
+Configuration, uploads, module activation and migration history are preserved.
+Core artifacts retire only their own module roots, so an independently installed
+Social package is not included in core cleanup. Absent foreign-module paths remain
+protected by the runtime; missing files within the artifact's own scope are harmless.
+
+Social publishing/discussion client sources now live under its own assets directory.
+Extension imports of the retired core discussion/text-resource helpers must use their
+Social owners. Existing publishing component IDs remain available through Social.
+Deploy the matching generated assets with the runtime; do not copy only PHP files.
+
+Settings sections save independently and show unsaved-tab markers. PATCH `/api/settings`
+returns the same password-safe `sections` resource as the editor GET, replacing the
+previous saved/images summary. Resource refresh protects drafts and preserves history.
+Core-only sitemap/privacy/crawler documents include only registered owner contributions.
+Error, SVG, XML, TXT and RSS delivery use the shared protocol mechanisms.
+
+## Upgrading to 7.0.0
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This major release consolidates
+the framework and Social registrations, introduces optional standalone public
+themes and moves asset sources to their owners. No database migration is added.
+Configuration, accounts, Social content, uploads and activation are preserved.
+An installation with Blog recorded as an installed owner is rejected before
+changes; removing the owner record or its data is not an upgrade procedure.
+
+Third-party API clients must use `/api/profiles/{id}` and the corresponding
+following endpoints for Social profiles. Identity account management remains
+under `/api/users`. Public search uses `/search/all` and `/api/search/query`;
+the Social CAPTCHA verification endpoint is `/api/search/challenges`. Removed
+search/profile paths are not aliases. See the [API reference](../reference/api.md).
+
+Extensions must replace the removed `PageTheme`/`Contributions::themes` contract
+with [standalone themes](../development/themes.md). The shared asset helper now
+accepts an owned application-relative source path, for example
+`App/Core/Ui/assets/icons.svg`; update old source imports and asset references.
+The signed deletion plan removes retired source paths. Generated, versioned URLs
+remain public; `/assets/embed.js` remains a stable Social-owned embed entry.
+An old saved module theme ID falls back to the core layout without rewriting
+site configuration.
+
+One GitHub release contains both core and production Social update/install trios
+(twelve files), each with its own signed product identity. Build from the same
+clean commit using the [product channel procedure](#product-update-channels).
+Verify each signature/archive and fresh installer, and rehearse the exact Social
+update from both the supported 6.0.10 baseline and the previous 6.3.1 release,
+including cached baseline classes and rollback. Source preflight is separate
+from validation of these concrete signed artifacts.
+
+## Upgrading to 6.3.1
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This patch refines shared
+links, table interaction, sticky header backgrounds, neutral dark surfaces and
+installer presentation. There are no database migrations or activation changes.
+Configuration, accounts, content and uploads are preserved. The signed deletion
+plan removes the obsolete inline-link hover stylesheet.
+
+Build production update and installation packages with `--assembly=platform --both`.
+Verify the exact signed update with the artifact preflight and representative
+6.0.10, 6.0.11, 6.1.4, 6.2.0 and 6.3.0 production update/rollback rehearsals using
+`--direct-web --cached-autoload`. Rehearse the extracted fresh installer against
+an isolated MySQL database. The development Blog module remains excluded from
+production distributions. A baseline created with `--platform-baseline` can
+include Blog; it requires a development update assembly retaining that owner.
+The production package must be refused for such a baseline rather than removing
+its installed owner or data.
+
+## Upgrading to 6.2.0
+
+Requires completed **6.0.10 or newer** and PHP 8.4. Shared UI scale and density
+now control typography, fields, buttons, dialogs, pagination and toasts. Layouts
+use one mobile/desktop boundary at 900px. Administration is compact and flat;
+public search uses a shared sidebar workspace with owner-rendered result cards.
+Settings presentation is lazy owner metadata instead of initial HTML payloads.
+Contextual help, validation and code-copy controls use shared core mechanisms.
+
+No database migration or activation change is introduced. Existing data,
+configuration, uploads and installed module ownership are retained. The signed
+deletion plan removes the retired confirm-layout stylesheet; its desktop rule
+is part of the shared desktop modal stylesheet.
+
+```sh
+php tools/release/build-update.php --version=6.2.0 --assembly=development --active=tinycat.social --output=.work/releases/release-6-2-0/update
+php tools/release/build-update.php --version=6.2.0 --assembly=platform --fresh-install --output=.work/releases/release-6-2-0/install
+```
+
+Verify the exact update against published 6.0.10, 6.0.11 and 6.1.4 platform sources
+with `--platform-baseline --direct-web --cached-autoload`, including retained Blog
+ownership, data preservation and exact rollback. Verify the production package
+with a fresh isolated MySQL installation. Refresh and verify the private rescue
+launcher on 6.0.10 before updating, as described below.
 
 ## Upgrading to 6.1.4
 
@@ -950,7 +1277,8 @@ This package excludes `migrations/` and update deletions. The installer creates
 all current tables and indexes directly. Use this ZIP only for new installations;
 publish the normal signed update package as the updater release asset.
 The shipped operational documentation includes `docs/reference/api.md`,
-`docs/operations/updates.md` and `docs/operations/module-deployment.md`.
+`docs/operations/updates.md`, `docs/operations/module-deployment.md`,
+`docs/operations/debugging.md` and `docs/contracts/error-handling.md`.
 
 To prepare both variants with a single validated compilation:
 
@@ -964,7 +1292,7 @@ The update and install subdirectories each contain their ZIP, manifest and
 signature. Preparation uses private temporary directories and publishes files
 only after archive completion, hashing and signing. A `.build.lock` coordinates
 replacement of previous outputs; it is not a release asset. Upload only the six
-named ZIP/JSON/SIG assets. The output directory must be writable; interrupted
+named ZIP/JSON/SIG assets for each product; a standard core/Social release has twelve. The output directory must be writable; interrupted
 or failed publication can retain a `.build-*` directory with `.previous` recovery
 copies when restoring a prior file fails.
 
@@ -982,6 +1310,47 @@ skip an application migration permanently.
 A release that introduces a new managed top-level directory needs a bridge
 release first. The bridge updates the updater allowlist without shipping files
 inside the new directory. Only the following release may populate that directory.
+
+### Product update channels
+
+Every installation selects its update assets using the `product` and `artifact`
+from its installed signed distribution. A repository may publish several products
+in one GitHub release, but each needs its own update ZIP, manifest and signature.
+The updater never substitutes another product when its assets are missing.
+An app may configure `updates.repository` and `updates.public_key` in its local
+configuration for its own GitHub release channel and signing authority.
+
+The standard TinyCat release must include both the core-only and production Social
+variants. Build each selection with the existing builder, from the same clean
+release commit and version, and keep their outputs separate:
+
+```sh
+php tools/release/build-update.php --version=X.Y.Z --assembly=core --both --output=.work/releases/release-X.Y.Z/core
+php tools/release/build-update.php --version=X.Y.Z --assembly=platform --both --output=.work/releases/release-X.Y.Z/social
+php tools/release/verify-update.php .work/releases/release-X.Y.Z/core/update --product=tinycat.core
+php tools/release/verify-update.php .work/releases/release-X.Y.Z/core/install --product=tinycat.core --fresh-install
+php tools/release/verify-update.php .work/releases/release-X.Y.Z/social/update
+php tools/release/verify-update.php .work/releases/release-X.Y.Z/social/install --fresh-install
+php tools/release/artifact-preflight.php --artifact=.work/releases/release-X.Y.Z/core/update --product=tinycat.core
+php tools/release/artifact-preflight.php --artifact=.work/releases/release-X.Y.Z/core/install --product=tinycat.core --fresh-install
+php tools/release/artifact-preflight.php --artifact=.work/releases/release-X.Y.Z/social/update
+php tools/release/artifact-preflight.php --artifact=.work/releases/release-X.Y.Z/social/install --fresh-install
+```
+
+Publish all twelve ZIP/JSON/SIG files in the same matching release. Core files use
+`tinycat.core` and Social files use `tinycat`; names do not collide. Never upload
+`.build.lock`, extracted installations, keys or evidence reports. Existing signed
+releases remain immutable; add the core channel in the next release rather than
+replacing or extending a published release retroactively.
+
+Custom applications declare their artifact stem in their distribution profile.
+Verification uses `--product=vendor.application` and discovers that product's local
+manifest, verifies its signature and archive, and checks the signed artifact name.
+No product-name map in the verifier or updater needs editing. Missing or ambiguous
+manifests fail verification. An artifact cannot discard an installed owner. Blog has been removed from current
+sources; historical Blog installations require an explicit separate retirement
+procedure and are rejected by the new distribution without changing their data.
+
 
 ## Migrations
 
@@ -1067,6 +1436,21 @@ contains the database snapshot. `backup.json` identifies the source and target
 versions and whether a database backup was required. After restoring the
 available snapshot, remove `storage/maintenance.json` or use the guarded
 maintenance button on the update page.
+
+MySQL snapshots include `database.index.jsonl`. Restoration validates the entire
+index before dropping any current objects: entries must cover the SQL file
+contiguously, end at statement boundaries, and include the opening and completion
+markers. Empty, truncated and structurally incomplete snapshots are rejected
+before changing data or foreign-key enforcement. This is structural validation;
+SQL semantics are still checked by MySQL during restoration, and deployment's
+snapshot hashes remain the integrity check. DDL restoration is not atomic.
+
+Export reads table data without PDO buffering and emits INSERT batches of at
+most 250 rows, targeting 256 KiB per statement and respecting the source server's
+packet limit. A single large row can exceed the target size. Restore groups
+INSERTs in bounded transactions and commits before DDL; historical single-row
+INSERTs and two-field statement indexes remain supported. The caller's buffering
+option and foreign-key enforcement are restored by their respective operations.
 
 Apache installations are protected by the bundled `.htaccess`. Other web
 servers must deny public access to all of `storage/`, including database backups

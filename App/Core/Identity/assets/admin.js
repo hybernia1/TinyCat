@@ -1,6 +1,6 @@
 // @component-owned: structure is declared in owner catalogs.
 import "./index.js";
-import "../../../../assets/ui/list-navigation.js";
+import "../../Ui/assets/list-navigation.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui, baseResult = T.accounts.result, baseModal = T.accounts.modal;

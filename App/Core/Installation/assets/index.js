@@ -1,6 +1,6 @@
-import "../../../../assets/core/lifecycle.js";
-import "../../../../assets/ui/form-requests.js";
-import "../../../../assets/ui/toasts.js";
+import "../../Ui/assets/runtime/lifecycle.js";
+import "../../Ui/assets/form-requests.js";
+import "../../Ui/assets/toasts.js";
 (function () {
   "use strict";
   var T = window.TinyCat;
@@ -12,6 +12,8 @@ import "../../../../assets/ui/toasts.js";
             if (data.redirect) { window.location.assign(T.urls.local(data.redirect)); }
           },
           error: function (error, fields) {
+            var data = error && error.data && error.data.data;
+            if (data && data.redirect === "/install/recovery") { window.location.assign(T.urls.local(data.redirect)); return; }
             var first = Object.keys(fields)[0];
             T.toasts.show((first && fields[first].join(" ")) || error.message || T.i18n.t("common.request_failed"), "danger");
             var input = first && form.elements.namedItem(first);

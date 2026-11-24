@@ -7,7 +7,7 @@ use TinyCat\Core\Links\Providers;
 
 use TinyCat\Core\Text\LinkParser;
 
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 use TinyCat\Database\Connection;
 use TinyCat\Http\Document;
@@ -31,7 +31,7 @@ final class Embed
     /** @return array<string, mixed>|null */
     private static function find(int $id): ?array
     {
-        return Connection::one('SELECT c.id, c.body, c.published_at, c.author_id, u.username AS author_name, u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.updated_at AS author_updated_at,
+        return Connection::one('SELECT c.id, c.body, c.published_at, c.author_id, u.username AS author_name, u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version, u.updated_at AS author_updated_at,
             ci.path AS image_path, ci.width AS image_width, ci.height AS image_height
             FROM social_posts c INNER JOIN users u ON u.id = c.author_id
             LEFT JOIN social_post_images ci ON ci.content_id = c.id
@@ -83,7 +83,7 @@ final class Embed
     /** @param array<string, mixed> $item */
     private static function code(array $item): string
     {
-        return self::iframe($item) . "\n" . '<script async src="' . Html::e(Presentation::absolute_url(Assets::asset('embed.js'))) . '"></script>';
+        return self::iframe($item) . "\n" . '<script async src="' . Html::e(Presentation::absolute_url('/assets/embed.js')) . '"></script>';
     }
 
     /** @return array<string, mixed>|null */
@@ -99,7 +99,7 @@ final class Embed
             'title' => Presentation::meta_text((string) $item['body'], 120) ?: (string) $item['author_name'],
             'width' => $width, 'height' => $height, 'html' => self::iframe($item, $width, $height), 'cache_age' => 0,
         ];
-        $image = \TinyCat\Social\Content\Images::status_image_url($item);
+        $image = \TinyCat\Social\Posts\Images::status_image_url($item);
         $media = self::media($item);
         $thumbnail = $image;
         foreach ($media as $link) {
@@ -139,7 +139,7 @@ final class Embed
             if (isset($segment['url'])) { $segment['url'] = Presentation::absolute_url($segment['outbound_url'] ?? $segment['url']); }
         }
         unset($segment);
-        $image = \TinyCat\Social\Content\Images::status_image_url($item);
+        $image = \TinyCat\Social\Posts\Images::status_image_url($item);
         $html = View::render('embed', [
             'author' => (string) $item['author_name'], 'authorUrl' => Presentation::absolute_url('/author/' . (int) $item['author_id']),
             'url' => Presentation::absolute_url('/status/' . $id), 'siteName' => Presentation::site_name(),
@@ -148,10 +148,10 @@ final class Embed
             'initial' => mb_strtoupper(mb_substr((string) $item['author_name'], 0, 1)),
             'media' => $media,
             'imageUrl' => $image !== '' ? Presentation::absolute_url($image) : '',
-            'imageAlt' => \TinyCat\Social\Content\Images::status_image_alt_text($item),
+            'imageAlt' => \TinyCat\Social\Posts\Images::status_image_alt_text($item),
             'imageWidth' => (int) ($item['image_width'] ?? 0), 'imageHeight' => (int) ($item['image_height'] ?? 0),
             'publishedAt' => Dates::dateIso((string) $item['published_at']), 'publishedLabel' => Dates::displayDateTime((string) $item['published_at']),
-            'styleUrl' => Assets::asset('embed.css'), 'scriptUrl' => Assets::asset('embed-frame.js'),
+            'styleUrl' => Assets::asset('App/Modules/Social/assets/embed/embed.css'), 'scriptUrl' => Assets::asset('App/Modules/Social/assets/embed/embed-frame.js'),
             'share' => $share, 'maxHeight' => $height,
             'code' => self::code($item),
         ], dirname(__DIR__, 2) . '/templates/status');

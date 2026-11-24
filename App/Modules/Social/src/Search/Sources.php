@@ -4,7 +4,7 @@ namespace TinyCat\Social\Search;
 
 use TinyCat\Core\Modules\SearchSource;
 
-/** Legacy social search remains one optional capability of the generic host. */
+/** Social owns its sources and presentation within the shared discovery host. */
 final class Sources
 {
     /** @return list<SearchSource> */
@@ -16,11 +16,16 @@ final class Sources
             $suggest = match ($type) { 'tags' => static fn (string $q, int $n): array => array_values(array_filter(Queries::public_search_suggestion_tags($q, $n), is_array(...))), 'users' => static fn (string $q, int $n): array => array_values(array_filter(Queries::public_search_suggestion_users($q, $n), is_array(...))), default => null };
             $sources[] = new SearchSource($type, static fn (): string => \TinyCat\Support\Localization::t($label), static function (string $query, array $cursor, int $limit) use ($type): array {
                 $page = Queries::collection($query, $type, $cursor, $limit);
-                $next = []; parse_str((string) parse_url($page['next_url'], PHP_URL_QUERY), $next);
-                $cursor = array_intersect_key($next, array_flip(['cursor_at', 'cursor_id', 'cursor_rank', 'cursor_name']));
-                return ['items' => array_values($page['items']), 'cursor' => $cursor];
-            }, $suggest, $type === 'content' ? 3 : 2, count($sources) * 10, $guard, suggestMinimum: 1);
+                return ['items' => array_values($page['items']), 'cursor' => $page['cursor']];
+            }, $suggest, $type === 'content' ? 3 : 2, count($sources) * 10, $guard, suggestMinimum: 1, icon: match ($type) { 'tags' => 'hash', 'users' => 'users', default => 'message-circle' }, render: $type === 'content' ? self::posts(...) : null);
         }
         return $sources;
+    }
+    /** @param list<array<string, mixed>> $items */
+    public static function posts(array $items): string
+    {
+        $rows = \TinyCat\Social\Posts\Feed::public_status_items_by_ids(array_column($items, 'id'));
+        $posts = \TinyCat\Social\Posts\Resource::posts($rows, \TinyCat\Core\Identity\Authentication::auth());
+        return \TinyCat\Support\Components::render('search/posts', ['items' => $posts, 'csrf' => \TinyCat\Core\Security\Csrf::token()]);
     }
 }

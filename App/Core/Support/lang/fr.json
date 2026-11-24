@@ -3,6 +3,7 @@
     "name": "Français"
   },
   "common": {
+    "help": "Aide",
     "sort": "Trier",
     "refresh": "Rafraîchir",
     "save": "Enregistrer",
@@ -82,7 +83,10 @@
     "activated": "{entity} activé.",
     "deactivated": "{entity} désactivé.",
     "action_for": "{action} — {context}",
-    "search_empty": "Rien trouvé."
+    "search_empty": "Rien trouvé.",
+    "copy": "Copier",
+    "copied": "Copié.",
+    "copy_failed": "Impossible de copier le texte."
   },
   "relative": {
     "now": "maintenant",

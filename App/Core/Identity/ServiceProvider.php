@@ -5,7 +5,7 @@ use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Readiness;
 use TinyCat\Core\Identity\Participants;
 use TinyCat\Core\Identity\Integration;
-use TinyCat\Core\Identity\Initialization;
+use TinyCat\Core\Identity\Setup;
 
 final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle, \TinyCat\Core\Runtime\InitializesModule, \TinyCat\Core\Modules\ProvidesManagedSchema, \TinyCat\Core\Modules\ProvidesSetup
 {
@@ -16,7 +16,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     public static function completeSetup(array $input): void
     {
         $data = Setup::input($input + ['password_confirm' => $input['password'] ?? '']);
-        Initialization::administrator($data['username'], $data['password'], $data['locale']);
+        Setup::administrator($data['username'], $data['password'], $data['locale']);
     }
     public static function schema(): \TinyCat\Core\Modules\ModuleSchema { return Schema::schema(); }
 
@@ -31,13 +31,13 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
     {
         return new \TinyCat\Core\Identity\Participant(prepareDelete: static fn (array $user): \TinyCat\Core\Identity\Deletion => new \TinyCat\Core\Identity\Deletion(
-            afterCommit: static function () use ($user): void { Avatar::delete((int) $user['id']); },
+            afterCommit: static function () use ($user): void { Avatar::delete((int) $user['id'], $user['avatar_version'] ?? null); },
         ));
     }
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
-        return new \TinyCat\Core\Modules\Contributions(homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.accounts.login', '/login', static function (): void { Pages::homepage(); }, PHP_INT_MAX, static fn (): string => \TinyCat\Support\Localization::t('auth.login_title'), 'login', navigation: false)], settings: Settings::sections(), temporaryDirectories: [
+        return new \TinyCat\Core\Modules\Contributions(statistics: [new \TinyCat\Core\Modules\DashboardStats('identity.accounts', static fn (): string => \TinyCat\Support\Localization::t('admin.stats.users'), Administration::dashboardWidget(...), fields: Administration::statisticsFields(...))], homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.accounts.login', '/login', static function (): void { Pages::homepage(); }, PHP_INT_MAX, static fn (): string => \TinyCat\Support\Localization::t('auth.login_title'), 'login', navigation: false)], settings: Settings::sections(), temporaryDirectories: [
             new \TinyCat\Core\Modules\TemporaryDirectory('avatars', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/avatars'), 10),
         ], navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.users.admin', static fn (): array => \TinyCat\Core\Ui\Admin\Definitions::navigation('core.users'), 20)], maintenance: [
             new \TinyCat\Core\Modules\MaintenanceTask('orphan_avatar_files', static fn (int $batch): array => Avatar::cleanupOrphans($batch), 50),
@@ -64,6 +64,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
 
         \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('core.users'), static function (): void { Pages::administration(); });
         foreach ([
+            ['GET', '/account', static function (): void { Pages::account(); }],
             ['GET', '/login', static function (): void { Pages::login(); }],
             ['GET', '/logout', static function (): void { Pages::logout(); }],
             ['GET', '/register', static function (): void { Pages::register(); }],

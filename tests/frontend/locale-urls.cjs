@@ -7,7 +7,7 @@ const dataset = { interfacePrefix: "pl", interfaceLocales: "cs,en,de,es,fr,pt,ru
 dataset.interfaceRoutes = require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.resolve(__dirname, "../presentation/fixtures/asset-graph-fixture.php"), "--locale-routes"], { encoding: "utf8" }).trim();
 const document = { documentElement: { dataset }, querySelector: () => null };
 const window = { location: new URL("https://tinycat.test/pl/"), TinyCat: {} };
-const source = name => fs.readFileSync(path.resolve(__dirname, "../../assets/core/" + name + ".js"), "utf8").replace(/^import .*;\r?\n/gm, "");
+const source = name => fs.readFileSync(path.resolve(__dirname, "../../App/Core/Ui/assets/runtime/" + name + ".js"), "utf8").replace(/^import .*;\r?\n/gm, "");
 let lastHeaders;
 const context = vm.createContext({ window, document, URL, Headers, FormData, Blob, URLSearchParams, fetch: async (_url, settings) => {
   lastHeaders = settings.headers;
@@ -22,7 +22,7 @@ const cases = [
   ["/", "/pl/"], ["/author/2", "/pl/author/2"], ["/status/10?compact=1#comments", "/pl/status/10?compact=1#comments"],
   ["/search/all?q=article", "/pl/search/all?q=article"], ["/tag/a%20b", "/pl/tag/a%20b"], ["/login?next=%2Fpl%2F", "/pl/login?next=%2Fpl%2F"], ["/privacy", "/pl/privacy"],
   ["/de/status/10", "/de/status/10"], ["/api/statuses/10", "/api/statuses/10"], ["/admin", "/admin"],
-  ["/author/2/feed", "/author/2/feed"], ["/assets/icons.svg", "/assets/icons.svg"], ["/uploads/image.webp", "/uploads/image.webp"],
+  ["/author/2/feed", "/author/2/feed"], ["/App/Core/Ui/assets/icons.svg", "/App/Core/Ui/assets/icons.svg"], ["/uploads/image.webp", "/uploads/image.webp"],
   ["/zz/privacy", "/zz/privacy"], ["//other.test/", "//other.test/"], ["https://other.test/privacy", "https://other.test/privacy"], ["#content", "#content"]
 ];
 const serverUrls = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.resolve(__dirname, "../presentation/fixtures/asset-graph-fixture.php"), "--localized-urls", JSON.stringify(cases.map(item => item[0]))], { encoding: "utf8" }));

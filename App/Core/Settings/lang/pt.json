@@ -25,7 +25,6 @@
       "site_meta_description_help": "Usado como meta descrição padrão e idealmente deve ter entre 150 e 160 caracteres.",
       "site_logo": "Logotipo do site",
       "site_favicon": "Favicon",
-      "site_footer": "Rodapé do site",
       "minify_css": "Minificar CSS",
       "minify_css_help": "Cria arquivos CSS compactos e com versão de conteúdo no cache de tempo de execução.",
       "minify_js": "Minificar JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Website URL",
       "homepage": "Home page",
       "theme": "Page theme",
-      "automatic": "Automatic"
+      "automatic": "Automatic",
+      "public_enabled": "Site público",
+      "public_enabled_help": "Ativa páginas públicas, pesquisa, feeds e conteúdo incorporado. O acesso, a conta e a administração continuam disponíveis quando desativado."
     },
     "messages": {
       "saved": "As configurações foram salvas.",
@@ -52,6 +53,9 @@
     "image_remove": "Remover imagem"
   },
   "install": {
+    "recovery_title": "Recuperação da instalação",
+    "recovery_warning": "Restaura a base de dados e a configuração anteriores ao passo interrompido. As alterações posteriores à cópia serão perdidas.",
+    "recovery_restore": "Restaurar cópia",
     "purpose_migrations": "Histórico de migrações, ordem e somas de verificação.",
     "language_label": "Português",
     "title": "Instalar TinyCat CMS",
@@ -101,7 +105,7 @@
       "invalid_database": "O nome do banco de dados pode conter apenas letras, números e sublinhados.",
       "required_fields": "Preencha todos os campos obrigatórios.",
       "invalid_username": "Use de 2 a 32 letras (incluindo acentos), números, pontos, hífens ou sublinhados. Comece com uma letra ou número; não termine com ponto ou hífen. O nome não pode conter apenas números.",
-      "password_length": "A senha deve ter pelo menos 8 caracteres.",
+      "password_length": "A senha deve ter pelo menos {min} bytes UTF-8.",
       "password_mismatch": "As senhas não coincidem.",
       "config_write_failed": "Não foi possível escrever config.php.",
       "db_failed": "Falha na conexão com o banco de dados: {message}"

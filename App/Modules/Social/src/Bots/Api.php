@@ -1,0 +1,84 @@
+<?php
+declare(strict_types=1);
+namespace TinyCat\Social\Bots;
+
+use \TinyCat\Http\Request;
+use \TinyCat\Http\Result;
+use \TinyCat\Http\Response;
+
+final class Api
+{
+    public static function register(\TinyCat\Http\Api $api): void
+    {
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-queue', 'endpoint'), static fn (): Result => Queue::listing(), 'admin');
+        $api->post('/bots/queue/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Queue::publish((int) $p['id']), 'admin');
+
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'endpoint'), static fn (): Result => Result::from(Administration::accountsPayload()), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-creation', 'editor.creation'), static fn (): array => Resource::creation(), 'admin');
+        $api->post('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccountCreate()), 'admin');
+        $api->get('/bots/accounts/{id:[0-9]+}/runs', static function (Request $r, array $p): Result {
+            $id = (int) $p['id'];
+            if (Administration::accountById($id) === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
+            return Result::from(Administration::runsPayload($id));
+        }, 'admin');
+        $api->put('/bots/accounts/{id:[0-9]+}/activation', static function (Request $r, array $p): Result {
+            $account = Administration::accountById((int) $p['id']);
+            if ($account === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
+            $data = $r->validated(['enabled' => 'required|boolean']);
+            $active = filter_var($data['enabled'], FILTER_VALIDATE_BOOLEAN);
+            \TinyCat\Core\Identity\Administration::setActive(\TinyCat\Core\Identity\Api::actor(), $account, $active, \TinyCat\Core\Identity\Participants::current());
+            return Result::from(Administration::accountsPayload((int) $p['id']) + \TinyCat\Support\AdminViews::activationNotice($active, '@' . $account['username']));
+        }, 'admin');
+        $api->get('/bots/accounts/{id:[0-9]+}/posts', static function (Request $request, array $params): array {
+            $id = (int) $params['id'];
+            if (Administration::accountById($id) === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
+            return Administration::postsPayload($id);
+        }, 'admin');
+        $api->get('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}/management', static fn (Request $request, array $params): array => Administration::postManagement((int) $params['id'], (int) $params['postId']), 'admin');
+        $api->get('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}/suggestions', static function (Request $request, array $params): array {
+            Administration::requirePost((int) $params['id'], (int) $params['postId']);
+            return \TinyCat\Social\Search\Api::suggestions($request);
+        }, 'admin');
+        $api->patch('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}', static function (Request $request, array $params): Result {
+            Administration::requirePost((int) $params['id'], (int) $params['postId']);
+            return \TinyCat\Social\Posts\Api::update((int) $params['postId']);
+        }, 'admin');
+        $api->delete('/bots/accounts/{id:[0-9]+}/posts/{postId:[0-9]+}', static function (Request $request, array $params): Result {
+            Administration::requirePost((int) $params['id'], (int) $params['postId']);
+            return \TinyCat\Social\Posts\Api::delete((int) $params['postId']);
+        }, 'admin');
+        $api->get('/bots/accounts/{id:[0-9]+}', static function (Request $r, array $p): array {
+            $account = Administration::accountById((int) $p['id']);
+            if ($account === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
+            return ['item' => Administration::accountResource($account)];
+        }, 'admin');
+        $api->patch('/bots/accounts/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotAccountUpdate((int) $p['id'])), 'admin');
+        $api->delete('/bots/accounts/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotAccountDelete((int) $p['id'])), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.bot-sources', 'endpoint'), static fn (): Result => Result::from(Administration::payload()), 'admin');
+        $api->get('/bots/sources/management', static function (): array {
+            $data = Administration::sourceFormData(null);
+            return ['item' => $data['source'] + ['post_template' => FeedPublication::defaultSourceTemplate(), 'enabled' => true], 'bots' => $data['bots'], 'constraints' => $data['constraints']];
+        }, 'admin');
+        $api->get('/bots/sources/{id:[0-9]+}/management', static function (Request $request, array $params): array {
+            $source = Importer::findSource((int) $params['id']);
+            if ($source === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.not_found'), 404, 'bot_source_not_found'); }
+            $data = Administration::sourceFormData($source);
+            return ['item' => Importer::sourceResource($source), 'bots' => $data['bots'], 'constraints' => $data['constraints']];
+        }, 'admin');
+        $api->post('/bots/sources/previews', static fn (): array => SourcePreview::payload(), 'admin');
+        $api->post('/bots/sources', static fn (): Result => Result::from(Actions::adminBotSourceCreate()), 'admin');
+        $api->patch('/bots/sources/{id:[0-9]+}', static function (Request $r, array $p): Result {
+            $id = (int) $p['id'];
+            if ($r->input('feed_url') === null && $r->input('enabled') !== null) {
+                $enabled = $r->input('enabled');
+                if (!in_array($enabled, [true,false,0,1,'0','1'], true)) { Response::validation(['enabled' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]); }
+                $source = \TinyCat\Social\Bots\Administration::sourceForAction($id, max(0, (int) $r->input('bot_id', 0)));
+                if ((bool) $source['enabled'] !== in_array($enabled, [true,1,'1'], true)) { \TinyCat\Social\Bots\Administration::toggleSource($source); }
+                return Result::from(\TinyCat\Social\Bots\Administration::payload($id) + \TinyCat\Support\AdminViews::activationNotice(in_array($enabled, [true, 1, '1'], true), (string) $source['name']));
+            }
+            return Result::from(Actions::adminBotSourceUpdate($id));
+        }, 'admin');
+        $api->delete('/bots/sources/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotSourceDelete((int) $p['id'])), 'admin');
+        $api->post('/bots/sources/{id:[0-9]+}/runs', static fn (Request $r, array $p): Result => Actions::adminBotSourceAction((int) $p['id']), 'admin');
+    }
+}

@@ -58,7 +58,7 @@ foreach (['cold', 'stale'] as $scenario) {
             $payload['written_at'] = time() - 10;
             $client->set($key, json_encode($payload, JSON_THROW_ON_ERROR), 3600);
         } else {
-            touch(Cache::file('shared.json'), time() - 10);
+            touch(Cache::file(hash('sha256', 'shared') . '.json'), time() - 10);
         }
     }
     $processes = [];

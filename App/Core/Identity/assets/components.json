@@ -28,8 +28,8 @@
                     "disabled": {"if": [{"not": {"get": "create"}}, true, null]},
                     "required": {"if": [{"get": "create"}, true, null]},
                     "pattern": {"if": [{"get": "create"}, {"get": "options.username_pattern"}, null]},
-                    "minlength": "2",
-                    "maxlength": "32",
+                    "data-min-length": {"get": "options.username_min_length"},
+                    "data-max-length": {"get": "options.username_max_length"},
                     "autocomplete": "username",
                     "autocapitalize": "none",
                     "spellcheck": "false"
@@ -46,7 +46,7 @@
                     "name": "email",
                     "type": "email",
                     "value": {"get": "user.email"},
-                    "maxlength": "254",
+                    "data-max-bytes": {"get": "options.email_max_bytes"},
                     "autocomplete": "email",
                     "data-email-check-url": {"concat": ["/api/users/", {"get": "user.id"}, "/email-checks"]}
                   }
@@ -60,7 +60,12 @@
               "label": {"t": "account.bio"},
               "value": {"get": "user.bio"},
               "textarea": true,
-              "attributes": {"class": "textarea", "name": "bio", "rows": "5", "maxlength": "500"}
+              "attributes": {
+                "class": "textarea",
+                "name": "bio",
+                "rows": "5",
+                "data-max-length": {"get": "options.bio_max_length"}
+              }
             },
             "when": {"not": {"get": "create"}}
           }
@@ -115,8 +120,8 @@
                 "name": "password",
                 "type": "password",
                 "value": "",
-                "minlength": "8",
-                "maxlength": {"get": "options.password_max_length"},
+                "data-min-bytes": {"get": "options.password_min_bytes"},
+                "data-max-bytes": {"get": "options.password_max_length"},
                 "autocomplete": "new-password",
                 "required": {"if": [{"get": "create"}, true, null]}
               }
@@ -145,42 +150,7 @@
     "tag": "tr",
     "attrs": {"class": {"if": [{"eq": [{"get": "user.status"}, "active"]}, null, "table-row-inactive"]}},
     "children": [
-      {
-        "tag": "td",
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {"class": "table-identity"},
-            "children": [
-              {
-                "component": "ui/account-status",
-                "data": {
-                  "status": {"get": "user.status"},
-                  "label": {
-                    "lookup": {"get": "user.status"},
-                    "cases": {
-                      "active": {"t": "users.statuses.active"},
-                      "waiting": {"t": "users.statuses.waiting"},
-                      "ban": {"t": "users.statuses.ban"}
-                    }
-                  }
-                }
-              },
-              {
-                "tag": "div",
-                "attrs": {"class": "table-identity-body"},
-                "children": [
-                  {
-                    "tag": "strong",
-                    "attrs": {"class": "table-primary", "title": {"get": "user.username"}},
-                    "children": [{"get": "user.username"}]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
+      {"tag": "td", "children": [{"component": "users/identity-row", "data": {"user": {"get": "user"}}}]},
       {
         "tag": "td",
         "children": [
@@ -388,16 +358,11 @@
             "autocapitalize": "none",
             "spellcheck": "false",
             "pattern": {"if": [{"get": "register"}, {"get": "options.username_pattern"}, null]},
-            "minlength": {"if": [{"get": "register"}, "2", null]},
-            "maxlength": {"if": [{"get": "register"}, "32", null]}
-          }
+            "data-min-length": {"if": [{"get": "register"}, {"get": "options.username_min_length"}, null]},
+            "data-max-length": {"if": [{"get": "register"}, {"get": "options.username_max_length"}, null]}
+          },
+          "help": {"if": [{"get": "register"}, {"t": "account.username_hint"}, null]}
         }
-      },
-      {
-        "tag": "span",
-        "attrs": {"class": "help"},
-        "when": {"get": "register"},
-        "children": [{"t": "account.username_hint"}]
       },
       {
         "component": "ui/field",
@@ -408,7 +373,7 @@
             "name": "email",
             "type": "email",
             "value": {"get": "old.email"},
-            "maxlength": "254",
+            "data-max-bytes": {"get": "options.email_max_bytes"},
             "autocomplete": "email",
             "data-email-check-url": "/api/users/registrations/email-checks"
           }
@@ -426,8 +391,8 @@
             "value": "",
             "required": true,
             "autocomplete": {"if": [{"get": "register"}, "new-password", "current-password"]},
-            "maxlength": {"get": "options.password_max_length"},
-            "minlength": {"if": [{"get": "register"}, "8", null]}
+            "data-max-bytes": {"get": "options.password_max_length"},
+            "data-min-bytes": {"if": [{"get": "register"}, {"get": "options.password_min_bytes"}, null]}
           }
         }
       },
@@ -442,7 +407,7 @@
             "value": "",
             "required": true,
             "autocomplete": "new-password",
-            "minlength": "8"
+            "data-min-bytes": {"get": "options.password_min_bytes"}
           }
         },
         "when": {"get": "register"}
@@ -573,8 +538,7 @@
               "class": "btn btn-secondary btn-sm",
               "href": {"get": "switch_url"},
               "data-modal-open": "auth-modal",
-              "data-modal-url": {"get": "switch_modal_url"},
-              "data-modal-refresh": "true"
+              "data-modal-url": {"get": "switch_modal_url"}
             },
             "children": [
               {"icon": {"if": [{"get": "register"}, "login", "user-plus"]}},
@@ -777,8 +741,8 @@
                         "class": "input",
                         "type": "password",
                         "autocomplete": "new-password",
-                        "minlength": 8,
-                        "maxlength": {"get": "password_max"},
+                        "data-min-bytes": {"get": "password_min"},
+                        "data-max-bytes": {"get": "password_max"},
                         "required": true,
                         "name": "password"
                       }
@@ -807,8 +771,8 @@
                         "class": "input",
                         "type": "password",
                         "autocomplete": "new-password",
-                        "minlength": 8,
-                        "maxlength": {"get": "password_max"},
+                        "data-min-bytes": {"get": "password_min"},
+                        "data-max-bytes": {"get": "password_max"},
                         "required": true,
                         "name": "password_confirm"
                       }
@@ -996,7 +960,12 @@
             "component": "ui/field",
             "data": {
               "label": {"t": "account.bio"},
-              "attributes": {"class": "textarea", "name": "bio", "maxlength": "500", "rows": "6"},
+              "attributes": {
+                "class": "textarea",
+                "name": "bio",
+                "data-max-length": {"get": "options.bio_max_length"},
+                "rows": "6"
+              },
               "textarea": true,
               "value": {"get": "user.bio"},
               "field_class": "field grid-span-full"
@@ -1039,13 +1008,13 @@
             "name": "email",
             "type": "email",
             "value": {"get": "user.email"},
-            "maxlength": "254",
+            "data-max-bytes": {"get": "options.email_max_bytes"},
             "autocomplete": "email",
             "data-email-check-url": {"concat": ["/api/users/", {"get": "user.id"}, "/email-checks"]}
-          }
+          },
+          "help": {"t": "account.email_optional"}
         }
       },
-      {"tag": "span", "attrs": {"class": "help"}, "children": [{"t": "account.email_optional"}]},
       {"tag": "input", "attrs": {"type": "hidden", "name": "email_notifications", "value": "0"}},
       {
         "tag": "label",
@@ -1099,8 +1068,8 @@
             "type": "password",
             "value": "",
             "required": true,
-            "minlength": "8",
-            "maxlength": {"string": {"get": "options.password_max_length"}},
+            "data-min-bytes": {"get": "options.password_min_bytes"},
+            "data-max-bytes": {"string": {"get": "options.password_max_length"}},
             "autocomplete": "new-password"
           }
         }
@@ -1115,7 +1084,7 @@
             "type": "password",
             "value": "",
             "required": true,
-            "minlength": "8",
+            "data-min-bytes": {"get": "options.password_min_bytes"},
             "autocomplete": "new-password"
           }
         }
@@ -1348,7 +1317,7 @@
       {
         "tag": "summary",
         "attrs": {
-          "class": "nav-link user-menu-trigger profile-nav-link",
+          "class": "nav-link user-menu-trigger",
           "aria-label": {"t": "account.profile_settings"},
           "title": {"get": "displayName"}
         },
@@ -1357,7 +1326,7 @@
           {"icon": "chevron-down"},
           {
             "tag": "span",
-            "attrs": {"class": "notification-badge profile-email-warning", "aria-hidden": "true"},
+            "attrs": {"class": "notification-badge user-menu-email-warning", "aria-hidden": "true"},
             "when": {"get": "profileNeedsEmail"},
             "children": ["!"]
           },
@@ -1442,6 +1411,45 @@
                 "tag": "button",
                 "attrs": {"class": "context-menu-action is-danger", "type": "submit"},
                 "children": [{"icon": "logout"}, " ", {"tag": "span", "children": [{"t": "common.logout"}]}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "users/identity-row": {
+    "tag": "div",
+    "attrs": {"class": "identity-row identity-row-inset"},
+    "children": [
+      {"component": "ui/avatar", "data": {"user": {"get": "user"}, "small": true, "alt": ""}},
+      {
+        "tag": "div",
+        "attrs": {"class": "table-identity-body"},
+        "children": [
+          {
+            "tag": "strong",
+            "attrs": {"class": "table-primary", "title": {"get": "user.username"}},
+            "children": [{"get": "user.username"}]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "table-meta"},
+            "children": [
+              {
+                "component": "ui/account-status",
+                "data": {
+                  "status": {"get": "user.status"},
+                  "label": {
+                    "lookup": {"get": "user.status"},
+                    "cases": {
+                      "active": {"t": "users.statuses.active"},
+                      "waiting": {"t": "users.statuses.waiting"},
+                      "ban": {"t": "users.statuses.ban"}
+                    }
+                  },
+                  "text": true
+                }
               }
             ]
           }

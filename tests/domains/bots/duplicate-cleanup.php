@@ -4,9 +4,9 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
-use TinyCat\Social\Automation\DuplicateCleanup;
+use TinyCat\Social\Bots\DuplicateCleanup;
 use TinyCat\Database\Connection;
-use TinyCat\Social\Content\Redirects;
+use TinyCat\Social\Posts\Repository;
 
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $checks = 0;
@@ -80,7 +80,7 @@ $exercise = static function (PDO $db) use ($assert): void {
     $assert((int) $db->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === 18, 'Preview is read-only.');
     $first = DuplicateCleanup::run(1);
     $assert($first['changed'] === 1 && $first['has_more'], 'Cleanup respects its batch limit and reports remaining work.');
-    $assert(Redirects::target(2) === 1 && Redirects::target(99) === 1, 'New and earlier redirects point directly at the surviving post.');
+    $assert(Repository::redirectTarget(2) === 1 && Repository::redirectTarget(99) === 1, 'New and earlier redirects point directly at the surviving post.');
     $trigger = $sqlite ? "CREATE TRIGGER fail_duplicate BEFORE DELETE ON social_posts WHEN OLD.id=3 BEGIN SELECT RAISE(ABORT,'rollback'); END"
         : "CREATE TRIGGER fail_duplicate BEFORE DELETE ON social_posts FOR EACH ROW BEGIN IF OLD.id=3 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='rollback'; END IF; END";
     $db->exec($trigger);
@@ -107,8 +107,15 @@ $exercise = static function (PDO $db) use ($assert): void {
     $assert($db->query('SELECT path FROM social_post_images WHERE content_id=11')->fetchColumn() === '2026/11/shared.webp', 'The shared attachment stays attached to the keeper.');
     $again = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('duplicate_bot_posts', 500);
     $assert($again['changed'] === 0 && $again['done'], 'The existing cleanup task dispatches this idempotent subtask.');
+    $seed = $db->prepare("INSERT INTO social_posts (id,author_id,body,published_at,status,kind) VALUES (?,1,?,'2000-01-01','published','post')");
+    for ($id = 1000; $id < 1650; $id++) { $seed->execute([$id, 'unique-' . $id]); }
+    $seed->execute([2000, 'unique-1000']);
+    $window = DuplicateCleanup::run(1);
+    $assert($window['changed'] === 0 && $window['has_more'], 'A bounded unique window advances rather than declaring the entire scan finished.');
+    for ($round = 0; $round < 10 && $window['has_more']; $round++) { $window = DuplicateCleanup::run(1); }
+    $assert(!$window['has_more'] && Repository::redirectTarget(2000) === 1000, 'Later duplicate candidates reach their turn and find keepers outside the current window.');
     $db->exec("UPDATE social_posts SET status='hidden' WHERE id=1");
-    $assert(Redirects::target(2) === null, 'Aliases cannot reveal a subsequently moderated post.');
+    $assert(Repository::redirectTarget(2) === null, 'Aliases cannot reveal a subsequently moderated post.');
     $db->exec('DELETE FROM social_posts WHERE id=1');
     $assert($db->query('SELECT 1 FROM social_post_redirects WHERE old_id=2')->fetchColumn() === false, 'Deleting a keeper removes its aliases.');
 };

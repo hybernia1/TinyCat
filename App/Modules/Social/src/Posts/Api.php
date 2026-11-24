@@ -2,9 +2,8 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Comments;
+use TinyCat\Social\Discussion\Comments;
 
-use TinyCat\Social\Content\Redirects;
 
 use \TinyCat\Http\Request;
 use \TinyCat\Http\Response;
@@ -18,6 +17,7 @@ final class Api
 {
     public static function register(Registrar $api): void
     {
+        $api = $api->forPublicWeb();
         $api->get('/statuses', self::listing(...));
         $api->get('/statuses/{id:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
         $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
@@ -28,9 +28,9 @@ final class Api
         });
         $api->post('/statuses', static fn (): Result => self::write(static fn (): array => Actions::status_json_create(IdentityApi::actor()), 'create'));
         $api->get('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): array => self::detail((int) $p['id']));
-        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_update((int) $p['id'], IdentityApi::actor()), 'update'));
-        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_delete((int) $p['id'], IdentityApi::actor()), 'delete'));
-        $api->get('/statuses/{id:[0-9]+}/comments', static fn (Request $r, array $p): array => ['items' => self::detail((int) $p['id'])['comments']]);
+        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::update((int) $p['id']));
+        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::delete((int) $p['id']));
+        $api->get('/statuses/{id:[0-9]+}/comments', self::comments(...));
         $api->post('/statuses/{id:[0-9]+}/comments', static function (Request $r, array $p): Result {
             $r->validated(['parent_id' => 'integer|min:0']);
             return self::write(static fn (): array => Actions::status_json_comment((int) $p['id'], max(0, (int) $r->input('parent_id', 0)), IdentityApi::actor()), 'comment');
@@ -58,6 +58,17 @@ final class Api
 
     }
 
+    /** Shared mutation contract; the registrar owns transport access and availability. */
+    public static function update(int $id): Result
+    {
+        return self::write(static fn (): array => Actions::status_json_update($id, IdentityApi::actor()), 'update');
+    }
+
+    public static function delete(int $id): Result
+    {
+        return self::write(static fn (): array => Actions::status_json_delete($id, IdentityApi::actor()), 'delete');
+    }
+
     /** JSON clients receive the standard envelope; native link navigation receives a temporary redirect.
      * @param array<string, string> $params
      * @return array{url: string, original_url: string} */
@@ -77,10 +88,21 @@ final class Api
         $items = $feed['items'];
         $nextParams = $params;
         unset($nextParams['cursor_at'], $nextParams['cursor_id']);
-        $nextParams += Feed::status_feed_cursor_params($items);
-        $next = count($items) < $limit ? '' : Feed::status_feed_next_url($context, $limit, $nextParams);
+        $selection = $feed['selection'];
+        $nextParams += $selection['cursor'];
+        $next = $selection['count'] < $limit ? '' : Feed::status_feed_next_url($context, $limit, $nextParams);
         return new Result(['items' => Resource::posts($items, $user), 'context' => $context, 'feed' => $params['feed'],
             'login_required' => $params['feed'] === 'following' && $user === null], null, ['pagination' => ['next_url' => $next, 'done' => $next === '']]);
+    }
+
+    /** @param array<string, string> $params */
+    private static function comments(Request $request, array $params): Result
+    {
+        $id = (int) $params['id'];
+        if (Feed::public_status_item($id) === null) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
+        $page = Comments::page($id, max(0, (int) $request->input('parent_id', 0)), trim((string) $request->input('cursor_at', '')), max(0, (int) $request->input('cursor_id', 0)), 'post', (int) $request->input('limit', Feed::public_status_page_limit()));
+        $user = Authentication::auth();
+        return new Result(['items' => Resource::comments($page['items'], $user), 'viewer' => $user === null ? null : \TinyCat\Social\Profiles\Profiles::resource($user)], null, ['pagination' => ['next_url' => $page['next_url'], 'done' => $page['next_url'] === '']]);
     }
 
     /**
@@ -94,16 +116,20 @@ final class Api
         $item = $editing
             ? \TinyCat\Database\Connection::one(Feed::public_status_select_sql() . ' WHERE c.kind = \'post\' AND c.id = ?', [$id])
             : Feed::public_status_item($id);
-        if (!$editing && $item === null && ($canonicalId = Redirects::target($id)) !== null) {
+        if (!$editing && $item === null && ($canonicalId = Repository::redirectTarget($id)) !== null) {
             $id = $canonicalId; $item = Feed::public_status_item($id);
         }
         if ($item === null || (!$editing && !Posts::status_can_view($item))) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
         if ($editing && !Posts::status_can_edit($item, $user)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden'); }
         $items = Resource::posts([$item], $user);
-        $comments = Comments::status_comments($id);
-        return ['constraints' => Resource::constraints(), 'item' => $items[0], 'comments' => Resource::comments($comments, $user),
-            'viewer' => $user === null ? null : \TinyCat\Social\Profiles\Resource::profile($user),
-            'options' => ['images_enabled' => \TinyCat\Social\Content\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Social\Content\Images::status_image_max_upload_bytes()]];
+        $page = Comments::page($id);
+        if (Request::current()->input('panel') === 'comment-edit') {
+            $comment = Comments::status_comment_item_find((int) Request::current()->input('comment_id', 0));
+            $page['items'] = $comment !== null && (int) $comment['content_id'] === $id ? [$comment] : [];
+        }
+        return ['constraints' => Resource::constraints(), 'item' => $items[0], 'comments' => Resource::comments($page['items'], $user), 'comments_next_url' => $page['next_url'],
+            'viewer' => $user === null ? null : \TinyCat\Social\Profiles\Profiles::resource($user),
+            'options' => ['images_enabled' => \TinyCat\Social\Posts\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Social\Posts\Images::status_image_max_upload_bytes()]];
     }
 
     /**
@@ -113,7 +139,7 @@ final class Api
     private static function commentTarget(array $params): array
     {
         $comment = Comments::status_comment_find((int) $params['commentId']);
-        if ($comment === null || (int) $comment['content_id'] !== (int) $params['id'] || !Posts::status_can_view(Posts::status_find((int) $params['id']))) {
+        if ($comment === null || (int) $comment['content_id'] !== (int) $params['id'] || Comments::status_comment_item_find((int) $params['commentId']) === null || Feed::public_status_item((int) $params['id']) === null) {
             Response::error(\TinyCat\Support\Localization::t('account.messages.comment_not_found'), 404, 'comment_not_found');
         }
         return $comment;
@@ -127,7 +153,7 @@ final class Api
         if (!in_array($action, ['react', 'comment_like'], true)) { Actions::status_json_require_session_interval($action); }
         $data = $operation();
         if (!in_array($action, ['react', 'comment_like'], true)) {
-            [$key, $intervalMs] = Posts::status_session_interval_rule($action);
+            [$key, $intervalMs] = \TinyCat\Social\Moderation\ActionPolicy::cooldown($action);
             \TinyCat\Core\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs);
         }
         return Result::from($data);

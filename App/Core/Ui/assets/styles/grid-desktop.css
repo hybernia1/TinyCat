@@ -1,0 +1,14 @@
+@media (min-width: 900px) {
+  .sm\:grid-2,
+  .md\:grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md\:grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .md\:grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

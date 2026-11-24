@@ -7,6 +7,12 @@ use Throwable;
 
 final class Pages
 {
+    public static function recovery(): void
+    {
+        $operation = \TinyCat\Core\Updates\Manager::installationRecoveryState();
+        self::render('recovery', [], ['operation' => (string) ($operation['id'] ?? '')]);
+    }
+
     public static function page(): void
     {
         if (Installer::isComplete()) {
@@ -73,13 +79,13 @@ final class Pages
      * @param array<mixed> $state */
     public static function render(string $step, array $languages, array $state): void
     {
-        $data = self::prepare($step, $languages, $state);
+        $data = $step === 'recovery' ? ['current' => 'recovery', 'steps' => [], 'operation' => $state['operation'] ?? ''] : self::prepare($step, $languages, $state);
         $data['error'] = \TinyCat\Http\Session::flash('error');
         $data['success'] = \TinyCat\Http\Session::flash('success');
         echo \TinyCat\Core\Ui\Document::frame([
             'title' => \TinyCat\Support\Localization::t('install.title') . ' | TinyCat',
             'htmlAttributes' => ['lang' => \TinyCat\Support\Localization::locale()],
-            'bodyAttributes' => ['data-icon-sprite' => \TinyCat\Support\Assets::asset('icons.svg')],
+            'bodyAttributes' => ['data-icon-sprite' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/icons.svg')],
             'csrfToken' => \TinyCat\Core\Security\Csrf::token(),
             'styles' => \TinyCat\Support\ClientAssets::styles('/install'),
             'scripts' => \TinyCat\Support\ClientAssets::scripts('/install'),
@@ -98,12 +104,12 @@ final class Pages
         $currentIndex = (int) array_search($step, array_keys($labels), true);
         $steps = [];
         foreach (array_keys($labels) as $index => $code) {
-            $steps[] = ['number' => $index + 1, 'label' => \TinyCat\Support\Localization::t($labels[$code]), 'active' => $code === $step, 'complete' => $index < $currentIndex];
+            $steps[] = ['label' => \TinyCat\Support\Localization::t($labels[$code]), 'active' => $code === $step, 'complete' => $index < $currentIndex];
         }
         $data = ['current' => $step, 'steps' => $steps, 'locale' => \TinyCat\Support\Localization::locale()];
         if ($step === 'language') {
             $data['locale'] = (string) ($state['locale'] ?? $data['locale']);
-            $data['languages'] = array_values(array_map(static fn (array $language): array => $language + ['display_code' => strtoupper($language['code'])], $languages));
+            $data['languages'] = array_values($languages);
         } elseif ($step === 'db') {
             $database = is_array($state['database'] ?? null) ? $state['database'] : (array) \TinyCat\Core\Settings\Store::config('database', []);
             $data['database'] = [];
@@ -117,14 +123,14 @@ final class Pages
                 try {
                     \TinyCat\Database\Connection::set(Installer::pdo($state['database']));
                     foreach (array_keys($tables) as $table) { $statuses[$table] = Installer::table_exists($table); }
-                } catch (Throwable $exception) { $data['table_error'] = $exception->getMessage(); }
+                } catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); $data['table_error'] = \TinyCat\Core\Runtime\Failure::message($exception, \TinyCat\Support\Localization::t('common.request_failed')); }
             }
             $data['tables'] = [];
             foreach ($tables as $table => $purpose) {
                 $data['tables'][] = ['name' => $table, 'purpose' => \TinyCat\Support\Localization::t($purpose), 'exists' => (bool) ($statuses[$table] ?? false)];
             }
         } elseif ($step === 'admin') {
-            $data += ['username_pattern' => \TinyCat\Core\Identity\Usernames::pattern(), 'username_hint' => \TinyCat\Core\Identity\Usernames::hint(), 'password_max' => \TinyCat\Core\Identity\Passwords::maxLength()];
+            $data += ['username_pattern' => \TinyCat\Core\Identity\Usernames::pattern(), 'username_hint' => \TinyCat\Core\Identity\Usernames::hint(), 'password_min' => \TinyCat\Core\Identity\Passwords::minLength(), 'password_max' => \TinyCat\Core\Identity\Passwords::maxLength()];
         } elseif ($step === 'done') {
             $data['required_tables'] = implode(', ', \TinyCat\Database\Schema::app_required_tables());
         }

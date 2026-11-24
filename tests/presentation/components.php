@@ -5,8 +5,6 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
-use TinyCat\Social\Profiles\Views as UsersViews;
-use TinyCat\Social\Presentation\Views as SiteViews;
 
 // No workspace database or cache is used by this rendering fixture.
 $database = new PDO('sqlite::memory:');
@@ -18,6 +16,7 @@ $database->exec('CREATE TABLE social_post_images (content_id INTEGER, path TEXT)
 $database->exec('CREATE TABLE social_post_likes (content_id INTEGER, user_id INTEGER)');
 $database->exec('CREATE TABLE social_comment_likes (comment_id INTEGER, user_id INTEGER)');
 \TinyCat\Database\Connection::set($database);
+\TinyCat\Core\Settings\Schema::install($database);
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $admin = ['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'avatar_exists' => 0];
 $member = ['id' => 2, 'username' => 'Member', 'role' => 'user', 'status' => 'active', 'avatar_exists' => 0];
@@ -74,6 +73,37 @@ $summary = \TinyCat\Support\Components::render('ui/list-summary', ['target' => '
 $assert(!str_contains($summary, 'data-list-result-count') && str_contains($summary, '&lt;needle&gt;') && str_contains($summary, 'data-list-summary-filters="#users-list"'), 'Shared list summaries render escaped search and scoped filter badges without a record-count prefix.');
 $emptySummary = \TinyCat\Support\Components::render('ui/list-summary', ['target' => '#users-list', 'pagination' => ['total' => 0]]);
 $assert(strip_tags($emptySummary) === '', 'An unfiltered list has no summary text or zero-result sentence.');
+foreach (['search' => 'search', 'password' => 'lock', 'email' => 'mail', 'url' => 'link', 'tel' => 'phone', 'date' => 'calendar', 'time' => 'clock'] as $type => $icon) {
+    $field = \TinyCat\Support\Components::render('ui/field', ['label' => $type, 'attributes' => ['class' => 'input', 'type' => $type, 'name' => 'fixture', 'value' => 'literal <value>']]);
+    $assert(substr_count($field, 'class="input-icon"') === 1 && str_contains($field, '#' . $icon . '"') && str_contains($field, 'literal &lt;value&gt;'), 'Typed fields share one icon and preserve attributes: ' . $type);
+}
+$settingsLookup = \TinyCat\Core\Settings\Sections::fieldLookup();
+$assert(isset($settingsLookup['email.smtp.password']['views'][0]['label']['t']), 'Nested settings presentation retains client translation expressions.');
+$assert(!isset($settingsLookup['email.smtp.password']['views'][0]['value'], $settingsLookup['email.smtp.password']['views'][0]['default']), 'Settings component lookups contain no stored values or defaults.');
+$settingsControl = \TinyCat\Support\Components::render('settings/field', ['key' => 'email.smtp.password', 'root_tag' => 'label', 'kind' => 'input', 'attributes' => ['class' => 'input', 'type' => 'password', 'name' => 'settings[email.smtp][password]', 'value' => '']]);
+$assert(str_contains($settingsControl, \TinyCat\Support\Localization::t('settings.fields.smtp_password')) && str_contains($settingsControl, '#lock'), 'The shared catalog renders nested settings labels and typed fields without HTML bootstrap metadata.');
+$opaqueSettings = ['fixture' => ['label' => ['t' => 'common.save'], 'fields' => [['key' => 'fixture', 'label' => ['t' => 'common.save'], 'default' => ['label' => ['t' => 'common.save']], 'options' => ['label' => ['t' => 'common.save']], 'fields' => [['label' => ['t' => 'common.save']]]]]]];
+$translatedSettings = (new ReflectionMethod(\TinyCat\Core\Settings\Sections::class, 'translate'))->invoke(null, $opaqueSettings);
+$assert($translatedSettings['fixture']['fields'][0]['default'] === $opaqueSettings['fixture']['fields'][0]['default'] && $translatedSettings['fixture']['fields'][0]['options'] === $opaqueSettings['fixture']['fields'][0]['options'] && is_string($translatedSettings['fixture']['fields'][0]['fields'][0]['label']), 'Settings translate presentation recursively through fields while preserving opaque defaults and options.');
+$emptySearch = \TinyCat\Support\Components::render('ui/search-page', ['result' => ['query' => 'missing', 'collections' => [['name' => 'People', 'items' => []]]]]);
+$assert(substr_count($emptySearch, 'empty-state-label') === 1 && str_contains($emptySearch, 'role="status"') && !str_contains($emptySearch, '>People<'), 'Full search pages show one shared empty state instead of empty collection cards.');
+$mixedSearch = \TinyCat\Support\Components::render('ui/search-page', ['result' => ['query' => 'found', 'collections' => [['name' => 'People', 'items' => []], ['name' => 'Articles', 'items' => [['url' => '/articles/1', 'title' => 'Found', 'excerpt' => 'Result']]]]]]);
+$assert(str_contains($mixedSearch, '>Articles<') && str_contains($mixedSearch, '>Found<') && !str_contains($mixedSearch, '>People<') && !str_contains($mixedSearch, 'empty-state-label'), 'Search pages retain matching collections and suppress empty collection cards.');
+$assert(!str_contains($mixedSearch, '<form') && !str_contains($mixedSearch, 'class="container') && !str_contains($mixedSearch, 'class="card'), 'Full search results reuse the page container and header search without nested forms or card frames.');
+$assert(str_contains($mixedSearch, 'class="identity-row"') && substr_count($mixedSearch, '<h1') === 1, 'Search results use shared identity rows and a single page heading.');
+$ownerSearch = \TinyCat\Support\Components::render('ui/search-page', ['result' => ['collections' => [['name' => 'Owner', 'items' => [['title' => 'Generic fallback']], 'content' => new \TinyCat\Support\Markup('<article>Owner result</article>')]]]]);
+$assert(str_contains($ownerSearch, '<article>Owner result</article>') && !str_contains($ownerSearch, 'Generic fallback'), 'Owner presentation replaces the generic result rows without duplicating results.');
+$workspace = \TinyCat\Support\Components::render('ui/public-workspace', ['title' => 'Search', 'navigation' => [['label' => 'All', 'icon' => 'search', 'url' => '/search/all?q=a%26b', 'active' => true], ['label' => 'Owner <test>', 'icon' => 'users', 'url' => '/search/all?collection=fixture', 'active' => false]], 'content' => new \TinyCat\Support\Markup($mixedSearch)]);
+$assert(substr_count($workspace, 'aria-current="page"') === 1 && str_contains($workspace, 'Owner &lt;test&gt;') && substr_count($workspace, '<h1') === 1 && !str_contains($workspace, '<form'), 'The shared public workspace keeps one selected source, escaped navigation labels and one search heading.');
+$hintField = \TinyCat\Support\Components::render('ui/field', ['label' => 'Flag', 'help' => 'Literal <img src=x>', 'help_id' => 'fixture-help', 'attributes' => ['name' => 'flag', 'type' => 'checkbox', 'aria-describedby' => 'fixture-help']]);
+$hintDocument = new DOMDocument();
+$previousXmlErrors = libxml_use_internal_errors(true);
+try { $hintDocument->loadHTML($hintField); }
+finally { libxml_clear_errors(); libxml_use_internal_errors($previousXmlErrors); }
+$hintXPath = new DOMXPath($hintDocument);
+$assert($hintXPath->query('//label/span[contains(@class,"label")]/span[@data-help][@role="button"]')->length === 1 && $hintXPath->query('//label//button')->length === 0, 'Field help sits beside its caption without nesting another labelable control inside the label.');
+$assert($hintXPath->query('//span[@id="fixture-help"][@hidden]')->item(0)?->textContent === 'Literal <img src=x>' && $hintXPath->query('//img')->length === 0, 'Help retains an escaped description target for existing field associations.');
+$assert(\TinyCat\Support\Components::render('ui/help', ['text' => '']) === '', 'Empty hints do not render an empty info control.');
 $accountFilters = \TinyCat\Support\Components::render('bots/account-filter-form', ['filters' => ['q' => 'Bot <unsafe>', 'status' => 'ban'], 'pagination' => ['per_page' => 25], 'statuses' => ['active', 'waiting', 'ban']]);
 $assert(str_contains($accountFilters, 'action="/api/bots/accounts') && str_contains($accountFilters, 'name="status"') && str_contains($accountFilters, 'value="ban" selected'), 'Account filters share their canonical owner component and selected status.');
 $assert(str_contains($accountFilters, 'Bot &lt;unsafe&gt;') && str_contains($accountFilters, 'data-ajax-target="#bot-accounts-list"') && !str_contains($accountFilters, 'role="dialog"') && !str_contains($accountFilters, 'type="submit"'), 'Account filters preserve escaped search state and automatic submission.');
@@ -82,16 +112,16 @@ $assert(str_contains($sourceFilters, 'action="/api/bots/sources"') && str_contai
 $assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source filters preserve their scoped controls and automatic submission.');
 
 $settingsSections = \TinyCat\Core\Settings\Administration::tc_admin_settings_view_sections();
-$iconSprite = (string) file_get_contents(__DIR__ . '/../../assets/icons.svg');
+$iconSprite = (string) file_get_contents(__DIR__ . '/../../App/Core/Ui/assets/icons.svg');
 foreach ($settingsSections as $section) {
     $assert(str_contains($iconSprite, 'id="' . $section['icon'] . '"'), 'Every settings section has a real shared SVG icon: ' . $section['icon']);
 }
 $assert(in_array('analytics', array_column(\TinyCat\Core\Settings\Resource::editor()['sections'], 'key'), true), 'Deferred settings expose the analytics section.');
-$sidebar = SiteViews::sidebar(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]);
+$sidebar = \TinyCat\Support\Components::render('site/sidebar', \TinyCat\Social\Site\Sidebar::resource(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]) + ['active_tag' => '', 'url' => '/api/site/sidebar']);
 $assert(str_contains($sidebar, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::plural('public.active_user_posts', 5))), 'Translation parameter maps preserve a parameter named count.');
 $assert(str_contains($sidebar, 'href="/author/1"') && str_contains($sidebar, 'href="/author/2"'), 'Sidebar authors retain distinct destinations.');
 $assert(str_contains($sidebar, 'href="/tag/tinycat"'), 'Sidebar topics use their prepared destination.');
-$following = UsersViews::followingProfile(['profile' => $member]);
+$following = \TinyCat\Support\Components::render('users/following-profile', ['user' => \TinyCat\Social\Profiles\Profiles::resource($member)]);
 $assert(str_contains($following, 'Member') && str_contains($following, 'href="/author/2"'), 'Following cards preserve the profile and its destination.');
 $avatar = \TinyCat\Core\Identity\Views::avatar(['user' => ['id' => 99, 'author_id' => 2, 'author_name' => 'Member', 'avatar_exists' => 0]]);
 $assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar, '#user'), 'Post avatars belong to the author and render the shared fallback icon.');
@@ -121,10 +151,8 @@ try {
     $settingsState->setValue(null, $savedSettingsState);
 }
 $assert(!str_contains((string) file_get_contents(__DIR__ . '/../../App/Core/Ui/Admin/templates/shell.php'), '$settingsEditor'), 'Admin pages do not embed a settings editor.');
-$botStat = \TinyCat\Support\Components::render('bots/stat', ['stat' => ['key' => 'posts', 'value' => 0]]);
-$assert(str_contains($botStat, 'class="card min-w-0"') && str_contains($botStat, '#file') && str_contains($botStat, 'data-bot-stat="posts">0</strong>'), 'Bot counters use the dashboard stat card, include their icon, and preserve zero values and live-update hooks.');
 $source = ['id' => 7, 'bot_user_id' => 3, 'username' => 'Bot', 'name' => 'Source', 'enabled' => true, 'feed_url' => 'https://example.test/feed'];
-$sourceModel = ['source' => \TinyCat\Social\Automation\Administration::prepareSourceInput($source), 'constraints' => \TinyCat\Social\Automation\Administration::sourceConstraints(), 'bots' => []];
+$sourceModel = ['source' => \TinyCat\Social\Bots\Administration::prepareSourceInput($source), 'constraints' => \TinyCat\Social\Bots\Administration::sourceConstraints(), 'bots' => []];
 $sourceFields = \TinyCat\Support\Components::render('bots/source-fields', $sourceModel);
 $typedFields = \TinyCat\Support\Components::render('bots/source-fields', array_diff_key($sourceModel, ['bots' => true]));
 $assert(!str_contains($typedFields, 'source_type') && str_contains($typedFields, '{{image}}'), 'Unified source forms retain the optional image marker without a type selector.');
@@ -133,25 +161,53 @@ $assert(str_contains($previewMarkup, '&lt;script&gt;') && str_contains($previewM
 $discoveryMarkup = \TinyCat\Support\Components::render('bots/source-preview', ['format' => 'discovery', 'title' => '', 'items' => [], 'sources' => [['name' => 'One', 'feed_url' => 'https://example.test/one'], ['name' => 'Two', 'feed_url' => 'https://example.test/two']]]);
 $assert(str_contains($discoveryMarkup, 'data-bot-preview-source="0"') && str_contains($discoveryMarkup, 'data-bot-preview-source="1"'), 'Discovery buttons preserve distinct candidate indexes across shared renderers.');
 $assert(preg_match('/name="publication_interval_minutes"[^>]*value="30"/', $sourceFields) === 1, 'Source forms display the publication default supplied by their owner.');
-$configuredFields = \TinyCat\Support\Components::render('bots/source-fields', array_replace($sourceModel, ['source' => \TinyCat\Social\Automation\Administration::prepareSourceInput($source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45])]));
+$configuredFields = \TinyCat\Support\Components::render('bots/source-fields', array_replace($sourceModel, ['source' => \TinyCat\Social\Bots\Administration::prepareSourceInput($source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45])]));
 $assert(preg_match('/name="publication_interval_minutes"[^>]*value="45"/', $configuredFields) === 1 && preg_match('/name="interval_minutes"[^>]*value="60"/', $configuredFields) === 1, 'Source forms display separate polling and publication intervals.');
-$sources = \TinyCat\Support\Components::render('bots/sources', ['bots' => [['id' => 3, 'username' => 'Bot']], 'items' => [\TinyCat\Social\Automation\Importer::sourceResource($source)]]);
+$sources = \TinyCat\Support\Components::render('bots/sources', ['bots' => [['id' => 3, 'username' => 'Bot']], 'items' => [\TinyCat\Social\Bots\Importer::sourceResource($source)]]);
 $assert($hasAction($sources, '/api/bots/sources/7/runs') && $hasAction($sources, '/api/bots/sources/7'), 'Source run and edit/delete actions address the same source.');
-$accounts = \TinyCat\Support\Components::render('bots/accounts', ['items' => [\TinyCat\Social\Automation\Administration::accountResource(['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01'])]]);
+$accounts = \TinyCat\Support\Components::render('bots/accounts', ['items' => [\TinyCat\Social\Bots\Administration::accountResource(['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01'])]]);
 $assert(str_contains($accounts, '/api/bots/accounts'), 'Bot accounts retain canonical API actions.');
 $item = ['id' => 7, 'likes_count' => 2, 'comments_count' => 1];
 $actions = \TinyCat\Support\Components::render('status/actions', ['item' => \TinyCat\Social\Posts\Resource::post($item, $member), 'open_modal' => true]);
 $assert(str_contains($actions, 'action="/api/statuses/7/likes/me"'), 'Status reactions use the resource action.');
-$form = \TinyCat\Support\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Resource::profile($member), 'parent_id' => 0, 'mention' => '']);
+$form = \TinyCat\Support\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Profiles::resource($member), 'parent_id' => 0, 'mention' => '']);
 $assert(str_contains($form, 'action="/api/statuses/7/comments"') && str_contains($form, 'status-comment-input-shell'), 'Comment forms preserve the API action and editor structure.');
+foreach ([null, 0, 20] as $parentId) {
+    $commentForm = \TinyCat\Support\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Profiles::resource($member), 'parent_id' => $parentId]);
+    $assert(str_contains($commentForm, 'name="parent_id" value="' . ($parentId ?? 0) . '"'), 'Comment forms submit a numeric zero for root comments and preserve reply parent IDs.');
+}
+$discussionForm = \TinyCat\Support\Components::render('publishing/comment-form', ['content_id' => 7, 'api_base' => '/api/articles/7', 'viewer' => \TinyCat\Social\Profiles\Profiles::resource($member)]);
+$assert(str_contains($discussionForm, 'name="parent_id" value="0"'), 'The shared article discussion form defaults to a numeric root parent without a supplied parent ID.');
 $thread = \TinyCat\Support\Components::render('status/thread', ['item' => \TinyCat\Social\Posts\Resource::post($item, null), 'comments' => \TinyCat\Social\Posts\Resource::comments([['id' => 1, 'content_id' => 7]], null), 'viewer' => null, 'context' => '']);
 $assert(str_contains($thread, 'data-modal-url="/api/users/authentication?'), 'Guest comment threads keep the sign-in modal.');
 $botFields = \TinyCat\Support\Components::render('bots/account-fields', ['item' => ['id' => 3, 'username' => 'Bot', 'status' => 'active', 'bio' => 'Draft']]);
-$assert(str_contains($botFields, 'data-modal-url="/api/users/3/avatar"') && str_contains($botFields, 'name="bio"'), 'The sole bot account form keeps biography and the shared avatar editor.');
+$assert(!str_contains($botFields, 'data-modal-url="/api/users/3/avatar"') && str_contains($botFields, 'name="bio"'), 'Bot account fields keep biography while avatar editing belongs to its separate tab.');
+$schedulerHtml = \TinyCat\Support\Components::render('scheduler/administration', ['cronToken' => 'fixture-token', 'cronUrl' => '/api/scheduler/executions', 'taskViews' => [['icon' => 'clock', 'title_label' => 'Fixture task', 'help_label' => 'Full task explanation', 'schedule_label' => 'Complete scheduling guidance', 'cadence_label' => 'Every hour', 'query_url' => '/api/scheduler/triggers/fixture', 'http_command' => 'fixture-http', 'cli_command' => 'fixture-cli']]]);
+$schedulerDocument = new DOMDocument();
+$schedulerXmlErrors = libxml_use_internal_errors(true);
+try { $schedulerDocument->loadHTML('<?xml encoding="UTF-8">' . $schedulerHtml); }
+finally { libxml_clear_errors(); libxml_use_internal_errors($schedulerXmlErrors); }
+$schedulerXPath = new DOMXPath($schedulerDocument);
+$rotationHtml = \TinyCat\Support\Components::render('scheduler/actions');
+$assert(!str_contains($schedulerHtml, '/api/scheduler/tokens') && str_contains($rotationHtml, 'action="/api/scheduler/tokens"') && str_contains($rotationHtml, 'data-confirm=') && str_contains($rotationHtml, 'name="_csrf"'), 'The header rotation action retains confirmation and CSRF without duplication in access details.');
+$assert($schedulerXPath->query('//details/summary//*[text()="Every hour"]')->length === 1 && $schedulerXPath->query('//details/summary//strong//*[@data-help]')->length === 1 && $schedulerXPath->query('//details/summary//small//*[@data-help]')->length === 1 && $schedulerXPath->query('//*[contains(concat(" ", normalize-space(@class), " "), " disclosure-body ")]/*[@data-help]')->length === 0 && str_contains($schedulerHtml, 'Full task explanation'), 'Task and scheduling hints sit beside their summary captions, with no floating help controls in the disclosure body.');
+$modulesIntro = \TinyCat\Support\Components::render('ui/modules-page', ['snapshot' => ['manageable' => true, 'groups' => [], 'problems' => []], 'rows' => []]);
+$assert(!str_contains($modulesIntro, 'data-help') && !str_contains($modulesIntro, \TinyCat\Support\Localization::t('modules.help')), 'Module administration omits the redundant introduction and its help icon.');
 $healthChecks = [
     ['id' => 'scheduler', 'status' => 'warning', 'duration_ms' => 1, 'metrics' => []],
     ['id' => 'http', 'status' => 'warning', 'duration_ms' => 1, 'metrics' => []],
 ];
+foreach ([null, 'completed', 'failed', 'running', 'not_due', 'has_more', 'interrupted'] as $taskStatus) {
+    $taskRow = \TinyCat\Support\Components::render('scheduler/task-row', ['task' => [
+        'name' => 'cleanup', 'options' => ['cleanup_batch' => 500],
+        'latest' => $taskStatus === null ? null : ['status' => $taskStatus, 'started_at' => '2026-11-01T12:00:00Z', 'duration_ms' => 0],
+        'run_url' => '/api/scheduler/tasks/cleanup/runs',
+    ]]);
+    $assert(str_starts_with($taskRow, '<tr>') && substr_count($taskRow, '<td') === 5, 'Every task uses the same five-column summary row.');
+    $assert(str_contains($taskRow, \TinyCat\Support\Localization::t($taskStatus === null ? 'cron.never' : 'cron.statuses.' . $taskStatus)), 'Latest task state is readable without relying on an icon.');
+    $assert($hasAction($taskRow, '/api/scheduler/tasks/cleanup/runs') && str_contains($taskRow, 'name="_csrf"') && !str_contains($taskRow, 'sr-only'), 'Task execution retains its API action, CSRF and visible button label.');
+    $assert($taskStatus === null || str_contains($taskRow, '0 ms'), 'Measured zero duration remains visible.');
+}
 $healthHtml = \TinyCat\Core\Health\Views::page([
     'snapshot' => ['status' => 'warning', 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => ['checked_at' => '2026-11-01T12:00:00Z']],
     'checks' => $healthChecks, 'issues' => $healthChecks, 'http' => $healthChecks[1], 'passed' => 0,
@@ -161,6 +217,20 @@ $previousXmlErrors = libxml_use_internal_errors(true);
 try { $healthDocument->loadHTML('<?xml encoding="UTF-8">' . $healthHtml); }
 finally { libxml_clear_errors(); libxml_use_internal_errors($previousXmlErrors); }
 $healthXPath = new DOMXPath($healthDocument);
+foreach (['ok', 'warning', 'critical', 'unknown'] as $healthStatus) {
+    $statusPage = \TinyCat\Core\Health\Views::page([
+        'snapshot' => ['status' => $healthStatus, 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => null],
+        'checks' => [], 'issues' => [], 'http' => null, 'passed' => 0,
+    ]);
+    preg_match('/<h2\b[^>]*>(.*?)<\/h2>/s', $statusPage, $statusHeading);
+    $assert(trim(strip_tags($statusHeading[1] ?? '')) === \TinyCat\Support\Localization::t('health.status.' . $healthStatus), 'Health overview exposes its actual status as visible heading text, including healthy and unknown states.');
+}
+$assert($healthXPath->query('//article//strong[text()="—"]')->length === 3 && $healthXPath->query('//article//small')->length === 0, 'Unavailable health metrics use an em dash without a misleading unit.');
+$zeroHealthHtml = \TinyCat\Core\Health\Views::page([
+    'snapshot' => ['status' => 'ok', 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => null],
+    'checks' => [], 'issues' => [], 'http' => ['metrics' => ['ttfb_ms' => 0, 'total_ms' => 0, 'http_status' => 200]], 'passed' => 0,
+]);
+$assert(substr_count($zeroHealthHtml, '<strong>0</strong>') === 2 && substr_count($zeroHealthHtml, '>ms</small>') === 2 && str_contains($zeroHealthHtml, '<strong>200</strong>'), 'Measured zero timings retain their values and units instead of becoming missing data.');
 $warnings = $healthXPath->query('//div[contains(concat(" ", normalize-space(@class), " "), " alert-warning ")]');
 $assert($warnings->length === 2, 'Health findings render one warning box per issue.');
 foreach ($warnings as $index => $warning) {
@@ -230,6 +300,11 @@ $memberHeader = \TinyCat\Core\Ui\DocumentData::publicHeader(array_replace($heade
 ]));
 $assert(str_contains($memberHeader, 'href="/admin"') && str_contains($memberHeader, 'data-notification-button') && str_contains($memberHeader, 'user-menu-trigger'), 'Authenticated header composes owner menus and administration link.');
 $assert(!str_contains($memberHeader, 'data-language-menu') && !str_contains($memberHeader, 'data-global-search'), 'Authenticated header respects conditional language and search surfaces.');
+foreach (['/uploads/avatars/member.webp', ''] as $avatarUrl) {
+    $identityHtml = \TinyCat\Support\Components::render('users/identity-row', ['user' => ['id' => 17, 'username' => 'Member <unsafe>', 'status' => 'waiting', 'avatar_url' => $avatarUrl]]);
+    $assert(str_contains($identityHtml, 'avatar avatar-sm') && str_contains($identityHtml, 'data-avatar-user-id="17"') && str_contains($identityHtml, 'Member &lt;unsafe&gt;'), 'Shared account cells preserve avatar identity and escaped names.');
+    $assert($avatarUrl === '' ? !str_contains($identityHtml, '<img') && str_contains($identityHtml, 'avatar-fallback') : str_contains($identityHtml, 'src="' . $avatarUrl . '"'), 'Shared account cells render uploaded avatars or the existing fallback.');
+}
 restore_error_handler();
 foreach ([['onclick' => 'alert(1)'], ['style' => 'color:red'], ['srcdoc' => '<script>bad</script>'], ['src' => 'javascript:alert(1)'], ['formaction' => "java\nscript:alert(1)"], ['src' => 'data:text/html,bad']] as $attributes) {
     $rejected = false;

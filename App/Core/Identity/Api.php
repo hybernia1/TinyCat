@@ -21,10 +21,10 @@ final class Api
         $api->post('/users/sessions', static fn (): Result => self::result(Login::auth_login_request()), 'public', 200);
         $api->post('/users/registrations/email-checks', static function (): array {
             if (!\TinyCat\Core\Identity\Integration::registrationEnabled()) { Response::error(\TinyCat\Support\Localization::t('auth.registration_disabled'), 403, 'registration_disabled'); }
-            return EmailAvailability::check();
+            return self::emailAvailability();
         }, 'public', 200);
-        $api->post('/users/me/email-checks', static fn (): array => EmailAvailability::check((int) self::actor()['id']), 'user', 200);
-        $api->post('/users/{id:[0-9]+}/email-checks', static fn (Request $r, array $p): array => EmailAvailability::check((int) self::target((int) $p['id'])['id']), 'user', 200);
+        $api->post('/users/me/email-checks', static fn (): array => self::emailAvailability((int) self::actor()['id']), 'user', 200);
+        $api->post('/users/{id:[0-9]+}/email-checks', static fn (Request $r, array $p): array => self::emailAvailability((int) self::target((int) $p['id'])['id']), 'user', 200);
         $api->post('/users/registrations', static fn (): Result => self::result(Actions::registration_request()), 'public');
         $api->post('/users/password-resets', static function (Request $request): Result {
             \TinyCat\Core\Security\RequestLimits::requireAllowed('recovery');
@@ -93,6 +93,19 @@ final class Api
         }
     }
 
+    /** @return array{available: bool} */
+    private static function emailAvailability(?int $ignoreId = null): array
+    {
+        header('Cache-Control: no-store, max-age=0');
+        \TinyCat\Core\Security\RequestLimits::requireAllowed('email-check');
+        Request::current()->validated(['email' => 'required|string']);
+        $email = \TinyCat\Core\Identity\Email::normalize((string) Request::current()->input('email', ''));
+        if (!\TinyCat\Core\Identity\Email::valid($email)) {
+            Response::validation(['email' => [Response::issue('email_invalid', \TinyCat\Support\Localization::t('account.messages.email_invalid'))]]);
+        }
+        return ['available' => !\TinyCat\Core\Identity\Email::taken($email, $ignoreId)];
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -147,7 +160,7 @@ final class Api
     private static function authentication(Request $request): array
     {
         $mode = Login::auth_modal_mode((string) $request->input('mode', 'login'));
-        return AuthResource::make($mode, Login::auth_request_next_url());
+        return Resource::authenticationForm($mode, Login::auth_request_next_url());
     }
 
     /**

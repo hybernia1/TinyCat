@@ -30,9 +30,14 @@ $cases = [
     "Text \u{200B} text https://example.com/a\u{200B}b?x=[...]" => "Text text https://example.com/a\u{200B}b?x=[...]",
 ];
 foreach ($cases as $before => $after) {
-    $assert(PostText::normalize($before) === $after);
-    $assert(PostText::normalize($after) === $after);
+    $assert(PostText::cleanImportBoilerplate($before) === $after);
+    $assert(PostText::cleanImportBoilerplate($after) === $after);
 }
+$assert(PostText::normalize('An excerpt. Continue reading') === 'An excerpt. Continue reading');
+$assert(PostText::normalize('The post Story appeared first on Site.') === 'The post Story appeared first on Site.');
+TinyCat\Social\Module::initialize();
+$assert(TinyCat\Social\Posts\PostCreation::fromText(str_repeat("The post X appeared first on Site.\n", 100) . 'Preserved tail')->body === 'Preserved tail');
+$assert(TinyCat\Social\Posts\PostCreation::fromText('An excerpt. Continue reading')->body === 'An excerpt.');
 $assert(PostText::isReadMore('READ MORE »'));
 $assert(!PostText::isReadMore('Read more about my work'));
 $description = TinyCat\Core\Feeds\FeedParser::descriptionText('<p>First</p><p>Second […] <a href="https://example.com/">Read <b>more</b> »</a></p>', 1200);
@@ -40,7 +45,7 @@ $assert($description === 'First Second …');
 $assert(!PostTextCleanup::safe('Read more', ''));
 $assert(!PostTextCleanup::safe('#foo bar', '#foobar'));
 $assert(!PostTextCleanup::safe('https://example.com/', 'https://example.org/'));
-$metadata = TinyCat\Social\Content\Links::status_link_data(['normalized_url' => 'https://example.com/', 'description' => '  Preview  […] Read more']);
+$metadata = TinyCat\Social\Posts\Links::status_link_data(['normalized_url' => 'https://example.com/', 'description' => '  Preview  […] Read more']);
 $assert($metadata['description'] === 'Preview …');
 
 if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {

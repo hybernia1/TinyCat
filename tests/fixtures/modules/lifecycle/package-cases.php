@@ -45,7 +45,7 @@ if ($packagePhase === 'install') {
     $coreDb = new PDO('sqlite:' . $coreHost . '/core.sqlite');
     $assert(count($coreDb->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 8, 'Core-only installation has exactly eight framework tables');
     [$exit, $text, $error] = $run([PHP_BINARY, $coreHost . '/App/Console.php', 'module-install', $moduleZip], $coreHost); $assert($exit === 0, 'Core-only installation receives its first module ZIP: ' . $text . $error);
-    [$exit, $text, $error] = $run([PHP_BINARY, $coreHost . '/App/Console.php', 'activate', 'fixture.addon'], $coreHost); $assert($exit === 0, 'First module activates without Social or Blog: ' . $text . $error);
+    [$exit, $text, $error] = $run([PHP_BINARY, $coreHost . '/App/Console.php', 'activate', 'fixture.addon'], $coreHost); $assert($exit === 0, 'First module activates without Social: ' . $text . $error);
     $assert(count($coreDb->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 9, 'First activation adds only the module-owned table');
     $coreDb = null;
 }

@@ -1,48 +1,26 @@
 <?php
 declare(strict_types=1);
-
 namespace TinyCat\Support;
 
-use \TinyCat\Support\Config;
-
+/** Owned source paths are published only as content-addressed public outputs. */
 final class Assets
 {
-
-    public static function asset(string $path, ?bool $version = null): string
+    public static function asset(string $path): string
     {
-        Config::load();
-
-        $path = ltrim(str_replace('\\', '/', $path), '/');
-        $url = '/assets/' . $path;
-
-        if ($version === false) {
-            return $url;
-        }
-
-        $file = \TinyCat\Support\Paths::basePath('assets/' . str_replace('/', DIRECTORY_SEPARATOR, $path));
-
-        if (!is_file($file)) {
-            return $url;
-        }
-
-        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        $minify = match ($extension) {
+        AssetGraph::validate($path);
+        $type = pathinfo($path, PATHINFO_EXTENSION);
+        $minify = match ($type) {
             'css' => ClientAssets::option('performance.minify_css'),
             'js' => ClientAssets::option('performance.minify_js'),
             default => false,
         };
-
         $compiled = CompiledAssets::asset($path, $minify);
         if ($compiled !== null) { return $compiled; }
-
-        if ($minify) {
-            $optimizedUrl = \TinyCat\Support\Minifier::assetUrl($path, $file, $extension);
-
-            if ($optimizedUrl !== null) {
-                return $optimizedUrl;
-            }
-        }
-
-        return $url . '?v=' . substr((string) hash_file('sha256', $file), 0, 24);
+        $source = AssetGraph::read($path);
+        if ($type === 'css') { $source = AssetGraph::stylesheet([$path]); }
+        if ($type === 'js') { $source = AssetGraph::javascript(AssetGraph::order([$path])); }
+        $name = substr((string) preg_replace('/[^a-z0-9_-]+/i', '-', pathinfo($path, PATHINFO_FILENAME)), 0, 100);
+        $url = Minifier::cachedAssetUrl($path, 'asset-' . strtolower($name), $source, $type, $minify);
+        return $url ?? throw new \RuntimeException('Could not publish owned asset: ' . $path);
     }
 }

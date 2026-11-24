@@ -9,6 +9,13 @@ use TinyCat\Support\{Components, Localization, Markup};
 /** Framework information surfaces compose lazy sections from active owners. */
 final class Information
 {
+    /** @return list<array{url: string, last_modified: null}> */
+    public static function pages(): array
+    {
+        $items = [['url' => '/', 'last_modified' => null], ['url' => '/privacy', 'last_modified' => null]];
+        foreach (array_keys(\TinyCat\Support\Languages::language_packages()) as $locale) { $items[] = ['url' => \TinyCat\Http\LocaleRouting::url('/privacy', $locale), 'last_modified' => null]; }
+        return $items;
+    }
     public static function sections(string $surface): string
     {
         $content = '';
@@ -18,8 +25,8 @@ final class Information
     public static function register(): void
     {
         Router::route(['GET', 'HEAD'], '/privacy', self::privacy(...));
-        foreach (['/llms.txt', '/llms'] as $path) { Router::route(['GET', 'HEAD'], $path, self::llms(...), 'text/plain'); }
-        Router::route(['GET', 'HEAD'], '/llms-full.txt', static fn () => self::llms(true), 'text/plain');
+        foreach (['/llms.txt', '/llms'] as $path) { Router::route(['GET', 'HEAD'], $path, self::llms(...), 'text/plain', publicWeb: true); }
+        Router::route(['GET', 'HEAD'], '/llms-full.txt', static fn () => self::llms(true), 'text/plain', publicWeb: true);
         Router::route(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/scheduled-tasks.php', static function (): never {
             \TinyCat\Http\Response::error('Use the scheduler API.', 410, 'endpoint_retired', ['endpoint' => '/api/scheduler/executions', 'health_endpoint' => '/api/scheduler/health']);
         });
@@ -29,7 +36,7 @@ final class Information
         $siteName = Site::site_name(); $siteCaptchaEnabled = Site::site_captcha_enabled(); $siteGoogleAnalyticsConfigured = Site::site_google_analytics_configured();
         $sections = new Markup(self::sections('privacy'));
         $url = Site::absolute_url(\TinyCat\Http\LocaleRouting::url('/privacy'));
-        Page::render(['title' => Localization::t('privacy.title'), 'current' => '/privacy', 'public' => true, 'meta' => [
+        Page::render(['title' => Localization::t('privacy.title'), 'current' => '/privacy', 'public' => true, 'surface' => PublicWeb::enabled() ? 'public' : 'access', 'asset_path' => PublicWeb::enabled() ? '/privacy' : '/access/privacy', 'meta' => [
             'url' => $url, 'type' => 'website', 'jsonld' => [
                 '@context' => 'https://schema.org', '@type' => 'WebPage', '@id' => $url . '#webpage',
                 'url' => $url, 'name' => Localization::t('privacy.title'), 'inLanguage' => Localization::locale(),
@@ -39,11 +46,13 @@ final class Information
     }
     public static function llms(bool $full = false): void
     {
-        $body = '# ' . Site::site_name() . "\n\n" . Site::site_meta_description() . "\n\n";
-        $body .= 'Interface languages: ' . implode(', ', array_keys(\TinyCat\Support\Languages::language_packages())) . ". Content retains its original language.\n\n";
-        $body .= '- [Homepage](' . Site::absolute_url('/') . ")\n- [Privacy and rules](" . Site::absolute_url('/privacy') . ")\n- [Sitemap](" . Site::absolute_url('/sitemap.xml') . ")\n\n";
+        $body = '# ' . Site::site_name() . "\n\n";
+        $description = Site::site_meta_description();
+        if ($description !== '') { $body .= $description . "\n\n"; }
+        $body .= 'Interface languages: ' . implode(', ', array_keys(\TinyCat\Support\Languages::language_packages())) . ".\n\n";
+        $body .= '- [Homepage](' . Site::absolute_url('/') . ")\n- [Privacy and rules](" . Site::absolute_url('/privacy') . ")\n- [Sitemap](" . Site::absolute_url('/sitemap.xml') . ")\n- [Robots rules](" . Site::absolute_url('/robots.txt') . ")\n\n";
         $body .= self::sections('llms');
         if ($full) { $body .= self::sections('llms-full'); }
-        ResponseDocument::respond($body, 'text/plain', 900);
+        ResponseDocument::respond($body, 'text/plain');
     }
 }

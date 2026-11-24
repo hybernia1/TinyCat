@@ -19,7 +19,8 @@ nikoli PHP adaptéry propojující domény.
   notifikace, nastavení, plánovač, diagnostika, instalace a aktualizace patří do core.
 - `Modules/Social` je jeden modul, nikoli skupina zapínatelných částí. Jeho jediný
   manifest a `src/Module.php` vlastní registraci profilů, statusů, moderace,
-  hledání, automatizace a veřejné prezentace. Blog má vlastní samostatnou registraci.
+  hledání, automatizace a veřejné prezentace. Nové moduly dodržují
+  [kontrakt modulu](docs/contracts/module-contract.md).
 - Dostupnost modulů určuje metadata-only inventář `App/Modules/*/module.json`,
   společný pro runtime a build. `App/modules.php` vybírá výchozí aktivaci zdrojů;
   instalace má explicitní aktivační stav. Nalezení složky modul nikdy nezapíná
@@ -28,8 +29,9 @@ nikoli PHP adaptéry propojující domény.
   Chybějící zdroje nemažou data ani evidenci; runtime pozastaví chybějící moduly
   a jejich závislé části, správce zůstává použitelný. Instalace a aktualizace používají společný updater, zámek,
   journal a zálohu; první nahrání modul nezapíná ani nespouští jeho PHP.
-- Blog je vývojový/testovací modul (`development: true`), běžná produkční
-  distribuce jej neobsahuje. Pro úplnou testovací sestavu je `--assembly=development`.
+- Blog je odstraněn z aktuálních zdrojů. Nevracej jej jako skrytý modul ani jako
+  testovací aplikaci; obecné kontrakty ověřují malé nezávislé fixture.
+  Publikované releasy a historické audity zůstávají neměnné.
 - Každý funkční modul má `src/`, `templates/`, `lang/`, `assets/`, migrace
   a registrační vstup v jednom `App/Modules/<Name>/`. Kontrakty jsou
   v `Core/Modules`, technický start v `Core/Runtime`.
@@ -44,8 +46,8 @@ nikoli PHP adaptéry propojující domény.
   patří vlastníkovi. Nepřidávej seznam domén do core ani glob discovery.
 - Core/Tasks vlastní běh, zámky a persistentní historii v `scheduler_runs`.
   HTTP/admin rozhraní plánovače patří také do core; CLI nesmí obejít runner.
-- Core nemá univerzální obsah, komentáře, tagy ani média. Blog vlastní celý
-  `blog_articles` a jeho vztahy, Social vlastní `social_posts` a vlastní diskuse,
+- Core nemá univerzální obsah, komentáře, tagy ani média. Social vlastní
+  `social_posts` a vlastní diskuse,
   reakce, tagy, odkazy a média. Domény mají nezávislé číselné prostory a FK.
 - `Core/Text`, `Core/Links`, `Core/Feeds` a `Core/Files` poskytují mechanismy
   bez doménového SQL; `Core/Ui` sdílenou prezentaci. Zachovej atomické zápisy,
@@ -54,10 +56,11 @@ nikoli PHP adaptéry propojující domény.
 
 - `Core/Modules/Resources` poskytuje tentýž výběr runtime i buildu. Klientské
   závislosti a překladové kanály deklarují vlastní modulové manifesty.
-- Sdílenou prezentaci poskytuje `Core/Ui/Page`. Social vlastní veřejné sociální téma;
-  společné UI nesmí vyžadovat jeho layout. Homepage, témata a dashboardy
+- Sdílenou prezentaci poskytuje `Core/Ui/Page`. Moduly vlastní obsah a komponenty,
+  nikoli globální téma. Volitelné veřejné layouty jsou samostatné v `App/Themes/`;
+  bez vybraného tématu se použije core rám. Homepage a dashboardy
   přispívají pojmenovanými definicemi; `/` a `/admin` vybírá core.
-  Blog a Social musejí fungovat zároveň i po samostatném vypnutí.
+  Core musí fungovat i po vypnutí všech funkčních modulů.
 - Společný HTML dokument, head, metadata, jazykové a consent UI vlastní Core/Ui;
   HTTP chyby a fallback Core/Runtime, locale URL Core/Http. Vlastníci deklarují
   `LocalizedRoute` včetně povolených query parametrů. Informační stránky a technický
@@ -71,8 +74,9 @@ nikoli PHP adaptéry propojující domény.
 - Textové renderování rozšiřuj pojmenovanými `Core/Text/Policies` a `TextPolicy`.
   Volající předává druh textu explicitně; core nevolí politiku Socialu jako výchozí.
   Pravidla URL a UTM vlastní každý modul; core poskytuje parser a aplikaci pravidel.
-  Sdílené assety v `assets/ui/content` a ID `publishing.*` jsou UI kompatibilita,
-  nikoli modul nebo povinná doménová služba. RSS poskytuje Core/Feeds,
+  Publikační a diskusní UI v `App/Modules/Social/assets/content` vlastní Social;
+  zachovaná ID `publishing.*` nejsou core služba ani samostatný modul. Core/Ui
+  poskytuje pouze obecné formuláře, dialogy a vykreslovací mechanismy. RSS poskytuje Core/Feeds,
   oEmbed hostuje Core/Discovery pro lazy `EmbedSource` vlastníka.
 
 - Nastavení, jejich popisky a `resources.emails` patří vlastníkům.

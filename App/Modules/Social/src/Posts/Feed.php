@@ -7,21 +7,10 @@ final class Feed
 {
     public static function homePath(): string { return \TinyCat\Core\Runtime\EntryPages::publicPath('tinycat.status.home'); }
 
-    public static function archive_type(string $type): string
-    {
-        return \TinyCat\Social\Content\Archive::type($type);
-    }
-
     private static function archive_query(\TinyCat\Database\Query $query, string $type): \TinyCat\Database\Query
     {
-        [$condition, $params] = self::archive_predicate($type);
+        [$condition, $params] = Archive::predicate($type);
         return $condition !== '' ? $query->where($condition, ...$params) : $query;
-    }
-
-    /** @return array{string, list<string>} */
-    public static function archive_predicate(string $type): array
-    {
-        return \TinyCat\Social\Content\Archive::predicate($type);
     }
 
     public static function public_status_select_sql(): string
@@ -38,7 +27,7 @@ final class Feed
                     u.username AS author_username,
                     u.username AS author_name,
                     u.role AS author_role,
-                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance,
+                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version,
                     u.updated_at AS author_updated_at,
                     (
                         SELECT COUNT(*)
@@ -48,16 +37,11 @@ final class Feed
                     (
                         SELECT COUNT(*)
                         FROM social_comments cc
-                        WHERE cc.content_id = c.id
+                        WHERE cc.content_id = c.id AND " . \TinyCat\Social\Discussion\Comments::visiblePredicate() . "
                     ) AS comments_count
                 FROM social_posts c
                 INNER JOIN users u ON u.id = c.author_id
                 LEFT JOIN social_post_images ci ON ci.content_id = c.id";
-    }
-
-    public static function public_status_apply_visibility(\TinyCat\Database\Query $query): \TinyCat\Database\Query
-    {
-        return \TinyCat\Social\Content\Archive::visible($query);
     }
 
     public static function public_status_id_query(bool $ordered = true): \TinyCat\Database\Query
@@ -66,8 +50,8 @@ final class Feed
             ? ' FORCE INDEX (content_feed_index)'
             : '';
 
-        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
-            'SELECT c.id FROM social_posts c' . $feedIndex . ' INNER JOIN users u ON u.id = c.author_id'
+        return Archive::visible(\TinyCat\Database\Query::select(
+            'SELECT c.id, c.published_at FROM social_posts c' . $feedIndex . ' INNER JOIN users u ON u.id = c.author_id'
         )->where('u.status = ?', 'active'));
     }
 
@@ -77,21 +61,22 @@ final class Feed
             ? ' FORCE INDEX (content_author_index)'
             : '';
 
-        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
-            'SELECT c.id FROM social_posts c' . $authorIndex . ' INNER JOIN users u ON u.id = c.author_id'
+        return Archive::visible(\TinyCat\Database\Query::select(
+            'SELECT c.id, c.published_at FROM social_posts c' . $authorIndex . ' INNER JOIN users u ON u.id = c.author_id'
         )->where('u.status = ?', 'active'));
     }
 
     public static function public_status_tag_id_query(int $termId): \TinyCat\Database\Query
     {
         // Let selective tags start with (term_id, content_id), without forcing a global feed scan.
-        return self::public_status_apply_visibility(\TinyCat\Database\Query::select(
-            'SELECT c.id FROM social_post_tags ct INNER JOIN social_posts c ON c.id = ct.content_id INNER JOIN users u ON u.id = c.author_id'
+        return Archive::visible(\TinyCat\Database\Query::select(
+            'SELECT c.id, c.published_at FROM social_post_tags ct INNER JOIN social_posts c ON c.id = ct.content_id INNER JOIN users u ON u.id = c.author_id'
         )->where('ct.term_id = ?', $termId)->where('u.status = ?', 'active'));
     }
 
-    /** @return list<int> */
-    private static function recent_ids(int $limit, string $cursorAt, int $cursorId, string $type, ?int $termId = null): array
+    /** @param array<string, mixed>|null $selection
+     * @return list<int> */
+    private static function recent_ids(int $limit, string $cursorAt, int $cursorId, string $type, ?int $termId = null, ?array &$selection = null): array
     {
         // Bound chronological work before selective filtering. A full page is
         // the global answer; an incomplete page falls back to the selective
@@ -102,11 +87,11 @@ final class Feed
             $enough = ' AND EXISTS (SELECT 1 FROM social_post_tags enough WHERE enough.term_id = ? LIMIT 1 OFFSET ' . ($limit - 1) . ')';
             $params[] = $termId;
         }
-        [$cursor, $cursorParams] = self::public_status_cursor_condition($cursorAt, $cursorId);
+        [$cursor, $cursorParams] = Archive::cursor($cursorAt, $cursorId);
         array_push($params, ...$cursorParams);
         $window = max(256, $limit * ($termId === null ? 32 : 16));
         $query = (new \TinyCat\Database\Query(
-            'SELECT c.id FROM (SELECT c.id, c.author_id, c.published_at FROM social_posts c FORCE INDEX (content_feed_index)'
+            'SELECT c.id, c.published_at FROM (SELECT c.id, c.author_id, c.published_at FROM social_posts c FORCE INDEX (content_feed_index)'
             . ' WHERE c.published_at <= ? AND c.status = \'published\' AND c.kind = \'post\'' . $enough . ($cursor === '' ? '' : ' AND ' . $cursor)
             . ' ORDER BY c.published_at DESC, c.id DESC LIMIT ' . $window . ') c'
             . ($termId === null ? '' : ' STRAIGHT_JOIN social_post_tags ct ON ct.content_id = c.id')
@@ -115,75 +100,71 @@ final class Feed
         ))->where('u.status = ?', 'active');
         if ($termId !== null) { $query->where('ct.term_id = ?', $termId); }
 
-        return self::public_status_ids_page(self::archive_query($query, $type), $limit);
+        return self::public_status_ids_page(self::archive_query($query, $type), $limit, $selection);
     }
 
     public static function public_status_query(): \TinyCat\Database\Query
     {
-        return self::public_status_apply_visibility(
+        return Archive::visible(
             \TinyCat\Database\Query::select(self::public_status_select_sql())->where('u.status = ?', 'active')
         );
     }
 
-    /** @return list<int> */
-    public static function public_status_ids_page(\TinyCat\Database\Query $query, int $limit = 24): array
+    /** @param array<string, mixed>|null $selection
+     * @param-out array{count: int, cursor: array<mixed>} $selection
+     * @return list<int> */
+    public static function public_status_ids_page(\TinyCat\Database\Query $query, int $limit = 24, ?array &$selection = null): array
     {
         $limit = max(1, min(100, $limit));
 
+        $rows = $query->order('c.published_at DESC, c.id DESC')->limit($limit)->all();
+        $selection = ['count' => count($rows), 'cursor' => self::status_feed_cursor_params($rows)];
         return array_values(array_filter(array_map(
             static fn (array $row): int => (int) ($row['id'] ?? 0),
-            $query
-                ->order('c.published_at DESC, c.id DESC')
-                ->limit($limit)
-                ->all()
+            $rows
         ), static fn (int $id): bool => $id > 0));
     }
 
     /**
+     * @param array<string, mixed>|null $selection
      * @return array<mixed>
      */
-    public static function public_status_cursor_page(\TinyCat\Database\Query $query, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
+    public static function public_status_cursor_page(\TinyCat\Database\Query $query, int $limit = 24, string $cursorAt = '', int $cursorId = 0, ?array &$selection = null): array
     {
-        return self::public_status_items_by_ids(self::public_status_ids_page(self::public_status_apply_cursor($query, $cursorAt, $cursorId), $limit));
-    }
-
-    /** Shared c.published_at/c.id predicate for selections and derived windows.
-     * @return array{0: string, 1: list<string|int>}
-     */
-    public static function public_status_cursor_condition(string $cursorAt = '', int $cursorId = 0): array
-    {
-        return \TinyCat\Social\Content\Archive::cursor($cursorAt, $cursorId);
+        return self::public_status_items_by_ids(self::public_status_ids_page(self::public_status_apply_cursor($query, $cursorAt, $cursorId), $limit, $selection));
     }
 
     public static function public_status_apply_cursor(\TinyCat\Database\Query $query, string $cursorAt = '', int $cursorId = 0): \TinyCat\Database\Query
     {
-        [$condition, $params] = self::public_status_cursor_condition($cursorAt, $cursorId);
+        [$condition, $params] = Archive::cursor($cursorAt, $cursorId);
         if ($condition !== '') { $query->where($condition, ...$params); }
         return $query;
     }
 
     /**
+     * @param array<string, mixed>|null $selection
      * @return array<mixed>
      */
-    public static function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
+    public static function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = '', ?array &$selection = null): array
     {
-        $type = self::archive_type($type);
+        $type = Archive::type($type);
         $limit = max(1, min(100, $limit));
         $media = in_array($type, ['images', 'links', 'video', 'audio'], true);
         if ($media && \TinyCat\Database\Connection::driver() === 'mysql') {
-            $ids = self::recent_ids($limit, $cursorAt, $cursorId, $type);
+            $ids = self::recent_ids($limit, $cursorAt, $cursorId, $type, null, $selection);
             if (count($ids) === $limit) { return self::public_status_items_by_ids($ids); }
         }
-        return self::public_status_cursor_page(self::archive_query(self::public_status_id_query(!$media), $type), $limit, $cursorAt, $cursorId);
+        return self::public_status_cursor_page(self::archive_query(self::public_status_id_query(!$media), $type), $limit, $cursorAt, $cursorId, $selection);
     }
 
     /**
+     * @param array<string, mixed>|null $selection
      * @return array<mixed>
      */
-    public static function public_status_items_for_user_cursor(int $userId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
+    public static function public_status_items_for_user_cursor(int $userId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = '', ?array &$selection = null): array
     {
         if ($userId < 1) {
-            return \TinyCat\Social\Posts\Feed::public_status_items_cursor($limit, $cursorAt, $cursorId, $type);
+            return \TinyCat\Social\Posts\Feed::public_status_items_cursor($limit, $cursorAt, $cursorId, $type, $selection);
         }
 
         $authorIds = \TinyCat\Social\Profiles\Following::public_following_author_ids($userId);
@@ -193,7 +174,8 @@ final class Feed
                 self::archive_query(\TinyCat\Social\Posts\Feed::public_status_author_id_query()->whereIn('c.author_id', $authorIds), $type),
                 $limit,
                 $cursorAt,
-                $cursorId
+                $cursorId,
+                $selection
             );
         }
 
@@ -213,14 +195,16 @@ final class Feed
             ),
             $limit,
             $cursorAt,
-            $cursorId
+            $cursorId,
+            $selection
         );
     }
 
     /**
+     * @param array<string, mixed>|null $selection
      * @return array<mixed>
      */
-    public static function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
+    public static function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = '', ?array &$selection = null): array
     {
         if ($authorId < 1) {
             return [];
@@ -230,7 +214,8 @@ final class Feed
             self::archive_query(\TinyCat\Social\Posts\Feed::public_status_author_id_query()->where('c.author_id = ?', $authorId), $type),
             $limit,
             $cursorAt,
-            $cursorId
+            $cursorId,
+            $selection
         );
     }
 
@@ -250,6 +235,7 @@ final class Feed
     }
 
     /**
+     * @param array<string, mixed>|null $selection
      * @return array<mixed>
      */
     public static function public_status_items_by_tag(
@@ -257,7 +243,8 @@ final class Feed
         int $limit = 24,
         string $cursorAt = '',
         int $cursorId = 0,
-        string $type = ''
+        string $type = '',
+        ?array &$selection = null
     ): array
     {
         $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
@@ -273,14 +260,14 @@ final class Feed
         }
 
         $limit = max(1, min(100, $limit));
-        $type = self::archive_type($type);
+        $type = Archive::type($type);
         if (\TinyCat\Database\Connection::driver() === 'mysql' && ($type === '' || $type === 'text')) {
-            $ids = self::recent_ids($limit, $cursorAt, $cursorId, $type, $termId);
+            $ids = self::recent_ids($limit, $cursorAt, $cursorId, $type, $termId, $selection);
             if (count($ids) === $limit) { return self::public_status_items_by_ids($ids); }
         }
         $query = self::public_status_tag_id_query($termId);
 
-        return \TinyCat\Social\Posts\Feed::public_status_cursor_page(self::archive_query($query, $type), $limit, $cursorAt, $cursorId);
+        return \TinyCat\Social\Posts\Feed::public_status_cursor_page(self::archive_query($query, $type), $limit, $cursorAt, $cursorId, $selection);
     }
 
     /**
@@ -383,10 +370,10 @@ final class Feed
         $userId = (int) (\TinyCat\Core\Identity\Authentication::auth()['id'] ?? 0);
 
         if ($userId > 0) {
-            \TinyCat\Social\Content\Reactions::status_preload_user_likes($ids, $userId);
+            \TinyCat\Social\Discussion\Reactions::status_preload_user_likes($ids, $userId);
         }
 
-        \TinyCat\Social\Content\Links::status_links_cache($ids);
+        \TinyCat\Social\Posts\Links::status_links_cache($ids);
     }
 
     public static function public_status_page_limit(): int
@@ -406,18 +393,20 @@ final class Feed
      */
     public static function status_feed_context_items(string $context, int $limit, array $params = [], ?array $user = null): array
     {
+        $selection = ['count' => 0, 'cursor' => []];
         $limit = max(1, min(50, $limit));
         $context = in_array($context, ['home', 'author', 'tag'], true) ? $context : 'home';
         $user ??= \TinyCat\Core\Identity\Authentication::auth();
         $cursorAt = trim((string) ($params['cursor_at'] ?? ''));
         $cursorId = max(0, (int) ($params['cursor_id'] ?? 0));
-        $type = self::archive_type((string) ($params['media'] ?? ''));
+        $type = Archive::type((string) ($params['media'] ?? ''));
 
         if ($context === 'author') {
             $authorId = max(0, (int) ($params['author_id'] ?? 0));
 
             return [
-                'items' => \TinyCat\Social\Posts\Feed::public_status_items_by_author_cursor($authorId, $limit, $cursorAt, $cursorId, $type),
+                'items' => \TinyCat\Social\Posts\Feed::public_status_items_by_author_cursor($authorId, $limit, $cursorAt, $cursorId, $type, $selection),
+                'selection' => $selection,
                 'action' => \TinyCat\Social\Profiles\Profiles::author_url($authorId),
             ];
         }
@@ -426,7 +415,8 @@ final class Feed
             $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize((string) ($params['tag'] ?? ''));
 
             return [
-                'items' => \TinyCat\Social\Posts\Feed::public_status_items_by_tag($tag, $limit, $cursorAt, $cursorId, $type),
+                'items' => \TinyCat\Social\Posts\Feed::public_status_items_by_tag($tag, $limit, $cursorAt, $cursorId, $type, $selection),
+                'selection' => $selection,
                 'action' => \TinyCat\Social\Posts\Tags::tag_url($tag),
             ];
         }
@@ -437,13 +427,15 @@ final class Feed
             $userId = (int) ($user['id'] ?? 0);
 
             return [
-                'items' => $userId > 0 ? \TinyCat\Social\Posts\Feed::public_status_items_for_user_cursor($userId, $limit, $cursorAt, $cursorId, $type) : [],
+                'items' => $userId > 0 ? \TinyCat\Social\Posts\Feed::public_status_items_for_user_cursor($userId, $limit, $cursorAt, $cursorId, $type, $selection) : [],
+                'selection' => $selection,
                 'action' => self::homePath() . '?feed=following',
             ];
         }
 
         return [
-            'items' => \TinyCat\Social\Posts\Feed::public_status_items_cursor($limit, $cursorAt, $cursorId, $type),
+            'items' => \TinyCat\Social\Posts\Feed::public_status_items_cursor($limit, $cursorAt, $cursorId, $type, $selection),
+            'selection' => $selection,
             'action' => self::homePath(),
         ];
     }
@@ -492,8 +484,9 @@ final class Feed
         $feed = self::status_feed_context_items($context, $limit, $params, $user);
         $items = $feed['items'];
         unset($params['cursor_at'], $params['cursor_id']);
-        $params += self::status_feed_cursor_params($items);
-        $done = count($items) < $limit;
+        $params += $feed['selection']['cursor'];
+        $done = $feed['selection']['count'] < $limit;
         return ['items' => Resource::posts($items, $user), 'count' => count($items), 'done' => $done, 'next_url' => $done ? '' : self::status_feed_next_url($context, $limit, $params)];
     }
+
 }

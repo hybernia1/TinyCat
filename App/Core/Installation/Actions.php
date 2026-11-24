@@ -10,6 +10,20 @@ use Throwable;
 
 final class Actions
 {
+    public static function recover(): \TinyCat\Http\Result
+    {
+        $operation = \TinyCat\Core\Updates\Manager::installationRecoveryState();
+        $input = \TinyCat\Http\Request::current()->validated(['operation' => 'required|string']);
+        if (($input['operation'] ?? '') !== ($operation['id'] ?? null)) { throw new \TinyCat\Http\HttpException('Installation recovery authorization failed.', 403, 'forbidden'); }
+        $state = &Installer::state();
+        $database = $state['database'] ?? null;
+        if (!is_array($database)) { throw new RuntimeException('Installation connection is unavailable; use private CLI recovery.'); }
+        \TinyCat\Database\Connection::set(Installer::pdo($database));
+        $result = \TinyCat\Core\Updates\Manager::rollback((string) ($operation['backup'] ?? ''), (string) $state['recovery_token'], operationId: (string) $operation['id']);
+        unset($state['tables'], $state['recovery_token']);
+        return new \TinyCat\Http\Result($result + ['redirect' => '/install?step=tables'], code: 'installation_restored');
+    }
+
     /** @return array<string, mixed> */
     public static function status(): array
     {
@@ -28,7 +42,7 @@ final class Actions
             'db' => ['host' => 'required|string', 'name' => 'required|string', 'user' => 'required|string', 'password' => 'string', 'charset' => 'string', 'port' => 'nullable|integer|min:1|max:65535'],
             'tables' => [],
             'admin' => ['username' => 'required|string', 'password' => 'required|string', 'password_confirm' => 'required|string'],
-            default => throw new \InvalidArgumentException('Unknown installation step.', 400),
+            default => throw new \TinyCat\Http\HttpException('Unknown installation step.', 400, 'bad_request'),
         };
         \TinyCat\Http\Request::current()->validated($rules);
         return match ($step) {
@@ -47,6 +61,16 @@ final class Actions
     private static function failure(string $message, string $step): never
     {
         \TinyCat\Http\Response::error($message, 422, 'installation_step_failed', ['step' => $step]);
+    }
+
+    private static function technicalFailure(Throwable $error, string $step): never
+    {
+        \TinyCat\Core\Runtime\Failure::report($error);
+        // A rejected connection is actionable setup input; schema/write failures are server errors.
+        $status = $step === 'db' && $error instanceof PDOException ? 422 : 500;
+        $data = ['step' => $step];
+        if (\TinyCat\Core\Updates\Manager::installationPending()) { $data['redirect'] = '/install/recovery'; }
+        \TinyCat\Http\Response::error(\TinyCat\Core\Runtime\Failure::message($error, \TinyCat\Support\Localization::t('common.request_failed')), $status, 'installation_step_failed', $data);
     }
 
     /** @param array<string, array{code: string, label: string}> $languages */
@@ -83,7 +107,7 @@ final class Actions
 
             return new \TinyCat\Http\Result(['redirect' => '/install?step=tables', 'step' => 'tables'], \TinyCat\Support\Localization::t('install.messages.db_connected'), [], 'installation_step_completed');
         } catch (Throwable $exception) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]), 'db');
+            self::technicalFailure($exception, 'db');
         }
     }
 
@@ -97,18 +121,18 @@ final class Actions
 
         try {
             \TinyCat\Database\Connection::set(Installer::pdo($state['database']));
-            Installer::create_tables();
-
-            $missingTables = Installer::missing_tables();
-
-            if ($missingTables !== []) {
-                throw new RuntimeException(\TinyCat\Support\Localization::t('install.messages.missing_tables') . ' ' . implode(', ', $missingTables));
-            }
-
+            $plan = \TinyCat\Core\Modules\Distribution::read(\TinyCat\Support\Paths::basePath());
+            Installer::operation('tables', static function (): array {
+                Installer::create_tables();
+                $missingTables = Installer::missing_tables();
+                if ($missingTables !== []) { throw new RuntimeException('Installation tables are incomplete.'); }
+                return [];
+            }, static function () use ($plan): void { self::assertInstallationTarget($plan); });
+            $state = &Installer::state();
             $state['tables'] = true;
             return new \TinyCat\Http\Result(['redirect' => '/install?step=admin', 'step' => 'admin'], \TinyCat\Support\Localization::t('install.messages.tables_created'), [], 'installation_step_completed');
         } catch (Throwable $exception) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]), 'tables');
+            self::technicalFailure($exception, 'tables');
         }
     }
 
@@ -121,9 +145,10 @@ final class Actions
         }
 
         try {
+            Installer::assert_config_publication_supported();
             \TinyCat\Database\Connection::set(Installer::pdo($state['database']));
         } catch (Throwable $exception) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]), 'db');
+            self::technicalFailure($exception, 'db');
         }
 
         $missingTables = Installer::missing_tables();
@@ -132,41 +157,37 @@ final class Actions
             self::failure(\TinyCat\Support\Localization::t('install.messages.missing_tables'), 'tables');
         }
 
-        $username = \TinyCat\Core\Identity\Usernames::normalize((string) \TinyCat\Http\Request::current()->input('username', ''));
-        $password = (string) \TinyCat\Http\Request::current()->input('password', '');
-        $confirm = (string) \TinyCat\Http\Request::current()->input('password_confirm', '');
-
-        if ($username === '' || $password === '') {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.required_fields'), 'admin');
-        }
-
-        if (!\TinyCat\Core\Identity\Usernames::valid($username)) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.invalid_username'), 'admin');
-        }
-
-        if (strlen($password) < 8) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.password_length'), 'admin');
-        }
-
-        if (\TinyCat\Core\Identity\Passwords::tooLong($password)) {
-            self::failure(\TinyCat\Support\Localization::t('account.messages.password_too_long'), 'admin');
-        }
-
-        if ($password !== $confirm) {
-            self::failure(\TinyCat\Support\Localization::t('install.messages.password_mismatch'), 'admin');
-        }
+        $input = (array) \TinyCat\Http\Request::current()->input();
+        $issues = \TinyCat\Core\Identity\Setup::issues($input);
+        if ($issues !== []) { self::failure(\TinyCat\Support\Localization::t(reset($issues), ['min' => (string) \TinyCat\Core\Identity\Passwords::minLength()]), 'admin'); }
+        $setup = \TinyCat\Core\Identity\Setup::input(array_replace($input, ['locale' => $state['locale'] ?? \TinyCat\Support\Localization::locale()]));
+        $username = $setup['username'];
+        $password = $setup['password'];
 
         try {
-            $adminId = Installer::create_admin_account($username, $password, (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
-            Installer::default_settings($state);
-            Installer::write_config($state);
+            $plan = \TinyCat\Core\Modules\Distribution::read(\TinyCat\Support\Paths::basePath());
+            $result = Installer::operation('admin', static function () use ($username, $password, $state, $plan): array {
+                $adminId = Installer::create_admin_account($username, $password, (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
+                Installer::default_settings($state);
+                if ($plan !== null) { \TinyCat\Core\Modules\Lifecycle::completeInstallation($plan); }
+                Installer::write_config($state);
+                return ['admin' => $adminId];
+            }, static function () use ($plan): void { self::assertInstallationTarget($plan); });
             unset($_SESSION['tc_install']);
-            \TinyCat\Core\Identity\Authentication::authLogin($adminId);
+            \TinyCat\Core\Identity\Authentication::authLogin((int) $result['admin']);
 
             return new \TinyCat\Http\Result(['redirect' => '/admin', 'step' => 'done'], \TinyCat\Support\Localization::t('install.messages.admin_created'), [], 'installation_step_completed');
         } catch (Throwable $exception) {
-            self::failure($exception->getMessage(), 'admin');
+            self::technicalFailure($exception, 'admin');
         }
+    }
+
+    /** @param array<string, mixed>|null $plan */
+    private static function assertInstallationTarget(?array $plan): void
+    {
+        $root = \TinyCat\Support\Paths::basePath();
+        if (\TinyCat\Core\Modules\Deployment::read($root) !== null || \TinyCat\Core\Modules\Distribution::read($root) !== $plan) { throw new RuntimeException('Installation target changed.'); }
+        if (Installer::table_exists('users') && (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM users') > 0) { throw new RuntimeException('An account already exists; fresh installation is refused.'); }
     }
 
     /** @return array{driver: string, host: string, name: string, user: string, password: string, charset: string, port?: int} */

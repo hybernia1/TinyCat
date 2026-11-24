@@ -18,14 +18,17 @@ final class Api
 
     /** @param (callable(): (array<string, mixed>|null))|null $currentUser
      * @param (callable(): bool)|null $ready */
-    public function __construct(?callable $currentUser = null, private readonly bool $debug = false, ?callable $ready = null)
+    public function __construct(?callable $currentUser = null, ?callable $ready = null, private readonly bool $publicWeb = false)
     {
         $this->currentUser = $currentUser === null ? static fn (): null => null : Closure::fromCallable($currentUser);
         $this->ready = $ready === null ? static fn (): bool => true : Closure::fromCallable($ready);
     }
 
     /** @param callable(): bool $ready */
-    public function whenReady(callable $ready): self { return new self($this->currentUser, $this->debug, fn (): bool => ($this->ready)() && $ready()); }
+    public function whenReady(callable $ready): self { return new self($this->currentUser, fn (): bool => ($this->ready)() && $ready(), $this->publicWeb); }
+
+    /** Scope availability independently of authentication and authorization. */
+    public function forPublicWeb(): self { return new self($this->currentUser, $this->ready, true); }
 
     /** Identity already authorized for the currently executing route.
      * @return array<string, mixed>|null */
@@ -84,10 +87,9 @@ final class Api
                 $result = self::result($handler(Request::current(), $named));
                 Response::success($result->data, $result->message, $status, $result->meta, $result->code, $result->params);
             } catch (Throwable $exception) {
-                error_log('Module API failed: ' . $exception->getMessage());
-                Response::exception($exception, $this->debug);
+                Response::exception($exception);
             }
-        });
+        }, publicWeb: $this->publicWeb);
     }
 
     private static function result(mixed $value): Result

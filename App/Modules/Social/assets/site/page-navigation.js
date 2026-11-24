@@ -1,9 +1,9 @@
-import "../../../../../assets/ui/document-navigation.js";
-import "../../../../../assets/core/page-navigation.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/core/component-renderer.js";
-import "../../../../../assets/core/lifecycle.js";
-import "../../../../../assets/ui/dialogs.js";
+import "../../../../Core/Ui/assets/document-navigation.js";
+import "../../../../Core/Ui/assets/runtime/page-navigation.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/runtime/component-renderer.js";
+import "../../../../Core/Ui/assets/runtime/lifecycle.js";
+import "../../../../Core/Ui/assets/dialogs.js";
 (function () {
   var T = window.TinyCat, sidebar = null;
   function supported(url) {
@@ -26,7 +26,7 @@ import "../../../../../assets/ui/dialogs.js";
     if (slot && sidebar && (!window.matchMedia || window.matchMedia("(min-width: 900px)").matches)) { slot.replaceWith(sidebar); sidebar.dataset.publicSidebarUrl = data.sidebar_url; T.site.activateSidebar(sidebar, data.tag); }
     target.replaceChildren(view); T.document.update(data.document); T.lifecycle.hydrate(target);
     var searchInput = document.querySelector("[data-global-search-input]");
-    if (searchInput) { searchInput.value = data.kind === "search" ? data.search.query : ""; }
+    if (searchInput) { searchInput.value = ""; }
     if (T.search && T.search.close) { document.querySelectorAll("[data-global-search]").forEach(T.search.close); }
     else { document.querySelectorAll("[data-global-search-results]").forEach(function (node) { node.hidden = true; }); }
     document.querySelectorAll("[data-language-link]").forEach(function (node) { node.href = T.urls.local(data.url, node.dataset.languageLink); });
@@ -39,18 +39,5 @@ import "../../../../../assets/ui/dialogs.js";
     url.searchParams.forEach(function (value, key) { request.searchParams.set(key, value); });
     var response = await T.api.request(request.href, { signal: signal, cache: "no-store" });
     return response.data;
-  } });
-  T.lifecycle.register("public-pages", { init: function () {
-    if (!document.querySelector("[data-public-page]")) { return; }
-    document.addEventListener("submit", function (event) {
-      var form = event.target.closest && event.target.closest("form[data-global-search]");
-      if (!form || event.defaultPrevented) { return; }
-      var input = form.querySelector("[data-global-search-input]");
-      if (!input || input.value.trim().length < 2) { return; }
-      var url = new URL(form.action, window.location.href);
-      url.searchParams.set("q", input.value.trim());
-      if (!supported(url)) { return; }
-      event.preventDefault(); T.navigation.go(url.href);
-    });
   } });
 }());

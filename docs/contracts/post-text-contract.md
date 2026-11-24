@@ -1,9 +1,13 @@
 # Jednotná pravidla textu příspěvků
 
 Tělo nového i upravovaného sociálního příspěvku připravuje `Social/Posts/PostCreation::fromText()`.
-Ruční zadání, API, náhled bota a import používají stejný `Core/Text/PostText` před
-omezením délky a rozpoznáním odkazů, zmínek a hashtagů. Pravidla se nevztahují
-na komentáře, životopisy ani jiná textová pole.
+Ruční zadání, API, náhled bota a import používají stejnou přípravu vlastníka.
+`Core/Text/PostText::normalize()` poskytuje obecnou normalizaci bez odstraňování
+redakčních dovětků. Social výslovně vybírá `cleanImportBoilerplate()` přes
+`TextPolicy::prepare` před omezením délky a validací; následné rozpoznání zmínek
+zůstává v jeho `TextPolicy::normalize`. Současné chování Socialu se tím nemění,
+ale jiný druh textu či vlastník čištění nepřebírá automaticky. Pravidla níže se
+nevztahují na komentáře, životopisy ani jiná textová pole.
 
 Stejné čištění se používá pro popis karty odkazu při ukládání metadat i při
 zobrazení již uloženého náhledu. Starší cache tak nevrací odstraněné dovětky.
@@ -23,7 +27,8 @@ zobrazení již uloženého náhledu. Starší cache tak nevrací odstraněné d
 - URL, jejich parametry, fragmenty, hashtagy a zmínky se zachovávají. Text se
   nepřekládá, neopravuje stylisticky a nevynucuje se nová šablona odstavců.
 
-RSS/Atom/JSON parser navíc odstraňuje HTML odkazy s přesným popiskem výzvy
+RSS/Atom/JSON parser pro své anotace výslovně vybírá stejné volitelné čištění
+a navíc odstraňuje HTML odkazy s přesným popiskem výzvy
 (včetně krátkých `More` a `Více`), zachovává mezery mezi HTML bloky a používá
 stejná pravidla pro výslednou anotaci. Dosavadní pravidlo pro odkazy v anotaci
 zůstává: obecné URL nahradí samostatný odkaz článku, podporovaná videa zůstávají.
@@ -41,6 +46,21 @@ Feedový import používá `PostCreation::fromText()` a zachovává dosavadní z
 anotace na limit vlastníka před odvozením vztahů. Komentáře mají vlastní pravidla
 v `Interactions::rules()` a při překročení limitu chybu pole `comment`.
 
+## Transaction and publication result
+
+Edits lock the current post and image reference, then recheck existence, kind,
+ownership/authorization and the text-or-image invariant. A previously loaded
+image is not a write input. Deletion takes the same parent lock before reading
+cleanup references. Link and image preparation happens before the transaction;
+superseded files are deleted after the outer commit, new files on rollback.
+
+Manual creation and editing persist inbox mentions atomically with the post.
+Email runs after commit. Delivery, moderation-counter and result-projection
+failures are diagnosed without reporting a committed write as failed. The
+response retains its success code and post ID; unavailable projections can be
+`null`. Imports keep their own policies and the shared transaction for the post,
+GUID history and source mapping, without adopting manual notifications or quotas.
+
 ## Jednorázová oprava databáze
 
 Nástroj je pouze pro CLI, není migrací a nespouští se automaticky:
@@ -57,7 +77,7 @@ se nepřepíše. Před zápisem se kontrolují konkrétní změny. Zápis je tra
 uzamyká řádky a odmítá souběžné úpravy; při konfliktu vrátí celou dávku zpět.
 Obnova stejně kontroluje aktuální těla, aby nepřepsala pozdější editace.
 
-Oprava zpracovává příspěvky všech autorů. Mění jen `content.body`, bez přepočtu
+Oprava zpracovává příspěvky všech autorů. Mění jen `social_posts.body`, bez přepočtu
 časů, stavů moderace, médií, vztahů a historie importu. Případy, kde by výsledné
 tělo bylo prázdné nebo se změnily rozpoznané odkazy, hashtagy či zmínky, plán
 označí jako přeskočené. Nejsou automaticky opraveny. Opakovaný náhled po opravě

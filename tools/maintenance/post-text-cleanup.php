@@ -34,7 +34,7 @@ final class PostTextCleanup
             foreach ($rows as $row) {
                 $cursor = (int) $row['id'];
                 $plan['scanned']++;
-                $after = PostText::normalize($row['body']);
+                $after = PostText::cleanImportBoilerplate($row['body']);
                 if ($after === $row['body']) { continue; }
                 if (!self::safe($row['body'], $after)) { $plan['skipped'][] = $cursor; continue; }
                 $plan['changes'][] = $row + ['after' => $after];
@@ -68,7 +68,7 @@ final class PostTextCleanup
                 $cases = [];
                 $parameters = [];
                 foreach ($batch as $row) {
-                    if (PostText::normalize($row['body']) !== $row['after'] || !self::safe($row['body'], $row['after'])) {
+                    if (PostText::cleanImportBoilerplate($row['body']) !== $row['after'] || !self::safe($row['body'], $row['after'])) {
                         throw new RuntimeException('Plan no longer matches cleanup rules.');
                     }
                     $current = $currentRows[(int) $row['id']] ?? null;

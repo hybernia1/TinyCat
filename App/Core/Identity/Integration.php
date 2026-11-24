@@ -51,7 +51,7 @@ final class Integration
 
     public static function profileUrl(int $id): ?string
     {
-        return isset(self::$policies['profile']) ? (string) (self::$policies['profile'])($id) : null;
+        return \TinyCat\Core\Ui\PublicWeb::enabled() && isset(self::$policies['profile']) ? (string) (self::$policies['profile'])($id) : null;
     }
 
     public static function localUrl(string $path): string

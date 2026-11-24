@@ -55,7 +55,7 @@ $assert(TinyCat\Core\Identity\Participants::fromModules($modules, new TinyCat\Co
 $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 Connection::set($pdo);
 $pdo->exec('PRAGMA foreign_keys = ON');
-$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT, role TEXT, created_at TEXT DEFAULT '2026-01-01 00:00:00')");
+$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT, role TEXT, avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), created_at TEXT DEFAULT '2026-01-01 00:00:00')");
 $pdo->exec("INSERT INTO users (id, status, role) VALUES (1, 'active', 'user'), (2, 'active', 'bot'), (3, 'active', 'user')");
 Lifecycle::setActive(['id' => 1, 'role' => 'user'], false);
 $assert(Connection::value('SELECT status FROM users WHERE id = 1') === 'ban', 'Accounts works with only its table');
@@ -99,6 +99,22 @@ try { Lifecycle::delete(3); throw new RuntimeException('Nested deletion was acce
 catch (LogicException) { $assert($pdo->inTransaction(), 'Nested deletion is rejected without touching caller transaction'); }
 $pdo->rollBack();
 
+$cleanupEvents = [];
+$failingCleanup = new Participant(prepareDelete: static fn (array $user): Deletion => new Deletion(
+    afterCommit: static function (): void { throw new RuntimeException('injected file cleanup failure'); },
+));
+$followingCleanup = new Participant(prepareDelete: static function (array $user) use (&$cleanupEvents): Deletion {
+    return new Deletion(afterCommit: static function () use (&$cleanupEvents): void { $cleanupEvents[] = 'remaining owner cleaned'; });
+});
+$pdo->exec("INSERT INTO users (id, role, status) VALUES (99, 'user', 'active')");
+try {
+    Lifecycle::delete(99, ['fixture.failure' => $failingCleanup, 'fixture.following' => $followingCleanup]);
+    throw new LogicException('Cleanup failure was ignored');
+} catch (\TinyCat\Database\AfterCommitFailed $exception) {
+    $assert(count($exception->failures) === 1, 'Account cleanup reports a committed transaction with failed file effects');
+}
+$assert(Connection::find('users', ['id' => 99]) === null && $cleanupEvents === ['remaining owner cleaned'], 'A failing owner does not prevent remaining post-commit account cleanup');
+
 $pdo->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, enabled INTEGER)');
 $pdo->exec('INSERT INTO bot_sources VALUES (1, 2, 1), (2, 3, 1)');
 Lifecycle::setActive(['id' => 2, 'role' => 'bot'], false, ['tinycat.social' => $participants['tinycat.social']]);
@@ -112,7 +128,7 @@ catch (RuntimeException $exception) { $assert($exception->getMessage() === 'inje
 $assert(Connection::value('SELECT status FROM users WHERE id = 3') === 'active', 'Status participant failure rolls account change back');
 
 $pdo->exec("CREATE TABLE social_posts (id INTEGER PRIMARY KEY, author_id INTEGER REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL DEFAULT 'post')");
-TinyCat\Social\Content\InteractionSchema::install($pdo);
+TinyCat\Social\Discussion\Schema::install($pdo);
 TinyCat\Core\Notifications\Schema::install($pdo);
 $pdo->exec('CREATE TABLE social_terms (id INTEGER PRIMARY KEY)');
 $pdo->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY)');
@@ -129,6 +145,7 @@ mkdir($root . '/uploads/status-images/2026/11', 0700, true);
 mkdir($root . '/uploads/avatars', 0700, true);
 $imageFile = $root . '/uploads/status-images/' . $imagePath;
 $avatarFile = $root . '/uploads/avatars/2.webp';
+$pdo->exec('UPDATE users SET avatar_exists = 1 WHERE id = 2');
 file_put_contents($imageFile, 'fixture image');
 file_put_contents($avatarFile, 'fixture avatar');
 $pdo->prepare('INSERT INTO social_post_images VALUES (10, ?)')->execute([$imagePath]);

@@ -12,14 +12,14 @@ final class Settings
     public static function section_security(): array
     {
         return [
-                'label' => \TinyCat\Support\Localization::t('settings.sections.security'),
+                'label' => ['t' => 'settings.sections.security'],
                 'icon' => 'shield',
                 'fields' => [
-                    ['key' => 'security.captcha.enabled', 'label' => \TinyCat\Support\Localization::t('settings.fields.captcha_enabled'), 'type' => 'bool', 'default' => false],
-                    ['key' => 'security.captcha.provider', 'label' => \TinyCat\Support\Localization::t('settings.fields.captcha_provider'), 'type' => 'select', 'default' => 'recaptcha', 'options' => ['recaptcha' => 'Google reCAPTCHA v2 Checkbox', 'turnstile' => 'Cloudflare Turnstile', 'hcaptcha' => 'hCaptcha'], 'help' => \TinyCat\Support\Localization::t('settings.fields.captcha_provider_help')],
-                    ['key' => 'security.captcha.site_key', 'label' => \TinyCat\Support\Localization::t('settings.fields.captcha_site_key'), 'type' => 'optional_text', 'default' => '', 'max' => 512],
-                    ['key' => 'security.captcha.secret_key', 'label' => \TinyCat\Support\Localization::t('settings.fields.captcha_secret_key'), 'type' => 'password', 'default' => '', 'max' => 512, 'help' => \TinyCat\Support\Localization::t('settings.fields.captcha_secret_key_help')],
-                    ['key' => 'security.captcha.login_attempts', 'label' => \TinyCat\Support\Localization::t('settings.fields.captcha_login_attempts'), 'type' => 'int', 'default' => 3, 'min' => 1, 'max' => 10],
+                    ['key' => 'security.captcha.enabled', 'label' => ['t' => 'settings.fields.captcha_enabled'], 'type' => 'bool', 'default' => false],
+                    ['key' => 'security.captcha.provider', 'label' => ['t' => 'settings.fields.captcha_provider'], 'type' => 'select', 'default' => 'recaptcha', 'options' => ['recaptcha' => 'Google reCAPTCHA v2 Checkbox', 'turnstile' => 'Cloudflare Turnstile', 'hcaptcha' => 'hCaptcha'], 'help' => ['t' => 'settings.fields.captcha_provider_help']],
+                    ['key' => 'security.captcha.site_key', 'label' => ['t' => 'settings.fields.captcha_site_key'], 'type' => 'optional_text', 'default' => '', 'max' => 512],
+                    ['key' => 'security.captcha.secret_key', 'label' => ['t' => 'settings.fields.captcha_secret_key'], 'type' => 'password', 'default' => '', 'max' => 512, 'help' => ['t' => 'settings.fields.captcha_secret_key_help']],
+                    ['key' => 'security.captcha.login_attempts', 'label' => ['t' => 'settings.fields.captcha_login_attempts'], 'type' => 'int', 'default' => 3, 'min' => 1, 'max' => 10],
                 ],
         ];
     }

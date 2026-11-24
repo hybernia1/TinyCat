@@ -13,6 +13,11 @@ final class HttpKernel
             \TinyCat\Http\Web::securityHeaders();
             $policy = Startup::http();
             $path = \TinyCat\Http\Request::current()->path();
+            if (\TinyCat\Core\Updates\Manager::installationPending()) {
+                $method = \TinyCat\Http\Request::current()->method();
+                $allowed = ($method === 'GET' && $path === '/install/recovery') || ($method === 'POST' && $path === '/api/installation/recover');
+                if (!$allowed || !\TinyCat\Core\Updates\Manager::installationRecoveryAllowed()) { throw new \TinyCat\Http\HttpException('Installation recovery is required.', 503, 'installation_recovery_required'); }
+            }
             if ($policy->prepare !== null) { $path = ($policy->prepare)($path); }
             if ($path === null) { return; }
             if ($policy->maintenanceExempt === null || !($policy->maintenanceExempt)($path)) { \TinyCat\Core\Updates\Manager::enforceMaintenance($path); }
@@ -37,14 +42,14 @@ final class HttpKernel
     private static function unavailable(string $code, string $message): void
     {
         if (\TinyCat\Http\Router::isApiPath(\TinyCat\Http\Request::current()->path()) || \TinyCat\Http\Request::current()->wantsJson()) { \TinyCat\Http\Response::error($message, 503, $code); }
-        http_response_code(503); echo $message;
+        \TinyCat\Http\Document::error($message, 503);
     }
 
     public static function exception(\Throwable $error): void
     {
         if (Startup::$exception !== null) { (Startup::$exception)($error); return; }
-        error_log('Application request failed: ' . $error->getMessage());
+        Failure::report($error);
         if (\TinyCat\Http\Router::isApiPath(\TinyCat\Http\Request::current()->path()) || \TinyCat\Http\Request::current()->wantsJson()) { \TinyCat\Http\Response::exception($error); }
-        http_response_code($error->getCode() >= 400 && $error->getCode() <= 599 ? $error->getCode() : 500); echo 'Request failed.';
+        \TinyCat\Http\Document::error(Failure::message($error, 'Request failed.'), Failure::status($error));
     }
 }

@@ -4,10 +4,9 @@ declare(strict_types=1);
 $sourceRoot = dirname(__DIR__, 3);
 if (($argv[1] ?? '') !== '--isolated') {
     $workspace = sys_get_temp_dir() . '/tinycat-publishing-' . bin2hex(random_bytes(10));
-    $excluded = ['App/Modules/Blog', 'App/Core/Support/compiled', 'assets/build'];
+    $excluded = ['App/Core/Support/compiled', 'assets/build'];
     $copy = static function (string $relative) use (&$copy, $sourceRoot, $workspace, $excluded): void {
         if (in_array($relative, $excluded, true)) { return; }
-        if (preg_match('~^assets/modules/(?:status|users|bots|notifications|moderation|settings|site|search)$~', $relative)) { return; }
         $source = $sourceRoot . '/' . $relative; $target = $workspace . '/' . $relative;
         if (is_file($source)) { copy($source, $target); return; }
         if (!is_dir($target)) { mkdir($target, 0700, true); }
@@ -30,11 +29,11 @@ if (($argv[1] ?? '') !== '--isolated') {
 }
 
 use TinyCat\Database\Connection;
-use TinyCat\Social\Content\Archive;
+use TinyCat\Social\Posts\Archive;
 use TinyCat\Core\Text\{Policies, TextPolicy};
 use TinyCat\Social\Posts\PostCreation;
-use TinyCat\Social\Content\Posts;
-use TinyCat\Social\Content\Queries;
+use TinyCat\Social\Posts\Repository;
+use TinyCat\Social\Posts\Queries;
 
 define('TINYCAT', true);
 $workspace = $argv[2];
@@ -47,7 +46,7 @@ $coreDb = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE
 TinyCat\Database\ModuleSchemas::install($coreDb, TinyCat\Core\Modules\Distribution::definitions($core));
 $coreTables = $coreDb->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $assert($coreTables === ['ip_action_limits', 'migrations', 'module_installations', 'notifications', 'password_reset_tokens', 'scheduler_runs', 'settings', 'users'], 'Core creates exactly eight framework tables without a domain module');
-$assert(!$core->catalog->has('tinycat.publishing') && !$core->catalog->has('tinycat.social') && !$core->catalog->has('tinycat.blog'), 'Core has no implicit publication capability or domain owner');
+$assert(!$core->catalog->has('tinycat.publishing') && !$core->catalog->has('tinycat.social'), 'Core has no implicit publication capability or domain owner');
 foreach (['Status', 'Users', 'Bots', 'Notifications', 'Moderation', 'Settings', 'Site', 'Search'] as $domain) { $assert(!is_dir($workspace . '/App/Modules/' . $domain), 'No physical product sources: ' . $domain); }
 $modules = TinyCat\Core\Modules\Loader::load($workspace);
 $modules->initialize(); Policies::forget('post');
@@ -58,7 +57,7 @@ $routes = (new ReflectionProperty(TinyCat\Http\Router::class, 'routes'))->getVal
 $assert(str_contains(json_encode(array_column($routes, 'path')), '/statuses'), 'Services do not silently activate social routes');
 $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('PRAGMA foreign_keys = ON'); Connection::set($pdo);
-TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Core\Security\Schema::install($pdo); TinyCat\Social\Content\Schema::install($pdo); TinyCat\Social\Content\InteractionSchema::install($pdo); TinyCat\Social\Content\Schema::install($pdo); TinyCat\Social\Content\InteractionSchema::install($pdo);
+TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Core\Security\Schema::install($pdo); TinyCat\Social\Posts\Schema::install($pdo); TinyCat\Social\Discussion\Schema::install($pdo); TinyCat\Social\Posts\Schema::install($pdo); TinyCat\Social\Discussion\Schema::install($pdo);
 $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $assert(count($tables) === 13 && in_array('social_posts', $tables, true) && !in_array('content', $tables, true), 'Fresh schema owns shared comments and reactions without following or bot tables');
 $pdo->exec("INSERT INTO users(id, username, role, status) VALUES (1, 'Writer', 'user', 'active'), (2, 'Disabled', 'user', 'ban'), (3, 'Admin', 'admin', 'active')");
@@ -67,8 +66,8 @@ $draft = PostCreation::fromText(" <b>Hello</b> @reader #Mixed_CASE\r\nhttps://ex
 $assert($draft->rejection === null && $draft->tags === ['mixed-case'] && str_contains($draft->body, '@reader'), 'Generic preparation normalizes text and tags without social mention lookup');
 $assert(count($draft->links) === 1 && !str_contains($draft->links[0]['normalized_url'], 'utm_'), 'Canonical links use shared parsing');
 $id = PostCreation::create(1, $draft, $draft->links, publishedAt: '2000-01-01 12:00:00');
-$assert(Queries::find($id)['body'] === $draft->body && Posts::canEdit(Posts::find($id), $writer) && Posts::canEdit(Posts::find($id), $admin), 'Public projection and owner/admin policy work without social tables');
-$assert(!Posts::canEdit(Posts::find($id), ['id' => 9, 'role' => 'user']) && !Posts::canEdit(null, $admin), 'Unrelated actors and missing posts are not editable');
+$assert(Queries::find($id)['body'] === $draft->body && Repository::canEdit(Repository::find($id), $writer) && Repository::canEdit(Repository::find($id), $admin), 'Public projection and owner/admin policy work without social tables');
+$assert(!Repository::canEdit(Repository::find($id), ['id' => 9, 'role' => 'user']) && !Repository::canEdit(null, $admin), 'Unrelated actors and missing posts are not editable');
 $second = PostCreation::create(1, PostCreation::fromText('Second #mixed_case'), [], publishedAt: '2000-01-01 12:00:00');
 $future = PostCreation::create(1, PostCreation::fromText('Future'), [], publishedAt: '2999-01-01 12:00:00');
 $hidden = PostCreation::create(1, PostCreation::fromText('Hidden'), [], publishedAt: '2000-01-01 12:00:00');
@@ -85,12 +84,12 @@ try { $bad = PostCreation::fromText('Rollback #unique https://rollback.test'); P
 catch (PDOException) { $assert((int) Connection::value('SELECT COUNT(*) FROM social_posts') === $before && !Connection::value("SELECT id FROM social_terms WHERE name = 'unique'"), 'Failure rolls back content and taxonomy together'); }
 $pdo->exec('DROP TRIGGER reject_link');
 $pdo->beginTransaction(); $outer = PostCreation::create(1, PostCreation::fromText('Outer transaction'), []); $assert($pdo->inTransaction(), 'Creation preserves the caller transaction'); $pdo->rollBack();
-$assert(Posts::find($outer) === null, 'Caller rollback removes publication');
-$update = PostCreation::fromText('Updated #replacement'); Posts::update($id, $update, [], null, false, null);
-$assert(Posts::find($id)['body'] === $update->body && count(Queries::page(tag: 'replacement')) === 1, 'Updates share the accepted preparation and relation writer');
+$assert(Repository::find($outer) === null, 'Caller rollback removes publication');
+$update = PostCreation::fromText('Updated #replacement'); Repository::update($id, $update, [], null, false, $writer);
+$assert(Repository::find($id)['body'] === $update->body && count(Queries::page(tag: 'replacement')) === 1, 'Updates share the accepted preparation and relation writer');
 $pdo->exec("CREATE TRIGGER reject_update BEFORE UPDATE ON social_posts BEGIN SELECT RAISE(ABORT, 'injected write failure'); END");
-try { Posts::update($id, PostCreation::fromText('Rejected #change'), [], null, false, null); $assert(false, 'Update must fail'); }
-catch (PDOException) { $assert(Posts::find($id)['body'] === $update->body, 'Failed update preserves original social_posts'); }
+try { Repository::update($id, PostCreation::fromText('Rejected #change'), [], null, false, $writer); $assert(false, 'Update must fail'); }
+catch (PDOException) { $assert(Repository::find($id)['body'] === $update->body, 'Failed update preserves original social_posts'); }
 $pdo->exec('DROP TRIGGER reject_update');
 $originalOptions = TinyCat\Core\Runtime\Startup::$options;
 TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default): mixed => $key === 'moderation.blocked_urls' ? 'blocked.test' : ($originalOptions !== null ? $originalOptions($key, $default) : TinyCat\Support\Config::get($key, $default));
@@ -106,16 +105,16 @@ mkdir($workspace . '/uploads/status-images/2000/01', 0700, true); $imagePath = '
 $file = $workspace . '/uploads/status-images/' . $imagePath; file_put_contents($file, 'prepared-image');
 $imageId = PostCreation::create(1, PostCreation::fromText('Image'), [], ['path' => $imagePath, 'width' => 1, 'height' => 1, 'bytes' => 14], '2000-01-01 12:00:00');
 $pdo->exec("CREATE TRIGGER reject_delete BEFORE DELETE ON social_posts BEGIN SELECT RAISE(ABORT, 'injected deletion failure'); END");
-try { Posts::delete($imageId); $assert(false, 'Deletion must fail'); }
-catch (PDOException) { $assert(Posts::find($imageId) !== null && is_file($file) && Connection::value('SELECT content_id FROM social_post_images WHERE content_id = ' . $imageId), 'Failed deletion preserves relations and the physical image'); }
+try { Repository::delete($imageId); $assert(false, 'Deletion must fail'); }
+catch (PDOException) { $assert(Repository::find($imageId) !== null && is_file($file) && Connection::value('SELECT content_id FROM social_post_images WHERE content_id = ' . $imageId), 'Failed deletion preserves relations and the physical image'); }
 $pdo->exec('DROP TRIGGER reject_delete');
 $pdo->beginTransaction();
-try { Posts::delete($imageId); $assert(false, 'Outer transaction must defer files'); } catch (LogicException) { $assert(is_file($file), 'Outer transaction cannot prematurely remove media'); }
-$pdo->rollBack(); Posts::delete($imageId); clearstatcache(true, $file);
-$assert(Posts::find($imageId) === null && !is_file($file), 'Successful deletion removes the file after commit');
-try { Posts::delete($id, static function () use ($pdo): void { $pdo->exec("UPDATE social_posts SET body = 'side effect'"); throw new RuntimeException('domain callback failed'); }); $assert(false, 'Callback must fail'); }
-catch (RuntimeException) { $assert(Posts::find($id)['body'] === $update->body, 'Related owner failure rolls back its effects and the publication'); }
-$deletion = TinyCat\Social\Content\AccountLifecycle::prepareDelete(...);
+try { Repository::delete($imageId); $assert(false, 'Outer transaction must defer files'); } catch (LogicException) { $assert(is_file($file), 'Outer transaction cannot prematurely remove media'); }
+$pdo->rollBack(); Repository::delete($imageId); clearstatcache(true, $file);
+$assert(Repository::find($imageId) === null && !is_file($file), 'Successful deletion removes the file after commit');
+try { Repository::delete($id, static function () use ($pdo): void { $pdo->exec("UPDATE social_posts SET body = 'side effect'"); throw new RuntimeException('domain callback failed'); }); $assert(false, 'Callback must fail'); }
+catch (RuntimeException) { $assert(Repository::find($id)['body'] === $update->body, 'Related owner failure rolls back its effects and the publication'); }
+$deletion = TinyCat\Social\Posts\AccountLifecycle::prepareDelete(...);
 
 $pdo->beginTransaction(); $cleanup = $deletion($writer); $pdo->exec('DELETE FROM users WHERE id = 1'); ($cleanup->afterDelete)(); $pdo->commit(); ($cleanup->afterCommit)();
 $assert((int) Connection::value('SELECT COUNT(*) FROM social_posts WHERE author_id = 1') === 0 && (int) Connection::value('SELECT COUNT(*) FROM social_post_tags') === 0, 'Account deletion uses only publishing-owned cleanup');
@@ -123,8 +122,14 @@ $compile = require $workspace . '/tools/assets/compile-assets.php'; $built = $co
 $assert(isset($built['assets/build/manifest.json']) && count(TinyCat\Support\TranslationSources::packages()) === 12, 'Selected services and Accounts build all locale assets without product sources');
 $feed = TinyCat\Core\Feeds\FeedParser::parse('<rss version="2.0"><channel><item><title>Standalone</title><link>https://example.com/post</link><description>Feed body</description><category>News</category></item></channel></rss>');
 $assert(count($feed) === 1 && $feed[0]['title'] === 'Standalone', 'Publishing parses feeds without Bots sources');
-$rendered = TinyCat\Social\Content\FeedImport::renderPost(['name' => 'Feed'], $feed[0]);
+$rendered = TinyCat\Social\Bots\FeedPublication::renderPost(['name' => 'Feed'], $feed[0]);
 $assert(str_contains($rendered, 'Standalone') && str_contains($rendered, '#news'), 'Shared import prepares feed text and category tags');
-$assert(TinyCat\Social\Content\FeedImport::prepareImage([], $feed[0]) === null, 'Text-only imports do not load bot or social media adapters');
+$assert(TinyCat\Social\Bots\FeedPublication::prepareImage([], $feed[0]) === null, 'Text-only imports do not load bot or social media adapters');
+$target = new TinyCat\Social\Bots\FeedPublication();
+$beforePreparation = (int) Connection::value('SELECT COUNT(*) FROM social_posts');
+$entry = $target->prepare(['post_template' => '{{title}}'], ['title' => 'Standalone preparation']);
+$attachments = $target->attachments([], [], $entry);
+$assert($entry->body === 'Standalone preparation' && $attachments === ['links' => [], 'image' => null], 'Text and attachment preparation are independently callable without bot tables');
+$assert((int) Connection::value('SELECT COUNT(*) FROM social_posts') === $beforePreparation, 'Preparation does not publish; absent bot tables also prevent scheduling or GUID side effects');
 foreach (get_declared_classes() as $class) { $assert(!preg_match('/^TinyCat\\\\(?:Status|Users|Bots|Notifications|Moderation|Settings|Site|Search)\\\\/', $class), 'No product class loaded: ' . $class); }
 echo "PASS Social-owned content schema, preparation, reads, writes, rollback and build ({$checks} checks)\n";

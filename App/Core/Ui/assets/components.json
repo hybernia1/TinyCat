@@ -1,0 +1,2106 @@
+{
+  "ui/field": {
+    "tag": "label",
+    "attrs": {"class": {"or": [{"get": "field_class"}, "field"]}},
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {"class": "label cluster gap-1"},
+        "children": [
+          {"get": "label"},
+          {
+            "component": "ui/help",
+            "data": {"text": {"get": "help"}, "label": {"get": "label"}, "help_id": {"get": "help_id"}}
+          }
+        ]
+      },
+      {"component": "ui/input", "data": {"attributes": {"get": "attributes"}}, "when": {"not": {"get": "textarea"}}},
+      {"tag": "textarea", "attrs": {"get": "attributes"}, "when": {"get": "textarea"}, "children": [{"get": "value"}]}
+    ]
+  },
+  "ui/select": {
+    "tag": "label",
+    "attrs": {"class": "field"},
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {"class": "label cluster gap-1"},
+        "children": [
+          {"get": "label"},
+          {
+            "component": "ui/help",
+            "data": {"text": {"get": "help"}, "label": {"get": "label"}, "help_id": {"get": "help_id"}}
+          }
+        ]
+      },
+      {
+        "tag": "select",
+        "attrs": {"get": "attributes"},
+        "children": [
+          {
+            "each": {"get": "choices"},
+            "as": "choice",
+            "children": [
+              {
+                "tag": "option",
+                "attrs": {
+                  "value": {"get": "_key"},
+                  "selected": {"if": [{"eq": [{"string": {"get": "_key"}}, {"string": {"get": "value"}}]}, true, null]}
+                },
+                "children": [{"get": "choice"}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/pagination": {
+    "tag": "nav",
+    "attrs": {"class": "pagination", "aria-label": {"t": "common.pagination"}},
+    "when": {"get": "navigation.visible"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "pagination-summary"},
+        "children": [
+          {
+            "t": "common.pagination_summary",
+            "values": {
+              "from": {"get": "navigation.from"},
+              "to": {"get": "navigation.to"},
+              "total": {"get": "navigation.total"}
+            }
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "pagination-list"},
+        "children": [
+          {
+            "component": "ui/pagination-step",
+            "data": {
+              "step": {"get": "navigation.previous"},
+              "kind": "prev",
+              "icon": "chevron-left",
+              "label": {"t": "common.previous"},
+              "target": {"get": "target"}
+            }
+          },
+          {
+            "each": {"get": "navigation.pages"},
+            "as": "page",
+            "children": [
+              {
+                "tag": "span",
+                "attrs": {"class": "pagination-ellipsis", "aria-hidden": "true"},
+                "when": {"get": "page.gap_before"},
+                "children": ["…"]
+              },
+              {
+                "tag": "span",
+                "attrs": {"class": "pagination-link is-active", "aria-current": "page"},
+                "when": {"get": "page.current"},
+                "children": [{"get": "page.number"}]
+              },
+              {
+                "tag": "a",
+                "attrs": {
+                  "class": "pagination-link",
+                  "href": {"get": "page.url"},
+                  "data-ajax": "",
+                  "data-ajax-target": {"get": "target"},
+                  "data-history": {"get": "page.history_url"}
+                },
+                "when": {"not": {"get": "page.current"}},
+                "children": [{"get": "page.number"}]
+              }
+            ]
+          },
+          {
+            "component": "ui/pagination-step",
+            "data": {
+              "step": {"get": "navigation.next"},
+              "kind": "next",
+              "icon": "chevron-right",
+              "label": {"t": "common.next"},
+              "target": {"get": "target"}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "ui/api-action": {
+    "tag": "form",
+    "attrs": {
+      "class": "inline-flex",
+      "method": "post",
+      "action": {"get": "url"},
+      "data-api-method": {"get": "method"},
+      "data-ajax-form": "",
+      "data-ajax-target": {"get": "target"},
+      "data-confirm": {"get": "confirm"},
+      "data-confirm-variant": {"if": [{"get": "confirm"}, "danger", null]}
+    },
+    "children": [
+      {"csrf": true},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "_method", "value": {"get": "method"}}},
+      {
+        "each": {"get": "fields"},
+        "as": "value",
+        "children": [{"tag": "input", "attrs": {"type": "hidden", "name": {"get": "_key"}, "value": {"get": "value"}}}]
+      },
+      {
+        "tag": "button",
+        "attrs": {
+          "class": {"or": [{"get": "button_class"}, "btn btn-sm btn-ghost"]},
+          "type": "submit",
+          "aria-label": {"get": "label"},
+          "title": {"if": [{"get": "icon"}, {"get": "label"}, null]}
+        },
+        "children": [
+          {"icon": {"get": "icon"}, "when": {"get": "icon"}},
+          {
+            "tag": "span",
+            "attrs": {"class": {"if": [{"and": [{"get": "icon"}, {"not": {"get": "show_label"}}]}, "sr-only", null]}},
+            "children": [{"get": "label"}]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/modal": {
+    "tag": "div",
+    "attrs": {"get": "root_attributes"},
+    "children": [
+      {"tag": "div", "attrs": {"class": "modal-backdrop"}},
+      {
+        "tag": {"if": [{"get": "form"}, "form", "div"]},
+        "attrs": {"get": "panel_attributes"},
+        "children": [
+          {"csrf": true, "when": {"get": "csrf"}},
+          {
+            "tag": "input",
+            "attrs": {"type": "hidden", "name": "_method", "value": {"get": "hidden_method"}},
+            "when": {"get": "hidden_method"}
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "modal-header"},
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {"class": "text-lg m-0 cluster gap-2", "id": {"get": "title_id"}},
+                "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "title"}]
+              },
+              {
+                "tag": "button",
+                "attrs": {
+                  "class": "btn btn-sm btn-ghost btn-icon",
+                  "type": "button",
+                  "data-modal-close": "",
+                  "aria-label": {"get": "close_label"}
+                },
+                "children": [{"slot": {"get": "close_icon"}}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": {"or": [{"get": "body_class"}, "modal-body"]}},
+            "children": [{"slot": {"get": "body"}}]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "modal-footer"},
+            "when": {"get": "has_footer"},
+            "children": [{"slot": {"get": "footer"}}]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/captcha": {
+    "tag": "div",
+    "attrs": {
+      "class": "field captcha-provider",
+      "data-captcha": "",
+      "data-captcha-provider": {"get": "config.provider"},
+      "data-captcha-sitekey": {"get": "config.site_key"},
+      "data-captcha-context": {"get": "config.context"},
+      "data-captcha-theme": "auto"
+    },
+    "when": {"get": "config.enabled"},
+    "children": [
+      {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "security.captcha_label"}]},
+      {"tag": "div", "attrs": {"class": "captcha-widget", "data-captcha-widget": ""}}
+    ]
+  },
+  "ui/search-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "admin-search-form",
+      "method": "get",
+      "action": {"get": "url"},
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": {"get": "target"},
+      "data-history": {"get": "history"}
+    },
+    "children": [
+      {
+        "each": {"get": "filters"},
+        "as": "value",
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {"type": "hidden", "name": {"get": "_key"}, "value": {"get": "value"}},
+            "when": {"not": {"eq": [{"get": "_key"}, "q"]}}
+          }
+        ]
+      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "per_page", "value": {"get": "pagination.per_page"}}},
+      {
+        "component": "ui/input",
+        "data": {
+          "attributes": {
+            "class": "input",
+            "type": "search",
+            "name": "q",
+            "value": {"get": "filters.q"},
+            "aria-label": {"t": "common.search"}
+          }
+        }
+      }
+    ]
+  },
+  "ui/per-page": {
+    "tag": "form",
+    "attrs": {
+      "class": "admin-per-page-form",
+      "method": "get",
+      "action": {"get": "url"},
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": {"get": "target"},
+      "data-history": {"get": "history"}
+    },
+    "children": [
+      {
+        "each": {"get": "filters"},
+        "as": "value",
+        "children": [{"tag": "input", "attrs": {"type": "hidden", "name": {"get": "_key"}, "value": {"get": "value"}}}]
+      },
+      {"tag": "input", "attrs": {"type": "hidden", "name": "page", "value": "1"}},
+      {
+        "tag": "label",
+        "attrs": {"class": "field-inline"},
+        "children": [
+          {"tag": "span", "attrs": {"class": "sr-only"}, "children": [{"t": "common.per_page"}]},
+          {
+            "tag": "select",
+            "attrs": {"class": "select select-sm", "name": "per_page", "data-submit-on-change": ""},
+            "children": [
+              {
+                "each": {"get": "choices"},
+                "as": "choice",
+                "children": [
+                  {
+                    "tag": "option",
+                    "attrs": {
+                      "value": {"get": "_key"},
+                      "selected": {
+                        "if": [
+                          {"eq": [{"string": {"get": "_key"}}, {"string": {"get": "pagination.per_page"}}]},
+                          true,
+                          null
+                        ]
+                      }
+                    },
+                    "children": [{"get": "choice"}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/list-toolbar": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-8"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "admin-list-toolbar"},
+        "children": [
+          {
+            "component": "ui/search-form",
+            "data": {
+              "url": {"get": "url"},
+              "target": {"get": "target"},
+              "history": {"get": "history"},
+              "filters": {"get": "filters"},
+              "pagination": {"get": "pagination"}
+            }
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "admin-filter-actions"},
+            "children": [
+              {
+                "component": "ui/filter-trigger",
+                "data": {"id": {"get": "filter_modal"}},
+                "when": {"get": "filter_modal"}
+              },
+              {
+                "component": "ui/per-page",
+                "data": {
+                  "url": {"get": "url"},
+                  "target": {"get": "target"},
+                  "history": {"get": "history"},
+                  "filters": {"get": "filters"},
+                  "pagination": {"get": "pagination"},
+                  "choices": {"10": "10", "25": "25", "50": "50", "100": "100"}
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {"component": "ui/list-summary", "data": {"target": {"get": "target"}, "filters": {"get": "filters"}}}
+    ]
+  },
+  "ui/avatar": {
+    "tag": "span",
+    "attrs": {
+      "class": {"concat": ["avatar", {"if": [{"get": "small"}, " avatar-sm", ""]}]},
+      "data-avatar-user-id": {"get": "user.id"}
+    },
+    "children": [
+      {
+        "component": "ui/avatar-content",
+        "data": {"user": {"get": "user"}, "alt": {"get": "alt"}, "fallback_icon": {"get": "fallback_icon"}}
+      }
+    ]
+  },
+  "ui/avatar-content": [
+    {
+      "tag": "img",
+      "attrs": {
+        "src": {"get": "user.avatar_url"},
+        "alt": {"or": [{"get": "alt"}, {"get": "user.username"}, "Avatar"]},
+        "loading": "lazy",
+        "data-user-avatar-image": "",
+        "data-avatar-user-id": {"get": "user.id"}
+      },
+      "when": {"get": "user.avatar_url"}
+    },
+    {
+      "tag": "span",
+      "attrs": {
+        "class": "avatar-fallback",
+        "data-user-avatar-fallback": "",
+        "data-avatar-user-id": {"get": "user.id"},
+        "hidden": {"if": [{"get": "user.avatar_url"}, true, null]}
+      },
+      "children": [{"icon": {"or": [{"get": "fallback_icon"}, "user"]}}]
+    }
+  ],
+  "ui/modal-trigger": {
+    "tag": "button",
+    "attrs": {
+      "class": {"get": "class"},
+      "type": "button",
+      "data-modal-open": {"get": "modal"},
+      "data-modal-url": {"get": "url"},
+      "aria-label": {"get": "label"},
+      "title": {"get": "label"}
+    },
+    "children": [
+      {"icon": {"get": "icon"}},
+      {"tag": "span", "when": {"not": {"get": "icon_only"}}, "children": [{"get": "label"}]}
+    ]
+  },
+  "ui/admin-list": {
+    "tag": "section",
+    "attrs": {"class": "card", "aria-label": {"if": [{"get": "primary"}, {"get": "title"}, null]}},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "card-header split"},
+        "when": {"not": {"get": "primary"}},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"icon": {"get": "icon"}}, {"get": "title"}]
+          },
+          {"component": "ui/filter-trigger", "data": {"id": {"get": "filter_modal"}}, "when": {"get": "filter_modal"}}
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "card-body", "id": {"get": "target_id"}},
+        "children": [{"slot": {"get": "content"}}]
+      }
+    ]
+  },
+  "ui/account-status": {
+    "component": "ui/status-badge",
+    "data": {
+      "tone": {"if": [{"eq": [{"get": "status"}, "active"]}, "ok", "critical"]},
+      "label": {"get": "label"},
+      "text": {"get": "text"}
+    }
+  },
+  "ui/pagination-step": {
+    "tag": {"if": [{"get": "step"}, "a", "span"]},
+    "attrs": {
+      "class": {"concat": ["pagination-link pagination-", {"get": "kind"}]},
+      "href": {"get": "step.url"},
+      "data-history": {"get": "step.history_url"},
+      "data-ajax": {"if": [{"get": "step"}, "", null]},
+      "data-ajax-target": {"if": [{"get": "step"}, {"get": "target"}, null]},
+      "aria-label": {"get": "label"},
+      "title": {"get": "label"},
+      "aria-disabled": {"if": [{"get": "step"}, null, "true"]}
+    },
+    "children": [
+      {"icon": {"get": "icon"}},
+      {"tag": "span", "attrs": {"class": "sr-only"}, "children": [{"get": "label"}]}
+    ]
+  },
+  "ui/sort-heading": [
+    {
+      "tag": "a",
+      "attrs": {
+        "class": "table-sort",
+        "href": {"get": "order.url"},
+        "data-ajax": true,
+        "data-ajax-target": {"get": "order.target"},
+        "data-history": {"get": "order.history"}
+      },
+      "when": {"get": "order"},
+      "children": [
+        {"tag": "span", "children": [{"get": "label"}]},
+        {
+          "tag": "span",
+          "attrs": {
+            "class": "table-sort-indicator",
+            "aria-hidden": "true",
+            "data-active": {"or": [{"get": "order.ascending"}, {"get": "order.descending"}]}
+          },
+          "children": [{"icon": {"if": [{"get": "order.descending"}, "arrow-down", "arrow-up"]}}]
+        }
+      ]
+    },
+    {"get": "label", "when": {"not": {"get": "order"}}}
+  ],
+  "ui/status-badge": {
+    "tag": "span",
+    "attrs": {
+      "class": {
+        "if": [
+          {"get": "text"},
+          {
+            "concat": [
+              "badge badge-",
+              {
+                "lookup": {"get": "tone"},
+                "cases": {
+                  "success": "success",
+                  "ok": "success",
+                  "danger": "danger",
+                  "critical": "danger",
+                  "warning": "warning"
+                },
+                "default": "info"
+              }
+            ]
+          },
+          {
+            "if": [
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              },
+              {
+                "concat": [
+                  "status-indicator status-indicator-",
+                  {
+                    "lookup": {"get": "tone"},
+                    "cases": {
+                      "ok": "success",
+                      "success": "success",
+                      "critical": "danger",
+                      "danger": "danger",
+                      "warning": "warning"
+                    },
+                    "default": ""
+                  }
+                ]
+              },
+              {
+                "concat": [
+                  "badge ",
+                  {
+                    "lookup": {"get": "tone"},
+                    "cases": {"primary": "badge-primary", "running": "badge-primary"},
+                    "default": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "role": {
+        "if": [
+          {
+            "and": [
+              {"not": {"get": "text"}},
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              }
+            ]
+          },
+          "img",
+          null
+        ]
+      },
+      "aria-label": {
+        "if": [
+          {
+            "and": [
+              {"not": {"get": "text"}},
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              }
+            ]
+          },
+          {"get": "label"},
+          null
+        ]
+      },
+      "title": {
+        "if": [
+          {
+            "and": [
+              {"not": {"get": "text"}},
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              }
+            ]
+          },
+          {"get": "label"},
+          null
+        ]
+      }
+    },
+    "children": [
+      {
+        "icon": {
+          "lookup": {"get": "tone"},
+          "cases": {
+            "ok": "check-circle",
+            "success": "check-circle",
+            "critical": "x-circle",
+            "danger": "x-circle",
+            "warning": "alert"
+          },
+          "default": "info"
+        },
+        "when": {
+          "and": [
+            {"not": {"get": "text"}},
+            {
+              "lookup": {"get": "tone"},
+              "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+              "default": false
+            }
+          ]
+        }
+      },
+      {
+        "get": "label",
+        "when": {
+          "not": {
+            "and": [
+              {"not": {"get": "text"}},
+              {
+                "lookup": {"get": "tone"},
+                "cases": {"ok": true, "success": true, "critical": true, "danger": true, "warning": true},
+                "default": false
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "ui/stat-card": {
+    "tag": "article",
+    "attrs": {"class": "stack stack-gap-4 min-w-0"},
+    "children": [
+      {
+        "tag": {"or": [{"get": "heading"}, "h3"]},
+        "attrs": {"class": "text-base m-0 cluster gap-2"},
+        "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "label"}]
+      },
+      {
+        "tag": "p",
+        "attrs": {"class": "text-xl m-0"},
+        "when": {"not": {"eq": [{"get": "value"}, null]}},
+        "children": [
+          {"tag": "strong", "attrs": {"get": "value_attributes"}, "children": [{"get": "value"}]},
+          " ",
+          {"tag": "small", "attrs": {"class": "table-meta"}, "when": {"get": "unit"}, "children": [{"get": "unit"}]}
+        ]
+      },
+      {"tag": "p", "attrs": {"class": "table-meta m-0"}, "when": {"get": "note"}, "children": [{"get": "note"}]}
+    ]
+  },
+  "ui/notice": {
+    "tag": "div",
+    "attrs": {
+      "class": {
+        "concat": [
+          "alert alert-",
+          {
+            "lookup": {"get": "tone"},
+            "cases": {
+              "danger": "danger",
+              "warning": "warning",
+              "success": "success",
+              "critical": "danger",
+              "ok": "success"
+            },
+            "default": "info"
+          }
+        ]
+      },
+      "role": {"lookup": {"get": "tone"}, "cases": {"critical": "alert", "danger": "alert"}, "default": "status"}
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "stack stack-gap-8 min-w-0"},
+        "children": [
+          {"get": "label", "when": {"get": "label"}},
+          {"tag": "strong", "when": {"get": "title"}, "children": [{"get": "title"}]},
+          {"tag": "span", "when": {"get": "description"}, "children": [{"get": "description"}]},
+          {"tag": "small", "when": {"get": "detail"}, "children": [{"get": "detail"}]}
+        ]
+      }
+    ]
+  },
+  "ui/empty-state": {
+    "tag": "div",
+    "attrs": {
+      "class": {"concat": ["empty-state", {"if": [{"get": "compact"}, " empty-state-compact", ""]}]},
+      "role": "status"
+    },
+    "children": [
+      {"icon": {"or": [{"get": "icon"}, "search"]}, "class": "icon empty-state-icon"},
+      {
+        "tag": "p",
+        "attrs": {"class": "empty-state-label"},
+        "children": [{"or": [{"get": "label"}, {"t": "common.no_records"}]}]
+      }
+    ]
+  },
+  "ui/activation-action": {
+    "component": "ui/api-action",
+    "data": {
+      "url": {"get": "url"},
+      "method": {"or": [{"get": "method"}, "PUT"]},
+      "target": {"get": "target"},
+      "fields": {"enabled": {"if": [{"get": "active"}, "0", "1"]}},
+      "label": {"if": [{"get": "active"}, {"t": "common.deactivate"}, {"t": "common.activate"}]},
+      "icon": {"if": [{"get": "active"}, "pause", "play"]},
+      "button_class": "btn btn-sm btn-ghost btn-icon"
+    }
+  },
+  "ui/filter-trigger": {
+    "tag": "details",
+    "attrs": {"class": "filter-menu", "data-popover": "", "data-filter-menu": ""},
+    "children": [
+      {
+        "tag": "summary",
+        "attrs": {"class": "btn btn-ghost btn-sm", "aria-label": {"t": "common.filters"}},
+        "children": [{"icon": "filter"}, {"tag": "span", "children": [{"t": "common.filters"}]}]
+      },
+      {"tag": "div", "attrs": {"class": "popover-panel filter-menu-panel", "data-filter-panel": {"get": "id"}}}
+    ]
+  },
+  "ui/filter-content": {"tag": "form", "attrs": {"get": "attributes"}, "children": [{"slot": {"get": "body"}}]},
+  "ui/list-summary": {
+    "tag": "div",
+    "attrs": {
+      "class": "cluster gap-2 text-sm text-muted",
+      "aria-live": "polite",
+      "aria-atomic": "true",
+      "data-list-summary": {"get": "target"}
+    },
+    "children": [
+      {
+        "component": "ui/filter-chip",
+        "data": {"label": {"get": "filters.q"}, "target": {"get": "target"}, "name": "q", "icon": "search"},
+        "when": {"get": "filters.q"}
+      },
+      {"tag": "span", "attrs": {"class": "cluster gap-2", "data-list-summary-filters": {"get": "target"}}}
+    ]
+  },
+  "ui/editor-refresh": {
+    "tag": "button",
+    "attrs": {
+      "type": "button",
+      "class": "btn btn-secondary",
+      "data-modal-resource-refresh": "",
+      "data-modal-open": {"get": "id"},
+      "data-modal-url": {"get": "url"},
+      "data-modal-refresh": "true"
+    },
+    "children": [{"icon": "refresh"}, {"tag": "span", "children": [{"t": "common.refresh"}]}]
+  },
+  "ui/editor-actions": {
+    "tag": "div",
+    "attrs": {"class": {"or": [{"get": "class"}, "cluster gap-2 modal-editor-actions"]}},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "modal-editor-destructive"},
+        "when": {"get": "destructive"},
+        "children": [{"slot": {"get": "destructive"}}]
+      },
+      {
+        "tag": "button",
+        "attrs": {"type": "button", "class": "btn btn-secondary", "data-modal-close": ""},
+        "children": [{"get": "cancel_label"}]
+      },
+      {"slot": {"get": "primary"}, "when": {"get": "primary"}}
+    ]
+  },
+  "ui/filter-chip": {
+    "tag": "button",
+    "attrs": {
+      "type": "button",
+      "class": "badge filter-chip",
+      "data-filter-remove": {"get": "name"},
+      "data-filter-target": {"get": "target"},
+      "aria-label": {"concat": [{"t": "common.clear_filters"}, ": ", {"get": "label"}]}
+    },
+    "children": [
+      {"icon": {"get": "icon"}, "when": {"get": "icon"}},
+      {"tag": "span", "children": [{"get": "label"}]},
+      {"icon": "close"}
+    ]
+  },
+  "ui/load-more": {
+    "tag": "div",
+    "attrs": {"get": "attributes"},
+    "children": [
+      {
+        "tag": "button",
+        "attrs": {"get": "button_attributes"},
+        "children": [{"icon": "plus"}, {"tag": "span", "children": [{"get": "label"}]}]
+      },
+      {
+        "tag": "span",
+        "attrs": {"class": "load-more-state", "role": "status", "hidden": true},
+        "children": [{"get": "loading_label"}]
+      }
+    ]
+  },
+  "ui/action-label": {"t": "common.action_for", "values": {"action": {"get": "action"}, "context": {"get": "context"}}},
+  "ui/dashboard": {
+    "tag": "div",
+    "attrs": {"class": "dashboard-grid", "data-dashboard": ""},
+    "children": [
+      {
+        "each": {"get": "widgets"},
+        "as": "widget",
+        "children": {"component": "ui/dashboard-widget", "data": {"widget": {"get": "widget"}}}
+      },
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "admin.widgets.empty"}, "icon": "dashboard"},
+        "when": {"not": {"get": "widgets"}}
+      }
+    ]
+  },
+  "ui/account-title": [
+    {
+      "tag": "span",
+      "attrs": {"data-account-title-status": ""},
+      "children": [
+        {"component": "ui/account-status", "data": {"status": {"get": "user.status"}, "label": {"get": "status_label"}}}
+      ]
+    },
+    {"tag": "span", "children": [{"get": "user.username"}]}
+  ],
+  "ui/code-block": {
+    "tag": "pre",
+    "attrs": {"class": "code-block"},
+    "children": [{"tag": "code", "attrs": {"get": "attributes"}, "children": [{"get": "text"}]}]
+  },
+  "ui/public-header": [
+    {
+      "tag": "header",
+      "attrs": {"class": "navbar"},
+      "children": [
+        {
+          "tag": "div",
+          "attrs": {"class": "container navbar-inner"},
+          "children": [
+            {
+              "tag": "a",
+              "attrs": {"class": "navbar-brand", "href": {"get": "urls.home"}},
+              "children": [
+                {
+                  "tag": "img",
+                  "attrs": {
+                    "class": "brand-logo",
+                    "src": {"get": "siteLogoUrl"},
+                    "alt": {"t": "common.site_logo_alt", "values": {"site": {"get": "appName"}}}
+                  },
+                  "when": {"get": "siteLogoUrl"}
+                },
+                {
+                  "tag": "strong",
+                  "attrs": {"aria-hidden": {"if": [{"get": "siteLogoUrl"}, "true", null]}},
+                  "children": [{"get": "appName"}]
+                }
+              ]
+            },
+            {
+              "tag": "form",
+              "attrs": {
+                "class": "global-search",
+                "action": {"get": "urls.search"},
+                "method": "get",
+                "role": "search",
+                "data-global-search": "",
+                "data-search-api": "/api/search",
+                "data-search-all": {"t": "public.search_all"},
+                "data-search-empty": {"t": "public.search_empty"},
+                "data-search-min": {"t": "public.search_min"},
+                "data-search-captcha-title": {"t": "public.search_captcha_title"},
+                "data-search-captcha-required": {"t": "public.search_captcha_required"},
+                "data-search-captcha-submit": {"t": "common.confirm"},
+                "autocomplete": "off"
+              },
+              "when": {"get": "hasGlobalSearch"},
+              "children": [
+                {
+                  "tag": "label",
+                  "attrs": {"class": "sr-only", "for": "global-search-input"},
+                  "children": [{"t": "common.search"}]
+                },
+                {
+                  "tag": "div",
+                  "attrs": {
+                    "class": "global-search-control input-icon",
+                    "data-popover": "",
+                    "data-popover-mode": "input",
+                    "data-popover-match-width": "true"
+                  },
+                  "children": [
+                    {"icon": "search"},
+                    {
+                      "tag": "input",
+                      "attrs": {
+                        "class": "input global-search-input",
+                        "id": "global-search-input",
+                        "type": "search",
+                        "name": "q",
+                        "value": {"get": "searchQuery"},
+                        "placeholder": {"t": "public.search_suggest_placeholder"},
+                        "minlength": "2",
+                        "maxlength": "80",
+                        "data-global-search-input": "",
+                        "data-popover-trigger": ""
+                      }
+                    },
+                    {
+                      "tag": "div",
+                      "attrs": {
+                        "class": "popover-panel global-search-results",
+                        "data-global-search-results": "",
+                        "hidden": true
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "nav",
+              "attrs": {"class": "nav-links", "aria-label": {"t": "common.main_navigation"}},
+              "children": [
+                {
+                  "each": {"get": "nav"},
+                  "as": "item",
+                  "children": {
+                    "tag": "a",
+                    "attrs": {
+                      "class": "nav-link nav-link-icon",
+                      "href": {"get": "item.href"},
+                      "target": {"if": [{"eq": [{"get": "item.target"}, "_blank"]}, "_blank", null]},
+                      "rel": {"if": [{"eq": [{"get": "item.target"}, "_blank"]}, "noopener", null]},
+                      "aria-current": {"if": [{"get": "item.active"}, "page", null]},
+                      "aria-label": {"or": [{"get": "item.label"}, {"get": "item.href"}]},
+                      "title": {"or": [{"get": "item.label"}, {"get": "item.href"}]}
+                    },
+                    "children": [{"icon": {"or": [{"get": "item.icon"}, "link"]}}]
+                  }
+                },
+                {
+                  "tag": "a",
+                  "attrs": {
+                    "class": "nav-link nav-link-icon",
+                    "href": "/admin",
+                    "aria-label": {"t": "common.admin"},
+                    "title": {"t": "common.admin"}
+                  },
+                  "when": {"and": [{"get": "authenticated"}, {"get": "viewerIsAdmin"}]},
+                  "children": [{"icon": "dashboard"}]
+                },
+                {"slot": {"get": "notificationMenu"}, "when": {"get": "authenticated"}},
+                {"slot": {"get": "userMenu"}, "when": {"get": "authenticated"}},
+                {
+                  "tag": "details",
+                  "attrs": {"class": "context-menu language-menu", "data-language-menu": "", "data-popover": ""},
+                  "when": {"not": {"get": "authenticated"}},
+                  "children": [
+                    {
+                      "tag": "summary",
+                      "attrs": {
+                        "class": "nav-link nav-link-icon",
+                        "aria-label": {"concat": [{"t": "common.language"}, ": ", {"get": "currentLanguageName"}]},
+                        "title": {"get": "currentLanguageName"}
+                      },
+                      "children": [
+                        {
+                          "tag": "svg",
+                          "attrs": {
+                            "class": "language-flag",
+                            "viewBox": "0 0 24 16",
+                            "aria-hidden": "true",
+                            "focusable": "false"
+                          },
+                          "children": [
+                            {
+                              "tag": "use",
+                              "attrs": {
+                                "href": {"concat": [{"get": "languageFlagSprite"}, "#", {"get": "languageFlagId"}]}
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "nav",
+                      "attrs": {"class": "popover-panel language-menu-list", "aria-label": {"t": "common.language"}},
+                      "children": [
+                        {
+                          "each": {"get": "languageLinks"},
+                          "as": "languageLink",
+                          "children": {
+                            "tag": "a",
+                            "attrs": {
+                              "class": "context-menu-action language-menu-link",
+                              "href": {"get": "languageLink.url"},
+                              "lang": {"get": "languageLink.language"},
+                              "data-popover-close": "",
+                              "data-language-link": {"get": "languageLink.language"},
+                              "aria-current": {"if": [{"get": "languageLink.active"}, "true", null]}
+                            },
+                            "children": [
+                              {
+                                "tag": "svg",
+                                "attrs": {
+                                  "class": "language-flag",
+                                  "viewBox": "0 0 24 16",
+                                  "aria-hidden": "true",
+                                  "focusable": "false"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "use",
+                                    "attrs": {
+                                      "href": {
+                                        "concat": [
+                                          {"get": "languageFlagSprite"},
+                                          "#flag-",
+                                          {"get": "languageLink.language"}
+                                        ]
+                                      }
+                                    }
+                                  }
+                                ]
+                              },
+                              {"tag": "span", "children": [{"get": "languageLink.name"}]}
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "a",
+                  "attrs": {
+                    "class": "nav-link nav-link-icon",
+                    "href": {"get": "urls.login"},
+                    "aria-current": {"if": [{"eq": [{"get": "current"}, "/login"]}, "page", null]},
+                    "data-modal-open": {"get": "loginModalId"},
+                    "data-modal-url": {"get": "loginModalUrl"},
+                    "aria-label": {"t": "common.login"},
+                    "title": {"t": "common.login"}
+                  },
+                  "when": {"not": {"get": "authenticated"}},
+                  "children": [{"icon": "user"}]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tag": "aside",
+      "attrs": {
+        "class": "language-suggestion",
+        "data-language-suggestion": {"get": "languageSuggestion.language"},
+        "lang": {"get": "languageSuggestion.language"}
+      },
+      "when": {"get": "languageSuggestion"},
+      "children": [
+        {
+          "tag": "div",
+          "attrs": {"class": "container language-suggestion-inner"},
+          "children": [
+            {"tag": "span", "children": [{"get": "languageSuggestion.message"}]},
+            {
+              "tag": "a",
+              "attrs": {
+                "class": "btn btn-secondary btn-sm",
+                "href": {"get": "languageSuggestion.url"},
+                "data-popover-close": "",
+                "data-language-link": {"get": "languageSuggestion.language"}
+              },
+              "children": [{"get": "languageSuggestion.action"}]
+            },
+            {
+              "tag": "button",
+              "attrs": {
+                "class": "language-suggestion-close nav-link nav-link-icon",
+                "type": "button",
+                "data-language-suggestion-close": "",
+                "aria-label": {"get": "languageSuggestion.close"}
+              },
+              "children": [{"icon": "close"}]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "ui/search-page": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-24"},
+    "children": [
+      {
+        "tag": "h1",
+        "attrs": {"class": "text-lg m-0 cluster gap-2"},
+        "children": [{"icon": "search"}, {"t": "common.search"}]
+      },
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "common.search_empty"}, "icon": "search"},
+        "when": {"not": {"count": {"get": "result.collections"}, "where": "items"}}
+      },
+      {
+        "each": {"get": "result.collections"},
+        "as": "group",
+        "children": {
+          "tag": "section",
+          "attrs": {"class": "stack stack-gap-8"},
+          "when": {"get": "group.items"},
+          "children": [
+            {"tag": "h2", "attrs": {"class": "text-base m-0"}, "children": [{"get": "group.name"}]},
+            {"slot": {"get": "group.content"}, "when": {"get": "group.content"}},
+            {
+              "tag": "ul",
+              "attrs": {"class": "result-list"},
+              "when": {"not": {"get": "group.content"}},
+              "children": [
+                {
+                  "each": {"get": "group.items"},
+                  "as": "item",
+                  "children": {
+                    "tag": "li",
+                    "children": [
+                      {
+                        "tag": "a",
+                        "attrs": {"class": "identity-row", "href": {"get": "item.url"}},
+                        "children": [
+                          {
+                            "tag": "span",
+                            "attrs": {"class": "avatar"},
+                            "children": [
+                              {
+                                "tag": "img",
+                                "attrs": {"src": {"get": "item.avatar_url"}, "alt": "", "loading": "lazy"},
+                                "when": {"get": "item.avatar_url"}
+                              },
+                              {"icon": "search", "when": {"not": {"get": "item.avatar_url"}}}
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {"class": "identity-copy"},
+                            "children": [
+                              {"tag": "strong", "children": [{"get": "item.title"}]},
+                              {"tag": "span", "when": {"get": "item.excerpt"}, "children": [{"get": "item.excerpt"}]}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "tag": "a",
+              "attrs": {"class": "btn btn-secondary", "href": {"get": "group.next_url"}},
+              "when": {"get": "group.next_url"},
+              "children": [{"t": "notifications.load_more"}]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "ui/consent": {
+    "tag": "aside",
+    "attrs": {
+      "class": "cookie-consent",
+      "data-cookie-consent": "",
+      "data-google-measurement-id": {"get": "googleMeasurementId"},
+      "aria-labelledby": "cookie-consent-title"
+    },
+    "when": {"get": "show"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "cookie-consent-copy"},
+        "children": [
+          {
+            "tag": "strong",
+            "attrs": {"id": "cookie-consent-title"},
+            "children": [{"t": "privacy.cookie_consent_title"}]
+          },
+          {
+            "tag": "span",
+            "children": [
+              {
+                "if": [
+                  {"get": "captchaEnabled"},
+                  {"t": "privacy.cookie_consent_text_captcha"},
+                  {"t": "privacy.cookie_consent_text"}
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "a",
+            "attrs": {"href": {"get": "privacyUrl"}, "rel": "privacy-policy"},
+            "children": [{"t": "privacy.title"}]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "cookie-consent-actions"},
+        "children": [
+          {
+            "tag": "button",
+            "attrs": {"class": "btn btn-primary btn-sm", "type": "button", "data-cookie-consent-choice": "granted"},
+            "children": [{"t": "privacy.cookie_consent_accept"}]
+          },
+          {
+            "tag": "button",
+            "attrs": {"class": "btn btn-secondary btn-sm", "type": "button", "data-cookie-consent-choice": "denied"},
+            "children": [{"t": "privacy.cookie_consent_necessary"}]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/privacy-page": {
+    "tag": "section",
+    "attrs": {"class": "stack information-page"},
+    "children": [
+      {
+        "tag": "h1",
+        "attrs": {"class": "text-xl m-0 cluster gap-2"},
+        "children": [{"icon": "shield"}, " ", {"t": "privacy.title"}]
+      },
+      {"slot": {"get": "sections"}},
+      {
+        "tag": "section",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {"tag": "h2", "attrs": {"class": "text-lg m-0 cluster gap-2"}, "children": [{"t": "privacy.data_title"}]}
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.data_account", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.data_email", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.data_technical", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.data_server_logs", "values": {"site": {"get": "siteName"}}}]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"t": "privacy.recovery_title"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.recovery_email", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.recovery_no_contact", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.recovery_lost", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.recovery_rotation", "values": {"site": {"get": "siteName"}}}]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "card-header"},
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"icon": "info"}, " ", {"t": "privacy.cookies_title"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "card-body stack"},
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.cookies_session", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "when": {"get": "siteCaptchaEnabled"},
+                "children": [{"t": "privacy.cookies_captcha", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [{"t": "privacy.cookies_remember", "values": {"site": {"get": "siteName"}}}]
+              },
+              {
+                "tag": "p",
+                "attrs": {"class": "mb-0"},
+                "children": [
+                  {
+                    "if": [
+                      {"get": "siteGoogleAnalyticsConfigured"},
+                      {"t": "privacy.cookies_analytics", "values": {"site": {"get": "siteName"}}},
+                      {"t": "privacy.cookies_no_analytics", "values": {"site": {"get": "siteName"}}}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/module-activation": {
+    "tag": "form",
+    "attrs": {
+      "action": "/api/modules/activation",
+      "method": "post",
+      "data-ajax-form": "",
+      "data-confirm": {"t": "modules.confirm"}
+    },
+    "children": [
+      {"csrf": true},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "id", "value": {"get": "id"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "revision", "value": {"get": "revision"}}},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "enabled", "value": {"get": "enabled"}}},
+      {
+        "tag": "button",
+        "attrs": {"type": "submit", "class": "btn btn-secondary btn-sm", "disabled": {"get": "disabled"}},
+        "children": [{"get": "label"}]
+      }
+    ]
+  },
+  "ui/modules-page": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-16"},
+    "children": [
+      {
+        "component": "ui/notice",
+        "data": {"label": {"t": "modules.unavailable"}, "tone": "warning"},
+        "when": {"not": {"get": "snapshot.manageable"}}
+      },
+      {
+        "each": {"get": "snapshot.problems"},
+        "as": "problem",
+        "children": {
+          "component": "ui/notice",
+          "data": {"label": {"concat": [{"get": "_key"}, ": ", {"get": "problem"}]}, "tone": "warning"}
+        }
+      },
+      {
+        "each": {"get": "snapshot.groups"},
+        "as": "group",
+        "children": {
+          "tag": "section",
+          "attrs": {"class": "card"},
+          "children": [
+            {
+              "tag": "div",
+              "attrs": {"class": "card-body cluster gap-2"},
+              "children": [
+                {
+                  "tag": "div",
+                  "attrs": {"class": "min-w-0"},
+                  "children": [
+                    {
+                      "tag": "strong",
+                      "children": [
+                        {"get": "group.name"},
+                        " ",
+                        {
+                          "tag": "span",
+                          "attrs": {"class": "text-muted"},
+                          "children": [{"get": "group.active_count"}, " / ", {"count": {"get": "group.modules"}}]
+                        }
+                      ]
+                    },
+                    {"tag": "p", "attrs": {"class": "table-meta table-text m-0"}, "children": [{"get": "group.names"}]}
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attrs": {"class": "cluster"},
+                  "children": [
+                    {
+                      "each": {"get": "group.actions"},
+                      "as": "action",
+                      "children": {"component": "ui/module-activation", "data": {"get": "action"}}
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "table-wrap min-w-0"},
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {"class": "table"},
+            "children": [
+              {
+                "tag": "thead",
+                "children": [
+                  {
+                    "tag": "tr",
+                    "children": [
+                      {"tag": "th", "children": [{"t": "modules.module"}]},
+                      {"tag": "th", "children": [{"t": "common.status"}]},
+                      {"tag": "th", "children": [{"t": "modules.dependencies"}]},
+                      {"tag": "th", "attrs": {"class": "table-actions-cell"}, "children": [{"t": "common.actions"}]}
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "children": [
+                  {
+                    "each": {"get": "rows"},
+                    "as": "item",
+                    "children": {
+                      "tag": "tr",
+                      "children": [
+                        {
+                          "tag": "td",
+                          "children": [
+                            {
+                              "tag": "div",
+                              "attrs": {"class": "identity-row identity-row-inset"},
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attrs": {"class": "avatar avatar-sm"},
+                                  "children": [{"icon": "settings"}]
+                                },
+                                {
+                                  "tag": "div",
+                                  "attrs": {"class": "table-identity-body"},
+                                  "children": [
+                                    {
+                                      "tag": "strong",
+                                      "attrs": {"class": "table-primary"},
+                                      "children": [{"get": "item.name"}]
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attrs": {"class": "table-meta"},
+                                      "children": [
+                                        {"get": "item.id"},
+                                        {
+                                          "tag": "span",
+                                          "when": {"get": "item.package_version"},
+                                          "children": [" · v", {"get": "item.package_version"}]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "children": [
+                            {
+                              "component": "ui/status-badge",
+                              "data": {
+                                "tone": {"get": "item.tone"},
+                                "label": {"get": "item.status_label"},
+                                "text": true
+                              }
+                            },
+                            {
+                              "tag": "div",
+                              "attrs": {"class": "table-meta"},
+                              "when": {"get": "item.required"},
+                              "children": [{"t": "modules.required"}]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attrs": {"class": "table-text"},
+                              "children": [{"or": [{"get": "item.dependencies"}, "—"]}]
+                            },
+                            {
+                              "tag": "div",
+                              "attrs": {"class": "table-meta"},
+                              "when": {"get": "item.blocked"},
+                              "children": [{"t": "modules.needed_by", "values": {"modules": {"get": "item.blocked"}}}]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "attrs": {"class": "table-actions-cell"},
+                          "children": [
+                            {
+                              "tag": "div",
+                              "attrs": {"class": "table-actions"},
+                              "children": [{"component": "ui/module-activation", "data": {"get": "item.activation"}}]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/help": {
+    "tag": "span",
+    "attrs": {
+      "class": "help",
+      "role": "button",
+      "tabindex": "0",
+      "aria-label": {
+        "if": [{"get": "label"}, {"concat": [{"t": "common.help"}, ": ", {"get": "label"}]}, {"t": "common.help"}]
+      },
+      "aria-expanded": "false",
+      "title": {"get": "text"},
+      "data-help": ""
+    },
+    "when": {"get": "text"},
+    "children": [
+      {"icon": "info"},
+      {
+        "tag": "span",
+        "attrs": {"hidden": true, "data-help-text": "", "id": {"get": "help_id"}},
+        "children": [{"get": "text"}]
+      }
+    ]
+  },
+  "ui/input": {
+    "each": {
+      "lookup": {"get": "attributes.type"},
+      "cases": {
+        "search": ["search"],
+        "password": ["lock"],
+        "email": ["mail"],
+        "url": ["link"],
+        "tel": ["phone"],
+        "date": ["calendar"],
+        "month": ["calendar"],
+        "week": ["calendar"],
+        "time": ["clock"],
+        "datetime-local": ["calendar"]
+      },
+      "default": [null]
+    },
+    "as": "input_icon",
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {"class": "input-icon"},
+        "when": {"get": "input_icon"},
+        "children": [{"icon": {"get": "input_icon"}}, {"tag": "input", "attrs": {"get": "attributes"}}]
+      },
+      {"tag": "input", "attrs": {"get": "attributes"}, "when": {"not": {"get": "input_icon"}}}
+    ]
+  },
+  "ui/public-workspace": {
+    "tag": "div",
+    "attrs": {"class": "public-workspace"},
+    "children": [
+      {
+        "tag": "nav",
+        "attrs": {"class": "public-workspace-nav", "aria-label": {"get": "title"}},
+        "children": [
+          {
+            "each": {"get": "navigation"},
+            "as": "entry",
+            "children": {
+              "tag": "a",
+              "attrs": {
+                "class": "btn btn-ghost",
+                "href": {"get": "entry.url"},
+                "aria-current": {"if": [{"get": "entry.active"}, "page", null]}
+              },
+              "children": [{"icon": {"get": "entry.icon"}}, {"get": "entry.label"}]
+            }
+          }
+        ]
+      },
+      {"tag": "div", "attrs": {"class": "min-w-0"}, "children": [{"slot": {"get": "content"}}]}
+    ]
+  },
+  "ui/cache-services": [
+    {
+      "each": {"get": "services"},
+      "as": "service",
+      "children": {"component": "ui/cache-service", "data": {"service": {"get": "service"}}}
+    }
+  ],
+  "ui/dashboard-widget": {
+    "tag": "section",
+    "attrs": {"class": "card card-body stack stack-gap-12 min-w-0", "data-dashboard-widget": {"get": "widget.id"}},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "cluster"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-base m-0 cluster gap-2"},
+            "children": [{"icon": {"get": "widget.icon"}}, {"get": "widget.title"}]
+          },
+          {
+            "tag": "form",
+            "attrs": {
+              "method": "get",
+              "action": "/admin",
+              "data-dashboard-stats-form": "",
+              "data-ajax-form": "",
+              "data-api-method": "GET",
+              "data-ajax-action": "/api/site/dashboard-stats",
+              "data-ajax-target": "#dashboard-statistics-body",
+              "data-history": "false"
+            },
+            "when": {"get": "widget.data.groups"},
+            "children": [
+              {
+                "tag": "select",
+                "attrs": {
+                  "class": "select",
+                  "name": "stats",
+                  "data-submit-on-change": "",
+                  "aria-label": {"t": "admin.widgets.stats_group"}
+                },
+                "children": [
+                  {
+                    "each": {"get": "widget.data.groups"},
+                    "as": "group",
+                    "children": {
+                      "tag": "option",
+                      "attrs": {
+                        "value": {"get": "group.id"},
+                        "selected": {"if": [{"eq": [{"get": "group.id"}, {"get": "widget.data.id"}]}, true, null]}
+                      },
+                      "children": [{"get": "group.label"}]
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "noscript",
+                "children": [
+                  {
+                    "tag": "button",
+                    "attrs": {"type": "submit", "class": "btn btn-secondary btn-sm"},
+                    "children": [{"t": "common.confirm"}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "id": {"if": [{"get": "widget.data.groups"}, "dashboard-statistics-body", null]},
+          "data-stats-current": {"get": "widget.data.id"}
+        },
+        "when": {"eq": [{"get": "widget.type"}, "metrics"]},
+        "children": [{"component": "ui/dashboard-metrics", "data": {"get": "widget.data"}}]
+      },
+      {
+        "tag": "ul",
+        "attrs": {"class": "result-list", "data-widget-list": ""},
+        "when": {"eq": [{"get": "widget.type"}, "list"]},
+        "children": [
+          {
+            "each": {"get": "widget.data.items"},
+            "as": "entry",
+            "children": {
+              "tag": "li",
+              "attrs": {"data-widget-row": "", "class": "identity-row identity-row-inset"},
+              "children": [
+                {
+                  "component": "ui/avatar",
+                  "data": {
+                    "user": {"get": "entry.user"},
+                    "small": true,
+                    "alt": "",
+                    "fallback_icon": {"or": [{"get": "entry.icon"}, "file-text"]}
+                  }
+                },
+                {
+                  "tag": "div",
+                  "attrs": {"class": "min-w-0"},
+                  "children": [
+                    {
+                      "tag": "a",
+                      "attrs": {"href": {"get": "entry.url"}},
+                      "children": [{"tag": "strong", "children": [{"get": "entry.label"}]}]
+                    },
+                    {
+                      "tag": "p",
+                      "attrs": {"class": "m-0 is-resource-text"},
+                      "when": {"get": "entry.detail"},
+                      "children": [{"get": "entry.detail"}]
+                    }
+                  ]
+                },
+                {
+                  "tag": "small",
+                  "attrs": {"class": "text-muted cluster gap-1", "data-widget-time": ""},
+                  "when": {"get": "entry.time"},
+                  "children": [{"icon": "clock"}, {"get": "entry.time"}]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "common.search_empty"}, "compact": true},
+        "when": {"and": [{"eq": [{"get": "widget.type"}, "list"]}, {"not": {"get": "widget.data.items"}}]}
+      },
+      {
+        "component": "ui/notice",
+        "data": {
+          "detail": {"get": "widget.data.detail"},
+          "tone": {"get": "widget.data.tone"},
+          "title": {"get": "widget.data.text"}
+        },
+        "when": {"eq": [{"get": "widget.type"}, "status"]}
+      },
+      {"slot": {"get": "widget.content"}, "when": {"eq": [{"get": "widget.type"}, "custom"]}},
+      {
+        "tag": "a",
+        "attrs": {"class": "btn btn-ghost btn-sm", "href": {"get": "widget.data.url"}},
+        "when": {"and": [{"get": "widget.data.url"}, {"not": {"eq": [{"get": "widget.type"}, "metrics"]}}]},
+        "children": [{"t": "admin.widgets.more"}, {"icon": "arrow-right"}]
+      }
+    ]
+  },
+  "ui/cache-page": {
+    "tag": "div",
+    "attrs": {"class": "dashboard-grid", "data-cache-page": ""},
+    "children": [
+      {
+        "tag": "section",
+        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-base m-0 cluster gap-2"},
+            "children": [
+              {"icon": "database"},
+              {"get": "application.name"},
+              {
+                "component": "ui/status-badge",
+                "data": {"label": {"get": "application.badge_label"}, "tone": {"get": "application.tone"}, "text": true}
+              }
+            ]
+          },
+          {"tag": "strong", "children": [{"get": "application.value"}]},
+          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "application.description"}]}
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-base m-0 cluster gap-2"},
+            "children": [{"icon": "code"}, {"get": "assets.name"}]
+          },
+          {"tag": "span", "attrs": {"class": "text-muted"}, "children": [{"get": "assets.mode"}]},
+          {"component": "ui/detail-table", "data": {"title": {"get": "assets.name"}, "rows": {"get": "assets.rows"}}},
+          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "assets.description"}]}
+        ]
+      },
+      {"slot": {"get": "services"}},
+      {
+        "each": {"get": "observations"},
+        "as": "observation",
+        "children": {
+          "tag": "section",
+          "attrs": {
+            "class": "card card-body stack stack-gap-12 min-w-0",
+            "data-cache-probe-url": {"get": "observation.url"}
+          },
+          "children": [
+            {
+              "tag": "h2",
+              "attrs": {"class": "text-base m-0 cluster gap-2"},
+              "children": [
+                {"icon": "globe"},
+                "HTTP · ",
+                {"get": "observation.label"},
+                {
+                  "component": "ui/help",
+                  "data": {"text": {"t": "admin.cache.http_help"}, "label": {"t": "admin.cache.http"}}
+                }
+              ]
+            },
+            {
+              "component": "ui/detail-table",
+              "data": {"title": {"get": "observation.label"}, "rows": {"get": "observation.rows"}}
+            }
+          ]
+        }
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0 grid-span-full"},
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {"class": "text-base m-0 cluster gap-2"},
+            "children": [{"icon": "monitor"}, {"get": "browser.name"}]
+          },
+          {"component": "ui/detail-table", "data": {"title": {"get": "browser.name"}, "rows": {"get": "browser.rows"}}},
+          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "browser.description"}]}
+        ]
+      }
+    ]
+  },
+  "ui/cache-service": {
+    "tag": "section",
+    "attrs": {"class": "card card-body stack stack-gap-12 min-w-0"},
+    "children": [
+      {
+        "tag": "h2",
+        "attrs": {"class": "text-base m-0 cluster gap-2"},
+        "children": [
+          {"icon": {"get": "service.icon"}},
+          {"get": "service.label"},
+          {
+            "component": "ui/status-badge",
+            "data": {"label": {"get": "service.badge_label"}, "tone": {"get": "service.tone"}, "text": true}
+          }
+        ]
+      },
+      {
+        "component": "ui/detail-table",
+        "data": {"title": {"get": "service.label"}, "rows": {"get": "service.rows"}},
+        "when": {"get": "service.rows"}
+      },
+      {
+        "component": "ui/notice",
+        "data": {"label": {"get": "service.status"}, "tone": "danger"},
+        "when": {"get": "service.issue"}
+      },
+      {
+        "tag": "form",
+        "attrs": {
+          "method": "post",
+          "action": "/api/site/cache-resets",
+          "data-ajax-form": "",
+          "data-confirm": {"t": "admin.cache.opcache_reset_confirm"},
+          "data-confirm-title": {"t": "admin.cache.opcache_reset"},
+          "data-confirm-ok": {"t": "admin.cache.opcache_reset"},
+          "data-confirm-cancel": {"t": "common.cancel"}
+        },
+        "when": {"get": "service.resettable"},
+        "children": [
+          {"csrf": true},
+          {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "reset-opcache"}},
+          {
+            "tag": "button",
+            "attrs": {"class": "btn btn-secondary btn-sm", "type": "submit"},
+            "children": [{"icon": "refresh"}, {"tag": "span", "children": [{"t": "admin.cache.opcache_reset"}]}]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/detail-table": {
+    "tag": "div",
+    "attrs": {"class": "table-wrap"},
+    "children": [
+      {
+        "tag": "table",
+        "attrs": {"class": "table", "aria-label": {"get": "title"}},
+        "children": [
+          {
+            "tag": "tbody",
+            "children": [
+              {
+                "each": {"get": "rows"},
+                "as": "row",
+                "children": {
+                  "tag": "tr",
+                  "children": [
+                    {"tag": "th", "attrs": {"scope": "row"}, "children": [{"get": "row.label"}]},
+                    {
+                      "tag": "td",
+                      "attrs": {"class": "is-resource-text"},
+                      "children": [
+                        {
+                          "component": "ui/status-badge",
+                          "data": {"label": {"get": "row.value"}, "tone": {"get": "row.tone"}, "text": true},
+                          "when": {"get": "row.badge"}
+                        },
+                        {
+                          "tag": "span",
+                          "attrs": {"get": "row.attributes"},
+                          "when": {"not": {"get": "row.badge"}},
+                          "children": [{"get": "row.value"}]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/dashboard-metrics": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-12"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "grid", "data-widget-metrics": ""},
+        "children": [
+          {
+            "each": {"get": "items"},
+            "as": "metric",
+            "children": {
+              "tag": "div",
+              "attrs": {"data-widget-metric": "", "class": "identity-row identity-row-inset"},
+              "children": [
+                {
+                  "tag": "span",
+                  "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                  "children": [
+                    {
+                      "icon": {
+                        "or": [
+                          {"get": "metric.icon"},
+                          {
+                            "lookup": {"get": "metric.key"},
+                            "default": "chart",
+                            "catalog": "dashboard.statistics",
+                            "field": "icon"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attrs": {"class": "stack stack-gap-4 min-w-0"},
+                  "children": [
+                    {
+                      "tag": "span",
+                      "attrs": {"class": "text-muted"},
+                      "children": [
+                        {
+                          "or": [
+                            {"get": "metric.label"},
+                            {
+                              "lookup": {"get": "metric.key"},
+                              "default": "",
+                              "catalog": "dashboard.statistics",
+                              "field": "label"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "strong",
+                      "attrs": {"class": "text-xl"},
+                      "children": [
+                        {
+                          "if": [
+                            {"get": "metric.display_value"},
+                            {"get": "metric.display_value"},
+                            {"get": "metric.value"}
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/empty-state",
+        "data": {"label": {"t": "common.search_empty"}, "compact": true},
+        "when": {"not": {"get": "items"}}
+      },
+      {
+        "tag": "a",
+        "attrs": {"class": "btn btn-ghost btn-sm", "href": {"get": "url"}},
+        "when": {"get": "url"},
+        "children": [{"t": "admin.widgets.more"}, {"icon": "arrow-right"}]
+      }
+    ]
+  }
+}

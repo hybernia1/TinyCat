@@ -3,6 +3,7 @@
     "name": "Italiano"
   },
   "common": {
+    "help": "Aiuto",
     "sort": "Ordina",
     "refresh": "Aggiorna",
     "save": "Salva",
@@ -82,7 +83,10 @@
     "activated": "{entity} attivato.",
     "deactivated": "{entity} disattivato.",
     "action_for": "{action} — {context}",
-    "search_empty": "Non è stato trovato nulla."
+    "search_empty": "Non è stato trovato nulla.",
+    "copy": "Copia",
+    "copied": "Copiato.",
+    "copy_failed": "Impossibile copiare il testo."
   },
   "relative": {
     "now": "adesso",

@@ -10,7 +10,7 @@ use TinyCat\Core\Identity\Authentication;
 use TinyCat\Http\Request;
 use TinyCat\Http\Web;
 use TinyCat\Social\Moderation\Restrictions;
-use TinyCat\Social\Presentation\Pages as SitePages;
+use TinyCat\Social\Site\Pages as SitePages;
 use TinyCat\Core\Ui\Site as Presentation;
 use TinyCat\Social\Posts\Feed;
 use TinyCat\Social\Posts\ViewData as StatusViewData;
@@ -29,7 +29,7 @@ final class AuthorPages
         $data = self::authorData($requestedId);
         if ($data === null) { \TinyCat\Core\Runtime\Errors::respond(404); return; }
         if (Request::current()->method() === 'GET' && (int) Web::get('page', 0) > 1) { Web::redirect($data['page']['current'], 301); }
-        \TinyCat\Social\Presentation\PublicPages::render('author', $data);
+        \TinyCat\Social\Site\PublicPages::render('author', $data);
     }
 
     /** @return array<string, mixed>|null */
@@ -47,12 +47,13 @@ final class AuthorPages
         $avatarUrl = Avatars::user_avatar_url($author);
         $memberSince = (string) ($author['created_at'] ?? '');
         $current = Profiles::author_url($authorId);
-        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $archiveType = Archive::type((string) Web::get('media', ''));
+        $compact = Web::get('compact', '') === '1';
 
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
         $pageUrl = $current;
-        $statusItems = Feed::public_status_items_by_author_cursor($authorId, $statusLimit, '', 0, $archiveType);
+        $statusItems = Feed::public_status_items_by_author_cursor($authorId, $statusLimit, '', 0, $archiveType, $selection);
         $authUser = Authentication::auth();
         $statusItems = StatusViewData::status_prepare_items_view($statusItems, $authUser);
         $feedMore = StatusViewData::status_feed_more_view_data(
@@ -61,7 +62,8 @@ final class AuthorPages
             $statusItems,
             $statusLimit,
             ['author_id' => $authorId, 'media' => $archiveType],
-            $nextStatusLimit
+            $nextStatusLimit,
+            $selection
         );
         $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
         $editor = $canPost ? StatusViewData::status_editor_view_data() : [];
@@ -71,7 +73,7 @@ final class AuthorPages
         $canFollow = $authUser !== null && (int) ($authUser['id'] ?? 0) !== $authorId;
         $isFollowing = $canFollow && Following::author_is_followed((int) ($authUser['id'] ?? 0), $authorId);
         $followCounts = Following::author_follow_counts($authorId);
-        $activityStats = Repository::author_activity_stats($authorId);
+        $activityStats = AuthorStatistics::author_activity_stats($authorId);
         $publicPostCount = (int) ($activityStats['posts'] ?? 0);
         $authorEntityId = Presentation::absolute_url($current) . '#author';
         $authorStructuredData = [
@@ -117,6 +119,6 @@ final class AuthorPages
                 'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
                 'jsonld' => $authorStructuredData,
             ],
-        ], 'context' => compact('author', 'authUser', 'statusItems', 'feedMore', 'editor', 'bio', 'memberSince', 'followCounts', 'activityStats', 'canEditProfile', 'canFollow', 'isFollowing', 'canPost', 'canSeeMute', 'mutedUntil', 'authorProfileEditModalId', 'authorProfileEditModalUrl', 'authorAvatarEditModalId', 'authorAvatarEditModalUrl', 'authorFollowingModalId', 'authorFollowingModalUrl', 'authorFeedUrl', 'archiveType')];
+        ], 'context' => compact('author', 'authUser', 'statusItems', 'feedMore', 'editor', 'bio', 'memberSince', 'followCounts', 'activityStats', 'canEditProfile', 'canFollow', 'isFollowing', 'canPost', 'canSeeMute', 'mutedUntil', 'authorProfileEditModalId', 'authorProfileEditModalUrl', 'authorAvatarEditModalId', 'authorAvatarEditModalUrl', 'authorFollowingModalId', 'authorFollowingModalUrl', 'authorFeedUrl', 'archiveType', 'compact')];
     }
 }

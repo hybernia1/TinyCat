@@ -155,7 +155,7 @@ try {
             }
         }
         $features = $saved;
-        $features['/'] = [['entries' => ['assets/core/dates.js'], 'translations' => []]];
+        $features['/'] = [['entries' => ['App/Core/Ui/assets/runtime/dates.js'], 'translations' => []]];
         $featuresProperty->setValue(null, $features);
         try {
             $validateClients($real);

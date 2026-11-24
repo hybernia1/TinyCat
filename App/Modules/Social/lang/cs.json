@@ -41,12 +41,48 @@
       "status_image_disabled": "Nahrávání obrázků je nyní vypnuté.",
       "status_image_compression": "Tento obrázek nelze zkomprimovat do nastaveného limitu.",
       "status_not_found": "Příspěvek nebyl nalezen.",
-      "status_forbidden": "Na tuto akci nemáš oprávnění."
+      "status_forbidden": "Na tuto akci nemáš oprávnění.",
+      "status_tag_too_long": "Tag může obsahovat nejvýše {max} znaků.",
+      "status_image_invalid": "Vyber platný obrázek JPEG, PNG nebo WebP do {size} KB.",
+      "comment_required": "Komentář nemůže být prázdný.",
+      "comment_not_found": "Komentář nebyl nalezen.",
+      "comment_edit_forbidden": "Na úpravu tohoto komentáře nemáš oprávnění.",
+      "comment_forbidden": "Na smazání tohoto komentáře nemáš oprávnění.",
+      "comment_created": "Komentář byl přidán.",
+      "comment_saved": "Komentář byl uložen.",
+      "comment_deleted": "Komentář byl smazán."
     },
     "status_embed": "Vložit na web",
     "status_embed_help": "Zkopírujte tento HTML kód do HTML bloku svého webu. WordPress může vložení rozpoznat také z odkazu na příspěvek.",
     "status_embed_code": "Kód pro vložení",
-    "status_embed_open": "Otevřít původní příspěvek"
+    "status_embed_open": "Otevřít původní příspěvek",
+    "translation_translate": "Přeložit",
+    "translation_hide": "Skrýt překlad",
+    "translation_preparing": "Připravuji překlad…",
+    "translation_machine": "Strojový překlad",
+    "translation_unavailable": "Překlad tohoto textu není dostupný.",
+    "translation_same": "Příspěvek už je v jazyce rozhraní.",
+    "translation_continue": "Překlad je připravený. Klikněte znovu na Přeložit.",
+    "translation_failed": "Překlad se nezdařil. Zkuste to znovu.",
+    "status_counter": "Zbývá {count}",
+    "status_image_add": "Přidat obrázek",
+    "status_image_remove": "Odebrat obrázek",
+    "status_body": "Co je nového?",
+    "status_comment": "Komentovat",
+    "status_comment_placeholder": "Napsat komentář...",
+    "status_reply": "Odpovědět",
+    "status_like": "To se mi líbí",
+    "status_reply_placeholder": "Napsat odpověď...",
+    "status_like_for": "Označit, že se mi líbí – {context}",
+    "status_unlike_for": "Odebrat označení To se mi líbí – {context}",
+    "status_more_comments": "Načíst další komentáře",
+    "status_more_replies": "Načíst odpovědi",
+    "status_comments": "Komentáře",
+    "status_comment_history": "Historie úprav",
+    "status_comment_history_empty": "Tento komentář zatím nebyl upraven.",
+    "status_comment_history_updated_by": "Upravil(a) {author}",
+    "status_comment_history_change": "Změna komentáře",
+    "status_comment_history_unknown": "Neznámý uživatel"
   },
   "bots": {
     "title": "Boti",
@@ -310,13 +346,14 @@
     "filter_links": "Odkazy",
     "filter_text": "Pouze text",
     "feed_empty_filtered": "Tomuto filtru neodpovídají žádné příspěvky.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} příspěvek",
       "few": "{count} příspěvky",
       "many": "{count} příspěvku",
       "other": "{count} příspěvků"
-    }
+    },
+    "status_image_alt": "Obrázek k příspěvku uživatele {author}: {text}",
+    "status_image_alt_empty": "Obrázek k příspěvku uživatele {author}"
   },
   "app": {
     "name": "TinyCat"
@@ -371,7 +408,8 @@
       "likes": "Lajky",
       "comments": "Komentáře",
       "follows": "Sledování",
-      "reports": "Nahlášení"
+      "reports": "Nahlášení",
+      "content_group": "Obsah"
     },
     "table_missing": "Tabulka zatím není vytvořená."
   },

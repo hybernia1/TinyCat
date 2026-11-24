@@ -184,6 +184,10 @@ try {
         foreach ($retiredFiles as $release => $paths) {
             if (version_compare((string) $release, $manifest['minimum_version'], '<=') || version_compare((string) $release, $version, '>')) { continue; }
             foreach ($paths as $path) {
+                if (str_starts_with($path, 'App/Modules/') && !\TinyCat\Core\Modules\Distribution::includes($path, $manifest['distribution'])) {
+                    if (in_array($path, $manifest['delete'], true)) { $failures[] = 'Foreign module cleanup: ' . $path; }
+                    continue;
+                }
                 if (!in_array($path, $manifest['delete'], true)) { $failures[] = 'Missing overlay cleanup: ' . $path; }
                 if (isset($manifest['files'][$path])) { $failures[] = 'Retired file is still packaged: ' . $path; }
             }
@@ -250,12 +254,12 @@ try {
     }
 
     foreach ($names as $name) {
-        if (str_starts_with($name, 'docs/') && !in_array($name, ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'], true)) {
+        if (str_starts_with($name, 'docs/') && !in_array($name, ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md', 'docs/operations/debugging.md', 'docs/contracts/error-handling.md'], true)) {
             $failures[] = "Internal release evidence in artifact: {$name}";
         }
     }
 
-    foreach (['App/Core/Support/Version.php', 'App/Core/Support/Localization.php', 'App/Core/Updates/Manager.php', 'App/Modules/Social/src/Automation/Importer.php', 'App/Modules/Social/src/Automation/Administration.php', 'App/Modules/Social/src/Automation/Pages.php', 'index.php', 'scheduled-tasks.php', 'docs/reference/api.md', 'docs/operations/updates.md'] as $required) {
+    foreach (['App/Core/Support/Version.php', 'App/Core/Support/Localization.php', 'App/Core/Updates/Manager.php', 'App/Modules/Social/src/Bots/Importer.php', 'App/Modules/Social/src/Bots/Administration.php', 'App/Modules/Social/src/Bots/Pages.php', 'index.php', 'scheduled-tasks.php', 'docs/reference/api.md', 'docs/operations/updates.md'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required modular runtime file missing from artifact: {$required}";
         }
@@ -270,13 +274,13 @@ try {
         if (in_array($retired, $names, true)) { $failures[] = 'Retired updater bridge or asset optimizer in artifact: ' . $retired; }
     }
 
-    foreach (['App/Core/Http/Api.php', 'App/Core/Http/Request.php', 'App/Core/Http/Response.php', 'App/Core/Http/Validator.php', 'App/Core/Database/Connection.php', 'App/Core/Support/Config.php', 'App/Core/Modules/Module.php', 'App/modules.php', 'assets/core/api-client.js', 'assets/core/dom.js', 'assets/ui/form-requests.js', 'assets/ui/dialogs.js'] as $required) {
+    foreach (['App/Core/Http/Api.php', 'App/Core/Http/Request.php', 'App/Core/Http/Response.php', 'App/Core/Http/Validator.php', 'App/Core/Database/Connection.php', 'App/Core/Support/Config.php', 'App/Core/Modules/Module.php', 'App/modules.php', 'App/Core/Ui/assets/runtime/api-client.js', 'App/Core/Ui/assets/runtime/dom.js', 'App/Core/Ui/assets/form-requests.js', 'App/Core/Ui/assets/dialogs.js'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required module infrastructure missing from artifact: {$required}";
         }
     }
 
-    foreach (['App/Modules/Social/src/Profiles/Registration.php', 'App/Modules/Social/src/Profiles/Api.php', 'App/Core/Identity/Avatar.php', 'App/Modules/Social/src/Profiles/Roles.php', 'App/Core/Notifications/ServiceProvider.php', 'App/Core/Notifications/Api.php', 'App/Modules/Social/src/Posts/Registration.php', 'App/Modules/Social/src/Posts/Api.php', 'App/Modules/Social/src/Content/ImageStorage.php', 'App/Core/Text/LinkParser.php', 'App/Core/Links/Metadata.php', 'assets/ui/component-builders.js', 'App/Modules/Social/assets/users/controller.js', 'App/Modules/Social/assets/status/controller.js', 'App/Core/Notifications/assets/controller.js'] as $required) {
+    foreach (['App/Modules/Social/src/Module.php', 'App/Modules/Social/src/Profiles/Api.php', 'App/Core/Identity/Avatar.php', 'App/Modules/Social/src/Profiles/Roles.php', 'App/Core/Notifications/ServiceProvider.php', 'App/Core/Notifications/Api.php', 'App/Modules/Social/src/Posts/Api.php', 'App/Modules/Social/src/Posts/ImageStorage.php', 'App/Core/Text/LinkParser.php', 'App/Core/Links/Metadata.php', 'App/Core/Ui/assets/component-builders.js', 'App/Modules/Social/assets/users/controller.js', 'App/Modules/Social/assets/status/controller.js', 'App/Core/Notifications/assets/controller.js'] as $required) {
         if (!in_array($required, $names, true)) { $failures[] = 'Required domain runtime missing: ' . $required; }
     }
     foreach (['App/Core.php', 'App/functions.php', 'App/Api.php', 'App/Bots.php', 'App/BotAdmin.php', 'App/Captcha.php', 'App/Cache.php', 'App/Minifier.php', 'App/SiteIdentity.php', 'App/Sitemap.php', 'App/PackageManager.php', 'App/Notifications.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $retired) {
@@ -284,6 +288,7 @@ try {
     }
 
     unset($entry, $iterator, $archive);
+    if (!$freshInstall) { (require $root . '/tests/fixtures/releases/product-channel-cases.php')($root, $temporaryRoot, $version, $keyPath, $secretKey, $publicKey, $output); }
     sodium_memzero($secretKey);
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();

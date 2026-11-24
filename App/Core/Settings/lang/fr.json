@@ -25,7 +25,6 @@
       "site_meta_description_help": "Utilisé comme méta description par défaut et devrait idéalement contenir entre 150 et 160 caractères.",
       "site_logo": "Logo du site",
       "site_favicon": "Icône de favori",
-      "site_footer": "Pied de page",
       "minify_css": "Réduire CSS",
       "minify_css_help": "Crée des fichiers CSS compacts et versionnés dans le cache d'exécution.",
       "minify_js": "Réduire JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Website URL",
       "homepage": "Home page",
       "theme": "Page theme",
-      "automatic": "Automatic"
+      "automatic": "Automatic",
+      "public_enabled": "Site web public",
+      "public_enabled_help": "Active les pages publiques, la recherche, les flux et les contenus intégrés. La connexion, le compte et l’administration restent accessibles après désactivation."
     },
     "messages": {
       "saved": "Les paramètres ont été enregistrés.",
@@ -52,6 +53,9 @@
     "image_remove": "Supprimer l'image"
   },
   "install": {
+    "recovery_title": "Récupération de l’installation",
+    "recovery_warning": "Restaure la base de données et la configuration avant l’étape interrompue. Les modifications effectuées depuis cette sauvegarde seront perdues.",
+    "recovery_restore": "Restaurer la sauvegarde",
     "purpose_migrations": "Historique des migrations, ordre et sommes de contrôle.",
     "language_label": "Français",
     "title": "Installer le système de gestion de contenu TinyCat",
@@ -101,7 +105,7 @@
       "invalid_database": "Le nom de la base de données ne peut contenir que des lettres, des chiffres et des traits de soulignement.",
       "required_fields": "Remplissez tous les champs obligatoires.",
       "invalid_username": "Utilisez 2 à 32 lettres (y compris les accents), des chiffres, des points, des traits d'union ou des traits de soulignement. Commencez par une lettre ou un chiffre ; ne terminez pas par un point ou un trait d’union. Le nom ne peut pas contenir uniquement des chiffres.",
-      "password_length": "Le mot de passe doit comporter au moins 8 caractères.",
+      "password_length": "Le mot de passe doit comporter au moins {min} octets UTF-8.",
       "password_mismatch": "Les mots de passe ne correspondent pas.",
       "config_write_failed": "Impossible d'écrire config.php.",
       "db_failed": "Échec de la connexion à la base de données : {message}"

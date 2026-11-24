@@ -17,7 +17,7 @@ $databasePath = $temporary . '/database.sqlite';
 $database = new PDO('sqlite:' . $databasePath);
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 foreach ([
-    'CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT DEFAULT "system", avatar_exists INTEGER DEFAULT 0, avatar_appearance TEXT, bio TEXT DEFAULT "", email_notifications INTEGER DEFAULT 0, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)',
+    'CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT DEFAULT "system", avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, bio TEXT DEFAULT "", email_notifications INTEGER DEFAULT 0, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)',
     'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY AUTOINCREMENT, author_id INTEGER, body TEXT, published_at TEXT, status TEXT NOT NULL DEFAULT \'published\')',
     'CREATE TABLE social_post_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, UNIQUE(content_id, user_id))',
     'CREATE TABLE social_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT, comments_diff TEXT)',
@@ -149,7 +149,7 @@ try {
     foreach (['/api/users', '/api/bots/accounts', '/api/bots/sources'] as $path) {
         [$status, $payload, $headers] = $request('PUT', $path);
         $assert($status === 405 && $payload['code'] === 'method_not_allowed', 'Unsupported methods must be rejected before handlers.');
-        $assert(count(array_filter($headers, static fn (string $header): bool => str_starts_with($header, 'Allow: GET, POST'))) === 1, '405 responses must include explicit allowed methods.');
+        $assert(count(array_filter($headers, static fn (string $header): bool => str_starts_with($header, 'Allow: GET, HEAD, POST'))) === 1, '405 responses must include explicit allowed methods.');
     }
     foreach (['/api/users', '/api/bots/sources', '/api/notifications', '/api/statuses'] as $path) {
         [$status, $payload] = $request($path === '/api/statuses' ? 'POST' : 'GET', $path);
@@ -174,7 +174,7 @@ try {
     $schedulerDatabase->prepare('INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)')->execute(['bots.cleanup_last_run', (string) time(), 'int', 'bots']);
     $schedulerDatabase = null;
     [$status, $payload] = $request('POST', '/api/scheduler/tasks/feeds/runs?per_page=50', [], 'admin', $csrf);
-    $assert($status === 201 && $payload['data']['execution']['ok'] && $payload['data']['runs'][0]['status'] === 'completed', 'An authorized run-now request executes and returns its durable history.');
+    $assert($status === 201 && $payload['data']['execution']['ok'] && $payload['data']['runs'][0]['status'] === 'not_due', 'An authorized run-now request executes and returns its durable history.');
     $assert($payload['code'] === 'scheduler_run_finished' && $payload['meta']['pagination']['per_page'] === 50 && !array_key_exists('pagination', $payload['data']), 'Cron POST uses the same pagination metadata and a stable action code.');
     $assert($payload['data']['runs'][0]['mode'] === 'admin' && !str_contains(json_encode($payload), 'Bearer '), 'Manual runs identify their origin without exposing cron credentials.');
     $schedulerRunId = $payload['data']['runs'][0]['id'];
@@ -199,6 +199,28 @@ try {
     $schedulerDatabase = null;
     [$status] = $request('POST', '/api/scheduler/tasks/unknown/runs', [], 'admin', $csrf);
     $assert($status === 404, 'Unknown cron tasks cannot execute arbitrary jobs.');
+
+    $settingsDatabase = new PDO('sqlite:' . $databasePath);
+    [$status] = $request('GET', '/api/settings/editor');
+    $assert($status === 401, 'Settings resources require authentication.');
+    [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Forbidden']], 'user', $csrf);
+    $assert($status === 403, 'Settings writes require administrator authorization.');
+    [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Forbidden']], 'admin');
+    $assert($status === 403, 'Settings writes require CSRF.');
+    [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Original fixture', 'site.home_title' => 'Original title']], 'admin', $csrf);
+    $assert($status === 200 && isset($payload['data']['sections']), 'Settings return their canonical editor resource after save.');
+    [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Partial write', 'app.url' => 'invalid url']], 'admin', $csrf);
+    $assert($status === 422 && isset($payload['error']['details']['errors']['settings[app.url]']), 'Settings validation identifies the failed control.');
+    $assert($settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.name'")->fetchColumn() === 'Original fixture', 'A late validation failure cannot persist earlier settings.');
+    [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => '  Canonical name  ']], 'admin', $csrf);
+    $assert($status === 200 && $settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.name'")->fetchColumn() === 'Canonical name', 'A partial settings write normalizes its submitted value.');
+    $assert($settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.home_title'")->fetchColumn() === 'Original title', 'Unsubmitted settings remain unchanged.');
+    $settingsDatabase->exec("CREATE TRIGGER reject_settings BEFORE UPDATE ON settings WHEN NEW.setting_key = 'site.home_title' BEGIN SELECT RAISE(ABORT, 'Fixture settings failure'); END");
+    [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Rolled back', 'site.home_title' => 'Reject']], 'admin', $csrf);
+    $assert($status === 500 && $settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.name'")->fetchColumn() === 'Canonical name', 'Database failure rolls back the complete settings batch.');
+    $settingsDatabase->exec('DROP TRIGGER reject_settings');
+
+    $settingsDatabase = null;
 
     [$status, $payload] = $request('GET', '/api/foundation/items/7');
     $assert($status === 200 && $payload['data']['id'] === 7 && $payload['data']['value'] === '<b>literal user text</b>' && $payload['message'] === 'Loaded.' && $payload['meta']['source'] === 'module', 'Module APIs receive named parameters and return pure data, messages and metadata.');
@@ -231,7 +253,7 @@ try {
         [$status] = $request('DELETE', '/api/bots/accounts/' . $invalidId, ['id' => 1], 'admin', $csrf);
         $assert($status === 404, 'Invalid path IDs cannot fall back to a body ID.');
     }
-    [$status, $payload] = $request('POST', '/api/users/1/followers/me', [], 'user', $csrf);
+    [$status, $payload] = $request('POST', '/api/profiles/1/followers/me', [], 'user', $csrf);
     $assert($status === 405, 'Follow state must use PUT or DELETE, never an action toggle.');
     [$status, $payload] = $request('POST', '/api/bots/sources', '{invalid', 'admin', $csrf);
     $assert($status === 400 && $payload['code'] === 'bad_request', 'Malformed JSON must use the same error envelope.');
@@ -372,6 +394,8 @@ try {
     require __DIR__ . '/cases/domain-contract-cases.php';
     require __DIR__ . '/cases/module-contract-cases.php';
     require __DIR__ . '/cases/avatar-contract-cases.php';
+    require __DIR__ . '/cases/branding-contract-cases.php';
+    require __DIR__ . '/cases/public-surface-cases.php';
     require __DIR__ . '/cases/rate-limit-cases.php';
     require __DIR__ . '/cases/request-limit-cases.php';
     require __DIR__ . '/cases/system-api-cases.php';

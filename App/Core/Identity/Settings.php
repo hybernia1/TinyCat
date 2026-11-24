@@ -12,11 +12,11 @@ final class Settings
     public static function section_security(): array
     {
         return [
-                'label' => \TinyCat\Support\Localization::t('settings.sections.security'),
+                'label' => ['t' => 'settings.sections.security'],
                 'icon' => 'shield',
                 'fields' => [
-                    ['key' => 'auth.registration.enabled', 'label' => \TinyCat\Support\Localization::t('settings.fields.registration_enabled'), 'type' => 'bool', 'default' => false],
-                    ['key' => 'auth.registration.auto_approve', 'label' => \TinyCat\Support\Localization::t('settings.fields.registration_auto_approve'), 'type' => 'bool', 'default' => false],
+                    ['key' => 'auth.registration.enabled', 'label' => ['t' => 'settings.fields.registration_enabled'], 'type' => 'bool', 'default' => false],
+                    ['key' => 'auth.registration.auto_approve', 'label' => ['t' => 'settings.fields.registration_auto_approve'], 'type' => 'bool', 'default' => false],
                 ],
         ];
     }

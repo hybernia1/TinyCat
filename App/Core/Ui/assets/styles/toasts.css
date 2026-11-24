@@ -1,0 +1,106 @@
+.toast-stack {
+  position: fixed;
+  right: var(--toast-inset);
+  bottom: var(--toast-inset);
+  z-index: 70;
+  display: grid;
+  width: min(calc(100vw - var(--toast-inset) * 2), var(--toast-width));
+  gap: var(--control-padding-block);
+  pointer-events: none;
+}
+
+.toast {
+  --status-icon-size: var(--control-height-inline);
+  display: grid;
+  grid-template-columns: var(--toast-action-size) minmax(0, 1fr) var(--toast-action-size);
+  align-items: center;
+  gap: var(--control-padding-inline);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: var(--control-padding-inline);
+  color: var(--text);
+  font-weight: 650;
+  pointer-events: auto;
+}
+
+.toast-close {
+  display: inline-grid;
+  width: var(--toast-action-size);
+  height: var(--toast-action-size);
+  place-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.toast-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.toast-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.toast-close:hover,
+.toast-close:focus-visible {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.toast-success {
+  --toast-color: var(--success);
+  --toast-background: var(--success-soft);
+  --toast-border-strength: 34%;
+}
+
+.toast-danger {
+  --toast-color: var(--danger);
+  --toast-background: var(--danger-soft);
+  --toast-border-strength: 38%;
+}
+
+.toast-warning {
+  --toast-color: var(--warning);
+  --toast-background: var(--warning-soft);
+  --toast-border-strength: 34%;
+}
+
+.toast-info {
+  --toast-color: var(--info);
+  --toast-background: var(--info-soft);
+  --toast-border-strength: 34%;
+}
+
+.toast-success,
+.toast-danger,
+.toast-warning,
+.toast-info {
+  border-color: color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border));
+  background: var(--toast-background);
+  color: var(--toast-color);
+}
+
+.toast-success .toast-close,
+.toast-danger .toast-close,
+.toast-warning .toast-close,
+.toast-info .toast-close {
+  color: currentColor;
+}
+
+@media (max-width: 899px) {
+  .toast-stack {
+    --toast-inset: var(--control-padding-inline);
+    --toast-action-size: var(--control-height-touch);
+  }
+}
+
+.toast::before {
+  justify-self: center;
+  align-self: center;
+}

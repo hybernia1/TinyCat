@@ -1,10 +1,11 @@
 // @component-owned: structure is declared in owner catalogs.
-import "../../../../../assets/ui/content-updates.js";
-import "../../../../../assets/ui/list-navigation.js";
-import "../../../../../assets/core/dom.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/tabs.js";
+import "../../../../Core/Ui/assets/content-updates.js";
+import "../../../../Core/Ui/assets/list-navigation.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/filters.js";
+import "../../../../Core/Ui/assets/tabs.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui, states = new WeakMap();
@@ -16,17 +17,13 @@ import "../../../../../assets/ui/tabs.js";
   }
   function failed(error) { if (error.name !== "AbortError") { T.toasts.show(error.message, "danger"); } }
   function metadata(state, data) {
-    var values = { sources: data.item.source_count, active_sources: data.item.active_source_count, posts: data.item.post_count, runs: data.item.run_count };
-    var cards = document.createDocumentFragment();
-    Object.keys(values).forEach(function (key) { cards.appendChild(T.components.render("bots/stat", { stat: { key: key, value: values[key] } })); });
-    T.content.replaceChildren(state.summary, cards);
     T.content.replaceChildren(state.status, T.components.render("ui/account-status", { status: data.item.status, label: U.text("users.statuses." + data.item.status) }));
   }
   function refreshMetadata(state) {
     var serial = state.metadataRevision = (state.metadataRevision || 0) + 1;
     return request(state, "/api/bots/accounts/" + state.id).then(function (response) {
-      if (state.dialog.isConnected && state.metadataRevision === serial) { metadata(state, response.data); }
-    }).catch(function (error) { if (state.dialog.isConnected && state.metadataRevision === serial) { failed(error); } });
+      if (!state.disposed && state.dialog.isConnected && state.metadataRevision === serial) { metadata(state, response.data); }
+    }).catch(function (error) { if (!state.disposed && state.dialog.isConnected && state.metadataRevision === serial) { failed(error); } });
   }
   function footer(state) {
     var content = state.active === "account" ? state.actions : state.pagers[state.active];
@@ -74,13 +71,13 @@ import "../../../../../assets/ui/tabs.js";
     root.dataset.loading = "true"; root.setAttribute("aria-busy", "true");
     var url = name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl, generation = root.dataset.apiGeneration;
     request(state, url).then(function (response) {
-      if (!state.dialog.isConnected || generation !== root.dataset.apiGeneration || url !== (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) { return; }
+      if (state.disposed || !state.dialog.isConnected || generation !== root.dataset.apiGeneration || url !== (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) { return; }
       if (name === "sources") { scopedSources(state, response); }
       else if (name === "history") { scopedRuns(state, response); }
       else { T.bots.posts(root, response); root.dataset.loaded = "true"; }
       T.lifecycle.hydrate(root);
     }).catch(function (error) {
-      if (error.name !== "AbortError" && state.dialog.isConnected && generation === root.dataset.apiGeneration && url === (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) {
+      if (!state.disposed && error.name !== "AbortError" && state.dialog.isConnected && generation === root.dataset.apiGeneration && url === (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) {
         var retry = T.components.render("bots/workspace-retry", {});
         retry.addEventListener("click", function () { load(state, name, true); });
         T.content.replaceChildren(root, retry); delete state.pagers[name];
@@ -108,12 +105,12 @@ import "../../../../../assets/ui/tabs.js";
       var dialog = U.adminDialog(id, data.item.username, form);
       dialog.dataset.botWorkspaceId = String(botId);
       var status = U.accountDialogTitle(dialog, data.item);
-      var summary = T.components.render("bots/workspace-account", {});
       var lists = T.components.render("bots/workspace-lists", { sources_url: "/api/bots/sources?bot=" + botId, runs_url: "/api/bots/accounts/" + botId + "/runs", posts_url: postUrl(botId, url.searchParams) });
       var sources = lists.querySelector("#bot-detail-sources-list"), posts = lists.querySelector("#bot-detail-posts-list"), history = lists.querySelector("#bot-detail-runs-list");
       var initial = url.searchParams.get("tab") || (url.searchParams.has("source") || url.searchParams.has("publication") || url.searchParams.has("q") ? "posts" : "account");
       var layout = U.tabbedContent(id, [
         { name: "account", label: "bots.detail_account", icon: "settings" },
+        { name: "avatar", label: "account.avatar", icon: "user" },
         { name: "sources", label: "bots.detail_sources", icon: "rss" },
         { name: "history", label: "bots.detail_history", icon: "clock" },
         { name: "posts", label: "bots.detail_posts", icon: "file" }
@@ -123,9 +120,10 @@ import "../../../../../assets/ui/tabs.js";
       var content = T.components.render("bots/workspace", { tabs: layout.content });
       panels.account.id = "bot-detail-account";
       tabButtons.account.setAttribute("aria-controls", panels.account.id);
-      panels.account.append(summary, form); panels.sources.appendChild(sources); panels.history.appendChild(history); panels.posts.appendChild(posts);
+      panels.account.append(form); panels.sources.appendChild(sources); panels.history.appendChild(history); panels.posts.appendChild(posts);
+      panels.avatar.appendChild(T.components.render("users/avatar-control", { user: data.item }));
       dialog.querySelector(".modal-body").replaceChildren(content);
-      var state = { id: botId, dialog: dialog, sources: sources, posts: posts, history: history, summary: summary, status: status, active: initial, footer: dialog.querySelector(".modal-footer"), actions: dialog.querySelector(".modal-editor-actions"), pagers: {}, requests: new Set(), changed: false };
+      var state = { id: botId, dialog: dialog, sources: sources, posts: posts, history: history, status: status, active: initial, footer: dialog.querySelector(".modal-footer"), actions: dialog.querySelector(".modal-editor-actions"), pagers: {}, requests: new Set(), changed: false };
       states.set(dialog, state); metadata(state, data);
       var tabRoot = U.pinDialogTabs(dialog, layout.content);
       footer(state);
@@ -170,9 +168,9 @@ import "../../../../../assets/ui/tabs.js";
     dispose: function (root) {
       var state = states.get(root);
       if (!state) { return; }
+      state.disposed = true;
       state.requests.forEach(function (controller) { controller.abort(); });
-      T.filters.remove("bot-detail-posts-filter-modal");
-      T.filters.remove("bot-detail-runs-filter-modal");
+      T.filters.dispose(root);
       states.delete(root);
     }
   };

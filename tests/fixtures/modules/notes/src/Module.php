@@ -22,7 +22,17 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
     public static function contributions(): Contributions
     {
         return new Contributions(tasks: [new ScheduledTask('pilot.notes.refresh', static fn (array $context): array => Notes::refresh($context),
-            options: ['batch' => 2], normalize: static fn (array $options): array => ['batch' => max(1, min(100, $options['batch']))])]);
+            options: ['batch' => 2], normalize: static fn (array $options): array => ['batch' => max(1, min(100, $options['batch']))])],
+            settings: [new \TinyCat\Core\Modules\SettingsSection('pilot.notes.settings', 'pilot_notes', static fn (): array => [
+                'label' => 'Pilot', 'icon' => 'settings', 'fields' => [[
+                    'key' => 'pilot.notes.options', 'label' => 'Options', 'type' => 'group', 'default' => [],
+                    'fields' => [['key' => 'name', 'label' => 'Name', 'type' => 'text', 'max' => 8]],
+                    'normalize' => static function (mixed $raw): array {
+                        if (!is_array($raw) || !is_string($raw['name'] ?? null) || mb_strlen($raw['name']) > 8) { throw new \InvalidArgumentException('Invalid pilot name'); }
+                        return [['name' => trim($raw['name'])], 'json'];
+                    },
+                ]],
+            ])]);
     }
 
     public static function register(Api $api): void

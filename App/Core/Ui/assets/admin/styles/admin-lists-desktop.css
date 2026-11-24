@@ -1,0 +1,21 @@
+@media (min-width: 900px) {
+.admin-list-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+.admin-search-form {
+    flex: 1 1 26.25rem;
+    max-width: 40rem;
+  }
+
+.admin-filter-actions {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
+
+.admin-per-page-form {
+    flex: 0 0 auto;
+  }
+}

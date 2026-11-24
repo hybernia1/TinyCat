@@ -43,11 +43,11 @@ $pdo = new PDO('sqlite:' . $root . '/storage/test.sqlite', options: [PDO::ATTR_E
 Connection::set($pdo);
 Lifecycle::install($plan);
 $before = Deployment::read($root);
-rename($root . '/App/Modules/Blog', $root . '/removed-blog');
+rename($root . '/App/Modules/Social', $root . '/removed-social');
 $snapshot = Administration::snapshot();
-$assert(!in_array('tinycat.blog', array_column($snapshot['items'], 'id'), true), 'A removed never-active module disappears from the manager');
+$assert(!in_array('tinycat.social', array_column($snapshot['items'], 'id'), true), 'A removed never-active module disappears from the manager');
 $assert(Deployment::read($root) === $before, 'Discovery does not alter installed state');
-$assert(!Loader::load($root)->catalog->has('tinycat.blog'), 'Core boots when an inactive distributed module is absent');
+$assert(!Loader::load($root)->catalog->has('tinycat.social'), 'Core boots when an inactive distributed module is absent');
 
 $directory = $root . '/App/Modules/LocalNotes';
 mkdir($directory . '/src', 0700, true);
@@ -95,9 +95,9 @@ Administration::change('fixture.localnotes', false, Administration::snapshot()['
 $assert(Deployment::read($root)['active'] === [] && in_array('fixture.localnotes', Deployment::read($root)['installed'], true), 'Missing module can be disabled without removing its installed record');
 
 $assert($pdo->query('SELECT body FROM local_notes')->fetchColumn() === 'Keep this record', 'Removing source files and disabling never deletes domain data');
-rename($root . '/removed-blog', $root . '/App/Modules/Blog');
+rename($root . '/removed-social', $root . '/App/Modules/Social');
 rename($dependent, $root . '/removed-dependent');
-$assert(SourceModules::production($root) === ['tinycat.social' => 'App/Modules/Social/module.json'], 'Production inventory excludes the development Blog');
+$assert(SourceModules::production($root) === ['tinycat.social' => 'App/Modules/Social/module.json'], 'Production inventory contains the restored Social module');
 rename($root . '/removed-notes', $directory);
 $assert(!Loader::load($root)->catalog->has('fixture.localnotes'), 'Restoring an explicitly disabled module does not activate it');
 mkdir($root . '/App/Modules/Broken', 0700, true);

@@ -24,6 +24,10 @@ $pure = static function (mixed $value) use (&$pure, $assert): void {
 [$status, $payload] = $request('GET', '/api/users/authentication?mode=register&view=html');
 $assert($status === 200 && $payload['data']['registration_enabled'] && isset($payload['data']['captcha']['site_key']), 'Authentication options are JSON configuration even when HTML is requested: ' . json_encode($payload));
 $pure($payload);
+[$status, $authentication] = $request('GET', '/api/users/authentication?mode=login&next=%2Fsocial');
+$assert($status === 200 && $authentication['data']['mode'] === 'login' && $authentication['data']['switch_modal_url'] === '/api/users/authentication?mode=register&next=%2Fsocial', 'Login exposes the canonical registration resource and preserves its safe destination.');
+[$status, $authentication] = $request('GET', $authentication['data']['switch_modal_url']);
+$assert($status === 200 && $authentication['data']['mode'] === 'register' && $authentication['data']['registration_enabled'] && $authentication['data']['next'] === '/social' && $authentication['data']['switch_modal_url'] === '/api/users/authentication?mode=login&next=%2Fsocial', 'Registration is authorized by the server and exposes the reverse resource switch.');
 [$status, $payload] = $request('POST', '/api/users/sessions', ['username' => 'member', 'password' => 'bad'], '', $csrf);
 $assert($status === 422 && isset($payload['error']['details']['errors']['username']) && !isset($payload['errors']), 'Login errors have one canonical field-error location.');
 $pure($payload);
@@ -32,7 +36,7 @@ $assert($status === 200 && $payload['data']['user']['id'] === 2 && !isset($paylo
 [$status, $payload] = $request('POST', '/api/users/registrations', ['username' => 'Žaneta.Test', 'password' => 'Example-password-43', 'password_confirm' => 'Example-password-43', 'platform_terms' => '1'], '', $csrf);
 $assert($status === 201 && $payload['data']['user']['username'] === 'Žaneta.Test' && $payload['data']['approved'], 'Registration accepts Unicode and mixed case and returns the created account.');
 $pure($payload);
-[$status, $payload] = $request('GET', '/api/users/2');
+[$status, $payload] = $request('GET', '/api/profiles/2');
 $assert($status === 200 && $payload['data']['user']['username'] === 'member', 'Public profiles are readable without authentication.');
 foreach (['password', 'email', 'email_notifications', 'muted_reason', 'theme', 'locale'] as $private) {
     $assert(!array_key_exists($private, $payload['data']['user']), 'Public profile excludes private field: ' . $private);
@@ -44,21 +48,27 @@ $assert($status === 403, 'A body ID cannot override the path target or its autho
 [$status, $payload] = $request('PATCH', '/api/users/me', ['bio' => 'Literal <script>profile</script>', 'locale' => 'en', 'theme' => 'dark', 'email' => 'member@example.test'], 'user', $csrf);
 $assert($status === 200 && $payload['data']['user']['theme'] === 'dark' && !isset($payload['data']['message']), 'Profile changes return the updated private resource with the message only in the envelope.');
 $profileBeforeTheme = $payload['data']['user'];
+foreach ([['bio' => str_repeat('😀', 501)], ['bio' => ['invalid']]] as $invalidBio) {
+    [$status, $rejected] = $request('PATCH', '/api/users/me', $invalidBio, 'user', $csrf);
+    $assert($status === 422 && isset($rejected['error']['details']['errors']['bio']), 'Invalid bio receives a field validation error.');
+}
+[$status, $rejected] = $request('PATCH', '/api/users/me', ['email_notifications' => ['invalid']], 'user', $csrf);
+$assert($status === 422 && isset($rejected['error']['details']['errors']['email_notifications']), 'Invalid notification preferences are not coerced into false.');
 [$status, $payload] = $request('PATCH', '/api/users/me', ['theme' => 'light'], 'user', $csrf);
 $assert($status === 200 && $payload['data']['user']['theme'] === 'light' && $payload['data']['user']['bio'] === $profileBeforeTheme['bio'] && $payload['data']['user']['locale'] === $profileBeforeTheme['locale'] && $payload['data']['user']['email'] === $profileBeforeTheme['email'], 'Header theme changes preserve the other profile fields.');
 $pure($payload);
 [$status, $payload] = $request('PUT', '/api/users/me/password', ['current_password' => 'incorrect', 'password' => 'New-password-44', 'password_confirm' => 'New-password-44'], 'user', $csrf);
 $assert($status === 422 && isset($payload['error']['details']['errors']['current_password']), 'Password changes still verify the current password.');
-[$status, $payload] = $request('PUT', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status, $payload] = $request('PUT', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200 && $payload['data']['following'] && $payload['data']['followers_count'] === 1, 'PUT creates the follow relationship.');
-[$status, $payload] = $request('PUT', '/api/users/1/followers/me', ['author_id' => 3], 'user', $csrf);
+[$status, $payload] = $request('PUT', '/api/profiles/1/followers/me', ['author_id' => 3], 'user', $csrf);
 $assert($status === 200 && $payload['data']['following'] && $payload['data']['followers_count'] === 1, 'Repeating PUT is idempotent and the body cannot change the target.');
-[$status, $payload] = $request('GET', '/api/users/2/following?view=html', null, 'user');
+[$status, $payload] = $request('GET', '/api/profiles/2/following?view=html', null, 'user');
 $assert($status === 200 && count($payload['data']['items']) === 1 && isset($payload['meta']['pagination']), 'Following lists return profile resources and pagination without fragments.');
 $pure($payload);
-[$status] = $request('DELETE', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status] = $request('DELETE', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200, 'DELETE removes the follow relationship.');
-[$status, $payload] = $request('DELETE', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status, $payload] = $request('DELETE', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200 && !$payload['data']['following'], 'Repeating DELETE keeps the unfollowed state.');
 
 [$status, $payload] = $request('GET', '/api/notifications?view=html', null, 'user');
@@ -92,16 +102,23 @@ $assert($status === 200 && $payload['data']['status']['liked'] && $payload['data
 $assert($status === 200 && !$payload['data']['status']['liked'], 'DELETE requests the unliked state.');
 [$status, $payload] = $request('PUT', '/api/statuses/11/comments/10/likes/me', [], 'user', $csrf);
 $assert($status === 404, 'Nested comment IDs must belong to the status in the path.');
+[$status, $payload] = $request('POST', '/api/statuses/10/comments', ['comment' => 'Root comment from a numeric form value', 'parent_id' => '0'], 'user', $csrf);
+$assert($status === 201 && $payload['data']['comment']['parent_id'] === 0, 'Root comments accept the numeric zero submitted by the shared form.');
+$rootCommentId = $payload['data']['comment']['id'];
+[$status] = $request('DELETE', '/api/statuses/10/comments/' . $rootCommentId, [], 'user', $csrf);
+$assert($status === 200, 'The created root comment remains independently removable.');
 [$status, $payload] = $request('POST', '/api/statuses/10/comments', ['comment' => 'JSON reply <b>literal</b>', 'parent_id' => 10], 'user', $csrf);
 $assert($status === 201 && $payload['data']['comment']['parent_id'] === 10 && !isset($payload['data']['comment']['html']), 'AJAX replies return a complete comment resource instead of rendered markup.');
 $commentId = $payload['data']['comment']['id'];
 $assert(str_starts_with($payload['data']['comment']['author']['avatar_url'], '/avatar/generated/v1/2.svg'), 'New replies carry the avatar of their author rather than an empty fallback.');
-[$commentsStatus, $commentTree] = $request('GET', '/api/statuses/10/comments');
+[$commentsStatus, $commentTree] = $request('GET', '/api/statuses/10/comments?parent_id=10');
 $replyWithAvatar = null;
-foreach ($commentTree['data']['items'] as $parentComment) {
-    foreach ($parentComment['replies'] as $reply) { if ($reply['id'] === $commentId) { $replyWithAvatar = $reply; } }
-}
+foreach ($commentTree['data']['items'] as $reply) { if ($reply['id'] === $commentId) { $replyWithAvatar = $reply; } }
 $assert($commentsStatus === 200 && $replyWithAvatar !== null && str_starts_with($replyWithAvatar['author']['avatar_url'], '/avatar/generated/v1/2.svg'), 'Reloading nested replies preserves the correct author avatar.');
+[$commentsStatus, $rootPage] = $request('GET', '/api/statuses/10/comments?limit=1');
+$assert($commentsStatus === 200 && count($rootPage['data']['items']) === 1 && $rootPage['data']['items'][0]['has_replies'] && $rootPage['data']['items'][0]['replies'] === [] && $rootPage['meta']['pagination']['next_url'] !== '', 'Root page is bounded and advertises lazy replies and continuation.');
+[$commentsStatus, $replyPage] = $request('GET', '/api/statuses/10/comments?parent_id=10&limit=1');
+$assert($commentsStatus === 200 && count($replyPage['data']['items']) === 1 && $replyPage['data']['items'][0]['parent_id'] === 10 && isset($replyPage['meta']['pagination']['done']), 'Replies are bounded to their root with canonical pagination metadata.');
 $pure($payload);
 [$status, $payload] = $request('PATCH', '/api/statuses/10/comments/' . $commentId, ['comment' => 'Edited JSON reply @1'], 'user', $csrf);
 $assert($status === 200 && $payload['data']['updated_comment']['editable_body'] === 'Edited JSON reply @admin', 'Comment edits preserve stable mention IDs and return an editable resource.');

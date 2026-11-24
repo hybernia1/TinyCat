@@ -21,7 +21,7 @@ final class StructuredData
             'headline' => ViewData::status_meta_title($item),
             'text' => trim((string) ($item['body'] ?? '')) !== '' ? (string) $item['body'] : null,
             'keywords' => Tags::status_tags_from_text((string) ($item['body'] ?? '')),
-            'image' => \TinyCat\Social\Content\Images::status_image_jsonld($item) ?? (ViewData::status_meta_link_image($item) ?: null),
+            'image' => \TinyCat\Social\Posts\Images::status_image_jsonld($item) ?? (ViewData::status_meta_link_image($item) ?: null),
             'datePublished' => !empty($item['published_at']) ? Dates::dateTime((string) $item['published_at'], DATE_ATOM) : null,
             'author' => self::author($item),
         ], static fn (mixed $value): bool => $value !== null);

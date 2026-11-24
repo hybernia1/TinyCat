@@ -13,7 +13,7 @@ final class Actions
 {
     public static function status_json_require_session_interval(string $action): void
     {
-        [$key, $intervalMs] = \TinyCat\Social\Posts\Posts::status_session_interval_rule($action);
+        [$key, $intervalMs] = \TinyCat\Social\Moderation\ActionPolicy::cooldown($action);
         $retryAfter = \TinyCat\Core\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs, false);
 
         if ($retryAfter > 0) {
@@ -88,14 +88,10 @@ final class Actions
             return;
         }
 
-        try {
-            $rows = \TinyCat\Database\Connection::all(
-                'SELECT id, body FROM social_posts WHERE kind = \'post\' AND author_id = ? AND published_at >= ? ORDER BY id DESC LIMIT 30',
-                [$userId, \TinyCat\Support\Dates::dateDb('-1 day')]
-            );
-        } catch (Throwable) {
-            return;
-        }
+        $rows = \TinyCat\Database\Connection::all(
+            'SELECT id, body FROM social_posts WHERE kind = \'post\' AND author_id = ? AND published_at >= ? ORDER BY id DESC LIMIT 30',
+            [$userId, \TinyCat\Support\Dates::dateDb('-1 day')]
+        );
 
         foreach ($rows as $row) {
             if ((int) ($row['id'] ?? 0) === $ignoreId) {
@@ -117,7 +113,7 @@ final class Actions
         $draft = self::status_draft();
         $userId = (int) ($user['id'] ?? 0);
         $body = $draft->body;
-        $imageFile = \TinyCat\Social\Content\Images::status_image_uploaded_file();
+        $imageFile = \TinyCat\Social\Posts\Images::status_image_uploaded_file();
         $hasImage = $imageFile !== null;
 
         if (trim($body) === '' && !$hasImage) {
@@ -126,7 +122,7 @@ final class Actions
             ]);
         }
 
-        if ($hasImage && !\TinyCat\Social\Content\Images::status_images_enabled()) {
+        if ($hasImage && !\TinyCat\Social\Posts\Images::status_images_enabled()) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_disabled'), 403, 'status_image_disabled');
         }
 
@@ -137,37 +133,41 @@ final class Actions
         $image = null;
 
         if ($hasImage) { \TinyCat\Core\Security\RequestLimits::requireAllowed('upload', $userId); }
-        $preparedLinks = \TinyCat\Social\Content\Links::prepareLinks($draft->links);
+        $preparedLinks = \TinyCat\Social\Posts\Links::prepareLinks($draft->links);
         try {
-            $image = $hasImage ? \TinyCat\Social\Content\ImageStorage::upload((array) $imageFile) : null;
+            $image = $hasImage ? \TinyCat\Social\Posts\ImageStorage::upload((array) $imageFile) : null;
         } catch (LengthException) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_compression'), 422, 'status_image_compression');
-        } catch (Throwable) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Social\Content\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid', [], ['size' => \TinyCat\Social\Content\Images::status_image_max_upload_kb()]);
+        } catch (\TinyCat\Core\Files\InvalidImage $error) {
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Social\Posts\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid', [], ['size' => \TinyCat\Social\Posts\Images::status_image_max_upload_kb()]);
         }
 
         try {
-            $contentId = PostCreation::create($userId, $draft, $preparedLinks, $image);
+            $contentId = 0;
+            \TinyCat\Database\Transactions::run(static function () use ($userId, $user, $draft, $preparedLinks, $image, $body, &$contentId): void {
+                $contentId = PostCreation::create($userId, $draft, $preparedLinks, $image);
+                // Inbox records are part of publication; email waits for the outer commit.
+                NotificationEvents::notifyMentions($body, $user, $contentId);
+            });
+        } catch (\TinyCat\Database\AfterCommitFailed $exception) {
+            \TinyCat\Core\Runtime\Failure::report($exception);
         } catch (Throwable $exception) {
             if ($image !== null) {
-                \TinyCat\Social\Content\ImageStorage::delete((string) ($image['path'] ?? ''));
+                self::discardImage((string) ($image['path'] ?? ''));
             }
 
             throw $exception;
         }
 
-        \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'post');
-        NotificationEvents::notifyMentions($body, $user, $contentId);
+        try { \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'post'); }
+        catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); }
 
-        $data = [
-            'action' => 'create',
-            'status' => \TinyCat\Social\Posts\Posts::status_json_summary($contentId, $user),
-            'status_id' => $contentId,
-            'message' => \TinyCat\Support\Localization::t('account.messages.status_created'), 'code' => 'status_created',
-        ];
-
-        $resource = \TinyCat\Social\Posts\Feed::public_status_item($contentId);
-        $data['item'] = $resource !== null ? Resource::posts([$resource], $user)[0] : null;
+        $data = ['action' => 'create', 'status_id' => $contentId, 'status' => null, 'item' => null, 'message' => \TinyCat\Support\Localization::t('account.messages.status_created'), 'code' => 'status_created'];
+        try {
+            $data['status'] = Posts::status_json_summary($contentId, $user);
+            $resource = \TinyCat\Social\Posts\Feed::public_status_item($contentId);
+            $data['item'] = $resource !== null ? Resource::posts([$resource], $user)[0] : null;
+        } catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); }
 
         return $data;
     }
@@ -178,8 +178,15 @@ final class Actions
      */
     public static function status_json_react(int $contentId, array $user, ?bool $desired = null): array
     {
-        $result = \TinyCat\Social\Content\Interactions::write('post', $contentId, $user, 'react', desired: $desired);
+        $result = \TinyCat\Social\Discussion\Interactions::write('post', $contentId, $user, 'react', desired: $desired);
         return ['action' => 'react', 'status' => Posts::status_json_summary($contentId, $user)];
+    }
+
+    /** Cleanup failure cannot turn a committed write into a reported failure. */
+    private static function discardImage(string $path): void
+    {
+        try { ImageStorage::delete($path); }
+        catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); }
     }
 
     private static function status_draft(): PostCreation
@@ -264,67 +271,58 @@ final class Actions
         $draft = self::status_draft();
         $payload = $draft->payload();
         $body = $payload['body'];
-        $existingImage = \TinyCat\Social\Content\Images::status_image_record($contentId);
-        $imageFile = \TinyCat\Social\Content\Images::status_image_uploaded_file();
+        $imageFile = \TinyCat\Social\Posts\Images::status_image_uploaded_file();
         $hasNewImage = $imageFile !== null;
         $removeImage = in_array(\TinyCat\Http\Request::current()->input('remove_image', null), [true, 1, '1', 'true', 'on'], true);
-        $willHaveImage = $hasNewImage || (!$removeImage && $existingImage !== null);
 
-        if (trim($body) === '' && !$willHaveImage) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_required'), 422, 'status_required', [
-                'errors' => ['body' => [\TinyCat\Support\Localization::t('account.messages.status_required')]],
-            ]);
-        }
-
-        if ($hasNewImage && !\TinyCat\Social\Content\Images::status_images_enabled()) {
+        if ($hasNewImage && !\TinyCat\Social\Posts\Images::status_images_enabled()) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_disabled'), 403, 'status_image_disabled');
         }
 
-        $author = (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0)
-            ? $user
-            : \TinyCat\Database\Connection::find('users', ['id' => (int) ($item['author_id'] ?? 0)]);
-        \TinyCat\Social\Posts\Actions::status_json_require_unique_body($author ?: $user, $body, $contentId);
-        $oldMentionIds = NotificationEvents::mentionedUserIds((string) ($item['body'] ?? ''));
         $newImage = null;
         $oldPath = '';
 
         if ($hasNewImage) { \TinyCat\Core\Security\RequestLimits::requireAllowed('upload', (int) $user['id']); }
-        $preparedLinks = \TinyCat\Social\Content\Links::prepareLinks($payload['links']);
+        $preparedLinks = \TinyCat\Social\Posts\Links::prepareLinks($payload['links']);
         try {
-            $newImage = $hasNewImage ? \TinyCat\Social\Content\ImageStorage::upload((array) $imageFile) : null;
+            $newImage = $hasNewImage ? \TinyCat\Social\Posts\ImageStorage::upload((array) $imageFile) : null;
         } catch (LengthException) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_compression'), 422, 'status_image_compression');
-        } catch (Throwable) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Social\Content\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid', [], ['size' => \TinyCat\Social\Content\Images::status_image_max_upload_kb()]);
+        } catch (\TinyCat\Core\Files\InvalidImage $error) {
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Social\Posts\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid', [], ['size' => \TinyCat\Social\Posts\Images::status_image_max_upload_kb()]);
         }
 
         try {
-            $oldPath = \TinyCat\Social\Content\Posts::update($contentId, $draft, $preparedLinks, $newImage, $removeImage, $existingImage);
+            \TinyCat\Database\Transactions::run(static function () use ($contentId, $user, $draft, $preparedLinks, $newImage, $removeImage, $body, &$oldPath): void {
+                $current = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM social_posts WHERE id = ?'), [$contentId]);
+                // Repository rechecks existence, kind, ownership and the current image under this lock.
+                $oldPath = Repository::update($contentId, $draft, $preparedLinks, $newImage, $removeImage, $user);
+                if (!\TinyCat\Core\Identity\Roles::isAdmin($user)) { self::status_json_require_not_muted($user); }
+                $author = \TinyCat\Database\Connection::find('users', ['id' => (int) ($current['author_id'] ?? 0)]);
+                self::status_json_require_unique_body($author ?: $user, $body, $contentId);
+                if (Posts::status_can_view($current) && \TinyCat\Social\Profiles\Roles::receivesNotifications((string) ($author['role'] ?? ''))) {
+                    NotificationEvents::notifyMentions($body, $user, $contentId, 0, NotificationEvents::mentionedUserIds((string) ($current['body'] ?? '')));
+                }
+            });
+        } catch (\TinyCat\Database\AfterCommitFailed $exception) {
+            \TinyCat\Core\Runtime\Failure::report($exception);
         } catch (Throwable $exception) {
             if ($newImage !== null) {
-                \TinyCat\Social\Content\ImageStorage::delete((string) ($newImage['path'] ?? ''));
+                self::discardImage((string) ($newImage['path'] ?? ''));
             }
 
             throw $exception;
         }
 
         if ($oldPath !== '') {
-            \TinyCat\Social\Content\ImageStorage::delete($oldPath);
+            self::discardImage($oldPath);
         }
-        if (\TinyCat\Social\Posts\Posts::status_can_view(\TinyCat\Social\Posts\Posts::status_find($contentId)) && \TinyCat\Social\Profiles\Roles::receivesNotifications((string) ($author['role'] ?? ''))) {
-            NotificationEvents::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
-        }
-
-        $data = [
-            'action' => 'update',
-            'status_id' => $contentId,
-            'status' => \TinyCat\Social\Posts\Posts::status_json_summary($contentId, $user),
-
-            'message' => \TinyCat\Support\Localization::t('account.messages.status_saved'), 'code' => 'status_saved',
-        ];
-
-        $resource = \TinyCat\Database\Connection::one(\TinyCat\Social\Posts\Feed::public_status_select_sql() . ' WHERE c.id = ?', [$contentId]);
-        $data['item'] = $resource !== null ? Resource::posts([$resource], $user)[0] : null;
+        $data = ['action' => 'update', 'status_id' => $contentId, 'status' => null, 'item' => null, 'message' => \TinyCat\Support\Localization::t('account.messages.status_saved'), 'code' => 'status_saved'];
+        try {
+            $data['status'] = Posts::status_json_summary($contentId, $user);
+            $resource = \TinyCat\Database\Connection::one(\TinyCat\Social\Posts\Feed::public_status_select_sql() . ' WHERE c.id = ?', [$contentId]);
+            $data['item'] = $resource !== null ? Resource::posts([$resource], $user)[0] : null;
+        } catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); }
 
         return $data;
     }
@@ -377,7 +375,7 @@ final class Actions
 
     private static function commentInput(): string
     {
-        $input = \TinyCat\Http\Request::current()->validated(\TinyCat\Social\Content\Interactions::rules());
+        $input = \TinyCat\Http\Request::current()->validated(\TinyCat\Social\Discussion\Interactions::rules());
         return (string) ($input['comment'] ?? '');
     }
 
@@ -387,7 +385,7 @@ final class Actions
      */
     private static function commentResource(int $commentId, array $user): array
     {
-        $comment = \TinyCat\Social\Content\Comments::status_comment_item_find($commentId);
+        $comment = \TinyCat\Social\Discussion\Comments::status_comment_item_find($commentId);
         if ($comment === null) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.comment_not_found'), 404, 'comment_not_found'); }
         return Resource::comment($comment, $user);
     }
@@ -398,7 +396,7 @@ final class Actions
      */
     public static function status_json_comment(int $contentId, int $parentId, array $user): array
     {
-        $result = \TinyCat\Social\Content\Interactions::write('post', $contentId, $user, 'comment', body: self::commentInput(), parentId: $parentId);
+        $result = \TinyCat\Social\Discussion\Interactions::write('post', $contentId, $user, 'comment', body: self::commentInput(), parentId: $parentId);
         $id = (int) $result['comment_id'];
         return ['action' => 'comment', 'status' => Posts::status_json_summary($contentId, $user), 'comment_id' => $id,
             'comment' => self::commentResource($id, $user),
@@ -411,11 +409,11 @@ final class Actions
      */
     public static function status_json_comment_like(int $commentId, array $user, ?bool $desired = null): array
     {
-        $comment = \TinyCat\Social\Content\Comments::status_comment_find($commentId);
+        $comment = \TinyCat\Social\Discussion\Comments::status_comment_find($commentId);
         $id = (int) ($comment['content_id'] ?? 0);
-        $result = \TinyCat\Social\Content\Interactions::write('post', $id, $user, 'comment_like', $commentId, desired: $desired);
+        $result = \TinyCat\Social\Discussion\Interactions::write('post', $id, $user, 'comment_like', $commentId, desired: $desired);
         return ['action' => 'comment_like', 'status' => Posts::status_json_summary($id, $user),
-            'comment_like' => ['comment_id' => $commentId, 'likes_count' => \TinyCat\Social\Content\Comments::status_comment_like_count($commentId), 'liked' => $result['liked']]];
+            'comment_like' => ['comment_id' => $commentId, 'likes_count' => \TinyCat\Social\Discussion\Comments::status_comment_like_count($commentId), 'liked' => $result['liked']]];
     }
 
     /**
@@ -424,11 +422,11 @@ final class Actions
      */
     public static function status_json_comment_update(int $commentId, array $user): array
     {
-        $comment = \TinyCat\Social\Content\Comments::status_comment_find($commentId);
+        $comment = \TinyCat\Social\Discussion\Comments::status_comment_find($commentId);
         $id = (int) ($comment['content_id'] ?? 0);
-        \TinyCat\Social\Content\Interactions::write('post', $id, $user, 'comment_update', $commentId, self::commentInput());
+        \TinyCat\Social\Discussion\Interactions::write('post', $id, $user, 'comment_update', $commentId, self::commentInput());
         return ['action' => 'comment_update', 'status' => Posts::status_json_summary($id, $user),
-            'updated_comment' => Resource::comment(\TinyCat\Social\Content\Comments::status_comment_item_find($commentId) ?? [], $user),
+            'updated_comment' => Resource::comment(\TinyCat\Social\Discussion\Comments::status_comment_item_find($commentId) ?? [], $user),
             'message' => \TinyCat\Support\Localization::t('account.messages.comment_saved'), 'code' => 'comment_saved'];
     }
 
@@ -438,9 +436,9 @@ final class Actions
      */
     public static function status_json_comment_delete(int $commentId, array $user): array
     {
-        $comment = \TinyCat\Social\Content\Comments::status_comment_find($commentId);
+        $comment = \TinyCat\Social\Discussion\Comments::status_comment_find($commentId);
         $id = (int) ($comment['content_id'] ?? 0);
-        \TinyCat\Social\Content\Interactions::write('post', $id, $user, 'comment_delete', $commentId);
+        \TinyCat\Social\Discussion\Interactions::write('post', $id, $user, 'comment_delete', $commentId);
         return ['action' => 'comment_delete', 'status' => Posts::status_json_summary($id, $user), 'deleted_comment_id' => $commentId,
             'message' => \TinyCat\Support\Localization::t('account.messages.comment_deleted'), 'code' => 'comment_deleted'];
     }

@@ -7,13 +7,13 @@ use TinyCat\Support\View;
 /** Shared document structure; each surface supplies explicit data and its shell. */
 final class Document
 {
-    /** @param array<string, mixed> $page */
-    public static function render(array $page, string $content): void
+    /** @param array<string, mixed> $page
+     * @param array<string, mixed>|null $document */
+    public static function render(array $page, string $content, ?array $document = null): void
     {
-        $prepared = DocumentData::prepare($page);
+        $prepared = DocumentData::prepare($page, $document);
         $prepared['content'] = $content;
         $prepared['public'] = (bool) ($page['public'] ?? false);
-        $prepared['hasPublicSidebar'] = false;
         self::renderPrepared($prepared, View::render('public-shell', $prepared, __DIR__ . '/templates'));
     }
 
@@ -33,11 +33,12 @@ final class Document
                 'class' => $prepared['bodyClasses'] !== '' ? $prepared['bodyClasses'] : null,
                 'data-application-version' => $prepared['applicationVersion'],
                 'data-current-user-id' => (int) ($prepared['authUser']['id'] ?? 0),
-                'data-icon-sprite' => \TinyCat\Support\Assets::asset('icons.svg'),
+                'data-icon-sprite' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/icons.svg'),
+                'data-fallback-avatar' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/fallback/avatar.svg'),
+                'data-fallback-image' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/fallback/image.svg'),
             ],
             'metadata' => new \TinyCat\Support\Markup(View::render('head', $prepared, __DIR__ . '/templates')),
             'styles' => $prepared['styleUrls'], 'scripts' => $prepared['scriptUrls'], 'flashToasts' => $prepared['flashToasts'],
-            'privacyUrl' => !$prepared['isAdminShell'] && !$prepared['hasPublicSidebar'] ? $prepared['privacyUrl'] : '',
             'analyticsMeasurementId' => $prepared['analyticsConfigured'] && $prepared['analyticsConsent'] === 'granted' ? $prepared['googleMeasurementId'] : '',
         ], new \TinyCat\Support\Markup($shell));
         if ((bool) \TinyCat\Core\Runtime\Startup::option('performance.minify_html', false)) { $html = \TinyCat\Support\Minifier::minifyHtml($html); }
@@ -49,7 +50,7 @@ final class Document
     public static function frame(array $data, \TinyCat\Support\Markup $content): string
     {
         $data += ['title' => '', 'csrfToken' => '', 'htmlAttributes' => [], 'bodyAttributes' => [], 'metadata' => new \TinyCat\Support\Markup(''),
-            'styles' => [], 'scripts' => [], 'flashToasts' => [], 'privacyUrl' => '', 'analyticsMeasurementId' => '', 'skipLink' => true, 'colorScheme' => true, 'robots' => ''];
+            'styles' => [], 'scripts' => [], 'flashToasts' => [], 'analyticsMeasurementId' => '', 'skipLink' => true, 'colorScheme' => true, 'robots' => ''];
         foreach (['htmlAttributes', 'bodyAttributes'] as $group) {
             foreach (array_keys($data[$group]) as $name) {
                 if (!is_string($name) || preg_match('/^(?:lang|class|data-[a-z0-9-]+)$/D', $name) !== 1) { throw new \InvalidArgumentException('Unsupported document attribute.'); }

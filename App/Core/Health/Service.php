@@ -23,7 +23,7 @@ final class Service
                 $outcome = $check();
                 $status = is_array($outcome) ? $outcome['status'] : $outcome;
                 if (is_array($outcome)) { $metrics = $outcome['metrics']; $limits = $outcome['limits']; }
-            } catch (\Throwable) { $status = 'critical'; }
+            } catch (\Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure); $status = 'critical'; }
             if (!in_array($status, ['ok', 'warning', 'critical', 'skipped'], true)) { $status = 'critical'; }
             $items[] = ['id' => $id, 'status' => $status, 'duration_ms' => max(0, (int) ((hrtime(true) - $start) / 1_000_000)), 'metrics' => $metrics, 'limits' => $limits];
         }
@@ -58,7 +58,7 @@ final class Service
         $history = [];
         $report = null;
         foreach ($records as $record) {
-            $run = \TinyCat\Core\Tasks\RunResource::make($record);
+            $run = \TinyCat\Core\Tasks\Resource::run($record);
             $health = $run['summary']['health'] ?? null;
             if ($report === null && is_array($health)) { $report = $health; }
             $http = null;

@@ -25,7 +25,6 @@
       "site_meta_description_help": "Używany jako domyślny metaopis, w idealnym przypadku powinien mieć około 150–160 znaków.",
       "site_logo": "Logo witryny",
       "site_favicon": "Favikona",
-      "site_footer": "Stopka witryny",
       "minify_css": "Minify CSS",
       "minify_css_help": "Tworzy kompaktowe pliki CSS z wersją zawartości w pamięci podręcznej środowiska wykonawczego.",
       "minify_js": "Minify JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Website URL",
       "homepage": "Home page",
       "theme": "Page theme",
-      "automatic": "Automatic"
+      "automatic": "Automatic",
+      "public_enabled": "Publiczna witryna",
+      "public_enabled_help": "Włącza publiczne strony, wyszukiwanie, kanały i osadzone treści. Logowanie, konto i administracja pozostają dostępne po wyłączeniu."
     },
     "messages": {
       "saved": "Ustawienia zostały zapisane.",
@@ -52,6 +53,9 @@
     "image_remove": "Usuń obraz"
   },
   "install": {
+    "recovery_title": "Odzyskiwanie instalacji",
+    "recovery_warning": "Przywróć bazę danych i konfigurację sprzed przerwanego kroku instalacji. Zmiany od wykonania kopii zostaną utracone.",
+    "recovery_restore": "Przywróć kopię",
     "purpose_migrations": "Historia migracji, kolejność i sumy kontrolne.",
     "language_label": "Polski",
     "title": "Zainstaluj TinyCat CMS",
@@ -101,7 +105,7 @@
       "invalid_database": "Nazwa bazy danych może zawierać wyłącznie litery, cyfry i podkreślenia.",
       "required_fields": "Wypełnij wszystkie wymagane pola.",
       "invalid_username": "Użyj 2–32 liter (łącznie z akcentami), cyfr, kropek, łączników i podkreśleń. Zacznij od litery lub cyfry; nie kończ się kropką ani łącznikiem. Nazwa nie może zawierać samych cyfr.",
-      "password_length": "Hasło musi mieć co najmniej 8 znaków.",
+      "password_length": "Hasło musi mieć co najmniej {min} bajtów UTF-8.",
       "password_mismatch": "Hasła nie są zgodne.",
       "config_write_failed": "Nie można zapisać pliku config.php.",
       "db_failed": "Połączenie z bazą danych nie powiodło się: {message}"

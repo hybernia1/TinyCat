@@ -11,11 +11,6 @@ class Urls
     public static function configure(?\Closure $base): void { self::$base = $base; }
     private static function baseUrl(): string { return self::$base !== null ? (self::$base)() : \TinyCat\Support\LocalUrls::absolute('/'); }
 
-    public static function status_link_title_is_placeholder(string $title): bool
-    {
-        return Providers::titleIsPlaceholder($title);
-    }
-
     public static function status_url_host_key(string $url): string
     {
         $parts = parse_url($url);

@@ -39,6 +39,19 @@ foreach ([['username' => '123'], ['email' => 'invalid'], ['password' => 'short']
 }
 $assert(isset(Registration::input(array_replace($input, ['password' => str_repeat('x', 1025)]))['field_errors']['password']), 'Registration enforces the password byte limit');
 $assert(Passwords::fieldErrors(str_repeat('x', 1024), str_repeat('x', 1024)) === [], 'Maximum password length remains accepted');
+$assert(Passwords::fieldErrors('éééé', 'éééé') === [] && Passwords::fieldErrors('ééé', 'ééé') !== [], 'Password minimum counts UTF-8 bytes consistently');
+$assert(TinyCat\Core\Identity\Setup::issues(['username' => 'Example', 'password' => 'éééé', 'password_confirm' => 'éééé']) === [], 'Installer shares the Identity password byte minimum');
+$setupInput = ['username' => '  Initial.Admin  ', 'password' => $password, 'password_confirm' => $password, 'locale' => 'en'];
+$beforeSetup = (int) Connection::value('SELECT COUNT(*) FROM users');
+$setup = TinyCat\Core\Identity\Setup::input($setupInput);
+$assert($setup['username'] === 'Initial.Admin' && (int) Connection::value('SELECT COUNT(*) FROM users') === $beforeSetup, 'Setup validation normalizes without writing an administrator');
+$administratorId = TinyCat\Core\Identity\Setup::administrator($setup['username'], $setup['password'], $setup['locale']);
+$administrator = Connection::find('users', ['id' => $administratorId]);
+$assert($administrator['role'] === 'admin' && $administrator['status'] === 'active' && $administrator['theme'] === 'system' && password_verify($password, $administrator['password']), 'Trusted setup persists the first administrator with a password hash');
+$assert(TinyCat\Core\Identity\Setup::administrator(' Initial.Admin ', 'Replacement-password-42', 'cs') === $administratorId, 'Resumed trusted setup retains the initial account identity');
+$administrator = Connection::find('users', ['id' => $administratorId]);
+$assert($administrator['locale'] === 'cs' && password_verify('Replacement-password-42', $administrator['password']), 'Resumed setup updates credentials and locale');
+Connection::delete('users', ['id' => $administratorId]);
 $assert(Email::maxLength() === 254 && !Email::valid(str_repeat('x', 255) . '@example.test'), 'Email length and format policy is shared');
 $assert(Usernames::valid('Žaneta.Novák') && !Usernames::valid('123'), 'Account identifier grammar preserves Unicode and numeric reservations');
 $created = Registration::create($valid + ['role' => 'admin', 'status' => 'active', 'theme' => 'dark'], false, 'cs');
@@ -98,12 +111,12 @@ $snapshot = new TinyCat\Core\Runtime\Context(new TinyCat\Core\Runtime\Configurat
 TinyCat\Support\Dates::configure($snapshot->dateOption(...));
 $assert(TinyCat\Support\Dates::dateDb(new DateTimeImmutable('2026-11-11 12:00:00 UTC')) === '2026-11-11 12:00:00', 'Technical date policy defaults to the configuration snapshot');
 TinyCat\Support\Dates::configure($context->dateOption(...));
-foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Identity\\Login', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Mail\\Templates', 'TinyCat\\Social\\Presentation\\Presentation', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration'] as $class) {
+foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Identity\\Login', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Mail\\Templates', 'TinyCat\\Social\\Site\\Presentation', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api'] as $class) {
     $assert(!class_exists($class, false), 'Standalone onboarding did not load ' . $class);
 }
 $assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'sqlite_sequence' ORDER BY name"), 'name') === ['password_reset_tokens', 'users'], 'Only account and reset-token tables are needed');
 TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $userId) : void {
-$assert(TinyCat\Core\Identity\Login::auth_password_validation_field_errors('short', 'short') === Passwords::fieldErrors('short', 'short'), 'Legacy password validation delegates to Accounts');
+$assert(Passwords::errors('short', 'short') === Passwords::fieldErrors('short', 'short')['password'], 'Password summaries retain canonical field validation errors');
 TinyCat\Core\Identity\Recovery::replaceToken($userId, hash('sha256', 'compatibility'), TinyCat\Support\Dates::dateDb('+1 hour'));
 $assert(Connection::value('SELECT token_hash FROM password_reset_tokens') === hash('sha256', 'compatibility'), 'Legacy recovery writes through the canonical owner');
 });

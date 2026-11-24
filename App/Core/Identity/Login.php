@@ -16,7 +16,7 @@ final class Login
         $target = self::auth_safe_next_url(Integration::landing($user));
         $path = Integration::unlocalizedPath(self::auth_next_path($target));
         if (($path === '/admin' || str_starts_with($path, '/admin/')) && !Roles::isAdmin($user)) { $target = ''; }
-        return $target !== '' ? $target : Integration::localUrl('/');
+        return $target !== '' ? $target : Integration::localUrl(\TinyCat\Core\Ui\PublicWeb::enabled() ? '/' : (Roles::isAdmin($user) ? '/admin' : '/account'));
     }
 
     public static function auth_next_path(string $next): string
@@ -38,6 +38,7 @@ final class Login
         }
 
         $path = Integration::unlocalizedPath(self::auth_next_path($next));
+        if (!\TinyCat\Core\Ui\PublicWeb::enabled() && ($path === '/' || \TinyCat\Http\Router::isPublicWebPath($path))) { return ''; }
 
         if (
             in_array($path, ['/login', '/register', '/install'], true)
@@ -132,7 +133,7 @@ final class Login
                 'remember' => (string) \TinyCat\Http\Request::current()->input('remember', '') === '1',
             ],
             'register' => [
-                'username' => \TinyCat\Core\Identity\Usernames::normalize(\TinyCat\Core\Identity\Login::auth_form_text_input('username', 32)),
+                'username' => \TinyCat\Core\Identity\Usernames::normalize(\TinyCat\Core\Identity\Login::auth_form_text_input('username', \TinyCat\Core\Identity\Usernames::maxLength())),
                 'email' => \TinyCat\Core\Identity\Email::normalize(\TinyCat\Core\Identity\Login::auth_form_text_input('email', \TinyCat\Core\Identity\Email::maxLength())),
                 'platform_terms' => (string) \TinyCat\Http\Request::current()->input('platform_terms', '') === '1',
             ],
@@ -204,13 +205,6 @@ final class Login
             'redirect' => \TinyCat\Core\Identity\Login::auth_redirect_after_login($user, $next),
         ];
     }
-
-    public static function auth_password_max_length(): int { return \TinyCat\Core\Identity\Passwords::maxLength(); }
-    public static function auth_password_too_long(string $password): bool { return \TinyCat\Core\Identity\Passwords::tooLong($password); }
-    /** @return array<mixed> */
-    public static function auth_password_validation_field_errors(string $password, string $passwordConfirm): array { return \TinyCat\Core\Identity\Passwords::fieldErrors($password, $passwordConfirm); }
-    /** @return array<mixed> */
-    public static function auth_password_validation_errors(string $password, string $passwordConfirm): array { return \TinyCat\Core\Identity\Passwords::errors($password, $passwordConfirm); }
 
     public static function auth_modal_id(): string
     {

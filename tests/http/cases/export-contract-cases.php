@@ -21,15 +21,24 @@ $exportRequest = static function (string $path, string $method = 'GET', array $e
     $assert(is_string($body), 'Machine-readable endpoints complete HTTP requests.');
     return [(int) ($match[1] ?? 0), (string) $body, $responseHeaders];
 };
+[$status, $llms] = $exportRequest('/llms.txt');
+$assert($status === 200 && substr_count($llms, '- [Homepage](') === 1 && substr_count($llms, '- [Sitemap](') === 1, 'Core discovery links are not duplicated by a Social contribution.');
+$insertExport->execute([900004, 900001, "First line\r\nSecond line", '2020-01-01 00:00:00']);
+[$status, $sample] = $exportRequest('/llms-full.txt');
+$assert($status === 200 && str_contains($sample, "> First line\n> Second line") && !str_contains($sample, '> > Second line'), 'Text exports quote normalized line endings once.');
+$exportDb->exec('DELETE FROM social_posts WHERE id=900004');
 foreach (['/robots.txt', '/llms.txt', '/llms-full.txt', '/sitemap.xml', '/sitemap-pages-1.xml', '/sitemap-tags-1.xml', '/sitemap-status-1.xml', '/author/900001/feed', '/tag/exportpublic/feed', '/search/feed?q=Export&media=text'] as $path) {
     [$status, $body, $headers] = $exportRequest($path);
     $assert($status === 200 && isset($headers['etag']) && str_contains($headers['cache-control'], 'public'), $path . ' exposes shared validators and public cache headers.');
+    $assert(str_contains($headers['cache-control'], 'max-age=0, must-revalidate'), $path . ' revalidates availability and active module contributions before reuse.');
     $assert(!isset($headers['set-cookie']) && !isset($headers['pragma']), $path . ' does not create a visitor session.');
     $assert(!str_contains($body, 'FUTURE-EXPORT-SECRET') && !str_contains($body, 'HIDDEN-EXPORT-SECRET'), 'Documents exclude hidden and future content even for administrators.');
     [$headStatus, $headBody, $headHeaders] = $exportRequest($path, 'HEAD');
     $assert($headStatus === 200 && $headBody === '' && $headHeaders['etag'] === $headers['etag'], 'HEAD shares GET metadata without a response body.');
     [$unchanged, $empty, $cachedHeaders] = $exportRequest($path, 'GET', ['If-None-Match' => '"unrelated", W/' . $headers['etag']]);
     $assert($unchanged === 304 && $empty === '' && isset($cachedHeaders['cache-control']), 'Conditional GET accepts weak validators in a list and returns an empty 304.');
+    [$compressed, $empty] = $exportRequest($path, 'GET', ['If-None-Match' => substr($headers['etag'], 0, -1) . '-gzip"']);
+    $assert($compressed === 304 && $empty === '', 'Downstream compression validators revalidate the same generated document.');
     [$otherStatus, $otherBody] = $exportRequest($path, 'GET', ['Accept-Language' => 'en', 'X-Test-Role' => 'admin']);
     $assert($otherStatus === 200 && $otherBody === $body, 'Export representations are independent of visitor identity and language.');
     if (str_contains($headers['content-type'], 'xml')) {
@@ -74,7 +83,7 @@ $assert($headXPath->evaluate('string(//link[@type="application/rss+xml"]/@href)'
 $navigationDocument = json_decode($navigationBody, true, 512, JSON_THROW_ON_ERROR)['data']['document'];
 $assert($status === 200 && $navigationDocument['tags'] === ['exportpublic'] && $navigationDocument['author'] === $postSchema['author']['url'] && $navigationDocument['rss'] === 'http://localhost/author/900001/feed', 'Client navigation carries the same article tags, author URL and RSS discovery as HTML.');
 $commentSchema = $postSchema['comment'][0];
-$assert(count($postSchema['comment']) === 1 && $commentSchema['text'] === 'Visible comment <b>literal</b>' && $commentSchema['comment'][0]['text'] === 'Visible reply', 'JSON-LD includes visible comments and keeps reply nesting.');
+$assert(count($postSchema['comment']) === 1 && $commentSchema['text'] === 'Visible comment <b>literal</b>' && !isset($commentSchema['comment']) && $postSchema['interactionStatistic'][1]['userInteractionCount'] === 2, 'JSON-LD contains the loaded root excerpt and total visible comment count.');
 $assert($commentSchema['author']['url'] === $postSchema['author']['url'] && $commentSchema['datePublished'] === '2020-01-02T00:00:00+00:00' && $commentSchema['url'] === $postSchema['url'], 'Comment JSON-LD has canonical author and page URLs and its actual publication date.');
 $assert(!str_contains(json_encode($postSchema), 'HIDDEN-COMMENT-SECRET') && !str_contains($postHtml, 'ORPHAN-REPLY-SECRET'), 'Structured data excludes hidden comments and replies missing their visible parent.');
 $assert(!str_contains((string) $feed->channel->item->title, 'https://') && !str_contains((string) $feed->channel->item->title, '<script>'), 'RSS titles omit long URLs and HTML markup.');
@@ -91,12 +100,13 @@ $exportDb->exec("INSERT INTO social_post_images (content_id, path, width, height
 $imageFeed = simplexml_load_string($imageRss);
 $imageUrl = (string) $imageFeed->channel->item->enclosure['url'];
 $assert($status === 200 && str_starts_with($imageUrl, 'http://localhost/') && (string) $imageFeed->channel->item->enclosure['length'] === '1234', 'RSS retains the absolute image enclosure and its real byte length.');
+$assert((string) $imageFeed->channel->item->enclosure['type'] === 'image/webp', 'Social supplies its actual attachment MIME type to the generic RSS renderer.');
 $assert((string) $imageFeed->channel->item->children('http://search.yahoo.com/mrss/')->content->attributes()['url'] === $imageUrl && str_contains((string) $imageFeed->channel->item->description, '<img src="' . $imageUrl . '" alt="'), 'RSS includes the same image in Media RSS and safe HTML with alternative text.');
 [$status, $imageHtml] = $exportRequest('/status/900001');
 $imageSchema = $schemaFromPage($imageHtml);
 $assert($imageSchema['image']['contentUrl'] === $imageUrl && $imageSchema['image']['width'] === 640, 'JSON-LD and RSS agree on the attached image.');
 // Compare direct HTML and client-navigation metadata while a real attachment exists.
-foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/search?q=Export', '/pl/status/900001'] as $metadataPath) {
+foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/pl/status/900001'] as $metadataPath) {
     [$status, $metadataHtml] = $exportRequest($metadataPath, 'GET', ['Accept-Language' => 'en']);
     $metadataDom = new DOMDocument();
     libxml_use_internal_errors(true); $metadataDom->loadHTML($metadataHtml); libxml_clear_errors();
@@ -114,14 +124,22 @@ foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/search?q=Ex
     $assert($schemaFromPage($metadataHtml) === $metadataDocument['jsonld'], 'HTML and navigation expose identical JSON-LD: ' . $metadataPath);
     $schema = $metadataDocument['jsonld'];
     if (str_contains($metadataPath, '/author/')) { $listedPost = $schema['hasPart'][0]; }
-    elseif (str_contains($metadataPath, '/tag/') || str_contains($metadataPath, '/search')) { $listedPost = $schema['mainEntity']['itemListElement'][0]['item']; }
+    elseif (str_contains($metadataPath, '/tag/')) { $listedPost = $schema['mainEntity']['itemListElement'][0]['item']; }
     else { $listedPost = $schema; }
     foreach (['url', 'text', 'keywords', 'datePublished', 'author'] as $postField) {
         $assert($listedPost[$postField] === $imageSchema[$postField], 'All page contexts describe the same post ' . $postField . ': ' . $metadataPath);
     }
     $assert($listedPost['image']['contentUrl'] === $imageSchema['image']['contentUrl'] && $listedPost['image']['width'] === $imageSchema['image']['width'], 'All contexts use the same attached image URL and dimensions.');
 }
-foreach (['/author/900001', '/tag/exportpublic', '/search?q=Export'] as $filteredPage) {
+foreach (['/author/900001', '/tag/exportpublic'] as $filteredPage) {
+    $combinedUrl = $filteredPage . '?compact=1&media=images';
+    [$combinedStatus, $combinedJson] = $exportRequest('/api/site/pages?path=' . rawurlencode($filteredPage) . '&compact=1&media=images');
+    $combined = json_decode($combinedJson, true, 512, JSON_THROW_ON_ERROR)['data'];
+    $assert($combinedStatus === 200 && $combined['url'] === $combinedUrl && $combined['compact'] === true
+        && $combined['archive_type'] === 'images' && !$combined['sidebar'], 'Native owner data reaches navigation with compact and media together.');
+    [$combinedStatus, $combinedHtml] = $exportRequest($combinedUrl);
+    $assert($combinedStatus === 200 && str_contains($combinedHtml, 'data-public-page=') && !str_contains($combinedHtml, '?compact=1?media='), 'The same compact/media URL survives a full document reload.');
+
     $separator = str_contains($filteredPage, '?') ? '&' : '?';
     [$status, $filteredHtml] = $exportRequest($filteredPage . $separator . 'media=images');
     $filteredDom = new DOMDocument();
@@ -165,7 +183,7 @@ $exportDb->exec("UPDATE social_posts SET body = 'Updated export' WHERE id = 9000
 $assert($status === 200 && $oldHeaders['etag'] !== $changedHeaders['etag'], 'Changed content invalidates the RSS representation immediately.');
 foreach (['/sitemap-unknown-1.xml', '/sitemap-status-999999999999999999999.xml', '/author/900002/feed', '/tag/missingexport/feed'] as $path) {
     [$status, $body, $headers] = $exportRequest($path);
-    $assert($status === 404 && $headers['cache-control'] === 'no-store', 'Missing documents and overflowing sitemap pages return non-cacheable 404 responses.');
+    $assert($status === 404 && $headers['cache-control'] === 'no-store, max-age=0' && !isset($headers['etag']), 'Missing documents and overflowing sitemap pages share non-cacheable error headers.');
 }
 $exportDb->exec('DELETE FROM social_post_tags WHERE term_id >= 900001');
 $exportDb->exec('DELETE FROM social_terms WHERE id >= 900001');
@@ -197,12 +215,16 @@ foreach (['/uploads/missing.webp', '/assets/missing.js', '/missing-page', '/avat
 }
 [$status, $body, $headers] = $exportRequest('/privacy', 'DELETE');
 $assert($status === 405 && str_contains($body, '405') && !preg_match('/aria-hidden="true">404/', $body) && isset($headers['allow']), 'Method errors render their real status and preserve the Allow header.');
+$assert(array_map('trim', explode(',', $headers['allow'])) === ['GET', 'HEAD'], 'A public GET route advertises its implicit HEAD on 405.');
+
 [$status, $body, $headers] = $exportRequest('/fixture-failure');
 $assert($status === 500 && str_contains($body, '500') && !str_contains($body, 'PRIVATE_') && !str_contains($body, 'Stack trace') && str_contains($headers['cache-control'], 'no-store'), 'Broken-database failures discard partial output and return a safe standalone 500 page.');
 [$status, $body, $headers] = $exportRequest('/fixture-maintenance', 'GET', ['Accept' => 'application/json']);
 $maintenance = json_decode($body, true);
 $assert($status === 503 && $maintenance['code'] === 'maintenance' && $maintenance['status'] === 503 && !$maintenance['ok'] && $headers['retry-after'] === '300', 'Maintenance follows the shared API envelope and retry semantics.');
-[$status, $body] = $exportRequest('/assets/fallback/image.svg');
+[$pageStatus, $pageHtml] = $exportRequest('/privacy');
+$assert($pageStatus === 200 && preg_match('/data-fallback-image="([^"]+)"/', $pageHtml, $placeholder) === 1, 'The shared document declares a generated image fallback URL.');
+[$status, $body] = $exportRequest(html_entity_decode($placeholder[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 $assert($status === 200 && simplexml_load_string($body) !== false, 'The static image placeholder is independently available with status 200.');
 
 [$status, $body] = $exportRequest('/admin', 'POST', ['X-Test-Role' => 'admin']);
@@ -215,12 +237,14 @@ foreach (['guest', 'user', 'admin'] as $role) {
         foreach (['/fixture-error/', '/admin/fixture-error/'] as $prefix) {
             [$status, $body, $headers] = $exportRequest($prefix . $errorStatus, 'GET', ['X-Test-Role' => $role]);
             $assert($status === $errorStatus && str_contains($body, (string) $errorStatus) && str_contains($headers['cache-control'], 'no-store'), 'HTML error retains its status and no-store policy: ' . $role . ' ' . $prefix . $errorStatus);
-            $assert(!str_contains($body, 'data-admin-shell') && !str_contains($body, 'admin-shell-page') && preg_match('~href="/admin/[^"<>]*"~', $body) !== 1, 'Public error documents exclude administration navigation and shell state: ' . $role . ' ' . $prefix . $errorStatus);
+            $adminError = $prefix === '/admin/fixture-error/' && $role === 'admin' && $errorStatus !== 503;
+            $assert(str_contains($body, 'data-admin-shell') === $adminError, 'Error documents select administration only for authorized admin requests: ' . $role . ' ' . $prefix . $errorStatus);
+            if (!$adminError) { $assert(preg_match('~href="/admin/[^"<>]*"~', $body) !== 1, 'Non-admin errors exclude administration navigation.'); }
             if ($errorStatus !== 503) {
-                $assert(str_contains($body, 'class="navbar"'), 'Error documents retain the public header: ' . $role . ' ' . $prefix . $errorStatus);
+                $assert(str_contains($body, 'class="navbar"') === ($prefix === '/fixture-error/'), 'Error headers follow the failed surface: ' . $role . ' ' . $prefix . $errorStatus);
                 preg_match_all('~<script src="([^"]+)"~', $body, $errorScripts);
                 if ($prefix === '/fixture-error/') { $publicErrorScripts = $errorScripts[1]; }
-                else { $assert($errorScripts[1] === $publicErrorScripts, 'Public errors select public assets regardless of the failed URL: ' . $role . ' ' . $errorStatus); }
+                else { $assert($errorScripts[1] !== $publicErrorScripts, 'Admin and access errors avoid public asset profiles: ' . $role . ' ' . $errorStatus); }
             }
         }
     }
@@ -233,6 +257,8 @@ foreach ([400, 401, 403, 404, 405, 422, 429, 500, 502, 503] as $errorStatus) {
     $errorPayload = json_decode($body, true);
     $assert($status === $errorStatus && is_array($errorPayload) && $errorPayload['status'] === $errorStatus && $errorPayload['ok'] === false && str_contains($headers['content-type'], 'application/json'), 'JSON error requests keep the shared envelope instead of HTML navigation: ' . $errorStatus);
 }
+[$status, , $errorHeaders] = $exportRequest('/fixture-error/500', 'GET', ['If-None-Match' => '*']);
+$assert($status === 500 && !isset($errorHeaders['etag']), 'Conditional requests cannot turn an error into a cached success.');
 
 [$status, $body, $headers] = $exportRequest('/privacy');
 $policyDocument = new DOMDocument();

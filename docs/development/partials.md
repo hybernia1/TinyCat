@@ -1,8 +1,10 @@
 # Společné vykreslování UI
 
+Volitelné veřejné layouty popisuje [minimalistické téma](themes.md).
+
 HTML struktura komponent, které se zobrazují při prvním načtení i přes AJAX,
-má jeden zdroj v `App/Modules/<Name>/assets/components.json` a `assets/ui/components.json`. PHP ji vykreslí přes
-`Support/Components`; prohlížeč přes `assets/core/component-renderer.js`.
+má jeden zdroj v `App/Modules/<Name>/assets/components.json` a `App/Core/Ui/assets/components.json`. PHP ji vykreslí přes
+`Support/Components`; prohlížeč přes `App/Core/Ui/assets/runtime/component-renderer.js`.
 Veřejný obsah zůstává v serverovém HTML a nevyžaduje JavaScript.
 
 Definice jsou rozdělené mezi `users`, `status`, `notifications`, `site`, `bots`,
@@ -12,7 +14,7 @@ Novou komponentu upravovat v definici, nikoli přidáním druhé HTML implementa
 
 ## Odpovědnosti
 
-Současný sociální feed připravuje `Social/Presentation/PublicPages` a vykresluje
+Současný sociální feed připravuje `Social/Site/PublicPages` a vykresluje
 `site/public-page`; tutéž strukturu používá klient. Staré PHP partialy feedu
 a `Posts/Views` jsou odstraněné. Příprava kanonických dat proběhne před renderem
 přes resources, včetně dávkových preloadů.
@@ -26,12 +28,15 @@ vstupy před vykreslením; pouze krok tabulek ověřuje DB. Handler neobsahuje H
 Společný `Core/Ui/Document::frame()` přijímá hotový `Markup`, locale a assety
 bez závislosti na dokončené instalaci. JavaScript
 instalace zajišťuje odesílání formulářů, nikoli druhou definici jejich struktury.
-Veřejný povrch, administrace i instalace používají jediný HTML dokument
+Přístupové stránky, veřejný povrch, administrace i instalace používají jediný HTML dokument
 `Core/Ui/templates/document.php`. `head.php` dodává pouze veřejná metadata,
 nikoli otevření dokumentu nebo doručování assetů. `Document::frame()` nemá
 vlastní načítání nastavení, účtu, session ani databáze. Volající předává
 atributy, metadata, assety, flash zprávy a případný consent pro analytics.
-Veřejnou hlavičku a consent připravuje `DocumentData` s explicitními vstupy;
+Login, recovery a účet používají `Core/Ui/AccessLayout` bez veřejných podkladů;
+autentizace má vlastní klientský modul bez editoru účtu a avataru. Dostupnost
+a výběr assetů popisuje [kontrakt veřejných povrchů](../contracts/public-surface.md).
+Veřejnou hlavičku, patičku a consent připravuje `DocumentData` s explicitními vstupy;
 core i Social shell dostávají hotové fragmenty a nepředávají celý PHP kontext.
 
 Nové struktury formulářů a obsahu patří do katalogu vlastníka. PHP šablona
@@ -42,7 +47,7 @@ až pro doloženou potřebu více konzumentů; složité výpočty patří do p�
 Účtové stránky volají přímo komponenty `users/auth-page`, `users/recovery-page`,
 `users/logout-page` a `users/account-home` z katalogu Identity. Přihlášení
 a registrace skládají existující `users/auth-content` a `users/auth-form`,
-takže stránka i dialog zachovávají tentýž formulář. `AuthResource::make()`
+takže stránka i dialog zachovávají tentýž formulář. `Resource::authenticationForm()`
 připravuje kanonické vstupy; mezi handlerem a komponentou není PHP partial
 ani průchozí `Views::authContent()` / `Views::authForm()`. Obnova hesla používá
 společná pole a `ui/captcha`, bez skládání důvěryhodných HTML řetězců.
@@ -54,8 +59,10 @@ Formulář a dialog nadále používají společné factory a ochranu konceptu.
 Vnořená pole podporovaného typu deklaruje vlastník pomocí `fields` uvnitř pole SettingsSection;
 například Mail vlastní podpole SMTP včetně výchozích hodnot a omezení.
 Resource rekurzivně odstraní popisky, callbacky a defaults a vynuluje hesla.
-`Sections::presentation()` zvlášť odvodí pouze popisky a prezentační metadata,
-také pro podpole. JavaScript nevede druhý seznam SMTP polí ani jejich popisků.
+Core Settings z registrací odvodí `ComponentLookup` pro popisky a prezentační
+metadata včetně podpolí. Překladové výrazy zůstávají v katalogu komponent;
+nepřenášejí se jako JSON v HTML atributu. JavaScript nevede druhý seznam SMTP
+polí ani jejich popisků.
 `fields` je schéma editoru; nemění serverová pravidla ukládání ani validaci
 složené hodnoty SMTP.
 
@@ -130,9 +137,28 @@ Nahrazené PHP šablony jsou odstraněné a uvedené v manifestu mazání pro ak
 
 ## Frontend asset ownership
 
-Shared infrastructure lives in `assets/core`, UI primitives in `assets/ui`, and domain controllers, component definitions and styles in `App/Modules/<Name>/assets`. Each asset manifest declares route scopes, entry points, component roots and styles. Local side-effect imports declare JavaScript dependencies; `Support/AssetGraph` validates and orders them, rejects cycles and builds classic script bundles without a browser module waterfall.
+Shared infrastructure lives in `App/Core/Ui/assets/runtime`, UI primitives in `App/Core/Ui/assets`, and domain controllers, component definitions and styles in `App/Modules/<Name>/assets`. Each asset manifest declares route scopes, entry points, component roots and styles. Local side-effect imports declare JavaScript dependencies; `Support/AssetGraph` validates and orders them, rejects cycles and builds classic script bundles without a browser module waterfall.
 
-`assets/styles/index.css` preserves the global cascade order. The selected module styles are composed into one CSS asset. Pages receive four JavaScript assets: shared runtime, selected component definitions, locale catalog and application bundle. Public, administration and installer scopes include their own dependencies. Release compilation produces immutable content hashes and raw/minified variants; development uses the same graph through the asset cache.
+Owner manifests define stylesheet order; there is no central CSS import index. Selected styles are composed into one CSS asset. Pages receive four JavaScript assets: shared runtime, selected component definitions, locale catalog and application bundle. Public, administration and installer scopes include their own dependencies. Release compilation produces immutable content hashes and raw/minified variants; development uses the same graph through the asset cache.
+
+Owner features may declare `defer: {"resources": ["/api/users"], "selectors": ["[data-avatar-upload]"]}`.
+`resources` contains same-origin API path prefixes, matched on segment boundaries;
+`selectors` identifies inline controls requiring the feature. Deferred features keep
+their own entries, component roots, translations, styles and `uses` dependencies.
+They are excluded from the initial selection and combined into one additive editor
+payload per delivery scope and locale, plus an optional stylesheet. Sources and
+component definitions already delivered initially are excluded from that payload.
+Dependencies explicitly selected by an initial feature remain eager.
+
+The locale script declares the immutable editor URLs. The common resource-dialog
+loader waits for the authorized JSON response and then for matching editor assets,
+while retaining request cancellation and draft guards. Inline editors request the
+same payload during hydration. Concurrent requests share one load; failed network
+loads can retry. Late modules initialize once and hydrate the existing document,
+preserving current field values. JSON resources never carry asset URLs or UI definitions.
+The release compiler and development fallback use the same selection. Component
+catalog URLs remain independent of language. `ClientAssets`' complete selection is
+used by source reachability and translation checks, including deferred code.
 
 Run `php tools/preflight.php`. Frontend tests exercise source and compiled bundles, minified delivery, scoped ownership and parity against the reviewed CSS baseline. `tests/assets/graph.php` checks graph ordering and invalid imports.
 
@@ -147,11 +173,30 @@ compressed-size and request-count budgets remain unchanged.
 
 ## Kompozice stránek a testovací data
 
-Modulový `Pages` handler připraví data před vykreslením. `Site/Layout` skládá
-hlavičku, veřejný nebo administrační shell a dokument; `LayoutData` připravuje
-metadata, assety a data účtu, `Navigation` navigační položky. `Support/View`
+Modulový `Pages` handler připraví data před vykreslením. `Core/Ui/Page` vybírá
+veřejný nebo administrační shell; `Core/Ui/DocumentData` připravuje
+metadata, assety a data účtu a `Core/Ui/Document` společný dokument. `Support/View`
 zajišťuje vykreslení šablony. `View::part('Module/name', $data)` načítá pouze
 partial daného modulu z `templates/parts`; vstupy jsou explicitní.
+
+## Rozsahy klientských assetů
+
+Manifesty rozlišují společné UI, veřejné funkce a administraci. Rozsah `public`
+je určen pro skutečně společné veřejné prvky, například hlavičku a hledání.
+Konkrétní funkce deklaruje své cesty: Social načítá feed, profily a veřejnou
+navigaci pouze na `/`, `/social`, `/status`, `/author` a `/tag`. Přihlášení,
+pravidla, oznámení a společné hledání tyto zdroje nepotřebují.
+
+Deklarace konkrétních cest zároveň vytváří samostatné rozsahy release buildu.
+Změnu ověřuj ve zdrojové i kompilované/minifikované variantě. Stejný výběr
+určuje JavaScript, CSS, komponentové definice a klientské překlady.
+
+Tabulky deklaruje pojmenovaná schopnost `ui.tables`, kterou automaticky používá
+administrace a instalátor; jiný vlastník ji může výslovně připojit přes `uses`.
+Stránkování seznamů a filtrační chips patří do administračního rozsahu.
+Obsluhu administračních filtrů načítá administrační vstup, nikoli společné
+formulářové helpery. Sdílený transport formulářů a dialogů zůstává použitelný
+na obou površích bez administračních konzumentů.
 
 Pro izolovanou testovací instalaci lze vytvořit vizuální fixture příkazem
 `php tools/data/demo-import.php --profile=small --users=120 --prefix=demo --ui-fixtures=1 --anchor="YYYY-MM-DD HH:MM:SS"`.

@@ -15,11 +15,11 @@ final class Runner
      * @param array<string, mixed> $context
      * @return array<string, mixed>
      */
-    public static function run(string $name, callable $runner, array $context, bool $debug = false): array
+    public static function run(string $name, callable $runner, array $context): array
     {
         try { $context = Tasks::context($name, $context); }
-        catch (Throwable $exception) { return Tasks::result('failed', error: $debug ? $exception->getMessage() : $name . ' task failed.'); }
-        return self::runPrepared($name, $runner, $context, $debug);
+        catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); return Tasks::result('failed', error: \TinyCat\Core\Runtime\Failure::message($exception, $name . ' task failed.')); }
+        return self::runPrepared($name, $runner, $context);
     }
 
     /** Execute a context already validated by Execution::contexts or Tasks::context.
@@ -27,21 +27,43 @@ final class Runner
      * @param callable(array<string, mixed>): array<string, mixed> $runner
      * @param array<string, mixed> $context
      * @return array<string, mixed> */
-    public static function runPrepared(string $name, callable $runner, array $context, bool $debug = false): array
+    public static function runPrepared(string $name, callable $runner, array $context): array
     {
-        $suffix = substr(hash('sha256', Paths::basePath()), 0, 24);
-        $lockName = 'tinycat_scheduled_' . $name . '_' . $suffix;
-        if (strlen($lockName) > 64) { $lockName = 'tinycat_scheduled_' . substr(hash('sha256', $lockName), 0, 46); }
+        // Deployment admission precedes the task lock, history and owner callback.
+        try {
+            return \TinyCat\Core\Updates\Manager::runTask(static fn (): array => self::runLocked($name, $runner, $context));
+        } catch (Throwable $exception) {
+            \TinyCat\Core\Runtime\Failure::report($exception);
+            return Tasks::result('failed', error: \TinyCat\Core\Runtime\Failure::message($exception, $name . ' task failed.'));
+        }
+    }
+
+    /** @param callable(array<string, mixed>): array<string, mixed> $runner
+     * @param array<string, mixed> $context
+     * @return array<string, mixed> */
+    private static function runLocked(string $name, callable $runner, array $context): array
+    {
+        $lockName = '';
         $locked = false;
         $runId = 0;
         $fileLock = null;
         $started = hrtime(true);
         try {
             $sqlite = Connection::driver() === 'sqlite';
+            $directory = Paths::basePath('storage/locks/tasks');
+            if ($sqlite) {
+                $main = array_find(Connection::all('PRAGMA database_list'), static fn (array $row): bool => $row['name'] === 'main');
+                $file = (string) ($main['file'] ?? '');
+                $identity = $file !== '' ? (realpath($file) ?: $file) : 'memory:' . getmypid() . ':' . spl_object_id(Connection::get());
+                if ($file !== '') { $directory = dirname($identity) . '/.tinycat-task-locks'; }
+            } else {
+                $identity = (string) Connection::value('SELECT DATABASE()');
+                if ($identity === '') { throw new RuntimeException('Scheduled tasks require a selected database.'); }
+            }
+            $lockName = 'tinycat_scheduled_' . substr(hash('sha256', ($sqlite ? 'sqlite:' : 'mysql:') . $identity . ':' . $name), 0, 46);
             $sqlLock = !$sqlite || Connection::value("SELECT name FROM pragma_function_list WHERE lower(name) = 'get_lock' LIMIT 1") !== null;
             if ($sqlLock) { $lockResult = Connection::value('SELECT GET_LOCK(?, 0)', [$lockName]); }
             else {
-                $directory = Paths::basePath('storage/locks/tasks');
                 if (!\TinyCat\Support\Storage::ensureDirectory($directory)) { throw new RuntimeException('Cannot prepare task locks.'); }
                 $fileLock = fopen($directory . '/' . hash('sha256', $lockName) . '.lock', 'c+b');
                 if ($fileLock === false) { throw new RuntimeException('Cannot open task lock.'); }
@@ -63,10 +85,11 @@ final class Runner
             History::finish($runId, $result, (int) ((hrtime(true) - $started) / 1_000_000));
             return $result;
         } catch (Throwable $exception) {
-            $result = Tasks::result('failed', error: $debug ? $exception->getMessage() : $name . ' task failed.');
+            \TinyCat\Core\Runtime\Failure::report($exception);
+            $result = Tasks::result('failed', error: \TinyCat\Core\Runtime\Failure::message($exception, $name . ' task failed.'));
             if ($runId > 0) {
                 try { History::finish($runId, $result, (int) ((hrtime(true) - $started) / 1_000_000)); }
-                catch (Throwable $historyError) { error_log('Scheduler history write failed for run ' . $runId . ': ' . $historyError->getMessage()); }
+                catch (Throwable $historyError) { \TinyCat\Core\Runtime\Failure::report($historyError); }
             }
             return $result;
         } finally {
@@ -74,7 +97,7 @@ final class Runner
             elseif ($locked) {
                 try {
                     Connection::value('SELECT RELEASE_LOCK(?)', [$lockName]);
-                } catch (Throwable) {
+                } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
                     // The connection also releases its advisory locks on close.
                 }
             }

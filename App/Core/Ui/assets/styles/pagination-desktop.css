@@ -1,0 +1,12 @@
+@media (min-width: 900px) {
+  .pagination-link,
+  .pagination-ellipsis {
+    min-width: var(--control-height-compact);
+    min-height: var(--control-height-compact);
+  }
+
+  .pagination-list > .pagination-link:not(.pagination-prev):not(.pagination-next):not(.is-active),
+  .pagination-list > .pagination-ellipsis {
+    display: inline-flex;
+  }
+}

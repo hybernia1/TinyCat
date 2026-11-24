@@ -19,7 +19,7 @@ jobs:
     name: PHP 8.4 release preflight
     # Keep the reviewed Playwright 1.52 / WebKit 18.4 regression environment.
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     services:
       mysql:
@@ -56,10 +56,45 @@ jobs:
           node-version: '24'
           package-manager-cache: false
 
-      - name: Install WebKit regression browser
+      - name: Prefer the Ubuntu archive mirror
         run: |
-          npm install --prefix "$RUNNER_TEMP/tinycat-webkit" --no-audit --no-fund playwright@1.52.0 axe-core@4.10.3
-          node "$RUNNER_TEMP/tinycat-webkit/node_modules/playwright/cli.js" install --with-deps webkit
+          # Hosted images may use mirror+file rather than a direct Ubuntu URI.
+          # Keep the image's other mirrors as failover, with lower priority.
+          if [ -f /etc/apt/apt-mirrors.txt ]; then
+            sudo python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path('/etc/apt/apt-mirrors.txt')
+          lines = ['https://archive.ubuntu.com/ubuntu/\tpriority:1']
+          for line in path.read_text().splitlines():
+              if re.match(r'https?://archive\.ubuntu\.com/ubuntu/?(?:\s|$)', line):
+                  continue
+              if line.strip() and not line.lstrip().startswith('#'):
+                  line = re.sub(r'\s+priority:\d+', '', line)
+                  line += '\tpriority:2'
+              lines.append(line)
+          path.write_text('\n'.join(lines) + '\n')
+          PY
+            cat /etc/apt/apt-mirrors.txt
+          fi
+          # Fallback for images using direct sources instead of a mirror list.
+          for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+            if [ -f "$source_file" ]; then
+              sudo sed -i -E 's#https?://([a-zA-Z0-9.-]+\.ec2|azure)\.archive\.ubuntu\.com/ubuntu/?#https://archive.ubuntu.com/ubuntu/#g' "$source_file"
+              echo "--- $source_file"
+              cat "$source_file"
+            fi
+          done
+
+      - name: Install pinned browser tooling
+        run: npm install --prefix "$RUNNER_TEMP/tinycat-webkit" --no-audit --no-fund playwright@1.52.0 axe-core@4.10.3
+
+      - name: Install WebKit system dependencies
+        run: node "$RUNNER_TEMP/tinycat-webkit/node_modules/playwright/cli.js" install-deps webkit
+
+      - name: Download WebKit regression browser
+        run: |
+          node "$RUNNER_TEMP/tinycat-webkit/node_modules/playwright/cli.js" install webkit
           echo "TINYCAT_TEST_PLAYWRIGHT_MODULE=$RUNNER_TEMP/tinycat-webkit/node_modules/playwright" >> "$GITHUB_ENV"
 
       - name: Cache Composer downloads
@@ -77,3 +112,11 @@ jobs:
 
       - name: Run release preflight
         run: composer preflight
+
+      - name: Upload measured preflight reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: preflight-${{ github.sha }}
+          path: .work/tests/runs/**/report.json
+          if-no-files-found: warn

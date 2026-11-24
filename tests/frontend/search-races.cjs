@@ -20,11 +20,11 @@ function setup() {
   const T = { dom: { find: selector => selector === "[data-global-search-input]" ? input : box, all: (selector, scope) => scope === root ? [] : [root], create: (_, __, text) => new Node(text || "") },
     components: { render: (_name, data) => new Node(data.label || "") },
     popovers: { open() { box.hidden = false; }, close() { box.hidden = true; if (root.handlers["tinycat:popover-close"]) root.handlers["tinycat:popover-close"](); }, restoringFocus: () => false },
-    ui: {}, lifecycle: { register: (name, service) => { services[name] = service; }, hydrate() {} }, navigation: { compact: url => url.pathname + url.search },
+    ui: { icon: () => new Node() }, lifecycle: { register: (name, service) => { services[name] = service; }, hydrate() {} }, navigation: { compact: url => url.pathname + url.search },
     api: { unwrap: response => response.data, request: (url, options) => new Promise((resolve, reject) => { pending.push({ url, options, resolve, reject }); }) }, i18n: { label: key => key, t: key => key, plural: key => key }, dates: { format: () => "" } };
   const window = { TinyCat: T, location: new URL("https://tinycat.test/"), AbortController, setTimeout: callback => { timers.set(++timer, callback); return timer; }, clearTimeout: id => timers.delete(id) };
   const context = vm.createContext({ window, document, URL, AbortController, Date: FixtureDate });
-  for (const file of ["assets/core/request-lifecycle.js", "assets/ui/global-search.js"]) {
+  for (const file of ["App/Core/Ui/assets/runtime/request-lifecycle.js", "App/Core/Ui/assets/global-search.js"]) {
     const absolute = path.resolve(__dirname, "../..", file);
     vm.runInContext(fs.readFileSync(absolute, "utf8").replace(/^import .*;\r?\n/gm, ""), context);
   }

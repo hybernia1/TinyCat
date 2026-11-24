@@ -19,7 +19,7 @@ final class HealthCheck
         ksort($tasks);
         $metrics = []; $limits = []; $status = 'ok';
         $successful = History::lastSuccessfulFor(array_keys($tasks));
-        $latestRuns = History::latestFor(array_keys($tasks));
+        $latestRuns = History::latestFor(array_keys($tasks), true);
         foreach ($tasks as $task => $age) {
             $last = $successful[$task] ?? null;
             $latest = $latestRuns[$task] ?? null;

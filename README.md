@@ -5,14 +5,15 @@ TinyCat is a small, self-hosted modular application framework written in plain P
 The development platform provides identity, security and shared technical services;
 functional modules own their complete domain data. Core has no mandatory content,
 comment, tag or media tables. See [domain ownership](docs/development/domain-storage.md). The default assembly provides the social features below;
-[Blog](docs/development/blog-assembly.md) can run independently or alongside Social
-in the platform assembly, with a shared identity and [module lifecycle](docs/operations/module-deployment.md).
+Social is optional; a core-only assembly provides the foundation for other
+applications. Modules follow the [module contract](docs/contracts/module-contract.md)
+and share the [module lifecycle](docs/operations/module-deployment.md).
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
 TinyCat defines the [authoritative core contract for API, UI and validation](docs/contracts/core-application-contract.md). Modules retain their domain rules and extend the common platform through its declared interfaces.
 
-Current release: **6.1.4**. Product pages, account/avatar/status editors, menus and administrative forms share owner component catalogs. JSON authoring has one canonical formatter and explicit object contexts; no per-component template files or new template language are required. Client lifecycle cleanup cancels obsolete reads and preserves drafts. Document, layout, error and embed templates retain their technical boundaries. Existing module activation and data are preserved, with no database migration. Updating requires a completed **6.0.10** installation or newer; before updating, refresh the private rescue launcher with `php App/Console.php rescue` and verify `php storage/updates/console.php help`. Older supported installations must first apply the unchanged signed 6.0.10 release through its supported predecessors. See the [update procedure](docs/operations/updates.md#supported-update-baseline) and [launcher preparation](docs/operations/updates.md#retiring-the-autoload-facade). TinyCat uses [Semantic Versioning](https://semver.org/); the source runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **8.0.3**. Core and Social consolidate internal handlers, registration and data preparation, removing redundant classes and forwarding methods while preserving application behavior. Core and Social have independent signed installation/update packages. This release introduces no new database migration or configuration change. Updates require completed **6.0.10** or newer and PHP 8.4. Refresh the private rescue launcher with `php App/Console.php rescue` and verify its help before updating from 6.0.10. See [8.0.3 compatibility notes](docs/operations/updates.md#upgrading-to-803), [runtime diagnostics](docs/operations/debugging.md), the [update procedure](docs/operations/updates.md#supported-update-baseline) and [theme authoring](docs/development/themes.md). TinyCat uses [Semantic Versioning](https://semver.org/).
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -113,7 +114,7 @@ Use HTTPS in production. The supplied Apache rules prevent direct web access to 
 
 When Apache terminates TLS, the bundled `.htaccess` also sends `Strict-Transport-Security: max-age=31536000; includeSubDomains`. Enable `includeSubDomains` only when every current and future subdomain is available over HTTPS. If TLS terminates at a reverse proxy or CDN, configure HSTS there instead (or ensure Apache receives the original HTTPS state).
 
-Release tooling supports updates from TinyCat 5.16.0 and newer. Older versions must first reach 5.16.0 using historical releases.
+Current sources support updates from completed TinyCat 6.0.10 and newer. Older installations must first reach 6.0.10 using the supported historical releases.
 
 ## Updates
 
@@ -196,6 +197,11 @@ safety limits, and commands.
 
 ## Development quality gates
 
+Runtime diagnostics are configured once through `app.debug`: `'on'` displays
+errors, `'off'` disables diagnostics, and `'log'` writes JSON Lines to private
+`storage/debug.log`. See the [configuration example](config.example.php) and
+[debugging guide](docs/operations/debugging.md).
+
 See the [documentation index](docs/README.md) for development contracts,
 API reference, maintenance procedures and performance tooling.
 
@@ -226,11 +232,11 @@ Tests and development tools are excluded from signed production packages.
 - `index.php` is the HTTP front controller; built-in modules register their own routes.
 - `scheduled-tasks.php` is the CLI adapter for the same execution service used by the authenticated scheduler API.
 - `App/bootstrap.php` initializes the runtime and the small `TinyCat\` PSR-4 autoloader.
-- `App/Modules/Social/src/Automation/` owns social feed imports and bot administration.
+- `App/Modules/Social/src/Bots/` owns social feed imports and bot administration.
 - `App/Core/Updates/` contains signed application updates and the migration registry.
 - Other `App/` directories contain domain modules and shared infrastructure.
 - Module page handlers live under `App/Modules/<Name>/src/`; private templates and partials live in `App/Modules/<Name>/templates/`. Core services use `App/Core/<Name>/`.
-- `assets/` contains source CSS, JavaScript, the SVG icon sprite, shared UI definitions and module-owned client manifests.
+- `App/Core/Ui/assets/` contains shared UI sources; individual core functions, modules and themes own their remaining assets. Root `assets/build/` contains generated public outputs only.
 - `App/Modules/<Name>/lang/<locale>.json` contains module-owned translations; owners declare server-only email templates through `resources.emails`. `lang/<locale>.json` declares language names.
 - Module manifests explicitly declare JavaScript translation dependencies; component definitions declare theirs through static `t` references. Release builds emit hashed page catalogs and OPcache-compatible PHP catalogs in `App/Core/Support/compiled/`.
 - `storage/` contains private runtime state and generated asset caches.

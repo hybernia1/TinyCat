@@ -25,9 +25,10 @@ final class DocumentData
     }
 
     /** @param array<mixed> $data
+     * @param array<string, mixed>|null $document
      * @return array<mixed>
      */
-    public static function prepare(array $data): array
+    public static function prepare(array $data, ?array $document = null): array
     {
         extract($data, EXTR_SKIP);
         $applicationVersion = \TinyCat\Support\Version::CURRENT;
@@ -37,12 +38,12 @@ final class DocumentData
         $siteIdentity = \TinyCat\Core\Ui\Branding::metadata();
         $searchQuery = trim((string) ($search_query ?? \TinyCat\Http\Web::get('q', '')));
         $title = (string) ($title ?? $appName);
-        $current = \TinyCat\Http\Request::current()->path((string) ($current ?? \TinyCat\Http\Request::current()->path()));
+        $current = \TinyCat\Http\Request::normalizePath((string) ($current ?? \TinyCat\Http\Request::current()->path()));
         $bodyClass = (string) ($bodyClass ?? '');
         $csrfToken = (string) ($csrfToken ?? \TinyCat\Core\Security\Csrf::token());
         $dateFormat = (string) \TinyCat\Core\Settings\Store::config('datetime.datetime', 'Y-m-d H:i:s');
         $dateRelative = (bool) \TinyCat\Core\Settings\Store::config('datetime.relative', false);
-        $assetPath = (string) ($asset_path ?? $current);
+        $assetPath = Surface::PublicWeb->assetPath($data + ['current' => $current]);
         $scriptUrls = \TinyCat\Support\ClientAssets::scripts($assetPath, array_values(array_map(static fn (mixed $script): string => (string) $script, (array) ($scripts ?? []))));
         $styleUrls = array_values(array_unique([
             ...\TinyCat\Support\ClientAssets::styles($assetPath),
@@ -65,13 +66,8 @@ final class DocumentData
 
         $authUser = \TinyCat\Core\Identity\Authentication::auth();
         $hasGlobalSearch = \TinyCat\Core\Discovery\Search::sources() !== [];
-        $isAdminShell = empty($public) && \TinyCat\Core\Identity\Roles::isAdmin($authUser)
-            && (bool) ($adminShell ?? ($current === '/admin' || str_starts_with($current, '/admin/')));
-        $nav = $isAdminShell ? (array) ($nav ?? \TinyCat\Core\Ui\Admin\Navigation::administration()) : (array) ($frontendNav ?? \TinyCat\Core\Runtime\EntryPages::navigation());
-        $nav = \TinyCat\Core\Ui\Admin\Navigation::prepare($nav, $current, $isAdminShell);
-        $titleIcon = $isAdminShell ? (string) ($title_icon ?? \TinyCat\Core\Ui\Admin\Navigation::activeIcon($nav)) : '';
-
-        $document = \TinyCat\Core\Ui\Metadata::document(['title' => $title, 'current' => (string) ($_SERVER['REQUEST_URI'] ?? $current), 'meta' => $meta + ['robots' => $isAdminShell ? 'noindex,nofollow' : '']]);
+        $nav = Navigation::prepare((array) ($frontendNav ?? \TinyCat\Core\Runtime\EntryPages::navigation()), $current, false);
+        $document ??= \TinyCat\Core\Ui\Metadata::document(['title' => $title, 'current' => (string) ($_SERVER['REQUEST_URI'] ?? $current), 'meta' => $meta]);
         $pageTitle = $document['title'];
         $metaTitle = $document['meta_title'];
         $metaDescription = $document['description'];
@@ -79,7 +75,7 @@ final class DocumentData
         $languageAlternatives = http_response_code() < 400 ? \TinyCat\Http\LocaleRouting::alternatives($current) : [];
         $languageLinks = \TinyCat\Http\LocaleRouting::selector($current, \TinyCat\Http\Request::current()->query());
         $currentLanguageName = (string) (\TinyCat\Support\Languages::language_packages()[\TinyCat\Support\Localization::locale()] ?? \TinyCat\Support\Localization::locale());
-        $languageFlagSprite = \TinyCat\Support\Assets::asset('icons.svg');
+        $languageFlagSprite = \TinyCat\Support\Assets::asset('App/Core/Ui/assets/icons.svg');
         $languageFlagId = 'flag-' . \TinyCat\Support\Localization::locale();
         $languageSuggestion = $authUser === null && http_response_code() < 400
             ? \TinyCat\Http\LocaleRouting::suggestion($languageLinks, (string) ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '')) : null;
@@ -106,7 +102,7 @@ final class DocumentData
         $metaRobots = $document['robots'];
         $metaLocale = $document['locale'];
         $meta['author'] = $document['author'];
-        $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
+        $bodyClasses = trim($bodyClass);
         $theme = \TinyCat\Core\Identity\Profile::theme((string) ($authUser['theme'] ?? 'system'));
         $googleMeasurementId = trim((string) \TinyCat\Core\Settings\Store::config('analytics.google_measurement_id', ''));
         $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? '');
@@ -115,8 +111,6 @@ final class DocumentData
         $metaRssUrl = $metaRss !== '' ? \TinyCat\Core\Ui\Site::absolute_url($metaRss) : '';
         $metaPrevUrl = $metaPrev !== '' ? \TinyCat\Core\Ui\Site::absolute_url($metaPrev) : '';
         $metaNextUrl = $metaNext !== '' ? \TinyCat\Core\Ui\Site::absolute_url($metaNext) : '';
-        $adminIdentity = trim((string) ($authUser['username'] ?? ''));
-        $adminIdentity = $adminIdentity !== '' ? '@' . $adminIdentity : $appName;
         $profileUrl = $authUser !== null ? (\TinyCat\Core\Identity\Integration::profileUrl((int) $authUser['id']) ?? '') : '';
         $profileNeedsEmail = $authUser !== null && trim((string) ($authUser['email'] ?? '')) === '';
         $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([
@@ -127,7 +121,7 @@ final class DocumentData
         $loginModalUrl = \TinyCat\Core\Identity\Login::auth_modal_url();
         $notificationState = [];
         $notificationItems = [];
-        if (!$isAdminShell && $authUser !== null) {
+        if ($authUser !== null) {
             $notificationUserId = (int) $authUser['id'];
             $notificationState = \TinyCat\Core\Notifications\Inbox::state($notificationUserId);
             $notificationItems = \TinyCat\Core\Notifications\Inbox::items($notificationUserId, \TinyCat\Core\Notifications\Inbox::PREVIEW_LIMIT);
@@ -138,6 +132,7 @@ final class DocumentData
             'googleMeasurementId' => $googleMeasurementId, 'privacyUrl' => $pageUrls['/privacy'],
             'captchaEnabled' => $cookieConsentTextKey === 'privacy.cookie_consent_text_captcha',
         ]);
-        return compact('publicHeader', 'consent', 'hasGlobalSearch', 'titleIcon', 'userMenu', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'interfaceRoutes', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'title', 'viewerIsAdmin');
+        $publicFooter = ($data['privacyFooter'] ?? true) ? \TinyCat\Support\View::render('public-footer', ['privacyUrl' => $privacyUrl], __DIR__ . '/templates') : '';
+        return compact('publicFooter', 'publicHeader', 'consent', 'hasGlobalSearch', 'userMenu', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'interfaceRoutes', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'actions', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'title', 'viewerIsAdmin');
     }
 }

@@ -1,7 +1,59 @@
 # Testy TinyCat
 
+Archive filters MySQL ověřuje omezené stránky kořenů a přímých odpovědí diskuse,
+plány dotazů včetně celkového počtu a skutečný souběh výběru s kontrolou
+viditelnosti při hydrataci. Počet vrácených řádků není obecnou mezí počtu
+prohlédnutých kandidátů, zejména při mnoha neaktivních autorech.
+
+`tests/infrastructure/cache/settings-consistency.php` řídí skutečný souběh
+SELECT → pozastavení čtenáře → commit a invalidace zapisovatele → cache fill.
+Používá izolovanou SQLite databázi ve WAL režimu a worker; ověřuje filesystem
+a dostupný skutečný Memcached. Včetně hlavního runneru potřebuje nejvýše tři
+procesy. Nedostupný Memcached musí být uveden jako neprovedená větev.
+
+`tests/domains/scheduler/file-recovery.php` ověřuje nezávislou fixture aktivního,
+vypnutého a odinstalovaného vlastníka i chybějící manifest či již načtený provider.
+Zahrnuje skutečnou retenci Socialu a úplné i částečné osiřelé branding sady
+včetně ochrany čerstvých souborů. `tests/domains/users/public-profile-cache.php`
+ověřuje, že cache pořadí uchovává jen ID a počty; bio, jméno, avatar, stav a role
+se načítají z aktuálních účtových dat.
+
+`tests/domains/accounts/avatar-storage.php` pokrývá managed upgrade avatarů
+v1→v2, fallback původních souborů, rychlé unikátní verze, rollback a tvrdé
+ukončení před i po commitu včetně opakovaného orphan cleanupu. Připravený scénář
+spouštěj cíleně přes hlavní runner; jeho registrace sama nedokládá průchod.
+
+`tests/infrastructure/cache/settings-boot.php` ověřuje konfigurační fallback bez
+DB před instalací i s pouhým příznakem dokončení. Provozní chybu spojení nebo SQL
+nesmí zaměnit za platnou prázdnou cache. Ověřuje také zachování již načteného
+requestového snapshotu a oddělení cold transakčních čtení bez úniku po rollbacku.
+
+Instalační API regrese používá izolovanou kopii a dočasnou MySQL databázi.
+Ověřuje skutečný přerušený tables krok, session/CSRF recovery, odmítnutí chybějícího
+snapshotu a cizí DB, obnovu ze stdin bez session a opakování kroku. POSIX větev
+navíc ověřuje obnovu konfigurace s původním módem `0640` po selhání admin kroku.
+Windows větev používá nový izolovaný root s chráněným DACL a ověřuje celý
+admin krok, obnovu i výsledná oprávnění souboru. Vyžaduje Windows PowerShell 5.1
+a `proc_open`; nepřepisuje ACL pracovního checkoutu. Počítej i vnořené HTTP,
+PowerShell a případný kompilátor .NET do limitu čtyř procesů; při jejich současném
+běhu spusť přímo `php tests/release/installation-api.php` bez dalšího rodičovského
+runneru.
+
+Úzké Windows kontroly stejného vstupu lze spustit pomocí
+`php tests/release/installation-api.php --configuration-only` bez DB, HTTP nebo
+schématu. Pokrývají privátní staging `storage/updates/installation-private`,
+výsledný DACL a identitu souboru, nepovolené ACE, výpadky před zápisem, po flush
+i po přesunu, omezený vstupní protokol a chybějící platformní schopnosti.
+`--configuration-capability-only` vybírá jen odmítnutí chybějícího helperu či
+PowerShellu. Tyto scénáře nenahrazují úplný instalační API průchod.
+
+POSIX větev je součástí existujícího Ubuntu 24.04 / MySQL 8.4 quality CI.
+V izolovaném checkoutu s CI službou lze použít `cp tests/fixtures/config.ci.php
+config.php` a `php tests/release/installation-api.php`. Nepřepisuj tím provozní
+ani osobní konfiguraci. Lokální Windows průchod nedokládá POSIX garance.
+
 Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitních
-91 skupin přes [hlavní runner](run.php), včetně 39 frontendových scénářů.
+91 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 
@@ -62,17 +114,9 @@ start, API, HTML a build v kopii bez Users, Status a Bots.
 Stejná fixture ověřuje také core schránku, obecný neprůhledný předmět, health
 upozornění, fallback po vypnutí vlastníka a zachování dat při payload migraci.
 Čisté core (8 tabulek) a doménové úložiště Socialu ověřuje
-`php tests/domains/publishing/module.php` v izolované kopii bez Blogu. `social-boundaries.php` ve stejné složce
+`php tests/domains/publishing/module.php` v izolované kopii. `social-boundaries.php` ve stejné složce
 ověřuje sledování, sociální projekce a transakční úklid bez Notifications.
-Blog ověřuje `php tests/domains/blog/module.php` v kopii bez sociálních zdrojů:
-fresh instalaci, modulovou migraci, skutečný HTTP vstup, API, editor, CSRF,
-locale a assety. Nad stejnou databází pak připojí Social a technické adaptéry:
-ověří samostatná schémata, oddělené druhy publikací, kořen a administraci,
-vypnutí/obnovení obou funkcí přes skutečné CLI a zachování dat, nastavení
-i šablon. `php tests/domains/blog/mysql.php` ověřuje MySQL DDL, dlouhé
-UTF-8 články, rollback, FK a obnovu migrace v samostatné dočasné databázi.
-
-`php tests/release/module-lifecycle.php` sestaví podepsaný Blog a volitelné
+`php tests/release/module-lifecycle.php` sestaví podepsané core a volitelné
 manifestové moduly; ověřuje fresh CLI, HTTP zdroje, aktivaci, neaktivní
 upgrady, starého načteného poskytovatele, chybu migrace, přerušení a rollback.
 `php tests/release/database-snapshots.php` ověřuje SQLite/MySQL obnovu dat,
@@ -111,12 +155,17 @@ Podrobnosti: [lokální prostředí a hranice izolovaných testů](../docs/devel
 - Další integrační požadavky jako GD/WebP, ZIP/Sodium či Memcached určují
   konkrétní skupiny. SKIP znamená neprovedenou kontrolu, nikoli ověřenou integraci.
 
-Blogový browser scénář lze lokálně spustit ve stejném WebKitu jako CI:
-nastav `TINYCAT_TEST_BLOG_BROWSER=webkit` a `TINYCAT_TEST_PLAYWRIGHT_MODULE`
-na příslušnou instalaci Playwrightu před cíleným během `tests/domains/blog/module.php`.
-Bez této volby zůstává zachován výběr dostupného místního Chromium/Chrome.
 
 ## Hlavní oblasti
+
+`tests/domains/scheduler/deployment.php` exercises deployment admission through
+Runner, Execution, both CLI entries and the registered scheduler/admin/health API
+handlers in child requests. It uses an isolated application copy and SQLite under
+the development workspace. Two task workers prove concurrent different tasks,
+per-task exclusion, deployment/snapshot/rollback exclusion and process-death
+recovery. The runner plus fixture and workers use at most four processes; this
+group does not start an HTTP server. Authorization remains covered by the HTTP
+API contract group.
 
 | Oblast | Vstup nebo umístění |
 | --- | --- |
@@ -225,3 +274,11 @@ The unified migration journal has SQLite preservation, conflicting-history and
 interruption tests in `tests/infrastructure/migrations.php`; the existing MySQL
 registry group runs the same disposable fixture. The signed 6.0.4 rehearsal
 also verifies conversion from the original journals and full rollback.
+
+`tests/domains/status/write-concurrency.php` uses a disposable MySQL database,
+an isolated runtime/media copy and one child worker to exercise replace/replace,
+replace/delete, image removal/edit, delete/edit and ownership changes. The worker
+starts with an older repeatable-read snapshot; both row and image references must
+be rechecked with current locking reads. Parent and worker use at most three
+processes including the main runner. `write-path-integrity.php` additionally
+injects inbox-write and after-commit delivery failures into real status actions.

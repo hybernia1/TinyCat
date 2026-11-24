@@ -8,9 +8,9 @@ use TinyCat\Support\AssetGraph;
 use TinyCat\Support\ClientAssets;
 
 $name = 'build-snapshot-' . bin2hex(random_bytes(8));
-$directory = $root . '/assets/modules/' . $name;
-mkdir($directory, 0700);
-$path = 'assets/modules/' . $name . '/probe.js';
+$directory = $root . '/App/Modules/' . $name;
+mkdir($directory, 0700, true);
+$path = 'App/Modules/' . $name . '/probe.js';
 $checks = 0;
 $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
 $dictionary = \TinyCat\Support\Localization::catalog('en') + ['snapshot.first' => 'First', 'snapshot.second' => 'Second'];
@@ -21,12 +21,12 @@ try {
     file_put_contents($directory . '/components.json', json_encode(['probe/snapshot' => ['tag' => 'span', 'children' => ['first']]], JSON_THROW_ON_ERROR));
     $plan = \TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', require $root . '/App/modules.php');
     $assert(!\TinyCat\Core\Modules\Distribution::includes($path, $plan), 'Unregistered asset probes cannot enter a signed package');
-    $assert(\TinyCat\Core\Modules\Distribution::includes('assets/modules/admin/index.js', $plan), 'Explicit core-owned administration assets remain distributable');
+    $assert(\TinyCat\Core\Modules\Distribution::includes('App/Core/Ui/assets/admin/index.js', $plan), 'Explicit core-owned administration assets remain distributable');
     $catalog = new \TinyCat\Core\Modules\Catalog([
         ...\TinyCat\Core\Modules\Resources::catalog()->definitions(),
         \TinyCat\Core\Modules\Definition::fromMetadata((object) [
             'format' => 1, 'coreApi' => 1, 'id' => 'fixture.snapshot', 'namespace' => 'Fixture\\Snapshot\\',
-            'resources' => (object) ['assets' => 'assets/modules/' . $name . '/module.json', 'components' => 'assets/modules/' . $name . '/components.json'],
+            'resources' => (object) ['assets' => 'App/Modules/' . $name . '/module.json', 'components' => 'App/Modules/' . $name . '/components.json'],
         ], $root),
     ]);
     $withBuild = static fn (callable $action): mixed => \TinyCat\Core\Modules\Resources::withCatalog($catalog, static fn (): mixed => ClientAssets::withBuildCache($action));
@@ -104,3 +104,12 @@ try {
     rmdir($temporary);
 }
 echo "PASS build snapshot/invalidation, ZIP backends and prepared publication ({$checks} checks)\n";
+
+$compile = require $root . '/tools/assets/compile-assets.php';
+$files = $compile();
+$assetManifest = json_decode($files['assets/build/manifest.json'], true, flags: JSON_THROW_ON_ERROR);
+$translationManifest = eval(substr($files['App/Core/Support/compiled/translations.php'], 5));
+$assert(array_key_exists('server_components_packages', $translationManifest), 'Translation build declares its package registry identity.');
+$assert($translationManifest['server_components_packages'] === $assetManifest['server_components_packages'], 'All compiled readers share the same deployment identity.');
+$assert(\TinyCat\Support\CompiledTranslations::matchesSelection($translationManifest), 'Fresh compiled catalogs match the current installation.');
+echo "PASS compiled asset and translation deployment identity\n";

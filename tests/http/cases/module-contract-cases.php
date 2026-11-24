@@ -9,18 +9,41 @@ foreach (['GET', 'POST'] as $retiredSettingsMethod) {
     $assert(preg_match('/\s404\s/', (string) ($retiredHeaders[0] ?? '')) === 1, 'The standalone settings page is retired for ' . $retiredSettingsMethod . '.');
 }
 $settingsHostPage = file_get_contents('http://' . $address . '/admin', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$cachePage = file_get_contents('http://' . $address . '/admin/cache', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$assert(str_contains($cachePage, 'data-cache-page') && str_contains($cachePage, 'data-cache-probe-url') && !str_contains($settingsHostPage, 'data-cache-page'), 'Cache diagnostics have a separate authorized page and are absent from the dashboard.');
+foreach (['' => 401, 'user' => 403] as $cacheRole => $expectedCacheStatus) {
+    [$cacheStatus] = $request('GET', '/admin/cache', null, $cacheRole, ['Accept' => 'application/json']);
+    $assert($cacheStatus === $expectedCacheStatus, 'Cache diagnostics remain private to administrators.');
+}
+foreach (['' => 401, 'user' => 403] as $statsRole => $expectedStatsStatus) {
+    [$statsStatus] = $request('GET', '/api/site/dashboard-stats?stats=identity.accounts', null, $statsRole);
+    $assert($statsStatus === $expectedStatsStatus, 'Statistics require administrator authorization.');
+}
+[$statsStatus, $statsResource] = $request('GET', '/api/site/dashboard-stats?stats=identity.accounts', null, 'admin');
+$assert($statsStatus === 200 && $statsResource['data']['id'] === 'identity.accounts' && isset($statsResource['data']['items'][0]['key']) && is_int($statsResource['data']['items'][0]['value']) && !isset($statsResource['data']['items'][0]['label']), 'Statistics API returns canonical counts without presentation metadata.');
+[$socialStatsStatus, $socialStatsResource] = $request('GET', '/api/site/dashboard-stats?stats=social.content', null, 'admin');
+$assert($socialStatsStatus === 200 && array_column($socialStatsResource['data']['items'], 'key') === ['social.content.published', 'social.content.scheduled', 'social.content.comments', 'social.content.likes'] && count(array_filter(array_column($socialStatsResource['data']['items'], 'value'), is_int(...))) === 4, 'Selected Social statistics remain owner-scoped canonical integer counts.');
+[$unknownStatsStatus] = $request('GET', '/api/site/dashboard-stats?stats=unknown.owner', null, 'admin');
+$assert($unknownStatsStatus === 404, 'Unknown statistics groups are rejected.');
+preg_match('/<html[^>]*\blang="([^"]+)"/', $settingsHostPage, $adminLanguageMatch);
+$assert(isset($adminLanguageMatch[1]) && str_contains($settingsHostPage, 'data-interface-prefix="' . $adminLanguageMatch[1] . '"'), 'The admin document propagates its displayed language through the existing API interface context.');
+$assert(str_contains($settingsHostPage, 'data-ui-density="compact"'), 'The admin document selects the reusable core compact UI profile.');
+foreach (['en' => 'Automatic', 'cs' => 'Automaticky'] as $editorLocale => $automaticLabel) {
+    [$editorStatus, $editorResource] = $request('GET', '/api/settings/editor', null, 'admin', ['X-TinyCat-Locale' => $editorLocale]);
+    $siteFields = [];
+    foreach ($editorResource['data']['sections'] as $editorSection) { if ($editorSection['key'] === 'site') { $siteFields = array_column($editorSection['fields'], null, 'key'); } }
+    $assert($editorStatus === 200 && $siteFields['site.homepage']['options'][0]['name'] === $automaticLabel && $siteFields['site.theme']['options'][0]['name'] === $automaticLabel, 'Settings option names respect the administration interface language.');
+}
 $assert(is_string($settingsHostPage) && str_contains($settingsHostPage, 'data-modal-open="modal-settings-editor"') && str_contains($settingsHostPage, 'data-modal-url="/api/settings/editor"') && !str_contains($settingsHostPage, 'data-settings-editor') && !str_contains($settingsHostPage, 'href="/admin/settings"'), 'Admin navigation opens the shared settings modal without a standalone page.');
 $assert(!str_contains($settingsHostPage, 'name="settings[') && !str_contains($settingsHostPage, 'id="modal-settings-editor"') && !str_contains($settingsHostPage, 'href="/admin/moderation/blocking"'), 'Settings fields and editor DOM are absent from the initial page and blocked websites have no separate navigation page.');
-preg_match('/data-settings-presentation="([^"]+)"/', $settingsHostPage, $settingsPresentationMatch);
-$settingsPresentation = json_decode(html_entity_decode($settingsPresentationMatch[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true, 512, JSON_THROW_ON_ERROR);
-$assert(isset($settingsPresentation['sections']['content_images'], $settingsPresentation['fields']['moderation.blocked_urls']), 'The admin document derives Social presentation from the registered PHP settings owners.');
-$checkSettingsPresentation = static function (array $fieldPresentation) use (&$checkSettingsPresentation, $assert): void {
-    $assert(array_diff(array_keys($fieldPresentation), ['label', 'help', 'placeholder', 'span', 'fields']) === [], 'Settings presentation contains no values, defaults, credentials or callbacks.');
-    $assert(is_string($fieldPresentation['label'] ?? null), 'Every nested field has an owner-provided presentation label.');
-    foreach ($fieldPresentation['fields'] ?? [] as $child) { $checkSettingsPresentation($child); }
-};
-foreach ($settingsPresentation['fields'] as $fieldPresentation) { $checkSettingsPresentation($fieldPresentation); }
-$assert(isset($settingsPresentation['fields']['email.smtp']['fields']['host'], $settingsPresentation['fields']['email.smtp']['fields']['password']), 'Mail contributes nested SMTP presentation without JavaScript field declarations.');
+$assert(!str_contains($settingsHostPage, 'data-settings-presentation'), 'Admin HTML contains no deferred settings presentation payload.');
+$searchDocumentHtml = file_get_contents('http://' . $address . '/search/all', false, stream_context_create(['http' => ['header' => "Accept: text/html", 'ignore_errors' => true]]));
+$searchDocument = new DOMDocument();
+@$searchDocument->loadHTML((string) $searchDocumentHtml);
+$searchXPath = new DOMXPath($searchDocument);
+$assert($searchXPath->query('//input[@type="search"]')->length === 1 && $searchXPath->query('//*[@id="main-content"]//form')->length === 0, 'The full search page uses only the shared header search field.');
+$assert($searchXPath->query('//*[@id="main-content"]//h1')->length === 1 && $searchXPath->query('//*[@id="main-content"]//*[contains(concat(" ", normalize-space(@class), " "), " empty-state ")]')->length === 1, 'An empty full search page has one contextual heading and shared empty state.');
+
 $moderationPage = file_get_contents('http://' . $address . '/admin/moderation/reports?status=open&reason=spam', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $moderationDocument = new DOMDocument();
 @$moderationDocument->loadHTML((string) $moderationPage);
@@ -43,6 +66,9 @@ foreach (['/api/users/creation' => 'roles', '/api/bots/accounts/creation' => 'us
     $assert($status === 200 && isset($creation['data']['options'][$option]), 'Creation metadata loads through an authorized resource: ' . $endpoint);
     $pure($creation);
 }
+[$status, $createdUnicode] = $request('POST', '/api/users', ['username' => 'UnicodeFixture', 'role' => 'user', 'status' => 'active', 'password' => 'éééé'], 'admin', $csrf);
+$assert($status === 201, 'Administrator creation accepts a password of exactly eight UTF-8 bytes.');
+$seed->exec("DELETE FROM users WHERE username = 'UnicodeFixture'");
 foreach (['/admin/users' => 'modal-users-creation', '/admin/bots/accounts' => 'modal-bots-accounts-creation'] as $page => $id) {
     $html = file_get_contents('http://' . $address . $page, false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
     $assert(str_contains($html, 'data-modal-open="' . $id . '"') && !str_contains($html, 'id="' . $id . '"') && !str_contains($html, 'class="modal"'), 'Creation pages contain resource triggers, never hidden dialogs: ' . $page);
@@ -65,13 +91,22 @@ foreach ($smtpField['fields'] as $child) {
 }
 $assert(in_array('moderation.blocked_urls', array_column($fields, 'key'), true), 'Remote settings include URL blocking.');
 [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Modular fixture', 'auth.registration.enabled' => false]], 'admin', $csrf);
-$assert($status === 200 && $payload['data']['saved'] && array_keys($payload['data']['images']) === ['site.logo_url', 'site.favicon_url'], 'Settings PATCH returns confirmation and saved public image paths for repeated AJAX saves.');
+$assert($status === 200 && isset($payload['data']['sections']) && !str_contains(json_encode($payload), 'fixture-secret'), 'Settings PATCH returns canonical editor values without saved secrets for repeated AJAX saves.');
 $assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'i18n.locale'")->fetchColumn() === 'en', 'Partial settings changes preserve omitted settings.');
 $assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'auth.registration.enabled'")->fetchColumn() === '0', 'A JSON false value disables a setting.');
 foreach ([['settings' => 'invalid'], ['settings' => ['site.name' => []]], ['settings' => ['email.smtp' => ['password' => []]]]] as $invalid) {
     [$status, $payload] = $request('PATCH', '/api/settings', $invalid, 'admin', $csrf);
     $assert($status === 422 && isset($payload['error']['details']['errors']), 'Malformed settings receive the shared validation envelope.');
 }
+$smtpBefore = $seed->query("SELECT setting_value FROM settings WHERE setting_key = 'email.smtp'")->fetchColumn();
+foreach ([['port' => 'invalid'], ['port' => '65536'], ['port' => true], ['port' => []], ['port' => 1.5], ['host' => str_repeat('a', 191)]] as $invalidSmtp) {
+    [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['email.smtp' => $invalidSmtp]], 'admin', $csrf);
+    $assert($status === 422 && isset($payload['error']['details']['errors']['settings[email.smtp]']), 'SMTP owner rejects invalid values without coercion or truncation.');
+}
+$assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'email.smtp'")->fetchColumn() === $smtpBefore, 'Rejected SMTP input does not mutate saved settings.');
+[$status] = $request('PATCH', '/api/settings', ['settings' => ['email.templates' => ['_present' => '1']]], 'admin', $csrf);
+$templateStates = json_decode((string) $seed->query("SELECT setting_value FROM settings WHERE setting_key = 'email.templates'")->fetchColumn(), true);
+$assert($status === 200 && is_array($templateStates) && !in_array(true, $templateStates, true), 'An empty template selection clears every owner-defined option.');
 [$status, $payload] = $request('POST', '/api/scheduler/tokens', [], 'admin', $csrf);
 $assert($status === 201 && strlen($payload['data']['token']) >= 32, 'Token rotation returns the new token directly to its administrator.');
 $pure($payload);
@@ -161,7 +196,7 @@ $assert($status === 403, 'Administrative publication requires CSRF protection.')
 $assert($status === 200 && $published['code'] === 'content_published' && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'published', 'Explicit administrative publication restores visibility.');
 $assert($seed->query('SELECT status FROM content_reports WHERE id = ' . $newReportId)->fetchColumn() === 'resolved' && $seed->query('SELECT status FROM content_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Publishing preserves earlier report outcomes.');
 [$status, $payload] = $request('GET', '/api/site/sidebar');
-$assert($status === 200 && isset($payload['data']['tags'], $payload['data']['authors'], $payload['data']['footer']), 'The sidebar exposes resources and structured footer nodes.');
+$assert($status === 200 && isset($payload['data']['tags'], $payload['data']['authors'], $payload['data']['privacy_url']) && !array_key_exists('footer', $payload['data']), 'The sidebar exposes resources and the privacy link without retired custom footer data.');
 $pure($payload);
 foreach ([['POST', '/api/bots/accounts', ['username' => []]], ['GET', '/api/search?q[]=invalid', null], ['PATCH', '/api/moderation/reports/9000', ['decision' => []]]] as [$verb, $path, $input]) {
     [$status, $payload] = $request($verb, $path, $input, 'admin', $csrf);
@@ -173,50 +208,40 @@ foreach (['/api/bots/accounts?q=feedbot', '/api/users?q=admin'] as $filtered) {
 }
 [$status, $payload] = $request('GET', '/api/bots/accounts?q=%25', null, 'admin');
 $assert($status === 200 && $payload['data']['items'] === [], 'Literal wildcard characters cannot broaden an account search.');
-// Search results and autocomplete have independent contracts.
+// One public search collection API; autocomplete and editor completion have separate purposes.
 $seed->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (9100, 2, 'quartz bright nebula', '2026-01-01 12:00:00'), (9101, 2, 'unrelated post', '2026-01-02 12:00:00')");
-[$status, $payload] = $request('GET', '/api/search/results?q=nebula%20quartz');
-$assert($status === 200 && array_column($payload['data']['items'], 'id') === [9100], 'Full search matches all words in any order.');
-$assert($payload['meta']['pagination']['done'] && $payload['meta']['pagination']['next_url'] === '', 'Search uses the standard feed cursor envelope.');
+[$status, $payload] = $request('GET', '/api/search/query?q=nebula%20quartz&collection=content');
+$group = $payload['data']['collections'][0];
+$assert($status === 200 && array_column($group['items'], 'id') === [9100] && $group['done'], 'Shared search matches all words and returns the selected owner collection.');
 $pure($payload);
 [$status, $payload] = $request('GET', '/api/search?q=quartz');
 $assert($status === 200 && $payload['data']['content'] === [], 'Autocomplete returns no post results.');
-foreach (['/api/search?q=' . str_repeat('a', 81), '/api/search/results?q=quartz&type=invalid', '/api/search/results?q=quartz&cursor_id=-1', '/api/search/results?q[]=invalid'] as $path) {
+foreach (['/api/search?q=' . str_repeat('a', 81), '/api/search/query?q[]=invalid', '/api/search/query?q=quartz&collection[]=invalid', '/api/search/query?q=quartz&collection=content&cursor[cursor_id]=-1'] as $path) {
     [$status] = $request('GET', $path);
-    $assert($status === 422, 'Search rejects invalid query and pagination parameters.');
+    $assert($status === 422, 'Canonical search rejects invalid query and cursor inputs.');
 }
-[$status, $html] = $exportRequest('/search?q=nebula%20quartz');
-$assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Search documents render matching posts without unrelated author posts.');
-[$status, $html] = $exportRequest('/search?q=nebula%20quartz&type=users');
-$assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Retired category URLs render matching posts.');
-$assert(str_contains($html, 'archive-filter') && !str_contains($html, 'type=tags'), 'Search documents expose media filters instead of category navigation.');
-[$status] = $exportRequest('/search?q[]=invalid');
-$assert($status === 422, 'Malformed document queries fail without PHP warnings.');
-[$status, $payload] = $request('GET', '/api/search/results?q=quartz%22');
-$assert($status === 200 && $payload['data']['query'] === 'quartz"' && array_column($payload['data']['items'], 'id') === [9100], 'Quoted queries retain their text and find the unquoted word.');
-[$status, $html] = $exportRequest('/search?q=%22%3Cquartz%3E%22');
+[$status, $html] = $exportRequest('/search/all?q=nebula%20quartz&collection=content');
+$assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Shared search documents render matching posts only.');
+[$status, $payload] = $request('GET', '/api/search/query?q=quartz%22&collection=content');
+$assert($status === 200 && $payload['data']['query'] === 'quartz"' && array_column($payload['data']['collections'][0]['items'], 'id') === [9100], 'Quoted queries retain their text and find the unquoted word.');
+[$status, $html] = $exportRequest('/search/all?q=%22%3Cquartz%3E%22&collection=content');
 $document = new DOMDocument(); libxml_use_internal_errors(true); $document->loadHTML($html); libxml_clear_errors();
 $input = (new DOMXPath($document))->query('//input[@id="global-search-input"]')->item(0);
-$assert($status === 200 && $input->getAttribute('value') === '"<quartz>"' && str_contains($html, 'quartz bright nebula'), 'HTML search preserves and safely escapes quotes and angle brackets while matching words.');
+$assert($status === 200 && $input->getAttribute('value') === '"<quartz>"' && str_contains($html, 'quartz bright nebula'), 'Shared HTML search preserves and escapes the original query.');
 $insertCursor = $seed->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, 2, ?, ?)');
 for ($i = 0; $i < 25; $i++) { $insertCursor->execute([9200 + $i, 'cursorfixture ' . $i, '2020-01-01 12:00:00']); }
-[$status, $firstBatch] = $request('GET', '/api/search/results?q=cursorfixture');
-$assert($status === 200 && count($firstBatch['data']['items']) === 20 && !$firstBatch['meta']['pagination']['done'], 'Search exposes the standard feed continuation URL.');
+[$status, $firstBatch] = $request('GET', '/api/search/query?q=cursorfixture&collection=content');
+$firstGroup = $firstBatch['data']['collections'][0];
+$assert($status === 200 && count($firstGroup['items']) === 20 && !$firstGroup['done'], 'Selected search collections expose stable continuation cursors.');
 $insertCursor->execute([9230, 'cursorfixture newer insertion', '2025-01-01 12:00:00']);
-[$status, $nextBatch] = $request('GET', $firstBatch['meta']['pagination']['next_url']);
-$allIds = array_column([...$firstBatch['data']['items'], ...$nextBatch['data']['items']], 'id');
-$assert($status === 200 && count($nextBatch['data']['items']) === 5 && $nextBatch['meta']['pagination']['done'] && count(array_unique($allIds)) === 25 && !in_array(9230, $allIds, true), 'HTTP search cursors survive new posts and ties without duplicate or missing results.');
-[$status, $html] = $exportRequest('/search?q=cursorfixture');
-$assert($status === 200 && str_contains($html, 'data-status-feed-more') && str_contains($html, 'cursor_at') && !str_contains($html, 'rel="next"'), 'Search documents use the existing feed loader instead of numbered pagination.');
-foreach (['content', 'users', 'tags'] as $type) {
-    [$status, $resource] = $request('GET', '/api/site/pages?path=/search&q=quartz&type=' . $type);
-    $assert($status === 200 && $resource['data']['kind'] === 'search' && $resource['data']['sidebar'] && $resource['data']['search']['type'] === 'content', 'Legacy search category parameters retain the shared post feed and sidebar.');
-    $pure($resource);
+[$status, $nextBatch] = $request('GET', str_replace('/search/all?', '/api/search/query?', $firstGroup['next_url']));
+$nextGroup = $nextBatch['data']['collections'][0];
+$allIds = array_column([...$firstGroup['items'], ...$nextGroup['items']], 'id');
+$assert($status === 200 && count($nextGroup['items']) === 5 && $nextGroup['done'] && count(array_unique($allIds)) === 25 && !in_array(9230, $allIds, true), 'Canonical search cursors survive concurrent inserts and timestamp ties.');
+foreach (['/search?q=quartz', '/api/search/results?q=quartz', '/api/users/2'] as $retired) {
+    [$status] = str_starts_with($retired, '/api/') ? $request('GET', $retired) : $exportRequest($retired);
+    $assert($status === ($retired === '/api/users/2' ? 405 : 404), 'Removed transports have no compatibility aliases: ' . $retired);
 }
-[$status, $resource] = $request('GET', '/api/site/pages?path=/cs/search&q=quartz');
-$assert($status === 200 && $resource['data']['locale'] === 'cs' && str_contains($resource['data']['url'], '/cs/search?'), 'Search navigation preserves locale and query parameters.');
-[$status, $html] = $exportRequest('/search?q=quartz');
-$assert($status === 200 && str_contains($html, 'data-public-page="search"') && str_contains($html, 'data-public-sidebar-slot'), 'Search initial HTML uses the same public page component and sidebar placeholder.');
 [$status, $state] = $request('PATCH', '/api/notifications', ['read' => true], 'user', $csrf);
 $assert($status === 200 && $state['data']['unread_count'] === 0, 'Mark-all clears the unread state.');
 [$status, $html] = $exportRequest('/notifications', 'GET', ['X-Test-Role' => 'user']);

@@ -16,7 +16,7 @@ final class Export
         $query = $termId !== null ? Feed::public_status_tag_id_query($termId)
             : ($authorId !== null ? Feed::public_status_author_id_query() : Feed::public_status_id_query());
         if ($authorId !== null) { $query->where('c.author_id = ?', $authorId); }
-        [$predicate, $params] = Feed::archive_predicate($media);
+        [$predicate, $params] = Archive::predicate($media);
         if ($predicate !== '') { $query->where($predicate, ...$params); }
         $ids = Feed::public_status_ids_page($query, $limit);
         return self::byIds($ids);

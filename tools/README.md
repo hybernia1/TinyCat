@@ -32,10 +32,29 @@ komponenty a cestu k chybnému poli. [Reference zápisu](../docs/reference/compo
 popisuje rozdělení odpovědností i připojení schématu do editoru.
 
 `asset-report.php --check --assembly=platform` ověřuje kombinovaný výběr
-Blog + Social proti stejným rozpočtům. Tuto nadmnožinu kontroluje také
+produkčních modulů proti stejným rozpočtům. Tuto nadmnožinu kontroluje také
 `tests/assets/budgets.php`; nepřidává druhý úplný build do testovací skupiny.
 
 ## Release, data a měření
+
+Lokální Memcached na Windows spravuje [tools/support/memcached.ps1](support/memcached.ps1):
+
+```powershell
+& tools/support/memcached.ps1 start -Executable E:/laragon/bin/memcached/memcached-1.6.8-win64-mingw/memcached.exe
+& tools/support/memcached.ps1 status
+& tools/support/memcached.ps1 stop
+```
+
+Cestu k nainstalované binárce určuje `-Executable`, případně PATH. Nástroj nic
+nestahuje, nemění služby ani PHP konfiguraci. Poslouchá pouze na `127.0.0.1`,
+vypíná UDP; volitelné `-Port` a `-MemoryMB` mají výchozí hodnoty 11211 a 64.
+PID, čas spuštění a logy ukládá přes workspace helper do `.work/tools/memcached/`.
+Zastaví pouze proces se shodnou uloženou identitou; cizí server nepřebírá ani
+neprovádí `flush_all`. Server po skončení příkazu zůstává spuštěný.
+PHP klient vyžaduje rozšíření **memcached**, nikoli **memcache**. Pro jednorázové
+ověření lze použít `php -d extension=memcached --ri memcached`; při testech
+s potomky musí rozšíření načíst také jejich PHP konfigurace. Testovací runner
+používá vlastní klíče, živou konfiguraci kvůli testům nepřepínej.
 
 Živá instalace `tinycat.test` má root `E:/laragon/www/tinycat`, nikoli tento
 checkout. Provozní CLI patří do externí instalace; u vývojových nástrojů
@@ -83,7 +102,7 @@ Before deployment, refresh inherited rescue launchers with the installed 6.0.10 
 [operator prerequisite](../docs/operations/updates.md#retiring-the-autoload-facade).
 Published migrations and local rollback backups remain intact.
 
-`--assembly=blog` sestaví samostatný produkt; `--product=vendor.product` a
+`--product=vendor.product` a
 `--active=id1,id2` určují vlastní identitu a výchozí aktivaci. Distribuce,
 produkční CLI `App/Console.php`, migrace a rescue rollback mají společný
 [provozní návod](../docs/operations/module-deployment.md). CLI je součást aplikace,
@@ -92,7 +111,7 @@ nikoli vývojových tools.
 ## Struktura
 
 Samostatný modul sestaví `php tools/release/build-module.php
---module=App/Modules/Blog --version=1.0.0 --output=storage/releases/modules`.
+--module=App/Modules/Notes --version=1.0.0 --output=.work/releases/modules`.
 Vstupem je přímý modulový adresář s manifestem; výstupem ZIP s inventářem,
 checksumy a migrační historií. `--minimum-core` a `--minimum-php` deklarují
 kompatibilitu. Instalaci přes administraci nebo `module-install` popisuje
@@ -125,3 +144,23 @@ The release update rehearsal accepts `--snapshot=/path/to/indexed-snapshot` to r
 
 Development outputs use ignored `.work/`, separated from application `storage/`.
 See [filesystem storage](../docs/development/storage.md#development-outputs).
+
+
+### Status symbols
+
+`php tools/assets/status-icons.php --write` refreshes the marked generated CSS-mask
+section in the core UI tokens from the four canonical symbols in `App/Core/Ui/assets/icons.svg`.
+Without `--write` it checks freshness. The existing UI-contract check also verifies
+this output. Do not edit generated SVG mask data by hand. Runtime uses ordinary
+CSS and needs no generator, JavaScript hydration or additional image requests.
+
+### Verifying multiple application products
+
+`php tools/release/verify-update.php DIRECTORY --product=vendor.application`
+selects exactly one local update manifest for that product. Add `--fresh-install`
+for its install variant. Product metadata is used only for discovery; successful
+verification still requires the configured signing key, exact archive inventory
+and the signed artifact filename. Several products may share a directory or a
+GitHub release without adding product-specific branches to the verifier.
+The [release procedure](../docs/operations/updates.md#product-update-channels)
+requires core and Social assets for standard TinyCat releases.

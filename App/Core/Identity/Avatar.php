@@ -27,11 +27,12 @@ final class Avatar
         'image/webp',
     ];
 
-    public static function url(int $userId, bool $exists, ?string $updatedAt = null, ?string $appearance = null): string
+    public static function url(int $userId, bool $exists, ?string $updatedAt = null, ?string $appearance = null, ?string $uploadVersion = null): string
     {
         if ($userId < 1) { return ''; }
         if (!$exists) { return GeneratedAvatar::url($userId, $appearance); }
 
+        if (is_string($uploadVersion) && preg_match('/^[a-f0-9]{32}$/D', $uploadVersion) === 1) { return self::BASE_URL . '/' . $userId . '-' . $uploadVersion . '.webp'; }
         $version = trim((string) $updatedAt);
 
         return self::BASE_URL . '/' . $userId . '.webp' . ($version !== '' ? '?v=' . rawurlencode($version) : '');
@@ -112,75 +113,81 @@ final class Avatar
         }
     }
 
-    /**
-     * Keep the old file until both replacement and database persistence succeed.
-     * The user row lock serializes all avatar changes, including removal.
+    /** Publish an immutable file before switching its database reference atomically.
+     * A crash before commit leaves an aged orphan, never a changed current file.
      * @param callable(array<string, mixed>): array<string, mixed> $persist
-     * @return array<string, mixed>
-     */
+     * @return array<string, mixed> */
     public static function replace(int $userId, ?string $prepared, bool $remove, callable $persist): array
     {
         $database = \TinyCat\Database\Connection::get();
-        $target = self::path($userId);
-        $backup = null;
-        $fileChanged = false;
+        $target = null;
+        $oldPath = null;
+        $oldVersion = null;
+        $committed = false;
         $ownsTransaction = false;
-        $preserveBackup = false;
+        $published = false;
         try {
             if ($userId < 1 || $database->inTransaction()) { throw new \LogicException('Avatar replacement requires its own transaction and a valid user.'); }
+            $version = $prepared !== null ? bin2hex(random_bytes(16)) : null;
+            if ($prepared !== null) {
+                $target = self::path($userId, $version);
+                // Exclusive creation never overwrites another upload and needs no hard-link support.
+                $input = @fopen($prepared, 'rb');
+                if ($input === false) { throw new RuntimeException('Could not read prepared avatar.'); }
+                $output = @fopen($target, 'x');
+                if ($output === false) { fclose($input); throw new RuntimeException('Could not publish immutable avatar.'); }
+                $published = true;
+                try {
+                    $info = fstat($input);
+                    $copied = stream_copy_to_stream($input, $output);
+                    if ($info === false || $copied === false || $copied !== $info['size'] || !fflush($output)) { throw new RuntimeException('Could not finish immutable avatar.'); }
+                } finally { fclose($input); fclose($output); }
+            }
             $database->beginTransaction();
             $ownsTransaction = true;
             $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [$userId]);
             if ($user === null) { throw new RuntimeException('Avatar owner no longer exists.'); }
-            if (($prepared !== null || $remove) && is_file($target)) {
-                $backup = @tempnam(dirname($target), '.avatar-backup-');
-                if ($backup === false || !@copy($target, $backup)) { throw new RuntimeException('Could not back up avatar.'); }
-            }
-            if ($prepared !== null) {
-                if (!@rename($prepared, $target)) {
-                    if (!is_file($target) || !@unlink($target)) { throw new RuntimeException('Could not replace avatar.'); }
-                    $fileChanged = true;
-                    if (!@rename($prepared, $target)) { throw new RuntimeException('Could not replace avatar.'); }
-                }
-                $fileChanged = true;
-            } elseif ($remove && is_file($target)) {
-                if (!@unlink($target)) { throw new RuntimeException('Could not remove avatar.'); }
-                $fileChanged = true;
-            }
             $updated = $persist($user);
-            $database->commit();
-            return $updated;
-        } catch (Throwable $exception) {
-            // Restore while still holding the row lock, before allowing another save.
-            if ($fileChanged) {
-                if (is_string($backup)) {
-                    if (is_file($target)) { @unlink($target); }
-                    if (!@rename($backup, $target)) {
-                        $preserveBackup = true;
-                        throw new RuntimeException('Could not restore avatar backup: ' . $backup, 0, $exception);
-                    }
-                    $backup = null;
-                } elseif (is_file($target)) { @unlink($target); }
+            if ($prepared !== null || $remove) {
+                $changes = ['avatar_exists' => $prepared !== null ? 1 : 0, 'avatar_version' => $version, 'updated_at' => Avatars::user_avatar_updated_at($user)];
+                \TinyCat\Database\Connection::update('users', $changes, ['id' => $userId]);
+                $updated = array_replace($updated, $changes);
+                $oldVersion = $user['avatar_version'] ?? null;
+                $oldPath = self::path($userId, $oldVersion);
             }
-            throw $exception;
+            $database->commit();
+            $committed = true;
         } finally {
-            if ($ownsTransaction && $database->inTransaction()) { $database->rollBack(); }
-            if (!$preserveBackup && is_string($backup) && is_file($backup)) { @unlink($backup); }
+            if ($ownsTransaction && !$committed && $database->inTransaction()) { $database->rollBack(); }
+            if (!$committed && $published && is_string($target) && is_file($target)) { @unlink($target); }
             if ($prepared !== null && is_file($prepared)) { @unlink($prepared); }
         }
+        // No cleanup failure can report an unsuccessful committed avatar write.
+        if ($oldPath !== null) {
+            try { self::delete($userId, $oldVersion); }
+            catch (Throwable $error) { \TinyCat\Core\Runtime\Failure::report($error); }
+        }
+        return $updated;
     }
 
-    public static function delete(int $userId): void
+    public static function delete(int $userId, ?string $version = null): void
     {
-        if ($userId < 1) {
-            return;
-        }
+        if ($userId < 1) { return; }
+        if (\TinyCat\Database\Connection::get()->inTransaction()) { throw new \LogicException('Avatar deletion requires a committed reference view.'); }
+        $current = \TinyCat\Database\Connection::one('SELECT avatar_exists, avatar_version FROM users WHERE id = ?', [$userId]);
+        if (!self::retains($current, $version)) { self::removeFile(self::path($userId, $version)); }
+    }
 
-        $file = self::path($userId);
+    /** @param array<mixed>|null $user */
+    private static function retains(?array $user, ?string $version): bool
+    {
+        return $user !== null && (int) $user['avatar_exists'] === 1 && ($user['avatar_version'] ?? null) === $version;
+    }
 
-        if ($file !== '' && is_file($file)) {
-            @unlink($file);
-        }
+    private static function removeFile(string $path): void
+    {
+        if (is_link($path)) { throw new RuntimeException('Refusing an avatar symlink.'); }
+        if (is_file($path) && !@unlink($path)) { throw new RuntimeException('Could not remove superseded avatar.'); }
     }
 
     private static function resizeSquare(GdImage $source): GdImage
@@ -197,28 +204,31 @@ final class Avatar
     public static function cleanupOrphans(int $limit): array
     {
         return \TinyCat\Support\FileSweep::run(\TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY), $limit, static function (array $files): array {
-            $candidates = [];
+            $candidates = []; $ids = [];
             foreach ($files as $file) {
-                if (preg_match('/^([1-9][0-9]*)\.webp$/D', $file->getFilename(), $match) === 1 && $file->getMTime() < time() - 86400) {
-                    $candidates[(int) $match[1]] = $file->getPathname();
+                if (preg_match('/^([1-9][0-9]*)(?:-([a-f0-9]{32}))?\.webp$/D', $file->getFilename(), $match) === 1 && $file->getMTime() < time() - 86400) {
+                    $candidates[] = [$file->getPathname(), (int) $match[1], $match[2] ?? null];
+                    $ids[(int) $match[1]] = (int) $match[1];
                 }
             }
             $owners = [];
-            foreach (array_chunk(array_keys($candidates), 100) as $ids) {
-                foreach (\TinyCat\Database\Connection::all('SELECT id FROM users WHERE id IN (' . implode(', ', array_fill(0, count($ids), '?')) . ')', $ids) as $row) { $owners[(int) $row['id']] = true; }
+            foreach (array_chunk(array_values($ids), 100) as $batch) {
+                foreach (\TinyCat\Database\Connection::all('SELECT id, avatar_exists, avatar_version FROM users WHERE id IN (' . implode(', ', array_fill(0, count($batch), '?')) . ')', $batch) as $row) { $owners[(int) $row['id']] = $row; }
             }
             $changed = 0;
-            foreach ($candidates as $id => $path) {
-                clearstatcache(true, $path);
-                $modified = @filemtime($path);
-                if (!isset($owners[$id]) && $modified !== false && $modified < time() - 86400 && \TinyCat\Support\FileSweep::remove($path)) { $changed++; }
+            foreach ($candidates as [$path, $id, $version]) {
+                $owner = $owners[$id] ?? null;
+                $retained = self::retains($owner, $version);
+                clearstatcache(true, $path); $modified = @filemtime($path);
+                if (!$retained && $modified !== false && $modified < time() - 86400 && \TinyCat\Support\FileSweep::remove($path)) { $changed++; }
             }
             return ['changed' => $changed, 'has_more' => false];
         });
     }
 
-    private static function path(int $userId): string
+    private static function path(int $userId, ?string $version = null): string
     {
-        return \TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY . '/' . $userId . '.webp');
+        if ($version !== null && preg_match('/^[a-f0-9]{32}$/D', $version) !== 1) { throw new RuntimeException('Invalid avatar version.'); }
+        return \TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY . '/' . $userId . ($version !== null ? '-' . $version : '') . '.webp');
     }
 }

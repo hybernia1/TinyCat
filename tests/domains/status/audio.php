@@ -6,7 +6,7 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 use TinyCat\Core\Links\Audio;
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 use TinyCat\Core\Text\LinkParser;
 use TinyCat\Core\Links\Metadata;
 use TinyCat\Core\Links\Providers;

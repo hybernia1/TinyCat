@@ -12,7 +12,6 @@ final readonly class Contributions
      * @param list<TemporaryDirectory> $temporaryDirectories
      * @param list<string> $configOverrides
      * @param list<NotificationType> $notificationTypes
-     * @param list<PageTheme> $themes
      * @param list<EntryPage> $homepages
      * @param list<EntryPage> $dashboards
      * @param list<SettingsSection> $settings
@@ -24,7 +23,8 @@ final readonly class Contributions
      * @param list<InformationSection> $information
      * @param list<DashboardWidget> $widgets
      * @param list<EmbedSource> $embeds
-     * @param list<ComponentLookup> $componentLookups */
+     * @param list<ComponentLookup> $componentLookups
+     * @param list<DashboardStats> $statistics */
     public function __construct(
         public array $tasks = [],
         public array $navigation = [],
@@ -34,7 +34,6 @@ final readonly class Contributions
         public array $configOverrides = [],
         public array $notificationTypes = [],
         public bool $notificationInbox = false,
-        public array $themes = [],
         public array $homepages = [],
         public array $dashboards = [],
         public array $settings = [],
@@ -48,5 +47,6 @@ final readonly class Contributions
         public array $widgets = [],
         public array $embeds = [],
         public array $componentLookups = [],
+        public array $statistics = [],
     ) {}
 }

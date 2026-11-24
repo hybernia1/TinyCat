@@ -3,6 +3,7 @@
     "name": "Русский"
   },
   "common": {
+    "help": "Справка",
     "sort": "Сортировка",
     "refresh": "Обновить",
     "save": "Сохранить",
@@ -82,7 +83,10 @@
     "activated": "{entity} активировано.",
     "deactivated": "{entity} деактивировано.",
     "action_for": "{action} — {context}",
-    "search_empty": "Ничего не найдено."
+    "search_empty": "Ничего не найдено.",
+    "copy": "Копировать",
+    "copied": "Скопировано.",
+    "copy_failed": "Не удалось скопировать текст."
   },
   "relative": {
     "now": "сейчас",

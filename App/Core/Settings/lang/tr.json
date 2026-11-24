@@ -25,7 +25,6 @@
       "site_meta_description_help": "Varsayılan meta açıklama olarak kullanılır ve ideal olarak 150-160 karakter civarında olmalıdır.",
       "site_logo": "Sitesi logosu",
       "site_favicon": "Site Simgesi",
-      "site_footer": "Site altbilgisi",
       "minify_css": "Küçült CSS",
       "minify_css_help": "Çalışma zamanı önbelleğinde kompakt, içerik sürümüne sahip CSS dosyaları oluşturur.",
       "minify_js": "Küçült JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Website URL",
       "homepage": "Home page",
       "theme": "Page theme",
-      "automatic": "Automatic"
+      "automatic": "Automatic",
+      "public_enabled": "Herkese açık web sitesi",
+      "public_enabled_help": "Herkese açık sayfaları, aramayı, akışları ve gömülü içeriği etkinleştirir. Devre dışıyken giriş, hesap ve yönetim kullanılabilir."
     },
     "messages": {
       "saved": "Ayarlar kaydedildi.",
@@ -52,6 +53,9 @@
     "image_remove": "Resmi kaldır"
   },
   "install": {
+    "recovery_title": "Kurulumu kurtar",
+    "recovery_warning": "Veritabanını ve yapılandırmayı kesilen kurulum adımından önceki yedeğe döndürür. Yedekten sonraki değişiklikler kaybolur.",
+    "recovery_restore": "Yedeği geri yükle",
     "purpose_migrations": "Geçiş geçmişi, sıralama ve sağlama toplamları.",
     "language_label": "Türkçe",
     "title": "TinyCat CMS'yi yükleyin",
@@ -101,7 +105,7 @@
       "invalid_database": "Veritabanı adı yalnızca harf, sayı ve alt çizgi içerebilir.",
       "required_fields": "Gerekli tüm alanları doldurun.",
       "invalid_username": "2-32 harf (vurgu dahil), rakam, nokta, tire veya alt çizgi kullanın. Bir harf veya rakamla başlayın; nokta veya kısa çizgi ile bitmeyin. Ad yalnızca rakamlardan oluşamaz.",
-      "password_length": "Şifre en az 8 karakterden oluşmalıdır.",
+      "password_length": "Parola en az {min} UTF-8 bayt içermelidir.",
       "password_mismatch": "Şifreler eşleşmiyor.",
       "config_write_failed": "Config.php yazılamadı.",
       "db_failed": "Veritabanı bağlantısı başarısız oldu: {message}"

@@ -23,19 +23,6 @@ class Presentation extends Urls
         return trim($host . ($path !== '/' ? $path : ''));
     }
 
-    public static function status_video_embed_allowed(string $url): bool
-    {
-        return Providers::embedAllowed($url);
-    }
-
-    /**
-     * @param array<mixed> $link
-     */
-    public static function status_video_embed_url(array $link): string
-    {
-        return Providers::embedUrl($link);
-    }
-
     /**
      * @param array<mixed> $link
      * @return array<mixed>

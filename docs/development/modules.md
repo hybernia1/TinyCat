@@ -10,12 +10,12 @@ v `App/Modules/`, společné mechanismy v `App/Core/`.
 
 Modul vlastní své entity, dotazy, FK, oprávnění a transakce. Core nemá univerzální
 `content` ani společné komentáře; přesný inventář a převod popisují
-[doménová data](domain-storage.md). Blog používá `Articles` a `Discussion`, Social
-vlastní `Content` a sociální politiku. Nevolej repository jiného vlastníka jen
+[doménová data](domain-storage.md). Social vlastní statusy a sociální politiku.
+Nevolej repository jiného vlastníka jen
 kvůli sdílenému editoru nebo stejnému číselnému ID.
 
-`Core/Ui/InteractionTarget`, `RichTextResource`, `DiscussionResource` a
-`ThreadTree` zpracují předaná data bez SQL. Vlastník předem ověří cíl a načte
+`Social/Discussion/InteractionTarget`, `Resource`, `ThreadTree` a
+`Social/Posts/TextResource` vlastní sociální resource a prezentaci. Social ověří cíl a načte
 autorizované přílohy, komentáře a stav reakcí. Zápis zamkne vlastní agregát,
 ověří rodiče komentáře i jeho vazbu a atomicky zapíše změnu a limiter.
 `Core/Text/Revisions` pomůže s formátem historie; tabulku vlastní modul.
@@ -25,11 +25,27 @@ spravovaném commitu. Při rollbacku se zahodí. Vnější transakce s takovými
 musí použít `Transactions::run`; samotné PDO `beginTransaction` neslibuje jejich
 doručení. Soubor neodstraňuj před commitem a neukládej nepotvrzené čtení do cache.
 
-Společná prezentace je v `assets/ui/content/`; kompatibilní feature ID
-`publishing.discussion-base` a `publishing.discussion` zůstávají zachována.
-URL, `submit_controller` a schopnost `reply_mentions` dodává vlastník.
-Sociální nabídka je volitelné `componentExtensions` rozšíření. Blog nepřebírá
-zmínky, reputaci ani sociální události jen kvůli společnému UI.
+Po úspěšném commitu se vyhodnotí celá fronta efektů, i když některé selžou.
+`Transactions::run` pak vyhodí `TinyCat\Database\AfterCommitFailed` se seznamem
+`failures` a první příčinou v `getPrevious()`. Tato výjimka znamená, že databáze
+už změny potvrdila; neopakuj kvůli ní celý zápis ani nemaž jeho uložené přílohy
+jako při rollbacku. Výjimka je definována společně s runnerem v
+`App/Core/Database/Transactions.php`. Mazání účtu používá stejnou frontu pro
+úklid všech vlastníků. Efekty mimo transakci se provádějí ihned a jejich
+výjimky se předávají přímo. Fronta není persistentní outbox: pád procesu
+po commitu nezaručuje doručení. Vnořené `run` sdílí vnější transakci bez savepointů.
+
+Volitelný druhý parametr `afterCommit($callback, $key)` sloučí opakovaný efekt:
+první callback se stejným namespacovaným klíčem v dané vnější transakci vyhraje.
+Klíče se zahodí při commitu i rollbacku a neovlivňují další transakce. Mimo
+transakci se callback nadále provede ihned. Používej jej pro společnou invalidaci,
+nikoli pro různé e-maily či soubory, které se musí zpracovat jednotlivě.
+
+Sociální prezentace je v `App/Modules/Social/assets/content/`; její feature ID
+`publishing.discussion-base` a `publishing.discussion` patří Socialu.
+Core nabízí obecné formuláře a dialogy, nikoli univerzální komentářovou doménu.
+Sociální nabídka používá `componentExtensions` uvnitř vlastního katalogu.
+Jiný modul si definuje své entity, resource a komponenty bez závislosti na Socialu.
 
 HTTP i počáteční HTML používají stejné komponentové definice. Doménové endpointy
 vracejí kanonická data a oprávnění, nikoli HTML či definice komponent. Autorizační
@@ -38,10 +54,56 @@ Společné rozhraní nevytváří druhý ruční renderer modalů či seznamů.
 
 ## Veřejný dokument a příspěvky UI
 
+### Hranice cest a společná prezentace
+
+`Request::path()` dekóduje cestu z HTTP URL právě jednou. Totéž platí pro explicitní
+zakódovanou cestu přijatou resource endpointem. Interní již dekódovaná cesta
+prochází pouze idempotentním `Request::normalizePath()`. `Router::dispatch($path)`,
+`pageResource()` a `isApiPath()` přijímají tuto interní podobu; router parametry
+po shodě znovu nedekóduje. Doslovné `%2F` vzniklé z URL `%252F` tak nezmění
+význam na oddělovač segmentů. Deklarace tras jsou struktura, nikoli zakódovaná
+URL; zachovávají regexové escape sekvence. GET registrace obsahuje také implicitní
+HEAD, včetně metadat a hlavičky `Allow` při HTTP 405.
+
+Server i klient používají stejná skalární pravidla komponent: číselná nula včetně
+`0.0` je nepravdivá, řetězec `"0"` zůstává pravdivý. Textový převod zachovává
+dosavadní PHP chování (`true` → `"1"`, `false` a `null` → prázdný text);
+lookup nezahodí číselný klíč `0`. Pole a objekty se při explicitním textovém
+převodu serializují jako JSON. Číselné `eq` sjednocuje int/float podle JSON,
+ale nepřevádí číselné řetězce na čísla. Regrese parity používají společnou
+fixture v `tests/fixtures/component-contexts.json`.
+
+Volitelný třetí argument `Page::render($page, $content, $document)` předá již
+připravený výstup `Metadata::document()` pro stejnou stránku. Core i místní téma
+ho použijí místo druhého výpočtu. Nejde o místo pro libovolný JSON od klienta.
+Administrace si zachovává vlastní metadata a robots politiku. Veřejné stránky
+Socialu skládají query parametry společným mechanismem pro URL a zachovávají
+`compact` při změně nebo vyčištění mediálního filtru, v SSR i při AJAX navigaci.
+
+Chybové HTML připravuje `Core/Runtime/Errors` s názvem, stavem a dostupnými
+akcemi. Běžná šablona `Core/Ui/templates/error.php` používá společný veřejný
+rám; hledání nabízí pouze při registrovaném zdroji. Samostatný
+`errorFallback.php` zůstává použitelný bez databáze, tématu a externích assetů.
+Obě šablony dostávají připravené URL a popisky, nikoli pevnou cestu či značku.
+Nouzový bootstrap může vrátit prostý text. Chybové dokumenty sdílejí
+`Http/Document::error`, který zachovává status, neposílá ETag, zakazuje cache
+a neposílá tělo při HEAD. Aplikační API dál používá vlastní společnou JSON obálku.
+
+XML/TXT/SVG serializace je oddělená od doručení přes `Http/Document`.
+`Support/Xml` poskytuje escapování, CDATA a ploché skalární elementy s ověřenými
+názvy. RSS renderer přijímá metadata enclosure (`url`, `length`, `type`) od
+vlastníka; nepředpokládá typ sociální přílohy. SVG avatar má vlastní verzovanou
+geometrii a CSP, ale sdílí HTTP validátory a HEAD. TXT příspěvky vlastníka
+vracejí řetězec bez výstupního bufferu a neopakují společné discovery odkazy.
+HTTP responder přijímá také gzip variantu svého ETag, protože Apache
+[`mod_deflate`](https://httpd.apache.org/docs/2.4/mod/mod_deflate.html#deflatealteretag)
+přidává příponu až za PHP. Změna těla zneplatní obě varianty. Aplikace kvůli
+tomu nevyžaduje změnu serverového vhostu ani vlastní implementaci komprese.
+
 Stránka volá `Core/Ui/Page::render()` s obsahem a metadaty. Core připraví dokument,
-head, jazykové menu, uživatelské menu a consent UI. Vlastní téma dodává rozložení
-obsahu přes `PageTheme`; nekopíruje head a vnější dokument. Blog je příkladem
-použití výchozího rámu, Social příkladem vlastního tématu nad týmž dokumentem.
+head, jazykové menu, uživatelské menu a consent UI. Volitelné
+[samostatné téma](themes.md) dodává veřejné rozložení nad stejným dokumentem.
+Funkční moduly včetně Socialu poskytují obsah; bez tématu používají core rám.
 
 `ProvidesContributions::contributions()` může vrátit tyto lazy příspěvky:
 
@@ -52,7 +114,7 @@ použití výchozího rámu, Social příkladem vlastního tématu nad týmž do
 | `widgets` | `DashboardWidget` | HTML widgetu pro společný administrátorský dashboard. |
 | `embeds` | `EmbedSource` | Lazy výběr veřejného obsahu pro společný oEmbed podle lokální kanonické cesty. |
 
-Příklad deklarace cesty: `new LocalizedRoute('blog.article', '^/articles/[1-9][0-9]*$')`.
+Příklad deklarace cesty: `new LocalizedRoute('notes.detail', '^/notes/[1-9][0-9]*$')`.
 Vzor neobsahuje regex oddělovače; musí být použitelný v PHP i JavaScriptu.
 Obsah článku se přepnutím jazyka nepřekládá a canonical zůstává bez prefixu.
 `translatedDocument: true` používej pro překládaný dokument, například privacy;
@@ -65,13 +127,12 @@ administrace; serverová autorizace jeho dat stále patří vlastníkovi. Vypnut
 nepřispívá cestami, informačním obsahem ani widgety.
 
 `Core/Text/Policies::provide(owner, name, policy)` registruje pojmenované čisté
-renderovací hooky. Social používá `post`, Blog `article`. Politiky nemají SQL;
+renderovací hooky. Social používá `post`. Politiky nemají SQL;
 normování a validaci uloženého textu určuje vlastník.
 
 Blokování URL a UTM má každý modul samostatné. Social zachovává historické klíče
-`moderation.blocked_urls` a `content_links.*`, Blog používá `blog.blocked_urls`
-a `blog.links.*`; normalizaci poskytuje `Core/Security/UrlRules` a
-`Core/Links/Tracking`. Blog-only instalace neposkytuje sociální moderation API.
+`moderation.blocked_urls` a `content_links.*`; další modul deklaruje své klíče.
+Normalizaci poskytuje `Core/Security/UrlRules` a `Core/Links/Tracking`.
 
 `Core/Text/Segments`, `Core/Links/Presentation` a UI komponenty sdílejí text,
 odkazy, obrázky a přehrávače. `Core/Links/Outbound` přijímá autorizovaný text

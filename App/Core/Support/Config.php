@@ -20,6 +20,7 @@ final class Config
     {
         self::$config = $configuration->values();
         self::$booted = true;
+        \TinyCat\Core\Runtime\Debug::configure(self::$config['app']['debug'] ?? 'off');
     }
 
     public static function load(): void
@@ -47,6 +48,7 @@ final class Config
 
         self::$config = $loaded;
         self::$booted = true;
+        \TinyCat\Core\Runtime\Debug::configure(self::$config['app']['debug'] ?? 'off');
     }
 
     public static function get(?string $key = null, mixed $default = null): mixed

@@ -25,7 +25,6 @@
       "site_meta_description_help": "Used as the default meta description and should ideally be around 150–160 characters.",
       "site_logo": "Site logo",
       "site_favicon": "Favicon",
-      "site_footer": "Site footer",
       "minify_css": "Minify CSS",
       "minify_css_help": "Creates compact, content-versioned CSS files in the runtime cache.",
       "minify_js": "Minify JavaScript",
@@ -37,7 +36,9 @@
       "site_url": "Website URL",
       "homepage": "Home page",
       "theme": "Page theme",
-      "automatic": "Automatic"
+      "automatic": "Automatic",
+      "public_enabled": "Public website",
+      "public_enabled_help": "Enable public pages, search, feeds and embedded content. Login, account and administration remain available when disabled."
     },
     "messages": {
       "saved": "Settings were saved.",
@@ -52,6 +53,9 @@
     "image_remove": "Remove image"
   },
   "install": {
+    "recovery_title": "Installation recovery",
+    "recovery_warning": "Restore the database and configuration to the snapshot before the interrupted installation step. Changes made since that snapshot will be lost.",
+    "recovery_restore": "Restore snapshot",
     "purpose_migrations": "Migration history, ordering and checksums.",
     "language_label": "English",
     "title": "Install TinyCat CMS",
@@ -101,7 +105,7 @@
       "invalid_database": "The database name may contain only letters, numbers, and underscores.",
       "required_fields": "Fill in all required fields.",
       "invalid_username": "Use 2–32 letters (including accents), numbers, dots, hyphens, or underscores. Start with a letter or number; do not end with a dot or hyphen. The name cannot contain only numbers.",
-      "password_length": "The password must be at least 8 characters.",
+      "password_length": "Password must be at least {min} UTF-8 bytes.",
       "password_mismatch": "The passwords do not match.",
       "config_write_failed": "Could not write config.php.",
       "db_failed": "Database connection failed: {message}"

@@ -42,7 +42,7 @@ $assert(!\TinyCat\Core\Identity\Roles::isAdmin(null), 'A missing user is not an 
 $assert(!\TinyCat\Core\Identity\Roles::isAdmin(['role' => 'user']), 'A regular user is not an administrator.');
 $assert(\TinyCat\Core\Identity\Roles::isAdmin(['role' => 'admin']), 'Administrator identity uses the shared policy helper.');
 
-$commentRows = \TinyCat\Core\Ui\ThreadTree::flatten([
+$commentRows = \TinyCat\Social\Discussion\ThreadTree::flatten([
     ['id' => 1, 'replies' => [['id' => 2, 'replies' => []]]],
     ['id' => 3, 'replies' => []],
 ]);

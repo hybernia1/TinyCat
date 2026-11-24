@@ -167,12 +167,26 @@ Spouštěj příslušné [existující runnery](../../tests/README.md) a zazname
 která část proběhla na živé instalaci a která nad izolovanými fixtures.
 Výsledek jednoho prostředí automaticky neprokazuje funkčnost druhého.
 
+## Source mode during UI development
+
+When synchronizing modified sources, do not leave an older release inventory
+active on the development installation. Preserve the generated entry points
+`assets/build/manifest.json` and `App/Core/Support/compiled/translations.php`
+in a backup outside the live runtime. Individual hashed bundles need not be
+deleted. Runtime then uses its standard source fallback. This workflow is for
+source development; do not modify signed production releases this way.
+
+Module selection determines whether a compiled inventory is valid. A stale build
+can be ignored with a module enabled and become eligible again after disabling
+it, unexpectedly restoring old CSS, JavaScript and components. Check loaded
+asset URLs before and after activation changes and restore the original module
+state after verification.
+
 ## Instalace a data
 
-Aktuální nasazení z 12. 11. 2026 je **6.0.0-dev.3** s aktivním Blogem
-i Socialem. [Report nasazení](../audits/platform-completion-2026-11-12.md)
-uvádí podpisové mezikroky, zálohy, ověření vypnutého Socialu a shodná data,
-konfiguraci i všech 9 141 existujících médií. Archiv Blogu je `/blog`.
+Na výslovné zadání byla 21. 11. 2026 provedena nová instalace **6.3.1 core**
+bez funkčních modulů. Starší [report nasazení](../audits/platform-completion-2026-11-12.md)
+popisuje historickou instalaci, nikoli současný stav domény.
 
 Doména `.test` není souhlas k resetu. Stávající instalace má svou konfiguraci,
 účty a média. Bez zadání reinstalace neměň její DB připojení, nemaž tabulky

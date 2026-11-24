@@ -1,6 +1,6 @@
-import "../../../../assets/core/modules.js";
+import "../../Ui/assets/runtime/modules.js";
 import "./controller.js";
-import "../../../../assets/ui/list-navigation.js";
+import "../../Ui/assets/list-navigation.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

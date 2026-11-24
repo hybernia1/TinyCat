@@ -44,8 +44,8 @@ $assert = static function (bool $value, string $message) use (&$checks): void { 
 $assert(!is_dir($workspace . '/App/Modules/Social'), 'The test assembly has no Users source directory');
 $pdo = new PDO('sqlite:' . $workspace . '/avatar.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 Connection::set($pdo);
-$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, email TEXT, password TEXT, role TEXT, status TEXT, bio TEXT, locale TEXT, theme TEXT, email_notifications INTEGER, avatar_exists INTEGER, avatar_appearance TEXT, updated_at TEXT)");
-$pdo->exec("INSERT INTO users VALUES (1, 'Member', 'private@example.test', 'private-hash', 'user', 'active', 'Bio', 'en', 'dark', 1, 0, NULL, '2026-11-11 00:00:00')");
+$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, email TEXT, password TEXT, role TEXT, status TEXT, bio TEXT, locale TEXT, theme TEXT, email_notifications INTEGER, avatar_exists INTEGER, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at TEXT)");
+$pdo->exec("INSERT INTO users VALUES (1, 'Member', 'private@example.test', 'private-hash', 'user', 'active', 'Bio', 'en', 'dark', 1, 0, NULL, NULL, '2026-11-11 00:00:00')");
 $pdo->exec('CREATE TABLE ip_action_limits (ip_address TEXT, action_name TEXT, bucket_start TEXT, action_count INTEGER, updated_at TEXT, UNIQUE(ip_address, action_name, bucket_start))');
 $user = Connection::find('users', ['id' => 1]);
 $public = Resource::profile($user); $private = Resource::privateProfile($user); $identity = Resource::identity($user);
@@ -100,7 +100,9 @@ try {
     $assert($status === 200 && str_starts_with($svg, '<svg') && str_contains($headers['content-type'][0], 'image/svg+xml'), 'Generated avatar is served without Users');
     $assert(!isset($headers['set-cookie']) && str_contains($headers['cache-control'][0], 'immutable'), 'Public generated avatar does not start a session');
     [$status] = $request('/avatar/generated/v1/1.svg', extra: ['If-None-Match' => $headers['etag'][0]], authorized: false); $assert($status === 304, 'Generated avatar preserves ETag handling');
-    [$status] = $request('/avatar/generated/v1/1.svg?fur=invalid', authorized: false); $assert($status === 404, 'Invalid appearance parameters remain rejected');
+    [$status] = $request('/avatar/generated/v1/1.svg', extra: ['If-None-Match' => '"other", W/' . $headers['etag'][0]], authorized: false); $assert($status === 304, 'Generated avatars share weak/list validator handling with other documents');
+    [$status] = $request('/avatar/generated/v1/1.svg', extra: ['If-None-Match' => 'W/' . substr($headers['etag'][0], 0, -1) . '-gzip"'], authorized: false); $assert($status === 304, 'A downstream gzip validator retains the identity of the generated SVG');
+    [$status, , $badHeaders] = $request('/avatar/generated/v1/1.svg?fur=invalid', authorized: false); $assert($status === 404 && str_contains($badHeaders['cache-control'][0], 'no-store') && !isset($badHeaders['etag']), 'Invalid appearance parameters remain rejected without cacheable error responses');
     [$status, , $headers] = $request('/avatar/Member', authorized: false); $assert($status === 302 && str_contains($headers['location'][0], '/avatar/generated/v1/1.svg'), 'Username lookup preserves generated fallback URL');
     [$status] = $request('/avatar/missing', authorized: false); $assert($status === 404, 'Missing username uses the technical 404 response');
     [$status] = $request('/api/_avatars/appearance', 'PATCH', ['appearance' => ['fur' => 'ginger']]); $assert($status === 403, 'Appearance mutation retains common CSRF');
@@ -111,8 +113,10 @@ try {
     $body = '--' . $boundary . "\r\nContent-Disposition: form-data; name=\"_method\"\r\n\r\nPUT\r\n--" . $boundary . "\r\nContent-Disposition: form-data; name=\"avatar\"; filename=\"avatar.png\"\r\nContent-Type: image/png\r\n\r\n" . $png . "\r\n--" . $boundary . "--\r\n";
     $uploadHeaders = ['Content-Type' => 'multipart/form-data; boundary=' . $boundary, 'X-CSRF-Token' => $csrf];
     [$status, $saved] = $request('/api/_avatars/avatar', 'POST', $body, $uploadHeaders);
-    $file = $workspace . '/uploads/avatars/1.webp';
+    $file = $workspace . parse_url($saved['data']['user']['avatar_url'], PHP_URL_PATH);
     $assert($status === 200 && $saved['data']['user']['avatar_custom'] && is_file($file), 'Real multipart upload uses the existing transactional storage');
+    $delivered = file_get_contents('http://' . $address . $saved['data']['user']['avatar_url']);
+    $assert(is_string($delivered) && $delivered === file_get_contents($file), 'The immutable public URI serves the complete committed WebP bytes');
     $assert(getimagesize($file)['mime'] === 'image/webp' && (int) Connection::value('SELECT avatar_exists FROM users WHERE id = 1') === 1, 'Upload persists WebP and account metadata');
     $assert((int) Connection::value("SELECT action_count FROM ip_action_limits WHERE action_name = 'upload'") === 1, 'Member upload still consumes the technical account limiter');
     $previousHash = hash_file('sha256', $file);
@@ -125,7 +129,7 @@ try {
     clearstatcache(true, $file);
     $assert($status === 200 && !is_file($file) && (int) Connection::value('SELECT avatar_exists FROM users WHERE id = 1') === 0, 'Removal preserves generated identity and clears the physical upload');
     $assert((glob($workspace . '/uploads/avatars/.avatar-*') ?: []) === [], 'Successful and failed mutations leave no staged avatar files');
-    foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Registration', 'TinyCat\\Social\\Automation\\Registration', 'TinyCat\\Social\\Moderation\\Restrictions', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Runtime\\Errors'] as $class) { $assert(!class_exists($class, false), 'Account resources did not load ' . $class); }
+    foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Social\\Moderation\\Restrictions', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Runtime\\Errors'] as $class) { $assert(!class_exists($class, false), 'Account resources did not load ' . $class); }
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     Connection::set(new PDO('sqlite::memory:')); $pdo = null;

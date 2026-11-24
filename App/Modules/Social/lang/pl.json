@@ -41,12 +41,48 @@
       "status_image_disabled": "Przesyłanie obrazów jest obecnie wyłączone.",
       "status_image_compression": "Tego obrazu nie można skompresować do skonfigurowanego limitu rozmiaru.",
       "status_not_found": "Nie znaleziono wpisu.",
-      "status_forbidden": "Nie masz uprawnień do wykonania tej akcji."
+      "status_forbidden": "Nie masz uprawnień do wykonania tej akcji.",
+      "status_tag_too_long": "Znacznik może zawierać maksymalnie {max} znaków.",
+      "status_image_invalid": "Wybierz prawidłowy obraz JPEG, PNG lub WebP w promieniu {size} KB.",
+      "comment_required": "Komentarz nie może być pusty.",
+      "comment_not_found": "Nie znaleziono komentarza.",
+      "comment_edit_forbidden": "Nie masz uprawnień do edycji tego komentarza.",
+      "comment_forbidden": "Nie możesz usunąć tego komentarza.",
+      "comment_created": "Komentarz został dodany.",
+      "comment_saved": "Komentarz został zapisany.",
+      "comment_deleted": "Komentarz został usunięty."
     },
     "status_embed": "Osadź wpis",
     "status_embed_help": "Skopiuj ten kod HTML do bloku HTML swojej witryny. WordPress może też rozpoznać osadzanie na podstawie adresu wpisu.",
     "status_embed_code": "Kod osadzania",
-    "status_embed_open": "Otwórz oryginalny wpis"
+    "status_embed_open": "Otwórz oryginalny wpis",
+    "translation_translate": "Tłumacz",
+    "translation_hide": "Ukryj tłumaczenie",
+    "translation_preparing": "Przygotowywanie tłumaczenia…",
+    "translation_machine": "Tłumaczenie maszynowe",
+    "translation_unavailable": "Tłumaczenie tego tekstu jest niedostępne.",
+    "translation_same": "Ten post jest już w Twoim języku interfejsu.",
+    "translation_continue": "Gotowy. Kliknij ponownie Tłumacz, aby kontynuować.",
+    "translation_failed": "Tłumaczenie nie powiodło się. Spróbuj ponownie.",
+    "status_counter": "Pozostało {count}",
+    "status_image_add": "Dodaj obraz",
+    "status_image_remove": "Usuń obraz",
+    "status_body": "Co nowego?",
+    "status_comment": "Komentarz",
+    "status_comment_placeholder": "Napisz komentarz...",
+    "status_reply": "Odpowiedź",
+    "status_like": "Podobnie",
+    "status_reply_placeholder": "Napisz odpowiedź...",
+    "status_like_for": "Lubię – {context}",
+    "status_unlike_for": "Inaczej – {context}",
+    "status_more_comments": "Wczytaj więcej komentarzy",
+    "status_more_replies": "Wczytaj odpowiedzi",
+    "status_comments": "Komentarze",
+    "status_comment_history": "Edytuj historię",
+    "status_comment_history_empty": "Ten komentarz nie był jeszcze edytowany.",
+    "status_comment_history_updated_by": "Edytowany przez {author}",
+    "status_comment_history_change": "Zmiana komentarza",
+    "status_comment_history_unknown": "Nieznany użytkownik"
   },
   "bots": {
     "title": "Boty",
@@ -310,13 +346,14 @@
     "filter_links": "Linki",
     "filter_text": "Tylko tekst",
     "feed_empty_filtered": "Żadne wpisy nie pasują do tego filtra.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} wpis",
       "few": "{count} wpisy",
       "many": "{count} wpisów",
       "other": "{count} wpisu"
-    }
+    },
+    "status_image_alt": "Obraz dołączony do postu autorstwa {author}: {text}",
+    "status_image_alt_empty": "Obraz dołączony do postu autorstwa {author}"
   },
   "app": {
     "name": "TinyCat"
@@ -371,7 +408,8 @@
       "likes": "Polubienia",
       "comments": "Komentarze",
       "follows": "Obserwowania",
-      "reports": "Zgłoszenia"
+      "reports": "Zgłoszenia",
+      "content_group": "Treści"
     },
     "table_missing": "Tabela nie została jeszcze utworzona."
   },

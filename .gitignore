@@ -29,4 +29,7 @@
 *.bak
 Thumbs.db
 .DS_Store
-/assets/modules/selection-probe-*/
+/App/Modules/selection-probe-*/
+/App/Modules/build-snapshot-*/
+/assets/build/*
+!/assets/build/.gitkeep

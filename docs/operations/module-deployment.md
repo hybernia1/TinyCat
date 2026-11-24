@@ -1,10 +1,9 @@
 # Instalace a správa modulové sestavy
 
-Runtime `6.0.1` odděluje povinný framework od funkčních
-modulů. Social je jeden modul; Blog je druhý
-a mohou běžet společně. Core není součástí aktivačního seznamu.
+TinyCat odděluje povinný framework od funkčních modulů. Social je jeden
+volitelný modul. Core není součástí aktivačního seznamu.
 
-Aktuální balíčky vyžadují dokončenou instalaci TinyCat 6.0.4 nebo novější.
+Aktuální balíčky vyžadují dokončenou instalaci TinyCat 6.0.10 nebo novější.
 Kompatibilní transport pro starší verze a builder přechodových balíčků byly
 odstraněny. Historie schémat a checksumy zůstávají zachované; aktualizace musí
 zachovat identitu produktu. Viz [podporovaný výchozí stav](updates.md#supported-update-baseline).
@@ -24,11 +23,9 @@ ani jeho závislé moduly nespustí; jejich uložená aktivace ani data se autom
 nemění. Chybějící modul lze výslovně vypnout. Vrácení souborů není nová aktivace:
 respektuje uložený stav. Neplatný neaktivní manifest neblokuje správce.
 
-Blog je vývojový a testovací modul (`development: true` v manifestu).
-Produkční `--assembly=platform` jej nezahrnuje; úplný inventář pro testovací
-sestavy vybírá `--assembly=development`, samostatný Blog `--assembly=blog`.
-Instalace, která Blog skutečně používala, musí dál dostávat odpovídající sestavu;
-updater nadále odmítá odstranit instalovaného vlastníka dat.
+Blog a jeho build preset jsou odstraněny. Historické instalace s evidovaným
+Blogem nejsou cílem nové sestavy; updater nadále odmítá odstranit instalovaného
+vlastníka dat. Neobcházej tuto kontrolu přepisem deploymentu nebo mazáním dat.
 
 Přihlášený administrátor otevře **Moduly** v navigaci nebo `/admin/modules`.
 Stránka ukazuje dostupné moduly, jejich stav, povinné závislosti a aktivní
@@ -36,7 +33,7 @@ moduly, které je potřebují. Zapnutí doplní potřebné závislosti; vypnutí
 zachová data a odmítne rozbití zbývající sestavy. Social má jediný přepínač pro celou svoji funkci. Core se v seznamu nenabízí. Změna vyžaduje potvrzení, CSRF a aktuální revizi výběru. Po úspěchu
 se načte celá stránka s novými routami, navigací, překlady a assety.
 
-Správce je součástí core UI, takže zůstává dostupný i bez Socialu a Blogu; Settings a Updates jsou povinnou součástí frameworku. Používá stejný lifecycle, zámek, zálohu a kontroly jako
+Správce je součástí core UI, takže zůstává dostupný i bez Socialu; Settings a Updates jsou povinnou součástí frameworku. Používá stejný lifecycle, zámek, zálohu a kontroly jako
 CLI. Zpřístupňuje moduly distribuce i samostatné ZIPy. Tlačítko **Nahrát modul**
 přijímá důvěryhodný PHP balíček do 32 MiB; vyžaduje potvrzení, oprávnění
 administrátora a CSRF. První nahrání zachová modul vypnutý a neprovádí jeho SQL
@@ -57,25 +54,38 @@ Výchozí `--assembly=source` používá explicitní `App/modules.php`.
 `--assembly=platform` načte produkční manifesty `App/Modules/*/module.json`
 přes `SourceModules::production()`, bez modulů s `development: true`.
 `--assembly=development` zahrne i vývojové moduly. Nový modul nevyžaduje zápis do centrálního seznamu.
-`--assembly=blog` je preset Blogu nad stejným povinným frameworkem. Presety jsou seznamy manifestů, nikoli další runtime.
 `--product=vendor.product` určuje identitu vlastní sestavy a `--active=id1,id2`
 její výchozí aktivní moduly; bez této volby jsou aktivní všechny dostupné.
 Funkční moduly jsou volitelné; jejich funkční závislosti musí být aktivní. Core je vždy přítomný. Manifestový modul musí ležet
 pod `App/Modules/` s vlastními `src/`, zdroji a neměnnou historií migrací.
 Builder validuje poskytovatele a tabulky, přibalí dostupné vlastníky a sestaví
 assety a překlady pouze aktivního výběru. Produkční balíček nepotřebuje tools,
-Composer ani Node. Blog artefakty mají prefix `tinycat-blog`, sociální `tinycat`.
+Composer ani Node. Core artefakty mají prefix `tinycat.core`, sociální `tinycat`.
 
 Podepsaný manifest obsahuje druh artefaktu (`install`/`update`), identitu
 produktu, dostupné a aktivní moduly, povinný framework, vlastnictví schémat, závislosti a migrační
 plány s checksumy. Stejný popis je uvnitř balíčku v `App/distribution.json`.
 Lokální aktivaci vlastní chráněný `storage/deployment.json`; nepřepisuj ji ručně.
 
+Historický mazací seznam se při sestavení omezí na modulové adresáře vlastněné
+danou distribucí. Core balíček proto nemaže soubory samostatně instalovaných
+modulů; jejich úklid patří aktualizaci vlastníka. Toto pravidlo platí i pro
+vypnuté moduly a neexistující cesty. Staré cesty mimo `App/Modules/` zůstávají
+v plánu kvůli podporovaným přechodům. Runtime nadále odmítá balíček zasahující
+do nezávisle instalovaného modulu před změnou souborů nebo dat.
+
+Veřejné discovery výstupy používají stejný registr aktivních vlastníků.
+Core přispívá homepage a stránkou soukromí do `SitemapSection`; moduly přidávají
+své vlastní sekce, `InformationSection`, `CrawlerHint` a feedové routy.
+Po vypnutí vlastníka jeho sekce zmizí a jeho feedové i sitemapové adresy vracejí
+404. Dynamické sitemap, robots, LLM a RSS dokumenty používají společný
+`Http/Document` s ETag a povinnou revalidací; trvalé cache bez revalidace jsou
+vyhrazené výslovně verzovaným výstupům.
+
 ## Fresh instalace
 
 Rozbal instalační artefakt do samostatné instalace a připrav její `config.php`
-s připojením k **prázdné** databázi. Blog čte například `i18n.locale`, `blog.title`,
-`cache` a `datetime` přímo z konfigurace. Příkazy spouštěj z kořene instalace:
+s připojením k **prázdné** databázi. Příkazy spouštěj z kořene instalace:
 
 ```powershell
 php App/Console.php status
@@ -86,11 +96,9 @@ php App/Console.php install
 `password_confirm`, `locale`. Předej jej správcem tajných údajů nebo chráněným
 vstupem; heslo nedávej do argumentů příkazu, shellové historie ani repozitáře.
 V interaktivním terminálu příkaz vyžádá přesměrovaný vstup. Validace i zápis
-hesla používají Accounts. Opakovaná instalace nebo neprázdná DB se odmítá.
-Sestava bez Accounts administrátora nevytváří.
+hesla používají Core/Identity. Opakovaná instalace nebo neprázdná DB se odmítá.
 
-Čisté core vytváří 8 tabulek. Blog přidává 13 vlastních tabulek, celkem 21;
-Social přidává 16, s oběma moduly je jich 37. Core nemá povinný obsah, diskuse
+Čisté core vytváří 8 tabulek. Social přidává 16, celkem 24. Core nemá povinný obsah, diskuse
 ani média. [Inventář a datové vlastnictví](../development/domain-storage.md).
 Bootstrap nikdy neprovádí DDL.
 Webserver musí používat kořenový `.htaccess` nebo ekvivalentní pravidla:
@@ -118,38 +126,30 @@ Nainstalovaní vlastníci zůstávají zapojení do úklidu při odstranění ú
 jejich běžné úlohy a statusové reakce se tím neaktivují. Destruktivní
 odinstalace není součástí tohoto rozhraní.
 
-### Blog a Social společně nebo odděleně
+### Volitelný Social
 
 Z kořene **nasazené instalace**, pro tinycat.test tedy `E:/laragon/www/tinycat`:
 
 ```powershell
 php App/Console.php status
-php App/Console.php activate tinycat.blog
 php App/Console.php deactivate tinycat.social
 php App/Console.php activate tinycat.social
-php App/Console.php deactivate tinycat.blog
 ```
 
 `tinycat.social` je jeden modul s vlastní inicializací a vnitřními částmi
 pro profily, statusy, moderaci, hledání, automatizaci a veřejné stránky.
 Vypnutí zachová celý framework včetně identity, nastavení,
 scheduleru, diagnostiky, obecné schránky a doručování pošty.
-Nesmaže statusy, vztahy ani články. Blog lze vypnout nezávisle.
+Nesmaže statusy ani vztahy.
 
-Blog má archiv `/blog`, detail `/articles/{id}` a administraci
-`/admin/articles`. Social má `/social` a dosavadní `/status/{id}`.
+Social má `/social` a dosavadní `/status/{id}`.
 Kořen `/` vybírá core z příspěvků `homepages`: nastavení `site.homepage`
-volí například `tinycat.blog.home` nebo `tinycat.status.home`. Prázdná hodnota
+volí například `tinycat.status.home`. Prázdná hodnota
 vybírá první aktivní nabídku; po vypnutí zvolené nabídky se použije aktivní
-fallback. `site.theme` obdobně vybírá vzhled; bez aktivního tématu je společný
-core rám. Obě volby jsou v editoru nastavení webu. Nastavení, jeho klientské
+fallback. `site.theme` vybírá [samostatné téma](../development/themes.md);
+moduly témata neregistrují. Bez vybraného tématu je společný core rám.
+Obě volby jsou v editoru nastavení webu. Nastavení, jeho klientské
 popisky a e-mailové šablony přispívají pouze aktivní vlastníci.
-
-Starší vývojová instalace `6.0.0-dev.1` odmítá nové druhy manifestových zdrojů
-`emails` a `componentExtensions`. Před platformním balíčkem potřebuje podepsaný
-kompatibilní mezikrok `6.0.0-dev.1.1`, který aktualizuje pouze podporu metadat
-a číslo verze nad jejími stávajícími zdroji. Neobcházej validátor ručním
-přepisem živého PHP. Oba kroky používají normální updater a vlastní zálohy.
 
 Předkompilované výstupy obsahují otisk výběru. Při změně aktivace runtime
 odmítne výstupy jiné sestavy a použije společný assetový a překladový compiler
@@ -158,18 +158,9 @@ nasazení výhradní; souběžný konflikt se odmítá a může se později zopa
 
 ## Aktualizace a obnova
 
-Datový model dev.10 používá descriptor formátu 3 bez povinného Publishingu.
-Starý runtime dev.9 jej neumí ověřit: nejprve použij kompatibilní sestavu
-dev.9.1, teprve potom datovou aktualizaci dev.10. Každý krok má vlastní snapshot.
-Neměň framework ani tabulky ručně. Blog i nainstalovaný vypnutý Social převádí
-standardní updater; ID, URL, média a historie zůstávají zachované.
-Podrobnosti `fresh`, `legacy` a `retired` jsou v
-[datovém kontraktu](../development/domain-storage.md).
-
-
 ```powershell
 php App/Console.php rescue
-php storage/updates/console.php update /private/tinycat-blog-update.json /private/tinycat-blog-update.sig /private/tinycat-blog-VERSION.zip
+php storage/updates/console.php update /private/tinycat.core-update.json /private/tinycat.core-update.sig /private/tinycat.core-VERSION.zip
 php storage/updates/console.php rollback BACKUP_ID
 ```
 
@@ -227,3 +218,23 @@ odinstalaci nejsou součástí této etapy.
 ZIP není podpis autora: instaluj pouze důvěryhodný PHP kód. Kontrola ověřuje
 checksumy, verze, cesty, vlastnictví a závislosti; nenahrazuje kontrolu zdroje.
 Nižší limity `upload_max_filesize`, `post_max_size` nebo webserveru platí i zde.
+
+### Completing a fresh installation
+
+The CLI installer and the final web installation step share
+`Lifecycle::completeInstallation()`. It verifies the declared schema readiness
+and writes the initial deployment with the product's explicit active/installed
+module lists. The web wizard keeps staged table creation, account validation,
+configuration writing and login; source checkouts without a distribution do not
+invent a product descriptor. An existing deployment cannot be finalized again
+as a fresh installation. Subsequent module operations use the normal lifecycle.
+
+### Application release channels
+
+The installed signed distribution retains both the product ID and artifact stem.
+The updater uses that stored stem even when the module declaring the original
+profile is inactive. A custom application therefore keeps its asset identity
+without a hardcoded core product list. Configure its repository and public signing
+key through `updates.repository` and `updates.public_key` when using a separate
+channel. A shared release must contain a complete signed asset trio for every
+supported product. See [product update channels](updates.md#product-update-channels).

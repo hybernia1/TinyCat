@@ -1,0 +1,32 @@
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.card-body {
+  padding: 0.875rem;
+}
+
+.card-header,
+.card-footer {
+  padding: 0.75rem 0.875rem;
+}
+
+.card-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.card-header.split {
+  gap: 0.625rem;
+}
+
+.card-header.split > .btn {
+  flex: 0 0 auto;
+}
+
+.card-footer {
+  border-top: 1px solid var(--border);
+}
+

@@ -321,15 +321,7 @@ final class Connection
 
     private static function identifier(string $identifier, bool $allowDot = true): string
     {
-        $pattern = $allowDot
-            ? '/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/'
-            : '/^[A-Za-z_][A-Za-z0-9_]*$/';
-
-        if (!preg_match($pattern, $identifier)) {
-            throw new InvalidArgumentException('Invalid SQL identifier: ' . $identifier);
-        }
-
-        return $identifier;
+        return \TinyCat\Core\Database\Statements::identifier($identifier, $allowDot);
     }
 
     /**

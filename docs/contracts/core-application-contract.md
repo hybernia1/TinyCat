@@ -13,6 +13,7 @@ nebo validační obálky nevznikají.
 | Oblast | Autorita core | Vstup modulu | Závazný kontrakt |
 | --- | --- | --- | --- |
 | HTTP API | Parsing, přístupová politika, CSRF, obálka a serializace | Registrace přes `TinyCat\Http\Api`, data nebo `Result` | [HTTP API](../reference/api.md) |
+| Chyby | Klasifikace, bezpečný výstup a společná diagnostika | Explicitní veřejné odmítnutí nebo předání technické výjimky | [Zpracování chyb](error-handling.md) |
 | Validace | Typy, obecná pravidla, struktura chyb a HTTP 422 | Pravidla pro `Request::validated()`, doménové chyby přes `Response::validation()` | Tento dokument a HTTP API |
 | Dokument a UI | `Core\Ui\Page`, společné komponenty, vykreslení PHP/JS | Data, vlastní komponentové definice, stránky a pojmenovaná rozšíření | [UI komponenty](ui-conventions.md), [administrace](admin-ui-conventions.md) |
 | Dialogy a formuláře | Resource loader, lifecycle, validace, historie a koncept | Autorizovaný resource endpoint a definice formuláře | [Modaly](modal-contract.md) |
@@ -31,6 +32,11 @@ Core autorizuje požadavek a kontroluje CSRF před obsluhou. Modul navíc ověř
 oprávnění ke konkrétnímu objektu a jeho viditelnost. Skryté tlačítko ani klientská
 validace toto oprávnění nenahrazují.
 
+Dostupnost veřejného webu je samostatná politika podle
+[kontraktu veřejných povrchů](public-surface.md). Veřejné obsahové endpointy
+ji deklarují nezávisle na svém oprávnění; anonymní přihlašovací API zůstává
+dostupné i při zavřeném webu.
+
 Úspěšný handler vrací data nebo `TinyCat\Http\Result`. Společný transport sestaví
 `ok`, `status`, `code`, `params`, `message`, `data` a `meta`. Modul nepíše vlastní
 JSON obálku, neukončuje API přes `echo json_encode()` a neposílá HTML ani definice
@@ -39,6 +45,21 @@ komponent v doménových resources. Core tato pravidla kontroluje při serializa
 Výsledkové a validační kódy odpovídají `^[a-z][a-z0-9_]*$`. Jsou stabilními
 identifikátory API; překladový klíč určuje vlastník ve svém klientském katalogu.
 Nečekaná chyba implementace má HTTP 500 a bezpečný fallback bez interních detailů.
+
+## Změny přístupových údajů
+
+Zápis hesla nebo recovery e-mailu a zneplatnění vydaných reset tokenů tvoří
+jednu transakci. Vlastníkem je Core/Identity; zápisy používají
+`Passwords::persist()`. Vydání i spotřeba reset tokenu zamykají nejprve účet,
+aby se nemohly protnout se změnou jeho přístupových údajů.
+
+Session je vázaná na aktuální hash hesla. Po jeho změně se stará session při
+dalším požadavku odmítne, stejně jako remember cookie. Při vlastní změně hesla
+HTTP obsluha obnoví pouze současnou session a ověří právě zapsaný hash;
+obnova hesla a administrátorský reset žádnou session neobnovují. Session bez
+otisku přístupových údajů vyžaduje nové přihlášení. Automatický rehash při
+přihlášení také zneplatní sessions svázané s předchozím hashem. Již probíhající
+autorizovaný požadavek toto pravidlo zpětně nezastavuje.
 
 ## Serverové validace
 
@@ -123,8 +144,8 @@ pravidla i bez HTTP. Doménová kontrola nadále ověřuje vlastnictví a provoz
 Metadata vyžadují jeden jednoznačný typ pole. Jsou to data, nikoli HTML atributy,
 překladové klíče nebo úplná kopie serverové autorizace a doménových pravidel.
 Resource editoru je vrací pod `constraints`; komponenta vybírá prezentaci.
-Výchozí hodnoty patří připravenému záznamu. Blog takto poskytuje editor článků
-i zdrojů; dřívější `limits` a `statuses` odvozuje ze stejných pravidel.
+Výchozí hodnoty patří připravenému záznamu a vlastník editoru odvozuje omezení
+ze stejných pravidel jako serverovou validaci.
 
 Sdílené formuláře používají pro znakové limity `data-max-length` a
 `data-min-length`, pro bajty `data-max-bytes`. Nativní `maxlength` počítá UTF-16
@@ -135,9 +156,8 @@ přes existující validační proxy. Bajtový limit nesmí zkracovat rozepsaný
 Editor si tuto společnou kontrolu vyžádá v asset manifestu přes
 `uses: ["ui.form-constraints"]`; ostatní stránky její implementaci nestahují.
 
-Stejný převod používají zdroje Socialu a diskuse Blogu. Zdroj Socialu zachovává
-své bajtové limity; náhled čerpá ze stejné definice. Komentář Blogu má vlastní
-znakový limit a při překročení vrací chybu pole bez zkrácení konceptu.
+Stejný převod používají zdroje Socialu. Zdroj Socialu zachovává své bajtové
+limity; náhled čerpá ze stejné definice.
 
 ## Registrace stránek a navigace
 
@@ -152,12 +172,11 @@ Neúspěšná registrace poskytovatele vrátí zpět trasy i jejich metadata.
 pro klientskou navigaci. Modul nedržuje druhý ruční seznam cest v JavaScriptu.
 Social deklaruje obsluhy, resources, lokalizované cesty a query parametry z jednoho
 seznamu v `PublicPages`. Navigaci, historii a ochranu konceptů nadále řídí
-`TinyCat.navigation`; Blog používá tentýž serverový router a společnou navigaci
-seznamů, bez vlastního veřejného AJAX rozcestníku.
+`TinyCat.navigation` a společnou navigaci seznamů.
 
 Klientská navigace stránky registruje
 `TinyCat.navigation.registerPage({ accepts, target, load, apply })`.
-Její klientský vstup importuje volitelný mechanismus `assets/core/page-navigation.js`;
+Její klientský vstup importuje volitelný mechanismus `App/Core/Ui/assets/runtime/page-navigation.js`;
 instalátor a stránky bez této navigace jej nestahují.
 `accepts(url)` vymezuje podporované URL, `target` je selektor obsahu,
 `load(url, signal)` vrací resource s kanonickým `url` a `apply(target, data)`

@@ -5,7 +5,7 @@ namespace TinyCat\Social\Posts;
 
 use TinyCat\Core\Text\LinkParser;
 
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 final class Syndication
 {
@@ -13,7 +13,7 @@ final class Syndication
     {
         $request = \TinyCat\Http\Request::current();
         $request->validated(['media' => 'string']);
-        $media = Feed::archive_type((string) $request->input('media', ''));
+        $media = Archive::type((string) $request->input('media', ''));
         $rssTitle = '';
         $rssDescription = '';
         $rssLink = '/';
@@ -28,11 +28,11 @@ final class Syndication
                 \TinyCat\Http\Document::notFound('Feed not found.');
                 return;
             }
-            $media = Feed::archive_type((string) $request->input('media', ''));
+            $media = Archive::type((string) $request->input('media', ''));
             $params = http_build_query(['q' => $query, ...($media !== '' ? ['media' => $media] : [])]);
             $rssTitle = \TinyCat\Support\Localization::t('public.search_title_query', ['query' => $query]);
             $rssDescription = $rssTitle;
-            $rssLink = '/search?' . $params;
+            $rssLink = '/search/all?' . http_build_query(['q' => $query, 'collection' => 'content']);
             $rssSelfLink = '/search/feed?' . $params;
             $rows = \TinyCat\Social\Search\Queries::public_search_content_rows($query, 50, '', 0, $media);
             $rssItems = Export::byIds(array_map('intval', array_column($rows, 'id')));
@@ -84,10 +84,10 @@ final class Syndication
             $itemUrl = \TinyCat\Core\Ui\Site::absolute_url(\TinyCat\Social\Posts\Posts::status_url((int) ($item['id'] ?? 0)));
             $publishedAt = (string) ($item['published_at'] ?? '');
             $publishedDate = $publishedAt !== '' ? \TinyCat\Support\Dates::dateTime($publishedAt, DATE_RSS) : '';
-            $attachedImage = \TinyCat\Social\Content\Images::status_image_url($item);
+            $attachedImage = \TinyCat\Social\Posts\Images::status_image_url($item);
             $imageUrl = $attachedImage !== '' ? $attachedImage : ViewData::status_meta_link_image($item);
             $imageType = $attachedImage !== '' ? 'image/webp' : '';
-            $imageAlt = $attachedImage !== '' ? \TinyCat\Social\Content\Images::status_image_alt_text($item) : $itemTitle;
+            $imageAlt = $attachedImage !== '' ? \TinyCat\Social\Posts\Images::status_image_alt_text($item) : $itemTitle;
             $imageBytes = max(0, (int) ($item['image_bytes'] ?? 0));
             $rssBody = \TinyCat\Core\Feeds\Rss::html($body);
             if ($imageUrl !== '') {
@@ -97,8 +97,9 @@ final class Syndication
             $creator = (string) ($item['author_name'] ?? '');
             $creatorUrl = \TinyCat\Core\Ui\Site::absolute_url(\TinyCat\Http\LocaleRouting::canonical(\TinyCat\Social\Profiles\Profiles::author_url((int) $item['author_id'])));
 
-            $items[] = compact('itemTitle', 'itemUrl', 'publishedDate', 'imageUrl', 'imageBytes', 'attachedImage', 'imageType', 'rssBody', 'categories', 'creator', 'creatorUrl');
+            $enclosure = $attachedImage !== '' ? ['url' => $imageUrl, 'length' => $imageBytes, 'type' => $imageType] : null;
+            $items[] = compact('itemTitle', 'itemUrl', 'publishedDate', 'imageUrl', 'imageType', 'rssBody', 'categories', 'creator', 'creatorUrl', 'enclosure');
         }
-        \TinyCat\Http\Document::respond(\TinyCat\Core\Feeds\Rss::render($rssTitle, $rssDescription, $rssLink, $selfUrl, $items, $rssImage, $locale), 'application/rss+xml', 300);
+        \TinyCat\Http\Document::respond(\TinyCat\Core\Feeds\Rss::render($rssTitle, $rssDescription, $rssLink, $selfUrl, $items, $rssImage, $locale), 'application/rss+xml');
     }
 }

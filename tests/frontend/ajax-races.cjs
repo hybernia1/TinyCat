@@ -10,7 +10,7 @@ function setup() {
   const T = {
     dom: { find: () => target, emit() {} }, lifecycle: { register: (name, value) => { services[name] = value; }, hydrate() {} },
     api: { unwrap: data => data.data, errors: error => error.fields, details: () => ({}), request: (url, options) => new Promise((resolve, reject) => { pending.push({ url, options, resolve, reject }); }) },
-    forms: { clearErrors() {}, applyErrors: (_, value) => { errors.push(value); return value; }, focusInvalid: field => { if (field) focused.push(field); }, reset() {}, markClean() {}, loading: (source, busy) => { loading.push([source, busy]); }, dirty: () => [], confirmDiscard: async () => true },
+    forms: { data: (form, submitter) => new FormData(form, submitter), clearErrors() {}, applyErrors: (_, value) => { errors.push(value); return value; }, focusInvalid: field => { if (field) focused.push(field); }, reset() {}, markClean() {}, loading: (source, busy) => { loading.push([source, busy]); }, dirty: () => [], confirmDiscard: async () => true },
     i18n: { label: key => key }, actions: { confirm: source => confirmation.run(source) }, dialog: {},
     modules: { result: (source, response) => { applied.push(response.data); } }, toasts: { show: message => { toasts.push(message); } }
   };
@@ -19,7 +19,7 @@ function setup() {
 T.forms.canSubmit = () => true;
   const window = { TinyCat: T, location: new URL("https://tinycat.test/admin/users"), history: { pushState: (_, __, url) => { history.push(url); } }, addEventListener() {} };
   const context = vm.createContext({ window, document, URL, FormData, AbortController });
-  for (const file of ["assets/core/request-lifecycle.js", "assets/core/navigation.js", "assets/ui/list-navigation.js", "assets/ui/ajax-bindings.js"]) {
+  for (const file of ["App/Core/Ui/assets/runtime/request-lifecycle.js", "App/Core/Ui/assets/runtime/navigation.js", "App/Core/Ui/assets/list-navigation.js", "App/Core/Ui/assets/ajax-bindings.js"]) {
     const absolute = path.resolve(__dirname, "../..", file);
     vm.runInContext(fs.readFileSync(absolute, "utf8").replace(/^import .*;\r?\n/gm, ""), context);
   }

@@ -10,8 +10,8 @@
   function editor(id, persistent) {
     const layout = T.ui.tabbedContent(id, [{name:'account',label:'Account',icon:'user'}, {name:'history',label:'History',icon:'clock'}], 'account', 'Editor');
     const form = T.ui.form('/api/test', 'PATCH'); form.id = id + '-form';
-    form.append(T.dom.element('input', {name:'bio',value:'Saved'})); layout.panels.account.append(form);
-    const dialog = T.ui.dialog(id, 'Editor', layout.content, persistent, null, {kind:'editor'});
+    form.append(T.dom.element('input', {name:'bio',value:'Saved'}), T.ui.button('Save',{type:'submit'})); layout.panels.account.append(form);
+    const dialog = T.ui.formDialog(id, 'Editor', layout.content, persistent);
     T.ui.pinDialogTabs(dialog, layout.content); return dialog;
   }
   T.api.request = (url, options) => {
@@ -37,7 +37,36 @@
   T.lifecycle.start(); await pause();
   const base = location.pathname + location.search;
   const count = () => history.length;
-  if (mode === 'confirm') {
+  if (mode === 'deferred') {
+    await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    history.back(); await wait(() => !modal() && !location.hash, 'Close before restoring a dialog with deferred assets');
+    let releaseAssets;
+    T.deferred = {resource: () => new Promise(resolve => { releaseAssets = resolve; })};
+    history.forward(); await wait(() => !!releaseAssets, 'Restoring a dialog waits for deferred assets after its resource read');
+    history.back(); await wait(() => !location.hash, 'Back cancels a dialog while its asset load is pending');
+    releaseAssets(); await pause();
+    check(!modal() && !document.body.dataset.dialogError, 'Late assets cannot resurrect a cancelled dialog');
+    T.deferred = null;
+    const current = await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    releaseAssets = null;
+    T.deferred = {resource: () => new Promise(resolve => { releaseAssets = resolve; })};
+    const refresh = T.dialog.refresh(current).catch(error => { check(error.name === 'AbortError', 'A deferred refresh reports cancellation'); });
+    await wait(() => !!releaseAssets, 'Refresh retains its draft guard while awaiting assets');
+    const input = current.querySelector('input'); input.value = 'Draft entered during asset loading'; input.dispatchEvent(new Event('input', {bubbles:true}));
+    releaseAssets(); await refresh;
+    check(modal() === current && input.value === 'Draft entered during asset loading', 'Deferred refresh preserves edits made after the resource response');
+  } else if (mode === 'replacement') {
+    const opener = document.getElementById('opener'); opener.focus();
+    const first = await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    check(first.querySelectorAll('[data-modal-resource-refresh]').length===1, 'Ordinary resource editors retain Refresh by default');
+    const switcher = T.dom.element('button',{'data-modal-open':first.id,'data-modal-url':'/api/users/7/avatar'},'Switch');
+    first.querySelector('.modal-body').append(switcher); switcher.focus(); switcher.click();
+    await wait(() => modal() && modal()!==first, 'A resource link replaces its dialog through the shared loader');
+    check(location.hash.includes('modal=users/7/avatar') && modal().contains(document.activeElement), 'Replacement updates history and focuses its dialog');
+    modal().querySelector('[data-modal-close]').click();
+    await wait(() => !modal() && !location.hash, 'Closing replacement consumes its history entry');
+    check(document.activeElement===opener, 'Link replacement restores focus to the original page opener');
+  } else if (mode === 'confirm') {
     await T.navigation.go(base + '&other=1');
     let decision;
     T.dialog.confirm({message:'Confirm test action'}).then(value => { decision = value; });
@@ -120,8 +149,8 @@
     history.back(); await wait(() => modal() && modal().dataset.modalKind === 'confirm', 'A later Back can retry discarding');
     modal().querySelectorAll('.modal-footer button')[1].click();
     await wait(() => !modal() && !location.hash, 'Confirmed discard closes the editor on its original page');
-    const persistent = editor('settings-editor-modal', true); T.lifecycle.hydrate(persistent); T.dialog.open(persistent);
-    tab('history').click(); check(location.hash.includes('modal=settings-editor-modal') && location.hash.includes('tab=history'), 'Persistent settings share the same URL contract');
+    const persistent = editor('persistent-editor-modal', true); T.lifecycle.hydrate(persistent); T.dialog.open(persistent);
+    tab('history').click(); check(location.hash.includes('modal=persistent-editor-modal') && location.hash.includes('tab=history'), 'Persistent editors share the same URL contract');
     persistent.querySelector('[data-modal-close]').click(); await wait(() => !modal() && !location.hash, 'The standard close button consumes persistent modal history');
     history.forward(); await wait(() => modal() === persistent && tab('history').getAttribute('aria-selected') === 'true', 'Persistent modals reopen without losing their tab');
     document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true})); await wait(() => !modal() && !location.hash, 'Escape closes the modal and returns to the base before the race test');

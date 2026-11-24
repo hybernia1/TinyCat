@@ -1,0 +1,26 @@
+.check-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.check-card:hover,
+.check-card:focus-within {
+  border-color: var(--primary);
+  background: var(--surface-soft);
+}
+
+.check-card input {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0.1875rem 0 0;
+  accent-color: var(--primary);
+}
+

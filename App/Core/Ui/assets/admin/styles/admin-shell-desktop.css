@@ -1,0 +1,73 @@
+@media (min-width: 900px) {
+body.admin-nav-open {
+    overflow: auto;
+  }
+
+.admin-shell {
+    display: grid;
+    grid-template-columns: 12.5rem minmax(0, 1fr);
+  }
+
+.admin-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    width: auto;
+    height: 100vh;
+    box-shadow: none;
+    transform: none;
+  }
+
+.admin-backdrop,
+  .admin-menu-btn,
+  .admin-sidebar-close {
+    display: none;
+  }
+
+  .admin-nav-link {
+    min-height: var(--control-height);
+    padding: var(--control-padding-block) var(--control-padding-inline);
+  }
+
+  .admin-main:has(.admin-content .admin-list-toolbar) {
+    display: flex;
+    height: 100dvh;
+    flex-direction: column;
+  }
+
+  .admin-main:has(.admin-content .admin-list-toolbar) > .admin-topbar {
+    flex-shrink: 0;
+  }
+
+  .admin-content:has(.admin-list-toolbar),
+  .admin-content div:has(.table-wrap):has(.admin-list-toolbar),
+  .admin-content section:has(.table-wrap):has(.admin-list-toolbar) {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 0;
+    flex-direction: column;
+  }
+
+  .admin-content:has(.admin-list-toolbar) .table-wrap {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .admin-content [data-scheduler-view] > .table-wrap {
+    max-height: 40dvh;
+    flex: 0 1 auto;
+  }
+
+  .admin-content:has(.admin-list-toolbar) .pagination,
+  .admin-content:has(.admin-list-toolbar) .card-header {
+    flex-shrink: 0;
+  }
+
+  .admin-content:has(.admin-list-toolbar) .table > thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+}

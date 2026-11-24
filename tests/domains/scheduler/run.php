@@ -219,7 +219,7 @@ try {
         static fn (string $task): bool => in_array($task, ['orphan_terms', 'orphan_links', 'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications'], true)
     ));
     $result = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, true, $databaseCleanupTasks);
-    $imageCleanup = \TinyCat\Social\Content\ImageStorage::cleanupOrphans(500, '2099/01');
+    $imageCleanup = \TinyCat\Social\Posts\ImageStorage::cleanupOrphans(500, '2099/01');
     $changed = array_map(
         static fn (array $task): int => (int) ($task['changed'] ?? 0),
         (array) ($result['results'] ?? [])
@@ -256,6 +256,20 @@ try {
     if (!empty($deferred['due']) || (int) \TinyCat\Core\Settings\Store::setting('cron.cleanup_last_run', 0) < time() - 5) {
         throw new RuntimeException('The hourly cleanup interval was not recorded.');
     }
+
+    $second = new PDO(sprintf('mysql:host=%s%s;dbname=%s;charset=%s', $host, $port, $databaseName, $charset), (string) ($config['user'] ?? ''), (string) ($config['password'] ?? ''), $options);
+    $expectedLock = 'tinycat_scheduled_' . substr(hash('sha256', 'mysql:' . $databaseName . ':cleanup'), 0, 46);
+    $locked = \TinyCat\Core\Tasks\Runner::run('cleanup', static function () use ($second, $database, $expectedLock): array {
+        $query = $second->prepare('SELECT IS_USED_LOCK(?)'); $query->execute([$expectedLock]);
+        if ($query->fetchColumn() === null) { throw new RuntimeException('Task lock must identify the selected database, not the checkout path.'); }
+        \TinyCat\Database\Connection::set($second);
+        try {
+            $nested = \TinyCat\Core\Tasks\Runner::run('cleanup', static fn (): array => \TinyCat\Core\Tasks\Tasks::result('completed'), []);
+            if ($nested['status'] !== 'already_running') { throw new RuntimeException('Independent connections to the same database must share a task lock.'); }
+        } finally { \TinyCat\Database\Connection::set($database); }
+        return \TinyCat\Core\Tasks\Tasks::result('completed');
+    }, [], true);
+    if (!$locked['ok']) { throw new RuntimeException($locked['error']); }
 
     echo "PASS unified scheduled tasks: orphan data cleaned and current rows retained.\n";
 } finally {

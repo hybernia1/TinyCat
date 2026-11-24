@@ -1,6 +1,6 @@
-import "../../../../assets/core/modules.js";
+import "../../Ui/assets/runtime/modules.js";
 import "./controller.js";
-import "../../../../assets/ui/ajax-bindings.js";
+import "../../Ui/assets/ajax-bindings.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

@@ -1,7 +1,7 @@
-import "../../../../assets/core/api-client.js";
-import "../../../../assets/core/dom.js";
-import "../../../../assets/core/lifecycle.js";
-import "../../../../assets/ui/toasts.js";
+import "../../Ui/assets/runtime/api-client.js";
+import "../../Ui/assets/runtime/dom.js";
+import "../../Ui/assets/runtime/lifecycle.js";
+import "../../Ui/assets/toasts.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

@@ -52,7 +52,7 @@ final class Csrf
     {
         if (!self::verify($token)) {
             if (!\TinyCat\Http\Router::isApiPath(\TinyCat\Http\Request::current()->path()) && !\TinyCat\Http\Request::current()->wantsJson()) {
-                throw new \RuntimeException('Invalid CSRF token.', 403);
+                throw new \TinyCat\Http\HttpException('Invalid CSRF token.', 403, 'forbidden');
             }
             Response::error('Invalid CSRF token.', 403, 'csrf_token_mismatch');
         }

@@ -9,7 +9,6 @@ declare(strict_types=1);
 /** @var list<string> $styles */
 /** @var list<string> $scripts */
 /** @var list<array<string, string>> $flashToasts */
-/** @var string $privacyUrl */
 /** @var string $analyticsMeasurementId */
 /** @var bool $skipLink */
 /** @var bool $colorScheme */
@@ -43,15 +42,10 @@ use TinyCat\Support\Html;
             gtag('config','<?= \TinyCat\Support\Html::e($analyticsMeasurementId) ?>');
         </script>
     <?php endif; ?>
-    <?= \TinyCat\Support\View::part('Ui/flashes', ['items' => $flashToasts]) ?>
+    <?php if ($flashToasts !== []): ?><template data-tinycat-flashes><?= json_encode($flashToasts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></template><?php endif; ?>
 </head>
 <body<?php foreach ($bodyAttributes as $name => $value): ?><?php if ($value !== null): ?> <?= Html::e($name) ?>="<?= Html::e($value) ?>"<?php endif; ?><?php endforeach; ?>>
     <?php if ($skipLink): ?><a class="skip-link" href="#main-content"><?= Html::et('common.skip_to_content') ?></a><?php endif; ?>
     <?= $content->html ?>
-    <?php if ($privacyUrl !== ''): ?>
-    <footer class="container section text-sm text-muted desktop-only">
-        <a class="cluster gap-2 text-muted" href="<?= Html::e($privacyUrl) ?>" rel="privacy-policy"><?= Html::icon('shield') ?> <span><?= Html::et('privacy.title') ?></span></a>
-    </footer>
-    <?php endif; ?>
 </body>
 </html>

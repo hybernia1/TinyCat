@@ -40,8 +40,8 @@ function html(name, variant, theme = "light") {
   return { value, csp: "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' " + inline.map(scriptHash).join(" ") + "; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; worker-src 'self'" };
 }
 const zipped = new Map();
-const icons = fs.readFileSync(path.join(root, "assets/icons.svg"));
-const avatar = fs.readFileSync(path.join(root, "assets/fallback/avatar.svg"));
+const icons = fs.readFileSync(path.join(root, "App/Core/Ui/assets/icons.svg"));
+const avatar = fs.readFileSync(path.join(root, "App/Core/Ui/assets/fallback/avatar.svg"));
 function send(res, body, type, cached = true, extra = {}) {
   const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body), key = hash(buffer);
   if (!zipped.has(key)) zipped.set(key, gzip(buffer));
@@ -52,7 +52,7 @@ const server = http.createServer((req, res) => {
   try {
     const url = new URL(req.url, "http://fixture.test"), pathname = url.pathname;
     if (fixture.assets[pathname] !== undefined) return send(res, fixture.assets[pathname], pathname.endsWith(".css") ? "text/css" : pathname.endsWith(".svg") ? "image/svg+xml" : "text/javascript");
-    if (pathname === "/assets/icons.svg") return send(res, icons, "image/svg+xml");
+    if (pathname === "/App/Core/Ui/assets/icons.svg") return send(res, icons, "image/svg+xml");
     if (pathname.startsWith("/avatar/")) return send(res, avatar, "image/svg+xml");
     if (pathname === "/api/site/sidebar") return send(res, JSON.stringify(fixture.sidebar), "application/json", false);
     if (pathname.startsWith("/api/")) return send(res, JSON.stringify({ ok: true, data: { items: [] }, meta: { pagination: { done: true } } }), "application/json", false);

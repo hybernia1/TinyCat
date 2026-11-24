@@ -26,9 +26,15 @@ final class Pages
         $next = Login::auth_request_next_url();
         if (Integration::unlocalizedPath(Login::auth_next_path($next)) === '/') { $next = ''; }
         $target = Login::auth_redirect_after_login($user, $next);
-        if (Integration::unlocalizedPath(Login::auth_next_path($target)) !== '/') { Web::redirect($target); }
+        if (!in_array(Integration::unlocalizedPath(Login::auth_next_path($target)), ['/', '/account'], true)) { Web::redirect($target); }
+        self::account();
+    }
+
+    public static function account(): void
+    {
+        $user = Access::requireAuth('/login');
         Integration::render([
-            'title' => Localization::t('account.title'), 'current' => '/', 'public' => true,
+            'title' => Localization::t('account.title'), 'current' => '/account', 'surface' => 'access',
             'meta' => ['robots' => 'noindex,nofollow'],
         ], Components::render('users/account-home', [
             'user' => $user,
@@ -69,6 +75,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.login_title'),
             'current' => '/login',
+            'surface' => 'access',
             'nav' => [],
             'meta' => [
                 'description' => Localization::t('auth.login_intro'),
@@ -76,7 +83,7 @@ final class Pages
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,follow',
             ],
-        ], Components::render('users/auth-page', AuthResource::make('login', $next) + ['old' => $old, 'error' => (string) $error, 'message' => (string) $message]));
+        ], Components::render('users/auth-page', Resource::authenticationForm('login', $next) + ['old' => $old, 'error' => (string) $error, 'message' => (string) $message]));
     }
 
     public static function register(): void
@@ -92,13 +99,14 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.register_title'),
             'current' => '/register',
+            'surface' => 'access',
             'meta' => [
                 'description' => Localization::t('auth.register_intro'),
                 'url' => '/register',
                 'image' => Integration::metaImage(),
                 'robots' => 'noindex,follow',
             ],
-        ], Components::render('users/auth-page', AuthResource::make('register', $next) + ['old' => $old]));
+        ], Components::render('users/auth-page', Resource::authenticationForm('register', $next) + ['old' => $old]));
     }
 
     public static function logout(): void
@@ -108,6 +116,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.logout_title'),
             'current' => '/logout',
+            'surface' => 'access',
             'meta' => [
                 'description' => Localization::t('auth.logout_intro'),
                 'url' => '/logout',
@@ -123,6 +132,7 @@ final class Pages
         Integration::render([
             'title' => Localization::t('auth.recovery_title'),
             'current' => '/recovery',
+            'surface' => 'access',
             'nav' => [],
             'meta' => [
                 'description' => Localization::t($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro'),
@@ -131,7 +141,7 @@ final class Pages
                 'robots' => 'noindex,nofollow',
             ],
         ], Components::render('users/recovery-page', [
-            'reset' => $recoveryToken !== '', 'token' => $recoveryToken, 'password_max' => Passwords::maxLength(),
+            'reset' => $recoveryToken !== '', 'token' => $recoveryToken, 'password_min' => Passwords::minLength(), 'password_max' => Passwords::maxLength(),
             'captcha' => Captcha::configuration('recovery'), 'login_url' => Integration::localUrl('/login'), 'privacy_url' => Integration::privacyUrl(),
         ]));
     }

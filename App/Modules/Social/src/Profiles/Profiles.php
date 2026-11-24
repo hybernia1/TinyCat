@@ -24,7 +24,7 @@ final class Profiles
 
     public static function author_feed_url(int $id, string $media = ''): string
     {
-        $media = \TinyCat\Social\Content\Archive::type($media);
+        $media = \TinyCat\Social\Posts\Archive::type($media);
         return $id > 0 ? '/author/' . $id . '/feed' . ($media !== '' ? '?media=' . $media : '') : '/';
     }
 
@@ -38,4 +38,12 @@ final class Profiles
         return '/api/users/' . $authorId . '/management?' . http_build_query(['panel' => 'account', 'focus' => $focus]);
     }
 
+    /**
+     * @param array<mixed> $user
+     * @return array<string, mixed>
+     */
+    public static function resource(array $user): array
+    {
+        return \TinyCat\Core\Identity\Resource::profile($user, Profiles::author_url((int) ($user['id'] ?? 0)));
+    }
 }

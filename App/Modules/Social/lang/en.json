@@ -41,12 +41,48 @@
       "status_image_disabled": "Image uploads are currently disabled.",
       "status_image_compression": "This image cannot be compressed to the configured size limit.",
       "status_not_found": "The post was not found.",
-      "status_forbidden": "You are not allowed to perform this action."
+      "status_forbidden": "You are not allowed to perform this action.",
+      "status_tag_too_long": "A tag can contain at most {max} characters.",
+      "status_image_invalid": "Choose a valid JPEG, PNG, or WebP image within {size} KB.",
+      "comment_required": "Comment cannot be empty.",
+      "comment_not_found": "The comment was not found.",
+      "comment_edit_forbidden": "You are not allowed to edit this comment.",
+      "comment_forbidden": "You are not allowed to delete this comment.",
+      "comment_created": "The comment was added.",
+      "comment_saved": "The comment was saved.",
+      "comment_deleted": "The comment was deleted."
     },
     "status_embed": "Embed post",
     "status_embed_help": "Copy this HTML into your website HTML block. WordPress can also discover the embed from the post URL.",
     "status_embed_code": "Embed code",
-    "status_embed_open": "Open original post"
+    "status_embed_open": "Open original post",
+    "translation_translate": "Translate",
+    "translation_hide": "Hide translation",
+    "translation_preparing": "Preparing translation…",
+    "translation_machine": "Machine translation",
+    "translation_unavailable": "Translation is unavailable for this text.",
+    "translation_same": "This post is already in your interface language.",
+    "translation_continue": "Ready. Click Translate again to continue.",
+    "translation_failed": "Translation failed. Please try again.",
+    "status_counter": "Remaining {count}",
+    "status_image_add": "Add image",
+    "status_image_remove": "Remove image",
+    "status_body": "What's new?",
+    "status_comment": "Comment",
+    "status_comment_placeholder": "Write a comment...",
+    "status_reply": "Reply",
+    "status_like": "Like",
+    "status_reply_placeholder": "Write a reply...",
+    "status_like_for": "Like – {context}",
+    "status_unlike_for": "Unlike – {context}",
+    "status_more_comments": "Load more comments",
+    "status_more_replies": "Load replies",
+    "status_comments": "Comments",
+    "status_comment_history": "Edit history",
+    "status_comment_history_empty": "This comment has not been edited yet.",
+    "status_comment_history_updated_by": "Edited by {author}",
+    "status_comment_history_change": "Comment change",
+    "status_comment_history_unknown": "Unknown user"
   },
   "bots": {
     "title": "Bots",
@@ -310,13 +346,14 @@
     "filter_links": "Links",
     "filter_text": "Text only",
     "feed_empty_filtered": "No posts match this filter.",
-    "theme_label": "Social",
     "search_tag_posts": {
       "one": "{count} post",
       "few": "{count} posts",
       "many": "{count} posts",
       "other": "{count} posts"
-    }
+    },
+    "status_image_alt": "Image attached to a post by {author}: {text}",
+    "status_image_alt_empty": "Image attached to a post by {author}"
   },
   "app": {
     "name": "TinyCat"
@@ -371,7 +408,8 @@
       "likes": "Likes",
       "comments": "Comments",
       "follows": "Follows",
-      "reports": "Reports"
+      "reports": "Reports",
+      "content_group": "Content"
     },
     "table_missing": "The table has not been created yet."
   },

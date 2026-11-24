@@ -15,6 +15,10 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 
 ## Kontrakty
 
+- [Zpracování chyb, veřejná odmítnutí a diagnostika](contracts/error-handling.md).
+
+- [Veřejný web, přístupové stránky a výběr assetů](contracts/public-surface.md).
+
 - [Autorita core pro API, UI a validace](contracts/core-application-contract.md).
 - [Notifikace, registrace typů a vlastnictví předmětů](contracts/notifications.md).
 - [Modaly](contracts/modal-contract.md) a [popovery](contracts/popover-contract.md).
@@ -39,6 +43,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 - [Audit významových hranic core a modulů](audits/core-module-boundaries-2026-11-12.md)
   a [plán platformních služeb a kombinovatelných funkcí](plans/core-services-and-feature-modules.md).
 - [Audit aplikačního JavaScriptu po 6.1.3](audits/application-javascript-2026-11-19.md).
+- [UI audit a směr minimalistické CRM administrace](audits/ui-crm-2026-11-19.md).
 - [Přesun produktové struktury do katalogů komponent](audits/presentation-ownership-2026-11-19.md).
 - [Dokončení produktových stránek a hranice prezentace 6.1.4](audits/presentation-pages-6.1.4-2026-11-19.md).
 - [Platformní služby: implementace a ověření etapy 1A](audits/core-services-stage-1a-2026-11-12.md).
@@ -53,9 +58,9 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 - [Sdílený Publishing a obsahové politiky: etapa 2](audits/social-core-stage2-2026-11-13.md).
 - [Společné diskuse a reakce: etapa 3](audits/social-core-stage3-2026-11-13.md).
 - [Společné feedové importy pro Social a Blog: etapa 4](audits/social-core-stage4-2026-11-14.md).
-- [Správa zdrojů článků a feedové importy](operations/feed-imports.md).
+- [Feedové importy Socialu](operations/feed-imports.md).
 - [Živá testovací instalace a Laragon](development/local-environment.md).
-- [Blogová sestava nad Accounts a Publishing](development/blog-assembly.md).
+- [Závazný kontrakt funkčních modulů](contracts/module-contract.md).
 - [Instalace, aktivace modulů a obnova produktové distribuce](operations/module-deployment.md).
 - [Samostatné ZIPy a správce modulů](audits/module-packages-2026-11-14.md).
 - [Návrh modulární platformy: jádro, moduly a sestavy](plans/modular-platform.md).

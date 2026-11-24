@@ -23,7 +23,6 @@ $forbiddenFunctions = array_fill_keys([
     'public_status_page_limit',
     'render_mentions',
     'render_status_body',
-    'site_footer_html',
     'status_comment_can_delete',
     'status_comment_count',
     'status_comment_like_count',
@@ -40,6 +39,8 @@ $forbiddenFunctions = array_fill_keys([
     'status_user_liked',
     'status_video_embed_allowed',
     'status_video_embed_url',
+    'embedAllowed',
+    'embedUrl',
     'status_video_thumbnail_sources',
 ], true);
 $forbiddenStaticOwners = array_fill_keys([

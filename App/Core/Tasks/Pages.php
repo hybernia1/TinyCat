@@ -58,6 +58,7 @@ final class Pages
         foreach ($taskViews as $task => &$view) {
             $taskUrl = $cronUrl . '?task=' . rawurlencode($task);
             foreach (['title', 'help', 'schedule'] as $label) { $view[$label . '_label'] = Localization::t((string) $view[$label]); }
+            $view['cadence_label'] = Localization::t((string) ($view['cadence'] ?? $view['schedule']));
             $view['query_url'] = LocalUrls::absolute('/api/scheduler/triggers/' . rawurlencode($task));
             $view['http_command'] = 'curl -fsS -X POST -H "Authorization: Bearer ' . $cronToken . '" "' . $taskUrl . '"';
             $view['cli_command'] = 'php "' . $runnerPath . '" --task=' . $task . ' ' . (string) $view['cli_arguments'];

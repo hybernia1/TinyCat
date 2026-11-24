@@ -24,7 +24,8 @@ final class Views
         $metrics = [];
         foreach ([['clock', 'TTFB', 'ttfb_ms', 'ms'], ['refresh', Localization::t('health.http.total'), 'total_ms', 'ms'], ['globe', 'HTTP', 'http_status', '']] as [$icon, $label, $key, $unit]) {
             $value = $http['metrics'][$key] ?? null;
-            $metrics[] = ['icon' => $icon, 'label' => $label, 'value' => $value === null || ($key === 'http_status' && !$value) ? '-' : (string) round((float) $value, 1), 'unit' => $unit];
+            $missing = $value === null || ($key === 'http_status' && !$value);
+            $metrics[] = ['icon' => $icon, 'label' => $label, 'value' => $missing ? '—' : (string) round((float) $value, 1), 'unit' => $missing ? '' : $unit];
         }
         $history = [];
         foreach ((array) $snapshot['history'] as $run) {

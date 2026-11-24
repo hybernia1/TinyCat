@@ -24,7 +24,7 @@ if ($cacheDriver === 'memcached' && isset($options['expire'])) { throw new Runti
 putenv('TINYCAT_PROFILE_CACHE_DRIVER=' . $cacheDriver);
 $pool = new \TinyCat\Tools\Performance\ProfileServerPool($root, $configPath, $log, $workers, (int) ($options['user'] ?? 0));
 try {
-    $paths = explode(',', (string) ($options['paths'] ?? '/,/api/statuses,/api/statuses/1,/author/2,/search?q=performance,/api/site/sidebar'));
+    $paths = explode(',', (string) ($options['paths'] ?? '/,/api/statuses,/api/statuses/1,/author/2,/search/all?q=performance,/api/site/sidebar'));
     $runner = new \TinyCat\Tools\Performance\HttpLoadRunner();
     $scenarios = [];
     foreach ($paths as $path) {
@@ -35,7 +35,7 @@ try {
             $runner->run($urls, $workers, $workers);
             foreach (explode(',', (string) $options['expire']) as $key) {
                 if (preg_match('/^[A-Za-z0-9_.-]+$/D', $key) !== 1) { throw new RuntimeException('Expected safe cache entry names.'); }
-                $entry = $log . '.cache/' . $key . '.json';
+                $entry = $log . '.cache/' . hash('sha256', $key) . '.json';
                 if (!is_file($entry) || !touch($entry, time() - max(1, (int) (json_decode((string) file_get_contents($entry), true)['ttl'] ?? 300)) - 1)) { throw new RuntimeException('Unable to expire the requested cache entry.'); }
             }
         }

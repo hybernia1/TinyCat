@@ -1,0 +1,5 @@
+@media (max-width: 899px) {
+  .admin-filter-actions {
+    justify-content: space-between;
+  }
+}

@@ -21,6 +21,29 @@ vykreslení běžného obsahu, composeru ani inline formulářů.
 
 ## Resource modaly
 
+### Významový typ a rozměr
+
+`data-modal-kind` určuje účel a chování, `data-modal-size` pouze rozměrovou variantu.
+Nejsou to další implementace dialogu; všechny používají `dialog.create` a `ui/modal`.
+
+| Typ | Účel | Společná pravidla |
+| --- | --- | --- |
+| `content` | Čtecí detail, historie, náhled nebo informace; může mít explicitní akce | Výchozí typ, společný fokus, Escape, backdrop a odstranění při zavření |
+| `editor` | Formulář včetně přihlášení, CAPTCHA nebo editace účtu | Form factory označí koncept, primární akci umístí do patičky; mobilní režim je fullscreen |
+| `confirm` | Krátké lokální potvrzení právě vyvolané akce | Společná confirm factory, žádná vlastní resource historie, potvrzení či zrušení |
+
+Rozměry jsou `default`, `compact`, `wide`, `reading` a `workspace`; potvrzení
+používá kombinaci `kind=confirm`, `size=confirm` a vlastní existující token šířky.
+`workspace` slouží pracovnímu editoru nebo rozsáhlému detailu, `reading` delšímu
+čtení. `data-modal-mobile=fullscreen` může explicitně rozšířit čtecí detail na
+mobilu. Neodvozovat významový typ z velikosti ani přidávat lokální modal rám.
+
+Pro celý modal platí jediná hranice: mobile do 899 px, desktop od 900 px.
+Záložky, fullscreen, potvrzovací tlačítka i JS zámek stránky používají stejnou
+hranici; hover ani typ ukazatele layout nepřepíná. Změna šířky za otevřeného
+dialogu synchronizuje viewport i zámek stránky, také u vnořených dialogů.
+Factory odmítá neznámý typ, velikost či mobilní režim před vytvořením DOM.
+
 1. Stránka obsahuje pouze spouštěč. Nevkládat dopředu modal, jeho formulář,
    hodnoty ani `<template>` s formulářem. Nevytvářet jej v `init`, `hydrate`
    ani při obnovení seznamu.
@@ -78,3 +101,32 @@ Při změně modalů spustit `php tests/quality/ui-contracts.php`,
 `node tests/frontend/form-validation.cjs` a příslušné HTTP kontrakty.
 Změny společného loaderu ověřit také pomocí
 `node tests/frontend/dialog-history.cjs` a `php tools/assets/asset-report.php --check`.
+
+## Sectioned resource editors
+
+Account management and Settings use the same `sectionedDialog` factory. Independently
+saved sections own separate forms. The shared footer submits the active section;
+validation, successful-save state and canonical values apply only to that form.
+Other section drafts remain unchanged. Sections remain available without an extra
+resource request on every tab switch.
+
+The common resource loader adds Refresh to editor footers by default. Owners may
+pass `refresh: false` through the shared dialog factory for forms such as login
+and registration where reloading the resource is not useful. The loader then
+omits Refresh and `dialog.refresh(modal)` does not reload that dialog.
+`dialog.refresh(modal)`
+and `openResource(id, url, {refresh: true})` use the same guarded loader as explicit
+resource triggers. Refresh preserves the selected tab, opener and history entry.
+It asks before discarding any draft and does not run during a pending save. Editing,
+submitting, switching tabs or closing during the GET invalidates the pending replacement.
+Read failures retain the current editor. There is no owner-specific refresh engine.
+
+Settings PATCH accepts only submitted keys, validates before persistence and commits
+the batch atomically. Cache invalidation follows commit. Its response contains the same
+canonical, password-safe `sections` resource as GET; the client renders only the saved
+section through the original component definitions. This also resets write-only secrets
+and image controls without rebuilding other forms.
+
+Changed section forms mark their shared desktop tab and mobile option with an
+asterisk. The marker uses the existing form snapshot comparison; saving a section
+or restoring its original values clears its marker without changing other drafts.

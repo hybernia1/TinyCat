@@ -20,7 +20,7 @@ final class Administration
             'task' => isset($definitions[$task]) ? $task : '',
             'status' => in_array($status, Resource::STATUSES, true) ? $status : '',
             'per_page' => AdminViews::admin_per_page(),
-        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Core\Tasks\Sorting::runs());
+        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Core\Tasks\Repository::sorting());
         $aliases = [];
         if ($filters['q'] !== '') {
             foreach ($definitions as $name => $definition) {

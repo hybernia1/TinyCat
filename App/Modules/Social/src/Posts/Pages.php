@@ -2,12 +2,11 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Redirects;
 
 use TinyCat\Http\Request;
 use TinyCat\Http\Web;
 use TinyCat\Social\Moderation\Restrictions;
-use TinyCat\Social\Presentation\Pages as SitePages;
+use TinyCat\Social\Site\Pages as SitePages;
 use TinyCat\Core\Ui\Site as Presentation;
 use TinyCat\Support\Dates;
 use TinyCat\Support\Localization;
@@ -21,7 +20,7 @@ final class Pages
     public static function home(): void
     {
         $data = self::homeData();
-        \TinyCat\Social\Presentation\PublicPages::render('home', $data);
+        \TinyCat\Social\Site\PublicPages::render('home', $data);
     }
 
     /** @return array<string, mixed> */
@@ -33,7 +32,8 @@ final class Pages
 
         $userIsMuted = $authUser !== null && Restrictions::user_is_muted($authUser);
         $userMutedUntil = $authUser !== null ? Restrictions::user_muted_until($authUser) : '';
-        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $archiveType = Archive::type((string) Web::get('media', ''));
+        $compact = Web::get('compact', '') === '1';
         $publicHomeFeedData = ViewData::public_home_feed_data($feed, $authUser, null, $archiveType);
         return ['page' => [
             'title' => Presentation::site_home_title(),
@@ -49,7 +49,7 @@ final class Pages
                     'name' => Presentation::site_name(), 'description' => Presentation::site_meta_description(),
                 ],
             ],
-        ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData', 'archiveType')];
+        ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData', 'archiveType', 'compact')];
     }
 
     public static function detail(?int $statusId = null): void
@@ -57,7 +57,7 @@ final class Pages
         $data = self::detailData($statusId);
         if ($data === null) { self::statusNotFound(); return; }
         if (Request::current()->method() === 'GET' && Request::current()->path() !== $data['page']['current']) { Web::redirect($data['page']['current'], 301); }
-        \TinyCat\Social\Presentation\PublicPages::render('status', $data);
+        \TinyCat\Social\Site\PublicPages::render('status', $data);
     }
 
     /** @return array<string, mixed>|null */
@@ -65,7 +65,7 @@ final class Pages
     {
         $statusId = max(0, $statusId ?? (int) Web::get('id', 0));
         $current = Posts::status_url($statusId);
-        $compact = (string) Web::get('compact', '') === '1';
+        $compact = Web::get('compact', '') === '1';
 
         if ($statusId < 1) {
             return null;
@@ -73,7 +73,7 @@ final class Pages
 
         $authUser = Authentication::auth();
         $item = Feed::public_status_item($statusId);
-        if ($item === null && ($canonicalId = Redirects::target($statusId)) !== null) {
+        if ($item === null && ($canonicalId = Repository::redirectTarget($statusId)) !== null) {
             $statusId = $canonicalId;
             $current = Posts::status_url($statusId);
             $item = Feed::public_status_item($statusId);
@@ -86,9 +86,10 @@ final class Pages
         $detail = ViewData::status_prepare_detail_view($item, $authUser);
         $item = $detail['item'];
         $comments = $detail['comments'];
+        $commentsNextUrl = $detail['comments_next_url'];
 
         $statusTitle = ViewData::status_meta_title($item);
-        $statusImageUrl = \TinyCat\Social\Content\Images::status_image_url($item);
+        $statusImageUrl = \TinyCat\Social\Posts\Images::status_image_url($item);
 
         return ['page' => [
             'title' => $statusTitle,
@@ -103,7 +104,7 @@ final class Pages
                 'image_type' => $statusImageUrl !== '' ? 'image/webp' : '',
                 'image_width' => (int) ($item['image_width'] ?? 0),
                 'image_height' => (int) ($item['image_height'] ?? 0),
-                'image_alt' => $statusImageUrl !== '' ? \TinyCat\Social\Content\Images::status_image_alt_text($item) : '',
+                'image_alt' => $statusImageUrl !== '' ? \TinyCat\Social\Posts\Images::status_image_alt_text($item) : '',
                 'type' => 'article',
                 'published_time' => (string) ($item['published_at'] ?? ''),
                 'author' => Presentation::absolute_url(Profiles::author_url((int) ($item['author_id'] ?? 0))),
@@ -127,7 +128,7 @@ final class Pages
                     ],
                 ], static fn (mixed $value): bool => $value !== null),
             ],
-        ], 'context' => compact('authUser', 'item', 'comments', 'compact')];
+        ], 'context' => compact('authUser', 'item', 'comments', 'commentsNextUrl', 'compact')];
     }
     /** @param array<int, array<string, mixed>> $comments
      * @return list<array<string, mixed>> */
@@ -159,7 +160,7 @@ final class Pages
         $data = self::tagData($tag);
         if ($data === null) { \TinyCat\Core\Runtime\Errors::respond(404); return; }
         if (Request::current()->method() === 'GET' && (Request::current()->path() !== $data['page']['current'] || (int) Web::get('page', 0) > 1)) { Web::redirect($data['page']['current'], 301); }
-        \TinyCat\Social\Presentation\PublicPages::render('tag', $data);
+        \TinyCat\Social\Site\PublicPages::render('tag', $data);
     }
 
     /** @return array<string, mixed>|null */
@@ -172,11 +173,12 @@ final class Pages
         }
 
         $current = Tags::tag_url($tag);
-        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $archiveType = Archive::type((string) Web::get('media', ''));
+        $compact = Web::get('compact', '') === '1';
 
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
-        $statusItems = Feed::public_status_items_by_tag($tag, $statusLimit, '', 0, $archiveType);
+        $statusItems = Feed::public_status_items_by_tag($tag, $statusLimit, '', 0, $archiveType, $selection);
         $indexableItems = $statusLimit >= 2 ? $statusItems : Feed::public_status_items_by_tag($tag, 2);
         $authUser = Authentication::auth();
         $statusItems = ViewData::status_prepare_items_view($statusItems, $authUser);
@@ -186,7 +188,8 @@ final class Pages
             $statusItems,
             $statusLimit,
             ['tag' => $tag, 'media' => $archiveType],
-            $nextStatusLimit
+            $nextStatusLimit,
+            $selection
         );
         $pageUrl = $current;
         $tagStructuredData = [
@@ -211,6 +214,6 @@ final class Pages
                 'robots' => count($indexableItems) >= 2 ? '' : 'noindex,follow',
                 'jsonld' => $tagStructuredData,
             ],
-        ], 'context' => compact('authUser', 'tag', 'statusItems', 'feedMore', 'tagFeedUrl', 'archiveType')];
+        ], 'context' => compact('authUser', 'tag', 'statusItems', 'feedMore', 'tagFeedUrl', 'archiveType', 'compact')];
     }
 }

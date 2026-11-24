@@ -15,7 +15,7 @@ final class Html
     {
         self::assertIconName($name);
 
-        $href = \TinyCat\Support\Assets::asset('icons.svg') . '#' . $name;
+        $href = \TinyCat\Support\Assets::asset('App/Core/Ui/assets/icons.svg') . '#' . $name;
         $extraClass = isset($attributes['class']) ? (string) $attributes['class'] : '';
         unset($attributes['class']);
 

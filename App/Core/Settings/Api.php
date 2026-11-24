@@ -11,6 +11,20 @@ final class Api
 
         $api->get('/settings', static fn (): array => ['items' => Resource::items()], 'admin');
         $api->get('/settings/editor', static fn (): array => Resource::editor(), 'admin');
-        $api->patch('/settings', static fn (): Result => Result::from(Actions::adminSettingsSave()), 'admin');
+        $api->patch('/settings', static fn (): Result => Result::from(self::adminSettingsSave()), 'admin');
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private static function adminSettingsSave(): array
+    {
+        try {
+            Administration::tc_admin_settings_save();
+        } catch (\InvalidArgumentException $exception) {
+            \TinyCat\Http\Response::error($exception->getMessage(), 422, 'settings_save_failed');
+        }
+
+        return Resource::editor() + ['message' => \TinyCat\Support\Localization::t('settings.messages.saved'), 'code' => 'settings_saved'];
     }
 }

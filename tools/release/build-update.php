@@ -86,10 +86,9 @@ $selection = match ($assembly) {
     'source' => require $root . '/App/modules.php',
     'platform' => \TinyCat\Core\Modules\SourceModules::production($root),
     'development' => \TinyCat\Core\Modules\SourceModules::selection($root),
-    'blog' => require $root . '/App/Modules/Blog/selection.php',
-    default => throw new InvalidArgumentException('Unknown assembly; use source, platform, development, blog or core.'),
+    default => throw new InvalidArgumentException('Unknown assembly; use source, platform, development or core.'),
 };
-$product = (string) ($options['product'] ?? match ($assembly) { 'core' => 'tinycat.core', 'blog' => 'tinycat.blog', default => 'tinycat.social' });
+$product = (string) ($options['product'] ?? match ($assembly) { 'core' => 'tinycat.core', default => 'tinycat.social' });
 $active = isset($options['active']) ? ((string) $options['active'] === '' ? [] : explode(',', (string) $options['active'])) : null;
 $distribution = \TinyCat\Core\Modules\Distribution::describe($root, $product, $selection, $active);
 if ($distribution['format'] === 4) {
@@ -99,7 +98,7 @@ if ($distribution['format'] === 4) {
 }
 \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, \TinyCat\Core\Modules\Distribution::selection($distribution, $distribution['active']))->catalog);
 $rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
-$includedDocumentation = ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'];
+$includedDocumentation = ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md', 'docs/operations/debugging.md', 'docs/contracts/error-handling.md'];
 if ($freshInstall) {
     $allowedRoots = array_values(array_diff($allowedRoots, ['migrations']));
 }
@@ -213,6 +212,9 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
         foreach ((array) $allDeletions as $deletionVersion => $paths) {
             if (version_compare((string) $deletionVersion, $variantMinimum, '>') && version_compare((string) $deletionVersion, $version, '<=')) {
                 foreach ((array) $paths as $path) {
+                    // A distribution only retires files inside module roots it owns.
+                    // Keep legacy non-module paths: supported upgrades may still need them.
+                    if (str_starts_with((string) $path, 'App/Modules/') && !\TinyCat\Core\Modules\Distribution::includes((string) $path, $distribution)) { continue; }
                     $deletions[] = (string) $path;
                 }
             }

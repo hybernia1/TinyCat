@@ -1,6 +1,6 @@
-import "../../../../../assets/core/dom.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/core/lifecycle.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/runtime/lifecycle.js";
 import "./views.js";
 (function () {
   "use strict";
@@ -120,7 +120,7 @@ import "./views.js";
     TinyCat.lifecycle.register("sidebar-freshness", { init: function () {
       document.addEventListener("tinycat:success", function (event) {
         var source = event.target, action = source && (source.getAttribute("action") || source.getAttribute("href") || "");
-        if (/^\/api\/(?:statuses|users\/[0-9]+\/followers)/.test(action)) { updated = 0; TinyCat.site.refresh(); }
+        if (/^\/api\/(?:statuses|profiles\/[0-9]+\/followers)/.test(action)) { updated = 0; TinyCat.site.refresh(); }
       });
     } });
 }());

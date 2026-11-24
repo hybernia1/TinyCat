@@ -12,7 +12,7 @@ const T = {
   dom: { find: () => target, emit() {} },
   lifecycle: { register() {}, hydrate() { if (trackMenu) menuSteps.push('hydrate'); } },
   api: { unwrap: response => response.data, errors: () => null, details: () => ({}), async request(url, options) { calls.push({ url, options }); return { data: { url } }; } },
-  forms: { canSubmit: () => true, validate: () => true, clearErrors() {}, applyErrors() {}, focusInvalid() {}, reset() {}, markClean() {}, loading() {}, dirty: () => [], confirmDiscard: async () => true },
+  forms: { data: (form, submitter) => new FormData(form, submitter), canSubmit: () => true, validate: () => true, clearErrors() {}, applyErrors() {}, focusInvalid() {}, reset() {}, markClean() {}, loading() {}, dirty: () => [], confirmDiscard: async () => true },
   i18n: { label: key => key }, actions: {}, dialog: {},
   modules: { result(_source, response, target) { applied.push(response.data.url); return [target]; } }, toasts: { show() {} }
 };
@@ -22,7 +22,7 @@ const window = {
   history: { pushState(_state, _title, url) { window.location = new URL(url, window.location); } }, addEventListener() {}
 };
 const context = vm.createContext({ window, document, URL, FormData, AbortController });
-for (const file of ["assets/core/request-lifecycle.js", "assets/core/navigation.js", "assets/ui/list-navigation.js", "assets/ui/ajax-bindings.js"]) {
+for (const file of ["App/Core/Ui/assets/runtime/request-lifecycle.js", "App/Core/Ui/assets/runtime/navigation.js", "App/Core/Ui/assets/list-navigation.js", "App/Core/Ui/assets/ajax-bindings.js"]) {
   vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
 }
 T.lists.register("/admin/users", { target: "#users-list", keepQuery: ["sort", "direction"], url: () => "/api/users" + window.location.search, apply: (target, data) => T.modules.result({}, data, target) });

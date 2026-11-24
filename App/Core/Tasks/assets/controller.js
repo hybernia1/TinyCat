@@ -1,7 +1,7 @@
-import "../../../../assets/ui/content-updates.js";
-import "../../../../assets/core/component-renderer.js";
-import "../../../../assets/core/dates.js";
-import "../../../../assets/ui/component-builders.js";
+import "../../Ui/assets/content-updates.js";
+import "../../Ui/assets/runtime/component-renderer.js";
+import "../../Ui/assets/runtime/dates.js";
+import "../../Ui/assets/component-builders.js";
 
 (function () {
   "use strict";

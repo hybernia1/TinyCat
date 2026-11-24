@@ -91,7 +91,7 @@ within each module before merging, so moving a key in only one language fails.
 There is no central registry mapping domains to namespaces.
 
 JavaScript dependencies are explicit `translations` lists in existing module
-manifests. Shared controls declare their common messages in `assets/ui/module.json`;
+manifests. Shared controls declare their common messages in `App/Core/Ui/assets/module.json`;
 feature modules do not repeat those shared declarations. Component definitions
 contribute static `t` references transitively through their selected components.
 For example, a module can declare `"translations": ["users.edit_user"]`; an empty
@@ -111,6 +111,12 @@ one content-hashed PHP array per locale. Application lookups and language discov
 use those PHP arrays; email templates load the compiled server-only section.
 OPcache can cache these arrays without runtime JSON parsing or source discovery.
 The signed package includes both compiled outputs and modular source files.
+
+Deferred editor features contribute an additive locale catalog to their on-demand
+payload. Its translations and component definitions are registered before the
+editor code executes. The initial locale script carries the payload descriptor;
+server catalogs and email channels remain complete. Translation declaration checks
+validate both the initial and complete feature selections, including deferred contributions.
 
 Development checkouts without compiled catalogs read module sources. Localization
 memoizes parsed and flattened catalogs within a request. Generated server catalogs

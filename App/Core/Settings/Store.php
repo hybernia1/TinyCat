@@ -53,50 +53,40 @@ final class Store
      */
     private static function settings(): array
     {
-        if (self::$settings !== null) {
-            return self::$settings;
-        }
-
-        self::$settings = [];
-
-        if (self::$settingsLoading || !self::settingsTableReady()) {
-            return self::$settings;
-        }
-
-        $cached = self::cachedAutoloadSettings();
-
-        if ($cached !== null) {
-            return self::$settings = $cached;
-        }
-
-        self::$settingsLoading = true;
-
+        if (self::$settingsLoading) { return []; }
+        if (self::$settings !== null) { return self::$settings; }
+        if (!self::settingsTableReady()) { return []; }
+        // A transaction may see uncommitted values or an older repeatable-read snapshot.
+        // Neither belongs in shared cache or in the request cache after rollback.
+        if (Connection::get()->inTransaction()) { return self::loadAutoloadSettings(); }
         try {
-            $rows = \TinyCat\Database\Connection::all(
-                'SELECT setting_key, setting_value, setting_type FROM settings WHERE autoload = 1 ORDER BY setting_key'
-            );
+            return self::$settings = Cache::synchronized(self::SETTINGS_CACHE_KEY, static function (): array {
+                $cached = self::cachedAutoloadSettings();
+                if ($cached !== null) { return $cached; }
+                $settings = self::loadAutoloadSettings();
+                self::cacheAutoloadSettings($settings);
+                return $settings;
+            });
+        } catch (Throwable $failure) {
+            \TinyCat\Core\Runtime\Failure::report($failure);
+            // Lock/cache failure falls back to DB without publishing an uncoordinated fill.
+            return self::loadAutoloadSettings();
+        }
+    }
 
+    /** @return array<mixed> */
+    private static function loadAutoloadSettings(): array
+    {
+        self::$settingsLoading = true;
+        try {
+            $settings = [];
+            $rows = Connection::all('SELECT setting_key, setting_value, setting_type FROM settings WHERE autoload = 1 ORDER BY setting_key');
             foreach ($rows as $row) {
                 $key = (string) ($row['setting_key'] ?? '');
-
-                if ($key === '' || self::isSensitiveSetting($key)) {
-                    continue;
-                }
-
-                self::$settings[$key] = self::castSettingValue(
-                    $row['setting_value'] ?? null,
-                    (string) ($row['setting_type'] ?? 'string')
-                );
+                if ($key !== '' && !self::isSensitiveSetting($key)) { $settings[$key] = self::castSettingValue($row['setting_value'] ?? null, (string) ($row['setting_type'] ?? 'string')); }
             }
-
-            self::cacheAutoloadSettings(self::$settings);
-        } catch (Throwable) {
-            self::$settings = [];
-        } finally {
-            self::$settingsLoading = false;
-        }
-
-        return self::$settings ?? [];
+            return $settings;
+        } finally { self::$settingsLoading = false; }
     }
 
     public static function setSetting(string $key, mixed $value, string $type = 'string', string $group = 'general'): void
@@ -119,12 +109,15 @@ final class Store
 
         \TinyCat\Database\Connection::upsert('settings', ['setting_key' => $key], $data);
 
-        self::$settings = null;
-        unset(self::$sensitiveSettings[$key]);
-        self::forgetCachedAutoloadSettings();
-
+        \TinyCat\Database\Transactions::afterCommit(static function (): void {
+            self::$settings = null;
+            self::$sensitiveSettings = [];
+            self::forgetCachedAutoloadSettings();
+        }, 'core.settings.autoload');
         if ($key === 'i18n.locale') {
-            \TinyCat\Support\Localization::reset();
+            \TinyCat\Database\Transactions::afterCommit(static function (): void {
+                \TinyCat\Support\Localization::reset();
+            }, 'core.settings.locale');
         }
     }
 
@@ -149,34 +142,25 @@ final class Store
 
     private static function sensitiveSettingValue(string $key, mixed $default): mixed
     {
+        if (self::$settingsLoading) { return $default; }
         if (array_key_exists($key, self::$sensitiveSettings)) {
             $cached = self::$sensitiveSettings[$key];
-
             return $cached['found'] ? $cached['value'] : $default;
         }
+        if (!self::settingsTableReady()) { return $default; }
+        $transaction = Connection::get()->inTransaction();
 
-        if (self::$settingsLoading || !self::settingsTableReady()) {
-            return $default;
-        }
+        $row = Connection::one('SELECT setting_value, setting_type FROM settings WHERE setting_key = ? LIMIT 1', [$key]);
 
-        try {
-            $row = \TinyCat\Database\Connection::one(
-                'SELECT setting_value, setting_type FROM settings WHERE setting_key = ? LIMIT 1',
-                [$key]
-            );
-        } catch (Throwable) {
-            self::$sensitiveSettings[$key] = ['found' => false, 'value' => null];
-            return $default;
-        }
-
-        self::$sensitiveSettings[$key] = [
+        $result = [
             'found' => $row !== null,
             'value' => $row === null
                 ? null
                 : self::castSettingValue($row['setting_value'] ?? null, (string) ($row['setting_type'] ?? 'string')),
         ];
 
-        return self::$sensitiveSettings[$key]['found'] ? self::$sensitiveSettings[$key]['value'] : $default;
+        if (!$transaction) { self::$sensitiveSettings[$key] = $result; }
+        return $result['found'] ? $result['value'] : $default;
     }
 
     /**
@@ -199,7 +183,9 @@ final class Store
 
     private static function forgetCachedAutoloadSettings(): void
     {
-        \TinyCat\Support\Cache::forget(self::SETTINGS_CACHE_KEY);
+        Cache::synchronized(self::SETTINGS_CACHE_KEY, static function (): void {
+            if (!Cache::forget(self::SETTINGS_CACHE_KEY)) { throw new RuntimeException('Cannot invalidate settings cache.'); }
+        });
     }
 
     private static function settingCanOverrideConfig(string $key): bool
@@ -208,6 +194,7 @@ final class Store
             'app.url' => true,
             'site.name' => true,
             'site.homepage' => true,
+            'site.public_enabled' => true,
             'site.theme' => true,
             'site.home_title' => true,
             'site.meta_description' => true,
@@ -215,7 +202,6 @@ final class Store
             'site.logo_path' => true,
             'site.favicon_url' => true,
             'site.favicon_path' => true,
-            'site.footer_html' => true,
             'i18n.locale' => true,
             'datetime.timezone' => true,
             'datetime.date' => true,
@@ -244,7 +230,9 @@ final class Store
     {
         static $ready = false;
 
-        if ($ready || (bool) self::config('install.complete', false)) {
+        // A published completion flag is not a connection during installation recovery.
+        // Keep configured production failures visible, but probe safely before setup.
+        if ($ready || ((bool) Config::get('install.complete', false) && Config::get('database', []) !== [])) {
             return true;
         }
 
@@ -252,7 +240,7 @@ final class Store
             Connection::query('SELECT setting_key FROM settings LIMIT 1');
             $ready = true;
             return true;
-        } catch (Throwable) {
+        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return false;
         }
     }

@@ -1,0 +1,7 @@
+.hashtag {
+  display: inline-block;
+  min-height: 24px;
+  line-height: 24px;
+  color: var(--primary-strong);
+  font-weight: 800;
+}

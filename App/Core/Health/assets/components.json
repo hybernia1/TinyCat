@@ -50,7 +50,8 @@
                           "unknown": {"t": "health.status.unknown"}
                         },
                         "default": {"get": "check.status"}
-                      }
+                      },
+                      "text": true
                     }
                   }
                 ]
@@ -216,15 +217,11 @@
           {
             "tag": "li",
             "attrs": {"class": "result-item"},
-            "when": {"lookup": {"get": "_key"}, "cases": {"cleanup": true, "feeds": true}, "default": false},
             "children": [
               {
                 "tag": "strong",
                 "children": [
-                  {
-                    "lookup": {"get": "_key"},
-                    "cases": {"cleanup": {"t": "cron.tasks.cleanup"}, "feeds": {"t": "cron.tasks.feeds"}}
-                  }
+                  {"lookup": {"get": "_key"}, "default": {"get": "_key"}, "catalog": "health.tasks", "field": "label"}
                 ]
               },
               " — ",
@@ -260,48 +257,48 @@
         "children": [
           {
             "tag": "div",
-            "attrs": {"class": "split"},
+            "attrs": {"class": "stack stack-gap-8"},
             "children": [
               {
-                "tag": "div",
-                "attrs": {"class": "stack stack-gap-8"},
+                "tag": "h2",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
                 "children": [
                   {
-                    "tag": "div",
-                    "attrs": {"class": "cluster"},
+                    "component": "ui/status-badge",
+                    "data": {"tone": {"get": "snapshot.status"}, "label": {"get": "status_label"}, "text": false},
+                    "when": {
+                      "lookup": {"get": "snapshot.status"},
+                      "cases": {"ok": true, "warning": true, "critical": true},
+                      "default": false
+                    }
+                  },
+                  {"get": "status_label"}
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "cluster gap-3 table-meta"},
+                "children": [
+                  {
+                    "tag": "span",
+                    "when": {"get": "checks"},
                     "children": [
                       {
-                        "component": "ui/status-badge",
-                        "data": {"tone": {"get": "snapshot.status"}, "label": {"get": "status_label"}}
+                        "t": "health.overview_count",
+                        "values": {"passed": {"get": "passed"}, "total": {"count": {"get": "checks"}}}
                       }
                     ]
                   },
                   {
-                    "tag": "div",
-                    "attrs": {"class": "cluster gap-3 table-meta"},
+                    "tag": "span",
+                    "when": {"get": "snapshot.report"},
                     "children": [
+                      {"t": "health.checked_at"},
+                      " ",
                       {
-                        "tag": "span",
-                        "when": {"get": "checks"},
-                        "children": [
-                          {
-                            "t": "health.overview_count",
-                            "values": {"passed": {"get": "passed"}, "total": {"count": {"get": "checks"}}}
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "span",
-                        "when": {"get": "snapshot.report"},
-                        "children": [
-                          {"t": "health.checked_at"},
-                          " ",
-                          {
-                            "tag": "time",
-                            "attrs": {"datetime": {"get": "snapshot.report.checked_at"}},
-                            "children": [{"get": "checked_label"}]
-                          }
-                        ]
+                        "tag": "time",
+                        "attrs": {"datetime": {"get": "snapshot.report.checked_at"}},
+                        "children": [{"get": "checked_label"}]
                       }
                     ]
                   }
@@ -342,43 +339,31 @@
       },
       {
         "tag": "section",
-        "attrs": {"class": "card"},
+        "attrs": {"class": "stack stack-gap-12"},
         "when": {"get": "issues"},
         "children": [
           {
-            "tag": "div",
-            "attrs": {"class": "card-header"},
-            "children": [
-              {
-                "tag": "h2",
-                "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                "children": [{"concat": [{"t": "health.status.warning"}, " (", {"count": {"get": "issues"}}, ")"]}]
-              }
-            ]
+            "tag": "h2",
+            "attrs": {"class": "text-lg m-0 cluster gap-2"},
+            "children": [{"concat": [{"t": "health.status.warning"}, " (", {"count": {"get": "issues"}}, ")"]}]
           },
           {
-            "tag": "div",
-            "attrs": {"class": "card-body stack"},
+            "each": {"get": "issues"},
+            "as": "check",
             "children": [
               {
-                "each": {"get": "issues"},
-                "as": "check",
-                "children": [
-                  {
-                    "component": "ui/notice",
-                    "data": {
-                      "tone": {"get": "check.status"},
-                      "title": {"get": "check.title"},
-                      "description": {"get": "check.advice"},
-                      "detail": {"get": "check.detail"}
-                    }
-                  },
-                  {
-                    "component": "health/scheduler-findings",
-                    "data": {"metrics": {"get": "check.metrics"}},
-                    "when": {"eq": [{"get": "check.id"}, "scheduler"]}
-                  }
-                ]
+                "component": "ui/notice",
+                "data": {
+                  "tone": {"get": "check.status"},
+                  "title": {"get": "check.title"},
+                  "description": {"get": "check.advice"},
+                  "detail": {"get": "check.detail"}
+                }
+              },
+              {
+                "component": "health/scheduler-findings",
+                "data": {"metrics": {"get": "check.metrics"}},
+                "when": {"eq": [{"get": "check.id"}, "scheduler"]}
               }
             ]
           }
@@ -435,7 +420,11 @@
                             },
                             {
                               "component": "ui/status-badge",
-                              "data": {"tone": {"get": "check.status"}, "label": {"get": "check.status_label"}}
+                              "data": {
+                                "tone": {"get": "check.status"},
+                                "label": {"get": "check.status_label"},
+                                "text": true
+                              }
                             }
                           ]
                         }
@@ -511,8 +500,13 @@
                                   "children": [
                                     {
                                       "tag": "div",
-                                      "attrs": {"class": "table-identity"},
+                                      "attrs": {"class": "identity-row identity-row-inset"},
                                       "children": [
+                                        {
+                                          "tag": "span",
+                                          "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                          "children": [{"icon": "clock"}]
+                                        },
                                         {
                                           "tag": "div",
                                           "attrs": {"class": "table-identity-body"},
@@ -535,7 +529,8 @@
                                       "component": "ui/status-badge",
                                       "data": {
                                         "tone": {"get": "run.health_status"},
-                                        "label": {"get": "run.status_label"}
+                                        "label": {"get": "run.status_label"},
+                                        "text": true
                                       }
                                     },
                                     {"tag": "br", "when": {"get": "run.incomplete"}},

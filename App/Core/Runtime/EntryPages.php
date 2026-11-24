@@ -13,7 +13,7 @@ final class EntryPages
         $pages = Registrations::current()->entries->homepages;
         $selected = (string) Startup::option('site.homepage', '');
         foreach ($pages as $page) { if ($page->id === $selected) { return $page; } }
-        return $pages[0] ?? null;
+        return $selected === '' ? ($pages[0] ?? null) : null;
     }
 
     public static function publicPath(string $id): string
@@ -26,15 +26,20 @@ final class EntryPages
     /** @return list<array{href: string, label: string, icon: string}> */
     public static function navigation(): array
     {
+        if (!\TinyCat\Core\Ui\PublicWeb::enabled()) { return []; }
         return array_values(array_map(static fn (\TinyCat\Core\Modules\EntryPage $page): array => ['href' => $page->path, 'label' => ($page->label)(), 'icon' => $page->icon], array_filter(Registrations::current()->entries->homepages, static fn (\TinyCat\Core\Modules\EntryPage $page): bool => $page->navigation)));
     }
 
     public static function register(): void
     {
         Router::route(['GET', 'HEAD'], '/', static function (): void {
+            if (!\TinyCat\Core\Ui\PublicWeb::enabled()) {
+                $user = \TinyCat\Core\Identity\Authentication::auth();
+                \TinyCat\Http\Web::redirect($user === null ? \TinyCat\Core\Identity\Integration::localUrl('/login') : \TinyCat\Core\Identity\Login::auth_landing_url($user));
+            }
             $page = self::homepage();
             if ($page !== null) { ($page->render)(); return; }
-            \TinyCat\Core\Ui\Page::render(['title' => 'TinyCat'], '');
+            \TinyCat\Core\Ui\Page::render(['title' => \TinyCat\Core\Ui\Site::site_name(), 'surface' => 'public', 'public' => true], \TinyCat\Support\Components::render('ui/notice', ['label' => \TinyCat\Support\Localization::t('public.no_homepage')]));
         });
         Router::route('GET', '/admin', static function (): void {
             \TinyCat\Core\Identity\Access::require_admin();

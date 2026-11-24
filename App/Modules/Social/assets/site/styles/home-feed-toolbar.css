@@ -33,7 +33,7 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 759px) {
+@media (max-width: 899px) {
   .home-feed-toolbar {
     gap: 4px;
   }

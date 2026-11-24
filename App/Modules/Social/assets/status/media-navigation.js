@@ -1,4 +1,4 @@
-import "../../../../../assets/ui/content/media.js";
+import "../content/media.js";
 import "./controller.js";
 (function () {
   "use strict";
@@ -10,7 +10,7 @@ import "./controller.js";
     var href;
     var statusId;
 
-    if (!trigger || !window.matchMedia || !window.matchMedia("(max-width: 760px), (hover: none) and (pointer: coarse)").matches) {
+    if (!trigger || !window.matchMedia || !window.matchMedia("(max-width: 899px)").matches) {
       return "";
     }
 

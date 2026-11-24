@@ -1,10 +1,10 @@
-import "../../../../assets/core/dates.js";
-import "../../../../assets/core/component-renderer.js";
-import "../../../../assets/core/dom.js";
-import "../../../../assets/core/api-client.js";
-import "../../../../assets/ui/component-builders.js";
-import "../../../../assets/ui/toasts.js";
-import "../../../../assets/ui/popovers.js";
+import "../../Ui/assets/runtime/dates.js";
+import "../../Ui/assets/runtime/component-renderer.js";
+import "../../Ui/assets/runtime/dom.js";
+import "../../Ui/assets/runtime/api-client.js";
+import "../../Ui/assets/component-builders.js";
+import "../../Ui/assets/toasts.js";
+import "../../Ui/assets/popovers.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;

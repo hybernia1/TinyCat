@@ -1,0 +1,21 @@
+.input-icon {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.input-icon > .icon {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--control-padding-inline);
+  width: var(--control-icon-size);
+  height: var(--control-icon-size);
+  color: var(--muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.input-icon > .input {
+  padding-inline-start: calc(var(--control-padding-inline) + var(--control-icon-size) + var(--control-icon-gap));
+}
+

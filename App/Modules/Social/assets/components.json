@@ -432,6 +432,17 @@
         ]
       },
       {
+        "tag": "button",
+        "attrs": {
+          "type": "button",
+          "class": "btn btn-secondary btn-sm",
+          "data-comment-page": {"get": "comments_next_url"},
+          "data-comment-parent": "0"
+        },
+        "when": {"get": "comments_next_url"},
+        "children": [{"t": "account.status_more_comments"}]
+      },
+      {
         "tag": "a",
         "attrs": {
           "class": "btn btn-secondary btn-sm",
@@ -460,7 +471,7 @@
               "value": {"get": "value"},
               "placeholder": {"t": "account.status_body"},
               "comment": false,
-              "suggest_url": "/api/search/suggestions",
+              "suggest_url": {"or": [{"get": "suggest_url"}, "/api/search/suggestions"]},
               "max_characters": {"get": "constraints.body.max_length"}
             }
           },
@@ -1030,40 +1041,48 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
                                   {
-                                    "component": "ui/account-status",
-                                    "data": {
-                                      "status": {"if": [{"get": "source.enabled"}, "active", "disabled"]},
-                                      "label": {
-                                        "if": [{"get": "source.enabled"}, {"t": "bots.enabled"}, {"t": "bots.disabled"}]
-                                      }
-                                    }
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "rss"}]
                                   },
                                   {
                                     "tag": "div",
                                     "attrs": {"class": "table-identity-body"},
                                     "children": [
                                       {
-                                        "tag": "strong",
-                                        "attrs": {"class": "table-primary", "title": {"get": "source.name"}},
-                                        "children": [{"get": "source.name"}]
+                                        "tag": "a",
+                                        "attrs": {
+                                          "class": "table-primary",
+                                          "href": {"get": "source.feed_url"},
+                                          "aria-label": {
+                                            "concat": [{"get": "source.name"}, " — ", {"get": "source.feed_url"}]
+                                          },
+                                          "target": "_blank",
+                                          "rel": "noopener noreferrer",
+                                          "title": {"get": "source.name"}
+                                        },
+                                        "children": [{"tag": "strong", "children": [{"get": "source.name"}]}]
                                       },
                                       {
                                         "tag": "div",
                                         "attrs": {"class": "table-meta"},
                                         "children": [
                                           {
-                                            "tag": "a",
-                                            "attrs": {
-                                              "href": {"get": "source.feed_url"},
-                                              "target": "_blank",
-                                              "rel": "noopener noreferrer",
-                                              "class": "table-text-url",
-                                              "title": {"get": "source.feed_url"}
-                                            },
-                                            "children": [{"get": "source.feed_url"}]
+                                            "component": "ui/account-status",
+                                            "data": {
+                                              "status": {"if": [{"get": "source.enabled"}, "active", "disabled"]},
+                                              "label": {
+                                                "if": [
+                                                  {"get": "source.enabled"},
+                                                  {"t": "bots.enabled"},
+                                                  {"t": "bots.disabled"}
+                                                ]
+                                              },
+                                              "text": true
+                                            }
                                           }
                                         ]
                                       },
@@ -1185,7 +1204,7 @@
                           {
                             "tag": "td",
                             "attrs": {"class": "table-meta"},
-                            "children": [{"or": [{"date": {"get": "source.last_imported_at"}}, "Ă˘â‚¬â€ť"]}]
+                            "children": [{"or": [{"date": {"get": "source.last_imported_at"}}, "—"]}]
                           },
                           {
                             "tag": "td",
@@ -1379,39 +1398,7 @@
                         "children": [
                           {
                             "tag": "td",
-                            "children": [
-                              {
-                                "tag": "div",
-                                "attrs": {"class": "table-identity"},
-                                "children": [
-                                  {
-                                    "component": "ui/account-status",
-                                    "data": {
-                                      "status": {"get": "account.status"},
-                                      "label": {
-                                        "lookup": {"get": "account.status"},
-                                        "cases": {
-                                          "active": {"t": "users.statuses.active"},
-                                          "waiting": {"t": "users.statuses.waiting"},
-                                          "ban": {"t": "users.statuses.ban"}
-                                        }
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "tag": "div",
-                                    "attrs": {"class": "table-identity-body"},
-                                    "children": [
-                                      {
-                                        "tag": "strong",
-                                        "attrs": {"class": "table-primary", "title": {"get": "account.username"}},
-                                        "children": [{"get": "account.username"}]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
+                            "children": [{"component": "users/identity-row", "data": {"user": {"get": "account"}}}]
                           },
                           {"tag": "td", "children": [{"get": "account.source_count"}]},
                           {"tag": "td", "children": [{"get": "account.post_count"}]},
@@ -1571,8 +1558,13 @@
                           "children": [
                             {
                               "tag": "div",
-                              "attrs": {"class": "table-identity"},
+                              "attrs": {"class": "identity-row identity-row-inset"},
                               "children": [
+                                {
+                                  "tag": "span",
+                                  "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                  "children": [{"icon": "clock"}]
+                                },
                                 {
                                   "tag": "div",
                                   "attrs": {"class": "table-identity-body"},
@@ -1609,8 +1601,8 @@
                           "children": [
                             {
                               "tag": "span",
-                              "attrs": {"class": "table-text", "title": {"or": [{"get": "run.error"}, "Ă˘â‚¬â€ť"]}},
-                              "children": [{"or": [{"get": "run.error"}, "Ă˘â‚¬â€ť"]}]
+                              "attrs": {"class": "table-text", "title": {"or": [{"get": "run.error"}, "—"]}},
+                              "children": [{"or": [{"get": "run.error"}, "—"]}]
                             }
                           ]
                         }
@@ -1625,26 +1617,6 @@
       ]
     }
   ],
-  "bots/stat": {
-    "component": "ui/stat-card",
-    "data": {
-      "label": {
-        "lookup": {"get": "stat.key"},
-        "cases": {
-          "sources": {"t": "bots.detail_stat_sources"},
-          "active_sources": {"t": "bots.detail_stat_active_sources"},
-          "posts": {"t": "bots.detail_stat_posts"},
-          "runs": {"t": "bots.detail_stat_runs"}
-        }
-      },
-      "icon": {
-        "lookup": {"get": "stat.key"},
-        "cases": {"sources": "rss", "active_sources": "check", "posts": "file", "runs": "refresh"}
-      },
-      "value": {"get": "stat.value"},
-      "value_attributes": {"data-bot-stat": {"get": "stat.key"}}
-    }
-  },
   "bots/run-status": {
     "component": "ui/status-badge",
     "data": {
@@ -1674,7 +1646,8 @@
           "interrupted": {"t": "bots.run_statuses.interrupted"}
         },
         "default": {"get": "status"}
-      }
+      },
+      "text": true
     }
   },
   "bots/posts": {
@@ -1766,8 +1739,13 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "file-text"}]
+                                  },
                                   {
                                     "tag": "div",
                                     "attrs": {"class": "table-identity-body"},
@@ -1812,17 +1790,18 @@
                             "tag": "td",
                             "children": [
                               {
-                                "tag": "span",
-                                "attrs": {"class": "badge"},
-                                "children": [
-                                  {
+                                "component": "ui/status-badge",
+                                "data": {
+                                  "label": {
                                     "if": [
                                       {"get": "post.published"},
                                       {"t": "bots.post_published"},
                                       {"t": "bots.post_scheduled"}
                                     ]
-                                  }
-                                ]
+                                  },
+                                  "tone": {"if": [{"get": "post.published"}, "ok", "warning"]},
+                                  "text": true
+                                }
                               }
                             ]
                           },
@@ -1991,21 +1970,12 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
                                   {
-                                    "component": "ui/account-status",
-                                    "data": {
-                                      "status": {"get": "post.status"},
-                                      "label": {
-                                        "lookup": {"get": "post.status"},
-                                        "cases": {
-                                          "active": {"t": "users.statuses.active"},
-                                          "waiting": {"t": "users.statuses.waiting"},
-                                          "ban": {"t": "users.statuses.ban"}
-                                        }
-                                      }
-                                    }
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "file-text"}]
                                   },
                                   {
                                     "tag": "div",
@@ -2023,6 +1993,27 @@
                                           "title": {"get": "post.username"}
                                         },
                                         "children": [{"get": "post.username"}]
+                                      },
+                                      {
+                                        "tag": "div",
+                                        "attrs": {"class": "table-meta"},
+                                        "children": [
+                                          {
+                                            "component": "ui/account-status",
+                                            "data": {
+                                              "status": {"get": "post.status"},
+                                              "label": {
+                                                "lookup": {"get": "post.status"},
+                                                "cases": {
+                                                  "active": {"t": "users.statuses.active"},
+                                                  "waiting": {"t": "users.statuses.waiting"},
+                                                  "ban": {"t": "users.statuses.ban"}
+                                                }
+                                              },
+                                              "text": true
+                                            }
+                                          }
+                                        ]
                                       }
                                     ]
                                   }
@@ -2204,7 +2195,7 @@
     "tag": "div",
     "attrs": {"class": "stack"},
     "children": [
-      {"tag": "p", "attrs": {"class": "alert alert-info"}, "children": [{"t": "bots.preview_help"}]},
+      {"component": "ui/help", "data": {"text": {"t": "bots.preview_help"}}},
       {
         "tag": "strong",
         "children": [
@@ -2348,14 +2339,6 @@
           "textarea": true,
           "attributes": {"class": "textarea", "name": "bio", "rows": "4", "maxlength": "500"}
         }
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "field stack stack-gap-8"},
-        "children": [
-          {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "account.avatar"}]},
-          {"component": "users/avatar-control", "data": {"user": {"get": "item"}}}
-        ]
       }
     ]
   },
@@ -2645,8 +2628,13 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "shield"}]
+                                  },
                                   {
                                     "tag": "div",
                                     "attrs": {"class": "table-identity-body"},
@@ -2671,7 +2659,7 @@
                                             "concat": [
                                               "#",
                                               {"get": "report.content_id"},
-                                              " Ă‚Â· ",
+                                              " · ",
                                               {"get": "report.author_name"}
                                             ]
                                           }
@@ -2681,7 +2669,7 @@
                                             "concat": [
                                               "#",
                                               {"get": "report.content_id"},
-                                              " Ă‚Â· ",
+                                              " · ",
                                               {"get": "report.author_name"}
                                             ]
                                           }
@@ -2880,8 +2868,13 @@
                             "children": [
                               {
                                 "tag": "div",
-                                "attrs": {"class": "table-identity"},
+                                "attrs": {"class": "identity-row identity-row-inset"},
                                 "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "children": [{"icon": "user"}]
+                                  },
                                   {
                                     "tag": "div",
                                     "attrs": {"class": "table-identity-body"},
@@ -2890,9 +2883,9 @@
                                         "tag": "strong",
                                         "attrs": {
                                           "class": "table-primary",
-                                          "title": {"or": [{"get": "report.reporter_name"}, "Ă˘â‚¬â€ť"]}
+                                          "title": {"or": [{"get": "report.reporter_name"}, "—"]}
                                         },
-                                        "children": [{"or": [{"get": "report.reporter_name"}, "Ă˘â‚¬â€ť"]}]
+                                        "children": [{"or": [{"get": "report.reporter_name"}, "—"]}]
                                       },
                                       {
                                         "tag": "div",
@@ -2930,7 +2923,7 @@
                           {
                             "tag": "td",
                             "children": [
-                              {"if": [{"get": "report.created_at"}, {"date": {"get": "report.created_at"}}, "Ă˘â‚¬â€ť"]}
+                              {"if": [{"get": "report.created_at"}, {"date": {"get": "report.created_at"}}, "—"]}
                             ]
                           },
                           {
@@ -2978,7 +2971,7 @@
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"or": [{"get": "report.reporter_name"}, "Ă˘â‚¬â€ť"]}]
+        "children": [{"or": [{"get": "report.reporter_name"}, "—"]}]
       },
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "moderation.report_reason"}]},
       {
@@ -3008,25 +3001,21 @@
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"if": [{"get": "report.created_at"}, {"date": {"get": "report.created_at"}}, "Ă˘â‚¬â€ť"]}]
+        "children": [{"if": [{"get": "report.created_at"}, {"date": {"get": "report.created_at"}}, "—"]}]
       },
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "moderation.report_note"}]},
-      {
-        "tag": "dd",
-        "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"or": [{"get": "report.note"}, "Ă˘â‚¬â€ť"]}]
-      },
+      {"tag": "dd", "attrs": {"class": "m-0 is-resource-text"}, "children": [{"or": [{"get": "report.note"}, "—"]}]},
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "moderation.reviewer"}]},
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"or": [{"get": "report.reviewer_name"}, "Ă˘â‚¬â€ť"]}]
+        "children": [{"or": [{"get": "report.reviewer_name"}, "—"]}]
       },
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "common.updated"}]},
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [{"if": [{"get": "report.reviewed_at"}, {"date": {"get": "report.reviewed_at"}}, "Ă˘â‚¬â€ť"]}]
+        "children": [{"if": [{"get": "report.reviewed_at"}, {"date": {"get": "report.reviewed_at"}}, "—"]}]
       }
     ]
   },
@@ -3047,133 +3036,9 @@
           "reviewed": {"t": "moderation.report_statuses.reviewed"}
         },
         "default": {"t": "moderation.report_statuses.reviewed"}
-      }
+      },
+      "text": true
     }
-  },
-  "search/page": {
-    "tag": "div",
-    "attrs": {"class": "stack stack-gap-16"},
-    "children": [
-      {
-        "tag": "header",
-        "attrs": {"class": "public-list-header"},
-        "children": [
-          {
-            "tag": "h1",
-            "attrs": {"class": "text-2xl m-0"},
-            "children": [
-              {
-                "if": [
-                  {"get": "search.valid"},
-                  {"t": "public.search_title_query", "values": {"query": {"get": "search.query"}}},
-                  {"t": "public.search_title"}
-                ]
-              }
-            ]
-          },
-          {
-            "component": "site/archive-actions",
-            "data": {
-              "rss_url": {"get": "rss_url"},
-              "archive_options": {"get": "archive_options"},
-              "archive_type": {"get": "archive_type"}
-            },
-            "when": {"get": "search.valid"}
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "alert alert-info"},
-        "when": {"not": {"get": "search.valid"}},
-        "children": [{"t": "public.search_length", "values": {"min": {"get": "search.minimum_length"}, "max": 80}}]
-      },
-      {
-        "tag": "form",
-        "attrs": {"class": "card", "action": "/api/security/challenges/search", "data-ajax-form": "", "method": "post"},
-        "when": {"and": [{"get": "search.blocked"}, {"eq": [{"get": "search.block_code"}, "captcha_required"]}]},
-        "children": [
-          {"tag": "input", "attrs": {"type": "hidden", "name": "_csrf", "value": {"get": "csrf"}}},
-          {"tag": "input", "attrs": {"type": "hidden", "name": "next", "value": {"get": "url"}}},
-          {
-            "tag": "div",
-            "attrs": {"class": "card-header"},
-            "children": [{"tag": "strong", "children": [{"t": "public.search_captcha_title"}]}]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "card-body stack stack-gap-12"},
-            "children": [
-              {"tag": "p", "attrs": {"class": "muted m-0"}, "children": [{"t": "public.search_captcha_required"}]},
-              {"component": "ui/captcha", "data": {"config": {"get": "search.captcha"}}}
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "card-footer justify-end"},
-            "children": [
-              {
-                "tag": "a",
-                "attrs": {
-                  "class": "btn btn-ghost",
-                  "href": {"get": "login_url"},
-                  "data-modal-open": "auth-modal",
-                  "data-modal-url": {"get": "login_modal_url"}
-                },
-                "children": [{"t": "auth.login_title"}]
-              },
-              {
-                "tag": "button",
-                "attrs": {"class": "btn btn-primary", "type": "submit"},
-                "children": [{"t": "common.confirm"}]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "alert alert-info"},
-        "when": {
-          "and": [{"get": "search.blocked"}, {"not": {"eq": [{"get": "search.block_code"}, "captcha_required"]}}]
-        },
-        "children": [{"t": "moderation.messages.action_limited"}]
-      },
-      {
-        "component": "ui/empty-state",
-        "data": {"label": {"t": "public.search_empty"}, "icon": "search"},
-        "when": {
-          "and": [{"and": [{"get": "search.valid"}, {"not": {"get": "search.blocked"}}]}, {"get": "search.empty"}]
-        }
-      },
-      {
-        "tag": "div",
-        "attrs": {"id": "search-results", "class": "status-feed"},
-        "when": {
-          "and": [
-            {"and": [{"get": "search.valid"}, {"not": {"get": "search.blocked"}}]},
-            {"not": {"get": "search.empty"}}
-          ]
-        },
-        "children": [
-          {
-            "each": {"get": "items"},
-            "as": "post",
-            "children": [
-              {
-                "component": "status/card",
-                "data": {"item": {"get": "post"}, "anchor": true, "open_modal": true, "action": {"get": "url"}}
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "component": "status/feed-more",
-        "data": {"target": "#search-results", "url": {"get": "next_url"}},
-        "when": {"and": [{"get": "search.valid"}, {"not": {"get": "search.blocked"}}]}
-      }
-    ]
   },
   "site/sidebar": {
     "tag": "aside",
@@ -3312,9 +3177,8 @@
       },
       {
         "tag": "footer",
-        "attrs": {"class": "public-sidebar-footer stack stack-gap-8 desktop-only"},
+        "attrs": {"class": "public-sidebar-footer desktop-only"},
         "children": [
-          {"rich": {"get": "footer"}, "when": {"get": "footer"}},
           {
             "tag": "a",
             "attrs": {
@@ -3535,7 +3399,7 @@
                             "tag": "form",
                             "attrs": {
                               "method": "post",
-                              "action": {"concat": ["/api/users/", {"get": "author.id"}, "/followers/me"]},
+                              "action": {"concat": ["/api/profiles/", {"get": "author.id"}, "/followers/me"]},
                               "data-follow-form": "",
                               "data-author-id": {"get": "author.id"}
                             },
@@ -3627,7 +3491,6 @@
           {
             "tag": "div",
             "attrs": {"class": "stack stack-gap-14"},
-            "when": {"not": {"eq": [{"get": "kind"}, "search"]}},
             "children": [
               {
                 "tag": "header",
@@ -3674,10 +3537,9 @@
                     "children": [
                       {
                         "tag": "div",
-                        "attrs": {"class": "alert alert-info status-email-notice"},
+                        "attrs": {"class": "alert alert-info status-email-notice cluster"},
                         "when": {"get": "email_missing"},
                         "children": [
-                          {"icon": "info"},
                           {
                             "tag": "span",
                             "attrs": {"class": "status-email-notice-copy"},
@@ -3760,6 +3622,7 @@
                 "data": {
                   "item": {"get": "item"},
                   "comments": {"get": "comments"},
+                  "comments_next_url": {"get": "comments_next_url"},
                   "viewer": {"get": "viewer"},
                   "context": {"concat": ["status-", {"get": "item.id"}]}
                 },
@@ -3895,22 +3758,6 @@
                 ]
               }
             ]
-          },
-          {
-            "component": "search/page",
-            "data": {
-              "search": {"get": "search"},
-              "items": {"get": "items"},
-              "url": {"get": "url"},
-              "next_url": {"get": "next_url"},
-              "csrf": {"get": "csrf"},
-              "login_url": {"get": "login_url"},
-              "login_modal_url": {"get": "login_modal_url"},
-              "rss_url": {"get": "rss_url"},
-              "archive_options": {"get": "archive_options"},
-              "archive_type": {"get": "archive_type"}
-            },
-            "when": {"eq": [{"get": "kind"}, "search"]}
           }
         ]
       },
@@ -4007,157 +3854,6 @@
     },
     "default": {"t": "public.filter_content"}
   },
-  "site/dashboard": {
-    "tag": "div",
-    "attrs": {"class": "stack stack-gap-14", "data-dashboard": ""},
-    "children": [
-      {
-        "tag": "section",
-        "attrs": {"class": "grid sm:grid-2 md:grid-4", "aria-label": {"t": "common.dashboard"}},
-        "children": [
-          {
-            "each": {"get": "stats"},
-            "as": "stat",
-            "children": [
-              {
-                "component": "ui/stat-card",
-                "data": {
-                  "heading": {"get": "stat.heading"},
-                  "icon": {"get": "stat.icon"},
-                  "label": {"get": "stat.label"},
-                  "value": {"get": "stat.value"},
-                  "note": {"get": "stat.note"}
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "component": "ui/admin-list",
-        "data": {
-          "title": {"t": "admin.recent_comments"},
-          "icon": "message-circle",
-          "target_id": "dashboard-comments",
-          "content": {"get": "comments_html"}
-        }
-      }
-    ]
-  },
-  "site/dashboard-comments": {
-    "tag": "div",
-    "children": [
-      {
-        "component": "ui/empty-state",
-        "data": {"label": {"t": "admin.no_recent_comments"}, "icon": "message-circle"},
-        "when": {"not": {"get": "items"}}
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "table-wrap"},
-        "when": {"get": "items"},
-        "children": [
-          {
-            "tag": "table",
-            "attrs": {"class": "table", "id": "dashboard-comments-table"},
-            "children": [
-              {"tag": "caption", "attrs": {"class": "sr-only"}, "children": [{"t": "admin.recent_comments"}]},
-              {
-                "tag": "thead",
-                "children": [
-                  {
-                    "tag": "tr",
-                    "children": [
-                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "admin.stats.comments"}]},
-                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "common.username"}]},
-                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "public.status_title"}]},
-                      {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "common.created"}]}
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "tbody",
-                "children": [
-                  {
-                    "each": {"get": "items"},
-                    "as": "comment",
-                    "children": [
-                      {
-                        "tag": "tr",
-                        "children": [
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "div",
-                                "attrs": {"class": "table-identity"},
-                                "children": [
-                                  {
-                                    "tag": "div",
-                                    "attrs": {"class": "table-identity-body"},
-                                    "children": [
-                                      {
-                                        "tag": "span",
-                                        "attrs": {"class": "table-primary", "title": {"get": "comment.body"}},
-                                        "children": [{"get": "comment.body"}]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "a",
-                                "attrs": {
-                                  "href": {"get": "comment.author_url"},
-                                  "class": "table-text",
-                                  "title": {"get": "comment.username"}
-                                },
-                                "children": [{"get": "comment.username"}]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "a",
-                                "attrs": {
-                                  "href": {"get": "comment.content_url"},
-                                  "class": "table-text",
-                                  "title": {"or": [{"get": "comment.content_body"}, {"t": "common.open"}]}
-                                },
-                                "children": [{"or": [{"get": "comment.content_body"}, {"t": "common.open"}]}]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "time",
-                                "attrs": {"datetime": {"get": "comment.created_iso"}},
-                                "children": [{"get": "comment.created_label"}]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
   "status/comment-menu": {
     "component": "status/menu",
     "data": {"item": {"get": "item"}, "comment": true, "content_id": {"get": "item.content_id"}},
@@ -4182,11 +3878,10 @@
           "spellcheck": "false",
           "aria-describedby": {"concat": [{"get": "dialog_id"}, "-username-help"]}
         },
-        "help": {"t": "account.username_hint"},
+        "help": {"concat": [{"t": "account.username_hint"}, "\n\n", {"t": "bots.account_create_help"}]},
         "help_id": {"concat": [{"get": "dialog_id"}, "-username-help"]}
       }
-    },
-    {"tag": "p", "attrs": {"class": "help m-0"}, "children": [{"t": "bots.account_create_help"}]}
+    }
   ],
   "bots/account-filter-form": {
     "tag": "form",
@@ -4319,6 +4014,7 @@
     "component": "status/composer-body",
     "data": {
       "constraints": {"get": "constraints"},
+      "suggest_url": {"get": "suggest_url"},
       "viewer": {"or": [{"get": "viewer"}, {"get": "item.author"}]},
       "value": {"get": "item.editable_body"},
       "image": {"get": "item.image"},
@@ -4361,6 +4057,7 @@
         "data": {
           "item": {"get": "item"},
           "comments": {"get": "comments"},
+          "comments_next_url": {"get": "comments_next_url"},
           "viewer": {"get": "viewer"},
           "context": "modal"
         }
@@ -4371,7 +4068,7 @@
     "tag": "div",
     "attrs": {"class": "stack"},
     "children": [
-      {"tag": "p", "attrs": {"class": "muted"}, "children": [{"t": "account.status_embed_help"}]},
+      {"component": "ui/help", "data": {"text": {"t": "account.status_embed_help"}}},
       {"slot": {"get": "preview"}},
       {
         "component": "ui/field",
@@ -4435,7 +4132,6 @@
     ]
   },
   "bots/workspace": {"tag": "div", "attrs": {"class": "stack stack-gap-16"}, "children": [{"slot": {"get": "tabs"}}]},
-  "bots/workspace-account": {"tag": "div", "attrs": {"class": "grid sm:grid-2 md:grid-4", "data-bot-summary": ""}},
   "bots/workspace-lists": [
     {
       "tag": "div",
@@ -4510,6 +4206,11 @@
       "tag": "p",
       "attrs": {"class": "text-muted"},
       "children": [{"t": "privacy.intro", "values": {"site": {"get": "siteName"}}}]
+    },
+    {
+      "tag": "p",
+      "attrs": {"class": "mb-0"},
+      "children": [{"t": "privacy.data_content", "values": {"site": {"get": "siteName"}}}]
     },
     {
       "tag": "div",
@@ -4596,97 +4297,6 @@
                   "tag": "p",
                   "attrs": {"class": "mb-0"},
                   "children": [{"t": "privacy.feed_no_shadow_bans", "values": {"site": {"get": "siteName"}}}]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "section",
-          "attrs": {"class": "card"},
-          "children": [
-            {
-              "tag": "div",
-              "attrs": {"class": "card-header"},
-              "children": [
-                {
-                  "tag": "h2",
-                  "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                  "children": [{"icon": "database"}, " ", {"t": "privacy.data_title"}]
-                }
-              ]
-            },
-            {
-              "tag": "div",
-              "attrs": {"class": "card-body stack"},
-              "children": [
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_account", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_email", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_content", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_technical", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.data_server_logs", "values": {"site": {"get": "siteName"}}}]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "section",
-          "attrs": {"class": "card"},
-          "children": [
-            {
-              "tag": "div",
-              "attrs": {"class": "card-header"},
-              "children": [
-                {
-                  "tag": "h2",
-                  "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                  "children": [{"icon": "key"}, " ", {"t": "privacy.recovery_title"}]
-                }
-              ]
-            },
-            {
-              "tag": "div",
-              "attrs": {"class": "card-body stack"},
-              "children": [
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.recovery_email", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.recovery_no_contact", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.recovery_lost", "values": {"site": {"get": "siteName"}}}]
-                },
-                {
-                  "tag": "p",
-                  "attrs": {"class": "mb-0"},
-                  "children": [{"t": "privacy.recovery_rotation", "values": {"site": {"get": "siteName"}}}]
                 }
               ]
             }
@@ -4842,5 +4452,875 @@
         }
       ]
     }
-  ]
+  ],
+  "search/posts": {
+    "tag": "div",
+    "attrs": {"class": "status-feed", "data-status-feed": ""},
+    "children": [
+      {
+        "each": {"get": "items"},
+        "as": "post",
+        "children": {"component": "status/card", "data": {"item": {"get": "post"}, "open_modal": true, "anchor": true}}
+      }
+    ]
+  },
+  "publishing/segments": {
+    "each": {"get": "segments"},
+    "as": "segment",
+    "children": [
+      {"tag": "span", "when": {"eq": [{"get": "segment.type"}, "text"]}, "children": [{"get": "segment.text"}]},
+      {
+        "tag": "a",
+        "attrs": {
+          "href": {"or": [{"get": "segment.outbound_url"}, {"get": "segment.url"}]},
+          "class": {
+            "if": [
+              {"eq": [{"get": "segment.type"}, "mention"]},
+              "mention-link",
+              {"if": [{"eq": [{"get": "segment.type"}, "tag"]}, "badge tag-link", "status-inline-link"]}
+            ]
+          },
+          "target": {"if": [{"eq": [{"get": "segment.type"}, "link"]}, "_blank", null]},
+          "rel": {"if": [{"eq": [{"get": "segment.type"}, "link"]}, "nofollow noopener noreferrer ugc", null]},
+          "translate": {"if": [{"eq": [{"get": "segment.type"}, "tag"]}, "no", null]}
+        },
+        "when": {"lookup": {"get": "segment.type"}, "cases": {"text": false, "tag-overflow": false}, "default": true},
+        "children": [{"get": "segment.text"}]
+      },
+      {
+        "tag": "details",
+        "attrs": {"class": "status-tags-overflow"},
+        "when": {"eq": [{"get": "segment.type"}, "tag-overflow"]},
+        "children": [
+          {"tag": "summary", "attrs": {"class": "badge"}, "children": [{"concat": ["# +", {"get": "segment.count"}]}]},
+          {"component": "publishing/segments", "data": {"segments": {"get": "segment.segments"}}}
+        ]
+      }
+    ]
+  },
+  "publishing/link": [
+    {
+      "tag": "div",
+      "attrs": {
+        "class": {
+          "concat": [
+            "status-video-card",
+            {"if": [{"eq": [{"get": "link.card_kind"}, "audio"]}, " status-audio-card", ""]}
+          ]
+        },
+        "data-status-video": "",
+        "data-embed-url": {"get": "link.embed_url"},
+        "data-embed-origin": {"get": "link.embed_origin"},
+        "data-embed-width-param": {"get": "link.embed_width_param"},
+        "data-embed-autoplay-param": {"get": "link.embed_autoplay_param"},
+        "data-embed-autoplay-value": {"get": "link.embed_autoplay_value"},
+        "data-embed-height": {"get": "link.embed_height"},
+        "data-card-kind": {"get": "link.card_kind"},
+        "data-provider": {"get": "link.provider"},
+        "data-audio-url": {"get": "link.audio_url"}
+      },
+      "when": {"or": [{"get": "link.embed_allowed"}, {"eq": [{"get": "link.card_kind"}, "audio"]}]},
+      "children": [
+        {
+          "component": "publishing/link-summary",
+          "data": {"link": {"get": "link"}},
+          "when": {"eq": [{"get": "link.card_kind"}, "audio"]}
+        },
+        {
+          "tag": "div",
+          "attrs": {"data-status-video-mount": ""},
+          "when": {"or": [{"get": "link.embed_allowed"}, {"get": "link.audio_url"}]},
+          "children": [
+            {
+              "tag": "button",
+              "attrs": {
+                "class": "status-video-placeholder",
+                "type": "button",
+                "data-status-video-load": "",
+                "aria-label": {"get": "link.title"}
+              },
+              "children": [
+                {
+                  "tag": "span",
+                  "attrs": {"class": "status-video-provider"},
+                  "when": {
+                    "and": [{"not": {"eq": [{"get": "link.card_kind"}, "audio"]}}, {"get": "link.provider_name"}]
+                  },
+                  "children": [{"get": "link.provider_name"}]
+                },
+                {
+                  "tag": "picture",
+                  "attrs": {"class": "status-video-thumb"},
+                  "when": {
+                    "and": [{"not": {"eq": [{"get": "link.card_kind"}, "audio"]}}, {"get": "link.thumbnail_url"}]
+                  },
+                  "children": [
+                    {
+                      "tag": "source",
+                      "attrs": {"srcset": {"get": "link.thumbnail_mobile_url"}, "media": "(max-width: 759px)"},
+                      "when": {"get": "link.thumbnail_mobile_url"}
+                    },
+                    {
+                      "tag": "img",
+                      "attrs": {
+                        "src": {"get": "link.thumbnail_url"},
+                        "alt": {"or": [{"get": "link.title"}, {"get": "link.url"}]},
+                        "loading": "lazy",
+                        "decoding": "async",
+                        "referrerpolicy": "no-referrer"
+                      }
+                    }
+                  ]
+                },
+                {"tag": "span", "attrs": {"class": "status-video-play"}, "children": [{"icon": "play"}]},
+                {
+                  "tag": "span",
+                  "attrs": {"class": "status-video-copy"},
+                  "when": {"not": {"eq": [{"get": "link.card_kind"}, "audio"]}},
+                  "children": [
+                    {"tag": "strong", "children": [{"get": "link.title"}]},
+                    {"tag": "small", "children": [{"or": [{"get": "link.description"}, {"get": "link.provider"}]}]}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "a",
+          "attrs": {
+            "class": "status-video-source",
+            "href": {"or": [{"get": "link.outbound_url"}, {"get": "link.url"}]},
+            "target": "_blank",
+            "rel": "nofollow noopener noreferrer ugc"
+          },
+          "when": {"not": {"eq": [{"get": "link.card_kind"}, "audio"]}},
+          "children": [
+            {"icon": "external-link"},
+            {"or": [{"get": "link.provider_name"}, {"get": "link.display_url"}, {"get": "link.url"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "component": "publishing/link-summary",
+      "data": {"link": {"get": "link"}},
+      "when": {
+        "and": [
+          {"not": {"get": "link.embed_allowed"}},
+          {"not": {"eq": [{"get": "link.card_kind"}, "social"]}},
+          {"not": {"eq": [{"get": "link.card_kind"}, "audio"]}}
+        ]
+      }
+    },
+    {
+      "tag": "div",
+      "attrs": {"class": "status-social-link"},
+      "when": {"and": [{"not": {"get": "link.embed_allowed"}}, {"eq": [{"get": "link.card_kind"}, "social"]}]},
+      "children": [
+        {
+          "tag": "a",
+          "attrs": {
+            "class": "status-link-provider",
+            "href": {"or": [{"get": "link.outbound_url"}, {"get": "link.url"}]},
+            "target": "_blank",
+            "rel": "nofollow noopener noreferrer ugc",
+            "data-card-kind": {"get": "link.card_kind"},
+            "data-provider": {"get": "link.provider"}
+          },
+          "when": {"get": "link.provider_name"},
+          "children": [
+            {"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}},
+            {"get": "link.provider_name"},
+            {
+              "tag": "span",
+              "attrs": {"class": "status-link-account"},
+              "when": {"eq": [{"get": "link.card_kind"}, "social"]},
+              "children": [{"get": "link.title"}]
+            }
+          ]
+        },
+        {
+          "tag": "span",
+          "attrs": {"class": "status-link-copy"},
+          "children": [{"tag": "span", "when": {"get": "link.description"}, "children": [{"get": "link.description"}]}]
+        },
+        {
+          "tag": "a",
+          "attrs": {
+            "class": {"concat": ["status-link-card", {"if": [{"get": "link.image_url"}, " has-image", ""]}]},
+            "href": {"or": [{"get": "link.outbound_url"}, {"get": "link.url"}]},
+            "target": "_blank",
+            "rel": "nofollow noopener noreferrer ugc",
+            "data-card-kind": {"get": "link.card_kind"},
+            "data-provider": {"get": "link.provider"}
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {"class": "status-link-media", "data-status-link-media": ""},
+              "when": {"get": "link.image_url"},
+              "children": [
+                {
+                  "tag": "img",
+                  "attrs": {
+                    "class": "status-link-image",
+                    "src": {"get": "link.image_url"},
+                    "alt": "",
+                    "loading": "lazy",
+                    "data-status-link-image": ""
+                  }
+                },
+                {
+                  "tag": "span",
+                  "attrs": {"class": "status-link-icon status-link-fallback-icon", "data-status-link-fallback": ""},
+                  "children": [{"icon": "image"}]
+                }
+              ]
+            },
+            {
+              "tag": "span",
+              "attrs": {"class": "status-link-icon"},
+              "when": {"not": {"get": "link.image_url"}},
+              "children": [{"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}}]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "publishing/link-summary": {
+    "tag": "a",
+    "attrs": {
+      "class": {"concat": ["status-link-card", {"if": [{"get": "link.image_url"}, " has-image", ""]}]},
+      "href": {"or": [{"get": "link.outbound_url"}, {"get": "link.url"}]},
+      "target": "_blank",
+      "rel": "nofollow noopener noreferrer ugc",
+      "data-card-kind": {"get": "link.card_kind"},
+      "data-provider": {"get": "link.provider"}
+    },
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {"class": "status-link-provider"},
+        "when": {"get": "link.provider_name"},
+        "children": [{"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}}, {"get": "link.provider_name"}]
+      },
+      {
+        "tag": "span",
+        "attrs": {"class": "status-link-media", "data-status-link-media": ""},
+        "when": {"get": "link.image_url"},
+        "children": [
+          {
+            "tag": "img",
+            "attrs": {
+              "class": "status-link-image",
+              "src": {"get": "link.image_url"},
+              "alt": "",
+              "loading": "lazy",
+              "data-status-link-image": ""
+            }
+          },
+          {
+            "tag": "span",
+            "attrs": {"class": "status-link-icon status-link-fallback-icon", "data-status-link-fallback": ""},
+            "children": [{"icon": "image"}]
+          }
+        ]
+      },
+      {
+        "tag": "span",
+        "attrs": {"class": "status-link-icon"},
+        "when": {"not": {"get": "link.image_url"}},
+        "children": [{"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}}]
+      },
+      {
+        "tag": "span",
+        "attrs": {"class": "status-link-copy"},
+        "children": [
+          {"tag": "strong", "children": [{"or": [{"get": "link.title"}, {"get": "link.url"}]}]},
+          {"tag": "span", "when": {"get": "link.description"}, "children": [{"get": "link.description"}]},
+          {"tag": "small", "children": [{"or": [{"get": "link.display_url"}, {"get": "link.url"}]}]}
+        ]
+      }
+    ]
+  },
+  "publishing/editor": {
+    "tag": "div",
+    "attrs": {
+      "class": {"if": [{"get": "comment"}, "status-comment-editor", "field status-field"]},
+      "data-status-editor": ""
+    },
+    "children": [
+      {
+        "tag": "textarea",
+        "attrs": {
+          "class": {"if": [{"get": "comment"}, "textarea status-comment-input", "textarea status-textarea"]},
+          "name": {"get": "name"},
+          "rows": {"or": [{"get": "rows"}, {"if": [{"get": "comment"}, "1", "4"]}]},
+          "maxlength": {
+            "if": [
+              {"or": [{"get": "max_bytes"}, {"get": "max_characters"}]},
+              null,
+              {"or": [{"get": "max_length"}, "2000"]}
+            ]
+          },
+          "required": {"if": [{"or": [{"get": "comment"}, {"get": "required"}]}, true, null]},
+          "data-status-editor-source": "",
+          "data-status-suggest-url": {"get": "suggest_url"},
+          "data-status-placeholder": {"get": "placeholder"},
+          "placeholder": {"get": "placeholder"},
+          "aria-label": {"get": "placeholder"},
+          "data-status-editor-counter-disabled": {"if": [{"get": "comment"}, "true", null]},
+          "data-status-counter": {"if": [{"not": {"get": "comment"}}, {"t": "account.status_counter"}, null]},
+          "data-max-bytes": {"get": "max_bytes"},
+          "data-max-length": {"get": "max_characters"},
+          "aria-labelledby": {"get": "labelledby"}
+        },
+        "children": [{"get": "value"}]
+      }
+    ]
+  },
+  "publishing/image-field": {
+    "tag": "div",
+    "attrs": {
+      "class": "status-image-field",
+      "data-status-image": "",
+      "hidden": {"if": [{"not": {"or": [{"get": "enabled"}, {"get": "image.url"}]}}, true, null]}
+    },
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {"type": "hidden", "name": "remove_image", "value": "0", "data-status-image-remove-input": ""}
+      },
+      {
+        "tag": "button",
+        "attrs": {
+          "class": "status-image-preview",
+          "type": "button",
+          "data-status-image-preview-wrap": "",
+          "data-status-image-remove": "",
+          "aria-label": {"t": "account.status_image_remove"},
+          "hidden": {"if": [{"not": {"get": "image.url"}}, true, null]}
+        },
+        "children": [
+          {
+            "tag": "img",
+            "attrs": {
+              "src": {"if": [{"get": "image.url"}, {"get": "image.url"}, null]},
+              "alt": {
+                "or": [
+                  {"get": "image.alt"},
+                  {
+                    "if": [
+                      {"get": "image.description"},
+                      {
+                        "t": "public.status_image_alt",
+                        "values": {"author": {"get": "image.author"}, "text": {"get": "image.description"}}
+                      },
+                      {"t": "public.status_image_alt_empty", "values": {"author": {"get": "image.author"}}}
+                    ]
+                  }
+                ]
+              },
+              "data-status-image-preview": "",
+              "hidden": {"if": [{"not": {"get": "image.url"}}, true, null]}
+            }
+          }
+        ]
+      },
+      {
+        "tag": "label",
+        "attrs": {
+          "class": "btn btn-secondary btn-sm btn-icon status-image-picker",
+          "data-status-image-picker": "",
+          "aria-label": {"t": "account.status_image_add"},
+          "hidden": {"if": [{"not": {"and": [{"get": "enabled"}, {"not": {"get": "image.url"}}]}}, true, null]}
+        },
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "class": "sr-only",
+              "type": "file",
+              "name": "image",
+              "accept": "image/jpeg,image/png,image/webp",
+              "data-status-image-input": "",
+              "data-client-image-max-dimension": "800",
+              "data-client-image-max-bytes": "26214400"
+            }
+          },
+          {"icon": "upload"}
+        ]
+      }
+    ]
+  },
+  "publishing/attached-image": {
+    "tag": "img",
+    "attrs": {
+      "src": {"get": "item.image.url"},
+      "alt": {
+        "if": [
+          {"get": "item.image.description"},
+          {
+            "t": "public.status_image_alt",
+            "values": {"author": {"get": "item.image.author"}, "text": {"get": "item.image.description"}}
+          },
+          {"t": "public.status_image_alt_empty", "values": {"author": {"get": "item.image.author"}}}
+        ]
+      },
+      "loading": "lazy"
+    }
+  },
+  "publishing/body": {
+    "tag": "div",
+    "attrs": {"class": "stack stack-gap-16 publishing-content"},
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {"class": "status-body publishing-text"},
+        "children": [{"component": "publishing/segments", "data": {"segments": {"get": "item.segments"}}}]
+      },
+      {"component": "publishing/attached-image", "data": {"item": {"get": "item"}}, "when": {"get": "item.image.url"}},
+      {
+        "each": {"get": "item.links"},
+        "as": "link",
+        "children": [{"component": "publishing/link", "data": {"link": {"get": "link"}}}]
+      }
+    ]
+  },
+  "publishing/comment-form": {
+    "tag": "form",
+    "attrs": {
+      "class": {"concat": ["status-comment-form", {"if": [{"get": "parent_id"}, " is-reply", ""]}]},
+      "method": "post",
+      "action": {"concat": [{"get": "api_base"}, "/comments"]},
+      "data-status-form": {"if": [{"get": "submit_controller"}, "", null]},
+      "data-status-id": {"get": "content_id"},
+      "data-confirm-unsaved": "true",
+      "data-confirm-unsaved-title": {"t": "common.unsaved_title"},
+      "data-confirm-unsaved-message": {"t": "common.unsaved_message"},
+      "data-confirm-unsaved-ok": {"t": "common.leave"},
+      "data-confirm-unsaved-cancel": {"t": "common.stay"},
+      "data-discussion-form": {"if": [{"not": {"get": "submit_controller"}}, "", null]},
+      "data-submit-controller": {"get": "submit_controller"}
+    },
+    "children": [
+      {"csrf": true},
+      {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "comment"}},
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "parent_id",
+          "value": {"if": [{"get": "parent_id"}, {"get": "parent_id"}, 0]}
+        }
+      },
+      {"component": "ui/avatar", "data": {"user": {"get": "viewer"}, "small": true}},
+      {
+        "tag": "div",
+        "attrs": {"class": "status-comment-input-shell"},
+        "children": [
+          {
+            "component": "publishing/editor",
+            "data": {
+              "name": "comment",
+              "comment": true,
+              "value": {"get": "mention"},
+              "placeholder": {
+                "if": [
+                  {"get": "parent_id"},
+                  {"t": "account.status_reply_placeholder"},
+                  {"t": "account.status_comment_placeholder"}
+                ]
+              },
+              "suggest_url": {"get": "suggest_url"},
+              "max_length": 2000,
+              "max_characters": {"get": "constraints.comment.max_length"}
+            }
+          },
+          {
+            "tag": "button",
+            "attrs": {
+              "type": "submit",
+              "class": "btn btn-primary btn-icon btn-sm status-comment-submit",
+              "aria-label": {
+                "if": [{"get": "parent_id"}, {"t": "account.status_reply"}, {"t": "account.status_comment"}]
+              }
+            },
+            "children": [{"icon": "send"}]
+          }
+        ]
+      }
+    ]
+  },
+  "publishing/comment": {
+    "tag": "article",
+    "attrs": {
+      "class": {"concat": ["status-comment", {"if": [{"get": "item.parent_id"}, " is-child", ""]}]},
+      "id": {
+        "if": [
+          {"not": {"get": "preview"}},
+          {
+            "concat": [
+              "comment-",
+              {"if": [{"get": "context"}, {"concat": [{"get": "context"}, "-"]}, ""]},
+              {"get": "item.id"}
+            ]
+          },
+          null
+        ]
+      },
+      "data-comment-id": {"get": "item.id"},
+      "data-comment-created-at": {"get": "item.created_at"},
+      "data-content-id": {"get": "item.content_id"},
+      "data-parent-id": {"get": "item.parent_id"}
+    },
+    "children": [
+      {
+        "tag": "a",
+        "attrs": {"href": {"get": "item.author.url"}, "aria-label": {"get": "item.author.username"}},
+        "children": [{"component": "ui/avatar", "data": {"user": {"get": "item.author"}, "small": true}}]
+      },
+      {
+        "tag": "div",
+        "attrs": {"class": "status-comment-main"},
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {"class": "status-comment-bubble"},
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {"class": "status-comment-heading"},
+                "children": [
+                  {
+                    "tag": "a",
+                    "attrs": {"class": "status-comment-author", "href": {"get": "item.author.url"}},
+                    "children": [{"get": "item.author.username"}]
+                  },
+                  {
+                    "tag": "time",
+                    "attrs": {"class": "status-comment-heading-time", "datetime": {"get": "item.created_at"}},
+                    "children": [{"date": {"get": "item.created_at"}}]
+                  },
+                  {"extensions": "publishing/comment-menu"},
+                  {
+                    "tag": "a",
+                    "attrs": {
+                      "href": {"concat": [{"get": "api_base"}, "/comments/", {"get": "item.id"}]},
+                      "class": "btn btn-ghost btn-sm",
+                      "data-modal-url": {"concat": [{"get": "api_base"}, "/comments/", {"get": "item.id"}]},
+                      "data-modal-open": {"concat": ["modal-comment-", {"get": "item.id"}]}
+                    },
+                    "when": {
+                      "and": [
+                        {"not": {"get": "submit_controller"}},
+                        {"or": [{"get": "item.capabilities.edit"}, {"get": "item.capabilities.delete"}]}
+                      ]
+                    },
+                    "children": [{"t": "common.edit"}]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "status-comment-body is-resource-text"},
+                "children": [{"component": "publishing/segments", "data": {"segments": {"get": "item.segments"}}}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "status-comment-meta"},
+            "children": [
+              {
+                "component": "publishing/like",
+                "data": {
+                  "item": {"get": "item"},
+                  "comment": true,
+                  "content_id": {"get": "item.content_id"},
+                  "url": {"concat": [{"get": "api_base"}, "/comments/", {"get": "item.id"}, "/likes/me"]},
+                  "submit_controller": {"get": "submit_controller"},
+                  "api_base": {"get": "api_base"},
+                  "suggest_url": {"get": "suggest_url"}
+                },
+                "when": {"get": "item.capabilities.interact"}
+              },
+              {
+                "tag": "details",
+                "attrs": {"class": "status-reply-details"},
+                "when": {"get": "show_reply_form"},
+                "children": [{"tag": "summary", "children": [{"t": "account.status_reply"}]}]
+              },
+              {
+                "tag": "span",
+                "attrs": {"class": "status-comment-like-button"},
+                "when": {"not": {"get": "item.capabilities.interact"}},
+                "children": [
+                  {"icon": "thumb-up"},
+                  {
+                    "tag": "span",
+                    "attrs": {"data-comment-like-count": "", "data-comment-id": {"get": "item.id"}},
+                    "children": [{"get": "item.likes_count"}]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "status-reply-form-container"},
+            "when": {"and": [{"get": "item.capabilities.interact"}, {"get": "show_reply_form"}]},
+            "children": [
+              {
+                "component": "publishing/comment-form",
+                "data": {
+                  "content_id": {"get": "item.content_id"},
+                  "parent_id": {"get": "item.id"},
+                  "mention": {
+                    "if": [
+                      {"and": [{"get": "reply_mentions"}, {"get": "item.parent_id"}]},
+                      {"concat": ["@", {"get": "item.author.username"}, " "]},
+                      ""
+                    ]
+                  },
+                  "viewer": {"get": "viewer"},
+                  "submit_controller": {"get": "submit_controller"},
+                  "api_base": {"get": "api_base"},
+                  "suggest_url": {"get": "suggest_url"},
+                  "constraints": {"get": "constraints"}
+                }
+              }
+            ]
+          },
+          {
+            "tag": "button",
+            "attrs": {
+              "type": "button",
+              "class": "btn btn-secondary btn-sm",
+              "data-comment-page": {"concat": [{"get": "api_base"}, "/comments?parent_id=", {"get": "item.id"}]},
+              "data-comment-parent": {"get": "item.id"}
+            },
+            "when": {"and": [{"get": "show_replies"}, {"get": "item.has_replies"}, {"not": {"get": "preview"}}]},
+            "children": [{"t": "account.status_more_replies"}]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "status-comment-replies",
+              "data-comment-replies": "",
+              "data-comment-id": {"get": "item.id"}
+            },
+            "when": {"and": [{"get": "show_replies"}, {"get": "item.replies"}]},
+            "children": [
+              {
+                "each": {"get": "item.replies"},
+                "as": "reply",
+                "children": [
+                  {
+                    "component": "publishing/comment",
+                    "data": {
+                      "item": {"get": "reply"},
+                      "viewer": {"get": "viewer"},
+                      "context": {"get": "context"},
+                      "show_replies": true,
+                      "show_reply_form": {"get": "show_reply_form"},
+                      "preview": {"get": "preview"},
+                      "submit_controller": {"get": "submit_controller"},
+                      "api_base": {"get": "api_base"},
+                      "suggest_url": {"get": "suggest_url"},
+                      "reply_mentions": {"get": "reply_mentions"},
+                      "constraints": {"get": "constraints"}
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "publishing/like": {
+    "tag": "form",
+    "attrs": {
+      "method": "post",
+      "action": {"get": "url"},
+      "class": {"if": [{"get": "comment"}, "status-comment-like", null]},
+      "data-status-form": {"if": [{"get": "submit_controller"}, "", null]},
+      "data-status-id": {"get": "content_id"},
+      "data-discussion-form": {"if": [{"not": {"get": "submit_controller"}}, "", null]},
+      "data-submit-controller": {"get": "submit_controller"}
+    },
+    "children": [
+      {"csrf": true},
+      {
+        "tag": "input",
+        "attrs": {"type": "hidden", "name": "action", "value": {"if": [{"get": "comment"}, "comment_like", "react"]}}
+      },
+      {
+        "tag": "button",
+        "attrs": {
+          "type": "submit",
+          "class": {
+            "concat": [
+              {"if": [{"get": "comment"}, "status-comment-like-button", "btn btn-ghost btn-sm status-reaction"]},
+              {"if": [{"get": "item.liked"}, " is-active", ""]}
+            ]
+          },
+          "data-status-like-button": {"if": [{"not": {"get": "comment"}}, "", null]},
+          "data-comment-like-button": {"if": [{"get": "comment"}, "", null]},
+          "data-comment-id": {"if": [{"get": "comment"}, {"get": "item.id"}, null]},
+          "aria-pressed": {"if": [{"get": "item.liked"}, "true", "false"]},
+          "data-like-label": {
+            "or": [
+              {"t": "account.status_like_for", "values": {"context": {"get": "item.author.username"}}},
+              {"t": "account.status_like"}
+            ]
+          },
+          "data-unlike-label": {
+            "or": [
+              {"t": "account.status_unlike_for", "values": {"context": {"get": "item.author.username"}}},
+              {"t": "account.status_unlike_for", "values": {"context": {"t": "account.status_comments"}}}
+            ]
+          },
+          "aria-label": {
+            "if": [
+              {"get": "item.liked"},
+              {
+                "or": [
+                  {"t": "account.status_unlike_for", "values": {"context": {"get": "item.author.username"}}},
+                  {"t": "account.status_unlike_for", "values": {"context": {"t": "account.status_comments"}}}
+                ]
+              },
+              {
+                "or": [
+                  {"t": "account.status_like_for", "values": {"context": {"get": "item.author.username"}}},
+                  {"t": "account.status_like"}
+                ]
+              }
+            ]
+          }
+        },
+        "children": [
+          {"icon": "thumb-up", "class": "icon status-like-icon status-like-icon-outline"},
+          {"icon": "thumb-up-filled", "class": "icon status-like-icon status-like-icon-filled"},
+          {
+            "tag": "span",
+            "attrs": {
+              "data-status-count": {"if": [{"not": {"get": "comment"}}, "likes", null]},
+              "data-comment-like-count": {"if": [{"get": "comment"}, "", null]},
+              "data-comment-id": {"if": [{"get": "comment"}, {"get": "item.id"}, null]},
+              "aria-hidden": "true"
+            },
+            "children": [{"get": "item.likes_count"}]
+          }
+        ]
+      }
+    ]
+  },
+  "publishing/discussion": {
+    "tag": "section",
+    "attrs": {
+      "class": "stack stack-gap-16",
+      "data-discussion": "",
+      "data-discussion-id": {"get": "target.id"},
+      "data-discussion-api": {"get": "target.api_url"},
+      "data-discussion-constraints": {"json": {"get": "constraints"}}
+    },
+    "children": [
+      {"tag": "h2", "children": [{"t": "account.status_comments"}]},
+      {
+        "component": "publishing/like",
+        "data": {
+          "item": {"id": {"get": "target.id"}, "liked": {"get": "liked"}, "likes_count": {"get": "likes_count"}},
+          "content_id": {"get": "target.id"},
+          "url": {"concat": [{"get": "target.api_url"}, "/likes/me"]}
+        },
+        "when": {"get": "capabilities.react"}
+      },
+      {
+        "tag": "div",
+        "attrs": {"data-status-comment-list": "", "data-status-id": {"get": "target.id"}},
+        "children": [
+          {
+            "each": {"get": "items"},
+            "as": "item",
+            "children": [
+              {
+                "component": "publishing/comment",
+                "data": {
+                  "item": {"get": "item"},
+                  "viewer": {"get": "viewer"},
+                  "show_replies": true,
+                  "show_reply_form": {"get": "capabilities.comment"},
+                  "api_base": {"get": "target.api_url"},
+                  "reply_mentions": {"get": "reply_mentions"},
+                  "constraints": {"get": "constraints"}
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "publishing/comment-form",
+        "data": {
+          "content_id": {"get": "target.id"},
+          "viewer": {"get": "viewer"},
+          "api_base": {"get": "target.api_url"},
+          "constraints": {"get": "constraints"}
+        },
+        "when": {"get": "capabilities.comment"}
+      }
+    ]
+  },
+  "publishing/comment-history": {
+    "tag": "div",
+    "attrs": {"class": "status-comment-history"},
+    "children": [
+      {
+        "each": {"get": "revisions"},
+        "as": "revision",
+        "children": {
+          "tag": "article",
+          "attrs": {"class": "status-comment-history-entry"},
+          "children": [
+            {
+              "tag": "time",
+              "attrs": {"class": "status-comment-history-meta", "datetime": {"get": "revision.at"}},
+              "children": [{"get": "revision.label"}]
+            },
+            {
+              "each": {"get": "revision.rows"},
+              "as": "row",
+              "children": {
+                "tag": "div",
+                "attrs": {"class": "status-comment-history-diff"},
+                "children": [
+                  {
+                    "tag": "span",
+                    "attrs": {"class": "status-comment-diff-marker", "aria-hidden": "true"},
+                    "children": [{"get": "row.marker"}]
+                  },
+                  {"get": "row.prefix"},
+                  {
+                    "tag": {"get": "row.tag"},
+                    "attrs": {"class": {"concat": ["status-comment-diff-", {"get": "row.kind"}]}},
+                    "children": [{"get": "row.change"}]
+                  },
+                  {"get": "row.suffix"}
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "publishing/comment-replies": {
+    "tag": "div",
+    "attrs": {"class": "status-comment-replies", "data-comment-replies": "true", "data-comment-id": {"get": "id"}}
+  }
 }

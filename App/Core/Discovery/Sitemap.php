@@ -50,6 +50,6 @@ final class Sitemap
             }
             $body .= '</urlset>';
         }
-        Document::respond($body . "\n", 'application/xml', 900);
+        Document::respond($body . "\n", 'application/xml');
     }
 }

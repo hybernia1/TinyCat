@@ -35,7 +35,7 @@ $database->exec("INSERT INTO social_posts (id, author_id, body) VALUES (1, 101, 
 $database->exec("INSERT INTO content_reports VALUES (1, 1, 1, 'open', 'spam', '2026-10-26'), (2, 2, 1, 'resolved', 'other', '2026-10-27')");
 
 foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $list) {
-    $config = match ($list) { 'users' => \TinyCat\Core\Identity\Sorting::users(), 'runs' => \TinyCat\Core\Tasks\Sorting::runs(), 'reports' => \TinyCat\Social\Moderation\Sorting::reports(), 'accounts' => \TinyCat\Social\Automation\Sorting::accounts(), 'sources' => \TinyCat\Social\Automation\Sorting::sources(), default => \TinyCat\Social\Automation\Sorting::LISTS[$list] };
+    $config = match ($list) { 'users' => \TinyCat\Core\Identity\ReadModel::sorting(), 'runs' => \TinyCat\Core\Tasks\Repository::sorting(), 'reports' => \TinyCat\Social\Moderation\Reports::sorting(), 'accounts' => \TinyCat\Social\Bots\Sorting::accounts(), 'sources' => \TinyCat\Social\Bots\Sorting::sources(), default => \TinyCat\Social\Bots\Sorting::LISTS[$list] };
     $_GET = [];
     $default = AdminSorting::order($config);
     $_GET = ['sort' => 'id; DROP TABLE users', 'direction' => 'desc; --'];
@@ -49,9 +49,9 @@ foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $li
             // Exercise every allowlisted SQL expression against its real query.
             match ($list) {
                 'users' => \TinyCat\Core\Identity\Actions::tc_admin_users_page(),
-                'accounts' => (new ReflectionMethod(\TinyCat\Social\Automation\Administration::class, 'accountsPage'))->invoke(null),
-                'sources' => \TinyCat\Social\Automation\Importer::sources(null, AdminSorting::order(\TinyCat\Social\Automation\Sorting::sources())),
-                'bot_posts' => \TinyCat\Social\Automation\Administration::postsPayload(101),
+                'accounts' => (new ReflectionMethod(\TinyCat\Social\Bots\Administration::class, 'accountsPage'))->invoke(null),
+                'sources' => \TinyCat\Social\Bots\Importer::sources(null, AdminSorting::order(\TinyCat\Social\Bots\Sorting::sources())),
+                'bot_posts' => \TinyCat\Social\Bots\Administration::postsPayload(101),
                 'runs' => \TinyCat\Core\Tasks\Repository::listing([], 1, 10),
                 'reports' => \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload()['items'],
             };
@@ -68,7 +68,7 @@ $_GET = ['sort' => 'task', 'direction' => 'asc'];
 $runs = \TinyCat\Core\Tasks\Repository::listing([], 2, 10);
 $assert($runs['runs'][0]['task'] === 'K', 'Run history sorts before pagination');
 $_GET = ['sort' => 'username', 'direction' => 'asc'];
-$accounts = (new ReflectionMethod(\TinyCat\Social\Automation\Administration::class, 'accountsPage'))->invoke(null);
+$accounts = (new ReflectionMethod(\TinyCat\Social\Bots\Administration::class, 'accountsPage'))->invoke(null);
 $assert($accounts['items'][0]['username'] === 'Alpha', 'Bot accounts sort by name');
 $_GET = ['sort' => 'content', 'direction' => 'asc'];
 $reports = \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
@@ -77,7 +77,7 @@ $_GET = [];
 $reports = \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
 $assert($reports[0]['status'] === 'open', 'Reports retain open-first default');
 $_GET = ['sort' => 'username', 'direction' => 'asc'];
-$heading = AdminSorting::headings(\TinyCat\Core\Identity\Sorting::users(), ['q' => 'A&B', 'role' => 'user', 'per_page' => 50, 'page' => 3])['username'];
+$heading = AdminSorting::headings(\TinyCat\Core\Identity\ReadModel::sorting(), ['q' => 'A&B', 'role' => 'user', 'per_page' => 50, 'page' => 3])['username'];
 parse_str((string) parse_url($heading['url'], PHP_URL_QUERY), $query);
 $assert($query['q'] === 'A&B' && $query['role'] === 'user' && $query['per_page'] === '50' && $query['page'] === '1' && $query['direction'] === 'desc', 'Sorting retains filters and resets page');
 $assert($heading['aria'] === 'ascending' && $heading['ascending'] === true, 'Active direction is accessible');

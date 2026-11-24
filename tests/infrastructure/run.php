@@ -110,6 +110,8 @@ $throws(static fn () => \TinyCat\Http\Response::issue('translation.key', 'Invali
 $throws(static fn () => $normalizeIssues->invoke(null, ['title' => [['code' => 'title_invalid', 'message' => []]]]), LogicException::class);
 $throws(static fn () => $normalizeIssues->invoke(null, ['title' => (object) ['message' => 'Invalid.']]), LogicException::class);
 $pageReads = 0;
+// Route mechanics are independent of the developer installation's web setting.
+Router::configurePublicWeb(static fn (): bool => true);
 Router::registerModule(static function () use (&$pageReads): void {
     Router::page('fixture.pages', '/fixture-page/{id:[1-9][0-9]*}', static fn (string $id): string => $id, static function (string $id) use (&$pageReads): array { $pageReads++; return ['id' => (int) $id]; }, ['q']);
 });
@@ -120,13 +122,38 @@ $definitions = Router::pageDefinitions('fixture.pages');
 $assert($definitions === [['pattern' => '^/fixture-page/(?:[1-9][0-9]*)$', 'query' => ['q']]], 'Client metadata is derived from the HTTP route and its query allowlist.');
 $throws(static function (): void { Router::registerModule(static function (): void { foreach ([1, 2] as $_) { Router::page('fixture.rejected', '/duplicate-page', static fn (): string => '', static fn (): array => []); } }); }, InvalidArgumentException::class);
 $assert(Router::pageDefinitions('fixture.rejected') === [], 'A rejected provider rolls back page metadata with its HTTP routes.');
-$sourceInput = \TinyCat\Social\Automation\Administration::prepareSourceInput(['bot_user_id' => 3, 'name' => str_repeat("\u{11B}", 60), 'feed_url' => 'https://example.test/feed', 'post_template' => str_repeat("\u{11B}", 1000)]);
-$sourceRules = \TinyCat\Social\Automation\Administration::sourceRules();
+$sourceInput = \TinyCat\Social\Bots\Administration::prepareSourceInput(['bot_user_id' => 3, 'name' => str_repeat("\u{11B}", 60), 'feed_url' => 'https://example.test/feed', 'post_template' => str_repeat("\u{11B}", 1000)]);
+$sourceRules = \TinyCat\Social\Bots\Administration::sourceRules();
 $assert(\TinyCat\Http\Validator::validate($sourceInput, $sourceRules) === [], 'Social source rules accept exact UTF-8 byte limits and supply the declared interval defaults.');
 foreach (['name' => str_repeat("\u{11B}", 61), 'post_template' => str_repeat("\u{11B}", 1001), 'interval_minutes' => 4, 'publication_interval_minutes' => 43201] as $field => $value) {
     $assert(isset(\TinyCat\Http\Validator::validate(array_replace($sourceInput, [$field => $value]), $sourceRules)[$field]), 'Social source rules reject overflow using their shared field definition: ' . $field);
 }
 $throws(static fn () => Router::route('ANY', '/unbounded', static fn (): null => null), InvalidArgumentException::class);
+
+$routeValues = [];
+Router::page('fixture.encoded', '/fixture-encoded/{value}',
+    static function (string $value) use (&$routeValues): void { $routeValues[] = $value; },
+    static fn (string $value): array => ['value' => $value]);
+foreach (['hello%20world' => 'hello world', '%25' => '%', '%252F' => '%2F', '%255C' => '%5C', '%252e%252e' => '%2e%2e', '%C5%BE' => "\u{17E}"] as $encoded => $expected) {
+    $pathOwner = new Request(serverData: ['REQUEST_URI' => '/fixture-encoded/' . $encoded]);
+    $path = $pathOwner->path();
+    $assert(Request::normalizePath($path) === $path, 'Internal path normalization is idempotent: ' . $encoded);
+    $assert(Router::dispatch($path, 'GET') && end($routeValues) === $expected, 'Native dispatch decodes at the request boundary only: ' . $encoded);
+    $assert(Router::pageResource('fixture.encoded', $path) === ['value' => $expected], 'Page resources and native dispatch receive identical literal segments: ' . $encoded);
+}
+foreach (['%2F', '%5C', 'one%2Ftwo'] as $encoded) {
+    $path = (new Request(serverData: ['REQUEST_URI' => '/fixture-encoded/' . $encoded]))->path();
+    $assert(!Router::dispatch($path, 'GET') && Router::pageResource('fixture.encoded', $path) === null, 'Decoded separators cannot become one captured segment: ' . $encoded);
+}
+$assert(!Router::isApiPath((new Request(serverData: ['REQUEST_URI' => '/%2561pi/items']))->path()), 'API classification does not decode a second time.');
+Router::route('GET', '/fixture-regex/{value:\d{1,3}}', static function (string $value) use (&$routeValues): void { $routeValues[] = $value; });
+$assert(Router::dispatch('/fixture-regex/123', 'GET') && end($routeValues) === '123'
+    && !Router::dispatch('/fixture-regex/1234', 'GET'), 'Route definitions preserve regex escapes and quantifiers.');
+Router::route('GET', '/fixture-percent/%2F', static function () use (&$routeValues): void { $routeValues[] = 'percent literal'; });
+$assert(Router::dispatch((new Request(serverData: ['REQUEST_URI' => '/fixture-percent/%252F']))->path(), 'HEAD')
+    && end($routeValues) === 'percent literal', 'Literal percent route definitions and implicit HEAD share the native matcher.');
+$registered = (new ReflectionProperty(Router::class, 'routes'))->getValue();
+$assert(end($registered)['methods'] === ['GET', 'HEAD'], 'The registered method metadata includes implicit HEAD, also used by Allow.');
 
 Session::start();
 $assert(Session::withoutLock(static fn (): bool => session_status() !== PHP_SESSION_ACTIVE), 'Slow operations run without a session lock.');
@@ -165,6 +192,116 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     $throws(static fn () => (new Query('SELECT * FROM records'))->whereIn('id; DROP TABLE records', [1]), InvalidArgumentException::class);
     try { Connection::insert('records', ['name' => 'first']); } catch (PDOException $exception) {
         $assert(Connection::uniqueViolation($exception) && \TinyCat\Database\Connection::uniqueViolation($exception), 'Unique constraint handling is shared.');
+    }
+    $effects = [];
+    $failure = new RuntimeException('injected after-commit failure');
+    try {
+        Transactions::run(static function () use (&$effects, $failure): void {
+            Connection::insert('records', ['name' => 'committed-effects']);
+            Transactions::afterCommit(static function () use ($failure): void { throw $failure; });
+            Transactions::afterCommit(static function () use (&$effects): void {
+                Transactions::run(static function () use (&$effects): void {
+                    Transactions::afterCommit(static function () use (&$effects): void { $effects[] = 'independent transaction'; });
+                });
+            });
+            Transactions::afterCommit(static function () use (&$effects): void { $effects[] = 'last effect'; });
+            Transactions::afterCommit(static function (): void { throw new DomainException('another failed effect'); });
+        });
+        $assert(false, 'After-commit failures must be reported.');
+    } catch (\TinyCat\Database\AfterCommitFailed $exception) {
+        $assert(count($exception->failures) === 2 && $exception->getPrevious() === $failure, 'Post-commit errors preserve every failure and distinguish a successful database commit.');
+    }
+    $assert(Connection::find('records', ['name' => 'committed-effects']) !== null && !$database->inTransaction(), 'An effect failure does not undo committed data.');
+    $assert($effects === ['independent transaction', 'last effect'], 'All effects run in order, including an effect opening its own transaction.');
+    $throws(static function () use (&$effects): void {
+        Transactions::run(static function () use (&$effects): void {
+            Transactions::afterCommit(static function () use (&$effects): void { $effects[] = 'rolled back'; });
+            throw new DomainException('rollback effects');
+        });
+    }, DomainException::class);
+    $assert($effects === ['independent transaction', 'last effect'], 'Rollback discards the effect queue.');
+    Transactions::run(static function () use (&$effects): void {
+        Transactions::afterCommit(static function () use (&$effects): void { $effects[] = 'next transaction'; });
+    });
+    $assert(end($effects) === 'next transaction', 'A subsequent transaction gets an independent clean queue.');
+    $assert(\TinyCat\Core\Database\Statements::quote('Order') === '`Order`'
+        && \TinyCat\Core\Database\Statements::quote('_column', false) === '"_column"'
+        && \TinyCat\Core\Database\Statements::identifier('owner.records', true) === 'owner.records', 'Shared identifier validation preserves qualified names and driver-specific quoting.');
+    foreach (["name\n", 'a; DROP TABLE records', 'a.b', ''] as $identifier) {
+        $throws(static fn () => \TinyCat\Core\Database\Statements::quote($identifier), InvalidArgumentException::class);
+    }
+    $once = [];
+    Transactions::run(static function () use (&$once): void {
+        Transactions::afterCommit(static function () use (&$once): void { $once[] = 'first'; }, 'fixture.once');
+        Transactions::run(static function () use (&$once): void {
+            Transactions::afterCommit(static function () use (&$once): void { $once[] = 'duplicate'; }, 'fixture.once');
+        });
+        Transactions::afterCommit(static function () use (&$once): void { $once[] = 'independent'; }, 'fixture.other');
+    });
+    $assert($once === ['first', 'independent'], 'Named effects coalesce across nested writes and preserve first-registration order.');
+    $throws(static function () use (&$once): void {
+        Transactions::run(static function () use (&$once): void {
+            Transactions::afterCommit(static function () use (&$once): void { $once[] = 'rollback'; }, 'fixture.once');
+            throw new DomainException('named effects rollback');
+        });
+    }, DomainException::class);
+    Transactions::run(static function () use (&$once): void {
+        Transactions::afterCommit(static function () use (&$once): void { $once[] = 'next'; }, 'fixture.once');
+    });
+    $assert($once === ['first', 'independent', 'next'], 'Rollback and a previous commit cannot suppress named effects in later transactions.');
+    $probe = new class('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]) extends PDO {
+        /** @var list<string> */
+        public array $reads = [];
+        public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
+        {
+            $this->reads[] = $query;
+            return parent::query($query, $fetchMode, ...$fetchModeArgs);
+        }
+        /** @param array<mixed> $options */
+        public function prepare(string $query, array $options = []): PDOStatement|false
+        {
+            $this->reads[] = $query;
+            return parent::prepare($query, $options);
+        }
+    };
+    $probe->exec('CREATE TABLE ready_table (id INTEGER)');
+    $readiness = new ReflectionProperty(\TinyCat\Database\Schema::class, 'accountReady');
+    $accountReady = $readiness->getValue();
+    $readiness->setValue(null, static fn (): bool => false);
+    Connection::set($probe);
+    try {
+        $status = \TinyCat\Database\Schema::app_db_status(['ready_table']);
+        $assert($status['connected'] && $status['missing_tables'] === [] && count($probe->reads) === 1
+            && !in_array('SELECT 1', $probe->reads, true), 'Schema inspection proves connectivity with one query and no redundant ping.');
+        $status = \TinyCat\Database\Schema::app_db_status(['missing_table']);
+        $assert($status['connected'] && $status['missing_tables'] === ['missing_table'] && !$status['ready'], 'Missing tables still produce the installation readiness failure.');
+        $probe->reads = [];
+        $status = \TinyCat\Database\Schema::app_db_status([]);
+        $assert($status['connected'] && $probe->reads === ['SELECT 1'], 'An empty schema requirement still checks connectivity.');
+        $probe->exec('CREATE TABLE module_installations (module_id TEXT PRIMARY KEY, version INTEGER, status TEXT)');
+        $probe->exec('CREATE TABLE another_table (id INTEGER)');
+        $probe->exec("INSERT INTO module_installations VALUES ('fixture.one', 1, 'ready'), ('fixture.two', 1, 'ready')");
+        $schemas = [];
+        foreach (['fixture.one' => 'ready_table', 'fixture.two' => 'another_table'] as $owner => $table) {
+            $schemas[$owner] = new \TinyCat\Core\Modules\ModuleSchema(1, [$table], static function (PDO $pdo): void {},
+                [new \TinyCat\Core\Modules\SchemaMigration(1, $owner . '.initial', __FILE__)]);
+        }
+        $probe->reads = [];
+        $assert(\TinyCat\Database\ModuleSchemas::ready($probe, $schemas) && count($probe->reads) === 2, 'Multiple module streams use one table inventory and one batched state read.');
+        $probe->exec("UPDATE module_installations SET status = 'failed' WHERE module_id = 'fixture.two'");
+        $assert(!\TinyCat\Database\ModuleSchemas::ready($probe, $schemas), 'A previously ready stream is immediately rejected after a state change.');
+        $probe->exec("UPDATE module_installations SET status = 'ready', version = 2 WHERE module_id = 'fixture.two'");
+        $assert(!\TinyCat\Database\ModuleSchemas::ready($probe, $schemas), 'Readiness requires the exact declared version.');
+        $probe->exec("UPDATE module_installations SET version = 1 WHERE module_id = 'fixture.two'");
+        $probe->exec('DROP TABLE another_table');
+        $assert(!\TinyCat\Database\ModuleSchemas::ready($probe, $schemas), 'A missing declared table is detected without stale readiness caching.');
+        $probe->exec("DELETE FROM module_installations WHERE module_id = 'fixture.one'");
+        $assert(!\TinyCat\Database\ModuleSchemas::ready($probe, ['fixture.one' => $schemas['fixture.one']]), 'Missing installation state is never adopted implicitly.');
+        $probe->reads = [];
+        $assert(\TinyCat\Database\ModuleSchemas::ready($probe, []) && $probe->reads === [], 'Empty module selection does not access the database.');
+    } finally {
+        Connection::set($database);
+        $readiness->setValue(null, $accountReady);
     }
     $configuration = \TinyCat\Support\Config::get();
     $mismatched = $configuration;

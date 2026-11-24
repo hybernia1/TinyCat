@@ -5,12 +5,63 @@
   function key(node, value) { return node.dispatchEvent(new KeyboardEvent('keydown', { key: value, bubbles: true, cancelable: true })); }
   function empty(preview) { const node = document.createElement('div'); node.append(T.notifications.items([], preview)); return node; }
   try {
-    const form = document.createElement('form'); form.className = 'global-search'; form.style.cssText = 'position:fixed;top:12px;left:12px;width:calc(100% - 24px)'; form.dataset.globalSearch = '';
-    const anchor = document.createElement('div'); anchor.className = 'global-search-control'; anchor.dataset.popover = ''; anchor.dataset.popoverMode = 'input'; anchor.dataset.popoverMatchWidth = 'true';
-    const input = document.createElement('input'); input.className = 'input global-search-input'; input.type = 'search'; input.dataset.globalSearchInput = ''; input.dataset.popoverTrigger = '';
-    const box = document.createElement('div'); box.className = 'popover-panel global-search-results'; box.dataset.globalSearchResults = ''; box.hidden = true;
-    const searchIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); searchIcon.classList.add('icon'); searchIcon.setAttribute('aria-hidden', 'true');
-    anchor.append(searchIcon, input, box); form.append(anchor); document.body.append(form);
+    for (const [tone, symbol] of [['info','info'],['success','check-circle'],['warning','alert'],['danger','x-circle']]) {
+      for (const scale of ['1','1.5']) {
+        document.documentElement.style.setProperty('--ui-scale', scale);
+        const alert = T.components.render('ui/notice', {tone, title:'A clear status title', description:'Long explanation '.repeat(20), detail:'Additional detail'});
+        document.body.append(alert);
+        const icon = getComputedStyle(alert,'::before'), copy = alert.querySelector(':scope > div');
+        const bounds=alert.getBoundingClientRect(), copyBox=copy.getBoundingClientRect();
+        const iconTop=bounds.top+parseFloat(icon.top)+parseFloat(icon.marginTop), iconLeft=bounds.left+parseFloat(icon.left);
+        check(icon.maskImage!=='none' && !alert.querySelector('svg') && icon.content==='""', 'Severity symbol is a decorative CSS mask without SVG markup: '+tone);
+        check(iconLeft+parseFloat(icon.width)<copyBox.left && Math.abs(iconTop+parseFloat(icon.height)/2-(bounds.top+bounds.height/2))<2 && alert.scrollWidth<=alert.clientWidth+1, 'Alert pseudo-element stays centered beside multiline text at scale '+scale);
+        check(alert.getAttribute('role')===(tone==='danger'?'alert':'status'), 'Alert retains appropriate live semantics');
+        alert.remove();
+      }
+    }
+    document.documentElement.style.removeProperty('--ui-scale');
+    for (const tone of ['success','danger','warning','info']) {
+      const badge=T.components.render('ui/status-badge',{tone,text:true,icon:true,label:'Readable state'});document.body.append(badge);
+      check(getComputedStyle(badge,'::before').maskImage!=='none' && !badge.querySelector('svg') && badge.textContent==='Readable state' && !badge.hasAttribute('aria-label'), 'Text status badges use a decorative CSS mask and readable state.');
+      const sample=document.createElement('span');sample.style.color='var(--'+tone+')';document.body.append(sample);
+      check(getComputedStyle(badge).color===getComputedStyle(sample).color, 'State badge uses the shared severity colour: '+tone);
+      badge.remove();sample.remove();
+    }
+
+    for (const tone of ['success','danger','warning','info']) {
+      const toast=T.toasts.show('Readable notice',tone), decoration=getComputedStyle(toast,'::before');
+      check(decoration.maskImage!=='none' && toast.children.length===2 && toast.querySelector('.toast-body').textContent==='Readable notice', 'Toasts share CSS severity symbols without a decoration node.');
+      toast.querySelector('.toast-close').click();
+    }
+    let previousIdentitySize=0;
+    for (const scale of ['1','1.5','2']) {
+      document.documentElement.style.setProperty('--ui-scale',scale);
+      const table=document.createElement('table');table.className='table';
+      const cell=table.insertRow().insertCell(), identity=T.components.render('users/identity-row',{user:{id:17,username:'A user',status:'active',avatar_url:''}});
+      cell.append(identity);document.body.append(table);
+      const symbol=identity.querySelector('.avatar').getBoundingClientRect(), body=identity.querySelector('.table-identity-body').getBoundingClientRect();
+      check(Math.abs(symbol.height-body.height)<1 && Math.abs(symbol.width-symbol.height)<1 && symbol.height>previousIdentitySize, 'Core identity symbol spans the title and state rows and scales together at '+scale);
+      previousIdentitySize=symbol.height;table.remove();
+    }
+    document.documentElement.style.removeProperty('--ui-scale');
+
+    const linkWidget=T.components.render('ui/dashboard-widget',{widget:{id:'fixture.links',title:'Links',icon:'users',type:'list',data:{items:[{label:'@admin',detail:'A comment',url:'/author/1'}]}}});
+    document.body.append(linkWidget);
+    const linkSamples=[...linkWidget.querySelectorAll('a')];
+    for (const className of ['','status-inline-link','mention-link','hashtag']) {
+      const link=document.createElement('a');link.className=className;link.href='/#link-style';link.textContent='Readable link';document.body.append(link);linkSamples.push(link);
+    }
+    for (const link of linkSamples) {
+      check(getComputedStyle(link).textDecorationLine==='none','Dashboard and inline links have no default underline');
+      link.focus();
+      check(getComputedStyle(link).textDecorationLine==='none' && getComputedStyle(link).outlineStyle!=='none','Keyboard focus stays visible without adding a link underline');
+    }
+    linkSamples.forEach(link=>link.remove());linkWidget.remove();
+
+    const header = T.components.render('ui/public-header', {hasGlobalSearch:true, urls:{home:'/',search:'/search/all'}, nav:[], languages:[]});
+    const form = header.querySelector('[data-global-search]'); form.style.cssText = 'position:fixed;top:12px;left:12px;width:calc(100% - 24px)';
+    const anchor = form.querySelector('[data-popover]'), input = form.querySelector('[data-global-search-input]'), box = form.querySelector('[data-global-search-results]'), searchIcon = anchor.querySelector(':scope > .icon');
+    document.body.append(form);
     T.api.request = (url, options) => new Promise((resolve, reject) => reads.push({ url, options, resolve, reject }));
     input.setAttribute('aria-expanded', 'false');
     T.popovers.init(); T.search.hydrate(document);
@@ -66,7 +117,10 @@
     const row = document.createElement('a'); row.className = 'identity-row identity-row-compact';
     row.append(T.components.render('ui/avatar', { user: {}, small: true }));
     const copy = document.createElement('span'); copy.className = 'identity-copy'; const title = document.createElement('strong'); title.textContent = 'Name'; const meta = document.createElement('small'); meta.textContent = 'Metadata'; copy.append(title, meta); row.append(copy); document.body.append(row);
-    check(row.querySelector('.avatar').getBoundingClientRect().width === 36 && getComputedStyle(meta).fontSize === '13px', 'Compact identity rows share avatar sizing and secondary typography');
+    const compactSymbolWidth=row.querySelector('.avatar').getBoundingClientRect().width;
+    row.classList.remove('identity-row-compact');
+    check(row.querySelector('.avatar').getBoundingClientRect().width === compactSymbolWidth && parseFloat(getComputedStyle(meta).fontSize)<parseFloat(getComputedStyle(title).fontSize), 'Compact and normal identity rows share the core symbol size and secondary typography');
+    row.classList.add('identity-row-compact');
     const modal = document.createElement('div'); modal.className = 'modal'; modal.dataset.open = 'true';
     const grid = document.createElement('div'); grid.className = 'following-modal-grid'; modal.append(grid);
     const more = T.components.render('ui/load-more', { attributes: { class: 'load-more' }, button_attributes: { class: 'btn btn-secondary', type: 'button', 'data-following-more': '', 'data-following-url': '/api/following' }, label: 'More', loading_label: 'Loading' }); modal.append(more); document.body.append(modal);
@@ -110,20 +164,22 @@
     document.body.append(installation);
     for (const theme of ['light', 'dark']) {
       document.documentElement.dataset.theme = theme;
-      const steps = installation.querySelector('ol');
+      const steps = installation.querySelector('nav.tabs');
       check(steps.children.length === 5 && steps.querySelectorAll('[aria-current="step"]').length === 1, 'Installation exposes five steps and one current step: '+theme);
       check(steps.children[2].getAttribute('aria-current') === 'step' && steps.children[0].querySelector('svg'), 'Installation distinguishes current and completed steps: '+theme);
-      const choices = installation.querySelectorAll('label.check-card');
-      check(choices.length >= 2 && installation.querySelector('input[value="cs"]').checked, 'Installation retains its selected native language: '+theme);
-      choices[1].click();
-      check(choices[1].querySelector('input').checked && installation.querySelectorAll('input[name="locale"]:checked').length === 1, 'Clicking the shared card selects exactly one language: '+theme);
-      choices[1].querySelector('input').focus();
-      check(choices[1].matches(':focus-within'), 'Native language focus stays inside its shared card: '+theme);
-      for (const node of installation.querySelectorAll('.result-item, .check-card, .btn')) {
+      const language = installation.querySelector('select[name="locale"]');
+      check(language.options.length >= 2 && language.value === 'cs', 'Installation retains its selected native language: '+theme);
+      language.value = 'en'; language.dispatchEvent(new Event('change', {bubbles:true}));
+      check(new FormData(language.form).get('locale') === 'en', 'Native language selection is submitted by the original form: '+theme);
+      language.focus();
+      check(document.activeElement === language, 'Language select receives native keyboard focus: '+theme);
+      const submit = installation.querySelector('.card-footer button[type="submit"]');
+      check(submit.form === language.form, 'Footer submit retains its native form association: '+theme);
+      for (const node of installation.querySelectorAll('nav.tabs, .select, .btn')) {
         const bounds = node.getBoundingClientRect();
         check(bounds.width > 0 && bounds.left >= 0 && bounds.right <= innerWidth + 1, 'Installation control fits the viewport: '+theme);
       }
-      installation.querySelector('input[value="cs"]').click();
+      language.value = 'cs';
     }
     installation.remove();
     const avatarImage = '/avatar-fixture.svg';
@@ -151,7 +207,7 @@
       const frame = document.createElement('iframe'); frame.src = '/notification-frame';
       await new Promise(resolve => { frame.onload = resolve; document.body.append(frame); });
       const w = frame.contentWindow, d = frame.contentDocument;
-      w.eval(assets.filter(asset => asset.path !== 'assets/bootstrap.js').map(asset => asset.source).join('\n'));
+      w.eval(assets.filter(asset => asset.path !== 'App/Core/Ui/assets/bootstrap.js').map(asset => asset.source).join('\n'));
       const N = w.TinyCat;
       N.components.register(window.notificationTemplates); N.i18n.register('en', window.notificationLabels);
       const list = d.createElement('div'); list.id = 'notifications-list';
@@ -176,6 +232,11 @@
       check(list.querySelectorAll('[data-notification-id]').length === 42, 'Late notification response cannot update a disposed inbox: '+assembly);
       frame.remove();
     }
+    const home = T.components.render('site/public-page', {kind:'home',items:[],feed:'all',all_feed_url:'/',following_feed_url:'/?feed=following',archive_options:[]});
+    document.body.append(home);
+    const homeToolbar = home.querySelector('.home-feed-toolbar'), homeEmpty = home.querySelector('.home-feed-section > .empty-state');
+    check(homeEmpty.getBoundingClientRect().top > homeToolbar.getBoundingClientRect().bottom, 'Nested home feed stacks keep space between the toolbar and empty content');
+    home.remove();
     const socialFeed = document.createElement('div'); socialFeed.className = 'container profile-main';
     const feed = document.createElement('div'); feed.className = 'status-feed'; socialFeed.append(feed); document.body.append(socialFeed);
     check(Math.abs(feed.getBoundingClientRect().width-socialFeed.getBoundingClientRect().width) < 1, 'Social owns its full-width profile feed layout');

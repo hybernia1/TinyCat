@@ -2,17 +2,17 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Comments;
-use TinyCat\Social\Content\Reactions;
+use TinyCat\Social\Discussion\Comments;
+use TinyCat\Social\Discussion\Reactions;
 
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 final class Resource
 {
     /** @return array<string, array<string, mixed>> */
     public static function constraints(): array
     {
-        return \TinyCat\Http\Validator::constraints(PostCreation::rules() + \TinyCat\Social\Content\Interactions::rules());
+        return \TinyCat\Http\Validator::constraints(PostCreation::rules() + \TinyCat\Social\Discussion\Interactions::rules());
     }
 
     /**
@@ -24,7 +24,7 @@ final class Resource
     {
         $id = (int) ($item['id'] ?? 0);
         $body = (string) ($item['body'] ?? '');
-        $presentation = \TinyCat\Core\Ui\RichTextResource::content($id, $body, 'post', Links::status_links_for_content($id));
+        $presentation = \TinyCat\Social\Posts\TextResource::content($id, $body, 'post', Links::status_links_for_content($id));
         $segments = $presentation['segments'];
         $at = (string) ($item['published_at'] ?? '');
         return [
@@ -39,7 +39,7 @@ final class Resource
             'context' => self::context($item),
             'login_url' => \TinyCat\Core\Identity\Login::auth_url_with_next('/login', Posts::status_url($id)),
             'login_modal_url' => \TinyCat\Core\Identity\Login::auth_modal_url('login', Posts::status_url($id)),
-            'image' => ['url' => \TinyCat\Social\Content\Images::status_image_url($item), 'description' => \TinyCat\Core\Ui\Site::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Core\Ui\Site::site_name()],
+            'image' => ['url' => \TinyCat\Social\Posts\Images::status_image_url($item), 'description' => \TinyCat\Core\Ui\Site::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Core\Ui\Site::site_name()],
             'links' => $presentation['links'],
             'likes_count' => (int) ($item['likes_count'] ?? 0),
             'comments_count' => (int) ($item['comments_count'] ?? 0),
@@ -75,7 +75,7 @@ final class Resource
      */
     public static function link(array $link, int $contentId = 0): array
     {
-        return \TinyCat\Core\Ui\RichTextResource::link($link, 'post', $contentId);
+        return \TinyCat\Social\Posts\TextResource::link($link, 'post', $contentId);
     }
 
     /**
@@ -93,6 +93,7 @@ final class Resource
             'segments' => \TinyCat\Core\Text\Segments::compactTags(\TinyCat\Core\Text\Segments::text((string) ($comment['body'] ?? ''), 'post', [], (int) ($comment['content_id'] ?? 0), $id)),
             'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'likes_count' => (int) ($comment['likes_count'] ?? 0),
+            'has_replies' => (bool) ($comment['has_replies'] ?? false),
             'liked' => $user !== null && Comments::status_comment_user_liked($id, (int) $user['id']),
             'capabilities' => ['edit' => Comments::status_comment_can_edit($comment, $user), 'delete' => Comments::status_comment_can_delete($comment, $user), 'interact' => $user !== null],
             'replies' => array_map(static fn (array $reply): array => self::comment($reply, $user), (array) ($comment['replies'] ?? []))];
@@ -127,7 +128,7 @@ final class Resource
     public static function preloadComments(array $comments, ?array $user): void
     {
         $mentionIds = [];
-        foreach (\TinyCat\Core\Ui\ThreadTree::flatten($comments) as $comment) {
+        foreach (\TinyCat\Social\Discussion\ThreadTree::flatten($comments) as $comment) {
             if (preg_match_all(Mentions::mention_id_pattern(), \TinyCat\Core\Text\InlineText::withoutLinks((string) ($comment['body'] ?? '')), $matches)) {
                 foreach ($matches[1] as $id) { $mentionIds[] = (int) $id; }
             }

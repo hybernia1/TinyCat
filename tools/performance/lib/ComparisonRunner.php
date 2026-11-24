@@ -48,7 +48,7 @@ final class ComparisonRunner
             'status_thread' => '/status/' . $representative['content_id'],
             'tag_feed' => '/tag/benchmark',
             'author_profile' => '/author/' . $representative['author_id'],
-            'search' => '/search?q=performance',
+            'search' => '/search/all?q=performance',
         ];
         $runId = gmdate('YmdHis') . '-' . bin2hex(random_bytes(3));
         $results = [];

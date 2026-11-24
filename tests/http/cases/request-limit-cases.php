@@ -27,12 +27,12 @@ foreach ([
 // Changes consume a follow budget, but already satisfied requests remain idempotent.
 $limitDb->exec('DELETE FROM user_followers WHERE user_id = 1 AND follower_id = 2');
 $seedLimit('user:2', 'follow', 3600);
-[$status] = $request('PUT', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status] = $request('PUT', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 429 && (int) $limitDb->query('SELECT COUNT(*) FROM user_followers WHERE user_id = 1 AND follower_id = 2')->fetchColumn() === 0, 'Exhausted follow budgets cannot change state.');
-[$status] = $request('DELETE', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status] = $request('DELETE', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200, 'An already satisfied unfollow does not consume a budget.');
 $limitDb->exec('INSERT INTO user_followers (user_id, follower_id) VALUES (1, 2)');
-[$status] = $request('PUT', '/api/users/1/followers/me', [], 'user', $csrf);
+[$status] = $request('PUT', '/api/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200, 'An already satisfied follow does not consume a budget.');
 
 $seedLimit('user:2', 'upload', 3600);
@@ -47,7 +47,7 @@ $seedLimit('user:1', 'upload', 3600);
 [$status, $invalidUpload] = $request('POST', '/api/users/2/avatar', $multipart, 'admin', $csrf + ['Content-Type' => 'multipart/form-data; boundary=' . $boundary]);
 $assert($status === 422 && $invalidUpload['code'] === 'avatar_invalid', 'Admins bypass even exhausted upload budgets and still undergo image validation.');
 $seedLimit('user:1', 'follow', 3600);
-[$status] = $request('PUT', '/api/users/2/followers/me', [], 'admin', $csrf);
+[$status] = $request('PUT', '/api/profiles/2/followers/me', [], 'admin', $csrf);
 $assert($status === 200, 'Admins bypass exhausted follow budgets.');
 [$status] = $request('POST', '/api/users/sessions', ['username' => 'admin', 'role' => 'admin'], '', $csrf);
 $assert($status === 429, 'A claimed administrator name or role cannot bypass anonymous login budgets.');
@@ -55,7 +55,7 @@ $assert($status === 429, 'A claimed administrator name or role cannot bypass ano
 $assert($status === 405, 'Logout has no legacy page write handler.');
 [$status, $loggedOut] = $request('DELETE', '/api/users/sessions/current', [], 'user', $csrf);
 $assert($status === 200 && $loggedOut['data']['logged_out'], 'Logout uses the normalized API.');
-foreach (['/admin', '/admin/updates', '/notifications', '/search', '/status/10', '/tag/test'] as $retiredPage) {
+foreach (['/admin', '/admin/updates', '/notifications', '/search/all', '/status/10', '/tag/test'] as $retiredPage) {
     [$status] = $request('POST', $retiredPage, [], 'admin', $csrf + ['Accept' => 'application/json']);
     $assert($status === 405, 'Page writes are retired: ' . $retiredPage);
 }

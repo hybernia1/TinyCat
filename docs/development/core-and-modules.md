@@ -1,8 +1,8 @@
 # Core a funkční moduly
 
 Core je povinný framework. Funkční modul přidává konkrétní použití aplikace
-a lze jej vypnout. Social a Blog mohou běžet samostatně, společně, nebo být
-oba neaktivní. Administrace a správa modulů zůstávají součástí core.
+a lze jej vypnout. Social je volitelný; čisté core nepotřebuje jeho data ani UI.
+Administrace a správa modulů zůstávají součástí core.
 
 Společné veřejné vstupy a jejich vynucení určuje
 [kontrakt core pro API, UI a validace](../contracts/core-application-contract.md).
@@ -45,24 +45,17 @@ App/
       module.json                # Jediná aktivace celého Socialu
       src/
         Module.php               # Jediný registrační a inicializační bod
-        Content/                 # Vlastní statusy, diskuse, tagy, odkazy a média
         Profiles/
-        Posts/
+        Posts/                   # Příspěvek, feed, tagy, odkazy a přílohy
+        Discussion/              # Komentáře a reakce
         Moderation/
         Search/
-        Automation/
-        Presentation/
+        Bots/                    # Botí účty, zdroje a publikační fronty
+        Site/                    # Veřejné stránky a příspěvky UI
       migrations/
       templates/
       lang/
       emails/
-      assets/
-    Blog/
-      module.json
-      src/Module.php
-      migrations/
-      templates/
-      lang/
       assets/
 ```
 
@@ -78,11 +71,11 @@ a veřejné kontrakty mezi modulem a frameworkem zůstávají zachované.
 `Social/Posts/PostCreation` je jediná příprava a vytvoření sociálního příspěvku,
 společná pro ruční zápis i feed import. `Social/Posts/Tags` vlastní normalizaci,
 vazby tagů a jejich veřejné výpisy bez dědičné mezivrstvy. `Posts/Resource`
-předává vlastní odkazy přímo společnému `Core/Ui/RichTextResource`.
-Transakční aktualizaci a mazání uložených dat nadále poskytuje `Content/Posts`.
+předává vlastní odkazy přímo vlastnímu `Social/Posts/TextResource`.
+Transakční aktualizaci a mazání uložených dat poskytuje `Posts/Repository`.
 Diskuse a reakce volají přímo `Posts/InteractionPolicy`; vlastní interní registr
 vlastníků nemají. Nastavení a lokalizaci URL čtou z core a blokování odkazů
-z vlastní `Content/Policy`. Textové politiky registrují přímo do `Core/Text/Policies`.
+z vlastní `Posts/Policy`. Textové politiky registrují přímo do `Core/Text/Policies`.
 
 Účtové akce, uživatelská jména a avatary se volají přímo přes `Core/Identity`.
 Social nemá přeposílací třídy `Profiles/Actions`, `Profiles/Usernames`,
@@ -91,31 +84,39 @@ vlastnosti rolí; přihlašování a správa účtů používají `Core/Identity
 Klientský Social přispívá do core navigace načtením a vykreslením stránky;
 historii, scroll a řízení souběžných přechodů vlastní společný mechanismus.
 
-`Social/Module` je jediný poskytovatel modulových kontraktů. Vnitřní
-`Registration` a `Content/ServiceProvider` jsou pomocné třídy bez vlastních
-modulových rozhraní. Jediným zdrojem inventáře tabulek jsou příslušná `Schema`;
+`Social/Module` je jediný poskytovatel modulových kontraktů. Registrace profilů,
+příspěvků, botů, moderace, hledání a webu vlastní jeho pojmenované privátní
+metody; doménové `Api` zůstávají oddělené. Šest sad příspěvků skládá přes
+`Registries`, které ověřují duplicity a pořadí.
+Jediným zdrojem inventáře tabulek jsou příslušná `Schema`;
 hlavní modul z nich skládá úplný seznam. Aktivační stav účtu mění
 `Core/Identity/Administration`, Social připojuje lazy callback pro své botí zdroje.
+Reference souborů poskytuje přímo `Module::fileReferences()` i pro instalovaný
+vypnutý Social; SQL běží až při volání. `Posts/ContentLinks` vlastní sociální UTM
+politiku a předává ověřený obsah společnému resolveru. `Bots/FeedPublication`
+poskytuje samostatně volatelné `defaultSourceTemplate()`, `renderPost()`,
+`prepareImage()`, `prepare()` a `attachments()`; příprava nepublikuje ani nemění
+plánování či GUID. `Importer` vlastní běh zdrojů a tyto metody nepřeposílá.
 Historické migrační streamy, baseline soubory a checksumy se tím nemění.
 
 Profily neposkytují účtové stránky, administrativní view data ani obálku
 administrativní navigace. Veřejné autorské stránky registruje `PublicPages`
-přímo přes `Posts/AuthorPages`. `Profiles/Resource` doplňuje k identitě sociální
-URL; `Profiles/Views` vlastní zobrazení sledovaných autorů. Sledování i jeho
+přímo přes `Posts/AuthorPages`. `Profiles/Profiles::resource()` doplňuje k identitě
+sociální URL; sledovaní autoři používají přímo společné komponenty. Sledování i jeho
 odstranění patří do `Profiles/Following`.
 
 Klientské účty používají `TinyCat.accounts`, sociální vztahy
 `TinyCat.socialUsers`. Sdílený objekt ani alias `TinyCat.users` neexistuje.
 Editor, přehrávače a překlady používají přímo `TinyCat.publishing.controllers`;
 Social k nim nekopíruje druhé ovladače. Mobilní sociální URL vlastní jeho
-samostatná navigační politika. `Presentation/Sidebar` připravuje totožná data
+samostatná navigační politika. `Site/Sidebar` připravuje totožná data
 pro počáteční HTML i deferred resource.
 
 Výchozí jazyk dokumentů zajišťuje `Localization::defaultLocale()` nezávisle na
 jazyku návštěvníka. Technické oEmbed URL ověřuje core; Social poskytuje data
 viditelného statusu. Strojové chyby dokumentů používají `Http/Document`, API dál
 společnou API obálku. HTTP CSP čerpá podporované přehrávače přímo z core katalogu,
-Social ani Blog neudržují globální kopii povolených originů. Inicializace Socialu
+Moduly neudržují globální kopii povolených originů. Inicializace Socialu
 neresetuje URL konfiguraci ani vlastnictví textových politik jiných poskytovatelů.
 
 ## Načtení a vlastnictví
@@ -141,7 +142,6 @@ modul se při inventarizaci nenačítá jako PHP. Výchozí aktivace zdrojů nap
 ```php
 return [
     'tinycat.social' => 'App/Modules/Social/module.json',
-    'tinycat.blog' => 'App/Modules/Blog/module.json',
 ];
 ```
 
@@ -169,29 +169,35 @@ Core/Identity vlastní účty a jejich administraci. Social/Profiles vlastní
 veřejné autory a vztahy. Životní cyklus účtu používá příspěvky vlastníků;
 při smazání zapojuje i nainstalované neaktivní vlastníky zachovaných dat.
 
-Blog vlastní celý článek v `blog_articles`, Social celý status v `social_posts`.
-Každý má vlastní diskuse, reakce, tagy, odkazy, média a zdroje. Core neobsahuje
+Social vlastní celý status v `social_posts` a vlastní diskuse, reakce, tagy,
+odkazy, média a zdroje. Core neobsahuje
 univerzální publikační tabulky. Podrobný [inventář a mechanismy](domain-storage.md)
 rozlišují technickou podporu od doménového SQL. Souběh ani stejné ID nevytváří
 vazbu mezi vlastníky.
 
 Core poskytuje společný dokument, editor, seznamy a dialogy. Moduly přispívají
-stránkami, tématy, homepage a dashboardy. `/` a `/admin` vybírá core z aktivních
+stránkami, homepage a dashboardy. `/` a `/admin` vybírá core z aktivních
 definic; vypnutí jednoho modulu neodstraní účet ani data druhého.
+
+Veřejné stránky Socialu posílají společný komponentový obsah do `Core/Ui/Page`.
+Ten vybere [samostatné téma](themes.md), nebo použije core rám. Administraci
+obsluhuje core před výběrem veřejného tématu. Botí seznamy používají společné
+`Admin/Definitions::page()` a dodávají jen vlastní akce, například předání ID bota
+do formuláře nového zdroje. Stejný rám se neskládá podruhé v modulu.
 
 ## Migrace a kompatibilita
 
 Podepsaný descriptor odděluje `selection` od povinného `framework`
 bez Publishingu. `schemaOwners` přiřazuje historické streamy aktuálním vlastníkům.
 Social vlastní Users, Moderation, Bots, Publishing verze 4 a Status verze 3;
-Blog vlastní verzi 4. Historické ID není aktivační jednotka. Publikované migrační
+Historické ID není aktivační jednotka. Publikované migrační
 bajty a checksumy se nemění. Vestavěná historie je od 6.0.9 archivní prefix
 formátu 4 s původními ID, pořadím, checksumy a explicitním `file: null`.
 Každý vlastník má samostatnou podepsanou `fresh` baseline bez řetězení starých
 datových převodů. Původní journalové záznamy se nepřepisují.
 Aktualizační cesta a retirement historie jsou v [datovém kontraktu](domain-storage.md).
 
-Současné zdroje podporují descriptor formátu 3 i 4 a vyžadují dokončenou 6.0.8
+Současné zdroje podporují descriptor formátu 3 i 4 a vyžadují dokončenou 6.0.10
 nebo novější instalaci. Archivovaný prefix vyžaduje také odpovídající dokončené
 schéma vlastníka. Starší aktivační ID převádí nezměněný podepsaný release
 6.0.6, archivní čtení přidává neměnná 6.0.8; současný core nemá seznam částí
@@ -204,7 +210,7 @@ Popisky tabulek pro instalátor a klientskou prezentaci vlastních nastavení
 dodává vlastník ve svých překladech a assetech. Core vybírá tabulky z registrací;
 instalační text nepředpokládá přítomnost konkrétního funkčního modulu.
 
-Textové renderery `Core/Text/Segments` a `Core/Ui/RichTextResource` vyžadují
+Textové renderery `Core/Text/Segments` a `Social/Posts/TextResource` vyžadují
 explicitní druh textu. Registr `Core/Text/Policies` použije příspěvek vlastníka
 pro tento druh, nebo neutrální chování, pokud příspěvek neexistuje. Aktivní
 Social nemění renderování textu jiného vlastníka.

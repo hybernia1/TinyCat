@@ -164,7 +164,7 @@ final class Tags
     {
         $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
 
-        $media = Feed::archive_type($media);
+        $media = Archive::type($media);
         return $tag !== '' ? '/tag/' . rawurlencode($tag) . '/feed' . ($media !== '' ? '?media=' . $media : '') : '/';
     }
 

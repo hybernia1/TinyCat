@@ -262,7 +262,7 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
   await T.navigation.restore({state:window.history.state});
   check(T.navigation.pageUrl() === "/public", "Older modal metadata without a stack cannot break page restoration.");
   delete window.history.state.tinycatModal;
-  const readCore = name => fs.readFileSync(path.join(root, name === "modal" ? "assets/ui/dialogs.js" : "assets/core/" + name + ".js"), "utf8");
+  const readCore = name => fs.readFileSync(path.join(root, name === "modal" ? "App/Core/Ui/assets/dialogs.js" : "App/Core/Ui/assets/runtime/" + name + ".js"), "utf8");
   check(!/TinyCat\.(?:users|status|openModal|closeModal)/.test(readCore("modal")), "Dialog infrastructure has no domain dispatch or reverse shell dependency.");
   check(!/\/api\/(?:users|statuses)/.test(readCore("navigation")), "History infrastructure does not own domain API routes.");
   check(!readCore("component-renderer").includes("T.ui."), "Component rendering depends on primitives instead of widget composition.");

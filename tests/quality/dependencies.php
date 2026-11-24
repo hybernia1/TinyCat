@@ -5,17 +5,25 @@ $root = dirname(__DIR__, 2);
 $checks = 0;
 $failures = [];
 $graph = [];
+$moduleNamespaces = []; $moduleRequirements = []; $moduleDirectories = [];
+foreach (glob($root . '/App/Modules/*/module.json') ?: [] as $manifest) {
+    $definition = json_decode((string) file_get_contents($manifest), true, 512, JSON_THROW_ON_ERROR);
+    $prefix = preg_replace('/^TinyCat\\\\/', '', $definition['namespace']);
+    $moduleNamespaces[$prefix] = $definition['id'];
+    $moduleRequirements[$prefix] = $definition['requires'] ?? [];
+    $moduleDirectories[basename(dirname($manifest))] = $prefix;
+}
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/App', FilesystemIterator::SKIP_DOTS)) as $file) {
     if ($file->getExtension() !== 'php') { continue; }
     $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root . '/App/')));
-    $relative = preg_replace('~^Modules/([^/]+)/src/~', '$1/', $relative);
+    $relative = preg_replace_callback('~^Modules/([^/]+)/src/~', static fn (array $match): string => str_replace('\\', '/', $moduleDirectories[$match[1]] ?? $match[1] . '/'), $relative);
     $owner = str_replace('/', '\\', substr($relative, 0, -4));
     foreach (token_get_all((string) file_get_contents($file->getPathname())) as $token) {
         if (!is_array($token)) { continue; }
         if (!in_array($token[0], [T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED, T_CONSTANT_ENCAPSED_STRING], true)) { continue; }
         $name = ltrim(str_replace('\\\\', '\\', trim($token[1], "'\"")), '\\');
-        if (!str_starts_with($name, 'TinyCat\\')) { continue; }
-        $target = explode('::', substr($name, 8))[0];
+        if (!str_starts_with($name, 'TinyCat\\') && !array_any(array_keys($moduleNamespaces), static fn (string $prefix): bool => str_starts_with($name, $prefix))) { continue; }
+        $target = explode('::', str_starts_with($name, 'TinyCat\\') ? substr($name, 8) : $name)[0];
         if (preg_match('/^(?:Support|Http|Database)\\\\/', $target)) { $target = 'Core\\' . $target; }
         if (!str_contains($target, '\\')) { continue; }
         $graph[$owner][$target] = true;
@@ -24,21 +32,22 @@ foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/
 foreach ($graph as $owner => $targets) {
     foreach (array_keys($targets) as $target) {
         $checks++;
-        if (str_starts_with($owner, 'Core\\') && str_starts_with($target, 'Social\\')) {
-            $failures[] = "Core imports Social: {$owner} -> {$target}";
+        foreach ($moduleNamespaces as $prefix => $moduleId) {
+            if (!str_starts_with($target, $prefix)) { continue; }
+            if (str_starts_with($owner, 'Core\\')) {
+                $failures[] = "Core imports optional module: {$owner} -> {$target}";
+            }
+            foreach ($moduleRequirements as $ownerPrefix => $requires) {
+                if (str_starts_with($owner, $ownerPrefix) && $ownerPrefix !== $prefix && !in_array($moduleId, $requires, true)) {
+                    $failures[] = "Undeclared module dependency: {$owner} -> {$target}";
+                }
+            }
         }
-        if (str_starts_with($owner, 'Core\\') && str_starts_with($target, 'Blog\\')) {
-            $failures[] = "Core imports Blog: {$owner} -> {$target}";
-        }
-        if (str_starts_with($owner, 'Blog\\') && str_starts_with($target, 'Social\\')) {
-            $failures[] = "Blog imports Social: {$owner} -> {$target}";
-        }
-        if (str_starts_with($owner, 'Social\\Profiles\\') && preg_match('/^Social\\\\(?:Posts|Automation)\\\\/', $target)) {
+        if (str_starts_with($owner, 'Social\\Profiles\\') && preg_match('/^Social\\\\(?:Posts|Bots)\\\\/', $target)) {
             // Social is one module; these explicit integrations replace its callback registry.
             $integrations = [
+                'Social\\Profiles\\Profiles' => 'Social\\Posts\\Archive',
                 'Social\\Profiles\\Following' => 'Social\\Posts\\NotificationEvents',
-                'Social\\Profiles\\Registration' => 'Social\\Posts\\Syndication',
-                'Social\\Profiles\\Repository' => 'Social\\Posts\\AuthorStatistics',
             ];
             if (($integrations[$owner] ?? null) !== $target) { $failures[] = "Profiles import another internal data owner: {$owner} -> {$target}"; }
         }

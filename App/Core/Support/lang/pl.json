@@ -3,6 +3,7 @@
     "name": "Polski"
   },
   "common": {
+    "help": "Pomoc",
     "sort": "Sortowanie",
     "refresh": "Odśwież",
     "save": "Zapisz",
@@ -82,7 +83,10 @@
     "activated": "{entity} aktywowano.",
     "deactivated": "{entity} dezaktywowano.",
     "action_for": "{action} — {context}",
-    "search_empty": "Nic nie znaleziono."
+    "search_empty": "Nic nie znaleziono.",
+    "copy": "Kopiuj",
+    "copied": "Skopiowano.",
+    "copy_failed": "Nie udało się skopiować tekstu."
   },
   "relative": {
     "now": "teraz",

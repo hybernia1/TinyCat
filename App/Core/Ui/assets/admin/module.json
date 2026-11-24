@@ -1,0 +1,20 @@
+[
+  {
+    "routes": [
+      "admin"
+    ],
+    "entries": [
+      "App/Core/Ui/assets/admin/index.js"
+    ],
+    "components": [],
+    "styles": [
+      "App/Core/Ui/assets/admin/styles/admin-lists.css",
+      "App/Core/Ui/assets/admin/styles/admin-shell.css",
+      "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
+      "App/Core/Ui/assets/admin/styles/admin-content-mobile.css",
+      "App/Core/Ui/assets/admin/styles/admin-lists-desktop.css",
+      "App/Core/Ui/assets/admin/styles/admin-shell-desktop.css"
+    ],
+    "translations": []
+  }
+]

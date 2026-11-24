@@ -11,7 +11,8 @@ if (is_file($directory . '/enabled')) { $selection['demo.notes'] = str_replace('
 $modules = \TinyCat\Core\Modules\Loader::fromSelection($root, $selection);
 $context = new \TinyCat\Core\Runtime\Context(new \TinyCat\Core\Runtime\Configuration(['database' => $database, 'i18n' => ['locale' => 'en']]),
     identity: static fn (): ?array => ($_SERVER['HTTP_AUTHORIZATION'] ?? '') === 'Bearer pilot-admin' ? ['id' => 7, 'role' => 'admin'] : null);
-\TinyCat\Core\Runtime\Application::boot($context, $modules);
+$api = \TinyCat\Core\Runtime\Application::boot($context, $modules);
+\TinyCat\Core\Settings\Api::register($api);
 $mode = PHP_SAPI === 'cli' ? ($argv[1] ?? '') : '';
 $pdo = \TinyCat\Database\Connection::get();
 if ($mode === 'install') {
@@ -50,5 +51,5 @@ if ($path === '/api/_pilot/gate') {
     \TinyCat\Http\Router::dispatch($path);
 }
 if (str_starts_with($path, '/cache/assets/')) { if (\TinyCat\Http\Router::dispatch($path)) { return; } }
-if (!in_array($path, ['/api/pilot/notes', '/pilot/notes'], true)) { http_response_code(404); return; }
+if (!in_array($path, ['/api/pilot/notes', '/pilot/notes', '/api/settings', '/api/settings/editor'], true)) { http_response_code(404); return; }
 if (!\TinyCat\Http\Router::dispatch($path)) { \TinyCat\Http\Response::error('Not found.', 404, 'not_found'); }

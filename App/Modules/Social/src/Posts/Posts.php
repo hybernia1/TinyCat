@@ -7,14 +7,6 @@ final class Posts
 {
     public const REPORT_NOTE_MAX_LENGTH = 1000;
 
-    /**
-     * @return array<mixed>
-     */
-    public static function status_session_interval_rule(string $action): array
-    {
-        return \TinyCat\Social\Moderation\ActionPolicy::cooldown($action);
-    }
-
     public static function status_anchor(int $id): string
     {
         return $id > 0 ? 'status-' . $id : '';
@@ -102,7 +94,7 @@ final class Posts
      */
     public static function status_find(int $id): ?array
     {
-        $post = \TinyCat\Social\Content\Posts::find($id);
+        $post = \TinyCat\Social\Posts\Repository::find($id);
         return $post !== null && ($post['kind'] ?? 'post') === 'post' ? $post : null;
     }
 
@@ -112,7 +104,7 @@ final class Posts
      */
     public static function status_can_edit(?array $item, ?array $user): bool
     {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Content\Posts::canEdit($item, $user);
+        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::canEdit($item, $user);
     }
 
     /**
@@ -121,7 +113,7 @@ final class Posts
      */
     public static function status_can_delete(?array $item, ?array $user): bool
     {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Content\Posts::canEdit($item, $user);
+        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::canEdit($item, $user);
     }
 
     /**
@@ -132,7 +124,7 @@ final class Posts
         $action = str_replace('_', '-', $action);
         $id = max(0, (int) ($params['id'] ?? 0));
         $commentId = max(0, (int) ($params['comment_id'] ?? 0));
-        if ($commentId > 0 && $id < 1) { $id = (int) (\TinyCat\Social\Content\Comments::status_comment_find($commentId)['content_id'] ?? 0); }
+        if ($commentId > 0 && $id < 1) { $id = (int) (\TinyCat\Social\Discussion\Comments::status_comment_find($commentId)['content_id'] ?? 0); }
         $base = '/api/statuses/' . $id;
         return match ($action) {
             'create' => '/api/statuses',
@@ -152,12 +144,12 @@ final class Posts
     public static function status_json_summary(int $contentId, array $user): array
     {
         $userId = (int) ($user['id'] ?? 0);
-        $liked = $userId > 0 && \TinyCat\Social\Content\Reactions::status_user_liked($contentId, $userId);
-        $commentsCount = \TinyCat\Social\Content\Comments::status_comment_count($contentId);
+        $liked = $userId > 0 && \TinyCat\Social\Discussion\Reactions::status_user_liked($contentId, $userId);
+        $commentsCount = \TinyCat\Social\Discussion\Comments::status_comment_count($contentId);
 
         return [
             'id' => $contentId,
-            'likes_count' => \TinyCat\Social\Content\Reactions::status_like_count($contentId),
+            'likes_count' => \TinyCat\Social\Discussion\Reactions::status_like_count($contentId),
             'comments_count' => $commentsCount,
             'liked' => $liked,
         ];
@@ -179,7 +171,7 @@ final class Posts
 
     public static function status_delete_content(int $contentId, bool $deleteReports = true, bool $deleteNotifications = true, bool $deleteImageFile = true): string
     {
-        return \TinyCat\Social\Content\Posts::delete($contentId, static function () use ($contentId, $deleteReports, $deleteNotifications): void {
+        return \TinyCat\Social\Posts\Repository::delete($contentId, static function () use ($contentId, $deleteReports, $deleteNotifications): void {
             if ($deleteNotifications) { NotificationHistory::removeForContent($contentId); }
             if ($deleteReports) { \TinyCat\Database\Connection::delete('content_reports', ['content_id' => $contentId]); }
         }, $deleteImageFile);
@@ -202,6 +194,6 @@ final class Posts
     /** @param array<string, mixed>|null $item */
     public static function status_can_view(?array $item): bool
     {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Content\Posts::visible($item);
+        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::visible($item);
     }
 }

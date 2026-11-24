@@ -1,16 +1,15 @@
-import "../../../../../assets/ui/content/index.js";
+import "../content/index.js";
 import "./media-navigation.js";
-import "../../../../../assets/core/dom.js";
-import "../../../../../assets/core/modules.js";
-import "../../../../../assets/core/navigation.js";
+import "../../../../Core/Ui/assets/runtime/dom.js";
+import "../../../../Core/Ui/assets/runtime/modules.js";
+import "../../../../Core/Ui/assets/runtime/navigation.js";
 import "./form-actions.js";
 import "./comments.js";
-import "../../../../../assets/ui/content/editor.js";
 import "./feed-loader.js";
 import "./form-context.js";
-import "../../../../../assets/ui/content/media.js";
+import "../content/media.js";
 import "./controller.js";
-import "../../../../../assets/ui/content/translation.js";
+import "../content/translation.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;
@@ -22,12 +21,12 @@ import "../../../../../assets/ui/content/translation.js";
   TinyCat.status.dispose = function (root) { C.feed.dispose(root); };
 
   TinyCat.status.init = function () {
-    C.comments.initCommentReplies(); C.actions.initStatusForms();
+    C.comments.initCommentReplies(); if (C.comments.initCommentPagination) C.comments.initCommentPagination(); C.actions.initStatusForms();
   };
   var feedResult = TinyCat.status.result;
   TinyCat.status.result = function (source, response, target) {
     if (!source.matches("form[data-status-form]")) { return feedResult(source, response, target); }
-    return C.actions.handleStatusJsonResponse(source, response).then(function () { C.actions.prepareForms(document); return []; });
+    return C.actions.handleStatusJsonResponse(source, response).then(function (roots) { C.actions.prepareForms(source); return roots; });
   };
   TinyCat.modules.register("status", TinyCat.status);
   TinyCat.navigation.register("/", {

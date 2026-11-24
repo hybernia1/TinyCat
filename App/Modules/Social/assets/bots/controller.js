@@ -1,14 +1,15 @@
-import "../../../../../assets/ui/content-updates.js";
-import "../../../../../assets/ui/list-navigation.js";
-import "../../../../../assets/core/dates.js";
-import "../../../../../assets/core/component-renderer.js";
-import "../../../../../assets/core/api-client.js";
-import "../../../../../assets/ui/avatar-rendering.js";
-import "../../../../../assets/ui/dialogs.js";
-import "../../../../../assets/ui/component-builders.js";
-import "../../../../../assets/ui/form-state.js";
-import "../../../../../assets/ui/form-requests.js";
-import "../../../../../assets/ui/toasts.js";
+import "../../../../Core/Ui/assets/content-updates.js";
+import "../../../../Core/Ui/assets/list-navigation.js";
+import "../../../../Core/Ui/assets/runtime/dates.js";
+import "../../../../Core/Ui/assets/runtime/component-renderer.js";
+import "../../../../Core/Ui/assets/runtime/api-client.js";
+import "../../../../Core/Ui/assets/avatar-rendering.js";
+import "../../../../Core/Ui/assets/dialogs.js";
+import "../../../../Core/Ui/assets/component-builders.js";
+import "../../../../Core/Ui/assets/filters.js";
+import "../../../../Core/Ui/assets/form-state.js";
+import "../../../../Core/Ui/assets/form-requests.js";
+import "../../../../Core/Ui/assets/toasts.js";
 import "./source-preview.js";
 import "./workspace.js";
 (function () {
@@ -36,8 +37,6 @@ import "./workspace.js";
     root.dataset.botPostsRevision = String(Number(root.dataset.botPostsRevision || 0) + 1);
     T.content.replaceChildren(root, T.components.render("bots/posts", Object.assign({}, data, { state: data })));
     T.botDetail.pagination(root, source);
-    var count = document.querySelector('[data-bot-stat="posts"]');
-    if (count && Number.isFinite(Number(data.total_count))) { count.textContent = String(data.total_count); }
   }
   function refreshPosts() {
     T.botDetail.changed();
@@ -59,8 +58,7 @@ import "./workspace.js";
     modal: function (url, response, id) {
       if (/^\/api\/bots\/accounts\/[0-9]+$/.test(url.pathname) && url.searchParams.get("panel") === "detail") { return T.botDetail.modal(url, response, id); }
       if (/^\/api\/bots\/accounts\/[0-9]+\/posts\/[0-9]+\/management$/.test(url.pathname)) {
-        var editUrl = new URL("/api/statuses/" + response.data.item.id + "?panel=edit", window.location.href);
-        var dialog = T.status.modal(editUrl, response, id);
+        var dialog = T.status.edit(response.data, id, response.data.update_url);
         dialog.addEventListener("tinycat:success", function () {
           refreshPosts();
           var queue = document.querySelector("#bot-queue-list");
@@ -74,6 +72,7 @@ import "./workspace.js";
       return null;
     },
     result: function (source, response, target) {
+      if (source.matches && source.matches('form[data-status-form]')) { return false; }
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
       if (!url.pathname.startsWith("/api/bots/")) { return false; }
       var detail = T.botDetail.result(source, response, target);

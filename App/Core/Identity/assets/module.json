@@ -2,13 +2,185 @@
   {
     "routes": [
       "public",
-      "admin"
+      "admin",
+      "access"
+    ],
+    "components": [
+      "users/auth-content"
+    ],
+    "entries": [
+      "App/Core/Identity/assets/authentication.js"
+    ],
+    "uses": [
+      "ui.form-constraints"
+    ],
+    "styles": [],
+    "translations": [
+      "account.email_notifications",
+      "account.email_optional",
+      "common.create",
+      "common.current_password",
+      "common.email",
+      "common.filters",
+      "common.language",
+      "common.login",
+      "common.password",
+      "common.password_confirm",
+      "common.register",
+      "common.save",
+      "account.email_available",
+      "account.email_checking",
+      "account.email_check_failed",
+      "account.messages.email_taken",
+      "common.account",
+      "common.username"
+    ],
+    "messages": {
+      "auth_recovery_done": "auth.recovery_done",
+      "auth_recovery_sent": "auth.recovery_sent",
+      "avatar_invalid": "account.messages.avatar_invalid",
+      "avatar_removed": "account.messages.avatar_removed",
+      "avatar_required": "account.messages.avatar_required",
+      "avatar_saved": "account.messages.avatar_saved",
+      "captcha_invalid": "auth.invalid_captcha",
+      "current_password_invalid": "account.messages.current_password_invalid",
+      "email_invalid": "account.messages.email_invalid",
+      "email_taken": "account.messages.email_taken",
+      "invalid_login": "auth.invalid_login",
+      "password_saved": "account.messages.password_saved",
+      "profile_saved": "account.messages.profile_saved",
+      "registration_disabled": "auth.registration_disabled",
+      "registration_failed": "auth.registration_failed",
+      "settings_invalid_language": "settings.messages.invalid_language",
+      "super_admin_protected": "users.messages.super_admin_protected",
+      "user_not_found": "public.author_not_found",
+      "user_saved": "users.messages.saved",
+      "user_super_admin_protected": "users.messages.super_admin_protected",
+      "email_check_limited": "account.messages.email_check_limited",
+      "record_activated": "common.activated",
+      "record_deactivated": "common.deactivated"
+    }
+  },
+  {
+    "routes": [
+      "public",
+      "admin",
+      "/account"
     ],
     "components": [
       "ui/avatar",
       "users/auth-content",
       "users/avatar-control",
-      "ui/account-status",
+      "ui/account-status"
+    ],
+    "entries": [
+      "App/Core/Identity/assets/index.js"
+    ],
+    "styles": [
+      "App/Core/Identity/assets/styles/user-menu.css"
+    ],
+    "translations": [],
+    "messages": {
+      "auth_recovery_done": "auth.recovery_done",
+      "auth_recovery_sent": "auth.recovery_sent",
+      "avatar_invalid": "account.messages.avatar_invalid",
+      "avatar_removed": "account.messages.avatar_removed",
+      "avatar_required": "account.messages.avatar_required",
+      "avatar_saved": "account.messages.avatar_saved",
+      "captcha_invalid": "auth.invalid_captcha",
+      "current_password_invalid": "account.messages.current_password_invalid",
+      "email_invalid": "account.messages.email_invalid",
+      "email_taken": "account.messages.email_taken",
+      "invalid_login": "auth.invalid_login",
+      "password_saved": "account.messages.password_saved",
+      "profile_saved": "account.messages.profile_saved",
+      "registration_disabled": "auth.registration_disabled",
+      "registration_failed": "auth.registration_failed",
+      "settings_invalid_language": "settings.messages.invalid_language",
+      "super_admin_protected": "users.messages.super_admin_protected",
+      "user_not_found": "public.author_not_found",
+      "user_saved": "users.messages.saved",
+      "user_super_admin_protected": "users.messages.super_admin_protected",
+      "email_check_limited": "account.messages.email_check_limited",
+      "record_activated": "common.activated",
+      "record_deactivated": "common.deactivated"
+    }
+  },
+  {
+    "routes": [
+      "/admin/users"
+    ],
+    "components": [
+      "users/admin-fields",
+      "users/admin-form"
+    ],
+    "entries": [],
+    "styles": [],
+    "translations": [
+      "users.edit_user",
+      "users.new_user"
+    ],
+    "messages": {
+      "user_created": "users.messages.created",
+      "user_password_required": "users.validation.password_required",
+      "user_username_invalid": "users.messages.username_invalid",
+      "user_username_taken": "users.messages.username_taken"
+    },
+    "admin": {
+      "core.users": {
+        "path": "/admin/users",
+        "endpoint": "/api/users",
+        "api": "/api/users",
+        "target": "#users-list",
+        "component": "users/list",
+        "filter": "users/filter-form",
+        "filterId": "users-filter-modal",
+        "title": "users.list_title",
+        "icon": "users"
+      }
+    }
+  },
+  {
+    "routes": [
+      "public",
+      "/account"
+    ],
+    "entries": [
+      "App/Core/Identity/assets/public.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "admin"
+    ],
+    "entries": [
+      "App/Core/Identity/assets/admin.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "public",
+      "admin",
+      "/account"
+    ],
+    "defer": {
+      "resources": [
+        "/api/users"
+      ],
+      "selectors": [
+        "[data-avatar-upload]"
+      ]
+    },
+    "entries": [
+      "App/Core/Identity/assets/avatar-entry.js"
+    ],
+    "components": [
       "users/account-editor",
       "users/account-form",
       "users/email-form",
@@ -20,12 +192,8 @@
       "users/avatar-save",
       "users/avatar-actions"
     ],
-    "entries": [
-      "App/Core/Identity/assets/index.js"
-    ],
     "styles": [
-      "App/Core/Identity/assets/styles/avatar-upload.css",
-      "App/Core/Identity/assets/styles/user-menu.css"
+      "App/Core/Identity/assets/styles/avatar-upload.css"
     ],
     "translations": [
       "account.avatar_edit",
@@ -92,87 +260,6 @@
       "users.statuses.active",
       "users.statuses.waiting",
       "users.statuses.ban"
-    ],
-    "messages": {
-      "auth_recovery_done": "auth.recovery_done",
-      "auth_recovery_sent": "auth.recovery_sent",
-      "avatar_invalid": "account.messages.avatar_invalid",
-      "avatar_removed": "account.messages.avatar_removed",
-      "avatar_required": "account.messages.avatar_required",
-      "avatar_saved": "account.messages.avatar_saved",
-      "captcha_invalid": "auth.invalid_captcha",
-      "current_password_invalid": "account.messages.current_password_invalid",
-      "email_invalid": "account.messages.email_invalid",
-      "email_taken": "account.messages.email_taken",
-      "invalid_login": "auth.invalid_login",
-      "password_saved": "account.messages.password_saved",
-      "profile_saved": "account.messages.profile_saved",
-      "registration_disabled": "auth.registration_disabled",
-      "registration_failed": "auth.registration_failed",
-      "settings_invalid_language": "settings.messages.invalid_language",
-      "super_admin_protected": "users.messages.super_admin_protected",
-      "user_not_found": "public.author_not_found",
-      "user_saved": "users.messages.saved",
-      "user_super_admin_protected": "users.messages.super_admin_protected",
-      "email_check_limited": "account.messages.email_check_limited",
-      "record_activated": "common.activated",
-      "record_deactivated": "common.deactivated"
-    }
-  },
-  {
-    "routes": [
-      "/admin/users"
-    ],
-    "components": [
-      "users/admin-fields",
-      "users/admin-form"
-    ],
-    "entries": [],
-    "styles": [],
-    "translations": [
-      "users.edit_user",
-      "users.new_user"
-    ],
-    "messages": {
-      "user_created": "users.messages.created",
-      "user_password_required": "users.validation.password_required",
-      "user_username_invalid": "users.messages.username_invalid",
-      "user_username_taken": "users.messages.username_taken"
-    },
-    "admin": {
-      "core.users": {
-        "path": "/admin/users",
-        "endpoint": "/api/users",
-        "api": "/api/users",
-        "target": "#users-list",
-        "component": "users/list",
-        "filter": "users/filter-form",
-        "filterId": "users-filter-modal",
-        "title": "users.list_title",
-        "icon": "users"
-      }
-    }
-  },
-  {
-    "routes": [
-      "public"
-    ],
-    "entries": [
-      "App/Core/Identity/assets/public.js"
-    ],
-    "components": [],
-    "styles": [],
-    "translations": []
-  },
-  {
-    "routes": [
-      "admin"
-    ],
-    "entries": [
-      "App/Core/Identity/assets/admin.js"
-    ],
-    "components": [],
-    "styles": [],
-    "translations": []
+    ]
   }
 ]

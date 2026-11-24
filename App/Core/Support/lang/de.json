@@ -3,6 +3,7 @@
     "name": "Deutsch"
   },
   "common": {
+    "help": "Hilfe",
     "sort": "Sortierung",
     "refresh": "Aktualisieren",
     "save": "Speichern",
@@ -82,7 +83,10 @@
     "activated": "{entity} aktiviert.",
     "deactivated": "{entity} deaktiviert.",
     "action_for": "{action} — {context}",
-    "search_empty": "Nichts gefunden."
+    "search_empty": "Nichts gefunden.",
+    "copy": "Kopieren",
+    "copied": "Kopiert.",
+    "copy_failed": "Der Text konnte nicht kopiert werden."
   },
   "relative": {
     "now": "Jetzt",

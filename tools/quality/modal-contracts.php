@@ -10,7 +10,7 @@ return static function (?array $sources = null): void {
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $directory, FilesystemIterator::SKIP_DOTS)) as $file) {
                 if (!in_array($file->getExtension(), $extensions, true)) { continue; }
                 $path = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
-                if ($path === 'assets/ui/dialogs.js' || str_starts_with($path, 'assets/build/')) { continue; }
+                if ($path === 'App/Core/Ui/assets/dialogs.js' || str_starts_with($path, 'assets/build/')) { continue; }
                 $sources[$path] = (string) file_get_contents($file->getPathname());
             }
         }

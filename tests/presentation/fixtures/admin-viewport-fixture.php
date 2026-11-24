@@ -8,41 +8,41 @@ require $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Applicat
 TinyCat\Core\Identity\Authentication::reset(null, true);
 $filters = ['q' => '', 'bot' => '3'];
 $items = [['id' => 7, 'name' => str_repeat('Source', 25), 'feed_url' => 'https://example.test/' . str_repeat('long-path', 30), 'bot_user_id' => 3, 'bot_username' => 'demo_bot', 'enabled' => true, 'interval_minutes' => 60, 'publication_interval_minutes' => 30, 'last_error' => str_repeat('Error ', 25)]];
-$list = TinyCat\Support\Components::render('bots/sources', ['items' => $items, 'bots' => [['id' => 3, 'username' => 'demo_bot']], 'filters' => $filters, 'sorting' => TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::sources(), $filters + ['sort' => 'name', 'direction' => 'asc']), 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 1]]);
+$list = TinyCat\Support\Components::render('bots/sources', ['items' => $items, 'bots' => [['id' => 3, 'username' => 'demo_bot']], 'filters' => $filters, 'sorting' => TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Bots\Sorting::sources(), $filters + ['sort' => 'name', 'direction' => 'asc']), 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 1]]);
 $content = TinyCat\Support\AdminViews::listCard('Sources', 'rss', 'bots-list', 'bots-filter-modal', new TinyCat\Support\Markup($list), primary: true);
 $content .= str_replace('<form ', '<form id="bots-filter-modal" data-filter-content hidden ', TinyCat\Support\Components::render('bots/source-filter-form', ['bots' => [['id' => 3, 'username' => str_repeat('bot', 50)]], 'filters' => $filters, 'pagination' => ['per_page' => 25]]));
 $html = TinyCat\Support\View::render('shell', ['content' => $content, 'actions' => '<button class="btn btn-primary btn-sm">New source</button>', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => 'Sources', 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'settingsEditor' => '', 'titleIcon' => 'rss'], $root . '/App/Core/Ui/Admin/templates');
 $context = match ($argv[1] ?? '') { '--modal' => 'modal', '--accounts' => 'accounts', default => 'page' };
 if ($context === 'accounts') {
     $account = ['id' => 3, 'username' => str_repeat('demo_bot_', 20), 'status' => 'active', 'source_count' => 1, 'post_count' => 12, 'updated_at' => '2026-10-30T12:00:00Z'];
-    $list = TinyCat\Support\Components::render('bots/accounts', ['items' => [$account, array_replace($account, ['id' => 4, 'status' => 'ban'])], 'filters' => [], 'sorting' => TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::accounts(), ['sort' => 'source_count', 'direction' => 'desc']), 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 2]]);
+    $list = TinyCat\Support\Components::render('bots/accounts', ['items' => [$account, array_replace($account, ['id' => 4, 'status' => 'ban'])], 'filters' => [], 'sorting' => TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Bots\Sorting::accounts(), ['sort' => 'source_count', 'direction' => 'desc']), 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 2]]);
     $content = TinyCat\Support\AdminViews::listCard('Accounts', 'users', 'bot-accounts-list', 'bot-accounts-filter-modal', new TinyCat\Support\Markup($list), primary: true);
     $content .= str_replace('<form ', '<form id="bot-accounts-filter-modal" data-filter-content hidden ', TinyCat\Support\Components::render('bots/account-filter-form', ['filters' => [], 'statuses' => ['active', 'ban'], 'pagination' => ['per_page' => 25]]));
     $html = TinyCat\Support\View::render('shell', ['content' => $content, 'actions' => '', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => 'Accounts', 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'settingsEditor' => '', 'titleIcon' => 'users'], $root . '/App/Core/Ui/Admin/templates');
 }
 if ($context === 'modal') {
     $model = ['runs' => [['source_name' => str_repeat('Source', 25), 'status' => 'error', 'started_at' => '2026-10-30T09:00:00Z', 'items_seen' => 0, 'error' => 'Feed unavailable']], 'filters' => ['q' => '', 'source' => '', 'status' => ''], 'sources' => ['' => 'All sources', '7' => str_repeat('Long source name ', 20)], 'sorting' => [], 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 1], 'api_url' => '/api/bots/accounts/3/runs', 'history_url' => false, 'list_target' => '#bot-detail-runs-list', 'filter_modal' => 'bot-detail-runs-filter-modal'];
-    $model['sorting'] = TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Automation\Sorting::LISTS['bot_runs'], ['sort' => 'started_at', 'direction' => 'desc'], '/api/bots/accounts/3/runs', '/admin/bots/3');
+    $model['sorting'] = TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Bots\Sorting::LISTS['bot_runs'], ['sort' => 'started_at', 'direction' => 'desc'], '/api/bots/accounts/3/runs', '/admin/bots/3');
     foreach ($model['sorting'] as &$heading) { $heading['history'] = false; }
     unset($heading);
     $html = TinyCat\Support\Components::render('ui/modal', ['root_attributes' => ['class' => 'modal', 'data-open' => 'true', 'data-modal-kind' => 'editor', 'data-modal-size' => 'workspace'], 'panel_attributes' => ['class' => 'modal-panel', 'data-tabs' => ''], 'title' => '@demo_bot', 'title_id' => 'fixture-title', 'close_label' => 'Close', 'close_icon' => new TinyCat\Support\Markup(TinyCat\Support\Html::icon('close')), 'body' => new TinyCat\Support\Markup(TinyCat\Support\Components::render('bots/runs-list', $model)), 'has_footer' => true, 'footer' => new TinyCat\Support\Markup('<button class="btn">Close</button>')]);
     $html .= TinyCat\Support\Components::render('bots/run-filter-form', $model);
 }
 $css = TinyCat\Support\AssetGraph::stylesheet(TinyCat\Support\ClientAssets::sourceStyles('/admin/bots/list'));
-echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $html;
+echo '<!doctype html><html data-ui-density="compact"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $html;
 ?>
 <script>
 window.TinyCat = { lifecycle: { register: function (name, hooks) { if (hooks.init) hooks.init(); if (name === 'tooltips') { window.tooltipService = hooks; hooks.hydrate(document); } } } };
 window.TinyCat.i18n = { t: key => ({'common.menu':'Menu', 'common.sort':'Řazení'})[key] || key };
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/dom.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/icons.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/component-renderer.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/dom.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/icons.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/component-renderer.js')) ?>
 window.TinyCat.components.register(<?= json_encode(array_intersect_key(TinyCat\Support\Components::templates(), array_flip(['ui/filter-chip', 'ui/list-summary'])), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>);
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/popovers.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/filters.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tooltips.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/component-builders.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tabs.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/popovers.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/filters.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/tooltips.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/component-builders.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/tabs.js')) ?>
 let escapedToModal = 0;
 document.addEventListener('keydown', event => { if (event.key === 'Escape') escapedToModal++; }, true);
 (async function () {
@@ -149,7 +149,7 @@ for (const long of [false, true]) {
     await new Promise(resolve => setTimeout(resolve, 100));
     const bounds = panel.getBoundingClientRect(), wrap = document.querySelector('.table-wrap');
     const summaryClean = !summary.querySelector('[data-list-result-count]') && (getComputedStyle(summary).display !== 'none') === !!summary.querySelector('.badge');
-    const identity = wrap.querySelector('.table-identity'), primary = identity.querySelector('.table-primary');
+    const identity = wrap.querySelector('.identity-row'), primary = identity.querySelector('.table-primary');
     const primaryBounds = primary.getBoundingClientRect(), details = [...identity.querySelectorAll('.table-meta')];
     const identityAligned = details.every(detail => Math.abs(detail.getBoundingClientRect().left - primaryBounds.left) < 1 && detail.getBoundingClientRect().top >= primaryBounds.bottom && parseFloat(getComputedStyle(detail).fontSize) < parseFloat(getComputedStyle(primary).fontSize));
     const primaryStyle = getComputedStyle(primary);
@@ -163,7 +163,7 @@ for (const long of [false, true]) {
     const tooltipClosed = tooltip.hidden && primary.getAttribute('aria-describedby') === 'fixture-description' && escapedToModal === 0;
     primary.blur();
     const actionsAligned = [...wrap.querySelectorAll('.table-actions-cell')].every(cell => getComputedStyle(cell).textAlign === 'right') && [...wrap.querySelectorAll('.table-actions')].every(actions => getComputedStyle(actions).flexWrap === 'nowrap' && actions.getBoundingClientRect().right <= actions.parentElement.getBoundingClientRect().right);
-    const table = wrap.querySelector('table'), mobile = innerWidth < 600;
+    const table = wrap.querySelector('table'), mobile = innerWidth < 900;
     let navigationFits = true;
     if (context === 'modal') {
       const row = document.querySelector('.modal-tabs'), select = row.querySelector('[data-tab-select]'), tabs = row.querySelector('.tabs');
@@ -250,7 +250,80 @@ let lazyHintsReady = initiallyUnfocusable && lazyText.getAttribute('tabindex') =
 lazy.hidden = true; window.tooltipService.hydrate(lazy); lazy.hidden = false;
 lazy.dispatchEvent(new CustomEvent('tinycat:tab', {bubbles:true}));
 lazyHintsReady = lazyHintsReady && lazyText.getAttribute('tabindex') === '0'; lazy.remove();
-results.forEach(result => Object.assign(result, {sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
+let pinnedList = true, paginationCompact = true, pinnedDiagnostics = {};
+if (context !== 'modal') {
+  const wrap = document.querySelector('.table-wrap'), body = wrap.querySelector('tbody');
+  const clones = Array.from({length:40}, () => body.rows[0].cloneNode(true));
+  body.append(...clones);
+  const paginationHost = document.createElement('div');
+  paginationHost.innerHTML = <?= json_encode(TinyCat\Support\Components::render('ui/pagination', ['navigation' => ['visible' => true, 'from' => 1, 'to' => 25, 'total' => 100, 'pages' => [['number' => 1, 'current' => true], ['number' => 2, 'current' => false, 'url' => '?page=2']], 'previous' => [], 'next' => ['url' => '?page=2']]]), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>;
+  const pagination = paginationHost.firstElementChild;
+  wrap.parentElement.append(pagination);
+  document.scrollingElement.scrollTop = 0;
+  const heading = wrap.querySelector('th'), toolbar = document.querySelector('.admin-list-toolbar');
+  const before = [heading.getBoundingClientRect().top, pagination.getBoundingClientRect().top, toolbar.getBoundingClientRect().top];
+  wrap.scrollTop = 500;
+  pagination.querySelector('a').focus({preventScroll:true});
+  const after = [heading.getBoundingClientRect().top, pagination.getBoundingClientRect().top, toolbar.getBoundingClientRect().top];
+  pinnedList = innerWidth >= 900
+    ? wrap.scrollTop > 0 && before.every((top,index) => Math.abs(top-after[index]) < 1)
+      && pagination.getBoundingClientRect().bottom <= innerHeight + 1
+      && document.documentElement.scrollHeight <= innerHeight + 1
+      && document.activeElement.closest('.pagination') === pagination
+    : wrap.scrollTop === 0 && document.documentElement.scrollHeight > innerHeight && getComputedStyle(heading).position !== 'sticky';
+  const originalTheme = document.documentElement.getAttribute('data-theme');
+  for (const theme of ['light', 'dark']) {
+    document.documentElement.dataset.theme = theme;
+    pinnedList = pinnedList && [...wrap.querySelectorAll('thead th')].every(cell => {
+      const color = getComputedStyle(cell).backgroundColor;
+      return color !== 'transparent' && !color.endsWith(', 0)');
+    });
+  }
+  if (originalTheme === null) { document.documentElement.removeAttribute('data-theme'); }
+  else { document.documentElement.dataset.theme = originalTheme; }
+  pinnedDiagnostics = {before, after, scroll:wrap.scrollTop, documentHeight:document.documentElement.scrollHeight, paginationBottom:pagination.getBoundingClientRect().bottom, focused:document.activeElement.closest('.pagination') === pagination};
+  paginationCompact = pagination.getBoundingClientRect().height <= 55
+    && pagination.scrollWidth <= pagination.clientWidth
+    && [...pagination.querySelectorAll('.pagination-prev,.pagination-next,.is-active')].every(link => link.getBoundingClientRect().width > 0)
+    && [...pagination.querySelectorAll('.pagination-list > a:not(.pagination-prev):not(.pagination-next)')].every(link => innerWidth >= 900 ? link.getBoundingClientRect().width > 0 : !link.getBoundingClientRect().width);
+  clones.forEach(row => row.remove()); pagination.remove(); wrap.scrollTop = 0;
+}
+const scalableControl = [...document.querySelectorAll('.input,.select')].find(field => field.getBoundingClientRect().height > 0 && !field.hasAttribute('data-tab-select'));
+const scalableButton = [...document.querySelectorAll('.btn')].find(button => button.getBoundingClientRect().height > 0);
+const scalableRow = document.querySelector('.table tbody tr');
+const scalableNodes = [scalableControl, scalableButton, scalableRow];
+const originalHeights = scalableNodes.map(node => node.getBoundingClientRect().height);
+const previousScale = document.documentElement.style.getPropertyValue('--ui-scale');
+const originalScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale'));
+let controlsScale = true;
+for (const multiplier of [1.25,1.5,2]) {
+  document.documentElement.style.setProperty('--ui-scale', originalScale * multiplier);
+  controlsScale = controlsScale && scalableNodes.every((node,index) => node.getBoundingClientRect().height > originalHeights[index])
+    && document.documentElement.scrollWidth <= innerWidth;
+}
+if (previousScale) document.documentElement.style.setProperty('--ui-scale',previousScale);
+else document.documentElement.style.removeProperty('--ui-scale');
+let rowStatesConsistent=true;
+const stateBody=document.querySelector('.table tbody'), stateSource=stateBody.rows[0], originalTheme=document.documentElement.getAttribute('data-theme');
+for (const theme of ['light','dark']) {
+  document.documentElement.setAttribute('data-theme',theme);
+  const rows=[0,1,2].map(()=>stateSource.cloneNode(true));stateBody.append(...rows);
+  rows[0].classList.add('table-row-inactive');rows[1].classList.remove('table-row-inactive');
+  const inactiveBackground=getComputedStyle(rows[0]).backgroundColor;
+  rows[0].classList.remove('table-row-inactive');
+  rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0]).backgroundColor===inactiveBackground && getComputedStyle(rows[0]).backgroundColor!==getComputedStyle(rows[1]).backgroundColor;
+  rows[0].classList.add('table-row-inactive');
+  const actionsCell=rows[0].querySelector('.table-actions-cell');
+  rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0].cells[0]).fontStyle==='italic' && getComputedStyle(rows[0].querySelector('.badge')).fontStyle==='normal' && (!actionsCell || getComputedStyle(actionsCell).fontStyle==='normal');
+  const action=rows[0].querySelector('button,a');
+  if(action){action.focus({preventScroll:true});rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0]).backgroundColor!==inactiveBackground;action.blur();}
+  rows.forEach(row=>row.remove());
+}
+if(originalTheme===null)document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',originalTheme);
+const tableBadgesReadable = [...document.querySelectorAll('table .badge')].every(badge => getComputedStyle(badge,'::before').maskImage!=='none' && badge.textContent.trim());
+const identitySlots = [...document.querySelectorAll('table .identity-row')].map(identity => identity.firstElementChild);
+const identitySlotsNormalized = identitySlots.every(slot => slot.matches('.avatar.avatar-sm') && Math.abs(slot.getBoundingClientRect().width - identitySlots[0].getBoundingClientRect().width) < 1);
+results.forEach(result => Object.assign(result, {rowStatesConsistent, tableBadgesReadable, identitySlotsNormalized, controlsScale, pinnedList, pinnedDiagnostics, paginationCompact, sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
 const output = document.createElement('pre'); output.id = 'layout-metrics'; output.textContent = JSON.stringify(results); document.body.append(output);
 }());
 </script></body></html>

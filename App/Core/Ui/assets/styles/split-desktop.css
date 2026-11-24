@@ -1,0 +1,7 @@
+@media (min-width: 900px) {
+  .split {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

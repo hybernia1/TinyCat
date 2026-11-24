@@ -10,13 +10,6 @@ use TinyCat\Support\{Assets, ClientAssets, View};
 final class Layout
 {
     /** @param array<string, mixed> $page */
-    public static function handles(array $page): bool
-    {
-        $path = (string) ($page['current'] ?? \TinyCat\Http\Request::current()->path());
-        return empty($page['public']) && (!empty($page['adminShell']) || $path === '/admin' || str_starts_with($path, '/admin/'));
-    }
-
-    /** @param array<string, mixed> $page */
     public static function render(array $page, string $content): void
     {
         $current = (string) ($page['current'] ?? '/admin');
@@ -29,16 +22,15 @@ final class Layout
         $profileUrl = $authUser !== null ? (Integration::profileUrl((int) $authUser['id']) ?? '') : '';
         $profileNeedsEmail = $authUser !== null && trim((string) ($authUser['email'] ?? '')) === '';
         $theme = Profile::theme((string) ($authUser['theme'] ?? 'system'));
-        $nav = Navigation::prepare(\TinyCat\Core\Identity\Roles::isAdmin($authUser) ? Navigation::administration() : [], $current, true);
+        $nav = \TinyCat\Core\Ui\Navigation::prepare(\TinyCat\Core\Identity\Roles::isAdmin($authUser) ? Navigation::administration() : [], $current, true);
         $titleIcon = (string) ($page['title_icon'] ?? Navigation::activeIcon($nav));
-        $styles = ClientAssets::styles($current);
-        $scripts = ClientAssets::scripts($current);
+        $assetPath = \TinyCat\Core\Ui\Surface::Administration->assetPath($page);
+        $styles = ClientAssets::styles($assetPath);
+        $scripts = ClientAssets::scripts($assetPath);
         $csrf = \TinyCat\Core\Security\Csrf::token();
         $dateFormat = (string) Startup::option('datetime.datetime', 'Y-m-d H:i:s');
         $dateRelative = (bool) Startup::option('datetime.relative', false);
-        $settingsPresentation = \TinyCat\Core\Identity\Roles::isAdmin($authUser)
-            ? json_encode(\TinyCat\Core\Settings\Sections::presentation(), JSON_THROW_ON_ERROR) : '';
-        $iconSprite = Assets::asset('icons.svg');
+        $iconSprite = Assets::asset('App/Core/Ui/assets/icons.svg');
         $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([
             'authUser' => $authUser, 'profileUrl' => $profileUrl, 'profileNeedsEmail' => $profileNeedsEmail,
             'theme' => $theme,
@@ -52,10 +44,10 @@ final class Layout
         echo \TinyCat\Core\Ui\Document::frame([
             'title' => $title, 'csrfToken' => $csrf, 'robots' => 'noindex,nofollow',
             'htmlAttributes' => ['lang' => \TinyCat\Support\Localization::locale(), 'data-theme' => $theme !== 'system' ? $theme : null,
+                'data-interface-prefix' => \TinyCat\Support\Localization::locale(), 'data-ui-density' => 'compact',
                 'data-date-format' => $dateFormat, 'data-date-relative' => $dateRelative ? 'true' : 'false'],
             'bodyAttributes' => ['class' => 'admin-shell-page', 'data-application-version' => \TinyCat\Support\Version::CURRENT,
-                'data-current-user-id' => (int) ($authUser['id'] ?? 0), 'data-icon-sprite' => $iconSprite,
-                'data-settings-presentation' => $settingsPresentation !== '' ? $settingsPresentation : null],
+                'data-current-user-id' => (int) ($authUser['id'] ?? 0), 'data-icon-sprite' => $iconSprite],
             'styles' => $styles, 'scripts' => $scripts, 'flashToasts' => $flashToasts,
         ], new \TinyCat\Support\Markup($shell));
     }

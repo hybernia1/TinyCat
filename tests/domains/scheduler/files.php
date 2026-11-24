@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 use TinyCat\Support\Cache;
 use TinyCat\Support\Config;
 use TinyCat\Support\Paths;
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
 (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['driver' => 'filesystem'], 'database' => ['driver' => 'sqlite']]);
@@ -20,11 +20,11 @@ $assert = static function (bool $value, string $message) use (&$checks): void {
 Cache::put('expired', ['old' => true], 300, 0);
 Cache::put('fresh', ['new' => true], 3600, 0);
 Cache::put('stale', ['previous' => true], 300, 3600);
-touch(Cache::file('expired.json'), time() - 301);
-touch(Cache::file('stale.json'), time() - 301);
-Cache::writeFile('legacy.json', '{"legacy":true}');
-Cache::writeFile('legacy-old.json', '{"legacy":true}');
-touch(Cache::file('legacy-old.json'), time() - 604801);
+touch(Cache::file(hash('sha256', 'expired') . '.json'), time() - 301);
+touch(Cache::file(hash('sha256', 'stale') . '.json'), time() - 301);
+Cache::writeFile(hash('sha256', 'legacy') . '.json', '{"legacy":true}');
+Cache::writeFile(hash('sha256', 'legacy-old') . '.json', '{"legacy":true}');
+touch(Cache::file(hash('sha256', 'legacy-old') . '.json'), time() - 604801);
 Cache::writeFile('app.js', 'generated', 'assets');
 Cache::writeFile('active.lock', 'lock', 'locks');
 $removed = 0;
@@ -35,7 +35,7 @@ for ($attempt = 0; $attempt < 20; $attempt++) {
     if (!$result['has_more']) { break; }
 }
 $assert($removed === 2 && !$result['has_more'], 'Resumable cache cleanup completes and removes only expired entries.');
-$assert(!is_file(Cache::file('expired.json')) && !is_file(Cache::file('legacy-old.json')), 'Expired entries and old legacy cache files are removed.');
+$assert(!is_file(Cache::file(hash('sha256', 'expired') . '.json')) && !is_file(Cache::file(hash('sha256', 'legacy-old') . '.json')), 'Expired entries and old legacy cache files are removed.');
 $assert(Cache::read('fresh') === ['new' => true] && Cache::read('stale') === ['previous' => true], 'Fresh data and the stale refresh window survive cleanup.');
 $assert(Cache::read('legacy') === ['legacy' => true], 'Legacy raw JSON remains readable during rollout.');
 $assert(is_file(Cache::file('app.js', 'assets')) && is_file(Cache::file('active.lock', 'locks')), 'Cache cleanup preserves generated assets and active lock files.');
@@ -61,11 +61,19 @@ $database->exec('CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id
 $database->exec("INSERT INTO users VALUES (1, 'fixture-bot', 'bot', 'active')");
 $database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, interval_minutes) VALUES (1, 1, 1, 'http://127.0.0.1/blocked-feed', 60)");
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['bots.cleanup_last_run' => time()]);
-$feedTask = \TinyCat\Social\Automation\Importer::scheduledTasks()['feeds']['runner'];
+$feedTask = \TinyCat\Social\Bots\Importer::scheduledTasks()['feeds']['runner'];
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
 $assert(!$result['ok'] && $result['status'] === 'failed' && $result['summary']['summary']['error'] === 1, 'A failed feed import makes the cron result fail instead of claiming success.');
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
-$assert($result['ok'] && $result['count'] === 0, 'A feed whose retry is scheduled in the future is not imported again.');
+$assert($result['ok'] && $result['count'] === 0 && $result['status'] === 'not_due', 'A feed whose retry is scheduled in the future is not imported again.');
+
+$database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, interval_minutes) VALUES (2, 1, 1, 'http://127.0.0.1/blocked-feed', 60)");
+$database->exec('UPDATE bot_sources SET next_run_at = NULL');
+$database->exec('CREATE TRIGGER lose_feed_claim BEFORE UPDATE ON bot_sources BEGIN SELECT RAISE(IGNORE); END');
+$backlog = $feedTask(['options' => ['bot_limit' => 1]]);
+$assert($backlog['status'] === 'has_more' && $backlog['has_more'] && $backlog['count'] === 1, 'A limited batch reports remaining eligible sources even when a claim is lost.');
+$database->exec('DROP TRIGGER lose_feed_claim');
+$database->exec('DELETE FROM bot_sources WHERE id = 2');
 
 $migration = require __DIR__ . '/../../../migrations/20261026_003_scheduler_runs.php';
 $migration($database);
@@ -183,7 +191,7 @@ $assert($database->query("SELECT status FROM bot_source_runs WHERE started_at = 
 $detail = \TinyCat\Core\Tasks\Administration::runDetail($parentId);
 $assert(count($detail['sources']) === 1 && $detail['sources'][0]['source_name'] === 'Fixture feed', 'Scheduler details expose only the sources belonging to that execution.');
 $html = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $detail]);
-$assert(str_contains($html, 'Fixture feed') && str_contains($html, 'Feed could not be downloaded.'), 'The common run modal renders source diagnostics for all supported feed formats.');
+$assert(str_contains($html, 'Fixture feed') && str_contains($html, 'Feed import failed.') && !str_contains($html, 'Feed could not be downloaded.'), 'The common run modal renders safe source diagnostics without raw exception details when debug is off.');
 $lockResult = 0;
 $before = (int) $database->query('SELECT COUNT(*) FROM bot_source_runs')->fetchColumn();
 \TinyCat\Core\Tasks\Runner::run('feeds', $feedTask, ['mode' => 'admin', 'options' => ['source_id' => 1]]);
@@ -211,11 +219,11 @@ $assert($targeted['options'] === ['bot_limit' => 1, 'source_id' => 1], 'Manual s
 $cleanup = \TinyCat\Core\Tasks\Tasks::context('cleanup', ['options' => ['cleanup_batch' => 7]]);
 $assert($cleanup['options'] === ['cleanup_batch' => 1000], 'Cleanup records the supported batch actually used for an unsupported request.');
 $before = (int) $database->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn();
-$invalid = \TinyCat\Core\Tasks\Runner::run('feeds', $runner, ['options' => ['source_id' => 1]], true);
+$invalid = \TinyCat\Core\Tasks\Runner::run('feeds', $runner, ['options' => ['source_id' => 1]]);
 $assert(!$invalid['ok'] && (int) $database->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn() === $before, 'A source selector outside administrator mode is rejected before execution or history.');
-$invalid = \TinyCat\Core\Tasks\Runner::run('cleanup', $runner, ['options' => ['cleanup_batch' => []]], true);
+$invalid = \TinyCat\Core\Tasks\Runner::run('cleanup', $runner, ['options' => ['cleanup_batch' => []]]);
 $assert(!$invalid['ok'], 'Malformed option values cannot be silently converted into a batch size.');
-$invalid = \TinyCat\Core\Tasks\Runner::run('cleanup', static fn (): array => ['ok' => true], [], true);
+$invalid = \TinyCat\Core\Tasks\Runner::run('cleanup', static fn (): array => ['ok' => true], []);
 $assert(!$invalid['ok'] && $database->query('SELECT status FROM scheduler_runs ORDER BY id DESC LIMIT 1')->fetchColumn() === 'failed', 'A malformed callback result is recorded as a failed execution.');
 $notDue = \TinyCat\Core\Tasks\Runner::run('cleanup', static fn (): array => \TinyCat\Core\Tasks\Tasks::result('not_due'), []);
 $lockResult = 0;
@@ -232,7 +240,7 @@ $assert(json_decode($deferredRecord['options_json'], true) === ['cleanup_batch' 
 $latest = \TinyCat\Core\Tasks\History::latestFor(['cleanup', 'feeds', 'missing']);
 $assert($latest['cleanup']['id'] === $deferredRecord['id'] && !isset($latest['missing']), 'Bulk latest history keeps the greatest ID for each task and omits missing tasks.');
 $successful = \TinyCat\Core\Tasks\History::lastSuccessfulFor(['cleanup', 'feeds']);
-$assert(isset($successful['cleanup']), 'Bulk health history includes successful and not-due runs.');
+$assert(isset($successful['cleanup']), 'Bulk health history includes meaningful successful work.');
 $assert(\TinyCat\Core\Tasks\History::latestFor([]) === [] && \TinyCat\Core\Tasks\History::lastSuccessfulFor([]) === [], 'Empty task selections require no history query.');
 
 $registered = \TinyCat\Core\Modules\Registrations::current();
@@ -265,14 +273,13 @@ try {
     $assert(\TinyCat\Core\Tasks\History::latest($taskId)['status'] === 'failed', 'History records failure when the completion write fails.');
 } finally { \TinyCat\Core\Modules\Registrations::configure($registered); }
 
-require_once __DIR__ . '/../../../App/Modules/Blog/src/FeedSources.php';
-$blogTask = \TinyCat\Blog\FeedSources::task();
-foreach ([0, -1] as $invalidId) {
+foreach (['invalid', 1.5, true, null] as $invalidDefault) {
     $rejected = false;
-    try { ($blogTask->normalize)(['source_limit' => 20, 'source_id' => $invalidId]); }
+    try { new \TinyCat\Core\Modules\ScheduledTask('invalid-default', $runner, options: ['batch' => $invalidDefault]); }
     catch (InvalidArgumentException) { $rejected = true; }
-    $assert($rejected, 'Invalid Blog source selectors cannot expand into a batch.');
+    $assert($rejected, 'Noninteger defaults fail at registration, before invoking a task.');
 }
+
 foreach (['all', str_repeat('a', 41)] as $invalidTask) {
     $rejected = false;
     try { new \TinyCat\Core\Modules\ScheduledTask($invalidTask, $runner); }
@@ -295,7 +302,7 @@ try {
     $presentation = \TinyCat\Core\Tasks\Presentation::tasks();
     $assert(array_keys($presentation) === ['fixture.import'] && $presentation['fixture.import']['icon'] === 'rss' && $presentation['fixture.import']['title'] === ['t' => 'cron.task'], 'Presentation follows an arbitrary registered task instead of a fixed task list.');
     $assert(\TinyCat\Core\Tasks\Presentation::options()['fixture.import:batch']['label'] === ['t' => 'cron.options.bot_limit'], 'Parameter labels are scoped to the task that registered them.');
-    $customHtml = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-card', ['task' => ['name' => 'fixture.import', 'options' => ['batch' => 7], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
+    $customHtml = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => ['batch' => 7], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
     $assert(str_contains($customHtml, '#rss') && str_contains($customHtml, \TinyCat\Support\Localization::t('cron.task')), 'Initial HTML uses the registered icon and translated title.');
     $clientDefinitions = \TinyCat\Support\ClientAssets::withBuildCache(static fn (): array => \TinyCat\Support\ClientAssets::definitions('/admin/cron/list'));
     $encoded = json_encode($clientDefinitions, JSON_THROW_ON_ERROR);
@@ -303,7 +310,7 @@ try {
     $assert($callbackCalls === 0 && $database->prepared === $presentationQueries, 'Building task presentation performs no SQL and invokes no runner, normalizer or detail callback.');
     \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture.owner' => new \TinyCat\Core\Modules\Contributions(componentLookups: $lookups)]));
     $assert(\TinyCat\Core\Tasks\Presentation::tasks() === [], 'Removing a task registration removes its presentation metadata.');
-    $historical = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-card', ['task' => ['name' => 'fixture.import', 'options' => [], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
+    $historical = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => [], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
     $assert(str_contains($historical, '#clock') && str_contains($historical, 'fixture.import'), 'Unknown historical tasks retain a safe generic icon and literal identifier.');
 } finally { \TinyCat\Core\Modules\Registrations::configure($originalRegistrations); }
 

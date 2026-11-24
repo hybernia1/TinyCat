@@ -1,7 +1,11 @@
 [
   {
     "routes": [
-      "public"
+      "/",
+      "/social",
+      "/status",
+      "/author",
+      "/tag"
     ],
     "components": [
       "users/following-profile",
@@ -10,7 +14,6 @@
       "users/follow-label"
     ],
     "styles": [
-      "App/Modules/Social/assets/users/styles/profile-navigation.css",
       "App/Modules/Social/assets/users/styles/profile-avatar.css",
       "App/Modules/Social/assets/users/styles/profile.css",
       "App/Modules/Social/assets/users/styles/profile-details.css",
@@ -31,24 +34,22 @@
   },
   {
     "routes": [
-      "public"
+      "/",
+      "/social",
+      "/status",
+      "/author",
+      "/tag",
+      "/search/all"
     ],
     "components": [
+      "search/posts",
       "status/card",
-      "status/thread",
-      "status/composer-body",
-      "publishing/editor",
       "status/feed-more",
-      "status/dialog-form",
-      "status/report-fields",
-      "status/edit-fields",
-      "status/comment-edit-fields",
-      "status/thread-dialog",
-      "status/embed-content",
       "status/feed-empty"
     ],
     "entries": [
-      "App/Modules/Social/assets/status/index.js"
+      "App/Modules/Social/assets/status/index.js",
+      "App/Modules/Social/assets/status/comment-pagination.js"
     ],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-email-notice.css",
@@ -84,6 +85,8 @@
       "account.translation_same",
       "account.translation_continue",
       "account.translation_failed",
+      "account.status_more_comments",
+      "account.status_more_replies",
       "account.status_comment_history",
       "account.status_comment_placeholder",
       "account.status_edit",
@@ -131,13 +134,12 @@
       "status_created": "account.messages.status_created"
     },
     "standalone": [
-      "assets/embed.css",
-      "assets/embed-frame.js",
-      "assets/embed.js"
+      "App/Modules/Social/assets/embed/embed.css",
+      "App/Modules/Social/assets/embed/embed-frame.js",
+      "App/Modules/Social/assets/embed/embed.js"
     ],
     "uses": [
       "publishing.presentation",
-      "publishing.editor",
       "publishing.discussion-base",
       "ui.form-constraints"
     ]
@@ -147,10 +149,14 @@
       "/admin/bots"
     ],
     "components": [
-      "status/composer-body"
+      "status/composer-body",
+      "status/edit-fields",
+      "status/dialog-form"
     ],
     "entries": [
-      "App/Modules/Social/assets/status/index.js"
+      "App/Modules/Social/assets/status/index.js",
+      "App/Modules/Social/assets/content/editor-entry.js",
+      "App/Modules/Social/assets/status/dialog-controller.js"
     ],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-editing.css"
@@ -232,7 +238,7 @@
       "status/thread"
     ],
     "entries": [
-      "assets/ui/content/media-preview.js"
+      "App/Modules/Social/assets/content/media-preview.js"
     ],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-header.css",
@@ -302,9 +308,9 @@
       "status_created": "account.messages.status_created"
     },
     "standalone": [
-      "assets/embed.css",
-      "assets/embed-frame.js",
-      "assets/embed.js"
+      "App/Modules/Social/assets/embed/embed.css",
+      "App/Modules/Social/assets/embed/embed-frame.js",
+      "App/Modules/Social/assets/embed/embed.js"
     ],
     "uses": [
       "publishing.media"
@@ -322,11 +328,9 @@
       "bots/source-preview",
       "bots/posts",
       "bots/post-filter-form",
-      "bots/stat",
       "bots/runs-list",
       "bots/run-filter-form",
       "bots/workspace",
-      "bots/workspace-account",
       "bots/workspace-lists",
       "bots/workspace-form",
       "bots/workspace-retry",
@@ -491,44 +495,11 @@
   },
   {
     "routes": [
-      "public"
-    ],
-    "components": [
-      "search/page",
-      "ui/notice"
-    ],
-    "entries": [],
-    "styles": [],
-    "translations": [
-      "auth.login_title",
-      "common.confirm",
-      "moderation.messages.action_limited",
-      "notifications.load_more",
-      "public.search_captcha_required",
-      "public.search_captcha_title",
-      "public.search_all",
-      "public.search_min",
-      "public.search_content",
-      "public.search_empty",
-      "public.search_length",
-      "public.search_tag_posts.few",
-      "public.search_tag_posts.many",
-      "public.search_tag_posts.one",
-      "public.search_tag_posts.other",
-      "public.search_tags",
-      "public.search_title",
-      "public.search_title_query",
-      "public.search_users"
-    ],
-    "messages": {
-      "action_limited": "moderation.messages.action_limited",
-      "captcha_required": "public.search_captcha_required",
-      "search_search_captcha_unlocked": "public.search_captcha_unlocked"
-    }
-  },
-  {
-    "routes": [
-      "public"
+      "/",
+      "/social",
+      "/status",
+      "/author",
+      "/tag"
     ],
     "components": [
       "site/sidebar",
@@ -563,5 +534,201 @@
     "messages": {
       "url_blocker_saved": "moderation.messages.url_blocker_saved"
     }
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [],
+    "translations": [],
+    "messages": {
+      "action_limited": "moderation.messages.action_limited",
+      "captcha_required": "public.search_captcha_required",
+      "search_search_captcha_unlocked": "public.search_captcha_unlocked"
+    }
+  },
+  {
+    "routes": [],
+    "entries": [
+      "App/Modules/Social/assets/content/presentation.js"
+    ],
+    "components": [
+      "publishing/segments",
+      "publishing/link",
+      "publishing/attached-image"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/content/styles/status-text.css",
+      "App/Modules/Social/assets/content/styles/status-content.css",
+      "App/Modules/Social/assets/content/styles/mobile.css",
+      "App/Modules/Social/assets/content/styles/hashtags.css"
+    ],
+    "translations": [
+      "account.status_counter",
+      "account.status_image_add",
+      "account.status_image_remove",
+      "account.translation_continue",
+      "account.translation_failed",
+      "account.translation_hide",
+      "account.translation_machine",
+      "account.translation_preparing",
+      "account.translation_same",
+      "account.translation_translate",
+      "account.translation_unavailable",
+      "public.status_image_alt",
+      "public.status_image_alt_empty",
+      "account.messages.status_image_invalid"
+    ],
+    "id": "publishing.presentation"
+  },
+  {
+    "routes": [],
+    "entries": [
+      "App/Modules/Social/assets/content/editor-entry.js"
+    ],
+    "components": [
+      "publishing/editor",
+      "publishing/image-field"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/content/styles/status-editing.css",
+      "App/Modules/Social/assets/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.status_counter",
+      "account.status_image_add",
+      "account.status_image_remove",
+      "public.status_image_alt",
+      "public.status_image_alt_empty",
+      "account.status_body",
+      "account.messages.status_image_invalid"
+    ],
+    "id": "publishing.editor"
+  },
+  {
+    "id": "publishing.media",
+    "routes": [],
+    "entries": [
+      "App/Modules/Social/assets/content/media-preview.js"
+    ],
+    "components": [
+      "publishing/link",
+      "publishing/attached-image"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/content/styles/status-content.css",
+      "App/Modules/Social/assets/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.messages.status_image_invalid"
+    ]
+  },
+  {
+    "id": "publishing.discussion-base",
+    "routes": [],
+    "uses": [
+      "publishing.presentation"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/content/comments.js"
+    ],
+    "components": [
+      "publishing/comment",
+      "publishing/comment-form",
+      "publishing/like",
+      "publishing/comment-history",
+      "publishing/comment-replies"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/content/styles/discussion-content.css",
+      "App/Modules/Social/assets/content/styles/discussion-editing.css",
+      "App/Modules/Social/assets/content/styles/discussion-mobile.css"
+    ],
+    "translations": [
+      "account.status_comment",
+      "account.status_comment_placeholder",
+      "account.status_comments",
+      "account.status_like",
+      "account.status_like_for",
+      "account.status_reply",
+      "account.status_reply_placeholder",
+      "account.status_unlike_for",
+      "common.confirm_action",
+      "common.delete",
+      "common.edit",
+      "common.leave",
+      "common.stay",
+      "common.unsaved_message",
+      "common.unsaved_title",
+      "account.status_comment_history"
+    ]
+  },
+  {
+    "id": "publishing.discussion",
+    "routes": [],
+    "uses": [
+      "publishing.discussion-base"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/content/discussion.js"
+    ],
+    "components": [
+      "publishing/discussion"
+    ],
+    "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "/privacy",
+      "/access/privacy"
+    ],
+    "uses": [
+      "ui.tables"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "/",
+      "/social",
+      "/status",
+      "/author",
+      "/tag",
+      "/search/all"
+    ],
+    "defer": {
+      "resources": [
+        "/api/statuses",
+        "/api/moderation/report-options"
+      ],
+      "selectors": [
+        "[data-status-editor]"
+      ]
+    },
+    "entries": [
+      "App/Modules/Social/assets/status/dialog-controller.js"
+    ],
+    "components": [
+      "status/thread",
+      "status/composer-body",
+      "publishing/editor",
+      "status/dialog-form",
+      "status/report-fields",
+      "status/edit-fields",
+      "status/comment-edit-fields",
+      "status/thread-dialog",
+      "status/embed-content"
+    ],
+    "styles": [],
+    "translations": [],
+    "uses": [
+      "publishing.editor"
+    ]
   }
 ]

@@ -4,6 +4,218 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
+  if (mode === 'auth-switch') {
+    const reads = [], opener = T.dom.element('button',{type:'button'},'Login'), confirm = T.dialog.confirm;
+    document.body.append(opener);
+    opener.dataset.modalOpen = 'auth-modal'; opener.dataset.modalUrl = '/api/users/authentication?mode=login&next=%2Fsocial';
+    T.api.request = async url => {
+      const address = new URL(url,location.href), mode = address.searchParams.get('mode');
+      check(address.pathname === '/api/users/authentication', 'Authentication switches only read their authorized resource');
+      reads.push(mode);
+      const other = mode === 'login' ? 'register' : 'login';
+      return {data:{mode,next:'/social',registration_enabled:true,options:{},captcha:{enabled:false},switch_url:'/'+other,switch_modal_url:'/api/users/authentication?mode='+other+'&next=%2Fsocial'}};
+    };
+    T.lifecycle.start(); opener.focus(); opener.click();
+    await wait(() => !!T.dialog.current(), 'Login is created on demand');
+    let modal = T.dialog.current();
+    check(!modal.querySelector('[data-modal-resource-refresh]') && await T.dialog.refresh(modal)===null, 'Login explicitly omits resource refresh');
+    const username = modal.querySelector('[name="username"]'); username.value='PreservedDraft'; username.dispatchEvent(new Event('input',{bubbles:true}));
+    T.forms.confirmWith(async () => false);
+    modal.querySelector('[data-modal-open="auth-modal"]').click(); await pause();
+    check(reads.join(',')==='login' && username.value==='PreservedDraft' && modal.isConnected, 'Declining a switch preserves the draft and avoids a resource read');
+    T.forms.confirmWith(async () => true);
+    modal.querySelector('[data-modal-open="auth-modal"]').click();
+    await wait(() => reads.includes('register') && T.dialog.current()!==modal, 'Switch requests register mode instead of refreshing login');
+    modal = T.dialog.current();
+    check(!modal.querySelector('[data-modal-resource-refresh]') && await T.dialog.refresh(modal)===null, 'Registration explicitly omits resource refresh');
+    check(!!modal.querySelector('[name="email"]') && location.hash.includes('mode=register') && modal.contains(document.activeElement), 'Registration fields, focus and history follow the selected resource');
+    modal.querySelector('[data-modal-open="auth-modal"]').click();
+    await wait(() => reads.join(',')==='login,register,login' && T.dialog.current()!==modal, 'Registration switches back through the same loader');
+    T.forms.confirmWith(confirm);
+    T.dialog.close(T.dialog.current(),{history:false});
+    check(document.activeElement===opener, 'Closing returns focus to the original opener');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
+  if (mode === 'javascript-audit') {
+    T.lifecycle.start();
+    const root=document.createElement('div');root.innerHTML='<button tabindex="-1">Inactive</button><button id="audit-active">Active</button><fieldset disabled><button>Disabled</button></fieldset><div inert><button>Inert</button></div>';
+    document.body.append(root);check(T.dom.focusables(root).length===1&&T.dom.focusables(root)[0].id==='audit-active','Traversal excludes negative tabindex, disabled fieldsets and inert ancestors');root.remove();
+    const editing=document.createElement('div');editing.contentEditable='plaintext-only';document.body.append(editing);check(T.dom.focusables(document.body).includes(editing),'Editable hosts remain tabbable without an explicit tabindex');editing.tabIndex=-1;check(!T.dom.focusables(document.body).includes(editing),'An explicit negative tabindex still excludes an editable host');editing.remove();
+    const form=document.createElement('form');form.id='audit-form';form.action='/api/local-audit';form.method='post';
+    for(let i=0;i<250;i++){const field=document.createElement('input');field.name='value'+i;field.dataset.maxBytes='100';field.value='sample';form.append(field);}
+    const submit=document.createElement('button');submit.type='submit';submit.name='intent';submit.value='publish';submit.setAttribute('form',form.id);document.body.append(form,submit);
+    const encode=TextEncoder.prototype.encode;let encoded=0;TextEncoder.prototype.encode=function(...args){encoded++;return encode.apply(this,args);};
+    try {
+      form.elements[0].dispatchEvent(new Event('input',{bubbles:true}));check(encoded===1,'One input validates only the changed field');
+      const proxy=document.createElement('div');proxy.dataset.validationFor='value0';form.append(proxy);encoded=0;proxy.dispatchEvent(new Event('input',{bubbles:true}));check(encoded===1,'Editor proxy validates its canonical source');
+      encoded=0;T.forms.syncConstraints(form);check(encoded===250,'Full-form validation remains available before submission');
+    } finally {TextEncoder.prototype.encode=encode;}
+    const request=T.api.request;let sent;
+    try {
+      T.api.request=async(url,options)=>{check(new URL(url,location.href).pathname==='/api/local-audit','Fixture request stays intercepted');sent=options.body;return {data:{}};};
+      await new Promise((resolve,reject)=>{T.forms.bind(form,{apply:resolve,error:reject});form.requestSubmit(submit);});
+      check(sent.get('intent')==='publish'&&sent.getAll('intent').length===1,'Associated submitter is serialized once by bound forms');
+    } finally {T.forms.dispose(form);form.remove();submit.remove();T.api.request=request;}
+  } else if (mode === 'code-copy') {
+    const value='  echo "žluťoučký <b>& test";\n\tsecond line\n';
+    const form=T.ui.form('/api/copy-fixture','POST'),pre=document.createElement('pre'),code=document.createElement('code'),inline=document.createElement('code'),editor=document.createElement('div'),link=document.createElement('a');
+    code.textContent=value;pre.append(code);inline.textContent='inline <value>';
+    editor.contentEditable='true';editor.innerHTML='<code>draft</code>';link.href='#';link.innerHTML='<code>linked</code>';
+    const draft=T.dom.element('input',{class:'input',name:'draft',value:'clean'});
+    form.append(pre,inline,editor,link,draft,T.ui.button('common.save',{type:'submit'}));document.body.append(form);
+    const writes=[];Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{writes.push(text);}}});
+    T.lifecycle.start();T.lifecycle.hydrate(form);T.lifecycle.hydrate(form);
+    const button=pre.querySelector('[data-copy-code]');
+    check(button&&pre.querySelectorAll('[data-copy-code]').length===1&&form.querySelectorAll('[data-copy-code]').length===2,'Hydration adds exactly one copy action per readonly code');
+    check(!editor.querySelector('button')&&!link.querySelector('button'),'Editable and linked code remain untouched');
+    check(code.textContent===value&&pre.textContent===value,'Copy controls never enter the code text');
+    let submits=0;form.addEventListener('submit',event=>{event.preventDefault();submits++;});
+    button.click();await wait(()=>writes.length===1,'Clipboard API receives a write');
+    check(writes[0]===value&&submits===0,'Copy preserves Unicode, markup literals and exact whitespace without submitting');
+    const updated=document.createElement('code');updated.textContent='new\ncontent';code.replaceWith(updated);T.lifecycle.hydrate(pre);
+    check(pre.querySelectorAll('[data-copy-code]').length===1,'Replacing code retargets its existing control');
+    button.click();await wait(()=>writes.length===2,'Retargeted control writes');check(writes[1]===updated.textContent,'Copy reads current content instead of a cached value');
+    const dialog=T.ui.adminDialog('code-copy-fixture','common.edit',form,false);document.body.append(dialog);T.dialog.open(dialog);T.lifecycle.hydrate(dialog);
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('denied');}}});
+    const previousCommand=document.execCommand;let fallbackText='',inside=false;
+    document.execCommand=name=>{fallbackText=document.activeElement.value;inside=dialog.contains(document.activeElement);return name==='copy';};
+    button.focus();button.click();await wait(()=>fallbackText.length>0,'Denied Clipboard API falls back to local selection');
+    check(fallbackText===updated.textContent&&inside&&document.activeElement===button&&!dialog.querySelector('textarea.sr-only'),'Fallback stays in the dialog, cleans up and restores focus');
+    check(!T.forms.dirty(dialog).length&&submits===0,'Copy does not dirty or submit the editor');
+    draft.value='unsaved';draft.dispatchEvent(new Event('input',{bubbles:true}));
+    document.execCommand=()=>false;document.querySelector('.toast-stack')?.remove();button.click();await wait(()=>!!document.querySelector('.toast-danger'),'Failed copying is reported as an error');
+    check(!button.hasAttribute('aria-busy')&&document.activeElement===button,'Failure restores action state and focus');
+    check(draft.value==='unsaved'&&T.forms.dirty(dialog).length===1,'Copy failure preserves an existing unsaved draft');
+    let rejectPending,unexpectedFallback=false;
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>new Promise((_resolve,reject)=>{rejectPending=reject;})}});
+    document.execCommand=()=>{unexpectedFallback=true;return true;};button.click();await wait(()=>!!rejectPending,'Clipboard request can remain pending');
+    T.dialog.close(dialog,{history:false});const focusAfterClose=document.activeElement;rejectPending(Error('denied'));await pause();
+    check(!unexpectedFallback&&document.activeElement===focusAfterClose,'Disposing the source prevents late fallback and focus stealing');
+    document.execCommand=previousCommand;
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,checks});return;
+  }
+  if (mode === 'scheduler-help') {
+    T.lifecycle.start();
+    const input=document.querySelector('[value="/api/scheduler/triggers/fixture"]'),details=input.closest('details'),summary=details.querySelector('summary');
+    check(!details.open&&!details.querySelector('.disclosure-body > [data-help]'),'Task details contain no floating help rows');
+    const titleHint=summary.querySelector('strong [data-help]'),scheduleHint=summary.querySelector('small [data-help]');
+    check(titleHint&&scheduleHint,'Hints are attached to the task and cadence captions');
+    titleHint.click();check(titleHint.getAttribute('aria-expanded')==='true'&&!details.open,'Clicking task help does not toggle its disclosure');
+    titleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+    scheduleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+    check(scheduleHint.getAttribute('aria-expanded')==='true'&&!details.open,'Keyboard help preserves the disclosure state');
+    scheduleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+    const queryHint=input.closest('label').querySelector('.label [data-help]');
+    check(queryHint&&input.getAttribute('aria-describedby').includes(queryHint.querySelector('[data-help-text]').id),'URL help describes its input beside the field caption');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,checks});return;
+  }
+  if (mode === 'field-types') {
+    const form=T.ui.form('/api/fields','POST');document.body.append(form);
+    const types={search:'search',password:'lock',email:'mail',url:'link',tel:'phone',date:'calendar',month:'calendar',week:'calendar',time:'clock','datetime-local':'calendar',text:null,number:null,checkbox:null};
+    for(const [type,icon] of Object.entries(types)) {
+      form.append(T.components.render('ui/field',{label:type,attributes:{class:type==='checkbox'?null:'input',name:type,type}}));
+      const input=form.elements.namedItem(type),field=input.closest('.field'),svg=field.querySelector('.input-icon svg');
+      check(icon ? svg&&svg.querySelector('use').getAttribute('href').endsWith('#'+icon) : !svg,'Semantic icon for '+type);
+      check(input.labels.length===1&&input.labels[0]===field,'Label association retained for '+type);
+    }
+    const input=form.elements.namedItem('email');input.value='fixture@example.test';
+    T.forms.applyErrors(form,{email:['Invalid address']});input.focus();
+    check(getComputedStyle(input).backgroundImage.includes('linear-gradient')&&getComputedStyle(input).boxShadow!=='none','Invalid input has underline and danger focus');
+    check(input.getAttribute('aria-describedby').includes(input.dataset.tinycatFieldErrorId),'Error remains described');
+    T.forms.clearErrors(form);
+    check(getComputedStyle(input).backgroundImage==='none'&&!input.hasAttribute('aria-invalid'),'Clearing validation restores normal input');
+    check(new FormData(form).get('email')==='fixture@example.test','Icon preserves submitted values');
+    const proxy=document.createElement('div');proxy.className='status-editor-input';proxy.contentEditable='true';proxy.dataset.validationFor='body';proxy.tabIndex=0;form.append(proxy);proxy.setAttribute('aria-invalid','true');proxy.focus();
+    check(getComputedStyle(proxy).backgroundImage.includes('linear-gradient')&&getComputedStyle(proxy).boxShadow!=='none','Rich text uses the same error treatment');
+    for(const density of ['regular','compact']) {
+      document.documentElement.dataset.uiDensity=density;document.documentElement.style.setProperty('--ui-scale','1');const initial=input.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--ui-scale','1.5');
+      check(input.getBoundingClientRect().height>initial*1.35,'Field scales in '+density+' profile');
+      check(document.documentElement.scrollWidth<=innerWidth,'No overflow in '+density+' profile: '+JSON.stringify([...form.querySelectorAll('*')].filter(e=>e.getBoundingClientRect().right>innerWidth).map(e=>[e.tagName,e.type,e.className,e.getBoundingClientRect().width])));
+    }
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,checks});return;
+  }
+  if (mode === 'help-info' || mode === 'help-info-cs') {
+    document.documentElement.dataset.uiDensity='compact';
+    const requests=[];
+    window.fetch=async(url,options)=>{
+      requests.push(options.method);
+      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:window.settingsSchema,meta:{}}),{headers:{'Content-Type':'application/json'}});
+    };
+    T.lifecycle.start();
+    const settings=await T.settings.open('site');
+    const siteLabel=settings.querySelector('[name="settings[site.name]"]').closest('.field').querySelector('.label').textContent.trim();
+    check(siteLabel === (mode === 'help-info-cs' ? 'N\u00e1zev webu' : 'Site name'), 'Compiled settings metadata translates at render time');
+    const smtpLabel=settings.querySelector('[name="settings[email.smtp][password]"]').closest('.field').querySelector('.label').textContent.trim();
+    check(smtpLabel === T.i18n.t('settings.fields.smtp_password'), 'Nested SMTP metadata uses the current client locale');
+    const hints=[...settings.querySelectorAll('[data-help]')];
+    check(hints.length>0&&hints.every(hint=>hint.closest('.label')), 'Actual settings bundle places hints beside field labels');
+    check(!settings.querySelector('.field > span.help'), 'Settings no longer render blocks of help below controls');
+    const text='Literal <img src=x> '+('Long explanatory text with details. '.repeat(160));
+    const form=T.ui.form('/api/help-fixture','POST');
+    form.append(T.components.render('ui/field',{label:'Flag',help:text,help_id:'flag-help',attributes:{class:'input',name:'flag',type:'checkbox','aria-describedby':'kept-hint'}}));
+    const kept=T.dom.element('span',{id:'kept-hint',hidden:true},'Existing description');form.append(kept,T.ui.button('common.save',{type:'submit'}));
+    const dialog=T.ui.adminDialog('help-info-fixture','common.edit',form,false);document.body.append(dialog);T.dialog.open(dialog);
+    T.lifecycle.hydrate(dialog);T.lifecycle.hydrate(dialog);
+    const hint=dialog.querySelector('[data-help]'), control=form.elements.namedItem('flag');
+    check(control.getAttribute('aria-label')==='Flag'&&control.getAttribute('aria-describedby').split(/\s+/).filter(id=>id==='flag-help').length===1&&control.getAttribute('aria-describedby').includes('kept-hint'), 'Hints preserve a clean field name and stable screen-reader descriptions across hydration');
+    hint.click();
+    let tip=document.getElementById(hint.getAttribute('aria-controls'));
+    check(hint.getAttribute('aria-expanded')==='true'&&!tip.hidden&&tip.textContent===text&&!tip.querySelector('img'), 'Help opens as literal escaped text through the shared tooltip');
+    check(!control.checked&&requests.every(method=>method==='GET'), 'Opening help neither toggles its checkbox nor submits a form');
+    hint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+    check(tip.hidden&&dialog.isConnected&&dialog.dataset.open==='true', 'Escape closes help without closing its modal');
+    hint.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+    check(!tip.hidden,'Enter opens help');
+    hint.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));
+    check(tip.hidden,'Space closes help without submitting');
+    function tap() { hint.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true,cancelable:true}));hint.dispatchEvent(new MouseEvent('click',{detail:1,bubbles:true,cancelable:true})); }
+    tap();check(!tip.hidden&&!control.checked,'Touch opens help without label activation');
+    tip.scrollTop=30;tip.dispatchEvent(new Event('scroll'));
+    check(!tip.hidden&&tip.scrollHeight>tip.clientHeight&&tip.getBoundingClientRect().right<=innerWidth&&tip.getBoundingClientRect().bottom<=innerHeight,'Long help remains readable and scrolls locally within the viewport');
+    tap();check(tip.hidden&&!control.checked,'A second touch closes help');
+    T.forms.applyErrors(form,{flag:['Fixture error']});T.forms.clearErrors(form);
+    check(control.getAttribute('aria-describedby').includes('flag-help')&&control.getAttribute('aria-describedby').includes('kept-hint'),'Validation feedback preserves help and other descriptions');
+    hint.click();T.dialog.close(dialog,{history:false});
+    check(!document.querySelector('.tooltip:not([hidden])')&&settings.isConnected,'Disposing a nested editor removes its help without disturbing its parent');
+    T.dialog.close(settings,{history:false});
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks});return;
+  }
+  if (mode === 'queue-edit') {
+    document.body.classList.add('admin-shell-page');
+    document.documentElement.dataset.uiDensity = 'compact';
+    const data = {update_url:'/api/bots/accounts/2/posts/7',suggest_url:'/api/bots/accounts/2/posts/7/suggestions',item:{id:7,editable_body:'Scheduled post draft',author:{id:2,username:'bot'},capabilities:{edit:true}},constraints:window.socialConstraints,options:{images_enabled:true}};
+    const dialog = T.modules.modal(new URL('/api/bots/accounts/2/posts/7/management',location.href),{data},'queue-edit-fixture');
+    check(dialog && dialog.querySelector('form'), 'The delivered queue bundle opens the bot post editor');
+    document.body.append(dialog); T.lifecycle.start(); T.dialog.open(dialog);
+    const form = dialog.querySelector('form'), body = form.elements.namedItem('body');
+    check(body.value === data.item.editable_body && form.getAttribute('action') === '/api/bots/accounts/2/posts/7', 'Queue editing retains the existing draft and canonical write endpoint');
+      check(dialog.querySelector('[data-status-editor-source]').dataset.statusSuggestUrl === data.suggest_url, 'Queue editing uses internal suggestions independently of the public website');
+    check(T.api.csrfToken() === 'test' && T.status.method(form,'update') === 'PATCH', 'Queue editing retains CSRF and its update method');
+    check(dialog.querySelector('[data-status-editor-input]') && dialog.querySelector('input[type="file"]'), 'The delivered editor contains its rich text and image controls');
+    const editor = dialog.querySelector('[data-status-editor-input]'), button = dialog.querySelector('button[type="submit"]'), panel = dialog.querySelector('.modal-panel'), modalBody = dialog.querySelector('.modal-body');
+    const before = [editor.getBoundingClientRect().height,button.getBoundingClientRect().height,parseFloat(getComputedStyle(modalBody).paddingTop)];
+    for (const scale of ['1.25','1.5','2']) {
+      document.documentElement.style.setProperty('--ui-scale',scale);
+      const after = [editor.getBoundingClientRect().height,button.getBoundingClientRect().height,parseFloat(getComputedStyle(modalBody).paddingTop)];
+      check(after.every((size,index)=>size>before[index]), 'One UI scale value enlarges the editor, action buttons and modal spacing together: '+JSON.stringify({scale,before,after,font:getComputedStyle(document.documentElement).fontSize}));
+      check(panel.getBoundingClientRect().width<=innerWidth&&panel.getBoundingClientRect().height<=innerHeight, 'An enlarged editor stays within the viewport: '+scale);
+      check(button.getBoundingClientRect().right<=panel.getBoundingClientRect().right+1&&button.getBoundingClientRect().bottom<=innerHeight+1, 'Enlarged save controls remain reachable: '+scale);
+      check(body.value===data.item.editable_body, 'Changing the UI scale preserves the editor draft: '+scale);
+    }
+    document.documentElement.style.removeProperty('--ui-scale');
+    const card = document.createElement('div'); card.className='status-card'; card.dataset.statusId='7'; document.body.append(card);
+    const originalCard = T.status.card, hydrated = [];
+    T.status.card = () => { const node = document.createElement('div'); node.className='status-card'; node.dataset.statusId='7'; return node; };
+    T.lifecycle.register('test-bot-mutation-hydration', {hydrate: root => { hydrated.push(root); }});
+    window.fetch = async () => new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:{action:'update',item:{id:7}},meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
+    button.click(); await wait(() => !card.isConnected && !form.dataset.apiBusy, 'Bot post edit applies its mutation');
+    const replacement = document.querySelector('.status-card[data-status-id="7"]');
+    check(hydrated.length === 1 && hydrated[0] === replacement, 'Bot post edit hydrates only its replacement once through the shared binder: '+JSON.stringify(hydrated.map(node=>node.className || node.nodeName)));
+    T.status.card = originalCard; replacement.remove();
+    if (dialog.isConnected) T.dialog.close(dialog,{history:false});
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
   if (mode === 'health-shell') {
     check(!T.adminDefinitions, 'The actual health bundle has no scheduler list declaration');
     const toggle = T.dom.element('button',{'data-admin-nav-toggle':'',type:'button'});
@@ -36,7 +248,10 @@
     return;
   }
   if (mode === 'social-forms') {
-    const follow=T.dom.element('form',{method:'post',action:'/api/users/2/followers/me','data-follow-form':'','data-author-id':'2'});
+    check(!T.publishing.controllers.editor && !T.accounts.avatarUpload, 'The public bundle initially excludes editor implementations');
+    await T.deferred.resource(new URL('/api/moderation/report-options', location.href));
+    check(T.publishing.controllers.editor && T.accounts.avatarUpload, 'The native browser loads editor implementations on demand');
+    const follow=T.dom.element('form',{method:'post',action:'/api/profiles/2/followers/me','data-follow-form':'','data-author-id':'2'});
     follow.append(T.ui.hidden('action','follow'),T.ui.button('public.follow',{type:'submit'})); document.body.append(follow);
     const react=T.dom.element('form',{method:'post',action:'/api/statuses/7/likes/me','data-status-form':'','data-status-id':'7'});
     const like=T.ui.button('common.save',{type:'submit','data-status-like-button':'','aria-pressed':'false'});
@@ -49,7 +264,7 @@
       const data=isFollow?{author_id:2,following:method==='PUT',followers_count:method==='PUT'?1:0}:{action:'react',status:{id:7,liked:method==='PUT',likes_count:method==='PUT'?1:0}};
       return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data,meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
     };
-    T.lifecycle.start(); follow.querySelector('button').click(); await wait(()=>!!release,'Social forms reach the shared transport');
+    T.lifecycle.start(); T.lifecycle.hydrate(document); follow.querySelector('button').click(); await wait(()=>!!release,'Social forms reach the shared transport');
     follow.requestSubmit(); await pause(); check(calls.length===1,'A pending follow cannot send a second mutation'); release();
     await wait(()=>follow.elements.namedItem('action').value==='unfollow'&&!follow.dataset.apiBusy,'Following updates the domain state and releases the shared lock');
     follow.querySelector('button').click(); await wait(()=>calls.length===2&&!follow.dataset.apiBusy,'Unfollowing uses the current state after the first result');
@@ -64,6 +279,9 @@
     const constraints = window.socialConstraints, form = T.ui.form('/api/statuses', 'POST');
     form.append(T.components.render('status/composer-body', {constraints,viewer:{id:1},value:''}));
     const commentForm = T.components.render('status/comment-form', {constraints,content_id:7,parent_id:0,viewer:{id:1}});
+    check(new FormData(commentForm).get('parent_id') === '0', 'Root comments submit numeric zero through native FormData');
+    const replyForm = T.components.render('status/comment-form', {constraints,content_id:7,parent_id:20,viewer:{id:1}});
+    check(new FormData(replyForm).get('parent_id') === '20', 'Replies retain their parent ID through native FormData');
     document.body.append(form, commentForm); T.lifecycle.start(); T.publishing.controllers.editor.hydrate(document);
     for (const [host,name] of [[form,'body'],[commentForm,'comment']]) {
       const source=host.elements.namedItem(name), editor=source.closest('[data-status-editor]').querySelector('[data-status-editor-input]');
@@ -73,6 +291,11 @@
       editor.textContent+='\u{1F642}'; editor.dispatchEvent(new Event('input',{bubbles:true}));
       check(!T.forms.validate(host)&&Array.from(source.value).length===constraints[name].max_length+1,'Social '+name+' retains its overflowing draft and rejects it through the common validator');
     }
+    T.forms.clearErrors(commentForm);
+    const draft = commentForm.elements.namedItem('comment').value;
+    const summary = T.forms.applyErrors(commentForm, {parent_id:['The parent is unavailable.']});
+    check(summary.getBoundingClientRect().width >= commentForm.clientWidth - 1, 'A hidden-field error spans the complete comment form instead of its avatar column');
+    check(commentForm.elements.namedItem('comment').value === draft, 'A form-level comment error preserves the draft');
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
   if (mode === 'constraints') {
@@ -117,7 +340,7 @@
     text.value = 'synced'; checkbox.checked = false; T.filters.defaults(defaults, ['name']); defaults.reset();
     check(text.value === 'synced' && checkbox.checked, 'Partial filter synchronization preserves unrelated reset defaults');
     T.filters.remove('fixture-filter-defaults');
-    const options = {username_pattern:'[A-Za-z][A-Za-z0-9_]+',password_max_length:1024,roles:['admin','user'],statuses:['active','ban']};
+    const options = {username_pattern:'[A-Za-z][A-Za-z0-9_]+',username_min_length:2,username_max_length:32,email_max_bytes:254,bio_max_length:500,password_min_bytes:8,password_max_length:1024,roles:['admin','user'],statuses:['active','ban']};
     const listing = {items:[],filters:{},options,roles:['admin','user'],statuses:['active','ban']};
     const reads = {};
     window.fetch = async (url, config) => {
@@ -133,12 +356,31 @@
     }});
     T.lifecycle.start();
     check(initBlocked && !document.querySelector('.modal'), 'Initialization cannot construct a hidden modal');
+    const install = T.components.render('installation/admin', {username_pattern:options.username_pattern,username_hint:'',password_min:options.password_min_bytes,password_max:options.password_max_length});
+    document.body.append(install); T.lifecycle.hydrate(install);
+    const installPassword = install.querySelector('[name="password"]');
+    installPassword.value='éééé'; T.forms.syncConstraints(installPassword);
+    check(installPassword.checkValidity() && !installPassword.hasAttribute('minlength'), 'Pre-database installer accepts the eight-byte Unicode password boundary');
+    installPassword.value='ééé'; T.forms.syncConstraints(installPassword);
+    check(!installPassword.checkValidity(), 'Pre-database installer rejects a password below the byte minimum');
+    T.lifecycle.dispose(install); install.remove();
+    const profileForm = T.components.render('users/account-form', {dialog_id:'identity-constraints',user:{id:2,bio:'',locale:'en',theme:'system'},languages:{en:'English'},options});
+    document.body.append(profileForm); T.lifecycle.hydrate(profileForm);
+    const bio = profileForm.elements.namedItem('bio'); bio.value = '😀'.repeat(options.bio_max_length);
+    T.forms.syncConstraints(bio); check(bio.checkValidity() && !bio.hasAttribute('maxlength'), 'Bio accepts the Unicode code point boundary without a UTF-16 limit');
+    bio.value += '😀'; T.forms.syncConstraints(bio);
+    check(!bio.checkValidity() && Array.from(bio.value).length === options.bio_max_length + 1, 'An overlong bio is rejected without truncating the draft');
+    T.lifecycle.dispose(profileForm); profileForm.remove();
     const list = T.dom.element('div',{id:'users-list'}); document.body.append(list);
     T.modules.result({dataset:{apiMethod:"GET"},getAttribute:name=>name==="href"?"/api/users":null},{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}},list);
     T.lifecycle.hydrate(list);
     check(!document.querySelector('.modal') && !Object.keys(reads).length, 'List hydration contains filters but no creation modal or resource read');
     const editor = await T.dialog.openResource('modal-users-creation','/api/users/creation');
     const username = editor.querySelector('[name="username"]'); username.value='UnsentAccount'; username.dispatchEvent(new Event('input',{bubbles:true}));
+    check(username.dataset.minLength === String(options.username_min_length) && username.dataset.maxLength === String(options.username_max_length) && !username.hasAttribute('maxlength'), 'Account creation derives Unicode username bounds from Identity.');
+    const pass = editor.querySelector('[name="password"]'); pass.value = 'éééé'; T.forms.syncConstraints(pass);
+    check(pass.checkValidity() && !pass.hasAttribute('minlength'), 'An eight-byte Unicode password passes the owner byte minimum.');
+    pass.value = 'ééé'; T.forms.syncConstraints(pass); check(!pass.checkValidity(), 'A seven-or-fewer-byte password fails the same minimum.'); pass.value = '';
     T.modules.result({dataset:{apiMethod:"GET"},getAttribute:name=>name==="href"?"/api/users":null},{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}},list); T.lifecycle.hydrate(list);
     check(document.getElementById('modal-users-creation') === editor && username.value === 'UnsentAccount', 'Refreshing the list preserves an open creation draft');
     const confirmation = T.dialog.confirm; T.forms.confirmWith(async () => false);
@@ -170,18 +412,17 @@
     check(!document.querySelector('.modal'), 'All resource dialogs are removed after closing');
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
-  if (mode === 'settings' || mode === 'settings-blog') {
-    if (mode === 'settings-blog') {
-      window.settingsSchema = {sections: window.blogSettings.sections};
-      document.body.dataset.settingsPresentation = JSON.stringify(window.blogSettings.presentation);
+  if (mode === 'settings' || mode === 'settings-module') {
+    if (mode === 'settings-module') {
+      window.settingsSchema = {sections: window.moduleSettings.sections};
     }
     const schema = window.settingsSchema || {sections:[
-      {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.footer_html',label:'Footer',type:'textarea',value:'Saved footer'}]},
+      {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.meta_description',label:'Description',type:'textarea',value:'Saved description'}]},
       {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',value:{host:'smtp.example.test',port:587}}]}
     ]};
     for (const section of schema.sections) for (const field of section.fields) {
       if (field.key === 'site.name') field.value = 'Current site';
-      if (field.key === 'site.footer_html') field.value = 'Saved footer';
+      if (field.key === 'site.meta_description') field.value = 'Saved description';
       if (field.key === 'email.smtp') field.value = {host:'smtp.example.test',port:587};
     }
     let reads=0, writes=0;
@@ -189,44 +430,62 @@
       const get = new URL(url).pathname === '/api/settings/editor';
       if (get) reads++; else writes++;
       if (!get) {
-        check(options.body.get('settings[email.smtp][host]') === 'smtp.example.test', 'Settings keep nested multipart field names');
-        check(options.body.get('settings[site.footer_html]') === 'Edited footer', 'Settings submit the textarea draft');
+        check(!options.body.has('settings[email.smtp][host]'), 'Saving Site excludes the Email draft');
+        check(options.body.get('settings[site.meta_description]') === 'Edited description', 'Settings submit the textarea draft');
       }
-      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:get ? schema : {saved:true,images:{}},meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
+      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:schema,meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
     };
     T.lifecycle.start();
     check(reads === 0 && !document.querySelector('#modal-settings-editor'), 'Initial hydration neither requests nor creates settings');
     const dialog = await T.settings.open('email');
     check(reads === 1 && dialog.dataset.modalDisposeOnClose === 'true', 'Settings are fetched only when opened and are disposable');
     check(!dialog.querySelector('[data-tab-panel="email"]').hidden && location.hash.includes('modal=settings/editor'), 'Requested section and canonical resource history are shared');
-    const form = dialog.querySelector('form'), footer = form.elements.namedItem('settings[site.footer_html]');
+    const control = name => [...dialog.querySelectorAll('form')].map(item => item.elements.namedItem(name)).find(Boolean), description = control('settings[site.meta_description]');
     for (const section of schema.sections) for (const spec of section.fields) {
       const suffix = spec.type === 'email_smtp' ? '[host]' : spec.type === 'email_templates' ? '[_present]' : '';
-      check(Boolean(form.elements.namedItem('settings['+spec.key+']'+suffix)), 'The editor retains the submitted field for '+spec.key);
+      check(Boolean(control('settings['+spec.key+']'+suffix)), 'The editor retains the submitted field for '+spec.key);
     }
     check(dialog.querySelectorAll('.image-preview-contain').length === 2 && dialog.querySelector('.grid-span-full'), 'Site images and full-width settings retain shared layout primitives');
     check([...dialog.querySelectorAll('.field > .label')].every(label => label.textContent.trim()), 'Every server field has a client-owned presentation label');
-    check(footer.value === 'Saved footer' && form.elements.namedItem('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
-    if (mode === 'settings-blog') {
-      check(form.checkValidity(), 'Unchanged Blog defaults pass native form validation');
-      for (const key of ['blog.blocked_urls','blog.links.utm.source','blog.links.utm.campaign']) {
-        const control = form.elements.namedItem('settings['+key+']');
-        check(control.value === '' && !control.required, 'Blog optional settings retain valid empty defaults: '+key);
+    check(description.value === 'Saved description' && control('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
+    if (mode === 'settings-module') {
+      check([...dialog.querySelectorAll('form')].every(item => item.checkValidity()), 'Unchanged Fixture defaults pass native form validation');
+      for (const key of ['fixture.blocked_urls','fixture.links.utm.source','fixture.links.utm.campaign']) {
+        const field = control('settings['+key+']');
+        check(field.value === '' && !field.required, 'Fixture optional settings retain valid empty defaults: '+key);
       }
-      check(form.elements.namedItem('settings[blog.links.utm.medium]').required, 'Blog UTM medium retains required native validation');
+      check(control('settings[fixture.links.utm.medium]').required, 'Fixture UTM medium retains required native validation');
     }
-    footer.value='Edited footer'; footer.dispatchEvent(new Event('input',{bubbles:true}));
-    check(T.forms.dirty(dialog).length === 1, 'Settings edits use the shared draft guard');
+    description.value='Edited description'; description.dispatchEvent(new Event('input',{bubbles:true}));
+    const emailDraft = control('settings[email.smtp][host]'); emailDraft.value='unsaved.example.test'; emailDraft.dispatchEvent(new Event('input',{bubbles:true}));
+    check(T.forms.dirty(dialog).length === 2, 'Settings sections use independent shared draft guards');
+    check(dialog.querySelectorAll('[data-tab-dirty]').length === 2, 'Every changed section has a dirty marker');
+    check(dialog.querySelector('[data-tab-select] option[value="email"]').textContent.endsWith(' *'), 'Mobile sections show the same dirty marker');
     const confirmation = T.dialog.confirm;
     T.forms.confirmWith(async () => false);
-    check(await T.dialog.requestClose(dialog,{history:false}) === false && dialog.isConnected && footer.value === 'Edited footer', 'Declining close preserves the complete settings draft');
+    check(await T.dialog.requestClose(dialog,{history:false}) === false && dialog.isConnected && description.value === 'Edited description', 'Declining close preserves the complete settings draft');
+    try { await T.dialog.refresh(dialog); } catch (error) { check(error.name === 'AbortError', 'Declining refresh cancels resource replacement'); }
+    check(reads === 1, 'A rejected refresh does not request data');
     T.forms.confirmWith(confirmation);
+    T.tabs.activate(dialog.querySelector('[data-tab="site"]'), false);
     dialog.querySelector('.modal-footer [type="submit"]').click();
-    await wait(() => writes === 1 && !T.forms.dirty(dialog).length, 'Saving settings uses shared AJAX and clears the saved draft');
-    T.dialog.close(dialog,{history:false});
+    await wait(() => writes === 1 && T.forms.dirty(dialog).length === 1, 'Saving clears only the submitted section draft');
+    check(emailDraft.value === 'unsaved.example.test', 'Saving Site preserves the Email draft');
+    check(!dialog.querySelector('[data-tab="site"] [data-tab-dirty]') && dialog.querySelector('[data-tab="email"] [data-tab-dirty]'), 'Saving clears only the saved section marker');
+    emailDraft.value='smtp.example.test'; emailDraft.dispatchEvent(new Event('input',{bubbles:true}));
+    check(!dialog.querySelector('[data-tab-dirty]') && !dialog.querySelector('[data-tab-select] option[value="email"]').textContent.endsWith(' *'), 'Restoring original values clears desktop and mobile markers');
+    check(control('settings[site.meta_description]').value === 'Saved description', 'Saved controls reconcile the canonical resource');
+    const currentHash = location.hash, entries = history.length;
+    const refreshed = await T.dialog.refresh(dialog);
+    check(reads === 2 && refreshed !== dialog && location.hash === currentHash && history.length === entries && !refreshed.querySelector('[data-tab-panel="site"]').hidden, 'Shared refresh retains tab and history without adding an entry');
+    check(refreshed.querySelectorAll('[data-modal-resource-refresh]').length === 1, 'Resource editor exposes one common refresh action');
+    T.tabs.activate(refreshed.querySelector('[data-tab="email"]'), false);
+    check(location.hash.includes('tab=email'), 'A refreshed editor retains live tab history binding');
+    T.dialog.close(refreshed);
+    await wait(() => !location.hash, 'Closing a refreshed editor consumes its original history entry');
     check(!document.querySelector('#modal-settings-editor'), 'Closing settings disposes the editor DOM');
     const reopened = await T.settings.open('site');
-    check(reads === 2 && reopened !== dialog, 'Reopening settings fetches current server data');
+    check(reads === 3 && reopened !== dialog, 'Reopening settings fetches current server data');
     T.dialog.close(reopened,{history:false});
     document.getElementById('validation-test-results').textContent = JSON.stringify({ok:true,mode,checks});
     return;

@@ -17,33 +17,13 @@ if (!defined('TINYCAT')) {
  */
 final class Minifier
 {
+    public const array ASSET_TYPES = ['css', 'js', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'ico', 'woff', 'woff2', 'ttf', 'otf'];
     private const CACHE_VERSION = '5';
     private const CACHE_NAMESPACE = 'assets';
     private const CACHE_URL = '/cache/assets';
 
     private function __construct()
     {
-    }
-
-    public static function assetUrl(string $relativePath, string $sourceFile, string $type): ?string
-    {
-        $type = strtolower($type);
-
-        if (!in_array($type, ['css', 'js'], true) || !is_file($sourceFile) || !is_readable($sourceFile)) {
-            return null;
-        }
-
-        $source = file_get_contents($sourceFile);
-
-        if (!is_string($source)) {
-            return null;
-        }
-
-        $baseName = pathinfo(str_replace('\\', '/', $relativePath), PATHINFO_FILENAME);
-        $baseName = trim((string) preg_replace('/[^a-z0-9_-]+/i', '-', $baseName), '-');
-        $baseName = $baseName !== '' ? strtolower($baseName) : 'asset';
-
-        return self::cachedAssetUrl($relativePath, $baseName, $source, $type, true);
     }
 
     public static function cachedAssetUrl(
@@ -57,7 +37,8 @@ final class Minifier
         $prefix = strtolower(trim($prefix));
 
         if (
-            !in_array($type, ['css', 'js'], true)
+            !in_array($type, self::ASSET_TYPES, true)
+            || ($minify && !in_array($type, ['css', 'js'], true))
             || $prefix === ''
             || preg_match('/^[a-z0-9_-]{1,120}$/', $prefix) !== 1
         ) {

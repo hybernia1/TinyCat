@@ -1,8 +1,8 @@
-import "../../../../assets/core/dom.js";
+import "../../Ui/assets/runtime/dom.js";
 import "./controller.js";
-import "../../../../assets/ui/dialogs.js";
-import "../../../../assets/ui/image-uploads.js";
-import "../../../../assets/ui/toasts.js";
+import "../../Ui/assets/dialogs.js";
+import "../../Ui/assets/image-uploads.js";
+import "../../Ui/assets/toasts.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat, uploads = new WeakMap();

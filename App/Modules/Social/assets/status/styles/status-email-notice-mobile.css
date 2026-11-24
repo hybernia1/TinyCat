@@ -1,6 +1,7 @@
-@media (max-width: 759px) {
+@media (max-width: 899px) {
 .status-email-notice-copy {
     min-width: 0;
+    flex-basis: calc(100% - 30px);
   }
 
 .status-email-notice .btn {

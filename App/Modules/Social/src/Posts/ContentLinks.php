@@ -2,13 +2,11 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\Redirects;
 
 use TinyCat\Core\Text\LinkParser;
 
-use TinyCat\Social\Content\Links;
+use TinyCat\Social\Posts\Links;
 
-use TinyCat\Core\Settings\Store;
 
 /** Resolve only links belonging to currently public content, never arbitrary redirect targets. */
 final class ContentLinks
@@ -33,14 +31,24 @@ final class ContentLinks
     {
         $item = \TinyCat\Database\Connection::one('SELECT c.body FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.kind = \'post\' AND c.id = ? AND c.published_at <= ? AND c.status = \'published\' AND u.status = ?', [$contentId, \TinyCat\Support\Dates::dateDb(), 'active']);
         if ($item === null) {
-            $canonicalId = Redirects::target($contentId);
+            $canonicalId = Repository::redirectTarget($contentId);
             return $canonicalId === null ? null : self::resolve($canonicalId, $hash, $commentId);
         }
         if ($commentId > 0) {
-            $comment = \TinyCat\Database\Connection::one('SELECT cc.body FROM social_comments cc INNER JOIN users u ON u.id = cc.user_id WHERE cc.id = ? AND cc.content_id = ? AND u.status = ?', [$commentId, $contentId, 'active']);
+            $comment = \TinyCat\Database\Connection::one('SELECT cc.body FROM social_comments cc WHERE cc.id = ? AND cc.content_id = ? AND ' . \TinyCat\Social\Discussion\Comments::visiblePredicate(), [$commentId, $contentId]);
             if ($comment === null) { return null; }
             $item = $comment;
         }
-        return \TinyCat\Social\Content\Outbound::resolve($hash, (string) $item['body'], $commentId === 0 ? static fn (): array => \TinyCat\Database\Connection::all('SELECT l.normalized_url, l.url_hash FROM social_post_links cl INNER JOIN social_links l ON l.id = cl.link_id WHERE cl.content_id = ?', [$contentId]) : null);
+        return \TinyCat\Core\Links\Outbound::resolve($hash, (string) $item['body'], $commentId === 0 ? static fn (): array => \TinyCat\Database\Connection::all('SELECT l.normalized_url, l.url_hash FROM social_post_links cl INNER JOIN social_links l ON l.id = cl.link_id WHERE cl.content_id = ?', [$contentId]) : null, self::tagged(...));
+    }
+
+    public static function tagged(string $url): string
+    {
+        if (!(bool) \TinyCat\Core\Runtime\Startup::option('content_links.utm.enabled', true)) { return $url; }
+        $source = trim((string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.source', ''));
+        if ($source === '') { $source = (string) parse_url((string) \TinyCat\Core\Runtime\Startup::option('app.url', ''), PHP_URL_HOST); }
+        if ($source === '') { return $url; }
+        $values = ['utm_source' => $source, 'utm_medium' => (string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.medium', 'referral'), 'utm_campaign' => (string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.campaign', '')];
+        return \TinyCat\Core\Links\Tracking::append($url, $values);
     }
 }

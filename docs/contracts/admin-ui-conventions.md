@@ -15,6 +15,24 @@ their background list never rebuilds or removes an open editor.
 
 `/admin/users` is the reference for administration lists.
 
+The administration content has no padding on desktop or mobile. Its actual
+sections and controls own their internal spacing; do not add a second page inset.
+
+Administration selects the core compact profile with `data-ui-density="compact"`
+on the document. It does not define its own scale or control/modal token overrides.
+The global `--ui-scale` factor defaults to `1` and affects every density profile.
+Core multiplies it by `--ui-density-scale` (1 normally, 0.875 in the compact profile).
+At a 16px browser base, the default regular/compact text sizes are 16px/14px;
+`--ui-scale: 1.25` enlarges them to 20px/17.5px together. Do not introduce per-list
+typography or size overrides for accessibility scaling.
+
+Buttons, inputs, selects and pagination use shared `--control-height`,
+`--control-height-compact` and control-padding tokens defined in rem units.
+Administration adjusts vertical density and selects the compact height on
+desktop layouts. Mobile input text keeps a 16px minimum and grows with larger
+root text. The section selector uses the shared touch-height minimum. Dialog
+dimensions and padding follow rem-based tokens, capped by the viewport.
+
 The admin bar owns the page title for all administration pages, including
 cron configuration, site health, updates, and URL blocking. A single outer
 content card does not repeat it. Keep headings on distinct inner sections,
@@ -22,6 +40,22 @@ such as history or diagnostic issues. For shared outer cards, select
 `primary: true` explicitly.
 
 Settings are opened directly from the administration navigation in a modal.
+
+Sidebar width and navigation row dimensions follow the root scale. Navigation
+groups do not add inter-row gaps, and submenus use compact indentation. At larger
+scales the navigation scrolls inside the sidebar while its header and footer remain usable.
+
+The sidebar selects the shared dark palette with `data-theme="dark"` and uses
+`--surface-panel`, distinct from the content's `--surface` in both themes. Do not
+copy theme colour values into administration styles. The page
+background follows the surface token (white in light mode). Cards inside main
+administration content have no outer border or corner radius; tables, notices
+and section separators retain their own meaning. Dialog cards retain their frame.
+
+The scheduler task overview uses a single summary table rather than task cards.
+Each row groups the task name, cadence and default limits, followed by the latest
+run, visible status text, duration and a visibly labelled run action. Narrow
+screens scroll the table within its wrapper without widening the document.
 
 ## List structure
 
@@ -36,6 +70,22 @@ Settings are opened directly from the administration navigation in a modal.
   translated titles. Toolbar controls stack naturally on narrow screens.
 - Inside `card-body`, use one `stack stack-gap-14` containing
   `ui/list-toolbar`, `table-wrap > table.table`, and `ui/pagination`.
+- In the existing desktop administration layout (at least 900px wide), the shell
+  allocates the remaining height to the table wrapper. Toolbar and pagination
+  stay outside the scrolling rows; column headings stick inside that wrapper.
+  Keep overflow local in both directions. Mobile layouts retain natural page
+  scrolling. Scheduler overview and history share the available height,
+  with the overview capped at 40dvh. This rule does not alter modal layout.
+- Shared pagination keeps the record range and navigation in one compact row.
+  In its base mobile layout, retain previous/next controls and the current page; neighbouring
+  page numbers remain available on wider layouts. Keep accessible labels and
+  the existing AJAX/history destinations on every navigation control.
+- Reuse the existing mobile/desktop stylesheet separation. Do not introduce
+  extra layout conditions based on viewport height, hover or pointer type.
+- The enclosing card or workspace owns the surface and outer frame.
+  `table-wrap` contains horizontal scrolling without a second border,
+  background or radius. Table headings use normal case, muted text and
+  the shared subdued background; do not add per-list heading variants.
 - `ui/list-toolbar` includes the shared `ui/list-summary` below its controls.
   Show only small neutral chips for search text and active filter labels
   and selected values. Do not prefix them with a result-count sentence.
@@ -59,7 +109,7 @@ Settings are opened directly from the administration navigation in a modal.
   values remain an em dash.
 - Keep row actions in `table-actions`. Use small ghost icon buttons;
   destructive actions use `text-danger` and confirmation.
-- First-column identities use `table-identity`: an optional status or type
+- First-column identities use `identity-row`: an optional status or type
   icon followed by `table-identity-body`. The body stacks the main
   `table-primary` name and `table-meta` details with a shared 4px gap.
   Metadata aligns with the name, not underneath the icon. Keep icons on
@@ -89,6 +139,10 @@ Settings are opened directly from the administration navigation in a modal.
 The cron overview contains sibling task cards followed by a history card.
 Task cards must not be nested inside the history card. Bot details use a tabbed modal; their source and post lists retain separate
 query state.
+Bot account fields contain biography only. Avatar belongs to a separate
+Avatar tab using the same `users/avatar-control` as user administration;
+the avatar editor saves independently and the parent tab has no competing
+Save action. Do not duplicate account statistics above the editor.
 
 Bot run history uses `/api/bots/accounts/{id}/runs` with its own
 `#bot-detail-runs-list` target, shared list toolbar and pagination.
@@ -107,14 +161,14 @@ preserves readable identities, data and row actions. Do not replace domain table
 with private mobile cards, a second sorting menu or duplicated row content.
 
 Sorting remains in the original translated column headings, including on mobile.
-Use `ui/sort-heading`, standard `table-identity`, `table-meta` and
+Use `ui/sort-heading`, standard `identity-row`, `table-meta` and
 `table-actions-cell` tokens. Filter and page-size controls use the same shared
 toolbar and popover services as desktop. `tests/frontend/admin-viewport.cjs`
 checks these table and sorting invariants against the actual administration shell.
 
 ## Mobile modal navigation
 
-Below 600px, tabbed modals use a full-width section select with the active
+Below 900px, tabbed modals use a full-width section select with the active
 section icon instead of a horizontally clipped tab strip. Keep the full
 translated section names and a minimum 44px control height. The switch is
 in the existing navigation row below the header, outside the scrolling body.
@@ -442,3 +496,112 @@ them with the declared transport paths. Metadata never registers data handlers,
 grants permissions, chooses domain tables or changes an API response into a UI
 definition. Unselected owners contribute nothing. Duplicate IDs, list targets,
 page paths and editor resources are rejected.
+
+## Optional help
+
+Settings and other editor hints appear as shared info controls beside captions,
+using `ui/help` through the shared field components. Do not add explanatory
+paragraphs under individual fields or implement a separate settings help popup.
+Preserve visible validation feedback and operational notices. The general
+[form help contract](ui-conventions.md#form-help) defines keyboard, touch,
+screen-reader descriptions and lifecycle behavior.
+
+
+## Registered dashboard widgets and cache diagnostics
+
+The dashboard host renders one shared responsive grid: one column below 900px,
+two from 900px, using core density, spacing and colours. It contains registered
+widgets only; cache diagnostics have their own `/admin/cache` route and menu item.
+Core/Ui owns widget frames and presentation types, never domain queries.
+
+`DashboardWidget` retains stable ID, lazy callback and order, with optional `type`,
+`title`, `icon` and `visible` metadata. Supported types:
+
+- `metrics`: `items` with `label` and formatted `value`.
+- `list`: `items` with `label`, canonical `url`, optional `detail` and `time`.
+- `status`: `text`, `tone` and optional `detail`.
+- `custom`: owner-rendered component markup within the same frame, preserving the
+  original callable contract for existing modules.
+
+Typed widgets may provide a footer `url`. The owner translates titles, formats
+values, authorizes its data and selects bounded candidates before hydration.
+The host caps displayed items at eight; this does not replace SQL limits.
+Visibility is checked before title/data callbacks. A failing visibility callback
+fails closed; a failing data callback produces a local error widget and leaves
+other widgets usable. Registration never executes these callbacks. No client
+widget registry, hidden dialog, HTML domain resource or persistence table exists.
+
+Identity contributes account statistics, Health supplies its latest stored inspection
+without running a probe, and Social supplies five recent comments. Inactive owners contribute nothing. The previous aggregate
+Social statistics table and its view-data adapter are retired.
+
+Cache uses the same grid and card primitives. Single state values belong beside
+the heading, especially disabled Memcached and OPcache. Metric and HTTP-header
+blocks use the shared `ui/detail-table` with two cells per row and `scope="row"`.
+Descriptions remain prose. Do not create one-row status tables simply to use a
+table everywhere. `ui/status-badge` supports `text: true` for a visible labelled
+badge: success for enabled, info for deliberately disabled, danger for failure.
+Its existing icon-status default remains unchanged. Table body last-row borders
+are removed from both header and data cells.
+
+The cache page reports configured application storage, runtime Memcached and
+OPcache metrics, release/on-demand assets, CSS/JS/HTML minification, declared
+browser-cache rules and observed HTTP headers. It does not scan cache keys or
+expose private paths. The browser samples the public homepage and its stylesheet
+anonymously, without cookies, using same-origin URLs and rejecting redirects.
+These samples show actual Content-Encoding, Cache-Control, Vary and ETag; they do
+not prove that every URL shares that policy. Requests are deduplicated per view
+and aborted on disposal; errors are distinct from uncompressed responses.
+OPcache reset keeps the existing administrator/CSRF/confirmation flow and returns
+to `/admin/cache`. There is no new bulk cache deletion action.
+
+### Statistics groups
+
+The core `core.statistics` widget hosts `DashboardStats` contributions in a native
+select. Each owner provides an ID, label, lazy count loader and metadata-only
+`fields` callback. The callback maps local metric keys to translation expressions.
+The shared `dashboard.statistics` component lookup compiles this metadata for PHP
+and browser rendering. It must not query data or evaluate the count loader.
+
+`GET /api/site/dashboard-stats?stats=<id>` requires administrator authorization,
+checks owner visibility and loads only the selected group. It returns canonical
+`id`, `items` (`key`, integer `value`) and an optional canonical `url`. No labels,
+component definitions or rendered HTML belong in this response. Inactive owners
+are absent and unknown or hidden groups return 404. The first HTML render uses
+the same metrics component and selects the first visible group by default.
+
+The selector uses the shared AJAX form and auto-submit lifecycle, including stale
+request protection, loading, errors and content disposal. No hidden panels or
+preloaded counts for other groups are created. Without JavaScript its GET form
+continues to work. A failed request preserves the previous metrics and selection.
+
+Dashboard list items may supply `user` (the shared avatar model) or a fallback
+`icon`. Their title and detail occupy the flexible middle column; time is a
+trailing column on desktop and moves beneath the text on mobile. Rows use shared
+spacing tokens and dividers. Statistics presentation metadata may provide an
+`icon`; canonical API counts stay unchanged. Desktop grid siblings stretch to
+matching height within each row. Cache cards use the same grid alignment.
+
+User and bot account tables share `users/identity-row`, owned by core Identity.
+It composes the existing small `ui/avatar`, account status and escaped username
+using table identity primitives. Use canonical `avatar_url` already supplied by
+account resources, without per-row lookups. Server rendering and refreshed JSON
+lists use the same definition. Avatar sizing, fallbacks and updates remain in the
+existing core avatar component; no list-specific avatar CSS is needed.
+
+
+All table state badges include readable text; their severity symbols are supplied
+by shared CSS rather than component SVG markup. The common `identity-row` and
+existing inset variant serve account tables, other admin lists and dashboard
+rows/metrics. Use the existing avatar surface for both account images and
+owner-supplied content symbols. Its shared size derives from title line-height,
+inline-control height and inter-row spacing, so the normal title/state pair and
+symbol scale together. Small/large avatar variants use the same `--avatar-size`
+mechanism. Do not add dashboard-specific or domain-specific icon dimensions.
+
+Table bodies use the shared core table zebra backgrounds and the same hover and
+focus-within highlight. Inactive rows keep those backgrounds; their descriptive
+cells use muted italic text, while badges and action controls remain upright.
+Do not add an inactive background that hides striping or interaction feedback.
+Bot source names link directly to their feed URL, including in the account
+workspace; avoid repeating the URL as a separate metadata row.

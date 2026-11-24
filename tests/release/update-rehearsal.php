@@ -325,7 +325,7 @@ PHP;
     [$rescueExit, $rescueOutput] = $run('$argv = ["console.php", "help"]; require ' . var_export($rescueFile, true) . ';');
     $assert($rescueExit === 0 && hash_file('sha256', $rescueFile) === $rescueHash, 'The refreshed private rescue launcher runs after update without the public autoload facade: ' . implode(' ', $rescueOutput));
     $retiredProbe = "define('TINYCAT', true); require " . var_export($installRoot . '/App/Core/Runtime/autoload.php', true)
-        . "; \TinyCat\Core\Runtime\Application::start(); if (class_exists('TinyCat\\\\Extension\\\\Loader') || !class_exists('TinyCat\\\\Social\\\\Automation\\\\Importer')) exit(2);";
+        . "; \TinyCat\Core\Runtime\Application::start(); if (class_exists('TinyCat\\\\Extension\\\\Loader') || !class_exists('TinyCat\\\\Social\\\\Bots\\\\Importer')) exit(2);";
     [$retiredExit, $retiredOutput] = $run($retiredProbe);
     $assert($retiredExit === 0, 'Updated runtime provides Bots without an extension loader: ' . implode(' ', $retiredOutput));
 

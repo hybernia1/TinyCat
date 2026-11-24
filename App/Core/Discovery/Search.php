@@ -38,7 +38,7 @@ final class Search
     public static function query(string $query, string $selected = '', array $cursor = [], int $limit = 20): array
     {
         foreach ($cursor as $key => $value) {
-            if (!is_scalar($value) || strlen((string) $value) > 120) { throw new \InvalidArgumentException('Invalid search cursor.', 400); }
+            if (!is_scalar($value) || strlen((string) $value) > 120) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 400, 'bad_request'); }
         }
         $query = self::normalize($query); $groups = []; $authorized = []; $found = $selected === '';
         foreach (self::sources() as $source) {
@@ -48,25 +48,34 @@ final class Search
             $next = $page['cursor'] === [] ? '' : '/search/all?' . http_build_query(['q' => $query, 'collection' => $source->id, 'cursor' => $page['cursor']]);
             $groups[] = ['id' => $source->id, 'name' => ($source->label)(), 'items' => $page['items'], 'next_url' => $next, 'done' => $next === ''];
         }
-        if (!$found) { throw new \DomainException('Search collection is not active.', 404); }
+        if (!$found) { throw new \TinyCat\Http\HttpException('Search collection is not active.', 404, 'not_found'); }
         return ['query' => $query, 'collections' => $groups];
     }
     public static function register(Api $api): void
     {
+        $api = $api->forPublicWeb();
         $api->get('/search', static function (Request $r): array { $r->validated(['q' => 'string|max:80']); return self::suggestions((string) $r->input('q', '')); });
-        $api->get('/search/query', static function (Request $r): array { $r->validated(['q' => 'string|max:80', 'collection' => 'string|max:80', 'limit' => 'integer|min:1|max:20']); $cursor = $r->input('cursor', []); if (!is_array($cursor)) { throw new \InvalidArgumentException('Invalid search cursor.', 400); } return self::query((string) $r->input('q', ''), (string) $r->input('collection', ''), $cursor, (int) $r->input('limit', 20)); });
-        Router::route(['GET', 'HEAD'], '/search/all', self::respond(...));
+        $api->get('/search/query', static function (Request $r): array { $r->validated(['q' => 'string|max:80', 'collection' => 'string|max:80', 'limit' => 'integer|min:1|max:20']); $cursor = $r->input('cursor', []); if (!is_array($cursor)) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 400, 'bad_request'); } return self::query((string) $r->input('q', ''), (string) $r->input('collection', ''), $cursor, (int) $r->input('limit', 20)); });
+        Router::route(['GET', 'HEAD'], '/search/all', self::respond(...), publicWeb: true);
     }
     public static function respond(): void
     {
         $r = Request::current(); $r->validated(['q' => 'string|max:80', 'collection' => 'string|max:80']); $cursor = $r->input('cursor', []);
-        if (!is_array($cursor)) { throw new \InvalidArgumentException('Invalid search cursor.', 400); }
+        if (!is_array($cursor)) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 400, 'bad_request'); }
         $data = self::query((string) $r->input('q', ''), (string) $r->input('collection', ''), $cursor);
-        $searchUrl = \TinyCat\Support\LocalUrls::resolve('/search/all');
+        $selected = (string) $r->input('collection', '');
+        $navigation = [['label' => Localization::t('common.all'), 'icon' => 'search', 'url' => \TinyCat\Support\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query']])), 'active' => $selected === '']];
+        foreach (self::sources() as $source) {
+            $navigation[] = ['label' => ($source->label)(), 'icon' => $source->icon, 'url' => \TinyCat\Support\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query'], 'collection' => $source->id])), 'active' => $selected === $source->id];
+            foreach ($data['collections'] as &$group) {
+                if ($group['id'] === $source->id && $group['items'] !== [] && $source->render !== null) { $group['content'] = new \TinyCat\Support\Markup(($source->render)($group['items'])); }
+            }
+            unset($group);
+        }
         foreach ($data['collections'] as &$group) { $group['next_url'] = \TinyCat\Support\LocalUrls::resolve($group['next_url']); }
         unset($group);
         $title = Localization::t('common.search');
-        $content = Components::render('ui/search-page', ['result' => $data, 'searchUrl' => $searchUrl]);
-        \TinyCat\Core\Ui\Page::render(['title' => $title, 'current' => '/search/all', 'meta' => ['robots' => 'noindex,nofollow']], $content);
+        $content = Components::render('ui/search-page', ['result' => $data]);
+        \TinyCat\Core\Ui\Page::render(['title' => $title, 'navigation' => $navigation, 'current' => '/search/all', 'public' => true, 'search_query' => $data['query'], 'meta' => ['robots' => 'noindex,nofollow']], $content);
     }
 }

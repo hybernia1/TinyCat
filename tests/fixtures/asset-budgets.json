@@ -1,38 +1,38 @@
 {
-  "/admin/article-sources": {
-    "raw_js": 229376,
-    "gzip_js": 52224,
-    "raw_css": 38912,
-    "gzip_css": 8192,
+  "/access/notifications": {
+    "raw_js": 164608,
+    "gzip_js": 39680,
+    "raw_css": 32512,
+    "gzip_css": 7168,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/site-health": {
-    "raw_js": 227328,
-    "gzip_js": 51456,
+    "raw_js": 249088,
+    "gzip_js": 55552,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/moderation": {
-    "raw_js": 287744,
-    "gzip_js": 60800,
+    "raw_js": 303616,
+    "gzip_js": 62720,
     "raw_css": 63488,
     "gzip_css": 12288,
     "scripts": 4,
     "stylesheets": 1
   },
-  "/admin/articles": {
-    "raw_js": 249856,
-    "gzip_js": 57344,
-    "raw_css": 47104,
-    "gzip_css": 10240,
+  "/access/privacy": {
+    "raw_js": 153088,
+    "gzip_js": 37120,
+    "raw_css": 30208,
+    "gzip_css": 6912,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/modules": {
-    "raw_js": 229376,
+    "raw_js": 229888,
     "gzip_js": 53248,
     "raw_css": 47104,
     "gzip_css": 10240,
@@ -40,74 +40,162 @@
     "stylesheets": 1
   },
   "/admin/updates": {
-    "raw_js": 205056,
-    "gzip_js": 48128,
+    "raw_js": 228352,
+    "gzip_js": 51968,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
+  "/notifications": {
+    "raw_js": 212736,
+    "gzip_js": 49664,
+    "raw_css": 41984,
+    "gzip_css": 9216,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/admin/cache": {
+    "raw_js": 229888,
+    "gzip_js": 52224,
+    "raw_css": 47104,
+    "gzip_css": 9728,
+    "scripts": 4,
+    "stylesheets": 1
+  },
   "/admin/users": {
-    "raw_js": 223232,
-    "gzip_js": 50176,
+    "raw_js": 247808,
+    "gzip_js": 54528,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/bots": {
-    "raw_js": 370688,
-    "gzip_js": 78848,
+    "raw_js": 383744,
+    "gzip_js": 80640,
     "raw_css": 55296,
     "gzip_css": 11264,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/cron": {
-    "raw_js": 244736,
-    "gzip_js": 54272,
+    "raw_js": 267264,
+    "gzip_js": 58368,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
-  "/articles": {
-    "raw_js": 376832,
-    "gzip_js": 81920,
-    "raw_css": 71680,
-    "gzip_css": 13312,
+  "/search/all": {
+    "raw_js": 327168,
+    "gzip_js": 70912,
+    "raw_css": 62208,
+    "gzip_css": 12032,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/recovery": {
+    "raw_js": 153088,
+    "gzip_js": 37120,
+    "raw_css": 29184,
+    "gzip_css": 6656,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/register": {
+    "raw_js": 153088,
+    "gzip_js": 37120,
+    "raw_css": 29184,
+    "gzip_css": 6656,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/account": {
+    "raw_js": 184832,
+    "gzip_js": 43776,
+    "raw_css": 32768,
+    "gzip_css": 7168,
     "scripts": 4,
     "stylesheets": 1
   },
   "/install": {
-    "raw_js": 55296,
-    "gzip_js": 15360,
+    "raw_js": 60160,
+    "gzip_js": 16896,
     "raw_css": 38912,
     "gzip_css": 8192,
     "scripts": 4,
     "stylesheets": 1
   },
+  "/privacy": {
+    "raw_js": 212736,
+    "gzip_js": 49664,
+    "raw_css": 43000,
+    "gzip_css": 9216,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/author": {
+    "raw_js": 370688,
+    "gzip_js": 79104,
+    "raw_css": 69632,
+    "gzip_css": 13312,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/logout": {
+    "raw_js": 153088,
+    "gzip_js": 37120,
+    "raw_css": 29184,
+    "gzip_css": 6656,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/social": {
+    "raw_js": 370688,
+    "gzip_js": 79104,
+    "raw_css": 69632,
+    "gzip_css": 13312,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/status": {
+    "raw_js": 370688,
+    "gzip_js": 79104,
+    "raw_css": 69632,
+    "gzip_css": 13312,
+    "scripts": 4,
+    "stylesheets": 1
+  },
   "/admin": {
-    "raw_js": 204800,
-    "gzip_js": 48128,
+    "raw_js": 227584,
+    "gzip_js": 51712,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
-  "/blog": {
-    "raw_js": 369152,
-    "gzip_js": 78464,
-    "raw_css": 71680,
+  "/login": {
+    "raw_js": 153088,
+    "gzip_js": 37120,
+    "raw_css": 29184,
+    "gzip_css": 6656,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/tag": {
+    "raw_js": 370688,
+    "gzip_js": 79104,
+    "raw_css": 69632,
     "gzip_css": 13312,
     "scripts": 4,
     "stylesheets": 1
   },
   "/": {
-    "raw_js": 369152,
-    "gzip_js": 78464,
-    "raw_css": 71680,
-    "gzip_css": 13312,
+    "raw_js": 375808,
+    "gzip_js": 79872,
+    "raw_css": 72704,
+    "gzip_css": 13824,
     "scripts": 4,
     "stylesheets": 1
   }

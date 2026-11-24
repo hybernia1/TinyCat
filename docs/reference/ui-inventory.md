@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-190 definic komponent, 394 CSS tříd, 128 CSS importů, 92 JS souborů, 24 UI služeb, 2 PHP partialů.
+185 definic komponent, 397 CSS tříd, 127 CSS importů, 100 JS souborů, 28 UI služeb, 0 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -15,7 +15,7 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `health/scheduler-run-detail` | [App/Core/Health/assets/components.json](../../App/Core/Health/assets/components.json) | health/report |
 | `health/page` | [App/Core/Health/assets/components.json](../../App/Core/Health/assets/components.json) | health/scheduler-findings, ui/empty-state, ui/modal-trigger, ui/notice, ui/stat-card, ui/status-badge |
 | `users/admin-fields` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/field, ui/select, users/avatar-control |
-| `users/admin-row` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/account-status, ui/activation-action, ui/api-action, ui/modal-trigger |
+| `users/admin-row` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/activation-action, ui/api-action, ui/modal-trigger, users/identity-row |
 | `users/list` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/empty-state, ui/list-toolbar, ui/pagination, ui/sort-heading, users/admin-row |
 | `users/auth-form` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/captcha, ui/field |
 | `users/auth-content` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | users/auth-form |
@@ -37,13 +37,15 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `users/avatar-editor` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | — |
 | `users/admin-form` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | users/admin-fields |
 | `users/menu` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | — |
+| `users/identity-row` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/account-status, ui/avatar |
 | `installation/steps` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
 | `installation/language` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
 | `installation/database` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | ui/field |
 | `installation/tables` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
 | `installation/admin` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | ui/field |
 | `installation/done` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
-| `installation/page` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | installation/admin, installation/database, installation/done, installation/language, installation/steps, installation/tables |
+| `installation/recovery` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
+| `installation/page` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | installation/admin, installation/database, installation/done, installation/language, installation/recovery, installation/steps, installation/tables |
 | `notifications/copy` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | — |
 | `notifications/action` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | — |
 | `notifications/item` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/action, notifications/copy, ui/avatar-content |
@@ -52,32 +54,68 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `notifications/page` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/items, ui/load-more |
 | `notifications/menu` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/items |
 | `settings/sections` | [App/Core/Settings/assets/components.json](../../App/Core/Settings/assets/components.json) | settings/field |
-| `settings/field` | [App/Core/Settings/assets/components.json](../../App/Core/Settings/assets/components.json) | settings/field |
+| `settings/field` | [App/Core/Settings/assets/components.json](../../App/Core/Settings/assets/components.json) | settings/field, ui/help, ui/input |
 | `settings/editor-form` | [App/Core/Settings/assets/components.json](../../App/Core/Settings/assets/components.json) | settings/sections |
 | `scheduler/status` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | ui/status-badge |
-| `scheduler/list` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/icon, scheduler/name, scheduler/status, scheduler/task-card, ui/empty-state, ui/filter-trigger, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
+| `scheduler/list` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/icon, scheduler/name, scheduler/status, scheduler/task-row, ui/empty-state, ui/filter-trigger, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
 | `scheduler/filter-form` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | ui/select |
 | `scheduler/run-detail` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/name, scheduler/option, scheduler/status |
-| `scheduler/task-card` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/icon, scheduler/name, scheduler/option, scheduler/status, ui/api-action |
 | `scheduler/name` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
 | `scheduler/icon` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
 | `scheduler/option` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
 | `scheduler/runs-page` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
 | `scheduler/actions` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
-| `scheduler/administration` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
+| `scheduler/administration` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | ui/help |
+| `scheduler/task-row` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/icon, scheduler/name, scheduler/option, ui/api-action |
+| `ui/field` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/help, ui/input |
+| `ui/select` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/help |
+| `ui/pagination` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/pagination-step |
+| `ui/api-action` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/modal` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/captcha` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/search-form` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/input |
+| `ui/per-page` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/list-toolbar` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/filter-trigger, ui/list-summary, ui/per-page, ui/search-form |
+| `ui/avatar` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/avatar-content |
+| `ui/avatar-content` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/modal-trigger` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/admin-list` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/filter-trigger |
+| `ui/account-status` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/status-badge |
+| `ui/pagination-step` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/sort-heading` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/status-badge` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/stat-card` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/notice` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/empty-state` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/activation-action` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/api-action |
+| `ui/filter-trigger` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/filter-content` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/list-summary` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/filter-chip |
+| `ui/editor-refresh` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/editor-actions` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/filter-chip` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/load-more` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/action-label` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/dashboard` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/dashboard-widget, ui/empty-state |
+| `ui/account-title` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/account-status |
+| `ui/code-block` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/public-header` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/search-page` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/empty-state |
+| `ui/consent` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/privacy-page` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/module-activation` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/modules-page` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/module-activation, ui/notice, ui/status-badge |
+| `ui/help` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/input` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/public-workspace` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | — |
+| `ui/cache-services` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/cache-service |
+| `ui/dashboard-widget` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/avatar, ui/dashboard-metrics, ui/empty-state, ui/notice |
+| `ui/cache-page` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/detail-table, ui/help, ui/status-badge |
+| `ui/cache-service` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/detail-table, ui/notice, ui/status-badge |
+| `ui/detail-table` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/status-badge |
+| `ui/dashboard-metrics` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/empty-state |
 | `updates/actions` | [App/Core/Updates/assets/components.json](../../App/Core/Updates/assets/components.json) | ui/modal-trigger |
-| `updates/page` | [App/Core/Updates/assets/components.json](../../App/Core/Updates/assets/components.json) | ui/empty-state, ui/notice, ui/stat-card, ui/status-badge |
-| `blog/articles` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading, ui/status-badge |
-| `blog/article-filter` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/select |
-| `blog/article-fields` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | publishing/editor, publishing/image-field, ui/field, ui/select |
-| `blog/source-fields` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/field, ui/select |
-| `blog/sources` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading, ui/status-badge |
-| `blog/source-filter` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/select |
-| `blog/source-preview` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | — |
-| `blog/embed-quote` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | — |
-| `blog/public-list` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | ui/empty-state |
-| `blog/article-page` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | — |
-| `blog/source-form` | [App/Modules/Blog/assets/components.json](../../App/Modules/Blog/assets/components.json) | blog/source-fields |
+| `updates/page` | [App/Core/Updates/assets/components.json](../../App/Core/Updates/assets/components.json) | ui/empty-state, ui/help, ui/notice, ui/stat-card, ui/status-badge |
 | `users/following-profile` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/avatar |
 | `status/time` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/permalink, ui/action-label |
 | `status/image` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/attached-image, status/permalink |
@@ -97,17 +135,16 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `status/body` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/segments |
 | `bots/source-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field |
 | `bots/sources` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/account-status, ui/action-label, ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
-| `bots/accounts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/account-status, ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
+| `bots/accounts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading, users/identity-row |
 | `bots/runs` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/run-status, ui/empty-state, ui/sort-heading |
-| `bots/stat` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/stat-card |
 | `bots/run-status` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/status-badge |
-| `bots/posts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/post-source, ui/empty-state, ui/list-toolbar, ui/pagination, ui/sort-heading |
+| `bots/posts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/post-source, ui/empty-state, ui/list-toolbar, ui/pagination, ui/sort-heading, ui/status-badge |
 | `bots/queue` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/post-source, ui/account-status, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
 | `bots/queue-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
 | `bots/post-source` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
-| `bots/source-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `bots/source-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/help |
 | `bots/post-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
-| `bots/account-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field, users/avatar-control |
+| `bots/account-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field |
 | `bots/runs-list` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/runs, ui/list-toolbar, ui/pagination |
 | `bots/run-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
 | `bots/scheduler-run-detail` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/run-status |
@@ -116,14 +153,11 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `moderation/history` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/status, ui/empty-state, ui/modal-trigger |
 | `moderation/report-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/status |
 | `moderation/status` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/status-badge |
-| `search/page` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-actions, status/card, status/feed-more, ui/captcha, ui/empty-state |
 | `site/sidebar` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/avatar, ui/empty-state |
-| `site/public-page` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | search/page, site/archive-actions, site/archive-filter, status/card, status/composer-body, status/feed-more, status/thread, ui/avatar-content, users/avatar-control |
+| `site/public-page` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-actions, site/archive-filter, status/card, status/composer-body, status/feed-more, status/thread, ui/avatar-content, users/avatar-control |
 | `site/archive-filter` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-filter-name |
 | `site/archive-actions` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-filter |
 | `site/archive-filter-name` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
-| `site/dashboard` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/admin-list, ui/stat-card |
-| `site/dashboard-comments` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/empty-state |
 | `status/comment-menu` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/menu |
 | `bots/account-creation-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field |
 | `bots/account-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
@@ -134,11 +168,10 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `status/edit-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/composer-body |
 | `status/comment-edit-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/editor |
 | `status/thread-dialog` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/card, status/thread |
-| `status/embed-content` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field |
+| `status/embed-content` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field, ui/help |
 | `status/feed-empty` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `moderation/detail-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/card, status/thread |
 | `bots/workspace` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
-| `bots/workspace-account` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `bots/workspace-lists` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `bots/workspace-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/account-fields |
 | `bots/workspace-retry` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
@@ -148,86 +181,52 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `bots/source-preview-state` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `bots/source-preview-confirm` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `site/privacy-section` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
-| `ui/field` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/select` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/pagination` | [assets/ui/components.json](../../assets/ui/components.json) | ui/pagination-step |
-| `ui/api-action` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/modal` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/captcha` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/search-form` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/per-page` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/list-toolbar` | [assets/ui/components.json](../../assets/ui/components.json) | ui/filter-trigger, ui/list-summary, ui/per-page, ui/search-form |
-| `ui/avatar` | [assets/ui/components.json](../../assets/ui/components.json) | ui/avatar-content |
-| `ui/avatar-content` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/modal-trigger` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/admin-list` | [assets/ui/components.json](../../assets/ui/components.json) | ui/filter-trigger |
-| `ui/account-status` | [assets/ui/components.json](../../assets/ui/components.json) | ui/status-badge |
-| `ui/pagination-step` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/sort-heading` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/status-badge` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/stat-card` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/notice` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/empty-state` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/activation-action` | [assets/ui/components.json](../../assets/ui/components.json) | ui/api-action |
-| `ui/filter-trigger` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/filter-content` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/list-summary` | [assets/ui/components.json](../../assets/ui/components.json) | ui/filter-chip |
-| `ui/editor-actions` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/filter-chip` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/load-more` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/action-label` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/dashboard-cache` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/dashboard-overview` | [assets/ui/components.json](../../assets/ui/components.json) | ui/stat-card |
-| `publishing/segments` | [assets/ui/components.json](../../assets/ui/components.json) | publishing/segments |
-| `publishing/link` | [assets/ui/components.json](../../assets/ui/components.json) | publishing/link-summary |
-| `publishing/link-summary` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `publishing/editor` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `publishing/image-field` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `publishing/attached-image` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `publishing/body` | [assets/ui/components.json](../../assets/ui/components.json) | publishing/attached-image, publishing/link, publishing/segments |
-| `publishing/comment-form` | [assets/ui/components.json](../../assets/ui/components.json) | publishing/editor, ui/avatar |
-| `publishing/comment` | [assets/ui/components.json](../../assets/ui/components.json) | publishing/comment, publishing/comment-form, publishing/like, publishing/segments, ui/avatar |
-| `publishing/like` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `publishing/discussion` | [assets/ui/components.json](../../assets/ui/components.json) | publishing/comment, publishing/comment-form, publishing/like |
-| `ui/dashboard` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `publishing/comment-history` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/account-title` | [assets/ui/components.json](../../assets/ui/components.json) | ui/account-status |
-| `publishing/comment-replies` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/code-block` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/public-header` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/search-page` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/consent` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/privacy-page` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/module-activation` | [assets/ui/components.json](../../assets/ui/components.json) | — |
-| `ui/modules-page` | [assets/ui/components.json](../../assets/ui/components.json) | ui/module-activation, ui/notice, ui/status-badge |
+| `search/posts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/card |
+| `publishing/segments` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/segments |
+| `publishing/link` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/link-summary |
+| `publishing/link-summary` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `publishing/editor` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `publishing/image-field` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `publishing/attached-image` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `publishing/body` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/attached-image, publishing/link, publishing/segments |
+| `publishing/comment-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/editor, ui/avatar |
+| `publishing/comment` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/comment, publishing/comment-form, publishing/like, publishing/segments, ui/avatar |
+| `publishing/like` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `publishing/discussion` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/comment, publishing/comment-form, publishing/like |
+| `publishing/comment-history` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `publishing/comment-replies` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 
 ## UI služby a metody zapsané jako `name: function`
 
 Jde o syntaktický seznam; nezahrnuje všechny exporty a nerozhoduje o veřejnosti metody.
-- [assets/ui/admin-resources.js](../../assets/ui/admin-resources.js): `url`, `apply`, `modal`, `result`, `hydrate`
-- [assets/ui/ajax-bindings.js](../../assets/ui/ajax-bindings.js): `current`
-- [assets/ui/analytics.js](../../assets/ui/analytics.js):
-- [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js): `appendAvatar`
-- [assets/ui/component-builders.js](../../assets/ui/component-builders.js): `text`, `field`, `select`, `hidden`, `button`, `form`, `dialog`, `editorActions`, `accountDialogTitle`, `formDialog`, `tabbedContent`, `pinDialogTabs`, `sectionedDialog`, `adminDialog`, `editorFrame`, `pagination`, `captcha`
-- [assets/ui/confirm-actions.js](../../assets/ui/confirm-actions.js):
-- [assets/ui/content-updates.js](../../assets/ui/content-updates.js): `replaceChildren`, `remove`, `replaceNode`
-- [assets/ui/dialog-history.js](../../assets/ui/dialog-history.js): `opened`, `closed`, `restore`, `leave`, `init`, `hydrate`
-- [assets/ui/dialogs.js](../../assets/ui/dialogs.js): `create`
-- [assets/ui/document-navigation.js](../../assets/ui/document-navigation.js):
-- [assets/ui/filters.js](../../assets/ui/filters.js): `defaults`, `get`, `capture`, `restore`, `remove`, `init`
-- [assets/ui/form-constraints.js](../../assets/ui/form-constraints.js):
-- [assets/ui/form-requests.js](../../assets/ui/form-requests.js): `validate`, `setSubmitGuard`, `canSubmit`, `request`, `cancel`, `dispose`, `bind`
-- [assets/ui/form-state.js](../../assets/ui/form-state.js):
-- [assets/ui/global-search.js](../../assets/ui/global-search.js):
-- [assets/ui/image-placeholders.js](../../assets/ui/image-placeholders.js):
-- [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js):
-- [assets/ui/language-suggestion.js](../../assets/ui/language-suggestion.js):
-- [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js): `register`, `isRead`, `result`, `url`
-- [assets/ui/popovers.js](../../assets/ui/popovers.js): `restoringFocus`, `capture`, `restore`, `init`, `dispose`
-- [assets/ui/public.js](../../assets/ui/public.js):
-- [assets/ui/tabs.js](../../assets/ui/tabs.js):
-- [assets/ui/toasts.js](../../assets/ui/toasts.js):
-- [assets/ui/tooltips.js](../../assets/ui/tooltips.js): `dispose`, `init`
+- [App/Core/Ui/assets/admin-resources.js](../../App/Core/Ui/assets/admin-resources.js): `url`, `apply`, `modal`, `result`, `hydrate`
+- [App/Core/Ui/assets/ajax-bindings.js](../../App/Core/Ui/assets/ajax-bindings.js): `current`
+- [App/Core/Ui/assets/analytics.js](../../App/Core/Ui/assets/analytics.js):
+- [App/Core/Ui/assets/avatar-rendering.js](../../App/Core/Ui/assets/avatar-rendering.js): `appendAvatar`
+- [App/Core/Ui/assets/bootstrap.js](../../App/Core/Ui/assets/bootstrap.js):
+- [App/Core/Ui/assets/cache-inspection.js](../../App/Core/Ui/assets/cache-inspection.js): `hydrate`, `dispose`
+- [App/Core/Ui/assets/code-copy.js](../../App/Core/Ui/assets/code-copy.js): `init`
+- [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js): `text`, `field`, `select`, `hidden`, `button`, `form`, `dialog`, `editorActions`, `accountDialogTitle`, `formDialog`, `tabbedContent`, `pinDialogTabs`, `sectionedDialog`, `adminDialog`, `editorFrame`, `pagination`, `captcha`
+- [App/Core/Ui/assets/confirm-actions.js](../../App/Core/Ui/assets/confirm-actions.js):
+- [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js): `replaceChildren`, `remove`, `replaceNode`
+- [App/Core/Ui/assets/dashboard-stats.js](../../App/Core/Ui/assets/dashboard-stats.js): `result`, `init`
+- [App/Core/Ui/assets/dialog-history.js](../../App/Core/Ui/assets/dialog-history.js): `replaced`, `opened`, `closed`, `restore`, `leave`, `init`, `hydrate`
+- [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js): `create`
+- [App/Core/Ui/assets/document-navigation.js](../../App/Core/Ui/assets/document-navigation.js):
+- [App/Core/Ui/assets/filters.js](../../App/Core/Ui/assets/filters.js): `defaults`, `get`, `capture`, `restore`, `remove`, `dispose`, `init`
+- [App/Core/Ui/assets/form-constraints.js](../../App/Core/Ui/assets/form-constraints.js):
+- [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js): `data`, `validate`, `setSubmitGuard`, `canSubmit`, `request`, `cancel`, `dispose`, `bind`
+- [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js):
+- [App/Core/Ui/assets/global-search.js](../../App/Core/Ui/assets/global-search.js):
+- [App/Core/Ui/assets/image-placeholders.js](../../App/Core/Ui/assets/image-placeholders.js):
+- [App/Core/Ui/assets/image-uploads.js](../../App/Core/Ui/assets/image-uploads.js):
+- [App/Core/Ui/assets/language-suggestion.js](../../App/Core/Ui/assets/language-suggestion.js):
+- [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js): `register`, `isRead`, `result`, `url`
+- [App/Core/Ui/assets/popovers.js](../../App/Core/Ui/assets/popovers.js): `restoringFocus`, `capture`, `restore`, `init`, `dispose`
+- [App/Core/Ui/assets/public.js](../../App/Core/Ui/assets/public.js):
+- [App/Core/Ui/assets/tabs.js](../../App/Core/Ui/assets/tabs.js):
+- [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js):
+- [App/Core/Ui/assets/tooltips.js](../../App/Core/Ui/assets/tooltips.js): `dispose`, `init`
 
 ## JavaScript — soubory, importy a vstupní body
 
@@ -235,103 +234,109 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 
 | Soubor | Přímé importy | Vstupní trasy |
 | --- | --- | --- |
-| [App/Core/Identity/assets/admin.js](../../App/Core/Identity/assets/admin.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | admin |
-| [App/Core/Identity/assets/avatar-editor.js](../../App/Core/Identity/assets/avatar-editor.js) | [assets/core/dom.js](../../assets/core/dom.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-state.js](../../assets/ui/form-state.js) | přes importy / společný runtime |
-| [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js), [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Identity/assets/avatar-editor.js](../../App/Core/Identity/assets/avatar-editor.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js), [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | admin, public |
-| [App/Core/Identity/assets/public.js](../../App/Core/Identity/assets/public.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | public |
-| [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js) | [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [App/Core/Installation/assets/index.js](../../App/Core/Installation/assets/index.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | /install |
-| [App/Core/Notifications/assets/controller.js](../../App/Core/Notifications/assets/controller.js) | [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/toasts.js](../../assets/ui/toasts.js), [assets/ui/popovers.js](../../assets/ui/popovers.js) | přes importy / společný runtime |
-| [App/Core/Notifications/assets/index.js](../../App/Core/Notifications/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Notifications/assets/controller.js](../../App/Core/Notifications/assets/controller.js), [assets/ui/ajax-bindings.js](../../assets/ui/ajax-bindings.js) | public |
-| [App/Core/Security/assets/captcha.js](../../App/Core/Security/assets/captcha.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Identity/assets/admin.js](../../App/Core/Identity/assets/admin.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js), [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js) | admin |
+| [App/Core/Identity/assets/authentication.js](../../App/Core/Identity/assets/authentication.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | access, admin, public |
+| [App/Core/Identity/assets/avatar-editor.js](../../App/Core/Identity/assets/avatar-editor.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/image-uploads.js](../../App/Core/Ui/assets/image-uploads.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | přes importy / společný runtime |
+| [App/Core/Identity/assets/avatar-entry.js](../../App/Core/Identity/assets/avatar-entry.js) | [App/Core/Identity/assets/editor-controller.js](../../App/Core/Identity/assets/editor-controller.js), [App/Core/Identity/assets/avatar-editor.js](../../App/Core/Identity/assets/avatar-editor.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | /account, admin, public |
+| [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js) | [App/Core/Identity/assets/authentication.js](../../App/Core/Identity/assets/authentication.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/avatar-rendering.js](../../App/Core/Ui/assets/avatar-rendering.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | přes importy / společný runtime |
+| [App/Core/Identity/assets/editor-controller.js](../../App/Core/Identity/assets/editor-controller.js) | [App/Core/Identity/assets/authentication.js](../../App/Core/Identity/assets/authentication.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/avatar-rendering.js](../../App/Core/Ui/assets/avatar-rendering.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js) | přes importy / společný runtime |
+| [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js) | přes importy / společný runtime |
+| [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js), [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js), [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | /account, admin, public |
+| [App/Core/Identity/assets/public.js](../../App/Core/Identity/assets/public.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | /account, public |
+| [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js) | [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | přes importy / společný runtime |
+| [App/Core/Installation/assets/index.js](../../App/Core/Installation/assets/index.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | /install |
+| [App/Core/Notifications/assets/controller.js](../../App/Core/Notifications/assets/controller.js) | [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js), [App/Core/Ui/assets/popovers.js](../../App/Core/Ui/assets/popovers.js) | přes importy / společný runtime |
+| [App/Core/Notifications/assets/index.js](../../App/Core/Notifications/assets/index.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Notifications/assets/controller.js](../../App/Core/Notifications/assets/controller.js), [App/Core/Ui/assets/ajax-bindings.js](../../App/Core/Ui/assets/ajax-bindings.js) | /access/notifications, /notifications, public |
+| [App/Core/Security/assets/captcha.js](../../App/Core/Security/assets/captcha.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
 | [App/Core/Security/assets/index.js](../../App/Core/Security/assets/index.js) | [App/Core/Security/assets/captcha.js](../../App/Core/Security/assets/captcha.js) | public |
-| [App/Core/Settings/assets/controller.js](../../App/Core/Settings/assets/controller.js) | [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/core/modules.js](../../assets/core/modules.js) | přes importy / společný runtime |
+| [App/Core/Settings/assets/controller.js](../../App/Core/Settings/assets/controller.js) | [App/Core/Ui/assets/image-uploads.js](../../App/Core/Ui/assets/image-uploads.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js) | přes importy / společný runtime |
 | [App/Core/Settings/assets/index.js](../../App/Core/Settings/assets/index.js) | [App/Core/Settings/assets/controller.js](../../App/Core/Settings/assets/controller.js) | admin |
-| [App/Core/Tasks/assets/controller.js](../../App/Core/Tasks/assets/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | přes importy / společný runtime |
-| [App/Core/Tasks/assets/index.js](../../App/Core/Tasks/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Tasks/assets/controller.js](../../App/Core/Tasks/assets/controller.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | /admin/cron, /admin/site-health |
-| [App/Core/Updates/assets/index.js](../../App/Core/Updates/assets/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | /admin/updates |
-| [App/Modules/Blog/assets/sources.js](../../App/Modules/Blog/assets/sources.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | /admin/article-sources |
-| [App/Modules/Social/assets/bots/controller.js](../../App/Modules/Social/assets/bots/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-state.js](../../assets/ui/form-state.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js), [App/Modules/Social/assets/bots/source-preview.js](../../App/Modules/Social/assets/bots/source-preview.js), [App/Modules/Social/assets/bots/workspace.js](../../App/Modules/Social/assets/bots/workspace.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/bots/index.js](../../App/Modules/Social/assets/bots/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Modules/Social/assets/bots/controller.js](../../App/Modules/Social/assets/bots/controller.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | /admin/bots |
-| [App/Modules/Social/assets/bots/source-preview.js](../../App/Modules/Social/assets/bots/source-preview.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/bots/workspace.js](../../App/Modules/Social/assets/bots/workspace.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/tabs.js](../../assets/ui/tabs.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/moderation/controller.js](../../App/Modules/Social/assets/moderation/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/core/dom.js](../../assets/core/dom.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/moderation/index.js](../../App/Modules/Social/assets/moderation/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [App/Modules/Social/assets/moderation/controller.js](../../App/Modules/Social/assets/moderation/controller.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | /admin/moderation |
-| [App/Modules/Social/assets/site/index.js](../../App/Modules/Social/assets/site/index.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/analytics.js](../../assets/ui/analytics.js), [App/Modules/Social/assets/site/sidebar-data.js](../../App/Modules/Social/assets/site/sidebar-data.js), [App/Modules/Social/assets/site/sticky-sidebars.js](../../App/Modules/Social/assets/site/sticky-sidebars.js), [App/Modules/Social/assets/site/views.js](../../App/Modules/Social/assets/site/views.js), [App/Modules/Social/assets/site/page-navigation.js](../../App/Modules/Social/assets/site/page-navigation.js), [assets/ui/language-suggestion.js](../../assets/ui/language-suggestion.js) | public |
-| [App/Modules/Social/assets/site/page-navigation.js](../../App/Modules/Social/assets/site/page-navigation.js) | [assets/ui/document-navigation.js](../../assets/ui/document-navigation.js), [assets/core/page-navigation.js](../../assets/core/page-navigation.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/site/sidebar-data.js](../../App/Modules/Social/assets/site/sidebar-data.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [App/Modules/Social/assets/site/views.js](../../App/Modules/Social/assets/site/views.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/site/sticky-sidebars.js](../../App/Modules/Social/assets/site/sticky-sidebars.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/site/views.js](../../App/Modules/Social/assets/site/views.js) | [assets/core/component-renderer.js](../../assets/core/component-renderer.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/status/comments.js](../../App/Modules/Social/assets/status/comments.js) | [assets/ui/content/comments.js](../../assets/ui/content/comments.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | [assets/ui/content/comments.js](../../assets/ui/content/comments.js), [assets/ui/content/runtime.js](../../assets/ui/content/runtime.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/status/feed-loader.js](../../App/Modules/Social/assets/status/feed-loader.js) | [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/navigation.js](../../assets/core/navigation.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/status/form-actions.js](../../App/Modules/Social/assets/status/form-actions.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/navigation.js](../../assets/core/navigation.js), [App/Modules/Social/assets/status/comments.js](../../App/Modules/Social/assets/status/comments.js), [assets/ui/content/editor.js](../../assets/ui/content/editor.js), [App/Modules/Social/assets/status/feed-loader.js](../../App/Modules/Social/assets/status/feed-loader.js), [App/Modules/Social/assets/status/form-context.js](../../App/Modules/Social/assets/status/form-context.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js), [assets/ui/confirm-actions.js](../../assets/ui/confirm-actions.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/form-state.js](../../assets/ui/form-state.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/status/form-context.js](../../App/Modules/Social/assets/status/form-context.js) | [assets/core/dom.js](../../assets/core/dom.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/status/index.js](../../App/Modules/Social/assets/status/index.js) | [assets/ui/content/index.js](../../assets/ui/content/index.js), [App/Modules/Social/assets/status/media-navigation.js](../../App/Modules/Social/assets/status/media-navigation.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/modules.js](../../assets/core/modules.js), [assets/core/navigation.js](../../assets/core/navigation.js), [App/Modules/Social/assets/status/form-actions.js](../../App/Modules/Social/assets/status/form-actions.js), [App/Modules/Social/assets/status/comments.js](../../App/Modules/Social/assets/status/comments.js), [assets/ui/content/editor.js](../../assets/ui/content/editor.js), [App/Modules/Social/assets/status/feed-loader.js](../../App/Modules/Social/assets/status/feed-loader.js), [App/Modules/Social/assets/status/form-context.js](../../App/Modules/Social/assets/status/form-context.js), [assets/ui/content/media.js](../../assets/ui/content/media.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js), [assets/ui/content/translation.js](../../assets/ui/content/translation.js) | /admin/bots, public |
-| [App/Modules/Social/assets/status/media-navigation.js](../../App/Modules/Social/assets/status/media-navigation.js) | [assets/ui/content/media.js](../../assets/ui/content/media.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/users/following.js](../../App/Modules/Social/assets/users/following.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/core/i18n.js](../../assets/core/i18n.js), [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
+| [App/Core/Tasks/assets/controller.js](../../App/Core/Tasks/assets/controller.js) | [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js) | přes importy / společný runtime |
+| [App/Core/Tasks/assets/index.js](../../App/Core/Tasks/assets/index.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Tasks/assets/controller.js](../../App/Core/Tasks/assets/controller.js), [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js) | /admin/cron, /admin/site-health |
+| [App/Core/Ui/assets/admin/index.js](../../App/Core/Ui/assets/admin/index.js) | [App/Core/Ui/assets/admin/navigation.js](../../App/Core/Ui/assets/admin/navigation.js), [App/Core/Ui/assets/admin-resources.js](../../App/Core/Ui/assets/admin-resources.js) | admin |
+| [App/Core/Ui/assets/admin/module-packages.js](../../App/Core/Ui/assets/admin/module-packages.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js) | /admin/modules |
+| [App/Core/Ui/assets/admin/navigation.js](../../App/Core/Ui/assets/admin/navigation.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/admin-resources.js](../../App/Core/Ui/assets/admin-resources.js) | [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/filters.js](../../App/Core/Ui/assets/filters.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js), [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/ajax-bindings.js](../../App/Core/Ui/assets/ajax-bindings.js) | [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js), [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/confirm-actions.js](../../App/Core/Ui/assets/confirm-actions.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | access, admin, public |
+| [App/Core/Ui/assets/analytics.js](../../App/Core/Ui/assets/analytics.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/avatar-rendering.js](../../App/Core/Ui/assets/avatar-rendering.js) | [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/bootstrap.js](../../App/Core/Ui/assets/bootstrap.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/cache-inspection.js](../../App/Core/Ui/assets/cache-inspection.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js) | /admin/cache |
+| [App/Core/Ui/assets/code-copy.js](../../App/Core/Ui/assets/code-copy.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/icons.js](../../App/Core/Ui/assets/runtime/icons.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | * |
+| [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js) | [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/icons.js](../../App/Core/Ui/assets/runtime/icons.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/confirm-actions.js](../../App/Core/Ui/assets/confirm-actions.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js) | access, admin, public |
+| [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/dashboard-stats.js](../../App/Core/Ui/assets/dashboard-stats.js) | [App/Core/Ui/assets/ajax-bindings.js](../../App/Core/Ui/assets/ajax-bindings.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js) | /admin |
+| [App/Core/Ui/assets/dialog-history.js](../../App/Core/Ui/assets/dialog-history.js) | [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/tabs.js](../../App/Core/Ui/assets/tabs.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js) | [App/Core/Ui/assets/dialog-history.js](../../App/Core/Ui/assets/dialog-history.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/icons.js](../../App/Core/Ui/assets/runtime/icons.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/document-navigation.js](../../App/Core/Ui/assets/document-navigation.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/filters.js](../../App/Core/Ui/assets/filters.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/popovers.js](../../App/Core/Ui/assets/popovers.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/form-constraints.js](../../App/Core/Ui/assets/form-constraints.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js), [App/Core/Ui/assets/tabs.js](../../App/Core/Ui/assets/tabs.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/global-search.js](../../App/Core/Ui/assets/global-search.js) | [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/avatar-rendering.js](../../App/Core/Ui/assets/avatar-rendering.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/popovers.js](../../App/Core/Ui/assets/popovers.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/image-placeholders.js](../../App/Core/Ui/assets/image-placeholders.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | * |
+| [App/Core/Ui/assets/image-uploads.js](../../App/Core/Ui/assets/image-uploads.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/language-suggestion.js](../../App/Core/Ui/assets/language-suggestion.js) | [App/Core/Ui/assets/popovers.js](../../App/Core/Ui/assets/popovers.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js) | [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/popovers.js](../../App/Core/Ui/assets/popovers.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | * |
+| [App/Core/Ui/assets/public.js](../../App/Core/Ui/assets/public.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/analytics.js](../../App/Core/Ui/assets/analytics.js), [App/Core/Ui/assets/language-suggestion.js](../../App/Core/Ui/assets/language-suggestion.js), [App/Core/Ui/assets/global-search.js](../../App/Core/Ui/assets/global-search.js) | /search/all, public |
+| [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js) | [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/urls.js](../../App/Core/Ui/assets/runtime/urls.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/icons.js](../../App/Core/Ui/assets/runtime/icons.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js) | [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js) | access, admin, public |
+| [App/Core/Ui/assets/runtime/deferred.js](../../App/Core/Ui/assets/runtime/deferred.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js) | [App/Core/Ui/assets/runtime/urls.js](../../App/Core/Ui/assets/runtime/urls.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js) |  | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/icons.js](../../App/Core/Ui/assets/runtime/icons.js) |  | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) |  | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js) | [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/page-navigation.js](../../App/Core/Ui/assets/runtime/page-navigation.js) | [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Core/Ui/assets/runtime/urls.js](../../App/Core/Ui/assets/runtime/urls.js) |  | přes importy / společný runtime |
+| [App/Core/Ui/assets/tabs.js](../../App/Core/Ui/assets/tabs.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | * |
+| [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/icons.js](../../App/Core/Ui/assets/runtime/icons.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | * |
+| [App/Core/Ui/assets/tooltips.js](../../App/Core/Ui/assets/tooltips.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | * |
+| [App/Core/Updates/assets/index.js](../../App/Core/Updates/assets/index.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js) | /admin/updates |
+| [App/Modules/Social/assets/bots/controller.js](../../App/Modules/Social/assets/bots/controller.js) | [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/avatar-rendering.js](../../App/Core/Ui/assets/avatar-rendering.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/filters.js](../../App/Core/Ui/assets/filters.js), [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js), [App/Modules/Social/assets/bots/source-preview.js](../../App/Modules/Social/assets/bots/source-preview.js), [App/Modules/Social/assets/bots/workspace.js](../../App/Modules/Social/assets/bots/workspace.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/bots/index.js](../../App/Modules/Social/assets/bots/index.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Modules/Social/assets/bots/controller.js](../../App/Modules/Social/assets/bots/controller.js), [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js) | /admin/bots |
+| [App/Modules/Social/assets/bots/source-preview.js](../../App/Modules/Social/assets/bots/source-preview.js) | [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/bots/workspace.js](../../App/Modules/Social/assets/bots/workspace.js) | [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/filters.js](../../App/Core/Ui/assets/filters.js), [App/Core/Ui/assets/tabs.js](../../App/Core/Ui/assets/tabs.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/content/comments.js](../../App/Modules/Social/assets/content/comments.js) | [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Modules/Social/assets/content/runtime.js](../../App/Modules/Social/assets/content/runtime.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/content/discussion.js](../../App/Modules/Social/assets/content/discussion.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Modules/Social/assets/content/comments.js](../../App/Modules/Social/assets/content/comments.js), [App/Modules/Social/assets/content/editor-entry.js](../../App/Modules/Social/assets/content/editor-entry.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/content/editor-entry.js](../../App/Modules/Social/assets/content/editor-entry.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Modules/Social/assets/content/editor.js](../../App/Modules/Social/assets/content/editor.js), [App/Modules/Social/assets/content/media.js](../../App/Modules/Social/assets/content/media.js) | /admin/bots |
+| [App/Modules/Social/assets/content/editor.js](../../App/Modules/Social/assets/content/editor.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Modules/Social/assets/content/runtime.js](../../App/Modules/Social/assets/content/runtime.js), [App/Core/Ui/assets/avatar-rendering.js](../../App/Core/Ui/assets/avatar-rendering.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/content/index.js](../../App/Modules/Social/assets/content/index.js) | [App/Modules/Social/assets/content/presentation.js](../../App/Modules/Social/assets/content/presentation.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/content/media-preview.js](../../App/Modules/Social/assets/content/media-preview.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Modules/Social/assets/content/media.js](../../App/Modules/Social/assets/content/media.js) | /admin/moderation |
+| [App/Modules/Social/assets/content/media.js](../../App/Modules/Social/assets/content/media.js) | [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Modules/Social/assets/content/runtime.js](../../App/Modules/Social/assets/content/runtime.js), [App/Core/Ui/assets/image-uploads.js](../../App/Core/Ui/assets/image-uploads.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/content/presentation.js](../../App/Modules/Social/assets/content/presentation.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Modules/Social/assets/content/media.js](../../App/Modules/Social/assets/content/media.js), [App/Modules/Social/assets/content/translation.js](../../App/Modules/Social/assets/content/translation.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/content/runtime.js](../../App/Modules/Social/assets/content/runtime.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/content/translation.js](../../App/Modules/Social/assets/content/translation.js) | [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/icons.js](../../App/Core/Ui/assets/runtime/icons.js), [App/Modules/Social/assets/content/runtime.js](../../App/Modules/Social/assets/content/runtime.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/embed/embed-frame.js](../../App/Modules/Social/assets/embed/embed-frame.js) |  | standalone |
+| [App/Modules/Social/assets/embed/embed.js](../../App/Modules/Social/assets/embed/embed.js) |  | standalone |
+| [App/Modules/Social/assets/moderation/controller.js](../../App/Modules/Social/assets/moderation/controller.js) | [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/moderation/index.js](../../App/Modules/Social/assets/moderation/index.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Modules/Social/assets/moderation/controller.js](../../App/Modules/Social/assets/moderation/controller.js), [App/Core/Ui/assets/list-navigation.js](../../App/Core/Ui/assets/list-navigation.js) | /admin/moderation |
+| [App/Modules/Social/assets/site/index.js](../../App/Modules/Social/assets/site/index.js) | [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/analytics.js](../../App/Core/Ui/assets/analytics.js), [App/Modules/Social/assets/site/sidebar-data.js](../../App/Modules/Social/assets/site/sidebar-data.js), [App/Modules/Social/assets/site/sticky-sidebars.js](../../App/Modules/Social/assets/site/sticky-sidebars.js), [App/Modules/Social/assets/site/views.js](../../App/Modules/Social/assets/site/views.js), [App/Modules/Social/assets/site/page-navigation.js](../../App/Modules/Social/assets/site/page-navigation.js), [App/Core/Ui/assets/language-suggestion.js](../../App/Core/Ui/assets/language-suggestion.js) | /, /author, /social, /status, /tag |
+| [App/Modules/Social/assets/site/page-navigation.js](../../App/Modules/Social/assets/site/page-navigation.js) | [App/Core/Ui/assets/document-navigation.js](../../App/Core/Ui/assets/document-navigation.js), [App/Core/Ui/assets/runtime/page-navigation.js](../../App/Core/Ui/assets/runtime/page-navigation.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/site/sidebar-data.js](../../App/Modules/Social/assets/site/sidebar-data.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Modules/Social/assets/site/views.js](../../App/Modules/Social/assets/site/views.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/site/sticky-sidebars.js](../../App/Modules/Social/assets/site/sticky-sidebars.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/site/views.js](../../App/Modules/Social/assets/site/views.js) | [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/status/comment-pagination.js](../../App/Modules/Social/assets/status/comment-pagination.js) | [App/Modules/Social/assets/status/comments.js](../../App/Modules/Social/assets/status/comments.js) | /, /author, /search/all, /social, /status, /tag |
+| [App/Modules/Social/assets/status/comments.js](../../App/Modules/Social/assets/status/comments.js) | [App/Modules/Social/assets/content/comments.js](../../App/Modules/Social/assets/content/comments.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | [App/Modules/Social/assets/content/comments.js](../../App/Modules/Social/assets/content/comments.js), [App/Modules/Social/assets/content/runtime.js](../../App/Modules/Social/assets/content/runtime.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/status/dialog-controller.js](../../App/Modules/Social/assets/status/dialog-controller.js) | [App/Modules/Social/assets/content/comments.js](../../App/Modules/Social/assets/content/comments.js), [App/Modules/Social/assets/content/runtime.js](../../App/Modules/Social/assets/content/runtime.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/dates.js](../../App/Core/Ui/assets/runtime/dates.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | /, /admin/bots, /author, /search/all, /social, /status, /tag |
+| [App/Modules/Social/assets/status/feed-loader.js](../../App/Modules/Social/assets/status/feed-loader.js) | [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js), [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/status/form-actions.js](../../App/Modules/Social/assets/status/form-actions.js) | [App/Core/Ui/assets/content-updates.js](../../App/Core/Ui/assets/content-updates.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Core/Ui/assets/runtime/lifecycle.js](../../App/Core/Ui/assets/runtime/lifecycle.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Modules/Social/assets/status/comments.js](../../App/Modules/Social/assets/status/comments.js), [App/Modules/Social/assets/status/feed-loader.js](../../App/Modules/Social/assets/status/feed-loader.js), [App/Modules/Social/assets/status/form-context.js](../../App/Modules/Social/assets/status/form-context.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js), [App/Core/Ui/assets/confirm-actions.js](../../App/Core/Ui/assets/confirm-actions.js), [App/Core/Ui/assets/dialogs.js](../../App/Core/Ui/assets/dialogs.js), [App/Core/Ui/assets/form-state.js](../../App/Core/Ui/assets/form-state.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/status/form-context.js](../../App/Modules/Social/assets/status/form-context.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/status/index.js](../../App/Modules/Social/assets/status/index.js) | [App/Modules/Social/assets/content/index.js](../../App/Modules/Social/assets/content/index.js), [App/Modules/Social/assets/status/media-navigation.js](../../App/Modules/Social/assets/status/media-navigation.js), [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/modules.js](../../App/Core/Ui/assets/runtime/modules.js), [App/Core/Ui/assets/runtime/navigation.js](../../App/Core/Ui/assets/runtime/navigation.js), [App/Modules/Social/assets/status/form-actions.js](../../App/Modules/Social/assets/status/form-actions.js), [App/Modules/Social/assets/status/comments.js](../../App/Modules/Social/assets/status/comments.js), [App/Modules/Social/assets/status/feed-loader.js](../../App/Modules/Social/assets/status/feed-loader.js), [App/Modules/Social/assets/status/form-context.js](../../App/Modules/Social/assets/status/form-context.js), [App/Modules/Social/assets/content/media.js](../../App/Modules/Social/assets/content/media.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js), [App/Modules/Social/assets/content/translation.js](../../App/Modules/Social/assets/content/translation.js) | /, /admin/bots, /author, /search/all, /social, /status, /tag |
+| [App/Modules/Social/assets/status/media-navigation.js](../../App/Modules/Social/assets/status/media-navigation.js) | [App/Modules/Social/assets/content/media.js](../../App/Modules/Social/assets/content/media.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/component-renderer.js](../../App/Core/Ui/assets/runtime/component-renderer.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js) | přes importy / společný runtime |
+| [App/Modules/Social/assets/users/following.js](../../App/Modules/Social/assets/users/following.js) | [App/Core/Ui/assets/runtime/dom.js](../../App/Core/Ui/assets/runtime/dom.js), [App/Core/Ui/assets/runtime/api-client.js](../../App/Core/Ui/assets/runtime/api-client.js), [App/Core/Ui/assets/runtime/request-lifecycle.js](../../App/Core/Ui/assets/runtime/request-lifecycle.js), [App/Core/Ui/assets/runtime/i18n.js](../../App/Core/Ui/assets/runtime/i18n.js), [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js), [App/Core/Ui/assets/component-builders.js](../../App/Core/Ui/assets/component-builders.js), [App/Core/Ui/assets/form-requests.js](../../App/Core/Ui/assets/form-requests.js), [App/Core/Ui/assets/toasts.js](../../App/Core/Ui/assets/toasts.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/users/index.js](../../App/Modules/Social/assets/users/index.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js), [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/users/public.js](../../App/Modules/Social/assets/users/public.js) | [App/Modules/Social/assets/users/index.js](../../App/Modules/Social/assets/users/index.js), [App/Modules/Social/assets/users/following.js](../../App/Modules/Social/assets/users/following.js) | public |
-| [assets/bootstrap.js](../../assets/bootstrap.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/modules.js](../../assets/core/modules.js), [assets/core/navigation.js](../../assets/core/navigation.js) | přes importy / společný runtime |
-| [assets/core/api-client.js](../../assets/core/api-client.js) | [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/urls.js](../../assets/core/urls.js) | přes importy / společný runtime |
-| [assets/core/component-renderer.js](../../assets/core/component-renderer.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/icons.js](../../assets/core/icons.js) | přes importy / společný runtime |
-| [assets/core/dates.js](../../assets/core/dates.js) | [assets/core/i18n.js](../../assets/core/i18n.js) | admin, public |
-| [assets/core/dom.js](../../assets/core/dom.js) | [assets/core/urls.js](../../assets/core/urls.js) | přes importy / společný runtime |
-| [assets/core/i18n.js](../../assets/core/i18n.js) |  | přes importy / společný runtime |
-| [assets/core/icons.js](../../assets/core/icons.js) |  | přes importy / společný runtime |
-| [assets/core/lifecycle.js](../../assets/core/lifecycle.js) |  | přes importy / společný runtime |
-| [assets/core/modules.js](../../assets/core/modules.js) |  | přes importy / společný runtime |
-| [assets/core/navigation.js](../../assets/core/navigation.js) | [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [assets/core/page-navigation.js](../../assets/core/page-navigation.js) | [assets/core/navigation.js](../../assets/core/navigation.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [assets/core/urls.js](../../assets/core/urls.js) |  | přes importy / společný runtime |
-| [assets/embed-frame.js](../../assets/embed-frame.js) |  | standalone |
-| [assets/embed.js](../../assets/embed.js) |  | standalone |
-| [assets/modules/admin/index.js](../../assets/modules/admin/index.js) | [assets/modules/admin/navigation.js](../../assets/modules/admin/navigation.js), [assets/ui/admin-resources.js](../../assets/ui/admin-resources.js) | admin |
-| [assets/modules/admin/module-packages.js](../../assets/modules/admin/module-packages.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | /admin/modules |
-| [assets/modules/admin/navigation.js](../../assets/modules/admin/navigation.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [assets/ui/admin-resources.js](../../assets/ui/admin-resources.js) | [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/modules.js](../../assets/core/modules.js) | přes importy / společný runtime |
-| [assets/ui/ajax-bindings.js](../../assets/ui/ajax-bindings.js) | [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/modules.js](../../assets/core/modules.js), [assets/core/navigation.js](../../assets/core/navigation.js), [assets/ui/confirm-actions.js](../../assets/ui/confirm-actions.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-state.js](../../assets/ui/form-state.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | admin, public |
-| [assets/ui/analytics.js](../../assets/ui/analytics.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js) | [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | přes importy / společný runtime |
-| [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/icons.js](../../assets/core/icons.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/filters.js](../../assets/ui/filters.js) | přes importy / společný runtime |
-| [assets/ui/confirm-actions.js](../../assets/ui/confirm-actions.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js) | admin, public |
-| [assets/ui/content/comments.js](../../assets/ui/content/comments.js) | [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/ui/content/editor.js](../../assets/ui/content/editor.js), [assets/ui/content/runtime.js](../../assets/ui/content/runtime.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js) | přes importy / společný runtime |
-| [assets/ui/content/discussion.js](../../assets/ui/content/discussion.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/ui/content/comments.js](../../assets/ui/content/comments.js), [assets/ui/content/editor-entry.js](../../assets/ui/content/editor-entry.js) | přes importy / společný runtime |
-| [assets/ui/content/editor-entry.js](../../assets/ui/content/editor-entry.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/content/editor.js](../../assets/ui/content/editor.js), [assets/ui/content/media.js](../../assets/ui/content/media.js) | přes importy / společný runtime |
-| [assets/ui/content/editor.js](../../assets/ui/content/editor.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/navigation.js](../../assets/core/navigation.js), [assets/ui/content/runtime.js](../../assets/ui/content/runtime.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js) | přes importy / společný runtime |
-| [assets/ui/content/index.js](../../assets/ui/content/index.js) | [assets/ui/content/presentation.js](../../assets/ui/content/presentation.js), [assets/ui/content/editor-entry.js](../../assets/ui/content/editor-entry.js) | přes importy / společný runtime |
-| [assets/ui/content/media-preview.js](../../assets/ui/content/media-preview.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/content/media.js](../../assets/ui/content/media.js) | /admin/moderation |
-| [assets/ui/content/media.js](../../assets/ui/content/media.js) | [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/navigation.js](../../assets/core/navigation.js), [assets/ui/content/runtime.js](../../assets/ui/content/runtime.js), [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [assets/ui/content/presentation.js](../../assets/ui/content/presentation.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/content/media.js](../../assets/ui/content/media.js), [assets/ui/content/translation.js](../../assets/ui/content/translation.js) | přes importy / společný runtime |
-| [assets/ui/content/runtime.js](../../assets/ui/content/runtime.js) | [assets/core/dom.js](../../assets/core/dom.js) | přes importy / společný runtime |
-| [assets/ui/content/translation.js](../../assets/ui/content/translation.js) | [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/icons.js](../../assets/core/icons.js), [assets/ui/content/runtime.js](../../assets/ui/content/runtime.js) | přes importy / společný runtime |
-| [assets/ui/content-updates.js](../../assets/ui/content-updates.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [assets/ui/dialog-history.js](../../assets/ui/dialog-history.js) | [assets/core/navigation.js](../../assets/core/navigation.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/tabs.js](../../assets/ui/tabs.js) | přes importy / společný runtime |
-| [assets/ui/dialogs.js](../../assets/ui/dialogs.js) | [assets/ui/dialog-history.js](../../assets/ui/dialog-history.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/icons.js](../../assets/core/icons.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/form-state.js](../../assets/ui/form-state.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | přes importy / společný runtime |
-| [assets/ui/document-navigation.js](../../assets/ui/document-navigation.js) | [assets/core/dom.js](../../assets/core/dom.js) | přes importy / společný runtime |
-| [assets/ui/filters.js](../../assets/ui/filters.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/ui/popovers.js](../../assets/ui/popovers.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | přes importy / společný runtime |
-| [assets/ui/form-constraints.js](../../assets/ui/form-constraints.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/form-state.js](../../assets/ui/form-state.js) | přes importy / společný runtime |
-| [assets/ui/form-requests.js](../../assets/ui/form-requests.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js) | přes importy / společný runtime |
-| [assets/ui/form-state.js](../../assets/ui/form-state.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/navigation.js](../../assets/core/navigation.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/tabs.js](../../assets/ui/tabs.js) | přes importy / společný runtime |
-| [assets/ui/global-search.js](../../assets/ui/global-search.js) | [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/navigation.js](../../assets/core/navigation.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/popovers.js](../../assets/ui/popovers.js) | přes importy / společný runtime |
-| [assets/ui/image-placeholders.js](../../assets/ui/image-placeholders.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
-| [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [assets/ui/language-suggestion.js](../../assets/ui/language-suggestion.js) | [assets/ui/popovers.js](../../assets/ui/popovers.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | [assets/core/navigation.js](../../assets/core/navigation.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/request-lifecycle.js](../../assets/core/request-lifecycle.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | přes importy / společný runtime |
-| [assets/ui/popovers.js](../../assets/ui/popovers.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
-| [assets/ui/public.js](../../assets/ui/public.js) | [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/analytics.js](../../assets/ui/analytics.js), [assets/ui/language-suggestion.js](../../assets/ui/language-suggestion.js), [assets/ui/global-search.js](../../assets/ui/global-search.js) | public |
-| [assets/ui/tabs.js](../../assets/ui/tabs.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
-| [assets/ui/toasts.js](../../assets/ui/toasts.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/icons.js](../../assets/core/icons.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
-| [assets/ui/tooltips.js](../../assets/ui/tooltips.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js) | * |
+| [App/Modules/Social/assets/users/public.js](../../App/Modules/Social/assets/users/public.js) | [App/Modules/Social/assets/users/index.js](../../App/Modules/Social/assets/users/index.js), [App/Modules/Social/assets/users/following.js](../../App/Modules/Social/assets/users/following.js) | /, /author, /social, /status, /tag |
 
 ## PHP partialy
 
-- [App/Core/Ui/templates/parts/flashes.php](../../App/Core/Ui/templates/parts/flashes.php)
-- [App/Modules/Social/templates/parts/site/sidebar-slot.php](../../App/Modules/Social/templates/parts/site/sidebar-slot.php)
 
 ## PHP renderery
 
@@ -340,365 +345,364 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 - [App/Core/Notifications/Views.php](../../App/Core/Notifications/Views.php): `menu`, `items`
 - [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `tc_admin_options`, `tc_admin_datetime`, `tc_admin_datetime_iso`, `admin_user_statuses`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_per_page_view_data`, `admin_pagination_view_data`
 - [App/Core/Updates/Views.php](../../App/Core/Updates/Views.php): `model`
-- [App/Modules/Social/src/Presentation/Views.php](../../App/Modules/Social/src/Presentation/Views.php): `dashboard`, `sidebar`
-- [App/Modules/Social/src/Profiles/Views.php](../../App/Modules/Social/src/Profiles/Views.php): `followingProfile`
 
 ## Všechny PHP šablony
 
 - [App/Core/Ui/Admin/templates/shell.php](../../App/Core/Ui/Admin/templates/shell.php)
+- [App/Core/Ui/templates/access-shell.php](../../App/Core/Ui/templates/access-shell.php)
 - [App/Core/Ui/templates/document.php](../../App/Core/Ui/templates/document.php)
+- [App/Core/Ui/templates/error.php](../../App/Core/Ui/templates/error.php)
 - [App/Core/Ui/templates/errorFallback.php](../../App/Core/Ui/templates/errorFallback.php)
 - [App/Core/Ui/templates/head.php](../../App/Core/Ui/templates/head.php)
-- [App/Core/Ui/templates/notFound.php](../../App/Core/Ui/templates/notFound.php)
-- [App/Core/Ui/templates/parts/flashes.php](../../App/Core/Ui/templates/parts/flashes.php)
+- [App/Core/Ui/templates/public-footer.php](../../App/Core/Ui/templates/public-footer.php)
 - [App/Core/Ui/templates/public-shell.php](../../App/Core/Ui/templates/public-shell.php)
-- [App/Modules/Social/templates/parts/site/sidebar-slot.php](../../App/Modules/Social/templates/parts/site/sidebar-slot.php)
-- [App/Modules/Social/templates/site/public.php](../../App/Modules/Social/templates/site/public.php)
 - [App/Modules/Social/templates/status/embed.php](../../App/Modules/Social/templates/status/embed.php)
 
 ## CSS mimo hlavní importní graf
 
-- [App/Modules/Blog/assets/styles/blog.css](../../App/Modules/Blog/assets/styles/blog.css): `blog-article`, `blog-body`, `blog-body-input`, `blog-excerpt`, `blog-page`, `blog-title`
-- [assets/embed.css](../../assets/embed.css): `embed-audio-summary`, `embed-author`, `embed-author-link`, `embed-avatar`, `embed-avatar-initial`, `embed-body`, `embed-card`, `embed-image`, `embed-link`, `embed-link-copy`, `embed-link-image`, `embed-play`, `embed-play-icon`, `embed-player`, `embed-provider`, `share-code`, `share-heading`, `share-page`, `status-audio-player`
+- [App/Modules/Social/assets/embed/embed.css](../../App/Modules/Social/assets/embed/embed.css): `embed-audio-summary`, `embed-author`, `embed-author-link`, `embed-avatar`, `embed-avatar-initial`, `embed-body`, `embed-card`, `embed-image`, `embed-link`, `embed-link-copy`, `embed-link-image`, `embed-play`, `embed-play-icon`, `embed-player`, `embed-provider`, `share-code`, `share-heading`, `share-page`, `status-audio-player`
 
 ## Vlastnictví a načítání CSS v pořadí kaskády
 
 | Soubor | Manifest | Trasy |
 | --- | --- | --- |
-| [assets/ui/styles/tokens.css](../../assets/ui/styles/tokens.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/layout.css](../../assets/ui/styles/layout.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/cards.css](../../assets/ui/styles/cards.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/check-card.css](../../assets/ui/styles/check-card.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/visibility.css](../../assets/ui/styles/visibility.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) | [assets/modules/admin/module.json](../../assets/modules/admin/module.json) | admin |
-| [assets/ui/styles/field-inline.css](../../assets/ui/styles/field-inline.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
+| [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | public, admin, /account |
+| [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | public, admin, /account |
+| [App/Core/Notifications/assets/styles/notification-badge-mobile.css](../../App/Core/Notifications/assets/styles/notification-badge-mobile.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
+| [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
+| [App/Core/Notifications/assets/styles/notification-nav.css](../../App/Core/Notifications/assets/styles/notification-nav.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
+| [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
+| [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
 | [App/Core/Security/assets/styles/captcha.css](../../App/Core/Security/assets/styles/captcha.css) | [App/Core/Security/assets/module.json](../../App/Core/Security/assets/module.json) | public |
-| [assets/ui/styles/alerts.css](../../assets/ui/styles/alerts.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/badges.css](../../assets/ui/styles/badges.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/filter-chips.css](../../assets/ui/styles/filter-chips.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/badge-danger.css](../../assets/ui/styles/badge-danger.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/tables.css](../../assets/ui/styles/tables.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/content-images.css](../../assets/ui/styles/content-images.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/status-indicators.css](../../assets/ui/styles/status-indicators.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/empty-state.css](../../assets/ui/styles/empty-state.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/filter-menu.css](../../assets/ui/styles/filter-menu.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/content-images-contain.css](../../assets/ui/styles/content-images-contain.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/status-indicator-warning.css](../../assets/ui/styles/status-indicator-warning.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/tables-mobile.css](../../assets/ui/styles/tables-mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/check-line.css](../../assets/ui/styles/check-line.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Core/Notifications/assets/styles/notification-nav.css](../../App/Core/Notifications/assets/styles/notification-nav.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/users/styles/profile-navigation.css](../../App/Modules/Social/assets/users/styles/profile-navigation.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public |
-| [assets/ui/styles/global-search.css](../../assets/ui/styles/global-search.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
-| [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
-| [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/feed-switch.css](../../App/Modules/Social/assets/status/styles/feed-switch.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/site/styles/public-layout.css](../../App/Modules/Social/assets/site/styles/public-layout.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/home-feed-switch-links.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-links.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public |
-| [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public |
-| [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/composer-loading.css](../../App/Modules/Social/assets/status/styles/composer-loading.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-header.css](../../App/Modules/Social/assets/status/styles/status-header.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-header.css](../../App/Modules/Social/assets/status/styles/status-header.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [App/Modules/Social/assets/status/styles/author-meta.css](../../App/Modules/Social/assets/status/styles/author-meta.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
+| [App/Core/Ui/assets/admin/styles/admin-content-mobile.css](../../App/Core/Ui/assets/admin/styles/admin-content-mobile.css) | [App/Core/Ui/assets/admin/module.json](../../App/Core/Ui/assets/admin/module.json) | admin |
+| [App/Core/Ui/assets/admin/styles/admin-lists-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-lists-desktop.css) | [App/Core/Ui/assets/admin/module.json](../../App/Core/Ui/assets/admin/module.json) | admin |
+| [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css) | [App/Core/Ui/assets/admin/module.json](../../App/Core/Ui/assets/admin/module.json) | admin |
+| [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) | [App/Core/Ui/assets/admin/module.json](../../App/Core/Ui/assets/admin/module.json) | admin |
+| [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css) | [App/Core/Ui/assets/admin/module.json](../../App/Core/Ui/assets/admin/module.json) | admin |
+| [App/Core/Ui/assets/admin/styles/admin-shell.css](../../App/Core/Ui/assets/admin/styles/admin-shell.css) | [App/Core/Ui/assets/admin/module.json](../../App/Core/Ui/assets/admin/module.json) | admin |
+| [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/avatar-sizes.css](../../App/Core/Ui/assets/styles/avatar-sizes.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/avatar.css](../../App/Core/Ui/assets/styles/avatar.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/badge-danger.css](../../App/Core/Ui/assets/styles/badge-danger.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/brand-logo.css](../../App/Core/Ui/assets/styles/brand-logo.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/check-card.css](../../App/Core/Ui/assets/styles/check-card.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/check-line.css](../../App/Core/Ui/assets/styles/check-line.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/code-block.css](../../App/Core/Ui/assets/styles/code-block.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/containers-mobile.css](../../App/Core/Ui/assets/styles/containers-mobile.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/content-images-contain.css](../../App/Core/Ui/assets/styles/content-images-contain.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/content-images.css](../../App/Core/Ui/assets/styles/content-images.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/context-menu-actions.css](../../App/Core/Ui/assets/styles/context-menu-actions.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/context-menu-trigger.css](../../App/Core/Ui/assets/styles/context-menu-trigger.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/cookie-consent-mobile.css](../../App/Core/Ui/assets/styles/cookie-consent-mobile.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
+| [App/Core/Ui/assets/styles/cookie-consent.css](../../App/Core/Ui/assets/styles/cookie-consent.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
+| [App/Core/Ui/assets/styles/dashboard.css](../../App/Core/Ui/assets/styles/dashboard.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | /admin |
+| [App/Core/Ui/assets/styles/disclosure.css](../../App/Core/Ui/assets/styles/disclosure.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/empty-state.css](../../App/Core/Ui/assets/styles/empty-state.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/field-inline-desktop.css](../../App/Core/Ui/assets/styles/field-inline-desktop.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/field-inline.css](../../App/Core/Ui/assets/styles/field-inline.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/filter-chips.css](../../App/Core/Ui/assets/styles/filter-chips.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | admin |
+| [App/Core/Ui/assets/styles/filter-menu.css](../../App/Core/Ui/assets/styles/filter-menu.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/global-search-controls.css](../../App/Core/Ui/assets/styles/global-search-controls.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
+| [App/Core/Ui/assets/styles/global-search-mobile.css](../../App/Core/Ui/assets/styles/global-search-mobile.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
+| [App/Core/Ui/assets/styles/global-search.css](../../App/Core/Ui/assets/styles/global-search.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
+| [App/Core/Ui/assets/styles/grid-desktop.css](../../App/Core/Ui/assets/styles/grid-desktop.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, admin |
+| [App/Core/Ui/assets/styles/information-pages.css](../../App/Core/Ui/assets/styles/information-pages.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | /privacy, /access/privacy |
+| [App/Core/Ui/assets/styles/input-icon.css](../../App/Core/Ui/assets/styles/input-icon.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
+| [App/Core/Ui/assets/styles/layout.css](../../App/Core/Ui/assets/styles/layout.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, admin |
+| [App/Core/Ui/assets/styles/loading.css](../../App/Core/Ui/assets/styles/loading.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css](../../App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/modal-confirm-buttons.css](../../App/Core/Ui/assets/styles/modal-confirm-buttons.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/modal.css](../../App/Core/Ui/assets/styles/modal.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/navbar-mobile.css](../../App/Core/Ui/assets/styles/navbar-mobile.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
+| [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, admin, /install |
+| [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | admin |
+| [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | admin |
+| [App/Core/Ui/assets/styles/popovers.css](../../App/Core/Ui/assets/styles/popovers.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/public-workspace.css](../../App/Core/Ui/assets/styles/public-workspace.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, admin |
+| [App/Core/Ui/assets/styles/reduced-motion.css](../../App/Core/Ui/assets/styles/reduced-motion.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/resource-text.css](../../App/Core/Ui/assets/styles/resource-text.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/result-list.css](../../App/Core/Ui/assets/styles/result-list.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, admin, /install |
+| [App/Core/Ui/assets/styles/section-desktop.css](../../App/Core/Ui/assets/styles/section-desktop.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/split-desktop.css](../../App/Core/Ui/assets/styles/split-desktop.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/status-indicator-warning.css](../../App/Core/Ui/assets/styles/status-indicator-warning.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/status-indicators.css](../../App/Core/Ui/assets/styles/status-indicators.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, admin |
+| [App/Core/Ui/assets/styles/tables-mobile.css](../../App/Core/Ui/assets/styles/tables-mobile.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | admin, /install |
+| [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | admin, /install |
+| [App/Core/Ui/assets/styles/tabs.css](../../App/Core/Ui/assets/styles/tabs.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, admin |
+| [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/tokens.css](../../App/Core/Ui/assets/styles/tokens.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/tooltip.css](../../App/Core/Ui/assets/styles/tooltip.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Core/Ui/assets/styles/visibility.css](../../App/Core/Ui/assets/styles/visibility.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
+| [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/discussion-mobile.css](../../App/Modules/Social/assets/content/styles/discussion-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/hashtags.css](../../App/Modules/Social/assets/content/styles/hashtags.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/mobile.css](../../App/Modules/Social/assets/content/styles/mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/mobile.css](../../App/Modules/Social/assets/content/styles/mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/mobile.css](../../App/Modules/Social/assets/content/styles/mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) |  |
+| [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/public-content-meta.css](../../App/Modules/Social/assets/site/styles/public-content-meta.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/public-layout-desktop.css](../../App/Modules/Social/assets/site/styles/public-layout-desktop.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/public-layout.css](../../App/Modules/Social/assets/site/styles/public-layout.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/public-list-header-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/public-sidebar-footer.css](../../App/Modules/Social/assets/site/styles/public-sidebar-footer.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/site/styles/sidebar-sticky.css](../../App/Modules/Social/assets/site/styles/sidebar-sticky.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/status/styles/author-meta.css](../../App/Modules/Social/assets/status/styles/author-meta.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
 | [App/Modules/Social/assets/status/styles/author-meta.css](../../App/Modules/Social/assets/status/styles/author-meta.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [App/Modules/Social/assets/status/styles/status-text.css](../../App/Modules/Social/assets/status/styles/status-text.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-text.css](../../App/Modules/Social/assets/status/styles/status-text.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [assets/ui/styles/hashtags.css](../../assets/ui/styles/hashtags.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [assets/ui/styles/inline-link-states.css](../../assets/ui/styles/inline-link-states.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [assets/ui/styles/popovers.css](../../assets/ui/styles/popovers.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | public, admin |
-| [App/Modules/Social/assets/status/styles/comment-menu.css](../../App/Modules/Social/assets/status/styles/comment-menu.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
+| [App/Modules/Social/assets/status/styles/comment-menu.css](../../App/Modules/Social/assets/status/styles/comment-menu.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
 | [App/Modules/Social/assets/status/styles/comment-menu.css](../../App/Modules/Social/assets/status/styles/comment-menu.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [assets/ui/styles/context-menu-trigger.css](../../assets/ui/styles/context-menu-trigger.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/status/styles/status-menu.css](../../App/Modules/Social/assets/status/styles/status-menu.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-menu.css](../../App/Modules/Social/assets/status/styles/status-menu.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [assets/ui/styles/context-menu-actions.css](../../assets/ui/styles/context-menu-actions.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
+| [App/Modules/Social/assets/status/styles/composer-loading.css](../../App/Modules/Social/assets/status/styles/composer-loading.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/embed-preview.css](../../App/Modules/Social/assets/status/styles/embed-preview.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/feed-switch-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/feed-switch.css](../../App/Modules/Social/assets/status/styles/feed-switch.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/home-feed-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/home-feed-switch-links.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-links.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
+| [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
+| [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
+| [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
 | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/bots |
 | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [assets/ui/styles/avatar.css](../../assets/ui/styles/avatar.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [assets/ui/styles/avatar-sizes.css](../../assets/ui/styles/avatar-sizes.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/users/styles/profile-avatar.css](../../App/Modules/Social/assets/users/styles/profile-avatar.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/ui/styles/code-block.css](../../assets/ui/styles/code-block.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/users/styles/profile-details.css](../../App/Modules/Social/assets/users/styles/profile-details.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | public, admin |
-| [App/Modules/Social/assets/site/styles/public-content-meta.css](../../App/Modules/Social/assets/site/styles/public-content-meta.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [App/Modules/Social/assets/site/styles/public-sidebar-footer.css](../../App/Modules/Social/assets/site/styles/public-sidebar-footer.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) | [assets/modules/admin/module.json](../../assets/modules/admin/module.json) | admin |
-| [assets/ui/styles/brand-logo.css](../../assets/ui/styles/brand-logo.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) | [assets/modules/admin/module.json](../../assets/modules/admin/module.json) | admin |
-| [assets/ui/styles/tabs.css](../../assets/ui/styles/tabs.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/modal.css](../../assets/ui/styles/modal.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/input-icon.css](../../assets/ui/styles/input-icon.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/modal-confirm-buttons.css](../../assets/ui/styles/modal-confirm-buttons.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/result-list.css](../../assets/ui/styles/result-list.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/cookie-consent.css](../../assets/ui/styles/cookie-consent.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
-| [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/mobile-inputs-and-dialogs.css](../../assets/ui/styles/mobile-inputs-and-dialogs.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/loading.css](../../assets/ui/styles/loading.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/ui/styles/navbar-mobile.css](../../assets/ui/styles/navbar-mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
-| [App/Core/Notifications/assets/styles/notification-badge-mobile.css](../../App/Core/Notifications/assets/styles/notification-badge-mobile.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public |
-| [assets/ui/styles/global-search-mobile.css](../../assets/ui/styles/global-search-mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
-| [assets/ui/styles/cards-mobile.css](../../assets/ui/styles/cards-mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/site/styles/public-list-header-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/feed-switch-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/home-feed-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/ui/content/styles/mobile.css](../../assets/ui/content/styles/mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [assets/ui/content/styles/mobile.css](../../assets/ui/content/styles/mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [assets/ui/content/styles/mobile.css](../../assets/ui/content/styles/mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [assets/ui/content/styles/discussion-mobile.css](../../assets/ui/content/styles/discussion-mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) |  |
-| [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
-| [App/Modules/Social/assets/users/styles/following-mobile.css](../../App/Modules/Social/assets/users/styles/following-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/ui/styles/cookie-consent-mobile.css](../../assets/ui/styles/cookie-consent-mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
-| [assets/ui/styles/containers-mobile.css](../../assets/ui/styles/containers-mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/status/styles/status-feed-mobile.css](../../App/Modules/Social/assets/status/styles/status-feed-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/modules/admin/styles/admin-content-mobile.css](../../assets/modules/admin/styles/admin-content-mobile.css) | [assets/modules/admin/module.json](../../assets/modules/admin/module.json) | admin |
-| [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/ui/styles/section-desktop.css](../../assets/ui/styles/section-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/pagination-desktop.css](../../assets/ui/styles/pagination-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/split-desktop.css](../../assets/ui/styles/split-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/modules/admin/styles/admin-lists-desktop.css](../../assets/modules/admin/styles/admin-lists-desktop.css) | [assets/modules/admin/module.json](../../assets/modules/admin/module.json) | admin |
-| [assets/ui/styles/field-inline-desktop.css](../../assets/ui/styles/field-inline-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/modal-confirm-mobile.css](../../assets/ui/styles/modal-confirm-mobile.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css) | [assets/modules/admin/module.json](../../assets/modules/admin/module.json) | admin |
-| [assets/ui/styles/grid-desktop.css](../../assets/ui/styles/grid-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Modules/Social/assets/users/styles/profile-layout-desktop.css](../../App/Modules/Social/assets/users/styles/profile-layout-desktop.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/site/styles/sidebar-sticky.css](../../App/Modules/Social/assets/site/styles/sidebar-sticky.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/users/styles/profile-main-desktop.css](../../App/Modules/Social/assets/users/styles/profile-main-desktop.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/site/styles/public-layout-desktop.css](../../App/Modules/Social/assets/site/styles/public-layout-desktop.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/ui/styles/modal-workspace-desktop.css](../../assets/ui/styles/modal-workspace-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/reduced-motion.css](../../assets/ui/styles/reduced-motion.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/resource-text.css](../../assets/ui/styles/resource-text.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/language.css](../../assets/ui/styles/language.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
-| [App/Modules/Social/assets/status/styles/embed-preview.css](../../App/Modules/Social/assets/status/styles/embed-preview.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [assets/ui/styles/tooltip.css](../../assets/ui/styles/tooltip.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/load-more.css](../../assets/ui/styles/load-more.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [assets/ui/styles/information-pages.css](../../assets/ui/styles/information-pages.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
+| [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-feed-mobile.css](../../App/Modules/Social/assets/status/styles/status-feed-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-header.css](../../App/Modules/Social/assets/status/styles/status-header.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-header.css](../../App/Modules/Social/assets/status/styles/status-header.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
+| [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
+| [App/Modules/Social/assets/status/styles/status-menu.css](../../App/Modules/Social/assets/status/styles/status-menu.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-menu.css](../../App/Modules/Social/assets/status/styles/status-menu.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
+| [App/Modules/Social/assets/status/styles/status-text.css](../../App/Modules/Social/assets/status/styles/status-text.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag, /search/all |
+| [App/Modules/Social/assets/status/styles/status-text.css](../../App/Modules/Social/assets/status/styles/status-text.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
+| [App/Modules/Social/assets/users/styles/following-mobile.css](../../App/Modules/Social/assets/users/styles/following-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/users/styles/profile-avatar.css](../../App/Modules/Social/assets/users/styles/profile-avatar.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/users/styles/profile-details.css](../../App/Modules/Social/assets/users/styles/profile-details.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/users/styles/profile-layout-desktop.css](../../App/Modules/Social/assets/users/styles/profile-layout-desktop.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/users/styles/profile-main-desktop.css](../../App/Modules/Social/assets/users/styles/profile-main-desktop.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
+| [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /, /social, /status, /author, /tag |
 
 ## CSS třídy
 
-Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů není počet duplicit; zahrnuje stavy a breakpointy.
+Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů není počet duplicit; zahrnuje stavy a breakpointy.
 
 | Třída | Soubory |
 | --- | --- |
-| `admin-backdrop` | [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css), [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
-| `admin-brand` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css), [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
-| `admin-content` | [assets/modules/admin/styles/admin-content-mobile.css](../../assets/modules/admin/styles/admin-content-mobile.css), [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css), [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css), [assets/ui/styles/containers-mobile.css](../../assets/ui/styles/containers-mobile.css) |
-| `admin-filter-actions` | [assets/modules/admin/styles/admin-content-mobile.css](../../assets/modules/admin/styles/admin-content-mobile.css), [assets/modules/admin/styles/admin-lists-desktop.css](../../assets/modules/admin/styles/admin-lists-desktop.css), [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
-| `admin-list-toolbar` | [assets/modules/admin/styles/admin-lists-desktop.css](../../assets/modules/admin/styles/admin-lists-desktop.css), [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
-| `admin-main` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-menu-btn` | [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css) |
-| `admin-nav` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-nav-chevron` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-nav-group` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-nav-link` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-nav-open` | [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css), [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
-| `admin-nav-submenu` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-nav-summary` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-per-page-form` | [assets/modules/admin/styles/admin-lists-desktop.css](../../assets/modules/admin/styles/admin-lists-desktop.css), [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
-| `admin-search-form` | [assets/modules/admin/styles/admin-lists-desktop.css](../../assets/modules/admin/styles/admin-lists-desktop.css), [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
-| `admin-shell` | [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css), [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
-| `admin-shell-page` | [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
-| `admin-sidebar` | [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css), [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
-| `admin-sidebar-close` | [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css) |
-| `admin-sidebar-footer` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-sidebar-header` | [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
-| `admin-topbar` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-topbar-actions` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-topbar-title` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `admin-user` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css) |
-| `alert` | [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css), [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css), [assets/ui/styles/alerts.css](../../assets/ui/styles/alerts.css) |
-| `alert-danger` | [assets/ui/styles/alerts.css](../../assets/ui/styles/alerts.css) |
-| `alert-info` | [assets/ui/styles/alerts.css](../../assets/ui/styles/alerts.css) |
-| `alert-success` | [assets/ui/styles/alerts.css](../../assets/ui/styles/alerts.css) |
-| `alert-warning` | [assets/ui/styles/alerts.css](../../assets/ui/styles/alerts.css) |
+| `admin-backdrop` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/admin/styles/admin-shell.css](../../App/Core/Ui/assets/admin/styles/admin-shell.css) |
+| `admin-brand` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css), [App/Core/Ui/assets/admin/styles/admin-shell.css](../../App/Core/Ui/assets/admin/styles/admin-shell.css) |
+| `admin-content` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css), [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/styles/containers-mobile.css](../../App/Core/Ui/assets/styles/containers-mobile.css) |
+| `admin-filter-actions` | [App/Core/Ui/assets/admin/styles/admin-content-mobile.css](../../App/Core/Ui/assets/admin/styles/admin-content-mobile.css), [App/Core/Ui/assets/admin/styles/admin-lists-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-lists-desktop.css), [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css) |
+| `admin-list-toolbar` | [App/Core/Ui/assets/admin/styles/admin-lists-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-lists-desktop.css), [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css), [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css) |
+| `admin-main` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css), [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css) |
+| `admin-menu-btn` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css) |
+| `admin-nav` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `admin-nav-chevron` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `admin-nav-group` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `admin-nav-link` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css), [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css) |
+| `admin-nav-open` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/admin/styles/admin-shell.css](../../App/Core/Ui/assets/admin/styles/admin-shell.css) |
+| `admin-nav-submenu` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `admin-nav-summary` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `admin-per-page-form` | [App/Core/Ui/assets/admin/styles/admin-lists-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-lists-desktop.css), [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css) |
+| `admin-search-form` | [App/Core/Ui/assets/admin/styles/admin-lists-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-lists-desktop.css), [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css) |
+| `admin-shell` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/admin/styles/admin-shell.css](../../App/Core/Ui/assets/admin/styles/admin-shell.css) |
+| `admin-shell-page` | [App/Core/Ui/assets/admin/styles/admin-shell.css](../../App/Core/Ui/assets/admin/styles/admin-shell.css) |
+| `admin-sidebar` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/admin/styles/admin-shell.css](../../App/Core/Ui/assets/admin/styles/admin-shell.css) |
+| `admin-sidebar-close` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css) |
+| `admin-sidebar-footer` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `admin-sidebar-header` | [App/Core/Ui/assets/admin/styles/admin-shell.css](../../App/Core/Ui/assets/admin/styles/admin-shell.css) |
+| `admin-topbar` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css), [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css) |
+| `admin-topbar-actions` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `admin-topbar-title` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `admin-user` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css) |
+| `alert` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css), [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css) |
+| `alert-danger` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) |
+| `alert-info` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) |
+| `alert-success` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) |
+| `alert-warning` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) |
 | `archive-actions` | [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) |
 | `archive-filter` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css) |
 | `archive-filter-menu` | [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) |
 | `archive-filter-option` | [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) |
-| `avatar` | [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css), [assets/ui/styles/avatar.css](../../assets/ui/styles/avatar.css), [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) |
+| `avatar` | [App/Core/Ui/assets/styles/avatar.css](../../App/Core/Ui/assets/styles/avatar.css), [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css), [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `avatar-creator-toggle` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-appearance` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-controls` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-remove` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
-| `avatar-fallback` | [assets/ui/styles/avatar.css](../../assets/ui/styles/avatar.css) |
-| `avatar-sm` | [assets/ui/styles/avatar-sizes.css](../../assets/ui/styles/avatar-sizes.css) |
+| `avatar-fallback` | [App/Core/Ui/assets/styles/avatar.css](../../App/Core/Ui/assets/styles/avatar.css) |
+| `avatar-sm` | [App/Core/Ui/assets/styles/avatar-sizes.css](../../App/Core/Ui/assets/styles/avatar-sizes.css) |
 | `avatar-upload` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-upload-drop` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-upload-empty` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-upload-empty-note` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-upload-preview` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
-| `avatar-xl` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css), [assets/ui/styles/avatar-sizes.css](../../assets/ui/styles/avatar-sizes.css) |
-| `badge` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css), [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css), [assets/ui/styles/badges.css](../../assets/ui/styles/badges.css), [assets/ui/styles/filter-chips.css](../../assets/ui/styles/filter-chips.css), [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) |
-| `badge-danger` | [assets/ui/styles/badge-danger.css](../../assets/ui/styles/badge-danger.css) |
-| `badge-primary` | [assets/ui/styles/badges.css](../../assets/ui/styles/badges.css) |
-| `block` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `brand-logo` | [assets/ui/styles/brand-logo.css](../../assets/ui/styles/brand-logo.css) |
-| `btn` | [App/Modules/Social/assets/site/styles/public-list-header-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-mobile.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css), [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css), [assets/ui/styles/cards.css](../../assets/ui/styles/cards.css), [assets/ui/styles/cookie-consent-mobile.css](../../assets/ui/styles/cookie-consent-mobile.css), [assets/ui/styles/load-more.css](../../assets/ui/styles/load-more.css), [assets/ui/styles/modal-confirm-buttons.css](../../assets/ui/styles/modal-confirm-buttons.css), [assets/ui/styles/modal-confirm-mobile.css](../../assets/ui/styles/modal-confirm-mobile.css), [assets/ui/styles/popovers.css](../../assets/ui/styles/popovers.css), [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) |
-| `btn-danger` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `btn-ghost` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `btn-group` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `btn-icon` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `btn-primary` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `btn-secondary` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `btn-sm` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
+| `avatar-xl` | [App/Core/Ui/assets/styles/avatar-sizes.css](../../App/Core/Ui/assets/styles/avatar-sizes.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
+| `badge` | [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css), [App/Core/Ui/assets/styles/filter-chips.css](../../App/Core/Ui/assets/styles/filter-chips.css), [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css), [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css), [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
+| `badge-danger` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/badge-danger.css](../../App/Core/Ui/assets/styles/badge-danger.css) |
+| `badge-info` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) |
+| `badge-primary` | [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) |
+| `badge-success` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) |
+| `badge-warning` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) |
+| `block` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `brand-logo` | [App/Core/Ui/assets/styles/brand-logo.css](../../App/Core/Ui/assets/styles/brand-logo.css) |
+| `btn` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Core/Ui/assets/styles/cookie-consent-mobile.css](../../App/Core/Ui/assets/styles/cookie-consent-mobile.css), [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css), [App/Core/Ui/assets/styles/modal-confirm-buttons.css](../../App/Core/Ui/assets/styles/modal-confirm-buttons.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css), [App/Core/Ui/assets/styles/popovers.css](../../App/Core/Ui/assets/styles/popovers.css), [App/Core/Ui/assets/styles/public-workspace.css](../../App/Core/Ui/assets/styles/public-workspace.css), [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css), [App/Modules/Social/assets/site/styles/public-list-header-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-mobile.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) |
+| `btn-danger` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `btn-ghost` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `btn-group` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `btn-icon` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
+| `btn-primary` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `btn-secondary` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `btn-sm` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `captcha-provider` | [App/Core/Security/assets/styles/captcha.css](../../App/Core/Security/assets/styles/captcha.css) |
 | `captcha-widget` | [App/Core/Security/assets/styles/captcha.css](../../App/Core/Security/assets/styles/captcha.css) |
-| `card` | [assets/ui/styles/cards.css](../../assets/ui/styles/cards.css), [assets/ui/styles/containers-mobile.css](../../assets/ui/styles/containers-mobile.css) |
-| `card-body` | [assets/ui/styles/cards-mobile.css](../../assets/ui/styles/cards-mobile.css), [assets/ui/styles/cards.css](../../assets/ui/styles/cards.css) |
-| `card-footer` | [assets/ui/styles/cards-mobile.css](../../assets/ui/styles/cards-mobile.css), [assets/ui/styles/cards.css](../../assets/ui/styles/cards.css) |
-| `card-header` | [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css), [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css), [assets/ui/styles/cards-mobile.css](../../assets/ui/styles/cards-mobile.css), [assets/ui/styles/cards.css](../../assets/ui/styles/cards.css) |
-| `check-card` | [assets/ui/styles/check-card.css](../../assets/ui/styles/check-card.css) |
-| `check-line` | [assets/ui/styles/check-line.css](../../assets/ui/styles/check-line.css) |
-| `cluster` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `code-block` | [assets/ui/styles/code-block.css](../../assets/ui/styles/code-block.css) |
-| `container` | [assets/ui/styles/containers-mobile.css](../../assets/ui/styles/containers-mobile.css), [assets/ui/styles/layout.css](../../assets/ui/styles/layout.css) |
-| `container-sm` | [assets/ui/styles/layout.css](../../assets/ui/styles/layout.css) |
-| `content-image-actions` | [assets/ui/styles/content-images.css](../../assets/ui/styles/content-images.css) |
-| `content-image-preview` | [assets/ui/styles/content-images.css](../../assets/ui/styles/content-images.css) |
-| `content-image-preview-empty` | [assets/ui/styles/content-images.css](../../assets/ui/styles/content-images.css) |
-| `context-menu` | [App/Modules/Social/assets/status/styles/comment-menu.css](../../App/Modules/Social/assets/status/styles/comment-menu.css), [assets/ui/styles/context-menu-trigger.css](../../assets/ui/styles/context-menu-trigger.css) |
-| `context-menu-action` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css), [assets/ui/styles/context-menu-actions.css](../../assets/ui/styles/context-menu-actions.css) |
-| `cookie-consent` | [assets/ui/styles/cookie-consent-mobile.css](../../assets/ui/styles/cookie-consent-mobile.css), [assets/ui/styles/cookie-consent.css](../../assets/ui/styles/cookie-consent.css) |
-| `cookie-consent-actions` | [assets/ui/styles/cookie-consent-mobile.css](../../assets/ui/styles/cookie-consent-mobile.css), [assets/ui/styles/cookie-consent.css](../../assets/ui/styles/cookie-consent.css) |
-| `cookie-consent-copy` | [assets/ui/styles/cookie-consent.css](../../assets/ui/styles/cookie-consent.css) |
-| `desktop-only` | [assets/ui/styles/visibility.css](../../assets/ui/styles/visibility.css) |
-| `disclosure-body` | [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css) |
-| `disclosure-chevron` | [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css) |
-| `disclosure-heading` | [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css) |
-| `disclosure-item` | [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css) |
-| `disclosure-list` | [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css) |
-| `disclosure-summary` | [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css) |
-| `empty-state` | [assets/ui/styles/empty-state.css](../../assets/ui/styles/empty-state.css), [assets/ui/styles/tables-mobile.css](../../assets/ui/styles/tables-mobile.css) |
-| `empty-state-compact` | [assets/ui/styles/empty-state.css](../../assets/ui/styles/empty-state.css) |
-| `empty-state-icon` | [assets/ui/styles/empty-state.css](../../assets/ui/styles/empty-state.css) |
-| `empty-state-label` | [assets/ui/styles/empty-state.css](../../assets/ui/styles/empty-state.css) |
+| `card` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Core/Ui/assets/styles/containers-mobile.css](../../App/Core/Ui/assets/styles/containers-mobile.css) |
+| `card-body` | [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css) |
+| `card-footer` | [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css) |
+| `card-header` | [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css), [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css) |
+| `check-card` | [App/Core/Ui/assets/styles/check-card.css](../../App/Core/Ui/assets/styles/check-card.css) |
+| `check-line` | [App/Core/Ui/assets/styles/check-line.css](../../App/Core/Ui/assets/styles/check-line.css) |
+| `cluster` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `code-block` | [App/Core/Ui/assets/styles/code-block.css](../../App/Core/Ui/assets/styles/code-block.css) |
+| `container` | [App/Core/Ui/assets/styles/containers-mobile.css](../../App/Core/Ui/assets/styles/containers-mobile.css), [App/Core/Ui/assets/styles/layout.css](../../App/Core/Ui/assets/styles/layout.css) |
+| `container-sm` | [App/Core/Ui/assets/styles/layout.css](../../App/Core/Ui/assets/styles/layout.css) |
+| `content-image-actions` | [App/Core/Ui/assets/styles/content-images.css](../../App/Core/Ui/assets/styles/content-images.css) |
+| `content-image-preview` | [App/Core/Ui/assets/styles/content-images.css](../../App/Core/Ui/assets/styles/content-images.css) |
+| `content-image-preview-empty` | [App/Core/Ui/assets/styles/content-images.css](../../App/Core/Ui/assets/styles/content-images.css) |
+| `context-menu` | [App/Core/Ui/assets/styles/context-menu-trigger.css](../../App/Core/Ui/assets/styles/context-menu-trigger.css), [App/Modules/Social/assets/status/styles/comment-menu.css](../../App/Modules/Social/assets/status/styles/comment-menu.css) |
+| `context-menu-action` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css), [App/Core/Ui/assets/styles/context-menu-actions.css](../../App/Core/Ui/assets/styles/context-menu-actions.css) |
+| `cookie-consent` | [App/Core/Ui/assets/styles/cookie-consent-mobile.css](../../App/Core/Ui/assets/styles/cookie-consent-mobile.css), [App/Core/Ui/assets/styles/cookie-consent.css](../../App/Core/Ui/assets/styles/cookie-consent.css) |
+| `cookie-consent-actions` | [App/Core/Ui/assets/styles/cookie-consent-mobile.css](../../App/Core/Ui/assets/styles/cookie-consent-mobile.css), [App/Core/Ui/assets/styles/cookie-consent.css](../../App/Core/Ui/assets/styles/cookie-consent.css) |
+| `cookie-consent-copy` | [App/Core/Ui/assets/styles/cookie-consent.css](../../App/Core/Ui/assets/styles/cookie-consent.css) |
+| `dashboard-grid` | [App/Core/Ui/assets/styles/dashboard.css](../../App/Core/Ui/assets/styles/dashboard.css) |
+| `desktop-only` | [App/Core/Ui/assets/styles/visibility.css](../../App/Core/Ui/assets/styles/visibility.css) |
+| `disclosure-body` | [App/Core/Ui/assets/styles/disclosure.css](../../App/Core/Ui/assets/styles/disclosure.css) |
+| `disclosure-chevron` | [App/Core/Ui/assets/styles/disclosure.css](../../App/Core/Ui/assets/styles/disclosure.css) |
+| `disclosure-heading` | [App/Core/Ui/assets/styles/disclosure.css](../../App/Core/Ui/assets/styles/disclosure.css) |
+| `disclosure-item` | [App/Core/Ui/assets/styles/disclosure.css](../../App/Core/Ui/assets/styles/disclosure.css) |
+| `disclosure-list` | [App/Core/Ui/assets/styles/disclosure.css](../../App/Core/Ui/assets/styles/disclosure.css) |
+| `disclosure-summary` | [App/Core/Ui/assets/styles/disclosure.css](../../App/Core/Ui/assets/styles/disclosure.css) |
+| `empty-state` | [App/Core/Ui/assets/styles/empty-state.css](../../App/Core/Ui/assets/styles/empty-state.css), [App/Core/Ui/assets/styles/tables-mobile.css](../../App/Core/Ui/assets/styles/tables-mobile.css) |
+| `empty-state-compact` | [App/Core/Ui/assets/styles/empty-state.css](../../App/Core/Ui/assets/styles/empty-state.css) |
+| `empty-state-icon` | [App/Core/Ui/assets/styles/empty-state.css](../../App/Core/Ui/assets/styles/empty-state.css) |
+| `empty-state-label` | [App/Core/Ui/assets/styles/empty-state.css](../../App/Core/Ui/assets/styles/empty-state.css) |
 | `feed-switch` | [App/Modules/Social/assets/status/styles/feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/feed-switch-mobile.css), [App/Modules/Social/assets/status/styles/feed-switch.css](../../App/Modules/Social/assets/status/styles/feed-switch.css) |
 | `feed-switch-link` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css), [App/Modules/Social/assets/status/styles/feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/feed-switch-mobile.css), [App/Modules/Social/assets/status/styles/feed-switch.css](../../App/Modules/Social/assets/status/styles/feed-switch.css), [App/Modules/Social/assets/status/styles/home-feed-switch-links.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-links.css), [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css) |
-| `field` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css), [assets/ui/styles/filter-menu.css](../../assets/ui/styles/filter-menu.css) |
-| `field-error` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) |
-| `field-inline` | [assets/ui/styles/field-inline-desktop.css](../../assets/ui/styles/field-inline-desktop.css), [assets/ui/styles/field-inline.css](../../assets/ui/styles/field-inline.css) |
-| `filter-chip` | [assets/ui/styles/filter-chips.css](../../assets/ui/styles/filter-chips.css) |
-| `filter-menu-panel` | [assets/ui/styles/filter-menu.css](../../assets/ui/styles/filter-menu.css) |
+| `field` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css), [App/Core/Ui/assets/styles/filter-menu.css](../../App/Core/Ui/assets/styles/filter-menu.css) |
+| `field-error` | [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css) |
+| `field-inline` | [App/Core/Ui/assets/styles/field-inline-desktop.css](../../App/Core/Ui/assets/styles/field-inline-desktop.css), [App/Core/Ui/assets/styles/field-inline.css](../../App/Core/Ui/assets/styles/field-inline.css) |
+| `filter-chip` | [App/Core/Ui/assets/styles/filter-chips.css](../../App/Core/Ui/assets/styles/filter-chips.css) |
+| `filter-menu-panel` | [App/Core/Ui/assets/styles/filter-menu.css](../../App/Core/Ui/assets/styles/filter-menu.css) |
 | `following-modal-grid` | [App/Modules/Social/assets/users/styles/following-mobile.css](../../App/Modules/Social/assets/users/styles/following-mobile.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
-| `gap-1` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `gap-2` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `global-search` | [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css), [assets/ui/styles/global-search.css](../../assets/ui/styles/global-search.css), [assets/ui/styles/navbar-mobile.css](../../assets/ui/styles/navbar-mobile.css) |
-| `global-search-control` | [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css) |
-| `global-search-heading` | [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css) |
-| `global-search-input` | [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css), [assets/ui/styles/global-search-mobile.css](../../assets/ui/styles/global-search-mobile.css) |
-| `global-search-results` | [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css) |
-| `global-search-section` | [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css) |
-| `grid` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `grid-span-full` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `has-editor-suggestions` | [assets/ui/styles/modal.css](../../assets/ui/styles/modal.css) |
-| `has-image` | [assets/ui/content/styles/mobile.css](../../assets/ui/content/styles/mobile.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `has-modal` | [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) |
+| `gap-1` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `gap-2` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `global-search` | [App/Core/Ui/assets/styles/global-search-controls.css](../../App/Core/Ui/assets/styles/global-search-controls.css), [App/Core/Ui/assets/styles/global-search.css](../../App/Core/Ui/assets/styles/global-search.css), [App/Core/Ui/assets/styles/navbar-mobile.css](../../App/Core/Ui/assets/styles/navbar-mobile.css) |
+| `global-search-heading` | [App/Core/Ui/assets/styles/global-search-controls.css](../../App/Core/Ui/assets/styles/global-search-controls.css) |
+| `global-search-input` | [App/Core/Ui/assets/styles/global-search-controls.css](../../App/Core/Ui/assets/styles/global-search-controls.css), [App/Core/Ui/assets/styles/global-search-mobile.css](../../App/Core/Ui/assets/styles/global-search-mobile.css) |
+| `global-search-results` | [App/Core/Ui/assets/styles/global-search-controls.css](../../App/Core/Ui/assets/styles/global-search-controls.css) |
+| `global-search-section` | [App/Core/Ui/assets/styles/global-search-controls.css](../../App/Core/Ui/assets/styles/global-search-controls.css) |
+| `grid` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `grid-span-full` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `has-editor-suggestions` | [App/Core/Ui/assets/styles/modal.css](../../App/Core/Ui/assets/styles/modal.css) |
+| `has-image` | [App/Modules/Social/assets/content/styles/mobile.css](../../App/Modules/Social/assets/content/styles/mobile.css), [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `has-modal` | [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css) |
 | `has-unread` | [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
-| `hashtag` | [assets/ui/styles/hashtags.css](../../assets/ui/styles/hashtags.css), [assets/ui/styles/inline-link-states.css](../../assets/ui/styles/inline-link-states.css) |
-| `help` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) |
-| `hidden` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
+| `hashtag` | [App/Modules/Social/assets/content/styles/hashtags.css](../../App/Modules/Social/assets/content/styles/hashtags.css) |
+| `help` | [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css) |
+| `hidden` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `home-feed-app` | [App/Modules/Social/assets/status/styles/home-feed-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-mobile.css), [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css), [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) |
 | `home-feed-section` | [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css), [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) |
 | `home-feed-switch` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css), [App/Modules/Social/assets/status/styles/home-feed-switch-links.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-links.css), [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css), [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) |
 | `home-feed-toolbar` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css) |
-| `icon` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css), [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css), [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css), [assets/ui/styles/filter-chips.css](../../assets/ui/styles/filter-chips.css), [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css), [assets/ui/styles/input-icon.css](../../assets/ui/styles/input-icon.css), [assets/ui/styles/navbar-mobile.css](../../assets/ui/styles/navbar-mobile.css), [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css), [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css), [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `icon-lg` | [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) |
-| `identity-copy` | [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) |
-| `identity-copy-truncate` | [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) |
-| `identity-row` | [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) |
-| `identity-row-compact` | [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) |
-| `identity-row-inset` | [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) |
-| `image-preview-contain` | [assets/ui/styles/content-images-contain.css](../../assets/ui/styles/content-images-contain.css) |
-| `information-page` | [assets/ui/styles/information-pages.css](../../assets/ui/styles/information-pages.css) |
-| `inline-flex` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `input` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css), [assets/ui/styles/input-icon.css](../../assets/ui/styles/input-icon.css) |
-| `input-icon` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css), [assets/ui/styles/input-icon.css](../../assets/ui/styles/input-icon.css) |
-| `is-active` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css), [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css), [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
-| `is-child` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/discussion-mobile.css](../../assets/ui/content/styles/discussion-mobile.css) |
-| `is-danger` | [assets/ui/styles/context-menu-actions.css](../../assets/ui/styles/context-menu-actions.css) |
-| `is-image-missing` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `is-image-ready` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `is-limit` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `is-loading` | [App/Modules/Social/assets/status/styles/composer-loading.css](../../App/Modules/Social/assets/status/styles/composer-loading.css), [assets/ui/styles/load-more.css](../../assets/ui/styles/load-more.css), [assets/ui/styles/loading.css](../../assets/ui/styles/loading.css) |
-| `is-reply` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css), [assets/ui/content/styles/discussion-mobile.css](../../assets/ui/content/styles/discussion-mobile.css) |
-| `is-resource-text` | [assets/ui/styles/resource-text.css](../../assets/ui/styles/resource-text.css) |
-| `is-unread` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css), [assets/ui/styles/identity-rows.css](../../assets/ui/styles/identity-rows.css) |
-| `is-warning` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `justify-end` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `label` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [assets/ui/styles/field-inline.css](../../assets/ui/styles/field-inline.css), [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) |
-| `language-flag` | [assets/ui/styles/language.css](../../assets/ui/styles/language.css) |
-| `language-menu` | [assets/ui/styles/language.css](../../assets/ui/styles/language.css) |
-| `language-menu-link` | [assets/ui/styles/language.css](../../assets/ui/styles/language.css) |
-| `language-menu-list` | [assets/ui/styles/language.css](../../assets/ui/styles/language.css) |
-| `language-suggestion` | [assets/ui/styles/language.css](../../assets/ui/styles/language.css) |
-| `language-suggestion-close` | [assets/ui/styles/language.css](../../assets/ui/styles/language.css) |
-| `language-suggestion-inner` | [assets/ui/styles/language.css](../../assets/ui/styles/language.css) |
-| `link-button` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `load-more` | [assets/ui/styles/load-more.css](../../assets/ui/styles/load-more.css) |
-| `load-more-state` | [assets/ui/styles/load-more.css](../../assets/ui/styles/load-more.css) |
-| `m-0` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `max-w-auth` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `max-w-auth-sm` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `max-w-prose` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `mb-0` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `md:grid-2` | [assets/ui/styles/grid-desktop.css](../../assets/ui/styles/grid-desktop.css) |
-| `md:grid-3` | [assets/ui/styles/grid-desktop.css](../../assets/ui/styles/grid-desktop.css) |
-| `md:grid-4` | [assets/ui/styles/grid-desktop.css](../../assets/ui/styles/grid-desktop.css) |
-| `mention-link` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css), [assets/ui/styles/inline-link-states.css](../../assets/ui/styles/inline-link-states.css) |
-| `min-w-0` | [assets/ui/styles/visibility.css](../../assets/ui/styles/visibility.css) |
-| `modal` | [assets/ui/styles/mobile-inputs-and-dialogs.css](../../assets/ui/styles/mobile-inputs-and-dialogs.css), [assets/ui/styles/modal-confirm-buttons.css](../../assets/ui/styles/modal-confirm-buttons.css), [assets/ui/styles/modal-confirm-mobile.css](../../assets/ui/styles/modal-confirm-mobile.css), [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/modal-workspace-desktop.css](../../assets/ui/styles/modal-workspace-desktop.css), [assets/ui/styles/modal.css](../../assets/ui/styles/modal.css) |
-| `modal-backdrop` | [assets/ui/styles/modal.css](../../assets/ui/styles/modal.css) |
-| `modal-body` | [assets/ui/styles/mobile-inputs-and-dialogs.css](../../assets/ui/styles/mobile-inputs-and-dialogs.css), [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/modal-workspace-desktop.css](../../assets/ui/styles/modal-workspace-desktop.css) |
-| `modal-confirm-message` | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css) |
-| `modal-editor-actions` | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css) |
-| `modal-editor-destructive` | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css) |
-| `modal-footer` | [assets/ui/styles/modal-confirm-buttons.css](../../assets/ui/styles/modal-confirm-buttons.css), [assets/ui/styles/modal-confirm-mobile.css](../../assets/ui/styles/modal-confirm-mobile.css), [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/modal-workspace-desktop.css](../../assets/ui/styles/modal-workspace-desktop.css) |
-| `modal-header` | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/modal-workspace-desktop.css](../../assets/ui/styles/modal-workspace-desktop.css) |
-| `modal-panel` | [assets/ui/styles/mobile-inputs-and-dialogs.css](../../assets/ui/styles/mobile-inputs-and-dialogs.css), [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/modal-workspace-desktop.css](../../assets/ui/styles/modal-workspace-desktop.css), [assets/ui/styles/modal.css](../../assets/ui/styles/modal.css) |
-| `modal-tab-switch` | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css) |
-| `modal-tabs` | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/modal-workspace-desktop.css](../../assets/ui/styles/modal-workspace-desktop.css) |
-| `mx-auto` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `nav-link` | [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css), [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) |
-| `nav-link-icon` | [assets/ui/styles/navbar-mobile.css](../../assets/ui/styles/navbar-mobile.css), [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css) |
-| `nav-links` | [assets/ui/styles/navbar-mobile.css](../../assets/ui/styles/navbar-mobile.css), [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css) |
-| `navbar` | [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css) |
-| `navbar-brand` | [assets/ui/styles/navbar-mobile.css](../../assets/ui/styles/navbar-mobile.css), [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css) |
-| `navbar-inner` | [assets/ui/styles/navbar-mobile.css](../../assets/ui/styles/navbar-mobile.css), [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css) |
+| `icon` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css), [App/Core/Ui/assets/styles/disclosure.css](../../App/Core/Ui/assets/styles/disclosure.css), [App/Core/Ui/assets/styles/filter-chips.css](../../App/Core/Ui/assets/styles/filter-chips.css), [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css), [App/Core/Ui/assets/styles/input-icon.css](../../App/Core/Ui/assets/styles/input-icon.css), [App/Core/Ui/assets/styles/navbar-mobile.css](../../App/Core/Ui/assets/styles/navbar-mobile.css), [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css), [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css), [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css), [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css), [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
+| `icon-lg` | [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css) |
+| `identity-copy` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
+| `identity-copy-truncate` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
+| `identity-row` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
+| `identity-row-compact` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
+| `identity-row-inset` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
+| `image-preview-contain` | [App/Core/Ui/assets/styles/content-images-contain.css](../../App/Core/Ui/assets/styles/content-images-contain.css) |
+| `information-page` | [App/Core/Ui/assets/styles/information-pages.css](../../App/Core/Ui/assets/styles/information-pages.css) |
+| `inline-flex` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `input` | [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css), [App/Core/Ui/assets/styles/input-icon.css](../../App/Core/Ui/assets/styles/input-icon.css) |
+| `input-icon` | [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css), [App/Core/Ui/assets/styles/input-icon.css](../../App/Core/Ui/assets/styles/input-icon.css) |
+| `is-active` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css), [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css), [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css), [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css), [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
+| `is-child` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/discussion-mobile.css](../../App/Modules/Social/assets/content/styles/discussion-mobile.css) |
+| `is-danger` | [App/Core/Ui/assets/styles/context-menu-actions.css](../../App/Core/Ui/assets/styles/context-menu-actions.css) |
+| `is-image-missing` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `is-image-ready` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `is-limit` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `is-loading` | [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css), [App/Core/Ui/assets/styles/loading.css](../../App/Core/Ui/assets/styles/loading.css), [App/Modules/Social/assets/status/styles/composer-loading.css](../../App/Modules/Social/assets/status/styles/composer-loading.css) |
+| `is-reply` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css), [App/Modules/Social/assets/content/styles/discussion-mobile.css](../../App/Modules/Social/assets/content/styles/discussion-mobile.css) |
+| `is-resource-text` | [App/Core/Ui/assets/styles/resource-text.css](../../App/Core/Ui/assets/styles/resource-text.css) |
+| `is-unread` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css), [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
+| `is-warning` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `justify-between` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `justify-end` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `label` | [App/Core/Ui/assets/styles/field-inline.css](../../App/Core/Ui/assets/styles/field-inline.css), [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
+| `language-flag` | [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) |
+| `language-menu` | [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) |
+| `language-menu-link` | [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) |
+| `language-menu-list` | [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) |
+| `language-suggestion` | [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) |
+| `language-suggestion-close` | [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) |
+| `language-suggestion-inner` | [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) |
+| `link-button` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `load-more` | [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css) |
+| `load-more-state` | [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css) |
+| `m-0` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `max-w-auth` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `max-w-auth-sm` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `max-w-prose` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `mb-0` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `md:grid-2` | [App/Core/Ui/assets/styles/grid-desktop.css](../../App/Core/Ui/assets/styles/grid-desktop.css) |
+| `md:grid-3` | [App/Core/Ui/assets/styles/grid-desktop.css](../../App/Core/Ui/assets/styles/grid-desktop.css) |
+| `md:grid-4` | [App/Core/Ui/assets/styles/grid-desktop.css](../../App/Core/Ui/assets/styles/grid-desktop.css) |
+| `mention-link` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
+| `min-w-0` | [App/Core/Ui/assets/styles/visibility.css](../../App/Core/Ui/assets/styles/visibility.css) |
+| `modal` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css), [App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css](../../App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css), [App/Core/Ui/assets/styles/modal-confirm-buttons.css](../../App/Core/Ui/assets/styles/modal-confirm-buttons.css), [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css), [App/Core/Ui/assets/styles/modal.css](../../App/Core/Ui/assets/styles/modal.css) |
+| `modal-backdrop` | [App/Core/Ui/assets/styles/modal.css](../../App/Core/Ui/assets/styles/modal.css) |
+| `modal-body` | [App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css](../../App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css), [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css) |
+| `modal-confirm-message` | [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css) |
+| `modal-editor-actions` | [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css) |
+| `modal-editor-destructive` | [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css) |
+| `modal-footer` | [App/Core/Ui/assets/styles/modal-confirm-buttons.css](../../App/Core/Ui/assets/styles/modal-confirm-buttons.css), [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css) |
+| `modal-header` | [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css) |
+| `modal-panel` | [App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css](../../App/Core/Ui/assets/styles/mobile-inputs-and-dialogs.css), [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css), [App/Core/Ui/assets/styles/modal.css](../../App/Core/Ui/assets/styles/modal.css) |
+| `modal-tab-switch` | [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css) |
+| `modal-tabs` | [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css) |
+| `mx-auto` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `nav-link` | [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css), [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css) |
+| `nav-link-icon` | [App/Core/Ui/assets/styles/navbar-mobile.css](../../App/Core/Ui/assets/styles/navbar-mobile.css), [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css) |
+| `nav-links` | [App/Core/Ui/assets/styles/navbar-mobile.css](../../App/Core/Ui/assets/styles/navbar-mobile.css), [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css) |
+| `navbar` | [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css) |
+| `navbar-brand` | [App/Core/Ui/assets/styles/navbar-mobile.css](../../App/Core/Ui/assets/styles/navbar-mobile.css), [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css) |
+| `navbar-inner` | [App/Core/Ui/assets/styles/navbar-mobile.css](../../App/Core/Ui/assets/styles/navbar-mobile.css), [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css) |
 | `notification-actions` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css) |
 | `notification-badge` | [App/Core/Notifications/assets/styles/notification-badge-mobile.css](../../App/Core/Notifications/assets/styles/notification-badge-mobile.css), [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
 | `notification-item` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css) |
@@ -710,14 +714,14 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `notification-preview-more` | [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
 | `notifications-list` | [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css) |
 | `notifications-page` | [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css) |
-| `pagination` | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/pagination-desktop.css](../../assets/ui/styles/pagination-desktop.css), [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
-| `pagination-ellipsis` | [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
-| `pagination-link` | [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
-| `pagination-list` | [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
-| `pagination-next` | [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
-| `pagination-prev` | [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
-| `pagination-summary` | [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
-| `popover-panel` | [assets/ui/styles/popovers.css](../../assets/ui/styles/popovers.css) |
+| `pagination` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
+| `pagination-ellipsis` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
+| `pagination-link` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
+| `pagination-list` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
+| `pagination-next` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
+| `pagination-prev` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
+| `pagination-summary` | [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
+| `popover-panel` | [App/Core/Ui/assets/styles/popovers.css](../../App/Core/Ui/assets/styles/popovers.css) |
 | `profile-actions` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-avatar-button` | [App/Modules/Social/assets/users/styles/profile-avatar.css](../../App/Modules/Social/assets/users/styles/profile-avatar.css) |
 | `profile-card` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
@@ -725,7 +729,6 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `profile-details` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-edit-toggle` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-editable-text` | [App/Modules/Social/assets/users/styles/profile-details.css](../../App/Modules/Social/assets/users/styles/profile-details.css) |
-| `profile-email-warning` | [App/Modules/Social/assets/users/styles/profile-navigation.css](../../App/Modules/Social/assets/users/styles/profile-navigation.css) |
 | `profile-following-link` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-following-main` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-identity` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
@@ -734,7 +737,6 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `profile-main` | [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css), [App/Modules/Social/assets/users/styles/profile-main-desktop.css](../../App/Modules/Social/assets/users/styles/profile-main-desktop.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-member-since` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-name` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
-| `profile-nav-link` | [App/Modules/Social/assets/users/styles/profile-navigation.css](../../App/Modules/Social/assets/users/styles/profile-navigation.css) |
 | `profile-sidebar` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-sidebar-stack` | [App/Modules/Social/assets/site/styles/sidebar-sticky.css](../../App/Modules/Social/assets/site/styles/sidebar-sticky.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-stat` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
@@ -747,162 +749,163 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `public-sidebar` | [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css), [App/Modules/Social/assets/site/styles/sidebar-sticky.css](../../App/Modules/Social/assets/site/styles/sidebar-sticky.css) |
 | `public-sidebar-card` | [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css) |
 | `public-sidebar-footer` | [App/Modules/Social/assets/site/styles/public-sidebar-footer.css](../../App/Modules/Social/assets/site/styles/public-sidebar-footer.css) |
-| `publishing-text` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
-| `result-item` | [assets/ui/styles/result-list.css](../../assets/ui/styles/result-list.css) |
-| `result-list` | [assets/ui/styles/result-list.css](../../assets/ui/styles/result-list.css) |
-| `section` | [App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css), [assets/ui/styles/cards-mobile.css](../../assets/ui/styles/cards-mobile.css), [assets/ui/styles/containers-mobile.css](../../assets/ui/styles/containers-mobile.css), [assets/ui/styles/layout.css](../../assets/ui/styles/layout.css), [assets/ui/styles/section-desktop.css](../../assets/ui/styles/section-desktop.css) |
-| `select` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css), [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css) |
+| `public-workspace` | [App/Core/Ui/assets/styles/public-workspace.css](../../App/Core/Ui/assets/styles/public-workspace.css) |
+| `public-workspace-nav` | [App/Core/Ui/assets/styles/public-workspace.css](../../App/Core/Ui/assets/styles/public-workspace.css) |
+| `publishing-text` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
+| `result-item` | [App/Core/Ui/assets/styles/result-list.css](../../App/Core/Ui/assets/styles/result-list.css) |
+| `result-list` | [App/Core/Ui/assets/styles/result-list.css](../../App/Core/Ui/assets/styles/result-list.css) |
+| `section` | [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/containers-mobile.css](../../App/Core/Ui/assets/styles/containers-mobile.css), [App/Core/Ui/assets/styles/layout.css](../../App/Core/Ui/assets/styles/layout.css), [App/Core/Ui/assets/styles/section-desktop.css](../../App/Core/Ui/assets/styles/section-desktop.css), [App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css) |
+| `select` | [App/Core/Ui/assets/styles/dashboard.css](../../App/Core/Ui/assets/styles/dashboard.css), [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css), [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css) |
 | `sidebar-user-list` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
-| `skip-link` | [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css) |
-| `sm:grid-2` | [assets/ui/styles/modal-confirm-mobile.css](../../assets/ui/styles/modal-confirm-mobile.css) |
-| `split` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css), [assets/ui/styles/cards.css](../../assets/ui/styles/cards.css), [assets/ui/styles/split-desktop.css](../../assets/ui/styles/split-desktop.css) |
-| `sr-only` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `stack` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css), [assets/ui/styles/filter-menu.css](../../assets/ui/styles/filter-menu.css), [assets/ui/styles/layout.css](../../assets/ui/styles/layout.css) |
-| `stack-gap-12` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `stack-gap-14` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `stack-gap-16` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `stack-gap-24` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `stack-gap-4` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `stack-gap-8` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `status-audio-card` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-audio-player` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
+| `skip-link` | [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css) |
+| `sm:grid-2` | [App/Core/Ui/assets/styles/grid-desktop.css](../../App/Core/Ui/assets/styles/grid-desktop.css) |
+| `split` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Core/Ui/assets/styles/split-desktop.css](../../App/Core/Ui/assets/styles/split-desktop.css) |
+| `sr-only` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `stack` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css), [App/Core/Ui/assets/styles/filter-menu.css](../../App/Core/Ui/assets/styles/filter-menu.css), [App/Core/Ui/assets/styles/layout.css](../../App/Core/Ui/assets/styles/layout.css) |
+| `stack-gap-12` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `stack-gap-14` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `stack-gap-16` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `stack-gap-24` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `stack-gap-4` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `stack-gap-8` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `status-audio-card` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-audio-player` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
 | `status-author` | [App/Modules/Social/assets/status/styles/author-meta.css](../../App/Modules/Social/assets/status/styles/author-meta.css), [App/Modules/Social/assets/status/styles/status-header.css](../../App/Modules/Social/assets/status/styles/status-header.css), [App/Modules/Social/assets/status/styles/status-text.css](../../App/Modules/Social/assets/status/styles/status-text.css) |
-| `status-body` | [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css), [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
+| `status-body` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css), [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css) |
 | `status-card` | [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
 | `status-card-body` | [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
-| `status-comment` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/discussion-mobile.css](../../assets/ui/content/styles/discussion-mobile.css) |
-| `status-comment-author` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
-| `status-comment-body` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-bubble` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
-| `status-comment-diff-added` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-diff-marker` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-diff-removed` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-editor` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-form` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css), [assets/ui/content/styles/discussion-mobile.css](../../assets/ui/content/styles/discussion-mobile.css) |
-| `status-comment-heading` | [App/Modules/Social/assets/status/styles/comment-menu.css](../../App/Modules/Social/assets/status/styles/comment-menu.css), [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
-| `status-comment-heading-time` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
-| `status-comment-history` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-history-diff` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-history-entry` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-history-meta` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-input` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-input-shell` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-like` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-like-button` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-list` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
-| `status-comment-main` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-meta` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-replies` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comment-submit` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-comments` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
+| `status-comment` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/discussion-mobile.css](../../App/Modules/Social/assets/content/styles/discussion-mobile.css) |
+| `status-comment-author` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css) |
+| `status-comment-body` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-bubble` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css) |
+| `status-comment-diff-added` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-diff-marker` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-diff-removed` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-editor` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-form` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css), [App/Modules/Social/assets/content/styles/discussion-mobile.css](../../App/Modules/Social/assets/content/styles/discussion-mobile.css) |
+| `status-comment-heading` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/status/styles/comment-menu.css](../../App/Modules/Social/assets/status/styles/comment-menu.css) |
+| `status-comment-heading-time` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css) |
+| `status-comment-history` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-history-diff` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-history-entry` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-history-meta` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-input` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-input-shell` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-like` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-like-button` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-list` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css) |
+| `status-comment-main` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-meta` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-replies` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comment-submit` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-comments` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css) |
 | `status-comments-thread` | [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css) |
 | `status-compose-actions` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
 | `status-compose-counter` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
 | `status-compose-footer` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
 | `status-compose-main` | [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
 | `status-compose-row` | [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
-| `status-composer` | [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [assets/ui/styles/cards-mobile.css](../../assets/ui/styles/cards-mobile.css) |
-| `status-editor-counter` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-editor-input` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css), [assets/ui/content/styles/mobile.css](../../assets/ui/content/styles/mobile.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-editor-meta` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-editor-shell` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-editor-suggestion` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-editor-suggestion-avatar` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-editor-suggestion-text` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-editor-suggestions` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
+| `status-composer` | [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css) |
+| `status-editor-counter` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `status-editor-input` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css), [App/Modules/Social/assets/content/styles/mobile.css](../../App/Modules/Social/assets/content/styles/mobile.css), [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
+| `status-editor-meta` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
+| `status-editor-shell` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `status-editor-suggestion` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `status-editor-suggestion-avatar` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `status-editor-suggestion-text` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `status-editor-suggestions` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
 | `status-email-notice` | [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) |
 | `status-email-notice-copy` | [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) |
 | `status-embed-preview` | [App/Modules/Social/assets/status/styles/embed-preview.css](../../App/Modules/Social/assets/status/styles/embed-preview.css) |
 | `status-feed` | [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css), [App/Modules/Social/assets/status/styles/status-feed-mobile.css](../../App/Modules/Social/assets/status/styles/status-feed-mobile.css), [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
 | `status-feed-more` | [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
 | `status-feed-spacer` | [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
-| `status-field` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
+| `status-field` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
 | `status-header` | [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css), [App/Modules/Social/assets/status/styles/status-header.css](../../App/Modules/Social/assets/status/styles/status-header.css) |
-| `status-image` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-image-alt-wrap` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-image-field` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-image-link` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-image-picker` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-image-preview` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
-| `status-indicator` | [assets/ui/styles/status-indicators.css](../../assets/ui/styles/status-indicators.css), [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `status-indicator-danger` | [assets/ui/styles/status-indicators.css](../../assets/ui/styles/status-indicators.css) |
-| `status-indicator-success` | [assets/ui/styles/status-indicators.css](../../assets/ui/styles/status-indicators.css) |
-| `status-indicator-warning` | [assets/ui/styles/status-indicator-warning.css](../../assets/ui/styles/status-indicator-warning.css) |
-| `status-inline-link` | [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css), [assets/ui/styles/inline-link-states.css](../../assets/ui/styles/inline-link-states.css) |
-| `status-like-icon-filled` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
-| `status-like-icon-outline` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css) |
-| `status-link-account` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-link-card` | [assets/ui/content/styles/mobile.css](../../assets/ui/content/styles/mobile.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-link-copy` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-link-fallback-icon` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-link-icon` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-link-image` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-link-media` | [assets/ui/content/styles/mobile.css](../../assets/ui/content/styles/mobile.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-link-provider` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-manage` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-manage-icon` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
+| `status-image` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `status-image-alt-wrap` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `status-image-field` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
+| `status-image-link` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
+| `status-image-picker` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
+| `status-image-preview` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
+| `status-indicator` | [App/Core/Ui/assets/styles/status-indicators.css](../../App/Core/Ui/assets/styles/status-indicators.css) |
+| `status-indicator-danger` | [App/Core/Ui/assets/styles/status-indicators.css](../../App/Core/Ui/assets/styles/status-indicators.css) |
+| `status-indicator-success` | [App/Core/Ui/assets/styles/status-indicators.css](../../App/Core/Ui/assets/styles/status-indicators.css) |
+| `status-indicator-warning` | [App/Core/Ui/assets/styles/status-indicator-warning.css](../../App/Core/Ui/assets/styles/status-indicator-warning.css) |
+| `status-inline-link` | [App/Modules/Social/assets/status/styles/status-inline-link.css](../../App/Modules/Social/assets/status/styles/status-inline-link.css) |
+| `status-like-icon-filled` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css) |
+| `status-like-icon-outline` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css) |
+| `status-link-account` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-link-card` | [App/Modules/Social/assets/content/styles/mobile.css](../../App/Modules/Social/assets/content/styles/mobile.css), [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-link-copy` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-link-fallback-icon` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-link-icon` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-link-image` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-link-media` | [App/Modules/Social/assets/content/styles/mobile.css](../../App/Modules/Social/assets/content/styles/mobile.css), [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-link-provider` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-manage` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-manage-icon` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
 | `status-manage-menu` | [App/Modules/Social/assets/status/styles/status-menu.css](../../App/Modules/Social/assets/status/styles/status-menu.css) |
-| `status-manage-top` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
+| `status-manage-top` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
 | `status-modal-form` | [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css) |
 | `status-post-modal-content` | [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css) |
-| `status-reaction` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-reactions` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-reply-details` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-reply-form-container` | [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css) |
-| `status-social-link` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-tags` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
-| `status-tags-overflow` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
-| `status-textarea` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
+| `status-reaction` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-reactions` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-reply-details` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-reply-form-container` | [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css) |
+| `status-social-link` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-tags` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
+| `status-tags-overflow` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
+| `status-textarea` | [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
 | `status-time-button` | [App/Modules/Social/assets/status/styles/status-detail.css](../../App/Modules/Social/assets/status/styles/status-detail.css) |
-| `status-translation` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
-| `status-translation-link` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
-| `status-translation-output` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
-| `status-video-card` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-video-copy` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-video-frame` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-video-placeholder` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-video-play` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-video-provider` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-video-source` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `status-video-thumb` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `tab` | [assets/ui/styles/tabs.css](../../assets/ui/styles/tabs.css) |
-| `table` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css), [assets/ui/styles/tables-mobile.css](../../assets/ui/styles/tables-mobile.css), [assets/ui/styles/tables.css](../../assets/ui/styles/tables.css) |
-| `table-actions` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-actions-cell` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css), [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-identity` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-identity-body` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-meta` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-primary` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-row-inactive` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
-| `table-sort` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
-| `table-sort-indicator` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css) |
-| `table-text` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-text-url` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `table-wrap` | [assets/ui/styles/tables.css](../../assets/ui/styles/tables.css) |
-| `tabs` | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css), [assets/ui/styles/tabs.css](../../assets/ui/styles/tabs.css) |
-| `tag-link` | [assets/ui/content/styles/status-text.css](../../assets/ui/content/styles/status-text.css) |
-| `text-2xl` | [App/Modules/Social/assets/site/styles/public-list-header-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-mobile.css), [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css), [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `text-base` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `text-danger` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css), [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
-| `text-lg` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `text-muted` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `text-primary` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `text-xl` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
-| `textarea` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) |
-| `toast` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-body` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-close` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-danger` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-icon` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-info` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-stack` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-success` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-warning` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `tooltip` | [assets/ui/styles/tooltip.css](../../assets/ui/styles/tooltip.css) |
+| `status-translation` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
+| `status-translation-link` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
+| `status-translation-output` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
+| `status-video-card` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-video-copy` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-video-frame` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-video-placeholder` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-video-play` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-video-provider` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-video-source` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `status-video-thumb` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
+| `tab` | [App/Core/Ui/assets/styles/tabs.css](../../App/Core/Ui/assets/styles/tabs.css) |
+| `table` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css), [App/Core/Ui/assets/styles/tables-mobile.css](../../App/Core/Ui/assets/styles/tables-mobile.css), [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css) |
+| `table-actions` | [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css) |
+| `table-actions-cell` | [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css), [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css) |
+| `table-identity-body` | [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css) |
+| `table-meta` | [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css) |
+| `table-primary` | [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css) |
+| `table-row-inactive` | [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css) |
+| `table-sort` | [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css) |
+| `table-sort-indicator` | [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css) |
+| `table-text` | [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css) |
+| `table-text-url` | [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css) |
+| `table-wrap` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css) |
+| `tabs` | [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/tabs.css](../../App/Core/Ui/assets/styles/tabs.css) |
+| `tag-link` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
+| `text-2xl` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css), [App/Modules/Social/assets/site/styles/public-list-header-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-mobile.css), [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) |
+| `text-base` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `text-danger` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css), [App/Core/Ui/assets/styles/table-identity.css](../../App/Core/Ui/assets/styles/table-identity.css) |
+| `text-lg` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `text-muted` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `text-primary` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `text-xl` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
+| `textarea` | [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css) |
+| `toast` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) |
+| `toast-body` | [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) |
+| `toast-close` | [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) |
+| `toast-danger` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) |
+| `toast-info` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) |
+| `toast-stack` | [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) |
+| `toast-success` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) |
+| `toast-warning` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/toasts.css](../../App/Core/Ui/assets/styles/toasts.css) |
+| `tooltip` | [App/Core/Ui/assets/styles/tooltip.css](../../App/Core/Ui/assets/styles/tooltip.css) |
 | `topic-link` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
 | `topic-list` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
 | `topic-name` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
 | `user-menu` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |
+| `user-menu-email-warning` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |
 | `user-menu-identity` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |
 | `user-menu-popover` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |
 | `user-menu-theme` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |

@@ -12,12 +12,29 @@ final class Cleanup
     /** @return array{changed: int, has_more: bool} */
     public static function run(int $limit): array
     {
+        $entered = false;
+        try {
+            return Manager::runTask(static function () use ($limit, &$entered): array {
+                $entered = true;
+                return self::runGuarded($limit);
+            });
+        } catch (\RuntimeException $error) {
+            if ($entered) { throw $error; }
+            // Retention defers while deployment admission is closed, including recovery.
+            return ['changed' => 0, 'has_more' => true];
+        }
+    }
+
+    /** Deployment admission is held before the retention lock.
+     * @return array{changed: int, has_more: bool} */
+    private static function runGuarded(int $limit): array
+    {
         $root = str_replace('\\', '/', Storage::path('updates'));
         if (!is_dir($root) || is_link($root)) { return ['changed' => 0, 'has_more' => false]; }
-        $lock = fopen($root . '/update.lock', 'c+');
+        $lock = fopen($root . '/cleanup.lock', 'c+');
         if ($lock === false) { throw new \RuntimeException('Unable to open update cleanup lock.'); }
         try {
-            if (!flock($lock, LOCK_EX | LOCK_NB) || Manager::maintenanceActive()) { return ['changed' => 0, 'has_more' => true]; }
+            if (!flock($lock, LOCK_EX | LOCK_NB)) { return ['changed' => 0, 'has_more' => true]; }
             $eligible = self::eligibleBackups($root . '/backups');
             $verified = [];
             $allowed = static function (string $relative) use ($root, $eligible, &$verified): bool {

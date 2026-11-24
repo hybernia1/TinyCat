@@ -33,13 +33,19 @@ $registries = $modules->registries();
 foreach (['TinyCat\\Support\\Config', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Database\\Connection', 'TinyCat\\Http\\Session'] as $class) {
     $assert(!class_exists($class, false), 'Registry collection did not load ' . $class);
 }
+$participant = \TinyCat\Social\Module::accountLifecycle();
+$assert($participant instanceof \TinyCat\Core\Identity\Participant, 'Social lifecycle callback can be assembled without SQL');
+$assert(\TinyCat\Social\Module::fileReferences('unknown', ['candidate']) === [] && \TinyCat\Social\Module::fileReferences('link-images', []) === [], 'Empty or unrelated reference lookups do not load the database');
+$assert(!class_exists(\TinyCat\Database\Connection::class, false), 'Lifecycle and empty file references remain lazy');
 $assert(session_status() === PHP_SESSION_NONE, 'Registry collection did not open a session');
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->tasks) === ['feeds', 'cleanup', 'site-health'], 'Existing task IDs and order remain stable');
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->health) === ['http', 'database', 'cache', 'storage', 'uploads', 'disk', 'runtime', 'scheduler', 'updates'], 'Existing probe IDs and order remain stable');
-$assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->maintenance) === [
+$maintenanceIds = array_map(static fn ($entry): string => $entry->id, $registries->entries->maintenance);
+$assert(array_values(array_diff($maintenanceIds, ['orphan_branding_files'])) === [
     'orphan_terms', 'orphan_links', 'orphan_status_image_files', 'orphan_link_image_files', 'orphan_avatar_files', 'temporary_files', 'update_files', 'expired_cache_files',
     'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications', 'old_scheduler_runs', 'bot_history', 'duplicate_bot_posts',
 ], 'Existing maintenance IDs and order remain stable');
+$assert(in_array('orphan_branding_files', $maintenanceIds, true) && $registries->owner('maintenance', 'orphan_branding_files') === 'tinycat.settings', 'Branding adds one owner-declared orphan task');
 $assert($registries->initialMaintenance() === 'update_files', 'The existing initial cleanup cursor is preserved by its owner');
 $assert($registries->owner('task', 'feeds') === 'tinycat.social' && $registries->owner('maintenance', 'old_password_reset_tokens') === 'tinycat.accounts', 'Tasks and retention have explicit owners');
 $assert($registries->task('feeds')->options === ['bot_limit' => 20], 'Feed defaults remain stable');
@@ -84,7 +90,7 @@ $assert($notificationCalls === 0 && $metadata->owner('notification', 'fixture.no
 $reject(static fn () => new Registries(['fixture.one' => $bundle, 'fixture.two' => $bundle]), 'Duplicate inbox providers');
 $reject(static fn () => new Registries(['fixture.one' => new Contributions(notificationTypes: [$type]), 'fixture.two' => new Contributions(notificationTypes: [$type])]), 'Duplicate notification types');
 $discoveryCalls = 0;
-$source = new \TinyCat\Core\Modules\SearchSource('fixture', static function () use (&$discoveryCalls): string { $discoveryCalls++; return 'Fixture'; }, static function () use (&$discoveryCalls): array { $discoveryCalls++; return ['items' => [], 'cursor' => []]; });
+$source = new \TinyCat\Core\Modules\SearchSource('fixture', static function () use (&$discoveryCalls): string { $discoveryCalls++; return 'Fixture'; }, static function () use (&$discoveryCalls): array { $discoveryCalls++; return ['items' => [], 'cursor' => []]; }, render: static function () use (&$discoveryCalls): string { $discoveryCalls++; return ''; });
 $section = new \TinyCat\Core\Modules\SitemapSection('fixture', static function () use (&$discoveryCalls): int { $discoveryCalls++; return 0; }, static function () use (&$discoveryCalls): array { $discoveryCalls++; return []; });
 $discovery = new Contributions(search: [$source], sitemaps: [$section]);
 $metadata = new Registries(['fixture.owner' => $discovery]);
@@ -98,7 +104,7 @@ $assert(array_map(static fn ($entry): string => $entry->id, $reverse->entries->t
 $assert((new ReflectionMethod(\TinyCat\Support\Cache::class, 'driver'))->invoke(null) === 'filesystem' && !class_exists(\TinyCat\Core\Settings\Store::class, false), 'Technical cache configuration does not load Settings');
 \TinyCat\Support\Localization::locale('en');
 $menu = \TinyCat\Core\Ui\Admin\Navigation::administration();
-$assert(count($menu) === 9 && $menu[0]['href'] === '/admin' && $menu[1]['href'] === '/admin/users' && $menu[8]['modal_url'] === '/api/settings/editor', 'Existing navigation shape is preserved alongside core module management');
+$assert(count($menu) === 10 && $menu[0]['href'] === '/admin' && $menu[1]['href'] === '/admin/users' && $menu[9]['modal_url'] === '/api/settings/editor', 'Existing navigation shape is preserved alongside core module management');
 $assert(in_array('/admin/modules', array_column($menu, 'href'), true), 'Core module management is present in administration');
 \TinyCat\Support\Localization::locale('cs');
 $assert(\TinyCat\Core\Ui\Admin\Navigation::administration()[1]['label'] !== $menu[1]['label'], 'Navigation labels resolve in the current language at render time');
@@ -108,7 +114,7 @@ $withoutBots = new Catalog(array_values(array_filter($modules->catalog->definiti
 Resources::withCatalog($withoutBots, static function () use ($assert): void {
     $assert(!isset(\TinyCat\Core\Tasks\Tasks::definitions()['feeds']), 'Removing Bots removes its task');
     $assert(!in_array('bot_history', \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks(), true), 'Removing Bots removes its maintenance');
-    $assert(count(\TinyCat\Core\Ui\Admin\Navigation::administration()) === 7, 'Removing Social retains only framework navigation including the dashboard');
+    $assert(count(\TinyCat\Core\Ui\Admin\Navigation::administration()) === 8, 'Removing Social retains only framework navigation including the dashboard');
     $assert(\TinyCat\Core\Tasks\HealthCheck::run()['metrics'] === ['cleanup' => 'ok'], 'Scheduler diagnostics work without bot tables when Bots is absent');
 });
 $assert(isset(\TinyCat\Core\Tasks\Tasks::definitions()['feeds']), 'Leaving a selection scope restores registrations');
