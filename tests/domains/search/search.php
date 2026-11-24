@@ -32,6 +32,7 @@ try {
         $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
     }
     Connection::set($pdo);
+    $pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INTEGER, updated_at DATETIME, PRIMARY KEY(ip_address, action_name, bucket_start))');
     $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username VARCHAR(80), role VARCHAR(20), bio TEXT, status VARCHAR(16), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at DATETIME)');
     $pdo->exec('CREATE TABLE social_terms (id INTEGER PRIMARY KEY, name VARCHAR(80))');
     $pdo->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, status VARCHAR(20) NOT NULL DEFAULT \'published\', published_at DATETIME' . ($mysql ? ', FULLTEXT KEY content_body_fulltext (body)' : '') . ')');
@@ -133,9 +134,9 @@ try {
     $assert(count(Queries::public_search_content_rows('unionboundary', 0)) === 1 && count(Queries::public_search_content_rows('unionboundary', 100)) === 51, 'Bounded source limits retain public limit normalization.');
     \TinyCat\Http\Session::start();
     $_SESSION['_tinycat_search_guard'] = ['count' => 7];
-    $suggestionCount = (int) ($_SESSION['_tinycat_suggestion_guard']['count'] ?? 0);
+    $suggestionCount = \TinyCat\Core\Security\RateLimiter::rate_limit_ip_action_count('search_suggestions', 60);
     \TinyCat\Social\Search\Guard::suggestions();
-    $assert($_SESSION['_tinycat_search_guard'] === ['count' => 7] && $_SESSION['_tinycat_suggestion_guard']['count'] === $suggestionCount + 1, 'Autocomplete uses a separate search budget.');
+    $assert($_SESSION['_tinycat_search_guard'] === ['count' => 7] && \TinyCat\Core\Security\RateLimiter::rate_limit_ip_action_count('search_suggestions', 60) === $suggestionCount + 1, 'Autocomplete uses a separate search budget.');
     echo 'PASS search semantics (' . ($mysql ? 'MySQL/MariaDB' : 'SQLite') . ", {$checks} checks)\n";
 } finally {
     if ($server instanceof PDO) { Connection::set($server); }

@@ -5,18 +5,14 @@ namespace TinyCat\Social\Search;
 
 final class Guard
 {
-    /** Autocomplete has its own session budget; it never consumes full searches. */
+    /** Autocomplete has its own database budget; it never consumes full searches. */
     public static function suggestions(): void
     {
         if (\TinyCat\Core\Security\RateLimitPolicy::isExempt(\TinyCat\Core\Identity\Authentication::auth())) { return; }
-        \TinyCat\Http\Session::start();
-        $now = time();
-        $state = $_SESSION['_tinycat_suggestion_guard'] ?? ['started_at' => $now, 'count' => 0];
-        if ((int) $state['started_at'] <= $now - \TinyCat\Core\Security\RateLimitPolicy::SUGGESTION_WINDOW) { $state = ['started_at' => $now, 'count' => 0]; }
-        $state['count']++;
-        $_SESSION['_tinycat_suggestion_guard'] = $state;
-        if ($state['count'] > \TinyCat\Core\Security\RateLimitPolicy::SUGGESTION_MAX) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', ['retry_after' => max(1, $state['started_at'] + \TinyCat\Core\Security\RateLimitPolicy::SUGGESTION_WINDOW - $now)]);
+        $user = \TinyCat\Core\Identity\Authentication::auth();
+        $subject = $user !== null ? 'user:' . (int) $user['id'] : \TinyCat\Core\Security\RateLimiter::rate_limit_ip();
+        if (!\TinyCat\Core\Security\RateLimiter::consume($subject, 'search_suggestions', Policy::SUGGESTION_WINDOW, Policy::SUGGESTION_MAX)) {
+            throw new \TinyCat\Http\HttpException(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', ['retry_after' => \TinyCat\Core\Security\RateLimiter::window_retry_after(Policy::SUGGESTION_WINDOW)]);
         }
     }
 
@@ -27,7 +23,7 @@ final class Guard
     {
         \TinyCat\Http\Session::start();
 
-        $limits = \TinyCat\Core\Security\RateLimitPolicy::guestSearch();
+        $limits = Policy::guestSearch();
         $now = time();
         $state = $_SESSION['_tinycat_search_guard'] ?? [];
 
@@ -62,7 +58,7 @@ final class Guard
     {
         \TinyCat\Http\Session::start();
 
-        $limits = \TinyCat\Core\Security\RateLimitPolicy::guestSearch();
+        $limits = Policy::guestSearch();
         $_SESSION['_tinycat_search_guard'] = [
             'started_at' => time(),
             'count' => 0,
@@ -90,7 +86,7 @@ final class Guard
 
             [$window, $limit] = \TinyCat\Social\Moderation\Restrictions::moderation_action_rule($user, 'search');
 
-            if (\TinyCat\Social\Moderation\Restrictions::moderation_action_count($user, 'search') >= (int) $limit) {
+            if ($increment ? !\TinyCat\Core\Security\RateLimiter::consume('user:' . (int) $user['id'], 'search', (int) $window, (int) $limit) : \TinyCat\Social\Moderation\Restrictions::moderation_action_count($user, 'search') >= (int) $limit) {
                 return [
                     'code' => 'action_limited',
                     'message' => \TinyCat\Support\Localization::t('moderation.messages.action_limited'),
@@ -99,25 +95,23 @@ final class Guard
                 ];
             }
 
-            if ($increment) {
-                \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'search');
-            }
-
             return null;
         }
+
+        $blocked = self::guestBudget($increment);
+        if ($blocked !== null) { return $blocked; }
 
         if (!\TinyCat\Core\Security\Captcha::isActive()) {
             return null;
         }
 
-        $limits = \TinyCat\Core\Security\RateLimitPolicy::guestSearch();
+        $limits = Policy::guestSearch();
         $state = \TinyCat\Social\Search\Guard::public_search_guest_state($increment);
         $now = time();
 
         if ((int) ($state['unlocked_until'] ?? 0) >= $now || (int) ($state['count'] ?? 0) <= (int) $limits['max']) {
             return null;
         }
-
 
         return [
             'code' => 'captcha_required',
@@ -127,6 +121,22 @@ final class Guard
             'login_url' => '/login',
             'retry_after' => max(1, (int) ($state['started_at'] ?? $now) + (int) $limits['window'] - $now),
         ];
+    }
+
+    /** Stateless public representations share the IP ceiling without resolving authentication.
+     * @return array<mixed>|null */
+    public static function guestBudget(bool $increment = true): ?array
+    {
+        $limits = Policy::guestSearch();
+        $subject = \TinyCat\Core\Security\RateLimiter::rate_limit_ip();
+        $allowed = $increment
+            ? \TinyCat\Core\Security\RateLimiter::consume($subject, 'search_guest', $limits['window'], Policy::GUEST_MAX)
+            : \TinyCat\Core\Security\RateLimiter::subject_action_count($subject, 'search_guest', $limits['window']) < Policy::GUEST_MAX;
+        if (!$allowed) {
+            return ['code' => 'action_limited', 'message' => \TinyCat\Support\Localization::t('moderation.messages.action_limited'), 'login_url' => '/login', 'retry_after' => \TinyCat\Core\Security\RateLimiter::window_retry_after($limits['window'])];
+        }
+
+        return null;
     }
 
     public static function public_search_api_guard(string $query): void

@@ -18,7 +18,14 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     'datetime' => ['timezone' => 'UTC'],
     'cache' => ['driver' => 'filesystem'],
 ]);
-$pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$pdo = new class ('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]) extends PDO {
+    public int $reputationQueries = 0;
+    public function prepare(string $query, array $options = []): PDOStatement|false
+    {
+        if (str_contains($query, 'SELECT COUNT(*) FROM social_posts')) { $this->reputationQueries++; }
+        return parent::prepare($query, $options);
+    }
+};
 Connection::set($pdo);
 $pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start TEXT, action_count INTEGER, updated_at TEXT, PRIMARY KEY(ip_address, action_name, bucket_start))');
 $pdo->exec('CREATE TABLE social_posts (author_id INTEGER, kind TEXT DEFAULT \'post\')');
@@ -94,6 +101,65 @@ $pdo->exec("INSERT INTO social_posts(kind, author_id) VALUES ('post', 1), ('post
 for ($article = 0; $article < 20; $article++) { $pdo->exec("INSERT INTO social_posts(kind, author_id) VALUES ('article', 1)"); }
 $assert(Restrictions::moderation_user_post_count(1) === 3, 'Only status publications count towards Social reputation');
 $assert(Restrictions::moderation_user_reputation(['id' => 1, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s', time() - 8 * 86400)]) === 'normal', 'Articles cannot promote Social reputation to trusted');
+
+$reputationActor = ['id' => 101, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s')];
+$beforeQueries = $pdo->reputationQueries;
+foreach (['post', 'comment', 'like', 'search'] as $action) { Restrictions::moderation_action_rule($reputationActor, $action); }
+$assert($pdo->reputationQueries === $beforeQueries + 1, 'One request computes reputation once across actions.');
+\TinyCat\Http\Request::reset();
+Restrictions::moderation_action_rule($reputationActor, 'post');
+$assert($pdo->reputationQueries === $beforeQueries + 2, 'The next request refreshes reputation.');
+
+// Failed work rolls back its quota, and exhaustion rolls back the domain write.
+$pdo->exec('CREATE TABLE accepted_actions (id INTEGER)');
+$quotaActor = ['id' => 90, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s')];
+try {
+    \TinyCat\Database\Transactions::run(static function () use ($quotaActor): void {
+        Restrictions::moderation_record_action($quotaActor, 'post');
+        throw new RuntimeException('injected write failure');
+    });
+} catch (RuntimeException) {}
+$assert(Restrictions::moderation_action_count($quotaActor, 'post') === 0, 'Failed writes do not consume success quotas.');
+for ($i = 0; $i < 6; $i++) {
+    try {
+        \TinyCat\Database\Transactions::run(static function () use ($quotaActor): void {
+            Connection::exec('INSERT INTO accepted_actions VALUES (1)');
+            Restrictions::moderation_record_action($quotaActor, 'post');
+        });
+    } catch (\TinyCat\Http\HttpException $error) { $assert($error->status === 429, 'Exhaustion is a public 429.'); }
+}
+$assert((int) Connection::value('SELECT COUNT(*) FROM accepted_actions') === 5, 'Exhaustion rolls back the domain write.');
+$assert(Restrictions::moderation_action_count($quotaActor, 'post') === 5, 'Only committed successes consume quota.');
+$assert(!\TinyCat\Core\Security\Captcha::isActive(), 'Guest search regression runs without CAPTCHA.');
+$_SERVER['REMOTE_ADDR'] = '192.0.2.77';
+for ($i = 0; $i < \TinyCat\Social\Search\Policy::GUEST_MAX; $i++) {
+    $_SESSION = [];
+    $assert(\TinyCat\Social\Search\Guard::public_search_guard('nebula') === null, 'Guest budget accepts searches without CAPTCHA.');
+}
+$_SESSION = [];
+$assert(\TinyCat\Social\Search\Guard::public_search_guard('nebula')['code'] === 'action_limited', 'Discarding session cannot reset guest search budget.');
+\TinyCat\Social\Search\Guard::public_search_guest_unlock();
+$assert(\TinyCat\Social\Search\Guard::public_search_guard('nebula')['code'] === 'action_limited', 'CAPTCHA unlock cannot bypass the server budget.');
+$_SERVER['REMOTE_ADDR'] = '192.0.2.78';
+$assert(\TinyCat\Social\Search\Guard::public_search_guard('nebula') === null, 'Independent IP retains its search budget.');
+
+for ($i = 0; $i < \TinyCat\Social\Search\Policy::SUGGESTION_MAX; $i++) {
+    $_SESSION = [];
+    \TinyCat\Social\Search\Guard::suggestions();
+}
+try {
+    $_SESSION = [];
+    \TinyCat\Social\Search\Guard::suggestions();
+    throw new RuntimeException('Autocomplete bypassed its database budget');
+} catch (\TinyCat\Http\HttpException $error) { $assert($error->status === 429, 'Autocomplete survives discarded sessions.'); }
+$assert(RateLimiter::rate_limit_ip_action_count('search_guest', 300) === 1, 'Autocomplete never consumes full searches.');
+foreach (['admin', 'bot'] as $role) {
+    \TinyCat\Core\Identity\Authentication::reset(['id' => 99, 'role' => $role], true);
+    $assert(\TinyCat\Social\Search\Guard::public_search_guard('nebula') === null, 'Verified privileged role bypasses search quota.');
+    \TinyCat\Social\Search\Guard::suggestions();
+    $assert(RateLimiter::subject_action_count('user:99', 'search_suggestions', 60) === 0, 'Privileged autocomplete consumes no quota.');
+}
+\TinyCat\Core\Identity\Authentication::reset(null, true);
 \TinyCat\Core\Security\RateLimitPolicy::retainWindows('fixture.long-window', [100000]);
 $assert(\TinyCat\Core\Security\RateLimitPolicy::retentionSeconds() === 200000, 'Retention follows declared owner windows instead of a core list of Social actions');
 echo "PASS rate limiter isolation and cooldowns ({$checks} checks)\n";

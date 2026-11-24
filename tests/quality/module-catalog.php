@@ -37,6 +37,22 @@ foreach (['TinyCat\\Support\\Config', 'TinyCat\\Core\\Settings\\Store', 'TinyCat
 }
 $assert($legacy->catalog->get('tinycat.social')->namespace === 'TinyCat\\Social\\', 'Legacy IDs identify the current namespace');
 $assert((new Catalog([]))->definitions() === [], 'The technical catalog does not require a business module');
+$framework = TinyCat\Core\Runtime\Framework::withSnapshot(static function () use ($root, $assert): array {
+    $first = TinyCat\Core\Runtime\Framework::definitions($root);
+    $assert($first === TinyCat\Core\Runtime\Framework::definitions($root), 'A loader snapshot reuses immutable framework definitions');
+    $nested = TinyCat\Core\Runtime\Framework::withSnapshot(static fn (): array => TinyCat\Core\Runtime\Framework::definitions($root));
+    $assert($nested[0] !== $first[0] && TinyCat\Core\Runtime\Framework::definitions($root)[0] === $first[0], 'Nested loader snapshots restore their parent');
+    return $first;
+});
+$assert(TinyCat\Core\Runtime\Framework::definitions($root)[0] !== $framework[0], 'A later load validates fresh framework metadata');
+$failedFramework = [];
+try {
+    TinyCat\Core\Runtime\Framework::withSnapshot(static function () use ($root, &$failedFramework): void {
+        $failedFramework = TinyCat\Core\Runtime\Framework::definitions($root);
+        throw new RuntimeException('fixture');
+    });
+} catch (RuntimeException) { }
+$assert(TinyCat\Core\Runtime\Framework::definitions($root)[0] !== $failedFramework[0], 'Failed loader snapshots do not persist definitions');
 $reject(static fn () => Loader::fromSelection($root, ['tinycat.bots' => TinyCat\Social\Module::class]), 'Removed bot activation ID cannot select the Social provider');
 $reject(static fn () => Loader::fromSelection($root, ['tinycat.notifications' => TinyCat\Core\Notifications\ServiceProvider::class]), 'Notifications without account identity');
 $inbox = Loader::fromSelection($root, []);
@@ -221,6 +237,11 @@ try {
     foreach ($plan['schemas'] as $stream => $schema) {
         $assert(isset($schema['fresh']) && is_file($root . '/' . $schema['fresh']['file']) && !isset($schema['legacy']), 'Each archived built-in owner has an independent fresh baseline: ' . $stream);
         foreach ($schema['migrations'] as $migration) {
+            $readIndexes = ['tinycat.accounts.read-indexes' => 'App/Core/Identity/migrations/read-indexes.php', 'tinycat.notifications.read-indexes' => 'App/Core/Notifications/migrations/read-indexes.php'];
+            if (isset($readIndexes[$migration['id']])) {
+                $assert($migration['file'] === $readIndexes[$migration['id']] && $migration['version'] === 3 && hash_equals($migration['checksum'], \TinyCat\Database\ModuleSchemas::checksum($root . '/' . $migration['file'])), 'New read indexes remain executable and authenticated after the archived prefix: ' . $migration['id']);
+                continue;
+            }
             if ($migration['id'] === 'tinycat.accounts.avatar-version') {
                 $assert($migration['file'] === 'App/Core/Identity/migrations/avatar-version.php' && $migration['version'] === 2 && hash_equals($migration['checksum'], \TinyCat\Database\ModuleSchemas::checksum($root . '/' . $migration['file'])), 'The new avatar migration remains executable and authenticated after the archived prefix');
                 continue;

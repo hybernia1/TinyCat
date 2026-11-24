@@ -7,6 +7,13 @@ final class HttpKernel
 {
     public static function respond(): void
     {
+        if (in_array(\TinyCat\Http\Request::current()->method(), ['GET', 'HEAD'], true)) {
+            \TinyCat\Support\CompiledTranslations::withDeploymentSnapshot(self::respondCurrent(...));
+        } else { self::respondCurrent(); }
+    }
+
+    private static function respondCurrent(): void
+    {
         $bufferLevel = ob_get_level();
         ob_start();
         try {

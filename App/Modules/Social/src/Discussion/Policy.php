@@ -29,7 +29,6 @@ final class Policy
         if (($data['explicit'] ?? false) && in_array($action, ['react', 'comment_like'], true)) { Actions::status_json_require_session_interval($action); }
         if ($action === 'comment' || (in_array($action, ['react', 'comment_like'], true) && $data['liked'])) {
             Actions::status_json_require_not_muted($actor);
-            Actions::status_json_require_action($actor, $action === 'comment' ? 'comment' : 'like');
         } elseif ($action === 'comment_update' && !\TinyCat\Core\Identity\Roles::isAdmin($actor)) { Actions::status_json_require_not_muted($actor); }
     }
 

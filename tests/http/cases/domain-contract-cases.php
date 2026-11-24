@@ -74,6 +74,15 @@ $assert($status === 200 && !$payload['data']['following'], 'Repeating DELETE kee
 [$status, $payload] = $request('GET', '/api/notifications?view=html', null, 'user');
 $assert($status === 200 && $payload['data']['unread_count'] >= 1 && $payload['data']['items'][0]['id'] === 1, 'Inbox reads are scoped to the current user and expose unread_count.');
 $pure($payload);
+foreach (['/api/notifications/state', '/api/notifications/preview'] as $endpoint) {
+    [$status] = $request('GET', $endpoint);
+    $assert($status === 401, 'Notification polling requires authentication: ' . $endpoint);
+    [$status, $poll] = $request('GET', $endpoint . '?user_id=1', null, 'user');
+    $assert($status === 200 && $poll['data']['unread_count'] === $payload['data']['unread_count'] && $poll['data']['latest_id'] === $payload['data']['latest_id'], 'Polling retains canonical own-inbox counters: ' . $endpoint);
+    $pure($poll);
+    if (str_ends_with($endpoint, '/state')) { $assert(!array_key_exists('items', $poll['data']), 'Unchanged-state polling does not return or serialize inbox rows.'); }
+    else { $assert(count($poll['data']['items']) <= 6 && $poll['data']['items'][0]['id'] === $payload['data']['items'][0]['id'], 'The preview is bounded and uses the same canonical item order.'); }
+}
 [$status] = $request('DELETE', '/api/notifications/2', ['id' => 1], 'user', $csrf);
 $assert($status === 404, 'A member cannot delete another inbox item by manipulating body IDs.');
 [$status, $payload] = $request('PATCH', '/api/notifications/1', [], 'user', $csrf);

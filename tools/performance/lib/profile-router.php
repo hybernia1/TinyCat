@@ -16,6 +16,7 @@ define('TINYCAT', true);
 $root = getenv('TINYCAT_PROFILE_ROOT') ?: dirname(__DIR__, 3);
 require $root . '/App/Core/Runtime/autoload.php';
 require __DIR__ . '/ProfileDatabase.php';
+require __DIR__ . '/ProfileIdentity.php';
 require __DIR__ . '/CallProfile.php';
 $config = require $configPath;
 if (preg_match('/^tinycat_perf_[a-z0-9_]+$/', $config['database']['name'] ?? '') !== 1) {
@@ -48,12 +49,11 @@ $database = new \TinyCat\Tools\Performance\ProfileDatabase(
 );
 \TinyCat\Database\Connection::set($database);
 $actorId = (int) (getenv('TINYCAT_PROFILE_USER') ?: 0);
-if ($actorId > 0) {
-    \TinyCat\Http\Session::start();
-    $_SESSION['auth_user_id'] = $actorId;
-}
+$sessionDirectory = getenv('TINYCAT_PROFILE_SESSIONS');
+if (is_string($sessionDirectory) && $sessionDirectory !== '') { session_save_path($sessionDirectory); }
+$authenticationSetup = \TinyCat\Tools\Performance\ProfileIdentity::seed($actorId, $database);
 ob_start();
-register_shutdown_function(static function () use ($started, $database, $outputPath): void {
+register_shutdown_function(static function () use ($started, $database, $outputPath, $authenticationSetup): void {
     $queries = $database->queries;
     $body = (string) ob_get_contents();
     json_decode($body);
@@ -62,6 +62,7 @@ register_shutdown_function(static function () use ($started, $database, $outputP
         'path' => $_SERVER['REQUEST_URI'], 'status' => http_response_code(),
         'ms' => round((hrtime(true) - $started) / 1_000_000, 3),
         'sql_count' => count($queries), 'sql_ms' => round(array_sum(array_column($queries, 'ms')), 3),
+        'authentication_setup' => $authenticationSetup,
         'peak_memory_bytes' => memory_get_peak_usage(true), 'queries' => $queries,
         'included_files' => count(get_included_files()),
         'cache_driver' => \TinyCat\Support\Config::get('cache.driver'),

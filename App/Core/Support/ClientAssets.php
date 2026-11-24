@@ -237,12 +237,12 @@ final class ClientAssets
         $locale = Localization::locale();
         $minify = self::option('performance.minify_js');
         $compiled = CompiledAssets::client($path, $locale, $minify, self::option('performance.minify_css'));
-        $urls = $compiled !== null ? $compiled['scripts'] : [
+        $urls = $compiled !== null ? $compiled['scripts'] : AssetGraph::withSnapshot(static fn (): array => [
             self::bundle('runtime', AssetGraph::javascript(self::runtime()), 'js', $minify),
             self::bundle('components', self::componentScript($path)),
             self::bundle('i18n-' . strtolower($locale), self::catalogScript($path, $locale)),
             self::bundle('app', AssetGraph::javascript(AssetGraph::order(self::entries($path), self::runtime())), 'js', $minify),
-        ];
+        ]);
         foreach ($extraScripts as $script) { $urls[] = Assets::asset($script); }
         return $urls;
     }
@@ -252,7 +252,7 @@ final class ClientAssets
     {
         $minify = self::option('performance.minify_css');
         $compiled = CompiledAssets::client($path, Localization::locale(), false, $minify);
-        return [$compiled !== null ? $compiled['style'] : self::bundle('styles', AssetGraph::stylesheet(self::sourceStyles($path)), 'css', $minify)];
+        return [$compiled !== null ? $compiled['style'] : AssetGraph::withSnapshot(static fn (): string => self::bundle('styles', AssetGraph::stylesheet(self::sourceStyles($path)), 'css', $minify))];
     }
 
     /** @return list<string> */

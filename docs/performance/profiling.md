@@ -4,6 +4,33 @@ New and changed list queries follow the [selection and pagination standard](../c
 Store each run's reports with its commit, dataset and environment below
 `.work/performance/`; historical measurements do not describe current performance.
 
+The [24 November core audit](../audits/core-performance-2026-11-24.md) measures
+the current compiled/source fallback paths, repeated deployment identity checks
+and framework metadata preparation. It separates live Apache samples from
+isolated worker measurements and lists the remaining load/data coverage gaps.
+Its implementation follow-up records scoped metadata/asset reuse, paired
+before/after measurements and restoration of matching compiled catalogs on
+the existing Laragon site; full preflight was explicitly deferred.
+
+The [follow-up data/concurrency audit](../audits/core-data-performance-2026-11-24.md)
+measures notification query plans on 310,100 synthetic rows and identifies full
+inbox polling and settings/session serialization. Its discovered `--user`
+credential defect is now corrected through canonical login followed by a fresh
+identity resolution in dispatch. Invalid or noninteractive actors fail instead
+of silently becoming guests. Raw traces separate `authentication_setup` SQL and
+time from dispatched SQL; HTTP elapsed time still includes that benchmark setup,
+so authenticated timings are not deployment TTFB measurements.
+
+The [HTTP/accounts/inventory audit](../audits/core-http-performance-2026-11-24.md)
+adds query plans for 100,000 synthetic accounts, fresh-process inactive-module
+inventory measurements, routing/input scale probes and live generated-avatar
+GET/304 samples. It distinguishes hot-path costs from setup-only readiness.
+
+The [account/inbox implementation results](../audits/core-list-performance-fixes-2026-11-24.md)
+record version 3 read indexes, state-only polling, reused unfiltered counts and
+authenticated API measurements, including the runtime control and remaining
+limitations. Full preflight and live schema deployment remain deferred.
+
 Use a dedicated database, never reset the development or production installation.
 The preparation tool copies table definitions only and writes a private configuration
 with a random `tinycat_perf_*` database name. Keep that directory outside public
@@ -37,6 +64,8 @@ The tool starts temporary **loopback-only** PHP workers and stops them on comple
 or failure. Its router accepts only GET requests and only `tinycat_perf_*` databases.
 `--user` selects a seeded account on this benchmark server; it does not sign into
 the development website. Authentication resolution still runs in each request.
+The extra seed-login query is recorded under `authentication_setup.queries`,
+outside dispatched `sql_count`. Its time remains included in HTTP duration.
 An isolated filesystem cache is used per output, independently of the site's cache.
 Pass `--cache=memcached` to measure the local Memcached server at 127.0.0.1:11211
 with a unique prefix per output. A missing server fails the run. The default is

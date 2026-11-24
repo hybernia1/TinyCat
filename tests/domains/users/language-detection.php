@@ -38,4 +38,25 @@ foreach ($cases as [$header, $available, $expected]) {
     }
 }
 
+require_once __DIR__ . '/../../../tools/support/workspace.php';
+$directory = \TinyCat\Tools\Workspace::directory('tests/language-packages-' . bin2hex(random_bytes(6)));
+$copied = [];
+try {
+    foreach (['Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/Languages.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/TranslationSources.php', 'Core/Modules/Resources.php', 'Core/Modules/Catalog.php'] as $relative) {
+        $target = $directory . '/App/' . $relative;
+        if (!is_dir(dirname($target))) { mkdir(dirname($target), 0700, true); }
+        if (!copy(dirname(__DIR__, 3) . '/App/' . $relative, $target)) { throw new RuntimeException('Cannot prepare language snapshot fixture.'); }
+        $copied[] = $target;
+    }
+    mkdir($directory . '/App/Core/Support/lang', 0700);
+    passthru(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../../fixtures/presentation/language-packages.php') . ' ' . escapeshellarg($directory), $exitCode);
+    if ($exitCode !== 0) { throw new RuntimeException('Language snapshot regression failed.'); }
+} finally {
+    foreach ($copied as $file) { unlink($file); }
+    foreach (['App/Core/Support/lang', 'App/Core/Support', 'App/Core/Runtime', 'App/Core/Modules', 'App/Core', 'App', ''] as $relative) {
+        $path = $directory . ($relative !== '' ? '/' . $relative : '');
+        if (is_dir($path)) { rmdir($path); }
+    }
+}
+
 echo 'PASS language detection (' . count($cases) . " cases)\n";

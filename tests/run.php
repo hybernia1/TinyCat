@@ -24,6 +24,7 @@ $tests = [
     'Failure boundaries and recovery' => 'tests/infrastructure/failures.php',
     'Shared infrastructure' => 'tests/infrastructure/run.php',
     'Unified migration journal' => 'tests/infrastructure/migrations.php',
+    'Core account and inbox read-index migrations' => 'tests/infrastructure/read-indexes.php',
     'Admin list sorting' => 'tests/presentation/admin-sorting.php',
     'JSON AJAX client' => 'tests/frontend/run.php',
     'Monolith API inventory' => 'tests/quality/monolith-inventory.php',

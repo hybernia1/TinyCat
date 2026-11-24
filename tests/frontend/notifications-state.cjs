@@ -1,14 +1,16 @@
 "use strict";
 const assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), vm = require("node:vm");
-const source = fs.readFileSync(path.join(__dirname, "../../App/Core/Notifications/assets/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
+const source = ["controller.js", "polling.js"].map(file => fs.readFileSync(path.join(__dirname, "../../App/Core/Notifications/assets", file), "utf8").replace(/^import .*;\r?\n/gm, "")).join("\n");
 function harness() {
   const classes = initial => { const s = new Set(initial); return { contains: n => s.has(n), remove: n => s.delete(n), toggle(n, on) { if (on) { s.add(n); } else { s.delete(n); } } }; };
   const action = () => ({ removed: false, remove() { this.removed = true; }, closest() { return this; } });
   const row = () => ({ dataset: { notificationId: "7" }, classList: classes(["is-unread"]), removed: false, read: action(), remove() { this.removed = true; }, querySelector() { return this.read.removed ? null : this.read; } });
   const rows = [row(), row()], badges = [{}, {}], readAll = { hidden: false, removed: false, remove() { this.removed = true; } };
-  const list = { replaceChildren() {} }, handlers = {}, timers = [];
+  const list = { replaceChildren() {} }, handlers = {}, timers = [], urls = [], observers = [];
+  const popover = { dataset: { popoverOpen: "false" } };
   const button = { dataset: { notificationUnread: "2", notificationLatestId: "8" }, classList: classes(["has-unread"]), attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, getAttribute(k) { return this.attrs[k]; }, querySelector() { return badges[0]; } };
-  const document = { hidden: false, addEventListener(n, fn) { (handlers[n] ||= []).push(fn); },
+  button.isConnected = true; button.closest = () => popover;
+  const document = { hidden: false, addEventListener(n, fn) { (handlers[n] ||= []).push(fn); }, removeEventListener(n, fn) { handlers[n] = (handlers[n] || []).filter(h => h !== fn); },
     querySelector(s) { return this.querySelectorAll(s)[0] || null; },
     querySelectorAll(s) {
       if (s === "[data-notification-button]") { return [button]; }
@@ -22,11 +24,11 @@ function harness() {
   };
   let requests = 0, resolve, reject;
   const T = { ui: {}, dom: {}, components: { render: (_name, data) => data.items }, i18n: { plural: () => "new notifications" }, toasts: { show() {} },
-    api: { request() { requests++; return new Promise((yes, no) => { resolve = yes; reject = no; }); } } };
-  const window = { TinyCat: T, location: new URL("https://tinycat.test/"), setInterval(fn) { timers.push(fn); } };
+    api: { request(url) { requests++; urls.push(url); return new Promise((yes, no) => { resolve = yes; reject = no; }); } } };
+  const window = { TinyCat: T, location: new URL("https://tinycat.test/"), setInterval(fn) { timers.push(fn); return timers.length; }, clearInterval(id) { timers[id - 1] = null; }, MutationObserver: class { constructor(fn) { this.fn = fn; observers.push(this); } observe() {} disconnect() { this.stopped = true; } } };
   vm.runInNewContext(source, { window, document, URL });
   const result = data => T.notifications.result({ dataset: {}, getAttribute: () => "/api/notifications/7" }, { data });
-  return { T, rows, badges, readAll, button, handlers, timers, result, count: () => requests, resolve: r => resolve(r), reject: e => reject(e) };
+  return { T, rows, badges, readAll, button, handlers, timers, result, urls, document, observers, open() { popover.dataset.popoverOpen = "true"; observers.forEach(o => o.fn()); }, count: () => requests, resolve: r => resolve(r), reject: e => reject(e) };
 }
 (async function () {
   const h = harness();
@@ -51,9 +53,26 @@ function harness() {
   p.resolve({ data: { unread_count: 5, latest_id: 8, items: [] } }); await pending;
   assert.equal(p.button.dataset.notificationUnread, "1", "A late poll cannot undo a completed read/delete action");
   const failed = p.timers[0](); p.reject(new Error("Network unavailable")); await failed;
-  const recovered = p.timers[0](); p.resolve({ data: { unread_count: 3, latest_id: 9, items: [] } }); await recovered;
-  assert.equal(p.count(), 3, "Polling recovers after network errors");
+  const recovered = p.timers[0](); p.resolve({ data: { unread_count: 3, latest_id: 9 } }); await new Promise(setImmediate);
+  assert.equal(p.urls.at(-1), "/api/notifications/preview", "Changed state fetches only a bounded preview");
+  p.resolve({ data: { unread_count: 3, latest_id: 9, items: [] } }); await recovered;
+  assert.equal(p.count(), 4, "Polling recovers after network errors");
   assert.equal(p.button.dataset.notificationUnread, "3");
+  const unchanged = p.timers[0](); p.resolve({ data: { unread_count: 3, latest_id: 9 } }); await unchanged;
+  assert.equal(p.urls.at(-1), "/api/notifications/state", "An unchanged closed menu never loads inbox rows");
+  assert.equal(p.count(), 5);
+  p.open();
+  assert.equal(p.urls.at(-1), "/api/notifications/preview", "Opening the shared popover refreshes its preview even with unchanged counters");
+  p.resolve({ data: { unread_count: 3, latest_id: 9, items: [] } }); await new Promise(setImmediate);
+  const inFlight = p.timers[0]();
+  p.result({ id: 7, deleted: true, unread_count: 2, latest_id: 9 });
+  p.resolve({ data: { unread_count: 3, latest_id: 9, items: [] } }); await inFlight;
+  assert.equal(p.button.dataset.notificationUnread, "2", "A preview response also respects mutation races");
+  const detached = p.count(); p.button.isConnected = false; await p.timers[0]();
+  assert.equal(p.count(), detached, "Detached buttons issue no further requests");
+  assert.equal(p.timers[0], null); assert.equal(p.handlers.visibilitychange.length, 0); assert.ok(p.observers[0].stopped);
+  const disposed = harness(); disposed.T.notifications.init(); disposed.T.notifications.dispose(disposed.document);
+  assert.equal(disposed.timers[0], null, "Lifecycle disposal releases polling immediately");
   // Exercise the same form-request lifecycle used by notification actions.
   const field = { disabled: false }, fixed = { disabled: true }, loading = new Set(), attrs = {};
   const form = { querySelectorAll: () => [field, fixed], classList: { contains: n => loading.has(n), add: n => loading.add(n), toggle(n, on) { if (on) { loading.add(n); } else { loading.delete(n); } } }, getAttribute: n => attrs[n] ?? null, setAttribute(n, v) { attrs[n] = v; }, removeAttribute(n) { delete attrs[n]; } };

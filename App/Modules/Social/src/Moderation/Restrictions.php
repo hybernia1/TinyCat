@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Moderation;
 
-use Throwable;
-
 final class Restrictions
 {
+    /** @var \WeakMap<\TinyCat\Http\Request, array<string, string>>|null */
+    private static ?\WeakMap $reputations = null;
+
     public static function moderation_user_post_count(int $userId): int
     {
         if ($userId < 1) {
@@ -27,18 +28,27 @@ final class Restrictions
             return 'trusted';
         }
 
+        $request = \TinyCat\Http\Request::current();
+        self::$reputations ??= new \WeakMap();
+        $key = $userId . ':' . (string) ($user['created_at'] ?? '');
+        $cached = self::$reputations[$request] ?? [];
+        if (isset($cached[$key])) { return $cached[$key]; }
+
         $createdAt = strtotime((string) ($user['created_at'] ?? '')) ?: time();
         $age = max(0, time() - $createdAt);
         $posts = \TinyCat\Social\Moderation\Restrictions::moderation_user_post_count($userId);
 
         if ($age >= 7 * 86400 && $posts >= 10) {
+            self::$reputations[$request] = $cached + [$key => 'trusted'];
             return 'trusted';
         }
 
         if ($age >= 86400 || $posts >= 3) {
+            self::$reputations[$request] = $cached + [$key => 'normal'];
             return 'normal';
         }
 
+        self::$reputations[$request] = $cached + [$key => 'new'];
         return 'new';
     }
 
@@ -138,12 +148,12 @@ final class Restrictions
             return;
         }
 
-        [$window] = \TinyCat\Social\Moderation\Restrictions::moderation_action_rule($user, $action);
-
-        try {
-            \TinyCat\Core\Security\RateLimiter::subject_action_record('user:' . $userId, $action, (int) $window);
-        } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
-            // Moderation limits must never break the primary action.
+        [$window, $limit] = self::moderation_action_rule($user, $action);
+        // Called inside the domain transaction: rejection or later failure rolls back both writes.
+        if (!\TinyCat\Core\Security\RateLimiter::consume('user:' . $userId, $action, (int) $window, (int) $limit)) {
+            throw new \TinyCat\Http\HttpException(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', [
+                'retry_after' => \TinyCat\Core\Security\RateLimiter::window_retry_after((int) $window),
+            ]);
         }
     }
 

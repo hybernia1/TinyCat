@@ -210,12 +210,12 @@ final class Actions
      * @param array<mixed> $filters
      * @return array<mixed>
      */
-    public static function tc_admin_users_page(?array $filters = null): array
+    public static function tc_admin_users_page(?array $filters = null, ?int $total = null): array
     {
         $filters ??= \TinyCat\Core\Identity\Actions::tc_admin_users_filters();
         $query = \TinyCat\Core\Identity\ReadModel::tc_admin_users_query($filters);
         $pagination = \TinyCat\Support\Pagination::paginationMeta(
-            $query->count(),
+            $total ?? $query->count(),
             \TinyCat\Support\AdminViews::admin_page(),
             \TinyCat\Support\AdminViews::admin_per_page()
         );
@@ -235,12 +235,14 @@ final class Actions
     public static function tc_admin_users_api_payload(?int $id = null): array
     {
         $filters = \TinyCat\Core\Identity\Actions::tc_admin_users_filters();
-        $page = \TinyCat\Core\Identity\Actions::tc_admin_users_page($filters);
+        $stats = \TinyCat\Core\Identity\ReadModel::tc_admin_users_stats();
+        $unfiltered = array_filter(array_intersect_key($filters, array_flip(['q', 'role', 'status', 'updated_from', 'updated_to'])), static fn (mixed $value): bool => $value !== '') === [];
+        $page = \TinyCat\Core\Identity\Actions::tc_admin_users_page($filters, $unfiltered ? $stats['total'] : null);
         $users = array_map('TinyCat\\Core\\Identity\\Resource::legacyUser', $page['items']);
         $payload = [
             'items' => $users,
             'pagination' => $page['pagination'],
-            'stats' => \TinyCat\Core\Identity\ReadModel::tc_admin_users_stats(),
+            'stats' => $stats,
             'roles' => \TinyCat\Core\Identity\ReadModel::roles(),
             'statuses' => \TinyCat\Support\AdminViews::admin_user_statuses(),
             'filters' => $filters,

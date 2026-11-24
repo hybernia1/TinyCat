@@ -77,3 +77,17 @@ try {
     rmdir($temporary);
 }
 echo "PASS instrumentation of empty functions, methods and constructors\n";
+foreach (['-1', 'invalid'] as $actor) {
+    $invalidOutput = $workspace . '/invalid-profiler-' . bin2hex(random_bytes(6)) . '.json';
+    $arguments = [PHP_BINARY, $root . '/tools/performance/profile-performance.php', '--root=' . $root, '--config=' . $root . '/config.example.php', '--output=' . $invalidOutput, '--user=' . $actor];
+    $lines = []; exec(implode(' ', array_map(escapeshellarg(...), $arguments)) . ' 2>&1', $lines, $invalidExit);
+    if ($invalidExit !== 2 || is_file($invalidOutput)) { throw new RuntimeException('Invalid profiler actor must fail before creating a measurement.'); }
+}
+$sessions = \TinyCat\Tools\Workspace::directory('tests/profiler-sessions-' . bin2hex(random_bytes(6)));
+try {
+    passthru(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tests/fixtures/performance/authenticated-profiler.php') . ' ' . escapeshellarg($sessions), $identityExit);
+    if ($identityExit !== 0) { throw new RuntimeException('Authenticated profiler fixture failed.'); }
+} finally {
+    foreach (glob($sessions . '/sess_*') ?: [] as $file) { unlink($file); }
+    rmdir($sessions);
+}

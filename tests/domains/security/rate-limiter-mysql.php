@@ -38,4 +38,45 @@ $assert(RateLimiter::consume('user:2', 'upload', 3600, 2), 'MySQL account budget
 RateLimiter::subject_action_record('user:1', 'post');
 RateLimiter::subject_action_record('user:1', 'post');
 $assert(RateLimiter::subject_action_count('user:1', 'post') === 2, 'MySQL successful-action quotas accumulate.');
+
+// Shared disposable database is required for a real competing connection.
+$name = 'tinycat_quota_' . bin2hex(random_bytes(6));
+$pdo->exec('CREATE DATABASE ' . $name);
+$worker = null;
+try {
+    $pdo->exec('DROP TEMPORARY TABLE ip_action_limits');
+    $pdo->exec('USE ' . $name);
+    $pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INT, updated_at DATETIME, PRIMARY KEY(ip_address, action_name, bucket_start)) ENGINE=InnoDB');
+    $pdo->exec('CREATE TABLE social_posts (author_id INT, kind VARCHAR(20)) ENGINE=InnoDB');
+    $pdo->exec('CREATE TABLE accepted_actions (id INT) ENGINE=InnoDB');
+    $actor = ['id' => 1, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s')];
+    for ($i = 0; $i < 4; $i++) { \TinyCat\Social\Moderation\Restrictions::moderation_record_action($actor, 'post'); }
+    $pdo->beginTransaction();
+    \TinyCat\Social\Moderation\Restrictions::moderation_record_action($actor, 'post');
+    $pdo->exec('INSERT INTO accepted_actions VALUES (1)');
+    $worker = proc_open([PHP_BINARY, __DIR__ . '/../../fixtures/security/quota-worker.php', $name], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    if (!is_resource($worker)) { throw new RuntimeException('Cannot start quota worker'); }
+    fclose($pipes[0]);
+    $ready = json_decode(trim((string) fgets($pipes[1])), true, 512, JSON_THROW_ON_ERROR);
+    $assert($ready['count'] === 4, 'Competing transaction starts with an older quota snapshot.');
+    $deadline = microtime(true) + 10;
+    do {
+        $query = (string) \TinyCat\Database\Connection::value('SELECT INFO FROM information_schema.PROCESSLIST WHERE ID = ?', [$ready['connection']]);
+        if (str_contains($query, 'INSERT INTO ip_action_limits')) { break; }
+        usleep(10000);
+    } while (microtime(true) < $deadline);
+    $assert(str_contains($query, 'INSERT INTO ip_action_limits'), 'Competing reservation waits on the uncommitted last slot.');
+    $pdo->commit();
+    $result = trim(stream_get_contents($pipes[1]));
+    $errors = stream_get_contents($pipes[2]);
+    fclose($pipes[1]); fclose($pipes[2]);
+    $exit = proc_close($worker); $worker = null;
+    $assert($exit === 0 && $result === 'limited', 'Competing success is rejected: ' . $errors);
+    $assert(RateLimiter::subject_action_count('user:1', 'post') === 5, 'Concurrent reservations preserve the successful-action ceiling.');
+    $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM accepted_actions') === 1, 'Rejected concurrent write is rolled back.');
+} finally {
+    if ($pdo->inTransaction()) { $pdo->rollBack(); }
+    if (is_resource($worker)) { proc_terminate($worker); proc_close($worker); }
+    $pdo->exec('DROP DATABASE ' . $name);
+}
 echo "PASS MySQL rate limiter ({$checks} checks)\n";

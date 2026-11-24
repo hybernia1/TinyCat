@@ -15,6 +15,11 @@ final class Api
     public static function register(Registrar $api): void
     {
         $api->get('/notifications', self::listing(...), 'user');
+        $api->get('/notifications/state', static fn (): array => Resource::state((int) Authentication::auth('id', 0)), 'user');
+        $api->get('/notifications/preview', static function (): array {
+            $id = (int) Authentication::auth('id', 0);
+            return Resource::state($id) + ['items' => array_map(Resource::item(...), Inbox::items($id, Inbox::PREVIEW_LIMIT))];
+        }, 'user');
         $api->patch('/notifications', static function (Request $request): array {
             if ($request->input('read') !== true && (string) $request->input('read', '') !== '1') {
                 Response::validation(['read' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);

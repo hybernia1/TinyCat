@@ -10,6 +10,21 @@ final class CompiledTranslations
     private static ?array $manifest = null;
     /** @var array<string, array<mixed>> */
     private static array $catalogs = [];
+    /** @var array{revision: int, packages: string|false|null}|null */
+    private static ?array $deployment = null;
+    private static bool $snapshot = false;
+
+    /** Read-only HTTP requests share one deployment identity; builds and writes stay fresh.
+     * @template T
+     * @param callable(): T $read
+     * @return T */
+    public static function withDeploymentSnapshot(callable $read): mixed
+    {
+        $previous = self::$deployment; $snapshot = self::$snapshot;
+        self::$deployment = null; self::$snapshot = true;
+        try { return $read(); }
+        finally { self::$deployment = $previous; self::$snapshot = $snapshot; }
+    }
 
     /** @return array<mixed> */
     private static function manifest(): array
@@ -26,9 +41,14 @@ final class CompiledTranslations
      * @param array<mixed> $manifest */
     public static function matchesSelection(array $manifest): bool
     {
-        $packages = Paths::basePath('App/module-packages.json');
-        $revision = is_file($packages) ? hash_file('sha256', $packages) : null;
-        if ($revision === false || ($manifest['server_components_packages'] ?? null) !== $revision) { return false; }
+        $selectionRevision = class_exists(\TinyCat\Core\Modules\Resources::class) ? \TinyCat\Core\Modules\Resources::revision() : 0;
+        $deployment = self::$snapshot ? self::$deployment : null;
+        if ($deployment === null || $deployment['revision'] !== $selectionRevision) {
+            $packages = Paths::basePath('App/module-packages.json');
+            $deployment = ['revision' => $selectionRevision, 'packages' => is_file($packages) ? hash_file('sha256', $packages) : null];
+            if (self::$snapshot) { self::$deployment = $deployment; }
+        }
+        if ($deployment['packages'] === false || ($manifest['server_components_packages'] ?? null) !== $deployment['packages']) { return false; }
         if (isset($manifest['selection']) && class_exists(\TinyCat\Core\Modules\Resources::class)) {
             return $manifest['selection'] === \TinyCat\Core\Modules\Resources::fingerprint();
         }

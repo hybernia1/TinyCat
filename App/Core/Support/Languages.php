@@ -5,6 +5,10 @@ namespace TinyCat\Support;
 
 final class Languages
 {
+    private static int $packagesRevision = -1;
+    /** @var array<string, string> */
+    private static array $sourcePackages = [];
+
     public static function language_code(string $code): string
     {
         $code = strtolower(trim(str_replace('_', '-', $code)));
@@ -156,7 +160,14 @@ final class Languages
      */
     public static function language_packages(): array
     {
-        return CompiledTranslations::packages() ?? TranslationSources::packages();
+        $compiled = CompiledTranslations::packages();
+        if ($compiled !== null) { return $compiled; }
+        $revision = \TinyCat\Core\Modules\Resources::revision();
+        if (self::$packagesRevision !== $revision) {
+            self::$sourcePackages = TranslationSources::packages();
+            self::$packagesRevision = $revision;
+        }
+        return self::$sourcePackages;
     }
 
     /**

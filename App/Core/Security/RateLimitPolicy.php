@@ -46,22 +46,14 @@ final class RateLimitPolicy
         return self::$requests[$action] ?? self::REQUESTS[$action] ?? throw new \InvalidArgumentException('Unknown rate-limit action: ' . $action);
     }
 
-    /** @return array{max: int, window: int, unlock: int} */
-    public static function guestSearch(): array
-    {
-        return ['max' => 10, 'window' => 300, 'unlock' => 600];
-    }
-
-    public const int SUGGESTION_WINDOW = 60;
     /** Keep at least a day, and two complete windows when policy grows. */
     public static function retentionSeconds(): int
     {
-        $windows = [self::SUGGESTION_WINDOW, self::LOGIN_CAPTCHA_WINDOW, self::guestSearch()['window']];
+        $windows = [self::LOGIN_CAPTCHA_WINDOW];
         foreach (self::$retention as $declared) { array_push($windows, ...$declared); }
         foreach (self::$requests as $rule) { $windows[] = $rule['window']; }
         foreach (self::REQUESTS as $rule) { $windows[] = $rule['window']; }
         return max(86400, 2 * max($windows));
     }
-    public const int SUGGESTION_MAX = 120;
     public const int LOGIN_CAPTCHA_WINDOW = 900;
 }

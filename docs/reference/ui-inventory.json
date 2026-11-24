@@ -14797,8 +14797,7 @@
         "App/Core/Ui/assets/runtime/dom.js",
         "App/Core/Ui/assets/runtime/api-client.js",
         "App/Core/Ui/assets/component-builders.js",
-        "App/Core/Ui/assets/toasts.js",
-        "App/Core/Ui/assets/popovers.js"
+        "App/Core/Ui/assets/toasts.js"
       ],
       "entries": [],
       "standalone": false
@@ -14817,6 +14816,22 @@
             "public",
             "/notifications",
             "/access/notifications"
+          ]
+        }
+      ],
+      "standalone": false
+    },
+    {
+      "source": "App/Core/Notifications/assets/polling.js",
+      "imports": [
+        "App/Core/Notifications/assets/controller.js",
+        "App/Core/Ui/assets/popovers.js"
+      ],
+      "entries": [
+        {
+          "manifest": "App/Core/Notifications/assets/module.json",
+          "routes": [
+            "public"
           ]
         }
       ],

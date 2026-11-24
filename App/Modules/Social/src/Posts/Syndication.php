@@ -34,6 +34,9 @@ final class Syndication
             $rssDescription = $rssTitle;
             $rssLink = '/search/all?' . http_build_query(['q' => $query, 'collection' => 'content']);
             $rssSelfLink = '/search/feed?' . $params;
+            // Feed readers share the server budget without interactive CAPTCHA/session state.
+            $blocked = \TinyCat\Social\Search\Guard::guestBudget();
+            if ($blocked !== null) { \TinyCat\Http\Response::error((string) $blocked['message'], 429, 'action_limited', $blocked); }
             $rows = \TinyCat\Social\Search\Queries::public_search_content_rows($query, 50, '', 0, $media);
             $rssItems = Export::byIds(array_map('intval', array_column($rows, 'id')));
         } elseif ($rssType === 'tag') {

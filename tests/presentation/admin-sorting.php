@@ -7,9 +7,10 @@ require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Run
 
 use TinyCat\Support\AdminSorting;
 use TinyCat\Database\Connection;
+require_once __DIR__ . '/../../tools/performance/lib/ProfileDatabase.php';
 
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
-$database = new PDO('sqlite::memory:');
+$database = new \TinyCat\Tools\Performance\ProfileDatabase('sqlite::memory:', '', '');
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 Connection::set($database);
@@ -95,4 +96,13 @@ $withoutBots = new \TinyCat\Core\Modules\Catalog(array_values(array_filter(\Tiny
     $assert($detail !== null && $detail['sources'] === [] && $detail['summary'] === ['count' => 2], 'Inactive task history loads without any bot tables or detail callbacks');
 });
 
+$database->exec('ALTER TABLE users ADD COLUMN created_at TEXT');
+$_GET = []; $database->queries = [];
+$allUsers = \TinyCat\Core\Identity\Actions::tc_admin_users_api_payload();
+$assert($allUsers['pagination']['total'] === $allUsers['stats']['total'], 'Unfiltered pagination uses the same managed population as statistics');
+$assert(count(array_filter($database->queries, static fn (array $query): bool => str_contains($query['sql'], 'SELECT COUNT(*) FROM ('))) === 0, 'Unfiltered listing avoids a duplicate full count');
+$_GET = ['q' => 'O']; $database->queries = [];
+$filteredUsers = \TinyCat\Core\Identity\Actions::tc_admin_users_api_payload();
+$assert($filteredUsers['pagination']['total'] < $filteredUsers['stats']['total'], 'Filtered pagination retains its own exact count');
+$assert(count(array_filter($database->queries, static fn (array $query): bool => str_contains($query['sql'], 'SELECT COUNT(*) FROM ('))) === 1, 'Filtered listing still executes the required selection count');
 echo "PASS admin sorting SQL, pagination, defaults, invalid inputs and headings ({$checks} checks)\n";

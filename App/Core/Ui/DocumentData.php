@@ -123,8 +123,8 @@ final class DocumentData
         $notificationItems = [];
         if ($authUser !== null) {
             $notificationUserId = (int) $authUser['id'];
-            $notificationState = \TinyCat\Core\Notifications\Inbox::state($notificationUserId);
-            $notificationItems = \TinyCat\Core\Notifications\Inbox::items($notificationUserId, \TinyCat\Core\Notifications\Inbox::PREVIEW_LIMIT);
+            $notificationState = $data['notificationState'] ?? \TinyCat\Core\Notifications\Inbox::state($notificationUserId);
+            $notificationItems = $data['notificationItems'] ?? \TinyCat\Core\Notifications\Inbox::items($notificationUserId, \TinyCat\Core\Notifications\Inbox::PREVIEW_LIMIT);
         }
         $publicHeader = self::publicHeader(compact('pageUrls', 'appName', 'authUser', 'current', 'loginModalId', 'loginModalUrl', 'nav', 'notificationItems', 'notificationState', 'searchQuery', 'siteLogoUrl', 'viewerIsAdmin', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageLinks', 'languageSuggestion', 'userMenu', 'hasGlobalSearch'));
         $consent = \TinyCat\Support\Components::render('ui/consent', [

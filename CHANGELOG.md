@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.0.4 - 2026-11-24
+
+- Reuse request-scoped framework metadata, source language packages and asset graphs; avoid repeated deployment identity hashing for compiled GET/HEAD responses.
+- Add resumable account sorting and notification read indexes with version 3 fresh baselines. Reuse the unfiltered account total and prepared inbox state instead of repeating queries.
+- Poll notification counters without fetching the full inbox; fetch at most six preview items when needed and preserve focused preview rows and mutation ordering.
+- Consume Social write quotas atomically inside their data transactions. Enforce database-backed search and suggestion budgets across sessions, including search feeds, and keep search policy in Social.
+- Make authenticated performance profiles use canonical login credentials and report authentication setup separately from request SQL.
+- Preserve existing data, configuration, uploads, module activation and published migration checksums. PHP 8.4 and completed 6.0.10 or newer remain required; deploy matching signed Core or Social packages through the normal updater.
+
 ## 8.0.3 - 2026-11-24
 
 - Consolidate internal Core handlers, account setup, resources and sorting definitions; remove forwarding methods and preserve shared HTML/API preparation.

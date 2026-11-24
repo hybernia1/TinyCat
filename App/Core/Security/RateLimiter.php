@@ -83,6 +83,7 @@ final class RateLimiter
         return self::consume($subject, $action, $rule['window'], $rule['max']) ? 0 : self::window_retry_after($rule['window']);
     }
 
+    /** UI pacing only; successful-action security quotas belong in the write transaction. */
     public static function session_action_retry_after(string $key, int $intervalMs, bool $record = true): int
     {
         if (RateLimitPolicy::isExempt(\TinyCat\Core\Identity\Authentication::auth())) { return 0; }

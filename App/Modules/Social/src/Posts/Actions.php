@@ -61,24 +61,6 @@ final class Actions
     /**
      * @param array<mixed> $user
      */
-    public static function status_json_require_action(array $user, string $action): void
-    {
-        if (\TinyCat\Core\Security\RateLimitPolicy::isExempt($user)) {
-            return;
-        }
-
-        [$window, $limit] = \TinyCat\Social\Moderation\Restrictions::moderation_action_rule($user, $action);
-
-        if (\TinyCat\Social\Moderation\Restrictions::moderation_action_count($user, $action) >= (int) $limit) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', [
-                'retry_after' => \TinyCat\Core\Security\RateLimiter::window_retry_after((int) $window),
-            ]);
-        }
-    }
-
-    /**
-     * @param array<mixed> $user
-     */
     public static function status_json_require_unique_body(array $user, string $body, int $ignoreId = 0): void
     {
         $userId = (int) ($user['id'] ?? 0);
@@ -127,7 +109,6 @@ final class Actions
         }
 
         \TinyCat\Social\Posts\Actions::status_json_require_not_muted($user);
-        \TinyCat\Social\Posts\Actions::status_json_require_action($user, 'post');
         \TinyCat\Social\Posts\Actions::status_json_require_unique_body($user, $body);
 
         $image = null;
@@ -145,6 +126,7 @@ final class Actions
         try {
             $contentId = 0;
             \TinyCat\Database\Transactions::run(static function () use ($userId, $user, $draft, $preparedLinks, $image, $body, &$contentId): void {
+                \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'post');
                 $contentId = PostCreation::create($userId, $draft, $preparedLinks, $image);
                 // Inbox records are part of publication; email waits for the outer commit.
                 NotificationEvents::notifyMentions($body, $user, $contentId);
@@ -158,9 +140,6 @@ final class Actions
 
             throw $exception;
         }
-
-        try { \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'post'); }
-        catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); }
 
         $data = ['action' => 'create', 'status_id' => $contentId, 'status' => null, 'item' => null, 'message' => \TinyCat\Support\Localization::t('account.messages.status_created'), 'code' => 'status_created'];
         try {
@@ -219,8 +198,7 @@ final class Actions
         $reason = in_array($reason, $reasons, true) ? $reason : 'other';
         $note = \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('note', ''), \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH);
         $now = \TinyCat\Support\Dates::dateDb();
-        \TinyCat\Social\Posts\Actions::status_json_require_action($user, 'report');
-        \TinyCat\Database\Transactions::run(static function () use ($contentId, $userId, $reason, $note, $now): void {
+        \TinyCat\Database\Transactions::run(static function () use ($contentId, $userId, $user, $reason, $note, $now): void {
             // Use the same parent lock as review/publication so a late report cannot
             // reopen a post while a moderator is hiding it.
             $content = \TinyCat\Database\Connection::one(
@@ -229,6 +207,7 @@ final class Actions
             if (!\TinyCat\Social\Posts\Posts::status_can_view($content)) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
             }
+            \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'report');
             $existing = \TinyCat\Database\Connection::one(
                 'SELECT id FROM content_reports WHERE content_id = ? AND reporter_id = ? AND status = ? ORDER BY id DESC LIMIT 1',
                 [$contentId, $userId, 'open']
@@ -242,7 +221,6 @@ final class Actions
                 ]);
             }
         });
-        \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'report');
 
         return [
             'action' => 'report',

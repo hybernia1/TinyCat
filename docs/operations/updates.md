@@ -7,6 +7,26 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.4
+
+Requires completed **6.0.10 or newer** and PHP 8.4. This maintenance release
+reduces repeated runtime/asset preparation, makes notification polling bounded,
+and enforces atomic Social write quotas and database-backed search budgets.
+CAPTCHA unlocks the interactive challenge without resetting the server budget.
+
+The release advances `tinycat.accounts` and `tinycat.notifications` from
+schema version 2 to 3. The migrations add read indexes only; account/inbox rows
+and existing uniqueness constraints are preserved. New installations use the
+version 3 fresh baselines. Published version 2 baselines and migration checksums
+remain unchanged. Both migrations can resume after partially completed index DDL.
+
+Deploy these changes through the normal core update operation, including its
+deployment lock, journal and database backup. Do not run individual migration
+files against an installed website. Package verification and supported
+update/rollback checks remain required; source performance measurements do not
+replace them. Deploy matching signed runtime and generated assets for the selected
+Core or Social product.
+
 ## Interrupted web installation
 
 The table and administrator steps each run as an exclusive deployment operation.

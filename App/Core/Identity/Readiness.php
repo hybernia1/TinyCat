@@ -12,7 +12,7 @@ final class Readiness
         try {
             return (int) \TinyCat\Database\Connection::value(
                 sprintf(
-                    'SELECT COUNT(*) FROM %s WHERE %s IS NOT NULL AND %s <> ?',
+                    'SELECT 1 FROM %s WHERE %s IS NOT NULL AND %s <> ? LIMIT 1',
                     \TinyCat\Database\Schema::app_sql_identifier('users'),
                     \TinyCat\Database\Schema::app_sql_identifier('password'),
                     \TinyCat\Database\Schema::app_sql_identifier('password')

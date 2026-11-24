@@ -18,19 +18,22 @@ final class Pages
         $userId = (int) ($user['id'] ?? 0);
 
         $batch = Inbox::page($userId);
-        $unread = Inbox::unreadCount($userId);
+        $public = \TinyCat\Core\Ui\PublicWeb::enabled();
+        $state = $public ? Inbox::state($userId) : ['unread' => Inbox::unreadCount($userId)];
         $items = array_map(Resource::item(...), (array) $batch['items']);
 
         Layout::render([
             'title' => Localization::t('notifications.title'),
             'current' => '/notifications',
-            'surface' => \TinyCat\Core\Ui\PublicWeb::enabled() ? 'public' : 'access',
-            'asset_path' => \TinyCat\Core\Ui\PublicWeb::enabled() ? '/notifications' : '/access/notifications',
+            'notificationState' => $state,
+            'notificationItems' => array_slice($batch['items'], 0, Inbox::PREVIEW_LIMIT),
+            'surface' => $public ? 'public' : 'access',
+            'asset_path' => $public ? '/notifications' : '/access/notifications',
             'meta' => [
                 'description' => Localization::t('notifications.meta'),
                 'url' => '/notifications',
                 'robots' => 'noindex,nofollow',
             ],
-        ], Components::render('notifications/page', ['items' => $items, 'has_unread' => $unread > 0, 'next_url' => (string) $batch['next_url']]));
+        ], Components::render('notifications/page', ['items' => $items, 'has_unread' => $state['unread'] > 0, 'next_url' => (string) $batch['next_url']]));
     }
 }

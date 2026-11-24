@@ -12,6 +12,11 @@ final readonly class Loader
     public static function fromCatalog(Catalog $catalog): self { return new self($catalog); }
     public static function load(string $root): self
     {
+        return \TinyCat\Core\Runtime\Framework::withSnapshot(static fn (): self => self::loadCurrent($root));
+    }
+
+    private static function loadCurrent(string $root): self
+    {
         $selected = Deployment::selection($root, static function () use ($root): array {
             $selection = require $root . '/App/modules.php';
             if (!is_array($selection)) { throw new \InvalidArgumentException('Module selection must be a map.'); }
@@ -40,14 +45,6 @@ final readonly class Loader
     public static function fromSelection(string $root, array $selection): self
     {
         $definitions = \TinyCat\Core\Runtime\Framework::definitions($root);
-        foreach ([
-            'support' => ['Support', ['translations' => 'App/Core/Support/lang', 'templates' => 'App/Core/Support/templates', 'migrations' => 'App/Core/Tasks/migrations']],
-            'ui' => ['Core\\Ui', ['assets' => 'App/Core/Ui/assets/module.json', 'components' => 'App/Core/Ui/assets/components.json', 'translations' => 'App/Core/Ui/lang', 'templates' => 'App/Core/Ui/templates']],
-            'admin' => ['Core\\Admin', ['assets' => 'App/Core/Ui/assets/admin/module.json', 'components' => 'App/Core/Ui/assets/admin/components.json']],
-        ] as $id => [$namespace, $resources]) {
-            $resources = array_filter($resources, static fn (string $path): bool => file_exists($root . '/' . $path));
-            $definitions[] = Definition::fromMetadata((object) ['format' => 1, 'coreApi' => 1, 'id' => 'tinycat.' . $id, 'namespace' => 'TinyCat\\' . $namespace . '\\', 'resources' => (object) $resources], $root);
-        }
         foreach ($selection as $id => $binding) {
             if (!is_string($id) || !is_string($binding)) { throw new \InvalidArgumentException('Invalid module binding.'); }
             if (!str_ends_with($binding, '.json')) {

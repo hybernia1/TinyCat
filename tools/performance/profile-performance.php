@@ -10,7 +10,8 @@ $configPath = realpath((string) ($options['config'] ?? ''));
 $output = (string) ($options['output'] ?? '');
 $workers = filter_var($options['workers'] ?? 1, FILTER_VALIDATE_INT);
 $requests = filter_var($options['requests'] ?? 20, FILTER_VALIDATE_INT);
-if ($workers === false || $workers < 1 || $workers > 8 || !$root || !is_file($root . '/index.php') || !$configPath || $output === '' || $requests === false || $requests < 5 || $requests > 1000) {
+$actorId = filter_var($options['user'] ?? 0, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+if ($actorId === false || $workers === false || $workers < 1 || $workers > 8 || !$root || !is_file($root . '/index.php') || !$configPath || $output === '' || $requests === false || $requests < 5 || $requests > 1000) {
     fwrite(STDERR, "Usage: php tools/performance/profile-performance.php --config=... --output=... [--root=release/app] [--requests=20] [--workers=1] [--user=1] [--paths=/,/api/statuses]\n");
     exit(2);
 }
@@ -22,7 +23,7 @@ $cacheDriver = (string) ($options['cache'] ?? 'filesystem');
 if (!in_array($cacheDriver, ['filesystem', 'memcached'], true)) { throw new RuntimeException('Expected filesystem or memcached cache.'); }
 if ($cacheDriver === 'memcached' && isset($options['expire'])) { throw new RuntimeException('File aging is only supported for filesystem cache.'); }
 putenv('TINYCAT_PROFILE_CACHE_DRIVER=' . $cacheDriver);
-$pool = new \TinyCat\Tools\Performance\ProfileServerPool($root, $configPath, $log, $workers, (int) ($options['user'] ?? 0));
+$pool = new \TinyCat\Tools\Performance\ProfileServerPool($root, $configPath, $log, $workers, $actorId);
 try {
     $paths = explode(',', (string) ($options['paths'] ?? '/,/api/statuses,/api/statuses/1,/author/2,/search/all?q=performance,/api/site/sidebar'));
     $runner = new \TinyCat\Tools\Performance\HttpLoadRunner();
@@ -82,7 +83,7 @@ try {
         'generated_at' => gmdate('c'), 'cache_driver' => $cacheDriver, 'php' => PHP_VERSION, 'requests_per_path' => $requests,
         'application_root' => $root, 'workers' => $workers,
         'expired_entries' => $options['expire'] ?? null,
-        'actor_id' => (int) ($options['user'] ?? 0), 'scenarios' => $scenarios,
+        'actor_id' => $actorId, 'scenarios' => $scenarios,
         'notes' => ['Each HTTP request has fresh PHP request state.', 'Independent loopback PHP workers: application concurrency only, not Apache production capacity.', 'First request does not imply a cold MySQL buffer pool.', 'SQL timing covers execution and buffered result retrieval, excluding prepare time.', 'Raw SQL shapes and execution times are in the adjacent requests.jsonl file.'],
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL);
 } finally {

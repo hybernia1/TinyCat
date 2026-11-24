@@ -161,6 +161,32 @@ const cases = [
         assert.equal(state.writes[0],state.source);assert.equal(state.writes[1],'inline');assert.ok(!state.submits&&state.contained&&state.scaled&&!state.overflow,JSON.stringify({width,compact,...state}));checks+=3;
       } finally {await session.close();}
     }
+    for (const width of [390,1024]) {
+      const session=await browser.newContext({viewport:{width,height:900}});
+      try {
+        const page=await session.newPage();
+        await page.route('**/api/notifications/preview',async route=>{
+          await new Promise(resolve=>setTimeout(resolve,300));
+          await route.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,meta:{},data:{unread_count:1,latest_id:8,items:[{id:8,type:'generic',message:'New fixture',icon:'bell',actor:{id:0,username:'',avatar_url:''},url:'/notifications',unread:true,excerpt:'',created_at:'2026-01-01T00:00:00Z'}]}})});
+        });
+        await page.goto('http://127.0.0.1:'+server.address().port+'/');
+        await page.evaluate(html=>{
+          const host=document.createElement('main');host.id='notification-polling-fixture';host.innerHTML=html;document.body.append(host);
+          TinyCat.notifications.update({unread_count:1,latest_id:7,items:[{id:7,type:'generic',message:'Initial fixture',icon:'bell',actor:{id:0,username:'',avatar_url:''},url:'/notifications',unread:true,excerpt:'',created_at:'2026-01-01T00:00:00Z'}]});
+          host.querySelector('[data-notification-list] a').id='polling-focus';
+          const interval=window.setInterval;window.setInterval=(fn,delay)=>{window.notificationPoll=fn;return interval(fn,60000);};
+          const update=TinyCat.notifications.update;window.pollUpdates=0;TinyCat.notifications.update=state=>{update(state);pollUpdates++;};
+          TinyCat.popovers.init();TinyCat.popovers.prepare(host.querySelector('[data-popover]'));TinyCat.notifications.init();window.pollUpdates=0;
+        },fixture.notifications);
+        await page.locator('[data-notification-button]').press('ArrowDown');
+        await page.locator('#polling-focus').focus();
+        await page.waitForFunction(()=>pollUpdates>0);
+        assert.ok(await page.evaluate(()=>document.activeElement.id==='polling-focus'&&document.querySelector('[data-notification-id="7"]')&&document.querySelector('[data-popover]').dataset.popoverOpen==='true'),'Preview polling must preserve focused row and open state');checks++;
+        await page.evaluate(async()=>{document.querySelector('[data-notification-button]').focus();await notificationPoll();});
+        assert.ok(await page.evaluate(()=>document.querySelector('[data-notification-id="8"]')&&document.activeElement.hasAttribute('data-notification-button')),'Preview catches up after focus leaves the list');checks++;
+        await page.evaluate(()=>TinyCat.notifications.dispose(document.querySelector('#notification-polling-fixture')));
+      } finally {await session.close();}
+    }
     console.log('PASS touch activation across all popover families in focusable pages and modals ('+cases.length+' variants; '+checks+' checks)');
   } finally { if (browser) await browser.close(); await new Promise(resolve => server.close(resolve)); }
 }()).catch(error => { console.error(error); process.exitCode=1; });

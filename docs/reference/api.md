@@ -292,6 +292,8 @@ Unknown columns retain the list's default order. Supported sort keys are:
 | Method | Path | Operation |
 | --- | --- | --- |
 | GET | `/api/notifications` | Own inbox, `unread_count`, `latest_id` |
+| GET | `/api/notifications/state` | Own exact `unread_count` and `latest_id`, without inbox items |
+| GET | `/api/notifications/preview` | Own exact counters and at most six canonical items in newest-first order |
 | PATCH | `/api/notifications` | Mark own inbox read with `read=true` |
 | PATCH | `/api/notifications/{id}` | Mark own item read |
 | DELETE | `/api/notifications/{id}` | Delete own item |
@@ -370,11 +372,20 @@ keys, so no schema migration is required. Previous IP action buckets expire thro
 normal cleanup and are not applied to the new account quotas. These controls cover
 selected actions; they are not a global request limiter.
 
-All rate-limit policy values live in `App/Core/Security/RateLimitPolicy.php`. Authenticated
+Core request budgets live in `App/Core/Security/RateLimitPolicy.php`; Social owns
+content quotas and UI cooldowns in `Moderation/ActionPolicy.php` and search rules
+in `Search/Policy.php`. Successful-action quotas are reserved atomically in the
+same database transaction as the action, and roll back on failure. Session
+cooldowns provide UI pacing; account quotas remain effective across sessions. Authenticated
 `admin` and `bot` roles are exempt from quotas, request budgets, autocomplete limits
 and short cooldowns, and do not consume these counters. Anonymous requests have no
 trusted role; submitting an administrator's username does not grant an exemption.
-CAPTCHA remains an additional check for public authentication requests.
+CAPTCHA remains an additional check for public authentication requests. Guest
+search retains the optional CAPTCHA challenge after 10 searches in 5 minutes
+and its 10-minute session unlock. The separate hard ceiling of 120 searches per
+IP in 5 minutes allows continued use after solving CAPTCHA while bounding work,
+even when CAPTCHA is disabled or cookies are discarded. CAPTCHA never resets
+this database budget. Autocomplete does not consume full-search quotas.
 
 | Request budget | Scope | Attempts | Window |
 |---|---|---:|---|
@@ -385,6 +396,8 @@ CAPTCHA remains an additional check for public authentication requests.
 | Email availability | IP | 60 | 1 minute |
 | Image upload (avatar, post, site settings) | Account of actor | 60 | 1 hour |
 | Follow/unfollow changes | Account of actor | 120 | 1 hour |
+| Guest full search | IP | 120 | 5 minutes |
+| Autocomplete | Account of actor, otherwise IP | 120 | 1 minute |
 
 Request budgets count attempts, including failed validation or CAPTCHA, and are
 reserved atomically in the database. Rejected attempts do not increase counters
@@ -757,8 +770,10 @@ or tags are added. Comments, bios and remote page bodies are not searched.
 
 Profile and tag results rank exact matches, prefixes, then contained matches;
 ties sort by name and ID. Profile bios are excerpts only. Autocomplete has a
-separate session budget of 120 requests per minute and never consumes the full
-search allowance. Full searches retain the account limits and guest CAPTCHA.
+separate database budget of 120 requests per minute per account (per IP for guests) and never consumes the full
+search allowance. Full searches retain the account limits and optional guest CAPTCHA,
+with a hard guest IP budget even when CAPTCHA is disabled. Search RSS shares
+the guest IP budget without resolving authentication, interactive CAPTCHA or session state.
 Continuation uses the shared workspace and `next_url`. Posts share the feed
 `cursor_at`/`cursor_id` keyset; profiles and tags use `cursor_rank`, `cursor_name`,
 and `cursor_id` in rank/name/ID order, nested under `cursor[...]` in requests.

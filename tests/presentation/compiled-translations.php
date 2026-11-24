@@ -37,6 +37,8 @@ try {
     $assert($actual['invalid_components'] === true, 'Compiled component paths reject traversal.');
     $assert($actual['legacy_components'] === null, 'Older release manifests retain the source fallback.');
     $assert($actual['changed_packages'] === true, 'An independently changed module package registry invalidates compiled components.');
+    $assert($actual['snapshot_identity'] === true && $actual['snapshot_restored'] === true, 'Read snapshots are nested, bounded and observe package changes after leaving the scope.');
+    $assert($actual['snapshot_exception'] === true, 'A failed read scope restores fresh deployment identity checks.');
     $assert($actual['deployed_without_resources'] === true, 'Both compiled readers reject deployed inventories when resource selection cannot be resolved.');
     $assert($actual['deployed_legacy_inventory'] === true, 'Both compiled readers reject unbound legacy inventories in an installed deployment.');
     $assert($actual['undeployed_legacy_inventory'] === true, 'Both compiled readers retain legacy source-free fallback without deployment state.');

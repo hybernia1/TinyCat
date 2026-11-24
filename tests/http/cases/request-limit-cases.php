@@ -24,6 +24,18 @@ foreach ([
     $assert($pageStatus === 405, $action . ' no longer has a parallel HTML write handler.');
 }
 
+// Server-side search budgets apply without CAPTCHA and without reusable cookies.
+foreach ([['127.0.0.1', 'search_guest', 300, '/api/search/query?q=nebula', ''], ['127.0.0.1', 'search_guest', 300, '/search/feed?q=nebula', ''], ['127.0.0.1', 'search_suggestions', 60, '/api/search?q=nebula', ''], ['user:2', 'search_suggestions', 60, '/api/search?q=nebula', 'user'], ['user:2', 'search', 3600, '/api/search/query?q=nebula', 'user']] as [$subject, $action, $window, $path, $role]) {
+    $seedLimit($subject, $action, $window);
+    [$status, $limited, $headers] = $request('GET', $path, null, $role, ['Cookie' => 'PHPSESSID=search-' . bin2hex(random_bytes(12))]);
+    $wait = $limited['error']['details']['retry_after'] ?? 0;
+    $assert($status === 429 && $limited['code'] === 'action_limited' && $wait >= 1 && $wait <= $window, 'Search database budget protects ' . $path);
+    $assert(in_array('Retry-After: ' . $wait, $headers, true), 'Search budget returns a matching wait header.');
+}
+[$status] = $request('GET', '/api/search?q=nebula', null, 'admin');
+$assert($status === 200, 'Verified administrators remain exempt from search budgets.');
+$limitDb->exec("DELETE FROM ip_action_limits WHERE action_name IN ('search_guest', 'search_suggestions', 'search')");
+
 // Changes consume a follow budget, but already satisfied requests remain idempotent.
 $limitDb->exec('DELETE FROM user_followers WHERE user_id = 1 AND follower_id = 2');
 $seedLimit('user:2', 'follow', 3600);

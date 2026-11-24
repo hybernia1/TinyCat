@@ -51,7 +51,7 @@ final class ActionPolicy
     public static function register(): void
     {
         \TinyCat\Core\Security\RateLimitPolicy::defineRequest('tinycat.social', 'follow', ['scope' => 'account', 'window' => 3600, 'max' => 120]);
-        $windows = [];
+        $windows = [\TinyCat\Social\Search\Policy::SUGGESTION_WINDOW, \TinyCat\Social\Search\Policy::guestSearch()['window']];
         foreach (self::moderationRules() as $rules) { foreach ($rules as $rule) { $windows[] = $rule[0]; } }
         \TinyCat\Core\Security\RateLimitPolicy::retainWindows('tinycat.social', $windows);
     }

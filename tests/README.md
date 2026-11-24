@@ -53,7 +53,7 @@ config.php` a `php tests/release/installation-api.php`. Nepřepisuj tím provozn
 ani osobní konfiguraci. Lokální Windows průchod nedokládá POSIX garance.
 
 Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitních
-91 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
+99 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 
@@ -187,7 +187,7 @@ PHP generátory a workers pro klientské testy jsou v `tests/presentation/fixtur
 JavaScript fixture v `tests/frontend/fixtures/`, HTTP router a data v
 `tests/http/fixtures/` a zahrnované scénáře v `tests/http/cases/`.
 Společná podpora patří do `tests/support/`; sdílená data a konfigurace do
-`tests/fixtures/`. Výchozí seznam obsahuje 90 skupin a frontendový 38
+`tests/fixtures/`. Výchozí seznam obsahuje 99 skupin a frontendový 40
 scénářů. Nová skupina `tests/release/build-preparation.php` ověřuje životnost
 cache, invalidaci, oba ZIP backendy a publikaci připraveného výstupu.
 `tests/quality/module-catalog.php` ověřuje offline načtení metadat, závislosti,
@@ -262,6 +262,13 @@ se samostatně a nevystavuje produkční routy. Vyžaduje GD/WebP a cURL.
 Development outputs use ignored `.work/`, separated from application `storage/`.
 See [filesystem storage](../docs/development/storage.md#development-outputs).
 
+`tests/infrastructure/read-indexes.php` verifies the account/inbox version 2→3
+read-index migrations on SQLite and the existing local MySQL service, including
+partial DDL, repeated upgrade and data preservation. Published baselines stay
+immutable; current fresh installations use the new baseline. Notification polling
+regressions cover state-only reads, bounded previews, mutation races, focus and
+timer disposal in `notifications-state.cjs` and the native popover touch scenario.
+
 ## Update baseline
 
 The update rehearsal starts directly at published `v6.0.4`, builds a signed
@@ -282,3 +289,10 @@ starts with an older repeatable-read snapshot; both row and image references mus
 be rechecked with current locking reads. Parent and worker use at most three
 processes including the main runner. `write-path-integrity.php` additionally
 injects inbox-write and after-commit delivery failures into real status actions.
+
+Rate-limit regressions in `tests/domains/security/rate-limiter.php` cover
+transactional success quotas, request-scoped reputation queries, guest search
+without CAPTCHA, and session-independent autocomplete. The MySQL limiter group
+uses a disposable `tinycat_quota_*` database and one child worker to verify that
+a concurrent reservation with an older snapshot cannot exceed the last slot;
+rejected writes roll back. It never changes the live application's counters.

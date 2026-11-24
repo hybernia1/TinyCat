@@ -60,6 +60,15 @@ try {
         $checks++;
         if (!\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Current deployment identity rejected.'); }
         $checks++;
+        \TinyCat\Support\CompiledTranslations::withDeploymentSnapshot(static function () use ($identity, $original, $owner): void {
+            if (!\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Snapshot rejected the selected deployment.'); }
+            \TinyCat\Core\Modules\Resources::configure($original);
+            try {
+                if (\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Snapshot accepted a previous selection.'); }
+            } finally { \TinyCat\Core\Modules\Resources::configure(new \TinyCat\Core\Modules\Catalog([...$original->definitions(), $owner])); }
+            if (!\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Restored selection remained invalid.'); }
+        });
+        $checks++;
     } finally {
         $assetsProperty->setValue(null, $oldAssets);
         $translationsProperty->setValue(null, $oldTranslations);

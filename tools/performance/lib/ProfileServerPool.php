@@ -13,11 +13,15 @@ final class ProfileServerPool
 
     public function __construct(string $root, string $config, string $log, int $workers, int $actor = 0)
     {
+        if ($actor < 0) { throw new RuntimeException('Profiling actor ID must be nonnegative.'); }
         $env = getenv();
         $env['TINYCAT_PROFILE_CONFIG'] = $config;
         $env['TINYCAT_PROFILE_ROOT'] = $root;
         $env['TINYCAT_PROFILE_OUTPUT'] = $log;
         $env['TINYCAT_PROFILE_USER'] = (string) $actor;
+        $sessions = $log . '.sessions';
+        if (!is_dir($sessions) && !mkdir($sessions, 0700, true) && !is_dir($sessions)) { throw new RuntimeException('Cannot create isolated profile sessions.'); }
+        $env['TINYCAT_PROFILE_SESSIONS'] = $sessions;
         try {
             for ($worker = 0; $worker < $workers; $worker++) {
                 $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);

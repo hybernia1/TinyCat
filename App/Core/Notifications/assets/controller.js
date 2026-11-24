@@ -4,7 +4,6 @@ import "../../Ui/assets/runtime/dom.js";
 import "../../Ui/assets/runtime/api-client.js";
 import "../../Ui/assets/component-builders.js";
 import "../../Ui/assets/toasts.js";
-import "../../Ui/assets/popovers.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
@@ -15,6 +14,7 @@ import "../../Ui/assets/popovers.js";
     if (read) { (read.closest("form") || read).remove(); }
   }
   T.notifications = {
+    revision: function () { return mutationRevision; },
     items: function (items, preview) {
       return T.components.render("notifications/items", { items: items, preview: Boolean(preview) });
     },
@@ -27,7 +27,10 @@ import "../../Ui/assets/popovers.js";
       });
       document.querySelectorAll("[data-notification-count], [data-notification-menu-count]").forEach(function (node) { node.textContent = notificationBadgeText(count); node.hidden = count < 1; });
       document.querySelectorAll('form[action="/api/notifications"]').forEach(function (form) { form.hidden = count < 1; });
-      if (state.items) { document.querySelectorAll("[data-notification-list]").forEach(function (node) { node.replaceChildren(T.notifications.items(state.items.slice(0, 6), true)); }); }
+      if (state.items) { document.querySelectorAll("[data-notification-list]").forEach(function (node) {
+        if (node.contains && node.contains(document.activeElement)) { return; }
+        node.replaceChildren(T.notifications.items(state.items.slice(0, 6), true));
+      }); }
     },
     page: function (response, append) {
       var list = document.getElementById("notifications-list");
@@ -84,83 +87,8 @@ import "../../Ui/assets/popovers.js";
   T.notifications.dispose = function (root) {
     observed.forEach(function (control) { if (root === control || root.contains(control)) { unobserve(control); } });
   };
-  function qsa(selector, root) { return Array.from((root || document).querySelectorAll(selector)); }
   function notificationBadgeText(count) {
     count = Math.max(0, parseInt(count || "0", 10) || 0);
     return count > 99 ? "99+" : String(count);
   }
-
-  T.notifications.init = function () {
-    qsa("[data-notification-button]").forEach(function (button) {
-      var api;
-      var interval;
-      var latestId;
-      var unread;
-      var first = true;
-      var polling = false;
-
-      if (button.dataset.notificationReady === "true") {
-        return;
-      }
-
-      api = button.dataset.notificationApi || "/api/notifications";
-      interval = Math.max(3000, parseInt(button.dataset.notificationInterval || "5000", 10) || 5000);
-      latestId = Math.max(0, parseInt(button.dataset.notificationLatestId || "0", 10) || 0);
-      unread = Math.max(0, parseInt(button.dataset.notificationUnread || "0", 10) || 0);
-      button.dataset.notificationReady = "true";
-      T.notifications.update({
-        unread: unread,
-        latest_id: latestId
-      });
-
-      async function poll() {
-        var state;
-        var nextLatestId;
-        var nextUnread;
-        var message;
-
-        if (document.hidden || polling) {
-          return;
-        }
-
-        polling = true;
-        var requestRevision = mutationRevision;
-        latestId = Math.max(0, parseInt(button.dataset.notificationLatestId || "0", 10) || 0);
-        unread = Math.max(0, parseInt(button.dataset.notificationUnread || "0", 10) || 0);
-
-        try {
-          state = await T.api.request(api, {
-            method: "GET",
-            cache: "no-store"
-          });
-          if (requestRevision !== mutationRevision || button.isConnected === false) { return; }
-          state = state.data || {};
-          nextLatestId = Math.max(0, parseInt((state && state.latest_id) || "0", 10) || 0);
-          nextUnread = Math.max(0, parseInt((state && (state.unread_count !== undefined ? state.unread_count : state.unread)) || "0", 10) || 0);
-          message = T.i18n.plural("notifications.new_count", nextUnread);
-
-          if (!first && message && nextUnread > 0 && (nextLatestId > latestId || nextUnread > unread)) {
-            T.toasts.show(message, "info", 4200);
-          }
-
-          T.notifications.update(state || {});
-          latestId = nextLatestId;
-          unread = nextUnread;
-          first = false;
-        } catch (_error) {
-          first = false;
-        } finally {
-          polling = false;
-        }
-      }
-
-      window.setInterval(poll, interval);
-      document.addEventListener("visibilitychange", function () {
-        if (!document.hidden) {
-          poll();
-        }
-      });
-    });
-  };
-
 }());
