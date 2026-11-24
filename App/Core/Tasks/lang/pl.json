@@ -1,6 +1,6 @@
 {
   "cron": {
-    "title": "Zaplanowane zadania",
+    "execution_details": "Szczegóły techniczne",
     "access_title": "Dostęp i token",
     "access_help": "Współdzielony punkt końcowy i uwierzytelnianie używane przez każde zaplanowane zadanie.",
     "url": "Adres URL punktu końcowego",
@@ -12,7 +12,7 @@
     "rotate": "Obróć token",
     "rotate_confirm": "Obrócić token cron? Istniejące zaplanowane połączenia przestaną działać do czasu ich aktualizacji.",
     "tasks": {
-      "cleanup": "Automatyczne czyszczenie",
+      "cleanup": "Czyszczenie",
       "cleanup_help": "Usuwa nieużywane znaczniki i łącza, osierocone obrazy postów i podglądów, wygasłe pamięci podręczne danych, stare zasobniki z limitami szybkości, wygasłe tokeny resetowania i powiadomienia o przeczytaniu. Usuwa też osierocone awatary, porzucone pliki tymczasowe i stare kopie ukończonych aktualizacji.",
       "cleanup_schedule": "Harmonogram godzinowy. Wewnętrzne kontrole zapobiegają zbyt częstemu uruchamianiu czyszczenia.",
       "feeds": "Źródła",
@@ -23,18 +23,15 @@
       "token_rotated": "Token cron został obrócony."
     },
     "list_title": "Przegląd zadań",
-    "configuration": "Połączenie i planowanie",
-    "list_help": "Harmonogramem zarządza Twój serwer lub web-cron. Podano zalecane interwały i domyślne limity. Uruchom teraz pomija interwał czyszczenia; RSS nadal przestrzega interwału każdego źródła. Historia obejmuje uruchomienia zarejestrowane po tej aktualizacji.",
+    "configuration": "Połączenie",
     "task": "Zadanie",
-    "schedule": "Harmonogram i limity domyślne",
     "latest": "Najnowsze uruchomienie",
-    "run_now": "Uruchom teraz",
+    "run_now": "Uruchom",
     "history": "Historia uruchamiania",
     "status": "Status",
     "started": "Rozpoczęto",
     "duration": "Czas trwania",
     "result": "Wynik",
-    "no_runs": "Żadne zarejestrowane przebiegi nie pasują do tych filtrów.",
     "never": "Brak zarejestrowanego przebiegu",
     "run_finished": "Zadanie zostało zakończone.",
     "run_failed": "Zadanie nie powiodło się. Zobacz jego wynik w historii uruchomień.",
@@ -61,13 +58,11 @@
       "admin": "Zadania"
     },
     "menu_title": "Zadania",
-    "overview_help": "Zalecane odstępy czasu i domyślne limity. Harmonogramem zarządza serwer lub web-cron.",
     "cadence": {
       "feeds": "Sprawdzaj co dwie minuty",
       "cleanup": "Raz na godzinę"
     },
     "run_details": "Szczegóły uruchomienia",
-    "refresh": "Odśwież",
     "run_not_found": "Nie znaleziono tego uruchomienia.",
     "finished": "Zakończono",
     "unfinished": "Nieskończone",

@@ -16,7 +16,7 @@ const vm = require("node:vm");
   const window = { TinyCat: T, location: { search: "?task=feeds&page=2" }, setInterval(fn, delay) { timers++; assert.equal(delay, 5000); tick = fn; return 1; }, clearInterval() { cleared = true; } };
   vm.runInNewContext(fs.readFileSync(require("node:path").join(__dirname, "../../App/Core/Tasks/assets/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, AbortController, URL, URLSearchParams });
   T.scheduler.list = () => { renders++; };
-  window.location.href = "https://tinycat.test/admin/cron/list";
+  window.location.href = "https://tinycat.test/admin/cron";
   for (const task of ["article_feeds", "fixture.task_2"]) {
     const source = { dataset: { ajaxAction: "/api/scheduler/tasks/" + task + "/runs" } };
     assert.deepEqual(Array.from(T.scheduler.result(source, { data: initial }, target)), [target]);

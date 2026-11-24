@@ -11,6 +11,7 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
+        $api->get('/scheduler/configuration', Administration::configuration(...), 'admin');
         $api->get('/scheduler/triggers/{task:' . \TinyCat\Core\Modules\ScheduledTask::ID_PATTERN . '}', static function (Request $request, array $params): Result {
             $task = $params['task'];
             if (!isset(Tasks::definitions()[$task])) { \TinyCat\Http\Response::error('Unknown scheduled task.', 404, 'scheduler_unknown_task'); }

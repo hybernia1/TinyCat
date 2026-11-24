@@ -4,14 +4,17 @@
       "/admin/cron"
     ],
     "components": [
-      "scheduler/run-detail"
+      "scheduler/run-detail",
+      "scheduler/configuration",
+      "scheduler/actions"
     ],
     "entries": [
       "App/Core/Tasks/assets/index.js"
     ],
     "styles": [],
     "translations": [
-      "common.filters"
+      "common.filters",
+      "cron.configuration"
     ],
     "messages": {
       "scheduler_token_rotated": "cron.messages.token_rotated",
@@ -21,7 +24,7 @@
     },
     "admin": {
       "core.scheduler-runs": {
-        "path": "/admin/cron/list",
+        "path": "/admin/cron",
         "endpoint": "/api/scheduler/tasks",
         "api": "/api/scheduler/tasks",
         "target": "#scheduler-list",

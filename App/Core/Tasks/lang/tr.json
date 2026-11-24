@@ -1,6 +1,6 @@
 {
   "cron": {
-    "title": "Zamanlanmış görevler",
+    "execution_details": "Teknik ayrıntılar",
     "access_title": "Erişim ve belirteç",
     "access_help": "Zamanlanmış her görev tarafından kullanılan paylaşılan uç nokta ve kimlik doğrulama.",
     "url": "Uç Nokta URL",
@@ -12,7 +12,7 @@
     "rotate": "Jetonu döndür",
     "rotate_confirm": "Cron jetonu döndürülsün mü? Mevcut planlanmış aramalar güncellenene kadar çalışmayı durduracaktır.",
     "tasks": {
-      "cleanup": "Otomatik temizleme",
+      "cleanup": "Temizlik",
       "cleanup_help": "Kullanılmayan etiketleri ve bağlantıları, artık yayın ve önizleme resimlerini, süresi dolmuş veri önbelleklerini, eski hız sınırı paketlerini, süresi dolmuş sıfırlama belirteçlerini ve okuma bildirimlerini kaldırır. Sahipsiz avatarları, terk edilmiş geçici dosyaları ve tamamlanan güncellemelerin eski yedeklerini de kaldırır.",
       "cleanup_schedule": "Saatlik program. Dahili durum kontrolleri temizleme işleminin çok sık yapılmasını önler.",
       "feeds": "kaynakları",
@@ -23,18 +23,15 @@
       "token_rotated": "Cron jetonu döndürüldü."
     },
     "list_title": "Göreve genel bakış",
-    "configuration": "Bağlantı ve planlama",
-    "list_help": "Planlama, sunucunuz veya web cronunuz tarafından kontrol edilir. Bunlar önerilen aralıklar ve varsayılan sınırlardır. Şimdi çalıştır, temizleme aralığını atlar; RSS hâlâ her kaynak aralığına saygı gösteriyor. Geçmiş, bu güncellemeden sonra kaydedilen çalıştırmaları içerir.",
+    "configuration": "Bağlantı",
     "task": "Görev",
-    "schedule": "Program ve varsayılan sınırlar",
     "latest": "En son çalışma",
-    "run_now": "Şimdi çalıştır",
+    "run_now": "Çalıştır",
     "history": "Çalıştırma geçmişi",
     "status": "Durumu",
     "started": "Başlatıldı",
     "duration": "Süre",
     "result": "Sonuç",
-    "no_runs": "Bu filtrelerle eşleşen kayıtlı çalışma yok.",
     "never": "Kayıtlı çalışma yok",
     "run_finished": "Görev tamamlandı.",
     "run_failed": "Görev başarısız oldu. Çalıştırma geçmişinde sonucunu görün.",
@@ -61,13 +58,11 @@
       "admin": "Kılavuzu"
     },
     "menu_title": "Görevler",
-    "overview_help": "Önerilen aralıklar ve varsayılan sınırlar. Planlama sunucu veya web-cron tarafından yönetilir.",
     "cadence": {
       "feeds": "Her iki dakikada bir kontrol edin",
       "cleanup": "Saatte bir"
     },
     "run_details": "Çalıştırma ayrıntıları",
-    "refresh": "Yenile",
     "run_not_found": "Bu çalıştırma bulunamadı.",
     "finished": "Bitti",
     "unfinished": "Bitmedi",

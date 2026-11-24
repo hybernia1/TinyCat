@@ -76,7 +76,10 @@ check(plain.messages.length === 1 && plain.origins[0] === 'https://blog.test', '
 function player(url, origin, kind, audioUrl = "") {
   let load, mounted;
   const button = { addEventListener(name, fn) { load = fn; }, getAttribute() { return "Media"; } };
-  const root = { dataset: { audioUrl, playerUrl: url, playerOrigin: origin, playerKind: kind, playerHeight: "166", playerAutoplayParam: "auto_play", playerAutoplayValue: "true" }, querySelector() { return button; }, replaceChildren(frame) { mounted = frame; } };
+  const root = { dataset: { audioUrl, embedUrl: url, embedOrigin: origin, cardKind: kind, embedHeight: '166', embedAutoplayParam: 'auto_play', embedAutoplayValue: 'true' },
+    querySelector: selector => selector === 'button' ? button : { replaceChildren(frame) { mounted = frame; } },
+    replaceChildren() { throw new Error('Card metadata and source links must survive mounting a player.'); }
+  };
   const win = { location: new URL("https://tinycat.test") }; win.parent = win;
   const doc = { querySelectorAll() { return [root]; }, getElementById() { return null; }, createElement(tag) { return { tag, setAttribute() {}, playCalls: 0, play() { this.playCalls++; return Promise.resolve(); } }; } };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/embed/embed-frame.js"), "utf8"), { window: win, document: doc, URL, Number, Math });
@@ -84,6 +87,9 @@ function player(url, origin, kind, audioUrl = "") {
   load(); return mounted;
 }
 const audio = player("https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fforss%2Fflickermood", "https://w.soundcloud.com", "audio");
+const sharedAudio = player('https://w.soundcloud.com/player/', 'https://w.soundcloud.com', 'audio', '');
+check(sharedAudio && sharedAudio.className === 'status-video-frame' && sharedAudio.height === '166', 'The canonical post card mounts media inside its shared placeholder and retains its source links.');
+check(player('', '', 'audio', 'https://example.com/episode.mp3').tag === 'audio', 'Canonical podcast placeholders still start native audio only on interaction.');
 check(audio && audio.height === "166" && new URL(audio.src).searchParams.get("auto_play") === "true", "The audio placeholder mounts the approved compact player on click.");
 check(!player("https://evil.test/player", "https://w.soundcloud.com", "audio"), "A media frame cannot change its approved provider origin.");
 check(!player("http://w.soundcloud.com/player/", "http://w.soundcloud.com", "audio"), "Media frames require HTTPS.");

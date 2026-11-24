@@ -95,15 +95,15 @@ check(load("/install").sources.includes("App/Core/Ui/assets/form-constraints.js"
   installer.forms.syncConstraints(field); check(!field.error, 'Installer accepts the eight-byte Unicode boundary');
   field.value='ééé'; installer.forms.syncConstraints(field); check(Boolean(field.error), 'Installer rejects a password below the byte boundary');
 }
-const schedulerPage = load("/admin/cron/list");
+const schedulerPage = load("/admin/cron");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
-check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");
+check(load("/admin/cron", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");
 for (const mode of [false, true, "min"]) {
-  const health = load("/admin/site-health", "cs", mode);
-  check(health.T.scheduler && health.T.settings && health.T.adminNavigation && !health.T.adminDefinitions, "Health boots shared navigation and settings with run details but without a scheduler list declaration.");
-  check(health.T.scheduler.result({dataset:{},getAttribute:name=>name==="action"?"/api/site-health/checks":null},{data:{}},null) === false, "The detail-only scheduler leaves health actions to the shared AJAX transport.");
+  const health = load("/admin/cron", "cs", mode);
+  check(health.T.scheduler && health.T.settings && health.T.adminNavigation && health.T.adminDefinitions['core.scheduler-runs'] && health.definitions.includes('health/report'), "The unified scheduler delivers shared history, configuration and the health run extension.");
+  check(health.T.scheduler.result({dataset:{},getAttribute:name=>name==="action"?"/api/site-health/checks":null},{data:{}},null) === false, "Health API actions remain handled by the shared AJAX transport.");
 
-  const cron = load("/admin/cron/list", "cs", mode);
+  const cron = load("/admin/cron", "cs", mode);
   const now = Date.UTC(2026, 9, 27, 12, 0, 0);
   check(cron.T.dates.relative(new Date(now - 2 * 60000), now) === "p\u0159ed 2 minutami", "Filtered cron dates receive Czech minute translations in source and release assets");
   check(cron.T.dates.relative(new Date(now - 3 * 3600000), now) === "p\u0159ed 3 hodinami", "Filtered cron dates receive Czech hour translations in source and release assets");

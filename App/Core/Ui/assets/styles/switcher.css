@@ -1,0 +1,38 @@
+.switcher {
+  display: flex;
+  min-width: 0;
+  gap: var(--control-padding-block);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.switcher > :is(a, button) {
+  display: inline-flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--control-height);
+  align-items: center;
+  justify-content: center;
+  gap: var(--control-padding-block);
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: var(--control-padding-block) var(--control-padding-inline);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.switcher > :is([aria-pressed="true"], [aria-current="page"]) {
+  background: var(--surface);
+  color: var(--primary-strong);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.switcher > :is(a, button):hover { color: var(--primary-strong); }
+.switcher > :is(a, button):focus-visible {
+  outline: 2px solid var(--primary-strong);
+  outline-offset: 1px;
+}

@@ -54,8 +54,21 @@ import "../../Ui/assets/component-builders.js";
       }
     },
     modal: function (url, response, id) {
+      if (url.pathname === "/api/scheduler/configuration") {
+        var content = T.components.render("scheduler/configuration", response.data);
+        var sections = Array.from(content.querySelectorAll("[data-configuration-section]")).map(function (section) {
+          return { name: section.dataset.configurationSection, label: section.dataset.configurationLabel, icon: section.dataset.configurationIcon, content: section };
+        });
+        var tabs = T.ui.tabbedContent(id, sections, "access", T.ui.text("cron.configuration"));
+        content.replaceChildren(tabs.content);
+        var rotation = T.components.render("scheduler/actions");
+        var dialog = T.ui.editorFrame(T.ui.dialog(id, "cron.configuration", content, false, rotation));
+        var tabRoot = T.ui.pinDialogTabs(dialog, tabs.content);
+        tabRoot.addEventListener("tinycat:tab", function (event) { rotation.hidden = event.detail.name !== "access"; });
+        return dialog;
+      }
       if (!/^\/api\/scheduler\/runs\/[0-9]+$/.test(url.pathname)) { return null; }
-      return T.ui.dialog(id, "cron.run_details", T.components.render("scheduler/run-detail", response.data));
+      return T.ui.dialog(id, "cron.run_details", T.components.render("scheduler/run-detail", response.data), false, null, { size: "reading", mobile: "fullscreen" });
     },
     list: function (target, response) {
       if (!definition) { return false; }
@@ -77,7 +90,7 @@ import "../../Ui/assets/component-builders.js";
       if (url.pathname !== "/api/scheduler/tokens") { return false; }
       var current = document.querySelector("[data-scheduler-token]"), token = response.data.token;
       document.querySelectorAll("[data-scheduler-command]").forEach(function (node) { node.textContent = node.textContent.replace(/(Authorization: Bearer )[^"]*/g, function (_, prefix) { return prefix + token; }); });
-      if (current) { current.value = token; }
+      if (current) { current.textContent = token; }
       return [];
     }
   };

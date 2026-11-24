@@ -16,10 +16,10 @@ const adminDefinitions = JSON.parse(execFileSync(php, [path.join(root,'tests/pre
 const moduleSettings = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--module-settings'], {encoding:'utf8',maxBuffer:8e6}));
 const socialConstraints = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--social-constraints'], {encoding:'utf8'}));
 const inputConstraints = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--constraints'], {encoding:'utf8',maxBuffer:8e6}));
-const healthBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/site-health','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
+const healthBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/cron','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
 const healthAction = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--health-action'], {encoding:'utf8'}));
 const healthSource = healthBundle.assets.map(asset => asset.source).join('\n');
-const healthCsBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/site-health','cs','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
+const healthCsBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/cron','cs','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
 const healthCs = healthCsBundle.assets.map(asset => asset.source).join('\n');
 const schedulerMarkup = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--scheduler-help'], {encoding:'utf8',maxBuffer:8e6}));
 const schedulerSource = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/cron','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6})).assets.map(asset => asset.source).join('\n');

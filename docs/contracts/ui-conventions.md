@@ -50,6 +50,22 @@ běžná 44 px; `identity-copy-truncate` slouží pro jednořádkové náhledy.
 `identity-row-inset` odstraňuje vnitřní odsazení při vložení do většího řádku.
 Hover, typografii a rozložení neurčuje znovu každý modul.
 
+Položky jednoduchých nabídek používají `ui/menu-item`: `label`, volitelnou
+`icon` a `attributes` s třídou `context-menu-action`. Panel má třídy
+`popover-panel menu-panel`; core určuje jeho vnitřní odsazení a jednotný vzhled položek.
+`href` volí odkaz,
+jinak jde o tlačítko s explicitním `type`. Stejný core styl obsluhuje akce
+i filtrovací odkazy; `aria-current="page"` označuje výběr a `is-danger`
+destruktivní akci. Vlastník dodává URL, oprávnění a akční atributy,
+společný popover zajišťuje rám a ovládání.
+
+Přepínače voleb používají core komponentu `ui/switcher` a capability `ui.switcher`.
+Vlastník předává `label`, `role`, volitelnou `class` a `items` s `label`,
+volitelnou `icon` a `attributes`. Položka s `href` je odkaz, jinak tlačítko
+s explicitním `type="button"`. Navigace používá `aria-current="page"`,
+tlačítka `aria-pressed`. Doménové URL, akce a ukládání zůstávají vlastníkovi.
+Povrch nemá vnější padding; rozměry voleb používají společné control tokeny.
+
 Ovladače načítání další stránky používají `ui/load-more` a `load-more.css`.
 Modul dodává atributy pro svůj loader a přeložené popisky. Rám obsahuje
 tlačítko i stav načítání; po vyčerpání stránek se odstraní celý rám.
@@ -483,3 +499,12 @@ GET serialization reuses shared navigation URL construction while retaining the
 binder's empty-value behavior. Interactive custom-constraint checks target the
 changed control or its canonical editor source. Hydration and submission retain
 whole-form validation; the byte encoder is reused.
+
+Status badges, notices and toasts share a neutral surface and readable text.
+Severity belongs to the coloured square symbol; its foreground uses the shared
+`--on-status-symbol` token in both colour schemes. Badges use the compact symbol;
+notices and toasts use the larger symbol aligned with the beginning of the text.
+Toasts have no border. Long explanations must wrap without moving the symbol.
+Buttons retain their established primary, secondary, danger and ghost variants.
+Retain accessible names, focus feedback and the existing confirmation and
+notification lifecycle.

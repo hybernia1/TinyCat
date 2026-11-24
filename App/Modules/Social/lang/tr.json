@@ -53,7 +53,6 @@
       "comment_deleted": "Yorum silindi."
     },
     "status_embed": "Gönderiyi yerleştir",
-    "status_embed_help": "Bu HTML kodunu sitenizin HTML bloğuna kopyalayın. WordPress, gönderi bağlantısından da yerleştirmeyi keşfedebilir.",
     "status_embed_code": "Yerleştirme kodu",
     "status_embed_open": "Orijinal gönderiyi aç",
     "translation_translate": "Çeviri",

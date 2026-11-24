@@ -1,58 +1,50 @@
 .alert {
-  --status-icon-size: var(--control-height-inline);
   position: relative;
   border: 0;
   border-radius: var(--radius-sm);
   padding: var(--control-padding-inline);
-  padding-inline-start: calc(var(--control-padding-inline) * 2 + var(--control-height-inline));
-  min-block-size: calc(var(--control-padding-inline) * 2 + var(--control-height-inline));
+  padding-inline-start: calc(var(--control-padding-inline) * 2 + var(--status-symbol-size));
+  min-block-size: calc(var(--control-padding-inline) * 2 + var(--status-symbol-size));
   overflow-wrap: anywhere;
-  background: var(--surface);
+  background: var(--surface-soft);
   color: var(--text);
 }
 
-.alert::before {
+:is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before,
+:is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after {
+  content: "";
   position: absolute;
-  inset-inline-start: var(--control-padding-inline);
-  inset-block: 0;
-  inline-size: var(--control-height-inline);
-  block-size: var(--control-height-inline);
-  margin: auto 0;
+  display: block;
+  inset-inline-start: var(--status-symbol-inset, var(--control-padding-inline));
+  inset-block-start: var(--control-padding-inline);
+  width: var(--status-symbol-size);
+  height: var(--status-symbol-size);
+  pointer-events: none;
 }
-
-.alert-info {
-  background: var(--info-soft);
-  color: var(--info);
-}
-
-.alert-success {
-  background: var(--success-soft);
-  color: var(--success);
-}
-
-.alert-warning {
-  background: var(--warning-soft);
-  color: var(--warning);
-}
-
-.alert-danger {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-
 
 :is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before {
-  content: "";
-  display: inline-block;
-  flex: 0 0 auto;
-  width: var(--status-icon-size, var(--control-icon-size));
-  height: var(--status-icon-size, var(--control-icon-size));
-  background: currentColor;
-  mask: var(--status-icon, var(--status-icon-info)) center / contain no-repeat;
+  background: var(--status-color, var(--info));
+  border-radius: var(--radius-sm);
 }
 
-.badge-success, .alert-success, .toast-success { --status-icon: var(--status-icon-success); }
-.badge-danger, .alert-danger, .toast-danger { --status-icon: var(--status-icon-danger); }
-.badge-warning, .alert-warning, .toast-warning { --status-icon: var(--status-icon-warning); }
+:is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after {
+  background: var(--on-status-symbol);
+  mask: var(--status-icon, var(--status-icon-info)) center / var(--status-symbol-icon-size) no-repeat;
+}
 
-.badge-info, .alert-info, .toast-info { --status-icon: var(--status-icon-info); }
+.badge-success, .alert-success, .toast-success {
+  --status-icon: var(--status-icon-success);
+  --status-color: var(--success);
+}
+.badge-danger, .alert-danger, .toast-danger {
+  --status-icon: var(--status-icon-danger);
+  --status-color: var(--danger);
+}
+.badge-warning, .alert-warning, .toast-warning {
+  --status-icon: var(--status-icon-warning);
+  --status-color: var(--warning);
+}
+.badge-info, .alert-info, .toast-info {
+  --status-icon: var(--status-icon-info);
+  --status-color: var(--info);
+}

@@ -51,10 +51,9 @@
       "App/Modules/Social/assets/status/index.js",
       "App/Modules/Social/assets/status/comment-pagination.js"
     ],
+    "uses": ["ui.switcher"],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-email-notice.css",
-      "App/Modules/Social/assets/status/styles/feed-switch.css",
-      "App/Modules/Social/assets/status/styles/home-feed-switch-links.css",
       "App/Modules/Social/assets/status/styles/status-feed.css",
       "App/Modules/Social/assets/status/styles/status-header.css",
       "App/Modules/Social/assets/status/styles/status-text.css",
@@ -65,7 +64,6 @@
       "App/Modules/Social/assets/status/styles/status-avatars.css",
       "App/Modules/Social/assets/status/styles/status-detail.css",
       "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
-      "App/Modules/Social/assets/status/styles/feed-switch-mobile.css",
       "App/Modules/Social/assets/status/styles/status-content-mobile.css",
       "App/Modules/Social/assets/status/styles/status-feed-mobile.css",
       "App/Modules/Social/assets/status/styles/embed-preview.css",
@@ -105,7 +103,6 @@
       "moderation.report_note",
       "public.feed_empty",
       "public.feed_empty_following",
-      "account.status_embed_help",
       "account.status_embed_code"
     ],
     "messages": {
@@ -167,7 +164,6 @@
       "account.status_edit",
       "account.status_embed",
       "account.status_embed_code",
-      "account.status_embed_help",
       "account.status_thread_title",
       "account.translation_continue",
       "account.translation_failed",
@@ -279,7 +275,6 @@
       "moderation.report_note",
       "public.feed_empty",
       "public.feed_empty_following",
-      "account.status_embed_help",
       "account.status_embed_code"
     ],
     "messages": {
@@ -360,6 +355,7 @@
       "common.create",
       "bots.new_account",
       "bots.account_create_help",
+      "account.avatar",
       "account.username_hint"
     ],
     "messages": {

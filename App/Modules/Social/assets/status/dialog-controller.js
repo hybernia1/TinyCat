@@ -45,8 +45,6 @@ import "./controller.js";
           resize();
         });
         var content = T.components.render("status/embed-content", { snippet: data.snippet, preview: preview });
-        var code = content.querySelector("textarea");
-        code.addEventListener("click", function () { code.select(); });
         var embedDialog = U.dialog(id, "account.status_embed", content);
         embedDialog.addEventListener("tinycat:modal-close", function () { if (previewObserver) previewObserver.disconnect(); });
         return embedDialog;

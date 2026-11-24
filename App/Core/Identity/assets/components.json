@@ -224,7 +224,7 @@
   "users/list": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14",
+      "class": "stack stack-gap-14 table-layout",
       "data-admin-list": "core.users",
       "data-admin-state": {
         "json": {
@@ -1365,29 +1365,44 @@
             "attrs": {"class": "user-menu-theme"},
             "children": [
               {
-                "tag": "div",
-                "attrs": {"class": "user-menu-theme-switch", "role": "group", "aria-label": {"t": "account.theme"}},
-                "children": [
-                  {
-                    "each": [
-                      {"value": "system", "label": {"t": "account.theme_system"}, "icon": "monitor"},
-                      {"value": "light", "label": {"t": "account.theme_light"}, "icon": "sun"},
-                      {"value": "dark", "label": {"t": "account.theme_dark"}, "icon": "moon"}
-                    ],
-                    "as": "option",
-                    "children": {
-                      "tag": "button",
-                      "attrs": {
+                "component": "ui/switcher",
+                "data": {
+                  "class": "user-menu-theme-switch",
+                  "role": "group",
+                  "label": {"t": "account.theme"},
+                  "items": [
+                    {
+                      "icon": "monitor",
+                      "attributes": {
                         "type": "button",
-                        "data-user-menu-theme": {"get": "option.value"},
-                        "aria-label": {"get": "option.label"},
-                        "title": {"get": "option.label"},
-                        "aria-pressed": {"if": [{"eq": [{"get": "theme"}, {"get": "option.value"}]}, "true", "false"]}
-                      },
-                      "children": [{"icon": {"get": "option.icon"}}]
+                        "data-user-menu-theme": "system",
+                        "aria-label": {"t": "account.theme_system"},
+                        "title": {"t": "account.theme_system"},
+                        "aria-pressed": {"if": [{"eq": [{"get": "theme"}, "system"]}, "true", "false"]}
+                      }
+                    },
+                    {
+                      "icon": "sun",
+                      "attributes": {
+                        "type": "button",
+                        "data-user-menu-theme": "light",
+                        "aria-label": {"t": "account.theme_light"},
+                        "title": {"t": "account.theme_light"},
+                        "aria-pressed": {"if": [{"eq": [{"get": "theme"}, "light"]}, "true", "false"]}
+                      }
+                    },
+                    {
+                      "icon": "moon",
+                      "attributes": {
+                        "type": "button",
+                        "data-user-menu-theme": "dark",
+                        "aria-label": {"t": "account.theme_dark"},
+                        "title": {"t": "account.theme_dark"},
+                        "aria-pressed": {"if": [{"eq": [{"get": "theme"}, "dark"]}, "true", "false"]}
+                      }
                     }
-                  }
-                ]
+                  ]
+                }
               }
             ]
           },

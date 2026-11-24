@@ -33,7 +33,7 @@ import "../../../../Core/Ui/assets/component-builders.js";
       T.content.replaceChildren(feed, T.status.fragment(response.data.items).content);
       feed.id = "status-feed-" + (response.data.feed || "all");
       section.querySelectorAll("[data-status-empty], [data-status-feed-more], [data-feed-login-required]").forEach(T.content.remove);
-      section.querySelectorAll(".feed-switch-link").forEach(function (link) { var following = link.getAttribute("href").indexOf("following") !== -1; if (following === (response.data.feed === "following")) { link.setAttribute("aria-current", "page"); } else { link.removeAttribute("aria-current"); } });
+      section.querySelectorAll(".home-feed-switch a").forEach(function (link) { var following = link.getAttribute("href").indexOf("following") !== -1; if (following === (response.data.feed === "following")) { link.setAttribute("aria-current", "page"); } else { link.removeAttribute("aria-current"); } });
       if (!response.data.items.length) { section.appendChild(T.components.render("status/feed-empty", response.data)); }
       var pagination = U.pagination(response);
       if (pagination.next_url) {

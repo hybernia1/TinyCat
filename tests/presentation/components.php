@@ -43,6 +43,19 @@ set_error_handler(static function (int $severity, string $message, string $file,
     throw new ErrorException($message, 0, $severity, $file, $line);
 });
 $roles = ['admin' => 'Admin', 'user' => 'User'];
+$embedSnippet = '<iframe src="https://example.test/status/26/embed"></iframe>';
+$embedContent = \TinyCat\Support\Components::render('status/embed-content', ['snippet' => $embedSnippet, 'preview' => new \TinyCat\Support\Markup('<iframe title="Preview"></iframe>')]);
+$assert(str_contains($embedContent, '<pre class="code-block"><code') && str_contains($embedContent, '&lt;iframe') && !str_contains($embedContent, '<textarea') && !str_contains($embedContent, 'data-help'), 'Embed dialogs use the shared copyable code block without a help control or editable textarea.');
+$menuLink = \TinyCat\Support\Components::render('ui/menu-item', ['label' => '<Images>', 'attributes' => ['class' => 'context-menu-action', 'href' => '/?media=images', 'aria-current' => 'page', 'data-popover-close' => '']]);
+$assert(str_contains($menuLink, '<a ') && !str_contains($menuLink, '<button') && str_contains($menuLink, '&lt;Images&gt;') && str_contains($menuLink, 'aria-current="page"'), 'Core menu links preserve canonical targets, selection and escaped labels.');
+$menuButton = \TinyCat\Support\Components::render('ui/menu-item', ['label' => 'Delete', 'attributes' => ['class' => 'context-menu-action is-danger', 'type' => 'submit', 'data-popover-close' => '']]);
+$assert(str_contains($menuButton, '<button ') && !str_contains($menuButton, '<a ') && str_contains($menuButton, 'type="submit"') && str_contains($menuButton, 'is-danger'), 'Core menu actions preserve native form submission and destructive presentation.');
+$assert(str_contains($accountMenu, 'switcher user-menu-theme-switch') && substr_count($accountMenu, 'data-user-menu-theme=') === 3, 'The account menu composes the core switcher with all theme actions.');
+$switcher = \TinyCat\Support\Components::render('ui/switcher', ['role' => 'navigation', 'label' => 'Feeds', 'items' => [
+    ['label' => '<All>', 'attributes' => ['href' => '/?feed=all', 'aria-current' => 'page']],
+    ['label' => 'Following', 'attributes' => ['href' => '/?feed=following']],
+]]);
+$assert(str_contains($switcher, 'role="navigation"') && substr_count($switcher, '<a ') === 2 && substr_count($switcher, 'aria-current="page"') === 1 && str_contains($switcher, '&lt;All&gt;') && !str_contains($switcher, '<button'), 'Core switchers preserve navigation semantics, active state and escaped labels.');
 $statuses = ['active' => 'Active', 'ban' => 'Banned'];
 $locked = \TinyCat\Core\Identity\Views::adminFormFields(['user' => $admin, 'roles' => $roles, 'statuses' => $statuses]);
 $assert(str_contains($accountMenu, 'data-modal-open="account-editor-modal-2"') && str_contains($accountMenu, 'data-modal-url="/api/users/2/management?panel=account&amp;focus="') && !str_contains($accountMenu, 'profile-edit-modal-'), 'The account menu targets the unified account editor.');
@@ -182,15 +195,21 @@ $thread = \TinyCat\Support\Components::render('status/thread', ['item' => \TinyC
 $assert(str_contains($thread, 'data-modal-url="/api/users/authentication?'), 'Guest comment threads keep the sign-in modal.');
 $botFields = \TinyCat\Support\Components::render('bots/account-fields', ['item' => ['id' => 3, 'username' => 'Bot', 'status' => 'active', 'bio' => 'Draft']]);
 $assert(!str_contains($botFields, 'data-modal-url="/api/users/3/avatar"') && str_contains($botFields, 'name="bio"'), 'Bot account fields keep biography while avatar editing belongs to its separate tab.');
-$schedulerHtml = \TinyCat\Support\Components::render('scheduler/administration', ['cronToken' => 'fixture-token', 'cronUrl' => '/api/scheduler/executions', 'taskViews' => [['icon' => 'clock', 'title_label' => 'Fixture task', 'help_label' => 'Full task explanation', 'schedule_label' => 'Complete scheduling guidance', 'cadence_label' => 'Every hour', 'query_url' => '/api/scheduler/triggers/fixture', 'http_command' => 'fixture-http', 'cli_command' => 'fixture-cli']]]);
+$schedulerHtml = \TinyCat\Support\Components::render('scheduler/administration', ['token' => 'fixture-token', 'execution_url' => '/api/scheduler/executions', 'tasks' => [['id' => 'cleanup', 'query_url' => '/api/scheduler/triggers/fixture', 'http_command' => 'fixture-http', 'cli_command' => 'fixture-cli']]]);
 $schedulerDocument = new DOMDocument();
 $schedulerXmlErrors = libxml_use_internal_errors(true);
 try { $schedulerDocument->loadHTML('<?xml encoding="UTF-8">' . $schedulerHtml); }
 finally { libxml_clear_errors(); libxml_use_internal_errors($schedulerXmlErrors); }
 $schedulerXPath = new DOMXPath($schedulerDocument);
+$combinedScheduler = \TinyCat\Support\Components::render('scheduler/page', ['target_id' => 'scheduler-list', 'content' => new \TinyCat\Support\Markup('<div data-history-fixture>History</div>'), 'configuration' => new \TinyCat\Support\Markup($schedulerHtml)]);
+$assert(str_contains($combinedScheduler, 'id="scheduler-list"') && str_contains($combinedScheduler, 'data-history-fixture') && !str_contains($combinedScheduler, '<details') && !str_contains($combinedScheduler, 'fixture-token'), 'The task page renders only its independently refreshed list, without hidden connection details or credentials.');
 $rotationHtml = \TinyCat\Support\Components::render('scheduler/actions');
-$assert(!str_contains($schedulerHtml, '/api/scheduler/tokens') && str_contains($rotationHtml, 'action="/api/scheduler/tokens"') && str_contains($rotationHtml, 'data-confirm=') && str_contains($rotationHtml, 'name="_csrf"'), 'The header rotation action retains confirmation and CSRF without duplication in access details.');
-$assert($schedulerXPath->query('//details/summary//*[text()="Every hour"]')->length === 1 && $schedulerXPath->query('//details/summary//strong//*[@data-help]')->length === 1 && $schedulerXPath->query('//details/summary//small//*[@data-help]')->length === 1 && $schedulerXPath->query('//*[contains(concat(" ", normalize-space(@class), " "), " disclosure-body ")]/*[@data-help]')->length === 0 && str_contains($schedulerHtml, 'Full task explanation'), 'Task and scheduling hints sit beside their summary captions, with no floating help controls in the disclosure body.');
+$runDetailHtml = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => ['id' => 99, 'task' => 'cleanup', 'status' => 'completed', 'started_at' => '2026-11-24T01:00:00Z', 'finished_at' => '2026-11-24T01:00:01Z', 'duration_ms' => 1000, 'mode' => 'cli', 'actor' => ['username' => 'operator'], 'options' => ['cleanup_batch' => 50], 'summary' => ['count' => 0, 'changed' => 0]]]);
+$httpRunReport = \TinyCat\Support\Components::render('health/report', ['report' => ['checks' => [['id' => 'http', 'status' => 'critical', 'duration_ms' => 12, 'metrics' => ['total_ms' => 12], 'limits' => ['ttfb_warning_ms' => 800, 'ttfb_critical_ms' => 1800]]]]]);
+$assert(str_contains($httpRunReport, '>12</dd>') && !str_contains($httpRunReport, '800') && !str_contains($httpRunReport, '1800'), 'Health run details show measured values without repeating configured warning and critical thresholds.');
+$assert(!str_contains($runDetailHtml, 'class="card"') && str_contains($runDetailHtml, '<details class="disclosure-item">') && str_contains($runDetailHtml, '>99</dd>') && str_contains($runDetailHtml, 'operator') && str_contains($runDetailHtml, '>50</dd>'), 'Run details keep execution metadata and options inside a collapsed disclosure without nested cards.');
+$assert(!str_contains($schedulerHtml, '/api/scheduler/tokens') && str_contains($rotationHtml, 'action="/api/scheduler/tokens"') && str_contains($rotationHtml, 'data-confirm=') && str_contains($rotationHtml, 'name="_csrf"'), 'The resource dialog rotation action retains confirmation and CSRF without duplication in access details.');
+$assert($schedulerXPath->query('//section/header')->length === 0 && $schedulerXPath->query('//section/p//*[@data-help]')->length === 0 && $schedulerXPath->query('//section//*[@class="field"]//*[@data-help]')->length >= 2 && $schedulerXPath->query('//details')->length === 0, 'Configuration tabs omit duplicate headings and retain contextual field and scheduling hints.');
 $modulesIntro = \TinyCat\Support\Components::render('ui/modules-page', ['snapshot' => ['manageable' => true, 'groups' => [], 'problems' => []], 'rows' => []]);
 $assert(!str_contains($modulesIntro, 'data-help') && !str_contains($modulesIntro, \TinyCat\Support\Localization::t('modules.help')), 'Module administration omits the redundant introduction and its help icon.');
 $healthChecks = [
@@ -207,36 +226,6 @@ foreach ([null, 'completed', 'failed', 'running', 'not_due', 'has_more', 'interr
     $assert(str_contains($taskRow, \TinyCat\Support\Localization::t($taskStatus === null ? 'cron.never' : 'cron.statuses.' . $taskStatus)), 'Latest task state is readable without relying on an icon.');
     $assert($hasAction($taskRow, '/api/scheduler/tasks/cleanup/runs') && str_contains($taskRow, 'name="_csrf"') && !str_contains($taskRow, 'sr-only'), 'Task execution retains its API action, CSRF and visible button label.');
     $assert($taskStatus === null || str_contains($taskRow, '0 ms'), 'Measured zero duration remains visible.');
-}
-$healthHtml = \TinyCat\Core\Health\Views::page([
-    'snapshot' => ['status' => 'warning', 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => ['checked_at' => '2026-11-01T12:00:00Z']],
-    'checks' => $healthChecks, 'issues' => $healthChecks, 'http' => $healthChecks[1], 'passed' => 0,
-]);
-$healthDocument = new DOMDocument();
-$previousXmlErrors = libxml_use_internal_errors(true);
-try { $healthDocument->loadHTML('<?xml encoding="UTF-8">' . $healthHtml); }
-finally { libxml_clear_errors(); libxml_use_internal_errors($previousXmlErrors); }
-$healthXPath = new DOMXPath($healthDocument);
-foreach (['ok', 'warning', 'critical', 'unknown'] as $healthStatus) {
-    $statusPage = \TinyCat\Core\Health\Views::page([
-        'snapshot' => ['status' => $healthStatus, 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => null],
-        'checks' => [], 'issues' => [], 'http' => null, 'passed' => 0,
-    ]);
-    preg_match('/<h2\b[^>]*>(.*?)<\/h2>/s', $statusPage, $statusHeading);
-    $assert(trim(strip_tags($statusHeading[1] ?? '')) === \TinyCat\Support\Localization::t('health.status.' . $healthStatus), 'Health overview exposes its actual status as visible heading text, including healthy and unknown states.');
-}
-$assert($healthXPath->query('//article//strong[text()="—"]')->length === 3 && $healthXPath->query('//article//small')->length === 0, 'Unavailable health metrics use an em dash without a misleading unit.');
-$zeroHealthHtml = \TinyCat\Core\Health\Views::page([
-    'snapshot' => ['status' => 'ok', 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => null],
-    'checks' => [], 'issues' => [], 'http' => ['metrics' => ['ttfb_ms' => 0, 'total_ms' => 0, 'http_status' => 200]], 'passed' => 0,
-]);
-$assert(substr_count($zeroHealthHtml, '<strong>0</strong>') === 2 && substr_count($zeroHealthHtml, '>ms</small>') === 2 && str_contains($zeroHealthHtml, '<strong>200</strong>'), 'Measured zero timings retain their values and units instead of becoming missing data.');
-$warnings = $healthXPath->query('//div[contains(concat(" ", normalize-space(@class), " "), " alert-warning ")]');
-$assert($warnings->length === 2, 'Health findings render one warning box per issue.');
-foreach ($warnings as $index => $warning) {
-    $checkId = $healthChecks[$index]['id'];
-    $assert(str_contains($warning->textContent, \TinyCat\Support\Localization::t('health.checks.' . $checkId))
-        && str_contains($warning->textContent, \TinyCat\Support\Localization::t('health.advice.' . $checkId)), 'Each health warning contains its title and advice inside the colored box.');
 }
 $criticalNotice = \TinyCat\Support\Components::render('ui/notice', ['tone' => 'critical', 'title' => 'Missing <extensions>', 'detail' => 'Unsafe <img src=x>']);
 $assert(str_contains($criticalNotice, 'alert-danger') && str_contains($criticalNotice, 'role="alert"') && str_contains($criticalNotice, 'Missing &lt;extensions&gt;') && str_contains($criticalNotice, 'Unsafe &lt;img src=x&gt;'), 'Critical update and health notices retain their danger tone and escaped rich text fields.');
@@ -255,13 +244,17 @@ foreach ([false, true] as $available) {
                 'releaseCompatible' => $compatible, 'canInstall' => $compatible && $extensionsReady,
                 'extensions' => ['cURL' => $extensionsReady],
             ]));
-            $html = \TinyCat\Support\Components::render('updates/actions', $model);
+            $html = \TinyCat\Support\Components::render('updates/actions', $model) . \TinyCat\Support\Components::render('updates/page', $model);
             $doc = new DOMDocument();
             $previousXmlErrors = libxml_use_internal_errors(true);
             try { $doc->loadHTML($html); }
             finally { libxml_clear_errors(); libxml_use_internal_errors($previousXmlErrors); }
             $xpath = new DOMXPath($doc);
             $install = $xpath->query('//form[@action="/api/updates/installations"]');
+            $assert($xpath->query('//details[@class="disclosure-item" and not(@open)]')->length === 1, 'Migration history uses the shared collapsed disclosure without environment success lists.');
+            $assert($xpath->query('//div[contains(@class,"alert-danger")]')->length === (int) !$extensionsReady && ($extensionsReady || str_contains($html, 'PHP cURL')), 'Only missing PHP requirements produce a blocking notice with the missing extension name.');
+            $assert(!str_contains(\TinyCat\Support\Components::render('updates/actions', $model), '/api/updates/installations'), 'The install action belongs beside the available release, while release notes remain in the header.');
+
             $assert($install->length === (int) $available, 'Install action exists only when an update is available.');
             if ($available) {
                 $assert($xpath->query('//form[@action="/api/updates/installations"]//button[@disabled]')->length === (int) !($compatible && $extensionsReady), 'Requirements and compatibility retain the disabled install state.');
@@ -278,8 +271,6 @@ $updateModel = \TinyCat\Core\Updates\Views::model(array_replace($updateData, [
 $updateHtml = \TinyCat\Support\Components::render('updates/page', $updateModel);
 $assert(str_contains($updateHtml, '&lt;unsafe error&gt;') && str_contains($updateHtml, '&lt;migration&gt;') && str_contains($updateHtml, '20260801_profile_links_and_legacy_cleanup'), 'Updater page escapes errors and preserves long historical migration labels.');
 $assert(str_contains($updateHtml, 'action="/api/updates/maintenance"') && str_contains($updateHtml, 'data-api-method="DELETE"') && str_contains($updateHtml, 'name="_method" value="DELETE"'), 'Maintenance recovery retains its DELETE transport.');
-$emptyHealth = \TinyCat\Core\Health\Views::page(['snapshot' => ['status' => 'unknown', 'report' => null, 'history' => [], 'latest_failed' => false, 'stale' => false], 'checks' => [], 'issues' => [], 'http' => null, 'passed' => 0]);
-$assert(!str_contains($emptyHealth, '/api/scheduler/runs/') && str_contains($emptyHealth, 'empty-state'), 'Health without a report remains renderable and does not invent history actions.');
 $headerData = [
     'appName' => 'Tiny <Cat>', 'authUser' => null, 'current' => '/cs/login',
     'pageUrls' => ['/' => '/cs/', '/search/all' => '/cs/search/all', '/login' => '/cs/login'],

@@ -1,5 +1,6 @@
 .field {
   display: grid;
+  align-content: start;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.375rem;
@@ -9,6 +10,10 @@
   color: var(--text);
   font-size: 0.925rem;
   font-weight: 650;
+}
+
+.field > .label {
+  min-block-size: 1.75rem;
 }
 
 .input,

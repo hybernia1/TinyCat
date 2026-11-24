@@ -63,7 +63,7 @@ function link(url, history, method = "GET") {
   assert.match(applied.at(-1), /sort=status/);
   const lists = require("./fixtures/list-fixture.cjs")();
   lists.T.api.request = async url => ({ data: { url, items: [url] }, meta: { pagination: { page: 1, per_page: 25 } } });
-  for (const [route, api] of [["/admin/bots/list", "/api/bots/sources"], ["/admin/moderation/reports", "/api/moderation/reports"], ["/admin/cron/list", "/api/scheduler/tasks"], ["/admin/users", "/api/users"]]) {
+  for (const [route, api] of [["/admin/bots/list", "/api/bots/sources"], ["/admin/moderation/reports", "/api/moderation/reports"], ["/admin/cron", "/api/scheduler/tasks"], ["/admin/users", "/api/users"]]) {
     lists.window.location = new URL("https://tinycat.test" + route + "?sort=status&direction=desc");
     await lists.T.navigation.restore();
     assert.equal(lists.rendered.at(-1).data.url, api + "?sort=status&direction=desc", "History restoration retains sorting: " + route);

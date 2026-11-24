@@ -1,194 +1,160 @@
 {
   "health/report": {
     "tag": "div",
-    "attrs": {"class": "stack"},
+    "attrs": {"class": "stack stack-gap-12"},
     "children": [
       {"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"t": "health.all_checks"}]},
       {
-        "each": {"get": "report.checks"},
-        "as": "check",
+        "tag": "div",
+        "attrs": {"class": "disclosure-list"},
         "children": [
           {
-            "tag": "section",
-            "attrs": {"class": "card"},
+            "each": {"get": "report.checks"},
+            "as": "check",
             "children": [
               {
-                "tag": "div",
-                "attrs": {"class": "card-header split"},
+                "tag": "details",
+                "attrs": {"class": "disclosure-item"},
                 "children": [
                   {
-                    "tag": "strong",
+                    "tag": "summary",
+                    "attrs": {"class": "disclosure-summary"},
                     "children": [
                       {
-                        "lookup": {"get": "check.id"},
-                        "cases": {
-                          "http": {"t": "health.checks.http"},
-                          "database": {"t": "health.checks.database"},
-                          "cache": {"t": "health.checks.cache"},
-                          "storage": {"t": "health.checks.storage"},
-                          "uploads": {"t": "health.checks.uploads"},
-                          "disk": {"t": "health.checks.disk"},
-                          "runtime": {"t": "health.checks.runtime"},
-                          "scheduler": {"t": "health.checks.scheduler"},
-                          "updates": {"t": "health.checks.updates"}
-                        },
-                        "default": {"get": "check.id"}
-                      }
+                        "tag": "span",
+                        "attrs": {"class": "cluster gap-2"},
+                        "children": [
+                          {
+                            "tag": "strong",
+                            "children": [
+                              {
+                                "lookup": {"get": "check.id"},
+                                "cases": {
+                                  "http": {"t": "health.checks.http"},
+                                  "database": {"t": "health.checks.database"},
+                                  "cache": {"t": "health.checks.cache"},
+                                  "storage": {"t": "health.checks.storage"},
+                                  "uploads": {"t": "health.checks.uploads"},
+                                  "disk": {"t": "health.checks.disk"},
+                                  "runtime": {"t": "health.checks.runtime"},
+                                  "scheduler": {"t": "health.checks.scheduler"},
+                                  "updates": {"t": "health.checks.updates"}
+                                },
+                                "default": {"get": "check.id"}
+                              }
+                            ]
+                          },
+                          {
+                            "component": "ui/status-badge",
+                            "data": {
+                              "tone": {"get": "check.status"},
+                              "label": {
+                                "lookup": {"get": "check.status"},
+                                "cases": {
+                                  "ok": {"t": "health.status.ok"},
+                                  "warning": {"t": "health.status.warning"},
+                                  "critical": {"t": "health.status.critical"},
+                                  "skipped": {"t": "health.status.skipped"},
+                                  "unknown": {"t": "health.status.unknown"}
+                                },
+                                "default": {"get": "check.status"}
+                              },
+                              "text": true
+                            }
+                          }
+                        ]
+                      },
+                      {"icon": "chevron-down", "class": "icon disclosure-chevron"}
                     ]
                   },
                   {
-                    "component": "ui/status-badge",
-                    "data": {
-                      "tone": {"get": "check.status"},
-                      "label": {
-                        "lookup": {"get": "check.status"},
-                        "cases": {
-                          "ok": {"t": "health.status.ok"},
-                          "warning": {"t": "health.status.warning"},
-                          "critical": {"t": "health.status.critical"},
-                          "skipped": {"t": "health.status.skipped"},
-                          "unknown": {"t": "health.status.unknown"}
-                        },
-                        "default": {"get": "check.status"}
-                      },
-                      "text": true
-                    }
-                  }
-                ]
-              },
-              {
-                "tag": "div",
-                "attrs": {"class": "card-body stack stack-gap-8"},
-                "children": [
-                  {
-                    "component": "health/scheduler-findings",
-                    "data": {"metrics": {"get": "check.metrics"}},
-                    "when": {"eq": [{"get": "check.id"}, "scheduler"]}
-                  },
-                  {
-                    "tag": "span",
-                    "attrs": {"class": "table-meta"},
-                    "children": [{"t": "health.check_duration"}, ": ", {"get": "check.duration_ms"}, " ms"]
-                  },
-                  {
-                    "tag": "dl",
-                    "attrs": {"class": "stack stack-gap-4 m-0"},
-                    "when": {"eq": [{"get": "check.id"}, "http"]},
+                    "tag": "div",
+                    "attrs": {"class": "disclosure-body stack stack-gap-8"},
                     "children": [
                       {
-                        "each": {"get": "check.metrics"},
-                        "as": "value",
+                        "component": "health/scheduler-findings",
+                        "data": {"metrics": {"get": "check.metrics"}},
+                        "when": {"eq": [{"get": "check.id"}, "scheduler"]}
+                      },
+                      {
+                        "tag": "span",
+                        "attrs": {"class": "table-meta"},
+                        "children": [{"t": "health.check_duration"}, ": ", {"get": "check.duration_ms"}, " ms"]
+                      },
+                      {
+                        "tag": "dl",
+                        "attrs": {"class": "stack stack-gap-4 m-0"},
+                        "when": {"eq": [{"get": "check.id"}, "http"]},
                         "children": [
                           {
-                            "tag": "div",
-                            "attrs": {"class": "split"},
-                            "when": {
-                              "lookup": {"get": "_key"},
-                              "cases": {
-                                "ttfb_ms": true,
-                                "total_ms": true,
-                                "dns_ms": true,
-                                "connect_ms": true,
-                                "tls_ms": true,
-                                "http_status": true,
-                                "bytes": true
-                              },
-                              "default": false
-                            },
+                            "each": {"get": "check.metrics"},
+                            "as": "value",
                             "children": [
                               {
-                                "tag": "dt",
-                                "attrs": {"class": "text-muted"},
+                                "tag": "div",
+                                "attrs": {"class": "split"},
+                                "when": {
+                                  "lookup": {"get": "_key"},
+                                  "cases": {
+                                    "ttfb_ms": true,
+                                    "total_ms": true,
+                                    "dns_ms": true,
+                                    "connect_ms": true,
+                                    "tls_ms": true,
+                                    "http_status": true,
+                                    "bytes": true
+                                  },
+                                  "default": false
+                                },
                                 "children": [
                                   {
-                                    "lookup": {"get": "_key"},
-                                    "cases": {
-                                      "ttfb_ms": "TTFB (ms)",
-                                      "total_ms": {"concat": [{"t": "health.http.total"}, " (ms)"]},
-                                      "dns_ms": "DNS (ms)",
-                                      "connect_ms": "TCP (ms)",
-                                      "tls_ms": "TLS (ms)",
-                                      "http_status": "HTTP",
-                                      "bytes": "Bytes"
-                                    },
-                                    "default": {"get": "_key"}
+                                    "tag": "dt",
+                                    "attrs": {"class": "text-muted"},
+                                    "children": [
+                                      {
+                                        "lookup": {"get": "_key"},
+                                        "cases": {
+                                          "ttfb_ms": "TTFB (ms)",
+                                          "total_ms": {"concat": [{"t": "health.http.total"}, " (ms)"]},
+                                          "dns_ms": "DNS (ms)",
+                                          "connect_ms": "TCP (ms)",
+                                          "tls_ms": "TLS (ms)",
+                                          "http_status": "HTTP",
+                                          "bytes": "Bytes"
+                                        },
+                                        "default": {"get": "_key"}
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "dd",
+                                    "attrs": {"class": "m-0"},
+                                    "children": [{"if": [{"eq": [{"get": "value"}, null]}, "-", {"get": "value"}]}]
                                   }
                                 ]
-                              },
-                              {
-                                "tag": "dd",
-                                "attrs": {"class": "m-0"},
-                                "children": [{"if": [{"eq": [{"get": "value"}, null]}, "-", {"get": "value"}]}]
                               }
                             ]
                           }
                         ]
                       },
                       {
-                        "each": {"get": "check.limits"},
-                        "as": "value",
+                        "tag": "p",
+                        "attrs": {"class": "m-0 table-meta"},
+                        "when": {"get": "check.metrics.error"},
                         "children": [
                           {
-                            "tag": "div",
-                            "attrs": {"class": "split"},
-                            "children": [
-                              {
-                                "tag": "dt",
-                                "attrs": {"class": "text-muted"},
-                                "children": [
-                                  {
-                                    "lookup": {"get": "_key"},
-                                    "cases": {
-                                      "ttfb_warning_ms": {
-                                        "concat": ["TTFB / ", {"t": "health.status.warning"}, " (ms)"]
-                                      },
-                                      "ttfb_critical_ms": {
-                                        "concat": ["TTFB / ", {"t": "health.status.critical"}, " (ms)"]
-                                      },
-                                      "total_warning_ms": {
-                                        "concat": [
-                                          {"t": "health.http.total"},
-                                          " / ",
-                                          {"t": "health.status.warning"},
-                                          " (ms)"
-                                        ]
-                                      },
-                                      "total_critical_ms": {
-                                        "concat": [
-                                          {"t": "health.http.total"},
-                                          " / ",
-                                          {"t": "health.status.critical"},
-                                          " (ms)"
-                                        ]
-                                      }
-                                    },
-                                    "default": {"get": "_key"}
-                                  }
-                                ]
-                              },
-                              {"tag": "dd", "attrs": {"class": "m-0"}, "children": [{"get": "value"}]}
-                            ]
+                            "lookup": {"get": "check.metrics.error"},
+                            "cases": {
+                              "configuration": {"t": "health.http.errors.configuration"},
+                              "unsupported": {"t": "health.http.errors.unsupported"},
+                              "timeout": {"t": "health.http.errors.timeout"},
+                              "transport": {"t": "health.http.errors.transport"},
+                              "response_limit": {"t": "health.http.errors.response_limit"},
+                              "disabled": {"t": "health.http.errors.disabled"}
+                            },
+                            "default": ""
                           }
                         ]
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "p",
-                    "attrs": {"class": "m-0 table-meta"},
-                    "when": {"get": "check.metrics.error"},
-                    "children": [
-                      {
-                        "lookup": {"get": "check.metrics.error"},
-                        "cases": {
-                          "configuration": {"t": "health.http.errors.configuration"},
-                          "unsupported": {"t": "health.http.errors.unsupported"},
-                          "timeout": {"t": "health.http.errors.timeout"},
-                          "transport": {"t": "health.http.errors.transport"},
-                          "response_limit": {"t": "health.http.errors.response_limit"},
-                          "disabled": {"t": "health.http.errors.disabled"}
-                        },
-                        "default": ""
                       }
                     ]
                   }
@@ -246,341 +212,5 @@
     "component": "health/report",
     "data": {"report": {"get": "item.summary.health"}},
     "when": {"get": "item.summary.health"}
-  },
-  "health/page": {
-    "tag": "div",
-    "attrs": {"class": "stack stack-gap-16 min-w-0"},
-    "children": [
-      {
-        "tag": "div",
-        "attrs": {"class": "stack"},
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {"class": "stack stack-gap-8"},
-            "children": [
-              {
-                "tag": "h2",
-                "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                "children": [
-                  {
-                    "component": "ui/status-badge",
-                    "data": {"tone": {"get": "snapshot.status"}, "label": {"get": "status_label"}, "text": false},
-                    "when": {
-                      "lookup": {"get": "snapshot.status"},
-                      "cases": {"ok": true, "warning": true, "critical": true},
-                      "default": false
-                    }
-                  },
-                  {"get": "status_label"}
-                ]
-              },
-              {
-                "tag": "div",
-                "attrs": {"class": "cluster gap-3 table-meta"},
-                "children": [
-                  {
-                    "tag": "span",
-                    "when": {"get": "checks"},
-                    "children": [
-                      {
-                        "t": "health.overview_count",
-                        "values": {"passed": {"get": "passed"}, "total": {"count": {"get": "checks"}}}
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "span",
-                    "when": {"get": "snapshot.report"},
-                    "children": [
-                      {"t": "health.checked_at"},
-                      " ",
-                      {
-                        "tag": "time",
-                        "attrs": {"datetime": {"get": "snapshot.report.checked_at"}},
-                        "children": [{"get": "checked_label"}]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "p",
-            "attrs": {"role": "alert", "class": "m-0"},
-            "when": {"get": "snapshot.latest_failed"},
-            "children": [{"t": "health.last_failed"}]
-          },
-          {
-            "tag": "p",
-            "attrs": {"role": "status", "class": "help m-0"},
-            "when": {"get": "snapshot.stale"},
-            "children": [{"t": "health.stale"}]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "grid sm:grid-2 md:grid-3"},
-            "when": {"get": "has_http"},
-            "children": [
-              {
-                "each": {"get": "metrics"},
-                "as": "metric",
-                "children": {"component": "ui/stat-card", "data": {"get": "metric"}}
-              }
-            ]
-          },
-          {
-            "component": "ui/empty-state",
-            "data": {"label": {"t": "health.empty"}, "icon": "shield"},
-            "when": {"and": [{"not": {"get": "has_http"}}, {"not": {"get": "snapshot.report"}}]}
-          }
-        ]
-      },
-      {
-        "tag": "section",
-        "attrs": {"class": "stack stack-gap-12"},
-        "when": {"get": "issues"},
-        "children": [
-          {
-            "tag": "h2",
-            "attrs": {"class": "text-lg m-0 cluster gap-2"},
-            "children": [{"concat": [{"t": "health.status.warning"}, " (", {"count": {"get": "issues"}}, ")"]}]
-          },
-          {
-            "each": {"get": "issues"},
-            "as": "check",
-            "children": [
-              {
-                "component": "ui/notice",
-                "data": {
-                  "tone": {"get": "check.status"},
-                  "title": {"get": "check.title"},
-                  "description": {"get": "check.advice"},
-                  "detail": {"get": "check.detail"}
-                }
-              },
-              {
-                "component": "health/scheduler-findings",
-                "data": {"metrics": {"get": "check.metrics"}},
-                "when": {"eq": [{"get": "check.id"}, "scheduler"]}
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "details",
-        "attrs": {"class": "disclosure-item"},
-        "when": {"get": "checks"},
-        "children": [
-          {
-            "tag": "summary",
-            "attrs": {"class": "disclosure-summary"},
-            "children": [
-              {
-                "tag": "span",
-                "children": [
-                  {"t": "health.all_checks"},
-                  " ",
-                  {
-                    "tag": "span",
-                    "attrs": {"class": "text-muted"},
-                    "children": ["(", {"count": {"get": "checks"}}, ")"]
-                  }
-                ]
-              },
-              {"icon": "chevron-down", "class": "icon disclosure-chevron"}
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "card-body"},
-            "children": [
-              {
-                "tag": "ul",
-                "attrs": {"class": "result-list"},
-                "children": [
-                  {
-                    "each": {"get": "checks"},
-                    "as": "check",
-                    "children": {
-                      "tag": "li",
-                      "attrs": {"class": "result-item split"},
-                      "children": [
-                        {"tag": "span", "children": [{"get": "check.title"}]},
-                        {
-                          "tag": "span",
-                          "attrs": {"class": "cluster gap-3"},
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attrs": {"class": "table-meta"},
-                              "children": [{"get": "check.duration_ms"}, " ms"]
-                            },
-                            {
-                              "component": "ui/status-badge",
-                              "data": {
-                                "tone": {"get": "check.status"},
-                                "label": {"get": "check.status_label"},
-                                "text": true
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "section",
-        "attrs": {"class": "card"},
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {"class": "card-header"},
-            "children": [
-              {"tag": "h2", "attrs": {"class": "text-lg m-0 cluster gap-2"}, "children": [{"t": "health.history"}]}
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "card-body stack"},
-            "children": [
-              {
-                "component": "ui/empty-state",
-                "data": {"label": {"t": "health.empty"}, "icon": "clock"},
-                "when": {"not": {"get": "history"}}
-              },
-              {
-                "tag": "div",
-                "attrs": {"class": "table-wrap min-w-0"},
-                "when": {"get": "history"},
-                "children": [
-                  {
-                    "tag": "table",
-                    "attrs": {"class": "table"},
-                    "children": [
-                      {
-                        "tag": "thead",
-                        "children": [
-                          {
-                            "tag": "tr",
-                            "children": [
-                              {"tag": "th", "children": [{"t": "health.checked_at"}]},
-                              {"tag": "th", "children": [{"t": "health.result"}]},
-                              {"tag": "th", "children": ["TTFB"]},
-                              {"tag": "th", "children": [{"t": "health.http.total"}]},
-                              {"tag": "th", "children": ["HTTP"]},
-                              {
-                                "tag": "th",
-                                "attrs": {"class": "table-actions-cell"},
-                                "children": [{"t": "common.actions"}]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "tbody",
-                        "children": [
-                          {
-                            "each": {"get": "history"},
-                            "as": "run",
-                            "children": {
-                              "tag": "tr",
-                              "children": [
-                                {
-                                  "tag": "td",
-                                  "children": [
-                                    {
-                                      "tag": "div",
-                                      "attrs": {"class": "identity-row identity-row-inset"},
-                                      "children": [
-                                        {
-                                          "tag": "span",
-                                          "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
-                                          "children": [{"icon": "clock"}]
-                                        },
-                                        {
-                                          "tag": "div",
-                                          "attrs": {"class": "table-identity-body"},
-                                          "children": [
-                                            {
-                                              "tag": "time",
-                                              "attrs": {"class": "table-primary", "datetime": {"get": "run.started_at"}},
-                                              "children": [{"get": "run.started_label"}]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "td",
-                                  "children": [
-                                    {
-                                      "component": "ui/status-badge",
-                                      "data": {
-                                        "tone": {"get": "run.health_status"},
-                                        "label": {"get": "run.status_label"},
-                                        "text": true
-                                      }
-                                    },
-                                    {"tag": "br", "when": {"get": "run.incomplete"}},
-                                    {
-                                      "tag": "small",
-                                      "attrs": {"class": "table-meta"},
-                                      "when": {"get": "run.incomplete"},
-                                      "children": [{"get": "run.run_label"}]
-                                    }
-                                  ]
-                                },
-                                {"tag": "td", "attrs": {"class": "table-meta"}, "children": [{"get": "run.ttfb"}]},
-                                {"tag": "td", "attrs": {"class": "table-meta"}, "children": [{"get": "run.total"}]},
-                                {"tag": "td", "children": [{"get": "run.http_status"}]},
-                                {
-                                  "tag": "td",
-                                  "attrs": {"class": "table-actions-cell"},
-                                  "children": [
-                                    {
-                                      "tag": "div",
-                                      "attrs": {"class": "table-actions"},
-                                      "children": [
-                                        {
-                                          "component": "ui/modal-trigger",
-                                          "data": {
-                                            "class": "btn btn-sm btn-ghost btn-icon",
-                                            "modal": {"concat": ["health-run-", {"get": "run.id"}]},
-                                            "url": {"concat": ["/api/scheduler/runs/", {"get": "run.id"}]},
-                                            "label": {"t": "health.details"},
-                                            "icon": "eye",
-                                            "icon_only": true
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
   }
 }

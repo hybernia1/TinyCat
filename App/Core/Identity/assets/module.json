@@ -79,6 +79,7 @@
     "styles": [
       "App/Core/Identity/assets/styles/user-menu.css"
     ],
+    "uses": ["ui.switcher"],
     "translations": [],
     "messages": {
       "auth_recovery_done": "auth.recovery_done",

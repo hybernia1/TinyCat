@@ -60,7 +60,7 @@
 }
 
 .disclosure-body {
-  padding: 0.75rem;
+  padding: 0.75rem var(--panel-inset, 0.75rem);
   background: var(--surface-soft);
 }
 

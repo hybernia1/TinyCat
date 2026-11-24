@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.0.5 - 2026-11-24
+
+- Unify scheduled tasks, run history and lazy tabbed connection details at `/admin/cron`; site-health notifications and dashboard links open the recorded run. Remove the separate health and task-list pages.
+- Standardize full-width administrative tables, identity rows, status badges, sorting headers and filter toolbars. Keep row hover/focus feedback without zebra backgrounds or row borders.
+- Present badges, flash messages and inline notices on neutral surfaces with shared severity symbols and theme-aware icon foregrounds. Preserve the established button variants and notification lifecycle.
+- Reuse core switcher and menu components for theme/feed controls and Social menus. Correct field alignment, cache diagnostics text and the bot avatar translation scope.
+- Render embedded Social posts with the canonical post card, including reaction/comment counts and lazy media. Use the shared copy block for embed and scheduler connection details.
+- Remove unused page code, styles, translation keys and obsolete embed player attributes. No database migration or configuration change is required.
+
 ## 8.0.4 - 2026-11-24
 
 - Reuse request-scoped framework metadata, source language packages and asset graphs; avoid repeated deployment identity hashing for compiled GET/HEAD responses.

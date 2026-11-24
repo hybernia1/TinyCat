@@ -1,6 +1,6 @@
 {
   "cron": {
-    "title": "Scheduled tasks",
+    "execution_details": "Technical details",
     "access_title": "Access and token",
     "access_help": "Shared endpoint and authentication used by every scheduled task.",
     "url": "Endpoint URL",
@@ -12,7 +12,7 @@
     "rotate": "Rotate token",
     "rotate_confirm": "Rotate the cron token? Existing scheduled calls will stop working until they are updated.",
     "tasks": {
-      "cleanup": "Automatic cleanup",
+      "cleanup": "Cleanup",
       "cleanup_help": "Removes unused tags and links, orphaned post and preview images, expired data caches, old rate-limit buckets, expired reset tokens and read notifications. Also removes orphaned avatars, abandoned temporary files and old completed update backups.",
       "cleanup_schedule": "Schedule hourly. Internal due checks prevent cleanup from running too often.",
       "feeds": "sources",
@@ -23,18 +23,15 @@
       "token_rotated": "The cron token was rotated."
     },
     "list_title": "Task overview",
-    "configuration": "Connection and scheduling",
-    "list_help": "Scheduling is controlled by your server or web-cron. These are the recommended intervals and default limits. Run now bypasses the cleanup interval; RSS still respects each source interval. History includes runs recorded after this update.",
+    "configuration": "Connection",
     "task": "Task",
-    "schedule": "Schedule and default limits",
     "latest": "Latest run",
-    "run_now": "Run now",
+    "run_now": "Run",
     "history": "Run history",
     "status": "Status",
     "started": "Started",
     "duration": "Duration",
     "result": "Result",
-    "no_runs": "No recorded runs match these filters.",
     "never": "No recorded run",
     "run_finished": "The task finished.",
     "run_failed": "The task failed. See its result in the run history.",
@@ -61,13 +58,11 @@
       "admin": "Manual"
     },
     "menu_title": "Tasks",
-    "overview_help": "Recommended intervals and default limits. Scheduling is managed by the server or web-cron.",
     "cadence": {
       "feeds": "Check every two minutes",
       "cleanup": "Once an hour"
     },
     "run_details": "Run details",
-    "refresh": "Refresh",
     "run_not_found": "This run was not found.",
     "finished": "Finished",
     "unfinished": "Not finished",

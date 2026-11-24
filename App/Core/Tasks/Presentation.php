@@ -16,6 +16,7 @@ final class Presentation
             $title = $task->admin['title'] ?? '';
             $schedule = $task->admin['cadence'] ?? $task->admin['schedule'] ?? '';
             $entries[$task->id] = ['icon' => $icon, 'title' => $title === '' ? $task->id : ['t' => $title], 'schedule' => $schedule === '' ? '' : ['t' => $schedule]];
+            $entries[$task->id]['help'] = $admin['help'] === '' ? '' : ['t' => $admin['help']];
         }
         return $entries;
     }

@@ -7,6 +7,26 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.5
+
+Requires completed **6.0.10 or newer** and PHP 8.4. No new migration or
+configuration change is required. Existing data, task IDs and scheduler APIs
+remain unchanged. Earlier pending migrations still run normally.
+
+Task execution, run history and connection settings now share `/admin/cron`.
+The retired `/admin/cron/list` and `/admin/site-health` pages have no redirect;
+update external bookmarks. Site-health notifications and the dashboard use the
+shared task history and the relevant run modal.
+
+Updates show actionable blockers instead of successful environment checklists.
+Release notes remain in the header modal and migration history is collapsed by
+default. Core table, menu, switcher and status presentation is shared by the
+administration and its consumers. Original button variants are retained.
+
+The signed update removes the retired health page, legacy feed-switch styles
+and the obsolete standalone danger-badge stylesheet. Social embeds reuse the
+post card with public reaction/comment counts and lazy media.
+
 ## Upgrading to 8.0.4
 
 Requires completed **6.0.10 or newer** and PHP 8.4. This maintenance release

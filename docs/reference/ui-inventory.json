@@ -12,7 +12,6 @@
         "_key",
         "check.duration_ms",
         "check.id",
-        "check.limits",
         "check.metrics",
         "check.metrics.error",
         "check.status",
@@ -38,52 +37,6 @@
       ],
       "inputs": [
         "item.summary.health"
-      ]
-    },
-    {
-      "name": "health/page",
-      "source": "App/Core/Health/assets/components.json",
-      "dependencies": [
-        "health/scheduler-findings",
-        "ui/empty-state",
-        "ui/modal-trigger",
-        "ui/notice",
-        "ui/stat-card",
-        "ui/status-badge"
-      ],
-      "inputs": [
-        "check.advice",
-        "check.detail",
-        "check.duration_ms",
-        "check.id",
-        "check.metrics",
-        "check.status",
-        "check.status_label",
-        "check.title",
-        "checked_label",
-        "checks",
-        "has_http",
-        "history",
-        "issues",
-        "metric",
-        "metrics",
-        "passed",
-        "run.health_status",
-        "run.http_status",
-        "run.id",
-        "run.incomplete",
-        "run.run_label",
-        "run.started_at",
-        "run.started_label",
-        "run.status_label",
-        "run.total",
-        "run.ttfb",
-        "snapshot.latest_failed",
-        "snapshot.report",
-        "snapshot.report.checked_at",
-        "snapshot.stale",
-        "snapshot.status",
-        "status_label"
       ]
     },
     {
@@ -431,15 +384,14 @@
     {
       "name": "users/menu",
       "source": "App/Core/Identity/assets/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/switcher"
+      ],
       "inputs": [
         "avatar",
         "displayName",
         "editModalId",
         "editModalUrl",
-        "option.icon",
-        "option.label",
-        "option.value",
         "profileNeedsEmail",
         "profileUrl",
         "theme"
@@ -740,7 +692,6 @@
         "scheduler/status",
         "scheduler/task-row",
         "ui/empty-state",
-        "ui/filter-trigger",
         "ui/list-toolbar",
         "ui/modal-trigger",
         "ui/pagination",
@@ -845,15 +796,6 @@
       ]
     },
     {
-      "name": "scheduler/runs-page",
-      "source": "App/Core/Tasks/assets/components.json",
-      "dependencies": [],
-      "inputs": [
-        "content",
-        "target_id"
-      ]
-    },
-    {
       "name": "scheduler/actions",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [],
@@ -863,20 +805,17 @@
       "name": "scheduler/administration",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
+        "ui/code-block",
         "ui/help"
       ],
       "inputs": [
-        "cronToken",
-        "cronUrl",
-        "taskViews",
-        "view.cadence_label",
+        "execution_url",
+        "tasks",
+        "token",
         "view.cli_command",
-        "view.help_label",
         "view.http_command",
-        "view.icon",
-        "view.query_url",
-        "view.schedule_label",
-        "view.title_label"
+        "view.id",
+        "view.query_url"
       ]
     },
     {
@@ -886,6 +825,7 @@
         "scheduler/icon",
         "scheduler/name",
         "scheduler/option",
+        "scheduler/status",
         "ui/api-action"
       ],
       "inputs": [
@@ -898,6 +838,54 @@
         "task.name",
         "task.options",
         "task.run_url"
+      ]
+    },
+    {
+      "name": "scheduler/page",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "content",
+        "target_id"
+      ]
+    },
+    {
+      "name": "scheduler/configuration",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [
+        "scheduler/administration"
+      ],
+      "inputs": [
+        "execution_url",
+        "tasks",
+        "token"
+      ]
+    },
+    {
+      "name": "ui/menu-item",
+      "source": "App/Core/Ui/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "action",
+        "action.href",
+        "attributes",
+        "icon",
+        "label"
+      ]
+    },
+    {
+      "name": "ui/switcher",
+      "source": "App/Core/Ui/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "class",
+        "items",
+        "label",
+        "option.attributes",
+        "option.attributes.href",
+        "option.icon",
+        "option.label",
+        "role"
       ]
     },
     {
@@ -1539,11 +1527,9 @@
         "application.name",
         "application.tone",
         "application.value",
-        "assets.description",
         "assets.mode",
         "assets.name",
         "assets.rows",
-        "browser.description",
         "browser.name",
         "browser.rows",
         "observation.label",
@@ -1612,9 +1598,7 @@
       ],
       "inputs": [
         "available",
-        "canInstall",
-        "has_notes",
-        "version"
+        "has_notes"
       ]
     },
     {
@@ -1622,16 +1606,13 @@
       "source": "App/Core/Updates/assets/components.json",
       "dependencies": [
         "ui/empty-state",
-        "ui/help",
-        "ui/notice",
-        "ui/stat-card",
-        "ui/status-badge"
+        "ui/notice"
       ],
       "inputs": [
-        "_key",
+        "available",
+        "canInstall",
+        "current_version",
         "error",
-        "extension",
-        "extensions",
         "has_release",
         "history",
         "maintenance",
@@ -1644,15 +1625,14 @@
         "migration_count",
         "minimum_php",
         "minimum_version",
+        "missing_extension_names",
         "missing_extensions",
         "releaseCompatible",
         "result",
         "result.backup",
         "result.version",
-        "stat",
-        "stats",
         "status_label",
-        "tone"
+        "version"
       ]
     },
     {
@@ -1700,7 +1680,9 @@
     {
       "name": "status/delete",
       "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/menu-item"
+      ],
       "inputs": [
         "action",
         "content_id",
@@ -1711,7 +1693,8 @@
       "name": "status/menu",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "status/delete"
+        "status/delete",
+        "ui/menu-item"
       ],
       "inputs": [
         "comment",
@@ -2395,6 +2378,7 @@
         "status/feed-more",
         "status/thread",
         "ui/avatar-content",
+        "ui/switcher",
         "users/avatar-control"
       ],
       "inputs": [
@@ -2456,7 +2440,8 @@
       "name": "site/archive-filter",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "site/archive-filter-name"
+        "site/archive-filter-name",
+        "ui/menu-item"
       ],
       "inputs": [
         "archive_options",
@@ -2617,8 +2602,7 @@
       "name": "status/embed-content",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "ui/field",
-        "ui/help"
+        "ui/code-block"
       ],
       "inputs": [
         "preview",
@@ -3012,7 +2996,6 @@
     "App/Core/Ui/assets/styles/alerts.css",
     "App/Core/Ui/assets/styles/avatar-sizes.css",
     "App/Core/Ui/assets/styles/avatar.css",
-    "App/Core/Ui/assets/styles/badge-danger.css",
     "App/Core/Ui/assets/styles/badges.css",
     "App/Core/Ui/assets/styles/brand-logo.css",
     "App/Core/Ui/assets/styles/buttons.css",
@@ -3066,6 +3049,7 @@
     "App/Core/Ui/assets/styles/split-desktop.css",
     "App/Core/Ui/assets/styles/status-indicator-warning.css",
     "App/Core/Ui/assets/styles/status-indicators.css",
+    "App/Core/Ui/assets/styles/switcher.css",
     "App/Core/Ui/assets/styles/table-identity.css",
     "App/Core/Ui/assets/styles/tables-mobile.css",
     "App/Core/Ui/assets/styles/tables.css",
@@ -3097,11 +3081,8 @@
     "App/Modules/Social/assets/status/styles/comment-menu.css",
     "App/Modules/Social/assets/status/styles/composer-loading.css",
     "App/Modules/Social/assets/status/styles/embed-preview.css",
-    "App/Modules/Social/assets/status/styles/feed-switch-mobile.css",
-    "App/Modules/Social/assets/status/styles/feed-switch.css",
     "App/Modules/Social/assets/status/styles/feedback-mobile.css",
     "App/Modules/Social/assets/status/styles/home-feed-mobile.css",
-    "App/Modules/Social/assets/status/styles/home-feed-switch-links.css",
     "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
     "App/Modules/Social/assets/status/styles/home-feed.css",
     "App/Modules/Social/assets/status/styles/status-avatars.css",
@@ -3753,15 +3734,27 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 14,
+        "line": 13,
         "context": [],
-        "selector": ".alert::before"
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
       },
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 44,
+        "line": 13,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 25,
         "context": [],
         "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 30,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/feedback-mobile.css",
@@ -3773,7 +3766,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
-        "line": 7,
+        "line": 2,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -3783,13 +3776,7 @@
     "alert-danger": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 38,
-        "context": [],
-        "selector": ".alert-danger"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 55,
+        "line": 39,
         "context": [],
         "selector": ".alert-danger"
       }
@@ -3797,13 +3784,7 @@
     "alert-info": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 23,
-        "context": [],
-        "selector": ".alert-info"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 58,
+        "line": 47,
         "context": [],
         "selector": ".alert-info"
       }
@@ -3811,13 +3792,7 @@
     "alert-success": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 28,
-        "context": [],
-        "selector": ".alert-success"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 54,
+        "line": 35,
         "context": [],
         "selector": ".alert-success"
       }
@@ -3825,13 +3800,7 @@
     "alert-warning": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 33,
-        "context": [],
-        "selector": ".alert-warning"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 56,
+        "line": 43,
         "context": [],
         "selector": ".alert-warning"
       }
@@ -3876,46 +3845,6 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-toolbar > .archive-filter"
-      }
-    ],
-    "archive-filter-menu": [
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 13,
-        "context": [],
-        "selector": ".archive-filter-menu"
-      }
-    ],
-    "archive-filter-option": [
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 14,
-        "context": [],
-        "selector": ".archive-filter-option"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 15,
-        "context": [],
-        "selector": ".archive-filter-option:hover"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 15,
-        "context": [],
-        "selector": ".archive-filter-option:focus-visible"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 15,
-        "context": [],
-        "selector": ".archive-filter-option[aria-current=\"page\"]"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 16,
-        "context": [],
-        "selector": ".archive-filter-option[aria-current=\"page\"]"
       }
     ],
     "avatar": [
@@ -4210,6 +4139,36 @@
         "selector": ".badge"
       },
       {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 17,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/dashboard.css",
+        "line": 14,
+        "context": [],
+        "selector": "[data-cache-page] h2 > .badge"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/dashboard.css",
+        "line": 18,
+        "context": [],
+        "selector": "[data-cache-page] td:has(> .badge)"
+      },
+      {
         "source": "App/Core/Ui/assets/styles/filter-chips.css",
         "line": 1,
         "context": [],
@@ -4223,7 +4182,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 55,
+        "line": 46,
         "context": [],
         "selector": ".table-row-inactive .badge"
       },
@@ -4255,89 +4214,201 @@
     "badge-danger": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 44,
+        "line": 13,
         "context": [],
         "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
       },
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 55,
+        "line": 13,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 25,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 30,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 39,
         "context": [],
         "selector": ".badge-danger"
       },
       {
-        "source": "App/Core/Ui/assets/styles/badge-danger.css",
-        "line": 1,
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 17,
         "context": [],
-        "selector": ".badge-danger"
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::after"
       }
     ],
     "badge-info": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 44,
+        "line": 13,
         "context": [],
         "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
       },
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 58,
+        "line": 13,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 25,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 30,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 47,
         "context": [],
         "selector": ".badge-info"
       },
       {
         "source": "App/Core/Ui/assets/styles/badges.css",
-        "line": 21,
+        "line": 17,
         "context": [],
-        "selector": ".badge-info"
-      }
-    ],
-    "badge-primary": [
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)"
+      },
       {
         "source": "App/Core/Ui/assets/styles/badges.css",
-        "line": 16,
+        "line": 24,
         "context": [],
-        "selector": ".badge-primary"
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::after"
       }
     ],
     "badge-success": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 44,
+        "line": 13,
         "context": [],
         "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
       },
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 54,
+        "line": 13,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 25,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 30,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 35,
         "context": [],
         "selector": ".badge-success"
       },
       {
         "source": "App/Core/Ui/assets/styles/badges.css",
-        "line": 26,
+        "line": 17,
         "context": [],
-        "selector": ".badge-success"
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::after"
       }
     ],
     "badge-warning": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 44,
+        "line": 13,
         "context": [],
         "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
       },
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 56,
+        "line": 13,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 25,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 30,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 43,
         "context": [],
         "selector": ".badge-warning"
       },
       {
         "source": "App/Core/Ui/assets/styles/badges.css",
-        "line": 32,
+        "line": 17,
         "context": [],
-        "selector": ".badge-warning"
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/badges.css",
+        "line": 24,
+        "context": [],
+        "selector": ".badge:is(.badge-info, .badge-success, .badge-warning, .badge-danger)::after"
       }
     ],
     "block": [
@@ -4509,7 +4580,7 @@
     "btn-group": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 233,
+        "line": 234,
         "context": [],
         "selector": ".btn-group"
       }
@@ -4517,7 +4588,7 @@
     "btn-icon": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 217,
+        "line": 218,
         "context": [],
         "selector": ".btn-icon"
       },
@@ -4562,6 +4633,12 @@
         "line": 211,
         "context": [],
         "selector": ".btn-sm"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/buttons.css",
+        "line": 211,
+        "context": [],
+        "selector": ".context-menu-action.btn-sm"
       }
     ],
     "captcha-provider": [
@@ -4608,12 +4685,18 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".admin-content .card"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/tables.css",
+        "line": 59,
+        "context": [],
+        "selector": ".table-layout > :not(.table-wrap):not(.card)"
       }
     ],
     "card-body": [
       {
         "source": "App/Core/Ui/assets/styles/cards-mobile.css",
-        "line": 6,
+        "line": 8,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -4621,7 +4704,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/cards-mobile.css",
-        "line": 6,
+        "line": 8,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -4632,12 +4715,18 @@
         "line": 8,
         "context": [],
         "selector": ".card-body"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/tables.css",
+        "line": 54,
+        "context": [],
+        "selector": ".card-body:has(> .table-layout)"
       }
     ],
     "card-footer": [
       {
         "source": "App/Core/Ui/assets/styles/cards-mobile.css",
-        "line": 11,
+        "line": 13,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -4679,7 +4768,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/cards-mobile.css",
-        "line": 11,
+        "line": 13,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -4854,28 +4943,46 @@
         "selector": ".user-menu-popover .context-menu-action"
       },
       {
+        "source": "App/Core/Ui/assets/styles/buttons.css",
+        "line": 211,
+        "context": [],
+        "selector": ".context-menu-action.btn-sm"
+      },
+      {
         "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
-        "line": 1,
+        "line": 5,
         "context": [],
         "selector": ".context-menu-action"
       },
       {
         "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
-        "line": 14,
+        "line": 22,
         "context": [],
         "selector": ".context-menu-action:hover"
       },
       {
         "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
-        "line": 14,
+        "line": 22,
         "context": [],
         "selector": ".context-menu-action:focus-visible"
       },
       {
         "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
-        "line": 20,
+        "line": 22,
+        "context": [],
+        "selector": ".context-menu-action[aria-current=\"page\"]"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
+        "line": 29,
         "context": [],
         "selector": ".context-menu-action.is-danger"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
+        "line": 33,
+        "context": [],
+        "selector": ".context-menu-action[aria-current=\"page\"]"
       }
     ],
     "cookie-consent": [
@@ -4939,7 +5046,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/dashboard.css",
-        "line": 45,
+        "line": 48,
         "context": [
           "@media (min-width: 900px)"
         ],
@@ -4962,6 +5069,12 @@
         "line": 62,
         "context": [],
         "selector": ".disclosure-body"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/tables.css",
+        "line": 54,
+        "context": [],
+        "selector": ".disclosure-body:has(> .table-layout)"
       }
     ],
     "disclosure-chevron": [
@@ -5136,78 +5249,6 @@
         "selector": ".empty-state-compact .empty-state-label"
       }
     ],
-    "feed-switch": [
-      {
-        "source": "App/Modules/Social/assets/status/styles/feed-switch-mobile.css",
-        "line": 2,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".feed-switch"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/feed-switch.css",
-        "line": 1,
-        "context": [],
-        "selector": ".feed-switch"
-      }
-    ],
-    "feed-switch-link": [
-      {
-        "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 45,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".home-feed-toolbar .feed-switch-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/feed-switch-mobile.css",
-        "line": 6,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".feed-switch-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/feed-switch.css",
-        "line": 11,
-        "context": [],
-        "selector": ".feed-switch-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/feed-switch.css",
-        "line": 25,
-        "context": [],
-        "selector": ".feed-switch-link:hover"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/feed-switch.css",
-        "line": 25,
-        "context": [],
-        "selector": ".feed-switch-link:focus"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/feed-switch.css",
-        "line": 31,
-        "context": [],
-        "selector": ".feed-switch-link[aria-current=\"page\"]"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/home-feed-switch-links.css",
-        "line": 1,
-        "context": [],
-        "selector": ".home-feed-switch .feed-switch-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
-        "line": 2,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".home-feed-switch .feed-switch-link"
-      }
-    ],
     "field": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
@@ -5222,6 +5263,12 @@
         "selector": ".field"
       },
       {
+        "source": "App/Core/Ui/assets/styles/fields.css",
+        "line": 15,
+        "context": [],
+        "selector": ".field > .label"
+      },
+      {
         "source": "App/Core/Ui/assets/styles/filter-menu.css",
         "line": 17,
         "context": [],
@@ -5231,7 +5278,7 @@
     "field-error": [
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 73,
+        "line": 78,
         "context": [],
         "selector": ".field-error"
       }
@@ -5501,25 +5548,25 @@
     "help": [
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 68,
+        "line": 73,
         "context": [],
         "selector": ".help"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 79,
+        "line": 84,
         "context": [],
         "selector": ".help[data-help]"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 93,
+        "line": 98,
         "context": [],
         "selector": ".help[data-help]:hover"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 98,
+        "line": 103,
         "context": [],
         "selector": ".help[data-help]:focus-visible"
       }
@@ -5543,7 +5590,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
-        "line": 7,
+        "line": 2,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -5567,7 +5614,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 10,
+        "line": 6,
         "context": [],
         "selector": ".home-feed-section .status-feed"
       }
@@ -5578,34 +5625,6 @@
         "line": 9,
         "context": [],
         "selector": ".home-feed-toolbar > .home-feed-switch"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/home-feed-switch-links.css",
-        "line": 1,
-        "context": [],
-        "selector": ".home-feed-switch .feed-switch-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
-        "line": 2,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".home-feed-switch"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
-        "line": 2,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".home-feed-switch .feed-switch-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 5,
-        "context": [],
-        "selector": ".home-feed-switch"
       }
     ],
     "home-feed-toolbar": [
@@ -5660,14 +5679,6 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-toolbar > .archive-filter"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 45,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".home-feed-toolbar .feed-switch-link"
       }
     ],
     "icon": [
@@ -5697,15 +5708,9 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 29,
+        "line": 24,
         "context": [],
         "selector": ".user-menu[open] .user-menu-trigger > .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 31,
-        "context": [],
-        "selector": ".user-menu-theme-switch .icon"
       },
       {
         "source": "App/Core/Ui/assets/styles/disclosure.css",
@@ -5935,37 +5940,37 @@
     "input": [
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 14,
+        "line": 19,
         "context": [],
         "selector": ".input"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 29,
+        "line": 34,
         "context": [],
         "selector": ".input[type=\"date\"]"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 38,
+        "line": 43,
         "context": [],
         "selector": ".input:disabled"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 47,
+        "line": 52,
         "context": [],
         "selector": ".input:focus"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 55,
+        "line": 60,
         "context": [],
         "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 63,
+        "line": 68,
         "context": [],
         "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]:focus:not(:disabled)"
       },
@@ -6097,7 +6102,7 @@
     "is-danger": [
       {
         "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
-        "line": 20,
+        "line": 29,
         "context": [],
         "selector": ".context-menu-action.is-danger"
       }
@@ -6229,9 +6234,15 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 8,
+        "line": 9,
         "context": [],
         "selector": ".label"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/fields.css",
+        "line": 15,
+        "context": [],
+        "selector": ".field > .label"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
@@ -6311,7 +6322,7 @@
     "link-button": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 222,
+        "line": 223,
         "context": [],
         "selector": ".link-button"
       }
@@ -6426,6 +6437,14 @@
         "line": 63,
         "context": [],
         "selector": ".mention-link"
+      }
+    ],
+    "menu-panel": [
+      {
+        "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
+        "line": 1,
+        "context": [],
+        "selector": ".menu-panel"
       }
     ],
     "min-w-0": [
@@ -7619,7 +7638,7 @@
     "profile-main": [
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 10,
+        "line": 6,
         "context": [],
         "selector": ".profile-main .status-feed"
       },
@@ -8015,37 +8034,37 @@
     "select": [
       {
         "source": "App/Core/Ui/assets/styles/dashboard.css",
-        "line": 19,
+        "line": 27,
         "context": [],
         "selector": "[data-dashboard-stats-form] > .select"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 14,
+        "line": 19,
         "context": [],
         "selector": ".select"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 38,
+        "line": 43,
         "context": [],
         "selector": ".select:disabled"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 47,
+        "line": 52,
         "context": [],
         "selector": ".select:focus"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 55,
+        "line": 60,
         "context": [],
         "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 63,
+        "line": 68,
         "context": [],
         "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]:focus:not(:disabled)"
       },
@@ -8056,14 +8075,6 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".modal-tab-switch > .select"
-      }
-    ],
-    "sidebar-user-list": [
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 44,
-        "context": [],
-        "selector": ".sidebar-user-list"
       }
     ],
     "skip-link": [
@@ -8781,7 +8792,7 @@
     "status-composer": [
       {
         "source": "App/Core/Ui/assets/styles/cards-mobile.css",
-        "line": 6,
+        "line": 8,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -9001,13 +9012,13 @@
     "status-feed": [
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 10,
+        "line": 6,
         "context": [],
         "selector": ".home-feed-section .status-feed"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 10,
+        "line": 6,
         "context": [],
         "selector": ".profile-main .status-feed"
       },
@@ -10044,6 +10055,38 @@
         "selector": ".status-video-thumb + .status-video-play"
       }
     ],
+    "switcher": [
+      {
+        "source": "App/Core/Ui/assets/styles/switcher.css",
+        "line": 1,
+        "context": [],
+        "selector": ".switcher"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/switcher.css",
+        "line": 10,
+        "context": [],
+        "selector": ".switcher > :is(a, button)"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/switcher.css",
+        "line": 28,
+        "context": [],
+        "selector": ".switcher > :is([aria-pressed=\"true\"], [aria-current=\"page\"])"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/switcher.css",
+        "line": 34,
+        "context": [],
+        "selector": ".switcher > :is(a, button):hover"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/switcher.css",
+        "line": 35,
+        "context": [],
+        "selector": ".switcher > :is(a, button):focus-visible"
+      }
+    ],
     "tab": [
       {
         "source": "App/Core/Ui/assets/styles/tabs.css",
@@ -10141,43 +10184,19 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 21,
+        "line": 20,
         "context": [],
         "selector": ".table th"
       },
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 27,
-        "context": [],
-        "selector": ".table > tbody > tr:last-child > td"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 27,
-        "context": [],
-        "selector": ".table > tbody > tr:last-child > th"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 32,
-        "context": [],
-        "selector": ".table > tbody > tr"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 36,
+        "line": 26,
         "context": [],
         "selector": ".table > thead > tr > th"
       },
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 36,
-        "context": [],
-        "selector": ".table > tbody > tr:nth-child(even)"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 41,
+        "line": 32,
         "context": [],
         "selector": ".table > tbody > tr:is(:hover, :focus-within)"
       }
@@ -10199,13 +10218,13 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 45,
+        "line": 36,
         "context": [],
         "selector": ".table-row-inactive > td:not(.table-actions-cell)"
       },
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 50,
+        "line": 41,
         "context": [],
         "selector": ".table-row-inactive > td:not(.table-actions-cell) :is(a, strong)"
       }
@@ -10222,6 +10241,40 @@
         "line": 31,
         "context": [],
         "selector": ".table-identity-body > .table-meta"
+      }
+    ],
+    "table-layout": [
+      {
+        "source": "App/Core/Ui/assets/styles/cards-mobile.css",
+        "line": 6,
+        "context": [
+          "@media (max-width: 899px)"
+        ],
+        "selector": ".table-layout"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/tables.css",
+        "line": 50,
+        "context": [],
+        "selector": ".table-layout"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/tables.css",
+        "line": 54,
+        "context": [],
+        "selector": ".card-body:has(> .table-layout)"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/tables.css",
+        "line": 54,
+        "context": [],
+        "selector": ".disclosure-body:has(> .table-layout)"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/tables.css",
+        "line": 59,
+        "context": [],
+        "selector": ".table-layout > :not(.table-wrap):not(.card)"
       }
     ],
     "table-meta": [
@@ -10273,19 +10326,19 @@
     "table-row-inactive": [
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 45,
+        "line": 36,
         "context": [],
         "selector": ".table-row-inactive > td:not(.table-actions-cell)"
       },
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 50,
+        "line": 41,
         "context": [],
         "selector": ".table-row-inactive > td:not(.table-actions-cell) :is(a, strong)"
       },
       {
         "source": "App/Core/Ui/assets/styles/tables.css",
-        "line": 55,
+        "line": 46,
         "context": [],
         "selector": ".table-row-inactive .badge"
       }
@@ -10366,6 +10419,12 @@
         "line": 1,
         "context": [],
         "selector": ".table-wrap"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/tables.css",
+        "line": 59,
+        "context": [],
+        "selector": ".table-layout > :not(.table-wrap):not(.card)"
       }
     ],
     "tabs": [
@@ -10489,13 +10548,7 @@
     "textarea": [
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 14,
-        "context": [],
-        "selector": ".textarea"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 33,
+        "line": 19,
         "context": [],
         "selector": ".textarea"
       },
@@ -10503,23 +10556,29 @@
         "source": "App/Core/Ui/assets/styles/fields.css",
         "line": 38,
         "context": [],
+        "selector": ".textarea"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/fields.css",
+        "line": 43,
+        "context": [],
         "selector": ".textarea:disabled"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 47,
+        "line": 52,
         "context": [],
         "selector": ".textarea:focus"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 55,
+        "line": 60,
         "context": [],
         "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]"
       },
       {
         "source": "App/Core/Ui/assets/styles/fields.css",
-        "line": 63,
+        "line": 68,
         "context": [],
         "selector": ":is(.input, .select, .textarea, [data-validation-for])[aria-invalid=\"true\"]:focus:not(:disabled)"
       }
@@ -10527,27 +10586,39 @@
     "toast": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 44,
+        "line": 13,
         "context": [],
         "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 13,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 25,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/alerts.css",
+        "line": 30,
+        "context": [],
+        "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after"
       },
       {
         "source": "App/Core/Ui/assets/styles/toasts.css",
         "line": 12,
         "context": [],
         "selector": ".toast"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 103,
-        "context": [],
-        "selector": ".toast::before"
       }
     ],
     "toast-body": [
       {
         "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 36,
+        "line": 37,
         "context": [],
         "selector": ".toast-body"
       }
@@ -10561,97 +10632,37 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 42,
+        "line": 45,
         "context": [],
         "selector": ".toast-close"
       },
       {
         "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 50,
+        "line": 53,
         "context": [],
         "selector": ".toast-close:hover"
       },
       {
         "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 50,
+        "line": 53,
         "context": [],
         "selector": ".toast-close:focus-visible"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 89,
-        "context": [],
-        "selector": ".toast-success .toast-close"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 89,
-        "context": [],
-        "selector": ".toast-danger .toast-close"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 89,
-        "context": [],
-        "selector": ".toast-warning .toast-close"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 89,
-        "context": [],
-        "selector": ".toast-info .toast-close"
       }
     ],
     "toast-danger": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 55,
+        "line": 39,
         "context": [],
         "selector": ".toast-danger"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 62,
-        "context": [],
-        "selector": ".toast-danger"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 80,
-        "context": [],
-        "selector": ".toast-danger"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 89,
-        "context": [],
-        "selector": ".toast-danger .toast-close"
       }
     ],
     "toast-info": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 58,
+        "line": 47,
         "context": [],
         "selector": ".toast-info"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 74,
-        "context": [],
-        "selector": ".toast-info"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 80,
-        "context": [],
-        "selector": ".toast-info"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 89,
-        "context": [],
-        "selector": ".toast-info .toast-close"
       }
     ],
     "toast-stack": [
@@ -10663,7 +10674,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 97,
+        "line": 60,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -10673,53 +10684,17 @@
     "toast-success": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 54,
+        "line": 35,
         "context": [],
         "selector": ".toast-success"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 56,
-        "context": [],
-        "selector": ".toast-success"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 80,
-        "context": [],
-        "selector": ".toast-success"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 89,
-        "context": [],
-        "selector": ".toast-success .toast-close"
       }
     ],
     "toast-warning": [
       {
         "source": "App/Core/Ui/assets/styles/alerts.css",
-        "line": 56,
+        "line": 43,
         "context": [],
         "selector": ".toast-warning"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 68,
-        "context": [],
-        "selector": ".toast-warning"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 80,
-        "context": [],
-        "selector": ".toast-warning"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/toasts.css",
-        "line": 89,
-        "context": [],
-        "selector": ".toast-warning .toast-close"
       }
     ],
     "tooltip": [
@@ -10817,7 +10792,7 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 29,
+        "line": 24,
         "context": [],
         "selector": ".user-menu[open] .user-menu-trigger > .icon"
       }
@@ -10860,44 +10835,6 @@
         "selector": ".user-menu-theme"
       }
     ],
-    "user-menu-theme-switch": [
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 23,
-        "context": [],
-        "selector": ".user-menu-theme-switch"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 24,
-        "context": [],
-        "selector": ".user-menu-theme-switch button"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 25,
-        "context": [],
-        "selector": ".user-menu-theme-switch button[aria-pressed=\"true\"]"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 26,
-        "context": [],
-        "selector": ".user-menu-theme-switch button:hover"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 27,
-        "context": [],
-        "selector": ".user-menu-theme-switch button:focus-visible"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 31,
-        "context": [],
-        "selector": ".user-menu-theme-switch .icon"
-      }
-    ],
     "user-menu-trigger": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
@@ -10913,7 +10850,7 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 29,
+        "line": 24,
         "context": [],
         "selector": ".user-menu[open] .user-menu-trigger > .icon"
       }
@@ -10955,504 +10892,124 @@
       ]
     },
     {
-      "selector": ".alert-info",
+      "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before",
       "context": [],
       "rules": [
         {
-          "selector": ".alert-info",
+          "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before",
           "context": [],
           "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 23,
+          "line": 13,
           "declarations": [
             [
-              "background",
-              "var(--info-soft)"
+              "content",
+              "\"\""
             ],
             [
-              "color",
-              "var(--info)"
+              "position",
+              "absolute"
+            ],
+            [
+              "display",
+              "block"
+            ],
+            [
+              "inset-inline-start",
+              "var(--status-symbol-inset, var(--control-padding-inline))"
+            ],
+            [
+              "inset-block-start",
+              "var(--control-padding-inline)"
+            ],
+            [
+              "width",
+              "var(--status-symbol-size)"
+            ],
+            [
+              "height",
+              "var(--status-symbol-size)"
+            ],
+            [
+              "pointer-events",
+              "none"
             ]
           ]
         },
         {
-          "selector": ".alert-info",
+          "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before",
           "context": [],
           "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 58,
+          "line": 25,
           "declarations": [
             [
-              "--status-icon",
-              "var(--status-icon-info)"
+              "background",
+              "var(--status-color, var(--info))"
+            ],
+            [
+              "border-radius",
+              "var(--radius-sm)"
             ]
           ]
         }
       ]
     },
     {
-      "selector": ".alert-success",
+      "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after",
       "context": [],
       "rules": [
         {
-          "selector": ".alert-success",
+          "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after",
           "context": [],
           "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 28,
+          "line": 13,
+          "declarations": [
+            [
+              "content",
+              "\"\""
+            ],
+            [
+              "position",
+              "absolute"
+            ],
+            [
+              "display",
+              "block"
+            ],
+            [
+              "inset-inline-start",
+              "var(--status-symbol-inset, var(--control-padding-inline))"
+            ],
+            [
+              "inset-block-start",
+              "var(--control-padding-inline)"
+            ],
+            [
+              "width",
+              "var(--status-symbol-size)"
+            ],
+            [
+              "height",
+              "var(--status-symbol-size)"
+            ],
+            [
+              "pointer-events",
+              "none"
+            ]
+          ]
+        },
+        {
+          "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::after",
+          "context": [],
+          "source": "App/Core/Ui/assets/styles/alerts.css",
+          "line": 30,
           "declarations": [
             [
               "background",
-              "var(--success-soft)"
+              "var(--on-status-symbol)"
             ],
             [
-              "color",
-              "var(--success)"
-            ]
-          ]
-        },
-        {
-          "selector": ".alert-success",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 54,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-success)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".alert-warning",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".alert-warning",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 33,
-          "declarations": [
-            [
-              "background",
-              "var(--warning-soft)"
-            ],
-            [
-              "color",
-              "var(--warning)"
-            ]
-          ]
-        },
-        {
-          "selector": ".alert-warning",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 56,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-warning)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".alert-danger",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".alert-danger",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 38,
-          "declarations": [
-            [
-              "background",
-              "var(--danger-soft)"
-            ],
-            [
-              "color",
-              "var(--danger)"
-            ]
-          ]
-        },
-        {
-          "selector": ".alert-danger",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 55,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-danger)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".badge-success",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".badge-success",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 54,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-success)"
-            ]
-          ]
-        },
-        {
-          "selector": ".badge-success",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/badges.css",
-          "line": 26,
-          "declarations": [
-            [
-              "background",
-              "var(--success-soft)"
-            ],
-            [
-              "color",
-              "var(--success)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".toast-success",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-success",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 54,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-success)"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-success",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 56,
-          "declarations": [
-            [
-              "--toast-color",
-              "var(--success)"
-            ],
-            [
-              "--toast-background",
-              "var(--success-soft)"
-            ],
-            [
-              "--toast-border-strength",
-              "34%"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-success",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 80,
-          "declarations": [
-            [
-              "border-color",
-              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
-            ],
-            [
-              "background",
-              "var(--toast-background)"
-            ],
-            [
-              "color",
-              "var(--toast-color)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".badge-danger",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".badge-danger",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 55,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-danger)"
-            ]
-          ]
-        },
-        {
-          "selector": ".badge-danger",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/badge-danger.css",
-          "line": 1,
-          "declarations": [
-            [
-              "background",
-              "var(--danger-soft)"
-            ],
-            [
-              "color",
-              "var(--danger)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".toast-danger",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-danger",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 55,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-danger)"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-danger",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 62,
-          "declarations": [
-            [
-              "--toast-color",
-              "var(--danger)"
-            ],
-            [
-              "--toast-background",
-              "var(--danger-soft)"
-            ],
-            [
-              "--toast-border-strength",
-              "38%"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-danger",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 80,
-          "declarations": [
-            [
-              "border-color",
-              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
-            ],
-            [
-              "background",
-              "var(--toast-background)"
-            ],
-            [
-              "color",
-              "var(--toast-color)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".badge-warning",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".badge-warning",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 56,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-warning)"
-            ]
-          ]
-        },
-        {
-          "selector": ".badge-warning",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/badges.css",
-          "line": 32,
-          "declarations": [
-            [
-              "background",
-              "var(--warning-soft)"
-            ],
-            [
-              "color",
-              "var(--warning)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".toast-warning",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-warning",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 56,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-warning)"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-warning",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 68,
-          "declarations": [
-            [
-              "--toast-color",
-              "var(--warning)"
-            ],
-            [
-              "--toast-background",
-              "var(--warning-soft)"
-            ],
-            [
-              "--toast-border-strength",
-              "34%"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-warning",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 80,
-          "declarations": [
-            [
-              "border-color",
-              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
-            ],
-            [
-              "background",
-              "var(--toast-background)"
-            ],
-            [
-              "color",
-              "var(--toast-color)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".badge-info",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".badge-info",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 58,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-info)"
-            ]
-          ]
-        },
-        {
-          "selector": ".badge-info",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/badges.css",
-          "line": 21,
-          "declarations": [
-            [
-              "background",
-              "var(--info-soft)"
-            ],
-            [
-              "color",
-              "var(--info)"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".toast-info",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".toast-info",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/alerts.css",
-          "line": 58,
-          "declarations": [
-            [
-              "--status-icon",
-              "var(--status-icon-info)"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-info",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 74,
-          "declarations": [
-            [
-              "--toast-color",
-              "var(--info)"
-            ],
-            [
-              "--toast-background",
-              "var(--info-soft)"
-            ],
-            [
-              "--toast-border-strength",
-              "34%"
-            ]
-          ]
-        },
-        {
-          "selector": ".toast-info",
-          "context": [],
-          "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 80,
-          "declarations": [
-            [
-              "border-color",
-              "color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border))"
-            ],
-            [
-              "background",
-              "var(--toast-background)"
-            ],
-            [
-              "color",
-              "var(--toast-color)"
+              "mask",
+              "var(--status-icon, var(--status-icon-info)) center / var(--status-symbol-icon-size) no-repeat"
             ]
           ]
         }
@@ -11519,6 +11076,40 @@
       ]
     },
     {
+      "selector": ".context-menu-action[aria-current=\"page\"]",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".context-menu-action[aria-current=\"page\"]",
+          "context": [],
+          "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
+          "line": 22,
+          "declarations": [
+            [
+              "background",
+              "var(--surface-soft)"
+            ],
+            [
+              "color",
+              "var(--primary-strong)"
+            ]
+          ]
+        },
+        {
+          "selector": ".context-menu-action[aria-current=\"page\"]",
+          "context": [],
+          "source": "App/Core/Ui/assets/styles/context-menu-actions.css",
+          "line": 33,
+          "declarations": [
+            [
+              "font-weight",
+              "600"
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "selector": ".textarea",
       "context": [],
       "rules": [
@@ -11526,7 +11117,7 @@
           "selector": ".textarea",
           "context": [],
           "source": "App/Core/Ui/assets/styles/fields.css",
-          "line": 14,
+          "line": 19,
           "declarations": [
             [
               "width",
@@ -11574,7 +11165,7 @@
           "selector": ".textarea",
           "context": [],
           "source": "App/Core/Ui/assets/styles/fields.css",
-          "line": 33,
+          "line": 38,
           "declarations": [
             [
               "min-height",
@@ -11915,10 +11506,6 @@
           "line": 13,
           "declarations": [
             [
-              "border-bottom",
-              "1px solid var(--border)"
-            ],
-            [
               "padding",
               "0.625rem 0.75rem"
             ],
@@ -11936,11 +11523,11 @@
           "selector": ".table th",
           "context": [],
           "source": "App/Core/Ui/assets/styles/tables.css",
-          "line": 21,
+          "line": 20,
           "declarations": [
             [
               "color",
-              "var(--muted)"
+              "var(--text)"
             ],
             [
               "font-size",
@@ -11964,6 +11551,10 @@
           "source": "App/Core/Ui/assets/styles/toasts.css",
           "line": 28,
           "declarations": [
+            [
+              "grid-column",
+              "3"
+            ],
             [
               "display",
               "inline-grid"
@@ -11990,7 +11581,7 @@
           "selector": ".toast-close",
           "context": [],
           "source": "App/Core/Ui/assets/styles/toasts.css",
-          "line": 42,
+          "line": 45,
           "declarations": [
             [
               "border",
@@ -12227,6 +11818,18 @@
               "color-mix(in srgb, var(--primary-soft) 54%, var(--surface))"
             ],
             [
+              "--on-status-symbol",
+              "light-dark(#ffffff, #3f4b54)"
+            ],
+            [
+              "--status-symbol-size",
+              "2rem"
+            ],
+            [
+              "--status-symbol-icon-size",
+              "1.25rem"
+            ],
+            [
               "--on-primary",
               "light-dark(#ffffff, #15212a)"
             ],
@@ -12332,7 +11935,7 @@
           "selector": ":root",
           "context": [],
           "source": "App/Core/Ui/assets/styles/tokens.css",
-          "line": 102,
+          "line": 105,
           "declarations": [
             [
               "--status-icon-info",
@@ -12711,40 +12314,6 @@
             [
               "padding-block-start",
               "7px"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".archive-filter-option[aria-current=\"page\"]",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".archive-filter-option[aria-current=\"page\"]",
-          "context": [],
-          "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-          "line": 15,
-          "declarations": [
-            [
-              "background",
-              "var(--surface-soft)"
-            ],
-            [
-              "color",
-              "var(--primary)"
-            ]
-          ]
-        },
-        {
-          "selector": ".archive-filter-option[aria-current=\"page\"]",
-          "context": [],
-          "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-          "line": 16,
-          "declarations": [
-            [
-              "font-weight",
-              "600"
             ]
           ]
         }
@@ -13238,12 +12807,6 @@
   ],
   "php_renderers": [
     {
-      "source": "App/Core/Health/Views.php",
-      "methods": [
-        "page"
-      ]
-    },
-    {
       "source": "App/Core/Identity/Views.php",
       "methods": [
         "userMenu",
@@ -13289,25 +12852,10 @@
     {
       "source": "App/Modules/Social/assets/embed/embed.css",
       "classes": [
-        "embed-audio-summary",
-        "embed-author",
-        "embed-author-link",
-        "embed-avatar",
-        "embed-avatar-initial",
-        "embed-body",
         "embed-card",
-        "embed-image",
-        "embed-link",
-        "embed-link-copy",
-        "embed-link-image",
-        "embed-play",
-        "embed-play-icon",
-        "embed-player",
-        "embed-provider",
         "share-code",
         "share-heading",
-        "share-page",
-        "status-audio-player"
+        "share-page"
       ]
     }
   ],
@@ -13455,14 +13003,6 @@
       }
     ],
     "App/Core/Ui/assets/styles/avatar.css": [
-      {
-        "manifest": "App/Core/Ui/assets/module.json",
-        "routes": [
-          "*"
-        ]
-      }
-    ],
-    "App/Core/Ui/assets/styles/badge-danger.css": [
       {
         "manifest": "App/Core/Ui/assets/module.json",
         "routes": [
@@ -13909,6 +13449,12 @@
         ]
       }
     ],
+    "App/Core/Ui/assets/styles/switcher.css": [
+      {
+        "manifest": "App/Core/Ui/assets/module.json",
+        "routes": []
+      }
+    ],
     "App/Core/Ui/assets/styles/table-identity.css": [
       {
         "manifest": "App/Core/Ui/assets/module.json",
@@ -14233,32 +13779,6 @@
         ]
       }
     ],
-    "App/Modules/Social/assets/status/styles/feed-switch-mobile.css": [
-      {
-        "manifest": "App/Modules/Social/assets/module.json",
-        "routes": [
-          "/",
-          "/social",
-          "/status",
-          "/author",
-          "/tag",
-          "/search/all"
-        ]
-      }
-    ],
-    "App/Modules/Social/assets/status/styles/feed-switch.css": [
-      {
-        "manifest": "App/Modules/Social/assets/module.json",
-        "routes": [
-          "/",
-          "/social",
-          "/status",
-          "/author",
-          "/tag",
-          "/search/all"
-        ]
-      }
-    ],
     "App/Modules/Social/assets/status/styles/feedback-mobile.css": [
       {
         "manifest": "App/Modules/Social/assets/module.json",
@@ -14273,19 +13793,6 @@
       }
     ],
     "App/Modules/Social/assets/status/styles/home-feed-mobile.css": [
-      {
-        "manifest": "App/Modules/Social/assets/module.json",
-        "routes": [
-          "/",
-          "/social",
-          "/status",
-          "/author",
-          "/tag",
-          "/search/all"
-        ]
-      }
-    ],
-    "App/Modules/Social/assets/status/styles/home-feed-switch-links.css": [
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
@@ -14905,12 +14412,6 @@
         "App/Core/Ui/assets/list-navigation.js"
       ],
       "entries": [
-        {
-          "manifest": "App/Core/Health/assets/module.json",
-          "routes": [
-            "/admin/site-health"
-          ]
-        },
         {
           "manifest": "App/Core/Tasks/assets/module.json",
           "routes": [

@@ -1602,7 +1602,7 @@
     }
   },
   {
-    "component": "scheduler/runs-page",
+    "component": "scheduler/page",
     "data": {
       "target_id": "scheduler-runs"
     },

@@ -186,7 +186,7 @@ check(T.components.render('scheduler/status', { status: 'running' }).textContent
 T.i18n.register("en", labels);
 const embedModal = T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://tinycat.test/status/42/embed", snippet: '<iframe title="example"></iframe>' } }, "status-embed-modal-42");
 check(embedModal.getAttribute("role") === "dialog" && embedModal.querySelector("iframe").src === "https://tinycat.test/status/42/embed", "Embedding opens the standard dialog with a same-origin preview.");
-check(embedModal.querySelector("textarea").getAttribute("readonly") !== null && embedModal.querySelector("textarea").value === '<iframe title="example"></iframe>', "The embed modal exposes code as selectable text, never interpreted markup.");
+check(embedModal.querySelector("code").textContent === '<iframe title="example"></iframe>' && !embedModal.querySelector("code").querySelector("iframe") && !embedModal.querySelector("textarea"), "The embed modal exposes its snippet through the shared code block as literal text, never interpreted markup.");
 assert.throws(() => T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://evil.test/status/42/embed", snippet: "" } }, "foreign-embed"), /Invalid embed preview/);
 
 const socialCard = T.components.render("publishing/link", { link: { url: "https://facebook.com/ExamplePage/posts/123", title: "Author", description: "Post text", provider: "facebook", provider_name: "Facebook", card_kind: "social", card_icon: "message-circle" } });
@@ -307,6 +307,9 @@ check(document.getElementById("scheduler-filter-modal").querySelectorAll("input"
 const schedulerPageForm = schedulerRoot.querySelectorAll("form").find(form => form.className.includes("admin-per-page-form"));
 check(schedulerPageForm.querySelectorAll("input").every(field => field.getAttribute("name") !== "per_page"), "The scheduler page-size form sends no duplicate hidden per_page value.");
 const schedulerDetail = T.scheduler.modal(new URL("https://tinycat.test/api/scheduler/runs/1"), { data: { item: Object.assign({}, schedulerModel.runs[0], { sources: [{ source_name: "Fixture RSS source", status: "interrupted", error: "<b>source failure</b>" }] }) } }, "scheduler-run-detail-fixture");
+const schedulerConfiguration = T.scheduler.modal(new URL('https://tinycat.test/api/scheduler/configuration'), { data: { token: 'fixture-token', execution_url: '/api/scheduler/executions', tasks: [] } }, 'scheduler-configuration-fixture');
+check(schedulerConfiguration.getAttribute('data-modal-size') === 'workspace' && schedulerConfiguration.getAttribute('data-modal-kind') === 'editor' && schedulerConfiguration.querySelector('[data-scheduler-token]') && !schedulerConfiguration.querySelector('.modal-body').querySelector('form') && schedulerConfiguration.querySelector('.modal-footer').querySelector('form').getAttribute('action') === '/api/scheduler/tokens', 'Connection resources use the same stable editor frame as accounts and settings, with token rotation outside the read-only body.');
+check(schedulerConfiguration.querySelector('[role="tablist"]') && schedulerConfiguration.querySelector('[data-tab-select]') && !schedulerConfiguration.querySelector('details'), 'Connection sections use the shared pinned tabs and mobile selector without a separate disclosure layout.');
 const skippedDetail = T.scheduler.modal(new URL("https://tinycat.test/api/scheduler/runs/1"), { data: { item: Object.assign({}, schedulerModel.runs[0], { summary: { skipped_items: [{ source_id: 7, source_name: "Skipped source", item_hash: "fixture-item-hash", code: "blocked_url", params: { host: "<b>blocked.example</b>" } }] } }) } }, "scheduler-skipped-fixture");
 check(skippedDetail.textContent.includes("Skipped source") && skippedDetail.textContent.includes("fixture-item-hash"), "Skipped feed diagnostics identify the source and item in the scheduler detail.");
 check(skippedDetail.textContent.includes(T.i18n.t("moderation.messages.blocked_url", { host: "<b>blocked.example</b>" })) && skippedDetail.querySelectorAll("b").length === 0, "Content rejection reasons are localized with parameters and rendered as text.");
@@ -315,7 +318,7 @@ check(schedulerDetail.textContent.includes("Fixture RSS source") && schedulerDet
 check(!schedulerRoot.textContent.includes("<img src=x onerror=bad>") && schedulerRoot.querySelector('[data-modal-url="/api/scheduler/runs/1"]'), "Run history opens details lazily through the standard resource modal.");
 {
   const query = document.querySelector, queryAll = document.querySelectorAll;
-  const field = new Node("input"), command = new Node("code"), rotate = new Node("form");
+  const field = new Node("code"), command = new Node("code"), rotate = new Node("form");
   field.value = "";
   command.textContent = 'curl -X POST -H "Authorization: Bearer " "https://tinycat.test/api/scheduler/executions?task=feeds"';
   rotate.setAttribute("action", "/api/scheduler/tokens");
@@ -323,7 +326,7 @@ check(!schedulerRoot.textContent.includes("<img src=x onerror=bad>") && schedule
   document.querySelectorAll = selector => selector === "[data-scheduler-command]" ? [command] : queryAll(selector);
   try {
     T.scheduler.result(rotate, { data: { token: "first-token" } });
-    check(field.value === "first-token" && command.textContent.includes('Authorization: Bearer first-token"'), "Creating the first scheduler token updates the ready-to-copy HTTP command.");
+    check(field.textContent === "first-token" && command.textContent.includes('Authorization: Bearer first-token"'), "Creating the first scheduler token updates the ready-to-copy HTTP command.");
     T.scheduler.result(rotate, { data: { token: "rotated-token" } });
     check(command.textContent.includes('Authorization: Bearer rotated-token"') && !command.textContent.includes("first-token"), "Rotating a scheduler token replaces the command credential.");
   } finally { document.querySelector = query; document.querySelectorAll = queryAll; }
@@ -676,7 +679,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const schedulerHydrate = T.lifecycle.hydrate;
   T.lifecycle.hydrate = root => T.modules.hydrate(root);
   try {
-    window.location = new URL("https://tinycat.test/admin/cron/list?page=2&status=failed");
+    window.location = new URL("https://tinycat.test/admin/cron?page=2&status=failed");
     document.querySelector = selector => selector === "#scheduler-list" ? schedulerRoot : schedulerQuery(selector);
     T.api.request = async url => { restoredSchedulerUrl = url; return { data: Object.assign({}, schedulerModel, { filters: { task: "", status: "failed" }, pagination: { page: 2, per_page: 10 } }), meta: { pagination: { page: 2, per_page: 50 } } }; };
     await T.navigation.restore();

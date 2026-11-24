@@ -2383,5 +2383,13 @@
     "App/Modules/Social/src/Profiles/Registration.php",
     "App/Modules/Social/src/Search/Registration.php",
     "App/Modules/Social/src/Site/Registration.php"
+  ],
+  "8.0.5": [
+    "App/Core/Health/Pages.php",
+    "App/Core/Health/Views.php",
+    "App/Core/Ui/assets/styles/badge-danger.css",
+    "App/Modules/Social/assets/status/styles/feed-switch-mobile.css",
+    "App/Modules/Social/assets/status/styles/feed-switch.css",
+    "App/Modules/Social/assets/status/styles/home-feed-switch-links.css"
   ]
 }

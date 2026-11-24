@@ -1,6 +1,6 @@
 {
   "cron": {
-    "title": "Tareas programadas",
+    "execution_details": "Detalles técnicos",
     "access_title": "Acceso y token",
     "access_help": "Punto final compartido y autenticación utilizada por cada tarea programada.",
     "url": "Punto final URL",
@@ -12,7 +12,7 @@
     "rotate": "Girar ficha",
     "rotate_confirm": "¿Girar el token cron? Las llamadas programadas existentes dejarán de funcionar hasta que se actualicen.",
     "tasks": {
-      "cleanup": "limpieza automática",
+      "cleanup": "Limpieza",
       "cleanup_help": "Elimina etiquetas y enlaces no utilizados, publicaciones huérfanas e imágenes de vista previa, cachés de datos caducados, depósitos de límite de velocidad antiguos, tokens de restablecimiento caducados y notificaciones de lectura. También elimina avatares huérfanos, archivos temporales abandonados y copias antiguas de actualizaciones completadas.",
       "cleanup_schedule": "Horario cada hora. Las comprobaciones internas debidas evitan que la limpieza se ejecute con demasiada frecuencia.",
       "feeds": "fuentes",
@@ -23,18 +23,15 @@
       "token_rotated": "Se rotó el token cron."
     },
     "list_title": "Resumen de tareas",
-    "configuration": "Conexión y programación",
-    "list_help": "La programación está controlada por su servidor o web-cron. Estos son los intervalos recomendados y los límites predeterminados. Ejecutar ahora omite el intervalo de limpieza; RSS todavía respeta cada intervalo de fuente. El historial incluye ejecuciones registradas después de esta actualización.",
+    "configuration": "Conexión",
     "task": "Tarea",
-    "schedule": "Horario y límites predeterminados",
     "latest": "Última ejecución",
-    "run_now": "Corre ahora",
+    "run_now": "Ejecutar",
     "history": "Historial de ejecución",
     "status": "Estado",
     "started": "Comenzó",
     "duration": "Duración",
     "result": "Resultado",
-    "no_runs": "Ninguna carrera registrada coincide con estos filtros.",
     "never": "No hay carrera registrada",
     "run_finished": "La tarea terminó.",
     "run_failed": "La tarea fracasó. Vea su resultado en el historial de ejecución.",
@@ -61,13 +58,11 @@
       "admin": "Manual"
     },
     "menu_title": "Tareas",
-    "overview_help": "Intervalos recomendados y límites predeterminados. La programación la gestiona el servidor o web-cron.",
     "cadence": {
       "feeds": "Comprobar cada dos minutos",
       "cleanup": "Una vez por hora"
     },
     "run_details": "Detalles de ejecución",
-    "refresh": "Refrescar",
     "run_not_found": "Esta ejecución no fue encontrada.",
     "finished": "Finalizado",
     "unfinished": "No terminado",

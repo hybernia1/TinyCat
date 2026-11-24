@@ -599,9 +599,16 @@ inline-control height and inter-row spacing, so the normal title/state pair and
 symbol scale together. Small/large avatar variants use the same `--avatar-size`
 mechanism. Do not add dashboard-specific or domain-specific icon dimensions.
 
-Table bodies use the shared core table zebra backgrounds and the same hover and
-focus-within highlight. Inactive rows keep those backgrounds; their descriptive
-cells use muted italic text, while badges and action controls remain upright.
-Do not add an inactive background that hides striping or interaction feedback.
+Table bodies use a uniform surface and the shared hover and focus-within
+highlight. Inactive descriptive cells use muted italic text, while badges and
+action controls remain upright. Do not add an inactive background that hides
+interaction feedback.
 Bot source names link directly to their feed URL, including in the account
 workspace; avoid repeating the URL as a separate metadata row.
+
+Administrative table sections use the shared `table-layout` container. The table
+uses the full panel width; its sibling toolbar, notices and pagination retain
+the common content inset. Panel padding is owned by this layout, without negative
+margins or page-specific overrides. Table rows have no separators or zebra fill;
+hover and focus-within retain the shared highlight. Task summaries and run history
+use the same identity rows and status badges.

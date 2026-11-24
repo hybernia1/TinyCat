@@ -41,8 +41,3 @@
   color: var(--primary-strong);
 }
 
-.sidebar-user-list {
-  display: grid;
-  gap: 6px;
-}
-

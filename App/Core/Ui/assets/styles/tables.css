@@ -12,30 +12,21 @@
 
 .table th,
 .table td {
-  border-bottom: 1px solid var(--border);
   padding: 0.625rem 0.75rem;
   text-align: left;
   vertical-align: top;
 }
 
 .table th {
-  color: var(--muted);
+  color: var(--text);
   font-size: 0.8125rem;
   font-weight: 600;
 }
 
-.table > tbody > tr:last-child > td,
-.table > tbody > tr:last-child > th {
-  border-bottom: 0;
-}
-
-.table > tbody > tr {
+.table > thead > tr > th {
   background: var(--surface);
-}
-
-.table > thead > tr > th,
-.table > tbody > tr:nth-child(even) {
-  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  padding-block: 0.875rem 0.625rem;
 }
 
 .table > tbody > tr:is(:hover, :focus-within) {
@@ -54,4 +45,17 @@
 
 .table-row-inactive .badge {
   font-style: normal;
+}
+
+.table-layout {
+  --panel-inset: 0;
+}
+
+.card-body:has(> .table-layout),
+.disclosure-body:has(> .table-layout) {
+  --panel-inset: 0;
+}
+
+.table-layout > :not(.table-wrap):not(.card) {
+  margin-inline: var(--table-content-inset, 0.875rem);
 }

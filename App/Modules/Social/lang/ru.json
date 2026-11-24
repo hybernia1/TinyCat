@@ -53,7 +53,6 @@
       "comment_deleted": "Комментарий был удален."
     },
     "status_embed": "Встроить запись",
-    "status_embed_help": "Скопируйте этот HTML-код в HTML-блок своего сайта. WordPress также может определить встраивание по ссылке на запись.",
     "status_embed_code": "Код для вставки",
     "status_embed_open": "Открыть исходную запись",
     "translation_translate": "Перевести",

@@ -10,11 +10,11 @@
         document.documentElement.style.setProperty('--ui-scale', scale);
         const alert = T.components.render('ui/notice', {tone, title:'A clear status title', description:'Long explanation '.repeat(20), detail:'Additional detail'});
         document.body.append(alert);
-        const icon = getComputedStyle(alert,'::before'), copy = alert.querySelector(':scope > div');
+        const icon = getComputedStyle(alert,'::after'), copy = alert.querySelector(':scope > div');
         const bounds=alert.getBoundingClientRect(), copyBox=copy.getBoundingClientRect();
         const iconTop=bounds.top+parseFloat(icon.top)+parseFloat(icon.marginTop), iconLeft=bounds.left+parseFloat(icon.left);
         check(icon.maskImage!=='none' && !alert.querySelector('svg') && icon.content==='""', 'Severity symbol is a decorative CSS mask without SVG markup: '+tone);
-        check(iconLeft+parseFloat(icon.width)<copyBox.left && Math.abs(iconTop+parseFloat(icon.height)/2-(bounds.top+bounds.height/2))<2 && alert.scrollWidth<=alert.clientWidth+1, 'Alert pseudo-element stays centered beside multiline text at scale '+scale);
+        check(iconLeft+parseFloat(icon.width)<copyBox.left && Math.abs(iconTop-copyBox.top)<2 && alert.scrollWidth<=alert.clientWidth+1, 'Alert symbol stays aligned with the start of multiline text at scale '+scale);
         check(alert.getAttribute('role')===(tone==='danger'?'alert':'status'), 'Alert retains appropriate live semantics');
         alert.remove();
       }
@@ -22,14 +22,14 @@
     document.documentElement.style.removeProperty('--ui-scale');
     for (const tone of ['success','danger','warning','info']) {
       const badge=T.components.render('ui/status-badge',{tone,text:true,icon:true,label:'Readable state'});document.body.append(badge);
-      check(getComputedStyle(badge,'::before').maskImage!=='none' && !badge.querySelector('svg') && badge.textContent==='Readable state' && !badge.hasAttribute('aria-label'), 'Text status badges use a decorative CSS mask and readable state.');
+      check(getComputedStyle(badge,'::after').maskImage!=='none' && !badge.querySelector('svg') && badge.textContent==='Readable state' && !badge.hasAttribute('aria-label'), 'Text status badges use a decorative CSS mask and readable state.');
       const sample=document.createElement('span');sample.style.color='var(--'+tone+')';document.body.append(sample);
-      check(getComputedStyle(badge).color===getComputedStyle(sample).color, 'State badge uses the shared severity colour: '+tone);
+      check(getComputedStyle(badge,'::before').backgroundColor===getComputedStyle(sample).color, 'State symbol uses the shared severity colour: '+tone);
       badge.remove();sample.remove();
     }
 
     for (const tone of ['success','danger','warning','info']) {
-      const toast=T.toasts.show('Readable notice',tone), decoration=getComputedStyle(toast,'::before');
+      const toast=T.toasts.show('Readable notice',tone), decoration=getComputedStyle(toast,'::after');
       check(decoration.maskImage!=='none' && toast.children.length===2 && toast.querySelector('.toast-body').textContent==='Readable notice', 'Toasts share CSS severity symbols without a decoration node.');
       toast.querySelector('.toast-close').click();
     }

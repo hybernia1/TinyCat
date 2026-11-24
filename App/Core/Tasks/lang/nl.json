@@ -1,6 +1,6 @@
 {
   "cron": {
-    "title": "Geplande taken",
+    "execution_details": "Technische details",
     "access_title": "Toegang en token",
     "access_help": "Gedeeld eindpunt en authenticatie gebruikt voor elke geplande taak.",
     "url": "Eindpunt URL",
@@ -12,7 +12,7 @@
     "rotate": "Token roteren",
     "rotate_confirm": "De cron-token roteren? Bestaande geplande oproepen werken niet meer totdat ze zijn bijgewerkt.",
     "tasks": {
-      "cleanup": "Automatisch opschonen",
+      "cleanup": "Opschonen",
       "cleanup_help": "Verwijdert ongebruikte tags en links, verweesde berichten en voorbeeldafbeeldingen, verlopen datacaches, oude snelheidslimietbuckets, verlopen resettokens en leesmeldingen. Verwijdert ook verweesde avatars, achtergebleven tijdelijke bestanden en oude back-ups van voltooide updates.",
       "cleanup_schedule": "Schema per uur. Interne controles voorkomen dat er te vaak wordt opgeschoond.",
       "feeds": "bronnen",
@@ -23,18 +23,15 @@
       "token_rotated": "De cron-token is geroteerd."
     },
     "list_title": "Taakoverzicht",
-    "configuration": "Verbinding en planning",
-    "list_help": "De planning wordt beheerd door uw server of web-cron. Dit zijn de aanbevolen intervallen en standaardlimieten. Nu uitvoeren omzeilt het opschooninterval; RSS respecteert nog steeds elk broninterval. De geschiedenis omvat runs die na deze update zijn geregistreerd.",
+    "configuration": "Verbinding",
     "task": "-taak",
-    "schedule": "Schema en standaardlimieten",
     "latest": "Laatste run",
-    "run_now": "Nu uitvoeren",
+    "run_now": "Uitvoeren",
     "history": "Rungeschiedenis",
     "status": "-status",
     "started": "gestart",
     "duration": "Duur",
     "result": "-resultaat",
-    "no_runs": "Er zijn geen geregistreerde runs die overeenkomen met deze filters.",
     "never": "Geen geregistreerde run",
     "run_finished": "De taak is voltooid.",
     "run_failed": "De taak is mislukt. Bekijk het resultaat in de rungeschiedenis.",
@@ -61,13 +58,11 @@
       "admin": "-handleiding"
     },
     "menu_title": "Taken",
-    "overview_help": "Aanbevolen intervallen en standaardlimieten. De planning wordt beheerd door de server of web-cron.",
     "cadence": {
       "feeds": "Controleer elke twee minuten",
       "cleanup": "Eén keer per uur"
     },
     "run_details": "Rundetails",
-    "refresh": "Vernieuwen",
     "run_not_found": "Deze run is niet gevonden.",
     "finished": "Klaar",
     "unfinished": "Niet klaar",

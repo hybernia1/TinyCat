@@ -313,4 +313,5 @@
   <symbol id="flag-pl" viewBox="0 0 24 16"><path fill="#fff" d="M0 0h24v8H0z"/><path fill="#dc143c" d="M0 8h24v8H0z"/></symbol>
   <symbol id="flag-tr" viewBox="0 0 24 16"><path fill="#e30a17" d="M0 0h24v16H0z"/><circle cx="9" cy="8" r="4" fill="#fff"/><circle cx="10.2" cy="8" r="3.2" fill="#e30a17"/><path fill="#fff" d="m15 5.2.8 2 2.1.1-1.6 1.4.5 2.1-1.8-1.2-1.8 1.2.5-2.1-1.6-1.4 2.1-.1z"/></symbol>
   <symbol id="flag-uk" viewBox="0 0 24 16"><path fill="#0057b7" d="M0 0h24v8H0z"/><path fill="#ffd700" d="M0 8h24v8H0z"/></symbol>
+  <symbol id="plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5m6-5v5M6 8h12v3a6 6 0 0 1-12 0V8Zm6 9v4"/></symbol>
 </svg>

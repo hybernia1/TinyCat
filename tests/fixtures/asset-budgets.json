@@ -2,16 +2,8 @@
   "/access/notifications": {
     "raw_js": 164608,
     "gzip_js": 39680,
-    "raw_css": 32512,
+    "raw_css": 32960,
     "gzip_css": 7168,
-    "scripts": 4,
-    "stylesheets": 1
-  },
-  "/admin/site-health": {
-    "raw_js": 249088,
-    "gzip_js": 55552,
-    "raw_css": 47104,
-    "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
@@ -26,7 +18,7 @@
   "/access/privacy": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 30208,
+    "raw_css": 30848,
     "gzip_css": 6912,
     "scripts": 4,
     "stylesheets": 1
@@ -98,7 +90,7 @@
   "/recovery": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 29184,
+    "raw_css": 29696,
     "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
@@ -106,7 +98,7 @@
   "/register": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 29184,
+    "raw_css": 29696,
     "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
@@ -146,7 +138,7 @@
   "/logout": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 29184,
+    "raw_css": 29696,
     "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
@@ -178,7 +170,7 @@
   "/login": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 29184,
+    "raw_css": 29696,
     "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1

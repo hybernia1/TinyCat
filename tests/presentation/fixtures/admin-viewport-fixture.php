@@ -311,7 +311,7 @@ for (const theme of ['light','dark']) {
   rows[0].classList.add('table-row-inactive');rows[1].classList.remove('table-row-inactive');
   const inactiveBackground=getComputedStyle(rows[0]).backgroundColor;
   rows[0].classList.remove('table-row-inactive');
-  rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0]).backgroundColor===inactiveBackground && getComputedStyle(rows[0]).backgroundColor!==getComputedStyle(rows[1]).backgroundColor;
+  rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0]).backgroundColor===inactiveBackground && getComputedStyle(rows[0]).backgroundColor===getComputedStyle(rows[1]).backgroundColor;
   rows[0].classList.add('table-row-inactive');
   const actionsCell=rows[0].querySelector('.table-actions-cell');
   rowStatesConsistent=rowStatesConsistent && getComputedStyle(rows[0].cells[0]).fontStyle==='italic' && getComputedStyle(rows[0].querySelector('.badge')).fontStyle==='normal' && (!actionsCell || getComputedStyle(actionsCell).fontStyle==='normal');
@@ -320,7 +320,7 @@ for (const theme of ['light','dark']) {
   rows.forEach(row=>row.remove());
 }
 if(originalTheme===null)document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',originalTheme);
-const tableBadgesReadable = [...document.querySelectorAll('table .badge')].every(badge => getComputedStyle(badge,'::before').maskImage!=='none' && badge.textContent.trim());
+const tableBadgesReadable = [...document.querySelectorAll('table .badge')].every(badge => getComputedStyle(badge,'::after').maskImage!=='none' && badge.textContent.trim());
 const identitySlots = [...document.querySelectorAll('table .identity-row')].map(identity => identity.firstElementChild);
 const identitySlotsNormalized = identitySlots.every(slot => slot.matches('.avatar.avatar-sm') && Math.abs(slot.getBoundingClientRect().width - identitySlots[0].getBoundingClientRect().width) < 1);
 results.forEach(result => Object.assign(result, {rowStatesConsistent, tableBadgesReadable, identitySlotsNormalized, controlsScale, pinnedList, pinnedDiagnostics, paginationCompact, sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));

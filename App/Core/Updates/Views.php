@@ -29,13 +29,9 @@ final class Views
             'maintenance_from' => (string) ($data['maintenance']['from_version'] ?? Version::CURRENT),
             'maintenance_to' => (string) ($data['maintenance']['to_version'] ?? '?'),
             'missing_extensions' => in_array(false, $extensions, true),
-            'tone' => !$data['canInstall'] ? 'warning' : ($release !== null ? ($available ? 'primary' : 'ok') : 'unknown'),
+            'current_version' => 'v' . Version::CURRENT,
+            'missing_extension_names' => implode(', ', array_map(static fn (string $name): string => 'PHP ' . $name, array_keys(array_filter($extensions, static fn (bool $loaded): bool => !$loaded)))),
             'status_label' => $release !== null ? ($available ? Localization::t('updates.available', ['version' => (string) ($release['version'] ?? '')]) : Localization::t('updates.up_to_date')) : Localization::t('updates.not_checked'),
-            'stats' => [
-                ['label' => Localization::t('updates.current_version'), 'value' => 'v' . Version::CURRENT, 'icon' => 'download'],
-                ['label' => Localization::t('updates.latest_version'), 'value' => $release !== null ? 'v' . (string) ($release['version'] ?? '?') : '-', 'icon' => 'refresh'],
-                ['label' => Localization::t('updates.requirements'), 'value' => count(array_filter($extensions)) . ' / ' . count($extensions), 'icon' => 'shield'],
-            ],
             'migration_count' => count((array) ($result['migrations'] ?? [])), 'history' => $history,
         ]);
     }

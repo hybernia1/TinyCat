@@ -53,7 +53,6 @@
       "comment_deleted": "Komentarz został usunięty."
     },
     "status_embed": "Osadź wpis",
-    "status_embed_help": "Skopiuj ten kod HTML do bloku HTML swojej witryny. WordPress może też rozpoznać osadzanie na podstawie adresu wpisu.",
     "status_embed_code": "Kod osadzania",
     "status_embed_open": "Otwórz oryginalny wpis",
     "translation_translate": "Tłumacz",

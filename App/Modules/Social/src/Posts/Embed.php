@@ -5,7 +5,6 @@ namespace TinyCat\Social\Posts;
 
 use TinyCat\Core\Links\Providers;
 
-use TinyCat\Core\Text\LinkParser;
 
 use TinyCat\Social\Posts\Links;
 
@@ -31,10 +30,7 @@ final class Embed
     /** @return array<string, mixed>|null */
     private static function find(int $id): ?array
     {
-        return Connection::one('SELECT c.id, c.body, c.published_at, c.author_id, u.username AS author_name, u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version, u.updated_at AS author_updated_at,
-            ci.path AS image_path, ci.width AS image_width, ci.height AS image_height
-            FROM social_posts c INNER JOIN users u ON u.id = c.author_id
-            LEFT JOIN social_post_images ci ON ci.content_id = c.id
+        return Connection::one(Feed::public_status_select_sql() . '
             WHERE c.id = ? AND u.status = ? AND c.published_at <= ? AND c.kind = \'post\' AND c.status = \'published\' LIMIT 1', [$id, 'active', Dates::dateDb()]);
     }
 
@@ -115,6 +111,52 @@ final class Embed
         return $data;
     }
 
+    /** @param array<string, mixed> $item
+     * @param list<array<string, mixed>> $media */
+    private static function card(array $item, array $media): \TinyCat\Support\Markup
+    {
+        $resource = Resource::post($item, null);
+        $resource['links'] = $media;
+        $html = \TinyCat\Support\Components::render('status/card', ['item' => $resource, 'preview' => true]);
+        $document = new \DOMDocument();
+        @$document->loadHTML('<!doctype html><html><head><meta charset="utf-8"></head><body>' . $html . '</body></html>', LIBXML_NONET);
+        $xpath = new \DOMXPath($document);
+        $article = $document->getElementsByTagName('article')->item(0);
+        if (!$article instanceof \DOMElement) { throw new \RuntimeException('Missing embedded status card.'); }
+        $article->setAttribute('class', $article->getAttribute('class') . ' embed-card');
+        // Preview controls retain the canonical card presentation without account actions.
+        foreach ($xpath->query('//div[contains(@class,"status-reactions")]/span') ?: [] as $like) {
+            if (!$like instanceof \DOMElement) { continue; }
+            $link = $document->createElement('a');
+            $link->setAttribute('class', $like->getAttribute('class'));
+            $link->setAttribute('href', Presentation::absolute_url($resource['url']));
+            $link->setAttribute('aria-label', Localization::t('account.status_like_for', ['context' => (string) $item['author_name']]));
+            while ($like->firstChild !== null) { $link->appendChild($like->firstChild); }
+            $like->parentNode?->replaceChild($link, $like);
+        }
+        foreach ($document->getElementsByTagName('a') as $link) {
+            $href = $link->getAttribute('href');
+            if (str_starts_with($href, '/')) { $link->setAttribute('href', Presentation::absolute_url($href)); }
+            $link->setAttribute('target', '_blank');
+            $link->setAttribute('rel', trim($link->getAttribute('rel') . ' noopener noreferrer'));
+        }
+        foreach ($xpath->query('//*[@data-modal-open or @data-modal-scroll or @data-modal-parent-open]') ?: [] as $node) {
+            if (!$node instanceof \DOMElement) { continue; }
+            foreach (iterator_to_array($node->attributes) as $attribute) {
+                if (str_starts_with($attribute->name, 'data-modal-')) { $node->removeAttribute($attribute->name); }
+            }
+        }
+        foreach ($xpath->query('//figure[contains(@class,"status-image")]//img') ?: [] as $image) {
+            if (!$image instanceof \DOMElement) { continue; }
+            $image->setAttribute('src', Presentation::absolute_url($image->getAttribute('src')));
+            if ((int) ($item['image_width'] ?? 0) > 0 && (int) ($item['image_height'] ?? 0) > 0) {
+                $image->setAttribute('width', (string) $item['image_width']);
+                $image->setAttribute('height', (string) $item['image_height']);
+            }
+        }
+        return new \TinyCat\Support\Markup($document->saveHTML($article) ?: '');
+    }
+
     public static function page(int $id, bool $share = false): void
     {
         Localization::locale(Localization::defaultLocale());
@@ -129,28 +171,11 @@ final class Embed
         $item = self::find($id);
         if ($item === null) { Document::notFound(Localization::t('public.status_not_found')); return; }
         $media = self::media($item);
-        $hiddenHashes = [];
-        foreach ($media as $link) {
-            $parsed = LinkParser::fromRaw((string) $link['url']);
-            if ($parsed !== null) { $hiddenHashes[] = (string) $parsed['url_hash']; }
-        }
-        $segments = \TinyCat\Core\Text\Segments::text((string) $item['body'], 'post', $hiddenHashes, (int) $item['id']);
-        foreach ($segments as &$segment) {
-            if (isset($segment['url'])) { $segment['url'] = Presentation::absolute_url($segment['outbound_url'] ?? $segment['url']); }
-        }
-        unset($segment);
-        $image = \TinyCat\Social\Posts\Images::status_image_url($item);
         $html = View::render('embed', [
-            'author' => (string) $item['author_name'], 'authorUrl' => Presentation::absolute_url('/author/' . (int) $item['author_id']),
-            'url' => Presentation::absolute_url('/status/' . $id), 'siteName' => Presentation::site_name(),
-            'siteUrl' => Presentation::absolute_url('/'), 'segments' => $segments,
-            'avatarUrl' => \TinyCat\Core\Identity\Avatars::user_avatar_url($item),
-            'initial' => mb_strtoupper(mb_substr((string) $item['author_name'], 0, 1)),
-            'media' => $media,
-            'imageUrl' => $image !== '' ? Presentation::absolute_url($image) : '',
-            'imageAlt' => \TinyCat\Social\Posts\Images::status_image_alt_text($item),
-            'imageWidth' => (int) ($item['image_width'] ?? 0), 'imageHeight' => (int) ($item['image_height'] ?? 0),
-            'publishedAt' => Dates::dateIso((string) $item['published_at']), 'publishedLabel' => Dates::displayDateTime((string) $item['published_at']),
+            'author' => (string) $item['author_name'], 'url' => Presentation::absolute_url('/status/' . $id),
+            'siteName' => Presentation::site_name(),
+            'card' => self::card($item, $media),
+            'cardStyles' => \TinyCat\Support\ClientAssets::styles('/status'),
             'styleUrl' => Assets::asset('App/Modules/Social/assets/embed/embed.css'), 'scriptUrl' => Assets::asset('App/Modules/Social/assets/embed/embed-frame.js'),
             'share' => $share, 'maxHeight' => $height,
             'code' => self::code($item),

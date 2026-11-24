@@ -812,7 +812,9 @@ Only URLs on the configured installation origin are accepted, including supporte
 localized post URLs. The provider never fetches the supplied URL. Unknown URLs,
 missing posts, future publications and inactive authors return 404, including for
 signed-in administrators. These public representations have no visitor session,
-analytics, comment forms or edit controls. The card shows the author avatar (including the generated cat portrait), post text, mentions,
+analytics, comment forms or edit controls. Embeds render the same `status/card`
+component and styles as ordinary posts, with public like and visible-comment
+counts linking to the original post. The card shows the author avatar (including the generated cat portrait), post text, mentions,
 hashtags, an attached image and up to three stored link previews. Approved video
 and audio providers use click-to-load players, including YouTube, Vimeo,
 Dailymotion, Facebook video, SoundCloud and Spotify. Unknown sources retain a
@@ -878,6 +880,14 @@ true), `source` (default the configured website hostname), `medium` (default
 `referral`) and optional `campaign`. Missing source configuration leaves URLs
 untagged. Existing UTM values, repeated query keys, encoding and fragments are
 preserved; metadata normalization and public feed/export source URLs are unchanged.
+
+### Scheduler connection details
+
+`GET /api/scheduler/configuration` is administrator-only and supplies the
+on-demand connection dialog with `token`, `execution_url` and registered `tasks`
+(`id`, `query_url`, `http_command`, `cli_command`). Captions and instructions
+come from the task owners' component lookups. Reading never generates a token;
+rotation remains `POST /api/scheduler/tokens` with administrator access and CSRF.
 
 ### Dashboard statistics
 

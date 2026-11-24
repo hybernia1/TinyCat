@@ -1,23 +1,36 @@
+.menu-panel {
+  --popover-padding: var(--control-padding-block);
+}
+
 .context-menu-action {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--control-padding-inline);
   width: 100%;
+  min-height: var(--control-height-inline);
   border: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
-  padding: 8px 10px;
+  padding: var(--control-padding-block) var(--control-padding-inline);
   color: var(--text);
   font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  text-align: left;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .context-menu-action:hover,
-.context-menu-action:focus-visible {
+.context-menu-action:focus-visible,
+.context-menu-action[aria-current="page"] {
   background: var(--surface-soft);
   color: var(--primary-strong);
 }
 
 .context-menu-action.is-danger {
   color: var(--danger);
+}
+
+.context-menu-action[aria-current="page"] {
+  font-weight: 600;
 }
 

@@ -34,6 +34,28 @@ final class Administration
         return Resource::listing($records, $definitions, $filters);
     }
 
+    /** Read-only connection resource. Task labels remain in owner component lookups.
+     * @return array<string, mixed> */
+    public static function configuration(): array
+    {
+        $token = Tokens::cron_token();
+        $executionUrl = \TinyCat\Support\LocalUrls::absolute('/api/scheduler/executions');
+        $runnerPath = \TinyCat\Support\Paths::basePath('scheduled-tasks.php');
+        $tasks = [];
+        foreach (Tasks::definitions() as $task => $definition) {
+            $arguments = [];
+            foreach ($definition['options'] as $name => $default) {
+                $arguments[] = '--' . str_replace('_', '-', (string) $name) . '=' . (int) $default;
+            }
+            $taskUrl = $executionUrl . '?task=' . rawurlencode($task);
+            $tasks[] = ['id' => $task,
+                'query_url' => \TinyCat\Support\LocalUrls::absolute('/api/scheduler/triggers/' . rawurlencode($task)),
+                'http_command' => 'curl -fsS -X POST -H "Authorization: Bearer ' . $token . '" "' . $taskUrl . '"',
+                'cli_command' => 'php "' . $runnerPath . '" --task=' . $task . ' ' . implode(' ', $arguments)];
+        }
+        return ['token' => $token, 'execution_url' => $executionUrl, 'tasks' => $tasks];
+    }
+
     /** @return array<string, mixed>|null */
     public static function runDetail(int $id): ?array
     {

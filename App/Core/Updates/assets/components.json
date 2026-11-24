@@ -29,27 +29,6 @@
             "children": [{"icon": "refresh"}, " ", {"tag": "span", "children": [{"t": "updates.check"}]}]
           }
         ]
-      },
-      {
-        "tag": "form",
-        "attrs": {
-          "method": "post",
-          "action": "/api/updates/installations",
-          "data-ajax-form": "",
-          "data-confirm": {"t": "updates.install_confirm", "values": {"version": {"get": "version"}}},
-          "data-confirm-title": {"t": "updates.install_title"},
-          "data-confirm-ok": {"t": "updates.install"}
-        },
-        "when": {"get": "available"},
-        "children": [
-          {"csrf": true},
-          {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "install"}},
-          {
-            "tag": "button",
-            "attrs": {"class": "btn btn-primary btn-sm", "type": "submit", "disabled": {"not": {"get": "canInstall"}}},
-            "children": [{"icon": "download"}, " ", {"tag": "span", "children": [{"t": "updates.install"}]}]
-          }
-        ]
       }
     ]
   },
@@ -112,137 +91,75 @@
         ]
       },
       {
-        "tag": "div",
-        "attrs": {"class": "stack"},
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {"class": "cluster"},
-            "children": [
-              {
-                "component": "ui/status-badge",
-                "data": {"tone": {"get": "tone"}, "label": {"get": "status_label"}, "text": true}
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "grid sm:grid-2 md:grid-3"},
-            "children": [
-              {
-                "each": {"get": "stats"},
-                "as": "stat",
-                "children": {"component": "ui/stat-card", "data": {"get": "stat"}}
-              }
-            ]
-          },
-          {
-            "component": "ui/help",
-            "data": {"text": {"t": "updates.check_help"}, "label": {"t": "updates.title"}},
-            "when": {"not": {"get": "has_release"}}
-          },
-          {
-            "component": "ui/notice",
-            "data": {
-              "tone": "warning",
-              "title": {
-                "t": "updates.incompatible",
-                "values": {"version": {"get": "minimum_version"}, "php": {"get": "minimum_php"}}
-              }
-            },
-            "when": {"and": [{"get": "has_release"}, {"not": {"get": "releaseCompatible"}}]}
-          },
-          {
-            "component": "ui/notice",
-            "data": {"tone": "critical", "title": {"t": "updates.missing_extensions"}},
-            "when": {"get": "missing_extensions"}
+        "component": "ui/notice",
+        "data": {
+          "tone": "warning",
+          "title": {
+            "t": "updates.incompatible",
+            "values": {"version": {"get": "minimum_version"}, "php": {"get": "minimum_php"}}
           }
-        ]
+        },
+        "when": {"and": [{"get": "has_release"}, {"not": {"get": "releaseCompatible"}}]}
       },
       {
-        "tag": "details",
-        "attrs": {"class": "disclosure-item"},
+        "component": "ui/notice",
+        "data": {
+          "tone": "critical",
+          "title": {"t": "updates.missing_extensions"},
+          "description": {"get": "missing_extension_names"}
+        },
+        "when": {"get": "missing_extensions"}
+      },
+      {
+        "tag": "section",
+        "attrs": {"class": "stack stack-gap-16"},
         "children": [
           {
-            "tag": "summary",
-            "attrs": {"class": "disclosure-summary"},
-            "children": [
-              {"tag": "span", "children": [{"t": "updates.requirements"}]},
-              {"icon": "chevron-down", "class": "icon disclosure-chevron"}
-            ]
-          },
-          {
             "tag": "div",
-            "attrs": {"class": "card-body stack"},
+            "attrs": {"class": "split"},
             "children": [
               {
-                "tag": "ul",
-                "attrs": {"class": "result-list"},
+                "tag": "div",
+                "attrs": {"class": "stack stack-gap-4"},
                 "children": [
-                  {
-                    "each": {"get": "extensions"},
-                    "as": "extension",
-                    "children": {
-                      "tag": "li",
-                      "attrs": {"class": "result-item"},
-                      "children": [
-                        {
-                          "component": "ui/status-badge",
-                          "data": {
-                            "tone": {"if": [{"get": "extension"}, "ok", "critical"]},
-                            "label": {
-                              "if": [{"get": "extension"}, {"t": "common.done"}, {"t": "updates.missing_extensions"}]
-                            },
-                            "text": true
-                          }
-                        },
-                        {"tag": "span", "children": ["PHP ", {"get": "_key"}]}
-                      ]
-                    }
-                  },
-                  {
-                    "tag": "li",
-                    "attrs": {"class": "result-item"},
-                    "children": [
-                      {
-                        "component": "ui/status-badge",
-                        "data": {"tone": "ok", "label": {"t": "common.done"}, "text": true}
-                      },
-                      " ",
-                      {"tag": "span", "children": [{"t": "updates.signed_packages"}]}
-                    ]
-                  },
-                  {
-                    "tag": "li",
-                    "attrs": {"class": "result-item"},
-                    "children": [
-                      {
-                        "component": "ui/status-badge",
-                        "data": {"tone": "ok", "label": {"t": "common.done"}, "text": true}
-                      },
-                      " ",
-                      {"tag": "span", "children": [{"t": "updates.automatic_backup"}]}
-                    ]
-                  },
-                  {
-                    "tag": "li",
-                    "attrs": {"class": "result-item"},
-                    "children": [
-                      {
-                        "component": "ui/status-badge",
-                        "data": {"tone": "ok", "label": {"t": "common.done"}, "text": true}
-                      },
-                      " ",
-                      {"tag": "span", "children": [{"t": "updates.protected_runtime"}]}
-                    ]
-                  }
+                  {"tag": "span", "attrs": {"class": "text-muted"}, "children": [{"t": "updates.current_version"}]},
+                  {"tag": "strong", "attrs": {"class": "text-xl"}, "children": [{"get": "current_version"}]}
                 ]
               },
               {
-                "tag": "div",
-                "attrs": {"class": "alert alert-warning"},
-                "when": {"get": "missing_extensions"},
-                "children": [{"t": "updates.missing_extensions"}]
+                "tag": "span",
+                "attrs": {"class": "text-muted"},
+                "when": {"not": {"get": "available"}},
+                "children": [{"get": "status_label"}]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "stack stack-gap-12"},
+            "when": {"get": "available"},
+            "children": [
+              {"tag": "h2", "attrs": {"class": "text-xl m-0"}, "children": ["TinyCat ", {"get": "version"}]},
+              {
+                "tag": "form",
+                "attrs": {
+                  "method": "post",
+                  "action": "/api/updates/installations",
+                  "data-ajax-form": "",
+                  "data-confirm": {"t": "updates.install_confirm", "values": {"version": {"get": "version"}}},
+                  "data-confirm-title": {"t": "updates.install_title"},
+                  "data-confirm-ok": {"t": "updates.install"}
+                },
+                "when": {"get": "available"},
+                "children": [
+                  {"csrf": true},
+                  {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "install"}},
+                  {
+                    "tag": "button",
+                    "attrs": {"class": "btn btn-primary", "type": "submit", "disabled": {"not": {"get": "canInstall"}}},
+                    "children": [{"icon": "download"}, " ", {"tag": "span", "children": [{"t": "updates.install"}]}]
+                  }
+                ]
               }
             ]
           }
@@ -297,23 +214,20 @@
         ]
       },
       {
-        "tag": "section",
-        "attrs": {"class": "card"},
+        "tag": "details",
+        "attrs": {"class": "disclosure-item"},
         "children": [
           {
-            "tag": "div",
-            "attrs": {"class": "card-header"},
+            "tag": "summary",
+            "attrs": {"class": "disclosure-summary"},
             "children": [
-              {
-                "tag": "h2",
-                "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                "children": [{"t": "updates.migration_history"}]
-              }
+              {"tag": "span", "attrs": {"class": ""}, "children": [{"t": "updates.migration_history"}]},
+              {"icon": "chevron-down", "class": "icon disclosure-chevron"}
             ]
           },
           {
             "tag": "div",
-            "attrs": {"class": "card-body stack"},
+            "attrs": {"class": "disclosure-body stack table-layout"},
             "children": [
               {
                 "component": "ui/empty-state",

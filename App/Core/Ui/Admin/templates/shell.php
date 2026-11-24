@@ -23,7 +23,6 @@ declare(strict_types=1);
                         <?php endif; ?>
                         <span>
                             <strong<?= $siteLogoUrl !== '' ? ' aria-hidden="true"' : '' ?>><?= \TinyCat\Support\Html::e($appName) ?></strong>
-                            <small><?= \TinyCat\Support\Html::et('common.admin') ?></small>
                         </span>
                     </a>
                     <button class="btn btn-icon admin-sidebar-close" type="button" data-admin-nav-toggle aria-controls="admin-sidebar" aria-expanded="false" aria-label="<?= \TinyCat\Support\Html::et('common.close') ?>">

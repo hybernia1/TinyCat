@@ -17,7 +17,7 @@ final class Api
             $type = $healthy ? 'success' : 'warning';
             $message = \TinyCat\Support\Localization::t($healthy ? 'health.notification_ok' : 'health.notification_attention');
             \TinyCat\Http\Session::flash($type, $message);
-            return new \TinyCat\Http\Result(['execution' => $execution, 'redirect' => '/admin/site-health'], $message, ['type' => $type], 'health_check_finished');
+            return new \TinyCat\Http\Result(['execution' => $execution, 'redirect' => ServiceProvider::historyUrl()], $message, ['type' => $type], 'health_check_finished');
         }, 'admin');
     }
 }

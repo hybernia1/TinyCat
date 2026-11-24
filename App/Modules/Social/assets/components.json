@@ -74,9 +74,11 @@
       {"csrf": true},
       {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": {"get": "action"}}},
       {
-        "tag": "button",
-        "attrs": {"class": "context-menu-action is-danger", "type": "submit", "data-popover-close": ""},
-        "children": [{"t": "common.delete"}]
+        "component": "ui/menu-item",
+        "data": {
+          "attributes": {"class": "context-menu-action btn-sm is-danger", "type": "submit", "data-popover-close": ""},
+          "label": {"t": "common.delete"}
+        }
       }
     ]
   },
@@ -101,50 +103,54 @@
       },
       {
         "tag": "div",
-        "attrs": {"class": "popover-panel"},
+        "attrs": {"class": "popover-panel menu-panel"},
         "children": [
           {
-            "tag": "button",
-            "attrs": {
-              "class": "context-menu-action",
-              "type": "button",
-              "data-popover-close": "",
-              "data-modal-open": {
-                "concat": [
-                  {"if": [{"get": "comment"}, "status-comment-edit-modal-", "status-edit-modal-"]},
-                  {"get": "item.id"}
-                ]
+            "component": "ui/menu-item",
+            "data": {
+              "attributes": {
+                "class": "context-menu-action btn-sm",
+                "type": "button",
+                "data-popover-close": "",
+                "data-modal-open": {
+                  "concat": [
+                    {"if": [{"get": "comment"}, "status-comment-edit-modal-", "status-edit-modal-"]},
+                    {"get": "item.id"}
+                  ]
+                },
+                "data-modal-url": {
+                  "concat": [
+                    "/api/statuses/",
+                    {"or": [{"get": "content_id"}, {"get": "item.id"}]},
+                    {
+                      "if": [
+                        {"get": "comment"},
+                        {"concat": ["?panel=comment-edit&comment_id=", {"get": "item.id"}]},
+                        "?panel=edit"
+                      ]
+                    }
+                  ]
+                }
               },
-              "data-modal-url": {
-                "concat": [
-                  "/api/statuses/",
-                  {"or": [{"get": "content_id"}, {"get": "item.id"}]},
-                  {
-                    "if": [
-                      {"get": "comment"},
-                      {"concat": ["?panel=comment-edit&comment_id=", {"get": "item.id"}]},
-                      "?panel=edit"
-                    ]
-                  }
-                ]
-              }
+              "label": {"t": "common.edit"}
             },
-            "when": {"get": "item.capabilities.edit"},
-            "children": [{"t": "common.edit"}]
+            "when": {"get": "item.capabilities.edit"}
           },
           {
-            "tag": "button",
-            "attrs": {
-              "class": "context-menu-action",
-              "type": "button",
-              "data-popover-close": "",
-              "data-modal-open": {"concat": ["status-comment-history-modal-", {"get": "item.id"}]},
-              "data-modal-url": {
-                "concat": ["/api/statuses/", {"get": "content_id"}, "/comments/", {"get": "item.id"}, "/revisions"]
-              }
+            "component": "ui/menu-item",
+            "data": {
+              "attributes": {
+                "class": "context-menu-action btn-sm",
+                "type": "button",
+                "data-popover-close": "",
+                "data-modal-open": {"concat": ["status-comment-history-modal-", {"get": "item.id"}]},
+                "data-modal-url": {
+                  "concat": ["/api/statuses/", {"get": "content_id"}, "/comments/", {"get": "item.id"}, "/revisions"]
+                }
+              },
+              "label": {"t": "account.status_comment_history"}
             },
-            "when": {"and": [{"get": "comment"}, {"get": "item.capabilities.edit"}]},
-            "children": [{"t": "account.status_comment_history"}]
+            "when": {"and": [{"get": "comment"}, {"get": "item.capabilities.edit"}]}
           },
           {
             "component": "status/delete",
@@ -162,16 +168,18 @@
             "when": {"get": "item.capabilities.delete"}
           },
           {
-            "tag": "button",
-            "attrs": {
-              "class": "context-menu-action",
-              "type": "button",
-              "data-popover-close": "",
-              "data-modal-open": {"concat": ["status-report-modal-", {"get": "item.id"}]},
-              "data-modal-url": {"concat": ["/api/moderation/report-options?id=", {"get": "item.id"}]}
+            "component": "ui/menu-item",
+            "data": {
+              "attributes": {
+                "class": "context-menu-action btn-sm",
+                "type": "button",
+                "data-popover-close": "",
+                "data-modal-open": {"concat": ["status-report-modal-", {"get": "item.id"}]},
+                "data-modal-url": {"concat": ["/api/moderation/report-options?id=", {"get": "item.id"}]}
+              },
+              "label": {"t": "moderation.report_action"}
             },
-            "when": {"get": "item.capabilities.report"},
-            "children": [{"t": "moderation.report_action"}]
+            "when": {"get": "item.capabilities.report"}
           }
         ]
       }
@@ -905,7 +913,7 @@
   "bots/sources": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14",
+      "class": "stack stack-gap-14 table-layout",
       "data-admin-list": {"if": [{"get": "scoped"}, null, "social.bot-sources"]},
       "data-admin-state": {
         "json": {"filters": {"get": "filters"}, "pagination": {"get": "pagination"}, "bots": {"get": "bots"}}
@@ -1299,7 +1307,7 @@
   "bots/accounts": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14",
+      "class": "stack stack-gap-14 table-layout",
       "data-admin-list": "social.bot-creation",
       "data-admin-state": {
         "json": {"filters": {"get": "filters"}, "pagination": {"get": "pagination"}, "statuses": {"get": "statuses"}}
@@ -1653,7 +1661,7 @@
   "bots/posts": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14",
+      "class": "stack stack-gap-14 table-layout",
       "data-bot-posts-view": "",
       "data-bot-posts-state": {"json": {"get": "state"}}
     },
@@ -1876,7 +1884,7 @@
   "bots/queue": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14",
+      "class": "stack stack-gap-14 table-layout",
       "data-admin-list": "social.bot-queue",
       "data-admin-state": {"json": {"get": "state"}}
     },
@@ -2441,20 +2449,21 @@
       ]
     },
     {
-      "tag": "section",
-      "attrs": {"class": "card"},
+      "tag": "details",
+      "attrs": {"class": "disclosure-item"},
       "when": {"get": "item.summary.skipped_items"},
       "children": [
         {
-          "tag": "div",
-          "attrs": {"class": "card-header"},
+          "tag": "summary",
+          "attrs": {"class": "disclosure-summary"},
           "children": [
-            {"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"t": "bots.run_statuses.skipped"}]}
+            {"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"t": "bots.run_statuses.skipped"}]},
+            {"icon": "chevron-down", "class": "icon disclosure-chevron"}
           ]
         },
         {
           "tag": "div",
-          "attrs": {"class": "card-body stack stack-gap-8"},
+          "attrs": {"class": "disclosure-body stack stack-gap-8"},
           "children": [
             {
               "each": {"get": "item.summary.skipped_items"},
@@ -2500,18 +2509,21 @@
       ]
     },
     {
-      "tag": "section",
-      "attrs": {"class": "card"},
+      "tag": "details",
+      "attrs": {"class": "disclosure-item"},
       "when": {"get": "item.sources"},
       "children": [
         {
-          "tag": "div",
-          "attrs": {"class": "card-header"},
-          "children": [{"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"t": "bots.sources_title"}]}]
+          "tag": "summary",
+          "attrs": {"class": "disclosure-summary"},
+          "children": [
+            {"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"t": "bots.sources_title"}]},
+            {"icon": "chevron-down", "class": "icon disclosure-chevron"}
+          ]
         },
         {
           "tag": "div",
-          "attrs": {"class": "card-body stack stack-gap-8"},
+          "attrs": {"class": "disclosure-body stack stack-gap-8"},
           "children": [
             {
               "each": {"get": "item.sources"},
@@ -2541,7 +2553,7 @@
   "moderation/reports": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14",
+      "class": "stack stack-gap-14 table-layout",
       "data-admin-state": {"json": {"filters": {"get": "filters"}, "pagination": {"get": "pagination"}}},
       "data-admin-list": "social.moderation-reports"
     },
@@ -3136,7 +3148,7 @@
               },
               {
                 "tag": "nav",
-                "attrs": {"class": "sidebar-user-list", "aria-label": {"t": "public.active_users"}},
+                "attrs": {"class": "grid gap-2", "aria-label": {"t": "public.active_users"}},
                 "when": {"get": "authors"},
                 "children": [
                   {
@@ -3641,28 +3653,28 @@
                     "when": {"eq": [{"get": "kind"}, "home"]},
                     "children": [
                       {
-                        "tag": "nav",
-                        "attrs": {"class": "feed-switch home-feed-switch", "aria-label": {"t": "public.feed_title"}},
-                        "children": [
-                          {
-                            "tag": "a",
-                            "attrs": {
-                              "href": {"get": "all_feed_url"},
-                              "class": "feed-switch-link",
-                              "aria-current": {"if": [{"eq": [{"get": "feed"}, "all"]}, "page", null]}
+                        "component": "ui/switcher",
+                        "data": {
+                          "class": "home-feed-switch",
+                          "role": "navigation",
+                          "label": {"t": "public.feed_title"},
+                          "items": [
+                            {
+                              "label": {"t": "public.feed_all"},
+                              "attributes": {
+                                "href": {"get": "all_feed_url"},
+                                "aria-current": {"if": [{"eq": [{"get": "feed"}, "all"]}, "page", null]}
+                              }
                             },
-                            "children": [{"t": "public.feed_all"}]
-                          },
-                          {
-                            "tag": "a",
-                            "attrs": {
-                              "href": {"get": "following_feed_url"},
-                              "class": "feed-switch-link",
-                              "aria-current": {"if": [{"eq": [{"get": "feed"}, "following"]}, "page", null]}
-                            },
-                            "children": [{"t": "public.feed_following"}]
-                          }
-                        ]
+                            {
+                              "label": {"t": "public.feed_following"},
+                              "attributes": {
+                                "href": {"get": "following_feed_url"},
+                                "aria-current": {"if": [{"eq": [{"get": "feed"}, "following"]}, "page", null]}
+                              }
+                            }
+                          ]
+                        }
                       },
                       {
                         "component": "site/archive-filter",
@@ -3798,21 +3810,23 @@
       },
       {
         "tag": "nav",
-        "attrs": {"class": "popover-panel archive-filter-menu", "aria-label": {"t": "public.filter_content"}},
+        "attrs": {"class": "popover-panel menu-panel archive-filter-menu", "aria-label": {"t": "public.filter_content"}},
         "children": [
           {
             "each": {"get": "archive_options"},
             "as": "option",
             "children": [
               {
-                "tag": "a",
-                "attrs": {
-                  "href": {"get": "option.url"},
-                  "class": "archive-filter-option",
-                  "aria-current": {"if": [{"get": "option.active"}, "page", false]},
-                  "data-popover-close": ""
-                },
-                "children": [{"use": "site/archive-filter-name", "data": {"type": {"get": "option.type"}}}]
+                "component": "ui/menu-item",
+                "data": {
+                  "attributes": {
+                    "href": {"get": "option.url"},
+                    "class": "context-menu-action",
+                    "aria-current": {"if": [{"get": "option.active"}, "page", false]},
+                    "data-popover-close": ""
+                  },
+                  "label": {"use": "site/archive-filter-name", "data": {"type": {"get": "option.type"}}}
+                }
               }
             ]
           }
@@ -4068,16 +4082,10 @@
     "tag": "div",
     "attrs": {"class": "stack"},
     "children": [
-      {"component": "ui/help", "data": {"text": {"t": "account.status_embed_help"}}},
       {"slot": {"get": "preview"}},
       {
-        "component": "ui/field",
-        "data": {
-          "label": {"t": "account.status_embed_code"},
-          "attributes": {"class": "textarea", "name": "embed_code", "readonly": "", "rows": "6", "spellcheck": "false"},
-          "textarea": true,
-          "value": {"get": "snippet"}
-        }
+        "component": "ui/code-block",
+        "data": {"attributes": {"aria-label": {"t": "account.status_embed_code"}}, "text": {"get": "snippet"}}
       }
     ]
   },

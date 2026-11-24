@@ -49,6 +49,9 @@
   --primary-strong: light-dark(#475569, #bdd4e5);
   --primary-soft: light-dark(#eef2f6, #29343c);
   --unread-surface: color-mix(in srgb, var(--primary-soft) 54%, var(--surface));
+  --on-status-symbol: light-dark(#ffffff, #3f4b54);
+  --status-symbol-size: 2rem;
+  --status-symbol-icon-size: 1.25rem;
   --on-primary: light-dark(#ffffff, #15212a);
   --button-primary-bg: light-dark(var(--primary), #247398);
   --button-primary-hover: light-dark(var(--primary-strong), #247ba0);

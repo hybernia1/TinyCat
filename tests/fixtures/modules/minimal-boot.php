@@ -10,7 +10,7 @@ if (count(spl_autoload_functions()) !== $autoloaders || class_exists(\TinyCat\Co
 if (($argv[1] ?? '') === '--framework') {
     $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);
     \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['dsn' => 'sqlite::memory:']]), $loader);
-    foreach ([\TinyCat\Core\Identity\Pages::class, \TinyCat\Core\Identity\Authentication::class, \TinyCat\Core\Identity\Readiness::class, \TinyCat\Core\Tasks\Pages::class, \TinyCat\Core\Tasks\Tokens::class, \TinyCat\Core\Health\Pages::class, \TinyCat\Core\Installation\Pages::class, \TinyCat\Core\Updates\Pages::class, \TinyCat\Core\Ui\Admin\Diagnostics::class, \TinyCat\Core\Runtime\Errors::class] as $class) {
+    foreach ([\TinyCat\Core\Identity\Pages::class, \TinyCat\Core\Identity\Authentication::class, \TinyCat\Core\Identity\Readiness::class, \TinyCat\Core\Tasks\Pages::class, \TinyCat\Core\Tasks\Tokens::class, \TinyCat\Core\Installation\Pages::class, \TinyCat\Core\Updates\Pages::class, \TinyCat\Core\Ui\Admin\Diagnostics::class, \TinyCat\Core\Runtime\Errors::class] as $class) {
         if (class_exists($class, false)) { throw new RuntimeException('Framework registration eagerly loaded ' . $class); }
     }
     if (session_status() !== PHP_SESSION_NONE || class_exists(\TinyCat\Database\Connection::class, false)) { throw new RuntimeException('Framework registration opened runtime state.'); }

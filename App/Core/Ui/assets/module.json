@@ -1,4 +1,5 @@
 [
+  {"id": "ui.switcher", "routes": [], "components": ["ui/switcher"], "entries": [], "styles": ["App/Core/Ui/assets/styles/switcher.css"], "translations": []},
   {
     "routes": [
       "*"
@@ -25,7 +26,6 @@
       "App/Core/Ui/assets/styles/fields.css",
       "App/Core/Ui/assets/styles/alerts.css",
       "App/Core/Ui/assets/styles/badges.css",
-      "App/Core/Ui/assets/styles/badge-danger.css",
       "App/Core/Ui/assets/styles/content-images.css",
       "App/Core/Ui/assets/styles/status-indicators.css",
       "App/Core/Ui/assets/styles/empty-state.css",

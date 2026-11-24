@@ -53,7 +53,6 @@
       "comment_deleted": "Il commento è stato cancellato."
     },
     "status_embed": "Incorpora il post",
-    "status_embed_help": "Copia questo codice HTML in un blocco HTML del tuo sito. WordPress può anche rilevare il contenuto da incorporare tramite il suo URL.",
     "status_embed_code": "Codice di incorporamento",
     "status_embed_open": "Apri il post originale",
     "translation_translate": "Traduci",

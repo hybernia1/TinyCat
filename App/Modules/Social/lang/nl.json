@@ -53,7 +53,6 @@
       "comment_deleted": "De opmerking is verwijderd."
     },
     "status_embed": "Bericht insluiten",
-    "status_embed_help": "Kopieer deze HTML-code naar een HTML-blok op je website. WordPress kan de insluiting ook herkennen via de bericht-URL.",
     "status_embed_code": "Insluitcode",
     "status_embed_open": "Oorspronkelijk bericht openen",
     "translation_translate": "Vertalen",

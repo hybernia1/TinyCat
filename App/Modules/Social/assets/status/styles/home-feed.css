@@ -2,10 +2,6 @@
   --stack-gap: 10px;
 }
 
-.home-feed-switch {
-  display: flex;
-  width: 100%;
-}
 
 .home-feed-section .status-feed,
 .profile-main .status-feed {

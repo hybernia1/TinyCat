@@ -208,7 +208,8 @@
   background: var(--surface-soft);
 }
 
-.btn-sm {
+.btn-sm,
+.context-menu-action.btn-sm {
   min-height: var(--control-height-compact);
   padding: calc(var(--control-padding-block) * 0.75) var(--control-padding-inline);
   font-size: 0.875rem;

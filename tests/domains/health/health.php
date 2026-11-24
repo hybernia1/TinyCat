@@ -81,7 +81,9 @@ $assert($task['changed'] === 2 && (int) $db->query('SELECT COUNT(*) FROM notific
 $assert((int) $db->query('SELECT COUNT(*) FROM notifications WHERE actor_id IS NOT NULL')->fetchColumn() === 0, 'System notifications have no invented human actor.');
 $runId = (int) $db->query("SELECT MAX(id) FROM scheduler_runs WHERE task = 'site-health'")->fetchColumn();
 $assert(\TinyCat\Core\Health\Alerts::send(true, $runId) === 0, 'Retrying notification delivery for one run is idempotent.');
-$assert(\TinyCat\Core\Notifications\Inbox::targetUrl(['type' => 'site_health_attention']) === '/admin/site-health', 'Both health notification variants link to the protected health page.');
+$assert(\TinyCat\Core\Notifications\Inbox::targetUrl(['type' => 'site_health_attention']) === '/admin/cron?task=site-health', 'Both health notification variants link to the shared task history with the health filter.');
+$assert(\TinyCat\Core\Notifications\Inbox::targetUrl(['type' => 'site_health_attention', 'notification_key' => 'site_health:' . $runId]) === '/admin/cron?task=site-health#modal=scheduler/runs/' . $runId, 'Existing health notification keys open the exact run through the shared modal deep link.');
+$assert(\TinyCat\Core\Health\ServiceProvider::widget()['url'] === '/admin/cron?task=site-health#modal=scheduler/runs/' . $runId, 'The dashboard opens its latest health run through the same modal deep link.');
 $repeat = Execution::run('site-health');
 $assert($repeat['tasks']['site-health']['status'] === 'not_due' && (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === 2, 'Repeated cron requests on the same day do not rerun probes or send duplicate notifications.');
 $assert(Service::snapshot()['status'] === 'ok' && !Service::snapshot()['stale'], 'A skipped duplicate does not replace the latest diagnostic report.');

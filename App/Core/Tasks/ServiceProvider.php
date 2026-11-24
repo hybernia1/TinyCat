@@ -31,14 +31,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     /** @return array<string, mixed> */
     public static function adminNavigation(): array
     {
-        return [
-            'icon' => 'clock',
-            'label' => \TinyCat\Support\Localization::t('cron.menu_title'),
-            'children' => [
-                ['href' => '/admin/cron', 'icon' => 'settings', 'label' => \TinyCat\Support\Localization::t('cron.title'), 'exact' => true],
-                \TinyCat\Core\Ui\Admin\Definitions::navigation('core.scheduler-runs'),
-            ],
-        ];
+        return ['href' => \TinyCat\Core\Ui\Admin\Definitions::get('core.scheduler-runs')['path'], 'icon' => 'clock', 'label' => \TinyCat\Support\Localization::t('cron.menu_title')];
     }
 
     public static function register(\TinyCat\Http\Api $api): void
@@ -46,7 +39,6 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
         \TinyCat\Http\Middleware::register('scheduler', static function (): void { Tokens::requireBearer(); });
         \TinyCat\Http\Middleware::register('scheduler_trigger', static function (): void { Tokens::requireBasic(); });
         Api::register($api);
-        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('core.scheduler-runs'), static function (): void { Pages::listing(); });
-        \TinyCat\Http\Router::route('GET', '/admin/cron', static function (): void { Pages::administration(); });
+        \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('core.scheduler-runs'), static function (): void { Pages::show(); });
     }
 }

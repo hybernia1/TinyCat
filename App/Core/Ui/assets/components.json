@@ -1,4 +1,50 @@
 {
+  "ui/menu-item": {
+    "each": [{"get": "attributes"}],
+    "as": "action",
+    "children": [
+      {
+        "tag": "a",
+        "attrs": {"get": "action"},
+        "when": {"get": "action.href"},
+        "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "label"}]
+      },
+      {
+        "tag": "button",
+        "attrs": {"get": "action"},
+        "when": {"not": {"get": "action.href"}},
+        "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "label"}]
+      }
+    ]
+  },
+  "ui/switcher": {
+    "tag": "div",
+    "attrs": {
+      "class": {"concat": ["switcher ", {"get": "class"}]},
+      "role": {"get": "role"},
+      "aria-label": {"get": "label"}
+    },
+    "children": [
+      {
+        "each": {"get": "items"},
+        "as": "option",
+        "children": [
+          {
+            "tag": "a",
+            "attrs": {"get": "option.attributes"},
+            "when": {"get": "option.attributes.href"},
+            "children": [{"icon": {"get": "option.icon"}, "when": {"get": "option.icon"}}, {"get": "option.label"}]
+          },
+          {
+            "tag": "button",
+            "attrs": {"get": "option.attributes"},
+            "when": {"not": {"get": "option.attributes.href"}},
+            "children": [{"icon": {"get": "option.icon"}, "when": {"get": "option.icon"}}, {"get": "option.label"}]
+          }
+        ]
+      }
+    ]
+  },
   "ui/field": {
     "tag": "label",
     "attrs": {"class": {"or": [{"get": "field_class"}, "field"]}},
@@ -1420,7 +1466,7 @@
   },
   "ui/modules-page": {
     "tag": "div",
-    "attrs": {"class": "stack stack-gap-16"},
+    "attrs": {"class": "stack stack-gap-16 table-layout"},
     "children": [
       {
         "component": "ui/notice",
@@ -1863,7 +1909,7 @@
       },
       {
         "tag": "section",
-        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0"},
+        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0 table-layout"},
         "children": [
           {
             "tag": "h2",
@@ -1871,8 +1917,7 @@
             "children": [{"icon": "code"}, {"get": "assets.name"}]
           },
           {"tag": "span", "attrs": {"class": "text-muted"}, "children": [{"get": "assets.mode"}]},
-          {"component": "ui/detail-table", "data": {"title": {"get": "assets.name"}, "rows": {"get": "assets.rows"}}},
-          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "assets.description"}]}
+          {"component": "ui/detail-table", "data": {"title": {"get": "assets.name"}, "rows": {"get": "assets.rows"}}}
         ]
       },
       {"slot": {"get": "services"}},
@@ -1882,7 +1927,7 @@
         "children": {
           "tag": "section",
           "attrs": {
-            "class": "card card-body stack stack-gap-12 min-w-0",
+            "class": "card card-body stack stack-gap-12 min-w-0 table-layout",
             "data-cache-probe-url": {"get": "observation.url"}
           },
           "children": [
@@ -1908,22 +1953,21 @@
       },
       {
         "tag": "section",
-        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0 grid-span-full"},
+        "attrs": {"class": "card card-body stack stack-gap-12 min-w-0 grid-span-full table-layout"},
         "children": [
           {
             "tag": "h2",
             "attrs": {"class": "text-base m-0 cluster gap-2"},
             "children": [{"icon": "monitor"}, {"get": "browser.name"}]
           },
-          {"component": "ui/detail-table", "data": {"title": {"get": "browser.name"}, "rows": {"get": "browser.rows"}}},
-          {"tag": "p", "attrs": {"class": "m-0 text-muted"}, "children": [{"get": "browser.description"}]}
+          {"component": "ui/detail-table", "data": {"title": {"get": "browser.name"}, "rows": {"get": "browser.rows"}}}
         ]
       }
     ]
   },
   "ui/cache-service": {
     "tag": "section",
-    "attrs": {"class": "card card-body stack stack-gap-12 min-w-0"},
+    "attrs": {"class": "card card-body stack stack-gap-12 min-w-0 table-layout"},
     "children": [
       {
         "tag": "h2",

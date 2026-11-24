@@ -6,7 +6,7 @@
 }
 
 .card-body {
-  padding: 0.875rem;
+  padding: 0.875rem var(--panel-inset, 0.875rem);
 }
 
 .card-header,

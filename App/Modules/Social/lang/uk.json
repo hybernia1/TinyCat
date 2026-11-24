@@ -53,7 +53,6 @@
       "comment_deleted": "Коментарі видалено."
     },
     "status_embed": "Вбудувати допис",
-    "status_embed_help": "Скопіюйте цей HTML-код у HTML-блок свого сайту. WordPress також може визначити вбудовування за посиланням на допис.",
     "status_embed_code": "Код для вставлення",
     "status_embed_open": "Відкрити оригінальний допис",
     "translation_translate": "Перекласти",

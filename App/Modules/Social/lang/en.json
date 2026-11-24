@@ -53,7 +53,6 @@
       "comment_deleted": "The comment was deleted."
     },
     "status_embed": "Embed post",
-    "status_embed_help": "Copy this HTML into your website HTML block. WordPress can also discover the embed from the post URL.",
     "status_embed_code": "Embed code",
     "status_embed_open": "Open original post",
     "translation_translate": "Translate",

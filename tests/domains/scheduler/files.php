@@ -304,7 +304,7 @@ try {
     $assert(\TinyCat\Core\Tasks\Presentation::options()['fixture.import:batch']['label'] === ['t' => 'cron.options.bot_limit'], 'Parameter labels are scoped to the task that registered them.');
     $customHtml = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => ['batch' => 7], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
     $assert(str_contains($customHtml, '#rss') && str_contains($customHtml, \TinyCat\Support\Localization::t('cron.task')), 'Initial HTML uses the registered icon and translated title.');
-    $clientDefinitions = \TinyCat\Support\ClientAssets::withBuildCache(static fn (): array => \TinyCat\Support\ClientAssets::definitions('/admin/cron/list'));
+    $clientDefinitions = \TinyCat\Support\ClientAssets::withBuildCache(static fn (): array => \TinyCat\Support\ClientAssets::definitions('/admin/cron'));
     $encoded = json_encode($clientDefinitions, JSON_THROW_ON_ERROR);
     $assert(str_contains($encoded, 'fixture.import') && !str_contains($encoded, '"catalog":"scheduler.tasks"'), 'Client components receive the resolved registration data rather than a second lookup mechanism.');
     $assert($callbackCalls === 0 && $database->prepared === $presentationQueries, 'Building task presentation performs no SQL and invokes no runner, normalizer or detail callback.');

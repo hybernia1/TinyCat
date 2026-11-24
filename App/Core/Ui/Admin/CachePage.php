@@ -18,12 +18,12 @@ final class CachePage
     {
         $cache = Cache::diagnostics();
         $application = ['name' => Localization::t('admin.cache.application'), 'description' => Localization::t('admin.cache.application_help'), 'value' => $cache['driver'] === 'memcached' ? 'Memcached' : Localization::t('admin.cache.filesystem'), 'badge_label' => Localization::t('admin.cache.' . ($cache['available'] ? 'available' : 'fallback')), 'tone' => $cache['available'] ? 'success' : 'danger'];
-        $assets = ['name' => Localization::t('admin.cache.assets'), 'description' => Localization::t('admin.cache.assets_help'), 'mode' => Localization::t('admin.cache.' . (CompiledAssets::client('/admin/cache', Localization::locale()) !== null ? 'compiled' : 'on_demand')), 'rows' => []];
+        $assets = ['name' => Localization::t('admin.cache.assets'), 'mode' => Localization::t('admin.cache.' . (CompiledAssets::client('/admin/cache', Localization::locale()) !== null ? 'compiled' : 'on_demand')), 'rows' => []];
         foreach (['css', 'js', 'html'] as $kind) {
             $enabled = (bool) \TinyCat\Core\Runtime\Startup::option('performance.minify_' . $kind, false);
             $assets['rows'][] = ['label' => Localization::t('settings.fields.minify_' . $kind), 'value' => Localization::t('admin.cache.' . ($enabled ? 'enabled' : 'disabled')), 'badge' => true, 'tone' => $enabled ? 'success' : 'info'];
         }
-        $browser = ['name' => Localization::t('admin.cache.browser'), 'description' => Localization::t('admin.cache.browser_help'), 'rows' => [
+        $browser = ['name' => Localization::t('admin.cache.browser'), 'rows' => [
             ['label' => Localization::t('admin.cache.assets'), 'value' => Localization::t('admin.cache.one_year')],
             ['label' => Localization::t('admin.cache.uploads'), 'value' => Localization::t('admin.cache.thirty_days')],
             ['label' => 'HTML', 'value' => 'no-store'],

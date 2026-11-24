@@ -1,6 +1,6 @@
 {
   "cron": {
-    "title": "Tâches planifiées",
+    "execution_details": "Détails techniques",
     "access_title": "Accès et jeton",
     "access_help": "Point de terminaison partagé et authentification utilisés par chaque tâche planifiée.",
     "url": "Point de terminaison URL",
@@ -12,7 +12,7 @@
     "rotate": "Faire pivoter le jeton",
     "rotate_confirm": "Faire pivoter le jeton cron ? Les appels programmés existants cesseront de fonctionner jusqu'à ce qu'ils soient mis à jour.",
     "tasks": {
-      "cleanup": "Nettoyage automatique",
+      "cleanup": "Nettoyage",
       "cleanup_help": "Supprime les balises et les liens inutilisés, les images de publication et d'aperçu orphelines, les caches de données expirés, les anciens compartiments de limite de débit, les jetons de réinitialisation expirés et les notifications de lecture. Supprime aussi les avatars orphelins, les fichiers temporaires abandonnés et les anciennes sauvegardes de mises à jour terminées.",
       "cleanup_schedule": "Planifiez toutes les heures. Les vérifications internes empêchent le nettoyage de s'exécuter trop souvent.",
       "feeds": "Sources",
@@ -23,18 +23,15 @@
       "token_rotated": "Le jeton cron a été pivoté."
     },
     "list_title": "Aperçu des tâches",
-    "configuration": "Connexion et planification",
-    "list_help": "La planification est contrôlée par votre serveur ou web-cron. Il s'agit des intervalles recommandés et des limites par défaut. Exécuter contourne désormais l'intervalle de nettoyage ; RSS respecte toujours chaque intervalle source. L'historique inclut les exécutions enregistrées après cette mise à jour.",
+    "configuration": "Connexion",
     "task": "Tâche",
-    "schedule": "Planification et limites par défaut",
     "latest": "Dernière course",
-    "run_now": "Courez maintenant",
+    "run_now": "Exécuter",
     "history": "Historique d'exécution",
     "status": "Statut",
     "started": "Commencé",
     "duration": "Durée",
     "result": "Résultat",
-    "no_runs": "Aucune exécution enregistrée ne correspond à ces filtres.",
     "never": "Aucune course enregistrée",
     "run_finished": "La tâche terminée.",
     "run_failed": "La tâche a échoué. Voir son résultat dans l'historique des exécutions.",
@@ -61,13 +58,11 @@
       "admin": "Manuel"
     },
     "menu_title": "Tâches",
-    "overview_help": "Intervalles recommandés et limites par défaut. La planification est gérée par le serveur ou web-cron.",
     "cadence": {
       "feeds": "Vérifiez toutes les deux minutes",
       "cleanup": "Une fois par heure"
     },
     "run_details": "Détails de l'exécution",
-    "refresh": "Rafraîchir",
     "run_not_found": "Cette exécution n'a pas été trouvée.",
     "finished": "Fini",
     "unfinished": "Pas fini",

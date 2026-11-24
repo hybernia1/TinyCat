@@ -1,6 +1,6 @@
 {
   "cron": {
-    "title": "Plánované úlohy",
+    "execution_details": "Technické podrobnosti",
     "access_title": "Přístup a token",
     "access_help": "Společný endpoint a ověření používané všemi plánovanými úlohami.",
     "url": "URL endpointu",
@@ -12,7 +12,7 @@
     "rotate": "Obnovit token",
     "rotate_confirm": "Obnovit cron token? Existující naplánovaná volání přestanou fungovat, dokud je neupravíš.",
     "tasks": {
-      "cleanup": "Automatický úklid",
+      "cleanup": "Úklid",
       "cleanup_help": "Odstraňuje nepoužívané štítky a odkazy, osiřelé obrázky příspěvků a náhledů, expirovanou datovou cache, staré rate-limit buckety, expirované reset tokeny a přečtené notifikace. Uklízí také osiřelé avatary, opuštěné dočasné soubory a staré dokončené zálohy aktualizací.",
       "cleanup_schedule": "Naplánuj jednou za hodinu. Interní kontrola zabrání příliš častému spuštění.",
       "feeds": "Zdroje",
@@ -23,18 +23,15 @@
       "token_rotated": "Cron token byl obnoven."
     },
     "list_title": "Přehled úloh",
-    "configuration": "Připojení a plánování",
-    "list_help": "Spouštění řídí server nebo web-cron. Zde jsou doporučené intervaly a výchozí limity. Spustit hned přeskočí interval úklidu; RSS zachová intervaly jednotlivých zdrojů. Historie obsahuje běhy zaznamenané od této aktualizace.",
+    "configuration": "Připojení",
     "task": "Úloha",
-    "schedule": "Plánování a výchozí limity",
     "latest": "Poslední běh",
-    "run_now": "Spustit hned",
+    "run_now": "Spustit",
     "history": "Historie běhů",
     "status": "Stav",
     "started": "Spuštěno",
     "duration": "Doba běhu",
     "result": "Výsledek",
-    "no_runs": "Filtrům neodpovídají žádné zaznamenané běhy.",
     "never": "Zatím bez záznamu",
     "run_finished": "Úloha byla dokončena.",
     "run_failed": "Úloha selhala. Podrobnosti jsou v historii běhů.",
@@ -61,13 +58,11 @@
       "admin": "Ručně"
     },
     "menu_title": "Úlohy",
-    "overview_help": "Doporučené intervaly a výchozí limity. Spouštění řídí server nebo web-cron.",
     "cadence": {
       "feeds": "Kontrola každé dvě minuty",
       "cleanup": "Jednou za hodinu"
     },
     "run_details": "Podrobnosti běhu",
-    "refresh": "Obnovit",
     "run_not_found": "Tento běh nebyl nalezen.",
     "finished": "Dokončeno",
     "unfinished": "Nedokončeno",

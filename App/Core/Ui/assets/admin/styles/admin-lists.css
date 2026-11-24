@@ -48,12 +48,13 @@
 
 .table-sort-indicator {
   display: inline-flex;
-  font-size: 0.8em;
-  color: var(--muted);
-  opacity: 0.35;
+  font-size: 1.15em;
+  color: var(--text);
+  opacity: 1;
 }
 
 .table-sort-indicator[data-active] {
-  color: var(--primary);
+  font-size: 1.3em;
+  color: var(--primary-strong);
   opacity: 1;
 }

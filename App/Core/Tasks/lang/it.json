@@ -1,6 +1,6 @@
 {
   "cron": {
-    "title": "Attività pianificate",
+    "execution_details": "Dettagli tecnici",
     "access_title": "Accesso e token",
     "access_help": "Endpoint condiviso e autenticazione utilizzati da ogni attività pianificata.",
     "url": "URL dell'endpoint",
@@ -12,7 +12,7 @@
     "rotate": "Ruota gettone",
     "rotate_confirm": "Ruotare il token cron? Le chiamate pianificate esistenti smetteranno di funzionare finché non verranno aggiornate.",
     "tasks": {
-      "cleanup": "Pulizia automatica",
+      "cleanup": "Pulizia",
       "cleanup_help": "Rimuove tag e collegamenti inutilizzati, post orfani e immagini di anteprima, cache di dati scaduti, vecchi bucket con limite di velocità, token di ripristino scaduti e notifiche di lettura. Rimuove anche avatar orfani, file temporanei abbandonati e vecchi backup di aggiornamenti completati.",
       "cleanup_schedule": "Programmazione oraria. I dovuti controlli interni impediscono che la pulizia venga eseguita troppo spesso.",
       "feeds": "Fonti",
@@ -23,18 +23,15 @@
       "token_rotated": "Il token cron è stato ruotato."
     },
     "list_title": "Panoramica delle attività",
-    "configuration": "Connessione e programmazione",
-    "list_help": "La pianificazione è controllata dal tuo server o web-cron. Questi sono gli intervalli consigliati e i limiti predefiniti. Esegui ora ignora l'intervallo di pulizia; RSS rispetta comunque ciascun intervallo di origine. La cronologia include le corse registrate dopo questo aggiornamento.",
+    "configuration": "Connessione",
     "task": "Attività",
-    "schedule": "Programmazione e limiti predefiniti",
     "latest": "Ultima esecuzione",
-    "run_now": "Esegui ora",
+    "run_now": "Esegui",
     "history": "Esegui cronologia",
     "status": "Stato",
     "started": "Avviato",
     "duration": "Durata",
     "result": "Risultato",
-    "no_runs": "Nessuna corsa registrata corrisponde a questi filtri.",
     "never": "Nessuna corsa registrata",
     "run_finished": "L'attività è terminata.",
     "run_failed": "L'attività non è riuscita. Visualizza il risultato nella cronologia delle corse.",
@@ -61,13 +58,11 @@
       "admin": "Manuale"
     },
     "menu_title": "Attività",
-    "overview_help": "Intervalli consigliati e limiti predefiniti. La pianificazione è gestita dal server o dal web-cron.",
     "cadence": {
       "feeds": "Controllare ogni due minuti",
       "cleanup": "Una volta ogni ora"
     },
     "run_details": "Dettagli esecuzione",
-    "refresh": "Aggiorna",
     "run_not_found": "Questa esecuzione non è stata trovata.",
     "finished": "Finito",
     "unfinished": "Non finito",

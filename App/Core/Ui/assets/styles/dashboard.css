@@ -11,6 +11,14 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--summary-item-min-width)), 1fr));
 }
 
+[data-cache-page] h2 > .badge {
+  margin-inline-start: auto;
+}
+
+[data-cache-page] td:has(> .badge) {
+  text-align: end;
+}
+
 [data-dashboard-stats-form] {
   max-width: 100%;
   margin-inline-start: auto;
@@ -24,11 +32,6 @@
 [data-widget-metric] {
   display: flex;
   align-items: center;
-}
-
-[data-widget-metric] + [data-widget-metric] {
-  border-inline-start: 1px solid var(--border);
-  padding-inline-start: var(--control-padding-inline);
 }
 
 [data-widget-list] { gap: 0; }

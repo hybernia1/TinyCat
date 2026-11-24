@@ -53,7 +53,6 @@
       "comment_deleted": "Der Kommentar wurde gelöscht."
     },
     "status_embed": "Beitrag einbetten",
-    "status_embed_help": "Diesen HTML-Code in einen HTML-Block Ihrer Website kopieren. WordPress kann die Einbettung auch über die Beitrags-URL erkennen.",
     "status_embed_code": "Einbettungscode",
     "status_embed_open": "Originalbeitrag öffnen",
     "translation_translate": "Übersetzen",

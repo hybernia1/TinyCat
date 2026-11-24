@@ -53,7 +53,6 @@
       "comment_deleted": "O comentário foi excluído."
     },
     "status_embed": "Incorporar publicação",
-    "status_embed_help": "Copie este código HTML para um bloco HTML do seu site. O WordPress também pode descobrir a incorporação pelo URL da publicação.",
     "status_embed_code": "Código de incorporação",
     "status_embed_open": "Abrir publicação original",
     "translation_translate": "Traduzir",

@@ -69,6 +69,7 @@ Příklady:
 | Vytvoření uživatele | `/api/users/creation` | `POST /api/users` |
 | Vytvoření botího účtu | `/api/bots/accounts/creation` | `POST /api/bots/accounts` |
 | Nastavení | `/api/settings/editor` | `PATCH /api/settings` |
+| Připojení a plánování úloh | `/api/scheduler/configuration` | Obnova tokenu: `POST /api/scheduler/tokens` |
 | Poznámky k aktualizaci | `/api/updates/release-notes` | Pouze čtení z již dostupné cache |
 
 ## Koncepty a zavírání

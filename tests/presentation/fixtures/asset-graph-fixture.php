@@ -20,7 +20,7 @@ if ($mode === '--notifications-core') {
 }
 
 if ($mode === '--scheduler-help') {
-    echo json_encode(\TinyCat\Support\Components::render('scheduler/administration', ['cronToken' => 'fixture', 'cronUrl' => '/api/scheduler/executions', 'taskViews' => [['icon' => 'clock', 'title_label' => 'Fixture task', 'help_label' => 'Task explanation', 'schedule_label' => 'Scheduling explanation', 'cadence_label' => 'Every hour', 'query_url' => '/api/scheduler/triggers/fixture', 'http_command' => 'fixture-http', 'cli_command' => 'fixture-cli']]]), JSON_THROW_ON_ERROR);
+    echo json_encode(\TinyCat\Support\Components::render('scheduler/administration', ['token' => 'fixture', 'execution_url' => '/api/scheduler/executions', 'tasks' => [['id' => 'cleanup', 'query_url' => '/api/scheduler/triggers/fixture', 'http_command' => 'fixture-http', 'cli_command' => 'fixture-cli']]]), JSON_THROW_ON_ERROR);
     exit;
 }
 if ($mode === '--health-action') {

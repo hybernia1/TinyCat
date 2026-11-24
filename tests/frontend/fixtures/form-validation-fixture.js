@@ -96,17 +96,24 @@
   }
   if (mode === 'scheduler-help') {
     T.lifecycle.start();
-    const input=document.querySelector('[value="/api/scheduler/triggers/fixture"]'),details=input.closest('details'),summary=details.querySelector('summary');
-    check(!details.open&&!details.querySelector('.disclosure-body > [data-help]'),'Task details contain no floating help rows');
-    const titleHint=summary.querySelector('strong [data-help]'),scheduleHint=summary.querySelector('small [data-help]');
-    check(titleHint&&scheduleHint,'Hints are attached to the task and cadence captions');
-    titleHint.click();check(titleHint.getAttribute('aria-expanded')==='true'&&!details.open,'Clicking task help does not toggle its disclosure');
+    const dialog=T.scheduler.modal(new URL('/api/scheduler/configuration',location.href),{data:{token:'fixture',execution_url:'/api/scheduler/executions',tasks:[{id:'cleanup',query_url:'/api/scheduler/triggers/fixture',http_command:'fixture-http',cli_command:'fixture-cli'}]}},'scheduler-configuration-native');
+    T.dialog.open(dialog);
+    const panel=dialog.querySelector('.modal-panel'),height=panel.getBoundingClientRect().height;
+    const select=dialog.querySelector('[data-tab-select]');select.value='cleanup';select.dispatchEvent(new Event('change',{bubbles:true}));
+    check(dialog.dataset.modalSize==='workspace'&&panel.getBoundingClientRect().height===height,'Configuration tabs use the same stable workspace frame as account and settings');
+    check(!dialog.querySelector('header')&&!dialog.querySelector('.modal-body h3'),'Configuration panels omit repeated tab headings');
+    const input=dialog.querySelector('[data-configuration-section="cleanup"] [data-scheduler-url]'),section=input.closest('[data-configuration-section]');
+    check(!section.querySelector('details'),'Task sections contain no independent disclosure layout');
+    const titleHint=input.closest('.field').querySelector('[data-help]');
+    check(titleHint&&!section.querySelector('p [data-help]'),'Connection hints remain beside fields without scheduling cadence or its tooltip');
+    titleHint.click();check(titleHint.getAttribute('aria-expanded')==='true'&&!section.hidden,'Clicking task help preserves its section');
     titleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
-    scheduleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
-    check(scheduleHint.getAttribute('aria-expanded')==='true'&&!details.open,'Keyboard help preserves the disclosure state');
-    scheduleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
-    const queryHint=input.closest('label').querySelector('.label [data-help]');
-    check(queryHint&&input.getAttribute('aria-describedby').includes(queryHint.querySelector('[data-help-text]').id),'URL help describes its input beside the field caption');
+    titleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+    check(titleHint.getAttribute('aria-expanded')==='true'&&!section.hidden,'Keyboard help preserves its section');
+    titleHint.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+    const queryHint=input.closest('.field').querySelector('.label [data-help]');
+    check(queryHint&&input.closest('.field').querySelector('.code-block'),'URL help describes its input beside the field caption');
+    T.dialog.close(dialog,{history:false});
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,checks});return;
   }
   if (mode === 'field-types') {
@@ -217,7 +224,7 @@
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
   if (mode === 'health-shell') {
-    check(!T.adminDefinitions, 'The actual health bundle has no scheduler list declaration');
+    check(T.adminDefinitions && T.adminDefinitions['core.scheduler-runs'] && !T.adminDefinitions['core.health-history'], 'Health actions use the standard scheduler bundle without a separate history declaration');
     const toggle = T.dom.element('button',{'data-admin-nav-toggle':'',type:'button'});
     const sidebar = T.dom.element('aside',{'data-admin-sidebar':''});
     sidebar.append(T.dom.element('a',{href:'#'},'Account')); document.body.append(toggle,sidebar);
@@ -226,7 +233,7 @@
       if (pathname === '/api/settings/editor') return new Response(JSON.stringify({ok:true,status:200,code:"ok",params:{},message:null,data:window.settingsSchema,meta:{}}),{headers:{'Content-Type':'application/json'}});
       check(pathname === '/api/site-health/checks' && options.method === 'POST', 'Health checks use the shared POST transport');
       sessionStorage.setItem('health-ajax','true');
-      return new Response(JSON.stringify({ok:true,status:201,code:'health_check_finished',params:{},message:null,data:{execution:{ok:true},redirect:'/admin/site-health'},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}});
+      return new Response(JSON.stringify({ok:true,status:201,code:'health_check_finished',params:{},message:null,data:{execution:{ok:true},redirect:'/admin/cron?task=site-health'},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}});
     };
     T.lifecycle.start(); toggle.click();
     check(document.body.classList.contains('admin-nav-open'), 'Health hamburger navigation opens');
@@ -237,7 +244,7 @@
     const local = T.urls.local;
     let canonicalRedirect = false;
     T.urls.local = function (url,locale) {
-      if (url === '/admin/site-health') { canonicalRedirect = true; return '#health-complete'; }
+      if (url === '/admin/cron?task=site-health') { canonicalRedirect = true; return '#health-complete'; }
       return local(url,locale);
     };
     const form = document.querySelector('form[data-ajax-form]');
