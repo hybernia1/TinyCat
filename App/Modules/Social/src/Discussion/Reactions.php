@@ -57,17 +57,6 @@ final class Reactions
         }
     }
 
-    public static function status_set_user_liked(int $contentId, int $userId, bool $liked): void
-    {
-        if (\TinyCat\Database\Connection::get()->inTransaction()) { return; }
-        if ($contentId < 1 || $userId < 1) {
-            return;
-        }
-
-        $cache =& \TinyCat\Social\Discussion\Reactions::status_user_liked_cache();
-        $cache[$userId][$contentId] = $liked;
-    }
-
     public static function status_like_count(int $contentId): int
     {
         if ($contentId < 1) {

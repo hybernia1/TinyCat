@@ -22,7 +22,10 @@ final class Archive
     /** @return array{0: string, 1: list<string|int>} */
     public static function cursor(string $at = '', int $id = 0): array
     {
-        return \TinyCat\Database\Keyset::beforeDateId($at, $id, 'c.published_at', 'c.id');
+        $at = trim($at);
+        return $id > 0 && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $at) === 1
+            ? ['(c.published_at < ? OR (c.published_at = ? AND c.id < ?))', [$at, $at, $id]]
+            : ['', []];
     }
 
     public static function visible(\TinyCat\Database\Query $query, string $kind = 'post'): \TinyCat\Database\Query

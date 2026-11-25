@@ -41,11 +41,11 @@ final class Repository
         if ($draft->rejection !== null || $id < 1) { throw new \InvalidArgumentException('An update requires accepted text or an image.'); }
         $payload = $draft->payload();
         return Transactions::run(static function () use ($id, $payload, $links, $image, $removeImage, $actor): string {
-            $current = Connection::one(Connection::lockingSelect('SELECT * FROM social_posts WHERE id = ?'), [$id]);
+            $current = Connection::one('SELECT * FROM social_posts WHERE id = ? FOR UPDATE', [$id]);
             if (!self::canManage($current, $actor)) {
                 throw new \TinyCat\Http\HttpException(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden');
             }
-            $existingImage = Connection::one(Connection::lockingSelect('SELECT * FROM social_post_images WHERE content_id = ?'), [$id]);
+            $existingImage = Connection::one('SELECT * FROM social_post_images WHERE content_id = ? FOR UPDATE', [$id]);
             if (trim($payload['body']) === '' && $image === null && ($removeImage || $existingImage === null)) {
                 throw new \TinyCat\Http\HttpException(\TinyCat\Support\Localization::t('account.messages.status_required'), 422, 'status_required', ['errors' => ['body' => [\TinyCat\Support\Localization::t('account.messages.status_required')]]]);
             }
@@ -71,9 +71,9 @@ final class Repository
         if ($deleteImageFile && Connection::get()->inTransaction()) { throw new \LogicException('The outer transaction owner must defer image deletion until commit.'); }
         $path = Transactions::run(static function () use ($id, $beforeDelete): string {
             // Serialize with image replacement before reading any cleanup references.
-            Connection::one(Connection::lockingSelect('SELECT id FROM social_posts WHERE id = ?'), [$id]);
+            Connection::one('SELECT id FROM social_posts WHERE id = ? FOR UPDATE', [$id]);
             $terms = Tags::status_term_ids_for_content($id); $links = Links::status_link_ids_for_content($id);
-            $image = Connection::one(Connection::lockingSelect('SELECT * FROM social_post_images WHERE content_id = ?'), [$id]);
+            $image = Connection::one('SELECT * FROM social_post_images WHERE content_id = ? FOR UPDATE', [$id]);
             if ($beforeDelete !== null) { $beforeDelete(); }
             Connection::exec('DELETE FROM social_comment_likes WHERE comment_id IN (SELECT id FROM social_comments WHERE content_id = ?)', [$id]);
             Connection::delete('social_comments', ['content_id' => $id]);

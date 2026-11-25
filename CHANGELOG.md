@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.7 - 2026-11-25
+
+- Reduce repeated Core and Social reads and consolidate internal helpers without changing database schemas or configuration.
+- Keep search visibility checks bounded and file-reference cleanup aware of installed inactive owners; preserve feed parsing metadata and content.
+- Fix editor mention/tag suggestion ranges and synchronized text values. Use the server's authoritative following count after mutations.
+- Remove unused forwarding methods and the internal Database Keyset helper; signed updates delete its obsolete file.
+- Preserve accounts, content, uploads, module activation, task IDs and migration history. Publish matching independent signed Core and Social update/install packages.
+
 ## 8.0.6 - 2026-11-25
 
 - Simplify core and Social ownership: keep publication, discussion, import policies and media data in Social; share RSS and oEmbed presentation through core contracts.

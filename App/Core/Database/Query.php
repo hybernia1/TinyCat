@@ -9,8 +9,6 @@ final class Query
 {
     private string $baseSql;
     /** @var list<string> */
-    private array $joins = [];
-    /** @var list<string> */
     private array $wheres = [];
     /** @var array<string|int, mixed> */
     private array $params = [];
@@ -35,17 +33,6 @@ final class Query
 
         $this->baseSql = $sql;
         $this->params = $params;
-    }
-
-    public function join(string $sql): self
-    {
-        $sql = rtrim(trim($sql), ';');
-
-        if ($sql !== '') {
-            $this->joins[] = $sql;
-        }
-
-        return $this;
     }
 
     public function where(string $condition, mixed ...$params): self
@@ -144,10 +131,6 @@ final class Query
     private function buildSql(bool $includeOrderAndLimit): string
     {
         $sql = $this->baseSql;
-
-        if ($this->joins !== []) {
-            $sql .= "\n" . implode("\n", $this->joins);
-        }
 
         if ($this->wheres !== []) {
             $sql .= "\nWHERE " . implode("\n    AND ", array_map(

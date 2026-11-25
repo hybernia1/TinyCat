@@ -170,19 +170,4 @@ final class Languages
         return self::$sourcePackages;
     }
 
-    /**
-     * @param array<mixed> $codes
-     */
-    public static function language_options(?string $selected = null, ?array $codes = null): string
-    {
-        $selected = \TinyCat\Support\Languages::language_code((string) $selected);
-        $html = '';
-        $items = $codes === null ? \TinyCat\Support\Languages::language_packages() : \TinyCat\Support\Languages::languages($codes, false);
-
-        foreach ($items as $code => $label) {
-            $html .= '<option value="' . \TinyCat\Support\Html::e($code) . '"' . ($selected === $code ? ' selected' : '') . '>' . \TinyCat\Support\Html::e(strtoupper($code) . ' - ' . $label) . '</option>';
-        }
-
-        return $html;
-    }
 }

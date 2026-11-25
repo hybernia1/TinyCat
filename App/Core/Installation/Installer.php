@@ -320,9 +320,11 @@ final class Installer
     /** @return list<string> */
     public static function missing_tables(): array
     {
+        $tables = array_keys(self::schema_tables());
+        $existing = array_flip(\TinyCat\Database\Schema::app_existing_tables($tables));
         return array_values(array_filter(
-            array_keys(self::schema_tables()),
-            static fn (string $table): bool => !self::table_exists($table)
+            $tables,
+            static fn (string $table): bool => !isset($existing[$table])
         ));
     }
 }

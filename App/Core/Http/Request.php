@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Http;
 
-use InvalidArgumentException;
 use JsonException;
 use \TinyCat\Support\Values;
 
@@ -85,11 +84,6 @@ final class Request
         }
 
         return Values::get($input, $key, $default);
-    }
-
-    public function isPost(): bool
-    {
-        return $this->method() === 'POST';
     }
 
     public function wantsJson(): bool
@@ -200,7 +194,6 @@ final class Request
         return null;
     }
 
-    /** @return array<mixed> */
     /**
      * @return array<mixed>
      */
@@ -209,7 +202,6 @@ final class Request
         return $this->serverData ?? $_SERVER;
     }
 
-    /** @return array<mixed> */
     /**
      * @return array<mixed>
      */
@@ -218,7 +210,6 @@ final class Request
         return $this->queryData ?? $_GET;
     }
 
-    /** @return array<mixed> */
     /**
      * @return array<mixed>
      */
@@ -227,7 +218,6 @@ final class Request
         return $this->postData ?? $_POST;
     }
 
-    /** @return array<mixed> */
     /**
      * @return array<mixed>
      */

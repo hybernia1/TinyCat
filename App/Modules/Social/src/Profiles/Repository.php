@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Profiles;
 
-use Throwable;
-
 final class Repository
 {
     /**
@@ -31,8 +29,7 @@ final class Repository
                     muted_until,
                     muted_by,
                     muted_reason,
-                    created_at,
-                    updated_at
+                    created_at
                 FROM users'
         )
             ->where('id = ?', $id)

@@ -28,7 +28,7 @@ final class Api
             \TinyCat\Core\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs);
             return Result::from($data);
         });
-        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.moderation-reports', 'endpoint'), static fn (): Result => Result::from(self::adminReports()), 'admin');
+        $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.moderation-reports', 'endpoint'), static fn (): Result => Result::from(Reports::tc_admin_moderation_reports_payload()), 'admin');
         $api->get('/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Reports::detail((int) $p['id'])), 'admin');
         $api->patch('/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(self::adminReportReview((int) $p['id'])), 'admin');
         $api->post('/moderation/posts/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Result::from(self::adminPostPublish((int) $p['id'])), 'admin', 200);
@@ -41,14 +41,6 @@ final class Api
         return Reports::tc_admin_moderation_reports_payload() + [
             'message' => \TinyCat\Support\Localization::t('moderation.messages.content_published'), 'code' => 'content_published',
         ];
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    private static function adminReports(): array
-    {
-        return \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload();
     }
 
     /**

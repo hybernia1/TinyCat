@@ -175,7 +175,7 @@ import "../../../../Core/Ui/assets/component-builders.js";
       marker: marker,
       type: marker === "@" ? "user" : "tag",
       query: query,
-      start: getCaret - query.length - 1,
+      start: caret - query.length - 1,
       end: caret
     };
   }
@@ -212,7 +212,7 @@ import "../../../../Core/Ui/assets/component-builders.js";
       counter.classList.toggle("is-warning", remaining <= Math.max(20, Math.floor(max * 0.1)));
       counter.classList.toggle("is-limit", remaining === 0);
     }
-    emit(root, "tinycat:editor-sync", { value: getText });
+    emit(root, "tinycat:editor-sync", { value: text });
   }
   function hideSuggestions(root) {
     var box = getBox(root);

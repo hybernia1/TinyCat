@@ -24,12 +24,12 @@ final class Search
     public static function suggestions(string $query, int $limit = 5, array $selected = [], int $minimum = 2): array
     {
         $limit = max(1, min(12, $limit));
-        $query = self::normalize($query); $collections = []; $result = []; $authorized = [];
+        $query = self::normalize($query); $length = mb_strlen($query); $collections = []; $result = []; $authorized = [];
         foreach (self::sources() as $source) {
             if ($selected !== [] && !in_array($source->id, $selected, true)) { continue; }
             $collections[] = ['id' => $source->id, 'name' => ($source->label)()];
             $result[$source->id] = [];
-            if ($source->suggest !== null && mb_strlen($query) >= max(1, $minimum, $source->suggestMinimum ?? $source->minimum) && mb_strlen($query) <= 80) { self::authorize($source, 'suggest', $query, $authorized); $result[$source->id] = array_slice(($source->suggest)($query, $limit), 0, $limit); }
+            if ($source->suggest !== null && $length >= max(1, $minimum, $source->suggestMinimum ?? $source->minimum) && $length <= 80) { self::authorize($source, 'suggest', $query, $authorized); $result[$source->id] = array_slice(($source->suggest)($query, $limit), 0, $limit); }
         }
         return ['query' => $query, 'collections' => $collections] + $result;
     }
@@ -40,11 +40,12 @@ final class Search
         foreach ($cursor as $key => $value) {
             if (!is_scalar($value) || strlen((string) $value) > 120) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 400, 'bad_request'); }
         }
-        $query = self::normalize($query); $groups = []; $authorized = []; $found = $selected === '';
+        $limit = $selected === '' ? 5 : max(1, min(20, $limit));
+        $query = self::normalize($query); $length = mb_strlen($query); $groups = []; $authorized = []; $found = $selected === '';
         foreach (self::sources() as $source) {
             if ($selected !== '' && $source->id !== $selected) { continue; }
             $found = true; $page = ['items' => [], 'cursor' => []];
-            if (mb_strlen($query) >= $source->minimum && mb_strlen($query) <= 80) { self::authorize($source, 'query', $query, $authorized); $page = ($source->search)($query, $cursor, $selected === '' ? 5 : max(1, min(20, $limit))); }
+            if ($length >= $source->minimum && $length <= 80) { self::authorize($source, 'query', $query, $authorized); $page = ($source->search)($query, $cursor, $limit); }
             $next = $page['cursor'] === [] ? '' : '/search/all?' . http_build_query(['q' => $query, 'collection' => $source->id, 'cursor' => $page['cursor']]);
             $groups[] = ['id' => $source->id, 'name' => ($source->label)(), 'items' => $page['items'], 'next_url' => $next, 'done' => $next === ''];
         }
@@ -55,24 +56,33 @@ final class Search
     {
         $api = $api->forPublicWeb();
         $api->get('/search', static function (Request $r): array { $r->validated(['q' => 'string|max:80']); return self::suggestions((string) $r->input('q', '')); });
-        $api->get('/search/query', static function (Request $r): array { $r->validated(['q' => 'string|max:80', 'collection' => 'string|max:80', 'limit' => 'integer|min:1|max:20']); $cursor = $r->input('cursor', []); if (!is_array($cursor)) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 400, 'bad_request'); } return self::query((string) $r->input('q', ''), (string) $r->input('collection', ''), $cursor, (int) $r->input('limit', 20)); });
+        $api->get('/search/query', static fn (Request $r): array => self::requestQuery($r, true));
         Router::route(['GET', 'HEAD'], '/search/all', self::respond(...), publicWeb: true);
+    }
+    /** @return array{query: string, collections: list<array<string, mixed>>} */
+    private static function requestQuery(Request $r, bool $withLimit = false): array
+    {
+        $rules = ['q' => 'string|max:80', 'collection' => 'string|max:80'];
+        if ($withLimit) { $rules['limit'] = 'integer|min:1|max:20'; }
+        $r->validated($rules); $cursor = $r->input('cursor', []);
+        if (!is_array($cursor)) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 400, 'bad_request'); }
+        return self::query((string) $r->input('q', ''), (string) $r->input('collection', ''), $cursor, $withLimit ? (int) $r->input('limit', 20) : 20);
     }
     public static function respond(): void
     {
-        $r = Request::current(); $r->validated(['q' => 'string|max:80', 'collection' => 'string|max:80']); $cursor = $r->input('cursor', []);
-        if (!is_array($cursor)) { throw new \TinyCat\Http\HttpException('Invalid search cursor.', 400, 'bad_request'); }
-        $data = self::query((string) $r->input('q', ''), (string) $r->input('collection', ''), $cursor);
+        $r = Request::current(); $data = self::requestQuery($r);
         $selected = (string) $r->input('collection', '');
+        $sources = [];
         $navigation = [['label' => Localization::t('common.all'), 'icon' => 'search', 'url' => \TinyCat\Support\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query']])), 'active' => $selected === '']];
         foreach (self::sources() as $source) {
             $navigation[] = ['label' => ($source->label)(), 'icon' => $source->icon, 'url' => \TinyCat\Support\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query'], 'collection' => $source->id])), 'active' => $selected === $source->id];
-            foreach ($data['collections'] as &$group) {
-                if ($group['id'] === $source->id && $group['items'] !== [] && $source->render !== null) { $group['content'] = new \TinyCat\Support\Markup(($source->render)($group['items'])); }
-            }
-            unset($group);
+            $sources[$source->id] = $source;
         }
-        foreach ($data['collections'] as &$group) { $group['next_url'] = \TinyCat\Support\LocalUrls::resolve($group['next_url']); }
+        foreach ($data['collections'] as &$group) {
+            $source = $sources[$group['id']];
+            if ($group['items'] !== [] && $source->render !== null) { $group['content'] = new \TinyCat\Support\Markup(($source->render)($group['items'])); }
+            $group['next_url'] = \TinyCat\Support\LocalUrls::resolve($group['next_url']);
+        }
         unset($group);
         $title = Localization::t('common.search');
         $content = Components::render('ui/search-page', ['result' => $data]);

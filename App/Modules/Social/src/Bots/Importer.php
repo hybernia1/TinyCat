@@ -306,11 +306,6 @@ final class Importer
         });
     }
 
-    /** No claims, history, publication writes or scheduling changes.
-     * @param array<string, mixed> $source
-     * @param array<string, mixed> $item */
-    public function preview(array $source, array $item): \TinyCat\Social\Posts\PostCreation { return $this->target->prepare($source, $item); }
-
     /** @param array<string, mixed> $source
      * @param list<array<string, mixed>> $items
      * @return array<string, mixed> */
@@ -326,7 +321,7 @@ final class Importer
                 $history[$hash] = true;
                 $link = LinkParser::fromRaw((string) ($item['url'] ?? ''));
                 if ($this->store->duplicate($source, $link)) { continue; }
-                $entry = $this->preview($source, $item);
+                $entry = $this->target->prepare($source, $item);
                 $rejection = $entry->rejection;
                 if ($rejection !== null) { $skipped[] = ['item_hash' => $hash, 'code' => $rejection['code'], 'params' => $rejection['params']]; continue; }
                 $attachments = Session::withoutLock(fn (): array => $this->target->attachments($source, $item, $entry));

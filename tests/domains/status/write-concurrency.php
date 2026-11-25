@@ -51,7 +51,7 @@ try {
         $stateFile = $workspace . '/' . $token . '.json';
         $state = ['root' => $workspace, 'dsn' => $dsn . ';dbname=' . $name, 'user' => $dbConfig['user'], 'password' => $dbConfig['password'], 'id' => $id, 'operation' => $operation, 'body' => $body, 'image' => $newImage, 'ready' => $ready, 'result' => $result];
         $db->beginTransaction();
-        Connection::one(Connection::lockingSelect('SELECT id FROM social_posts WHERE id = ?'), [$id]);
+        Connection::one('SELECT id FROM social_posts WHERE id = ? FOR UPDATE', [$id]);
         file_put_contents($stateFile, json_encode($state, JSON_THROW_ON_ERROR));
         $worker = proc_open([PHP_BINARY, $root . '/tests/fixtures/status/write-worker.php', $stateFile], [0 => ['pipe', 'r'], 1 => ['file', $workspace . '/worker.log', 'a'], 2 => ['file', $workspace . '/worker.log', 'a']], $pipes);
         if (!is_resource($worker)) { throw new RuntimeException('Unable to start status worker'); }

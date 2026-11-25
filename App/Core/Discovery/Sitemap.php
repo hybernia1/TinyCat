@@ -23,7 +23,7 @@ final class Sitemap
     /** @return array<string, int> */
     public static function pageCounts(): array
     {
-        return Cache::rememberArray('sitemap-page-counts-v2-' . Resources::fingerprint(), 60, static function (): array { $result = []; foreach (self::sections() as $id) { $result[$id] = self::pageCount($id); } return $result; });
+        return Cache::rememberArray('sitemap-page-counts-v2-' . Resources::fingerprint(), 60, static function (): array { $result = []; foreach (Registrations::current()->entries->sitemaps as $section) { $result[$section->id] = (int) ceil(max(0, ($section->count)()) / 1000); } return $result; });
     }
     /** @return list<array{url: string, last_modified: ?string, image_url?: string}> */
     public static function entries(string $id, int $limit, int $offset): array { return (self::section($id)->entries)(max(1, min(1000, $limit)), max(0, $offset)); }

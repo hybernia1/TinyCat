@@ -105,14 +105,4 @@ final class Templates
         }
     }
 
-    public static function email_notification_templates_enabled(): bool
-    {
-        foreach ((array) (self::email_catalog('en')['templates'] ?? []) as $templateKey => $template) {
-            if (($template['channel'] ?? '') === 'notifications' && self::email_template_enabled($templateKey)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

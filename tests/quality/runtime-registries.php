@@ -134,6 +134,8 @@ $reject(static fn () => new Registries(['fixture.one' => new Contributions(notif
 $discoveryCalls = 0;
 $source = new \TinyCat\Core\Modules\SearchSource('fixture', static function () use (&$discoveryCalls): string { $discoveryCalls++; return 'Fixture'; }, static function () use (&$discoveryCalls): array { $discoveryCalls++; return ['items' => [], 'cursor' => []]; }, render: static function () use (&$discoveryCalls): string { $discoveryCalls++; return ''; });
 $section = new \TinyCat\Core\Modules\SitemapSection('fixture', static function () use (&$discoveryCalls): int { $discoveryCalls++; return 0; }, static function () use (&$discoveryCalls): array { $discoveryCalls++; return []; });
+$reject(static fn () => new \TinyCat\Core\Modules\SitemapSection('index', $section->count, $section->entries), 'The sitemap index sentinel cannot be registered as a section');
+$assert($discoveryCalls === 0 && \TinyCat\Core\Discovery\Sitemap::url() === '/sitemap.xml' && \TinyCat\Core\Discovery\Sitemap::url('fixture', 2) === '/sitemap-fixture-2.xml', 'Sitemap definition validation stays lazy and section URLs remain distinct from the index');
 $discovery = new Contributions(search: [$source], sitemaps: [$section]);
 $metadata = new Registries(['fixture.owner' => $discovery]);
 $assert($discoveryCalls === 0 && $metadata->owner('search', 'fixture') === 'fixture.owner' && $metadata->owner('sitemap', 'fixture') === 'fixture.owner', 'Discovery callbacks retain their owners and do not execute during registration');

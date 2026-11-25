@@ -10,7 +10,6 @@ use TinyCat\Core\Identity\Authentication;
 use TinyCat\Http\Request;
 use TinyCat\Http\Web;
 use TinyCat\Social\Moderation\Restrictions;
-use TinyCat\Social\Site\Pages as SitePages;
 use TinyCat\Core\Ui\Site as Presentation;
 use TinyCat\Social\Posts\Feed;
 use TinyCat\Social\Posts\ViewData as StatusViewData;
@@ -103,7 +102,7 @@ final class AuthorPages
         $authorAvatarEditModalId = Avatars::avatarEditModalId($authorId);
         $authorAvatarEditModalUrl = Avatars::avatarEditModalUrl($authorId);
         $authorFollowingModalId = Following::author_following_modal_id($authorId);
-        $authorFollowingModalUrl = Following::author_following_modal_url($authorId);
+        $authorFollowingModalUrl = Following::author_following_api_url($authorId);
         $authorFeedUrl = Profiles::author_feed_url($authorId, $archiveType);
         return ['page' => [
             'title' => Localization::t('public.author_archive_title', ['author' => $authorName]),
@@ -115,7 +114,7 @@ final class AuthorPages
                 'url' => $pageUrl,
                 'image' => $avatarUrl ?: Presentation::site_meta_image_url(),
                 'type' => 'profile',
-                'rss' => Profiles::author_feed_url($authorId, $archiveType),
+                'rss' => $authorFeedUrl,
                 'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
                 'jsonld' => $authorStructuredData,
             ],

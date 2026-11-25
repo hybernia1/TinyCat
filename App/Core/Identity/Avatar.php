@@ -153,7 +153,7 @@ final class Avatar
             }
             $database->beginTransaction();
             $ownsTransaction = true;
-            $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [$userId]);
+            $user = \TinyCat\Database\Connection::one('SELECT * FROM users WHERE id = ? FOR UPDATE', [$userId]);
             if ($user === null) { throw new RuntimeException('Avatar owner no longer exists.'); }
             $updated = $persist($user);
             if ($prepared !== null || $remove) {

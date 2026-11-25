@@ -61,14 +61,6 @@ final class Response
     }
 
     /**
-     * @param array<mixed> $meta
-     */
-    public static function created(mixed $data = null, ?string $message = 'Created.', array $meta = []): never
-    {
-        self::success($data, $message, 201, $meta);
-    }
-
-    /**
      * @param array<mixed> $details
      * @param array<mixed> $params
      */

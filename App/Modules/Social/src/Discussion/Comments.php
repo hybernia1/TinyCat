@@ -221,17 +221,6 @@ final class Comments
         }
     }
 
-    public static function status_set_comment_user_liked(int $commentId, int $userId, bool $liked): void
-    {
-        if (\TinyCat\Database\Connection::get()->inTransaction()) { return; }
-        if ($commentId < 1 || $userId < 1) {
-            return;
-        }
-
-        $cache =& \TinyCat\Social\Discussion\Reactions::status_comment_user_liked_cache();
-        $cache[$userId][$commentId] = $liked;
-    }
-
     public static function status_comment_like_count(int $commentId): int
     {
         if ($commentId < 1) {
@@ -276,22 +265,6 @@ final class Comments
         });
     }
 
-    public static function status_comment_mention(string $name): string
-    {
-        $handle = \TinyCat\Support\Text::slug($name);
-
-        return $handle !== '' ? '@' . $handle . ' ' : '';
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function &status_comments_cache(): array
-    {
-        static $cache = [];
-
-        return $cache;
-    }
 /** @return array<mixed> */
     public static function readHistory(string $json): array
     {

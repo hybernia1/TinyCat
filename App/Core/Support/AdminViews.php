@@ -29,18 +29,6 @@ final class AdminViews
         ]);
     }
 
-
-    public static function tc_admin_datetime(string $value): string
-    {
-        return $value === '' ? '' : \TinyCat\Support\Dates::displayDateTime($value);
-    }
-
-    public static function tc_admin_datetime_iso(string $value): string
-    {
-        return $value === '' ? '' : \TinyCat\Support\Dates::dateIso($value);
-    }
-
-
     public static function admin_filter_text(string $value, int $limit = 120): string
     {
         $value = trim((string) preg_replace('/\s+/', ' ', $value));
@@ -114,29 +102,6 @@ final class AdminViews
         $query = \TinyCat\Support\AdminViews::admin_list_query($params);
 
         return $path . ($query !== [] ? '?' . http_build_query($query) : '');
-    }
-
-    /**
-     * @param array<mixed> $params
-     * @return array<mixed>
-     */
-    public static function admin_per_page_view_data(
-        string $path,
-        string $target,
-        array $params,
-        int $selected,
-        string $historyPath
-    ): array {
-        $params['page'] = 1;
-
-        return [
-            'path' => $path,
-            'target' => $target,
-            'params' => $params,
-            'selected' => \TinyCat\Support\AdminViews::admin_per_page($selected),
-            'history_path' => $historyPath,
-            'options' => \TinyCat\Support\AdminViews::admin_per_page_options(),
-        ];
     }
 
     /**

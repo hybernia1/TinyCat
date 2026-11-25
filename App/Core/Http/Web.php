@@ -69,13 +69,4 @@ final class Web
 
         return $_GET[$key] ?? $default;
     }
-
-    public static function post(?string $key = null, mixed $default = null): mixed
-    {
-        if ($key === null) {
-            return $_POST;
-        }
-
-        return $_POST[$key] ?? $default;
-    }
 }

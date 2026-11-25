@@ -41,7 +41,7 @@ final class Administration
     public static function primaryId(): int
     {
         $sql = 'SELECT id FROM users WHERE role = ? ORDER BY created_at ASC, id ASC LIMIT 1';
-        return (int) Connection::value(Connection::get()->inTransaction() ? Connection::lockingSelect($sql) : $sql, ['admin']);
+        return (int) Connection::value(Connection::get()->inTransaction() ? $sql . ' FOR UPDATE' : $sql, ['admin']);
     }
 
     /** $primaryId is an explicit snapshot for one read payload; writes always read current locked policy. */
@@ -108,7 +108,7 @@ final class Administration
     {
         return Transactions::run(static function () use ($actor, $id, $input): array {
             self::requireAdmin($actor);
-            $user = Connection::one(Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [$id]);
+            $user = Connection::one('SELECT * FROM users WHERE id = ? FOR UPDATE', [$id]);
             if ($user === null) { throw new \DomainException('user_not_found'); }
             return self::persist($actor, $user, self::prepare($actor, $input, $user));
         });
@@ -143,7 +143,7 @@ final class Administration
     {
         self::requireAdmin($actor);
         Transactions::run(static function () use ($user, $active, $participants): void {
-            $locked = Connection::one(Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [(int) ($user['id'] ?? 0)]);
+            $locked = Connection::one('SELECT * FROM users WHERE id = ? FOR UPDATE', [(int) ($user['id'] ?? 0)]);
             if ($locked === null) { throw new \DomainException('user_not_found'); }
             if (!$active && self::isPrimary((int) $locked['id'])) { throw new \DomainException('super_admin_protected'); }
             Lifecycle::setActive($locked, $active, $participants);

@@ -11,7 +11,7 @@ final class Reports
     {
         \TinyCat\Database\Transactions::run(static function () use ($contentId): void {
             $content = \TinyCat\Database\Connection::one(
-                \TinyCat\Database\Connection::lockingSelect('SELECT id FROM social_posts WHERE id = ?'), [$contentId]
+                'SELECT id FROM social_posts WHERE id = ? FOR UPDATE', [$contentId]
             );
             if ($content === null) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
@@ -34,10 +34,10 @@ final class Reports
             $result = \TinyCat\Database\Transactions::run(static function () use ($reportId, $decision, $contentId): array {
                 // Serialize reviews for the same post even when moderators choose different reports.
                 $content = \TinyCat\Database\Connection::one(
-                    \TinyCat\Database\Connection::lockingSelect('SELECT * FROM social_posts WHERE id = ?'), [$contentId]
+                    'SELECT * FROM social_posts WHERE id = ? FOR UPDATE', [$contentId]
                 );
                 $report = \TinyCat\Database\Connection::one(
-                    \TinyCat\Database\Connection::lockingSelect('SELECT * FROM content_reports WHERE id = ? AND status = ? LIMIT 1'),
+                    'SELECT * FROM content_reports WHERE id = ? AND status = ? LIMIT 1 FOR UPDATE',
                     [$reportId, 'open']
                 );
 

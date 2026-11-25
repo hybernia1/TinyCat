@@ -103,7 +103,7 @@ if (is_file($configFile) && in_array('mysql', PDO::getAvailableDrivers(), true))
         $worker = null;
         try {
             $mysql->beginTransaction();
-            Connection::one(Connection::lockingSelect('SELECT id FROM users WHERE id = ?'), [1]);
+            Connection::one('SELECT id FROM users WHERE id = ? FOR UPDATE', [1]);
             Connection::update('users', ['avatar_version' => $versionA], ['id' => 1]);
             $worker = proc_open([PHP_BINARY, $source . '/tests/fixtures/accounts/avatar-storage-worker.php', $root, 'concurrent', $stateFile], [0 => ['pipe', 'r'], 1 => ['file', $root . '/worker.log', 'a'], 2 => ['file', $root . '/worker.log', 'a']], $pipes);
             if (!is_resource($worker)) { throw new RuntimeException('Cannot start concurrent avatar worker'); } fclose($pipes[0]);

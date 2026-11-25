@@ -2778,22 +2778,6 @@
       ]
     },
     {
-      "name": "publishing/body",
-      "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [
-        "publishing/attached-image",
-        "publishing/link",
-        "publishing/segments"
-      ],
-      "inputs": [
-        "item",
-        "item.image.url",
-        "item.links",
-        "item.segments",
-        "link"
-      ]
-    },
-    {
       "name": "publishing/comment-form",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
@@ -12696,15 +12680,12 @@
         "activationNotice",
         "listCard",
         "modalAction",
-        "tc_admin_datetime",
-        "tc_admin_datetime_iso",
         "admin_filter_text",
         "admin_per_page_options",
         "admin_per_page",
         "admin_page",
         "admin_list_query",
         "admin_list_url",
-        "admin_per_page_view_data",
         "admin_pagination_view_data"
       ]
     },

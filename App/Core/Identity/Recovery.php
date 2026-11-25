@@ -14,7 +14,7 @@ final class Recovery
         if (!Email::valid($email)) { return; }
         $token = bin2hex(random_bytes(32));
         $userId = \TinyCat\Database\Transactions::run(static function () use ($email, $token): int {
-            $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT id FROM users WHERE email = ? AND status = ? LIMIT 1'), [$email, 'active']);
+            $user = \TinyCat\Database\Connection::one('SELECT id FROM users WHERE email = ? AND status = ? LIMIT 1 FOR UPDATE', [$email, 'active']);
             if ($user === null) { return 0; }
             self::replaceToken((int) $user['id'], hash('sha256', $token), \TinyCat\Support\Dates::dateDb('+60 minutes'));
             return (int) $user['id'];
@@ -42,7 +42,7 @@ final class Recovery
         }
 
         \TinyCat\Database\Transactions::run(static function () use ($userId, $tokenHash, $expiresAt): void {
-            $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT id FROM users WHERE id = ?'), [$userId]);
+            $user = \TinyCat\Database\Connection::one('SELECT id FROM users WHERE id = ? FOR UPDATE', [$userId]);
             if ($user === null) { return; }
             \TinyCat\Database\Connection::delete('password_reset_tokens', ['user_id' => $userId]);
             \TinyCat\Database\Connection::insert('password_reset_tokens', [
@@ -65,7 +65,7 @@ final class Recovery
 
         return \TinyCat\Database\Transactions::run(static function () use ($userId, $tokenHash, $passwordHash, $usedAt): bool {
             // All credential operations lock the account before its reset tokens.
-            $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [$userId]);
+            $user = \TinyCat\Database\Connection::one('SELECT * FROM users WHERE id = ? FOR UPDATE', [$userId]);
             $consumed = \TinyCat\Database\Connection::exec(
                 'UPDATE password_reset_tokens
                     SET used_at = ?

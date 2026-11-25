@@ -47,7 +47,7 @@ final class Snapshots
             $emit('SET NAMES utf8mb4');
             $emit('SET FOREIGN_KEY_CHECKS=0');
             foreach (self::objects($pdo, 'BASE TABLE') as $name) {
-                $quoted = self::identifier($name);
+                $quoted = \TinyCat\Core\Database\Statements::quote($name);
                 $create = $pdo->query('SHOW CREATE TABLE ' . $quoted);
                 if ($create === false || !is_array($row = $create->fetch(PDO::FETCH_NUM)) || !is_string($row[1] ?? null)) { throw new RuntimeException('Cannot read table schema.'); }
                 $create->closeCursor();
@@ -58,17 +58,17 @@ final class Snapshots
                 $writable = []; $binary = []; $select = [];
                 foreach ($columns->fetchAll(PDO::FETCH_ASSOC) as $column) {
                     if (preg_match('/(?:VIRTUAL|STORED) GENERATED/i', (string) $column['Extra']) === 1) { continue; }
-                    $name = (string) $column['Field']; $identifier = self::identifier($name); $writable[] = $name;
+                    $name = (string) $column['Field']; $identifier = \TinyCat\Core\Database\Statements::quote($name); $writable[] = $name;
                     $binary[$name] = preg_match('/^(?:bit|binary|varbinary|tinyblob|blob|mediumblob|longblob)\b/i', (string) $column['Type']) === 1;
                     $select[] = $binary[$name] ? 'HEX(' . $identifier . ') AS ' . $identifier : $identifier;
                 }
                 $prefix = 'INSERT INTO ' . $quoted . ' (' . implode(', ', array_map(
-                    static fn (string $column): string => self::identifier($column), $writable
+                    static fn (string $column): string => \TinyCat\Core\Database\Statements::quote($column), $writable
                 )) . ') VALUES ';
                 self::writeRows($pdo, 'SELECT ' . implode(', ', $select) . ' FROM ' . $quoted, $prefix, $binary, $batchBytes, $emit);
             }
             foreach (self::objects($pdo, 'VIEW') as $name) {
-                $query = $pdo->query('SHOW CREATE VIEW ' . self::identifier($name));
+                $query = $pdo->query('SHOW CREATE VIEW ' . \TinyCat\Core\Database\Statements::quote($name));
                 $row = $query === false ? false : $query->fetch(PDO::FETCH_ASSOC);
                 if (!is_array($row) || !is_string($row['Create View'] ?? null)) { throw new RuntimeException('Cannot read view schema.'); }
                 $query->closeCursor();
@@ -77,7 +77,7 @@ final class Snapshots
             $triggers = $pdo->query('SHOW TRIGGERS');
             if ($triggers === false) { throw new RuntimeException('Cannot read database triggers.'); }
             foreach ($triggers->fetchAll(PDO::FETCH_ASSOC) as $trigger) {
-                $query = $pdo->query('SHOW CREATE TRIGGER ' . self::identifier((string) $trigger['Trigger']));
+                $query = $pdo->query('SHOW CREATE TRIGGER ' . \TinyCat\Core\Database\Statements::quote((string) $trigger['Trigger']));
                 $row = $query === false ? false : $query->fetch(PDO::FETCH_ASSOC);
                 if (!is_array($row) || !is_string($row['SQL Original Statement'] ?? null)) { throw new RuntimeException('Cannot read trigger schema.'); }
                 $query->closeCursor();
@@ -105,10 +105,10 @@ final class Snapshots
             $foreignKeys = (int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT @@FOREIGN_KEY_CHECKS')->fetchColumn();
             $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
             foreach (self::objects($pdo, 'VIEW') as $name) {
-                $pdo->exec('DROP VIEW ' . self::identifier($name));
+                $pdo->exec('DROP VIEW ' . \TinyCat\Core\Database\Statements::quote($name));
             }
             foreach (self::objects($pdo, 'BASE TABLE') as $name) {
-                $pdo->exec('DROP TABLE ' . self::identifier($name));
+                $pdo->exec('DROP TABLE ' . \TinyCat\Core\Database\Statements::quote($name));
             }
             $bytes = 0;
             $statements = 0;
@@ -238,11 +238,6 @@ final class Snapshots
         $names = [];
         foreach ($query->fetchAll(PDO::FETCH_NUM) as $row) { $names[] = (string) $row[0]; }
         return $names;
-    }
-
-    private static function identifier(string $name, bool $mysql = false): string
-    {
-        return \TinyCat\Core\Database\Statements::quote($name);
     }
 
     private static function dedicated(PDO $pdo): void

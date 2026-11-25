@@ -51,8 +51,10 @@ final class LinkParser extends \TinyCat\Core\Text\LinkParser
         $parts = explode('#', $url, 2);
         $query = self::cleanQuery((string) parse_url($parts[0], PHP_URL_QUERY));
         $url = explode('?', $parts[0], 2)[0] . ($query !== '' ? '?' . $query : '') . (isset($parts[1]) ? '#' . $parts[1] : '');
-        $link = parent::fromRaw($url);
-        if ($link === null) { return null; }
+        if ($url !== $link['normalized_url']) {
+            $link = parent::fromRaw($url);
+            if ($link === null) { return null; }
+        }
         $provider = Providers::classify($url);
         if ($provider !== null) {
             $url = $provider['normalized_url'];

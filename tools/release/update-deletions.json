@@ -2448,5 +2448,8 @@
     "App/Core/Identity/Readiness.php",
     "App/Core/Identity/GeneratedAvatar.php",
     "App/Core/Identity/avatar-options.json"
+  ],
+  "8.0.7": [
+    "App/Core/Database/Keyset.php"
   ]
 }

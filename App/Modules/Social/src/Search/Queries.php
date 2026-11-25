@@ -21,7 +21,8 @@ final class Queries
 
     public static function public_search_query_too_short(string $query): bool
     {
-        return self::length($query) < 2 || self::length($query) > self::MAX_QUERY_LENGTH;
+        $length = self::length($query);
+        return $length < 2 || $length > self::MAX_QUERY_LENGTH;
     }
 
     public static function public_search_excerpt(string $text, string $query, int $limit = 120): string
@@ -198,7 +199,8 @@ final class Queries
     public static function public_search_content_rows(string $query, int $limit, string $cursorAt = '', int $cursorId = 0, string $media = ''): array
     {
         $query = self::public_search_normalize_query($query);
-        if (self::length($query) < 3 || self::length($query) > self::MAX_QUERY_LENGTH) {
+        $length = self::length($query);
+        if ($length < 3 || $length > self::MAX_QUERY_LENGTH) {
             return [];
         }
         $limit = max(1, min(51, $limit));
@@ -315,7 +317,8 @@ final class Queries
         $type = in_array($type, ['content', 'users', 'tags'], true) ? $type : 'content';
         $limit = $limit > 0 ? min(50, $limit) : \TinyCat\Social\Posts\Feed::public_status_page_limit();
         $minimum = $type === 'content' ? 3 : 2;
-        $valid = self::length($query) >= $minimum && self::length($query) <= self::MAX_QUERY_LENGTH;
+        $length = self::length($query);
+        $valid = $length >= $minimum && $length <= self::MAX_QUERY_LENGTH;
         $items = [];
         $nextCursor = [];
         if ($valid) {

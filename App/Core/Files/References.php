@@ -8,9 +8,24 @@ use TinyCat\Support\Paths;
 /** Shared physical files remain protected by active and installed inactive data owners. */
 final class References
 {
+    private static ?Loader $operationOwners = null;
+
+    /** Share only the verified inventory during one synchronous operation, never DB references.
+     * @template T
+     * @param callable(): T $operation
+     * @return T */
+    public static function withOwners(callable $operation): mixed
+    {
+        if (self::$operationOwners !== null) { return $operation(); }
+        self::$operationOwners = self::owners();
+        try { return $operation(); }
+        finally { self::$operationOwners = null; }
+    }
+
     /** Installed data owners, including inactive modules; never initializes them. */
     public static function owners(): Loader
     {
+        if (self::$operationOwners !== null) { return self::$operationOwners; }
         $root = Paths::basePath(); $plan = Distribution::read($root); $state = Deployment::read($root);
         if (($plan === null) !== ($state === null)) { throw new \RuntimeException('Incomplete installed file-owner metadata.'); }
         $loader = $plan !== null && $state !== null

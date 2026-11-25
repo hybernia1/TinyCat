@@ -2,11 +2,8 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Site;
 
-use TinyCat\Http\Request;
-use TinyCat\Support\Cache;
 use TinyCat\Support\Localization;
 use TinyCat\Support\Components;
-use TinyCat\Core\Identity\Access;
 
 /** HTTP authorization, actions and prepared page composition. */
 final class Pages

@@ -10,7 +10,7 @@ final class Passwords
     public static function persist(int $userId, array $data, ?string $expectedPassword = null): int
     {
         return \TinyCat\Database\Transactions::run(static function () use ($userId, $data, $expectedPassword): int {
-            $locked = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [$userId]);
+            $locked = \TinyCat\Database\Connection::one('SELECT * FROM users WHERE id = ? FOR UPDATE', [$userId]);
             if ($locked === null || ($expectedPassword !== null && !hash_equals($expectedPassword, (string) $locked['password']))) { return 0; }
             $changed = \TinyCat\Database\Connection::update('users', $data, ['id' => $userId]);
             if ((array_key_exists('password', $data) && $data['password'] !== $locked['password'])

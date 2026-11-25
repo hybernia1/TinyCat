@@ -195,6 +195,11 @@ if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
     try { Connection::insert('records', ['name' => 'first']); } catch (PDOException $exception) {
         $assert(Connection::uniqueViolation($exception) && \TinyCat\Database\Connection::uniqueViolation($exception), 'Unique constraint handling is shared.');
     }
+    foreach ([['23505', 0], ['23000', 1555], ['23000', 2067], ['23000', 1048]] as [$state, $driverCode]) {
+        $exception = new PDOException('Unique constraint failure', (int) $state);
+        $exception->errorInfo = [$state, $driverCode, 'Unique constraint failure'];
+        $assert(!Connection::uniqueViolation($exception), 'Only MySQL duplicate keys are recognized as unique violations.');
+    }
     $effects = [];
     $failure = new RuntimeException('injected after-commit failure');
     try {
@@ -278,6 +283,15 @@ if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
             && !in_array('SELECT 1', $probe->reads, true), 'Schema inspection proves connectivity with one query and no redundant ping.');
         $status = \TinyCat\Database\Schema::app_db_status(['missing_table']);
         $assert($status['connected'] && $status['missing_tables'] === ['missing_table'] && !$status['ready'], 'Missing tables still produce the installation readiness failure.');
+        $requiredTables = new ReflectionProperty(\TinyCat\Database\Schema::class, 'requiredTables');
+        $originalTables = $requiredTables->getValue();
+        try {
+            $requiredTables->setValue(null, ['missing_first', 'ready_table', 'missing_last']);
+            $probe->reads = [];
+            $assert(\TinyCat\Core\Installation\Installer::missing_tables() === ['missing_first', 'missing_last'] && count($probe->reads) === 1, 'Installer batches table inspection and preserves missing table order.');
+        } finally {
+            $requiredTables->setValue(null, $originalTables);
+        }
         $probe->reads = [];
         $status = \TinyCat\Database\Schema::app_db_status([]);
         $assert($status['connected'] && $probe->reads === ['SELECT 1'], 'An empty schema requirement still checks connectivity.');

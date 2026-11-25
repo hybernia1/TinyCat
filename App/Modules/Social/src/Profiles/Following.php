@@ -173,11 +173,6 @@ final class Following
         return 'following-modal-' . max(0, $authorId);
     }
 
-    public static function author_following_modal_url(int $authorId, string $cursorAt = '', int $cursorId = 0): string
-    {
-        return \TinyCat\Social\Profiles\Following::author_following_api_url($authorId, $cursorAt, $cursorId);
-    }
-
     public static function author_following_api_url(int $authorId, string $cursorAt = '', int $cursorId = 0): string
     {
         return '/api/profiles/' . $authorId . '/following?' . http_build_query(['cursor_at' => $cursorAt, 'cursor_id' => $cursorId]);

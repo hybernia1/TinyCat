@@ -51,7 +51,6 @@
       "App/Modules/Social/assets/status/index.js",
       "App/Modules/Social/assets/status/comment-pagination.js"
     ],
-    "uses": ["ui.switcher"],
     "styles": [
       "App/Modules/Social/assets/status/styles/status-email-notice.css",
       "App/Modules/Social/assets/status/styles/status-feed.css",
@@ -136,6 +135,7 @@
       "App/Modules/Social/assets/embed/embed.js"
     ],
     "uses": [
+      "ui.switcher",
       "publishing.presentation",
       "publishing.discussion-base",
       "ui.form-constraints"

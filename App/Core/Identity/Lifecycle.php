@@ -27,7 +27,7 @@ final class Lifecycle
         // This operation owns the commit boundary for irreversible file cleanup.
         if (Connection::get()->inTransaction()) { throw new \LogicException('Account deletion must own its transaction.'); }
         return Transactions::run(static function () use ($userId, $participants): ?array {
-            $user = Connection::one(Connection::lockingSelect('SELECT * FROM users WHERE id = ? LIMIT 1'), [$userId]);
+            $user = Connection::one('SELECT * FROM users WHERE id = ? LIMIT 1 FOR UPDATE', [$userId]);
             if ($user === null) { return null; }
             $effects = [];
             foreach ($participants as $participant) { $effects[] = ($participant->prepareDelete)($user); }

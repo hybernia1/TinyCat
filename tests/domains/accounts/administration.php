@@ -87,7 +87,7 @@ $assert((int) Connection::value("SELECT id FROM users WHERE role = 'admin' ORDER
 $assert((int) Connection::value('SELECT COUNT(*) FROM users') > 0, 'Establish an ordinary consistent-read snapshot');
 $contender = \tinycat_test_mysql_connect($databaseConfig);
 $contender->exec("UPDATE users SET role = 'admin', status = 'active' WHERE id = 5");
-$lockedPromotion = Connection::one(Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [5]);
+$lockedPromotion = Connection::one('SELECT * FROM users WHERE id = ? FOR UPDATE', [5]);
 try {
     $invalid(static fn () => Administration::persist($actor, $lockedPromotion, $preparedBeforePromotion), $protected);
     $denied(static fn () => Administration::setActive($actor, $lockedPromotion, false), 'super_admin_protected');

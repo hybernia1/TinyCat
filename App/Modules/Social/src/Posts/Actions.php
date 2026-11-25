@@ -202,7 +202,7 @@ final class Actions
             // Use the same parent lock as review/publication so a late report cannot
             // reopen a post while a moderator is hiding it.
             $content = \TinyCat\Database\Connection::one(
-                \TinyCat\Database\Connection::lockingSelect('SELECT * FROM social_posts WHERE kind = \'post\' AND id = ?'), [$contentId]
+                'SELECT * FROM social_posts WHERE kind = \'post\' AND id = ? FOR UPDATE', [$contentId]
             );
             if (!\TinyCat\Social\Posts\Repository::visible($content)) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
@@ -272,7 +272,7 @@ final class Actions
 
         try {
             \TinyCat\Database\Transactions::run(static function () use ($contentId, $user, $draft, $preparedLinks, $newImage, $removeImage, $body, &$oldPath): void {
-                $current = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM social_posts WHERE id = ?'), [$contentId]);
+                $current = \TinyCat\Database\Connection::one('SELECT * FROM social_posts WHERE id = ? FOR UPDATE', [$contentId]);
                 // Repository rechecks existence, kind, ownership and the current image under this lock.
                 $oldPath = Repository::update($contentId, $draft, $preparedLinks, $newImage, $removeImage, $user);
                 if (!\TinyCat\Core\Identity\Roles::isAdmin($user)) { self::status_json_require_not_muted($user); }
@@ -326,29 +326,6 @@ final class Actions
 
             'message' => \TinyCat\Support\Localization::t('account.messages.status_deleted'), 'code' => 'status_deleted',
         ];
-    }
-
-    public static function status_login_url(string $fragment = '', string $fallback = ''): string
-    {
-        $next = \TinyCat\Core\Identity\Login::auth_safe_next_url($fallback);
-
-        if ($next === '') {
-            $next = \TinyCat\Core\Identity\Login::auth_safe_next_url((string) ($_SERVER['REQUEST_URI'] ?? \TinyCat\Http\Request::current()->path()));
-        }
-
-        if ($next === '') {
-            $next = \TinyCat\Core\Identity\Login::auth_referer_next_url();
-        }
-
-        if ($next === '') {
-            $next = '/';
-        }
-
-        if ($fragment !== '' && str_starts_with($fragment, '#') && !str_contains($next, '#')) {
-            $next = \TinyCat\Core\Identity\Login::auth_safe_next_url($next . $fragment) ?: $next;
-        }
-
-        return '/login?next=' . rawurlencode($next);
     }
 
     private static function commentInput(): string

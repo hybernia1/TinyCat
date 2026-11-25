@@ -133,6 +133,12 @@ final class Task
      */
     public static function runTask(string $task, int $batchSize): array
     {
+        return \TinyCat\Core\Files\References::withOwners(static fn (): array => self::executeTask($task, $batchSize));
+    }
+
+    /** @return array<mixed> */
+    private static function executeTask(string $task, int $batchSize): array
+    {
         $batchSize = self::batchSize($batchSize);
         $startedAt = hrtime(true);
         $entries = self::maintenanceTasks();

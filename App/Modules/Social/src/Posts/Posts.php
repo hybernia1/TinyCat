@@ -7,11 +7,6 @@ final class Posts
 {
     public const REPORT_NOTE_MAX_LENGTH = 1000;
 
-    public static function status_anchor(int $id): string
-    {
-        return $id > 0 ? 'status-' . $id : '';
-    }
-
     public static function status_url(int $id): string
     {
         return \TinyCat\Support\LocalUrls::resolve($id > 0 ? '/status/' . $id : '/');
@@ -32,8 +27,9 @@ final class Posts
             'users' => [],
         ];
 
-        $suggestions = \TinyCat\Core\Discovery\Search::suggestions($query, $limit, ['tags', 'users'], minimum: 1);
-        if ($type === 'all' || $type === 'tag') {
+        $selected = match ($type) { 'tag' => ['tags'], 'user' => ['users'], default => ['tags', 'users'] };
+        $suggestions = \TinyCat\Core\Discovery\Search::suggestions($query, $limit, $selected, minimum: 1);
+        if (in_array('tags', $selected, true)) {
             $seen = [];
             $tagQuery = \TinyCat\Social\Posts\Tags::normalizeTag($query);
 
@@ -67,7 +63,7 @@ final class Posts
             $payload['tags'] = array_slice($payload['tags'], 0, $limit);
         }
 
-        if (($type === 'all' || $type === 'user') && $query !== '') {
+        if (in_array('users', $selected, true) && $query !== '') {
             foreach (($suggestions['users'] ?? []) as $user) {
                 $username = \TinyCat\Core\Identity\Usernames::normalize((string) ($user['title'] ?? $user['username'] ?? ''));
 

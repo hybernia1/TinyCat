@@ -182,21 +182,6 @@ final class Actions
     }
     /**
      * @param array<mixed> $filters
-     * @param array<mixed> $pagination
-     * @return array<mixed>
-     */
-    public static function tc_admin_users_list_params(?array $filters = null, ?array $pagination = null): array
-    {
-        $filters ??= \TinyCat\Core\Identity\Actions::tc_admin_users_filters();
-        $params = $filters;
-        $params['per_page'] = (int) ($pagination['per_page'] ?? \TinyCat\Support\AdminViews::admin_per_page());
-        $params['page'] = (int) ($pagination['page'] ?? \TinyCat\Support\AdminViews::admin_page());
-
-        return $params;
-    }
-
-    /**
-     * @param array<mixed> $filters
      * @return array<mixed>
      */
     public static function tc_admin_users_page(?array $filters = null, ?int $total = null): array

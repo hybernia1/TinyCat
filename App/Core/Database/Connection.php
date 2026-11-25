@@ -91,11 +91,6 @@ final class Connection
         return strtr($text, ['!' => '!!', '%' => '!%', '_' => '!_']);
     }
 
-    public static function lockingSelect(string $sql): string
-    {
-        return $sql . ' FOR UPDATE';
-    }
-
     /**
      * @param array<mixed> $params
      */
@@ -377,12 +372,7 @@ final class Connection
         $driverCode = (int) ($exception->errorInfo[1] ?? 0);
         $message = strtolower($exception->getMessage());
 
-        return $sqlState === '23505'
-            || $driverCode === 1062
-            || in_array($driverCode, [1555, 2067], true)
-            || ($sqlState === '23000' && (
-                str_contains($message, 'unique constraint')
-                || str_contains($message, 'duplicate entry')
-            ));
+        return $driverCode === 1062
+            || ($sqlState === '23000' && str_contains($message, 'duplicate entry'));
     }
 }

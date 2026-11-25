@@ -231,8 +231,6 @@ function exerciseStatus(): void
         }
 
         \TinyCat\Social\Discussion\Comments::status_comment_can_delete($comment, $user);
-        \TinyCat\Social\Posts\ViewData::status_comment_edit_modal_url((int) $comment['id'], (int) $comment['content_id']);
-        \TinyCat\Social\Posts\ViewData::status_comment_history_modal_url((int) $comment['id'], (int) $comment['content_id']);
         \TinyCat\Social\Discussion\Comments::status_comment_user_liked((int) ($comment['id'] ?? 0), (int) ($user['id'] ?? 0));
         array_push($pending, ...(array) ($comment['replies'] ?? []));
     }

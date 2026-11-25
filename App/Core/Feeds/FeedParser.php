@@ -9,6 +9,9 @@ use TinyCat\Http\Client;
 /** Syndication normalization, independent of import history and post storage. */
 final class FeedParser
 {
+    private const MAX_BYTES = 2097152;
+    private const MAX_ITEMS = 100;
+    private const MAX_ATTACHMENTS = 8;
     private const ATOM = 'http://www.w3.org/2005/Atom';
     private const MEDIA = 'http://search.yahoo.com/mrss/';
     private const CONTENT = 'http://purl.org/rss/1.0/modules/content/';
@@ -25,7 +28,7 @@ final class FeedParser
     /** @return array{format: string, url: string, title: string, items: list<array<string, mixed>>, sources: list<array<string, string>>} */
     public static function inspect(string $url): array
     {
-        $response = Client::get($url, 2097152, [
+        $response = Client::get($url, self::MAX_BYTES, [
             'accept' => 'application/feed+json,application/rss+xml,application/atom+xml,application/xml,text/xml,text/html;q=0.5', 'timeout' => 10,
         ]);
         if ($response === null) { throw new \RuntimeException('Feed could not be downloaded.'); }
@@ -37,40 +40,47 @@ final class FeedParser
     {
         return Client::withHostChecks(static function () use ($body, $url): array {
             $format = 'unknown'; $title = ''; $sources = [];
-            if (strlen($body) <= 2097152 && str_starts_with(ltrim($body, "\xEF\xBB\xBF \r\n\t"), '{')) {
-                $json = json_decode(ltrim($body, "\xEF\xBB\xBF"), true, 32);
-                if (is_array($json) && in_array($json['version'] ?? '', ['https://jsonfeed.org/version/1', 'https://jsonfeed.org/version/1.1'], true)) {
-                    $format = $json['version'] === 'https://jsonfeed.org/version/1.1' ? 'json_feed_1_1' : 'json_feed_1';
-                    $title = self::text(self::string($json['title'] ?? ''), 120);
-                }
-            } elseif (strlen($body) <= 2097152 && stripos($body, '<!DOCTYPE') === false && function_exists('simplexml_load_string')) {
-                $previous = libxml_use_internal_errors(true);
-                try { $xml = simplexml_load_string($body, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA); }
-                finally { libxml_clear_errors(); libxml_use_internal_errors($previous); }
-                if ($xml instanceof SimpleXMLElement) {
-                    $format = match ($xml->getName()) { 'rss' => 'rss', 'feed' => 'atom', 'RDF' => 'rss_1', default => 'unknown' };
-                    $title = self::text((string) ($xml->channel->title ?? $xml->title ?? $xml->head->title), 120);
-                }
+            $feed = self::decode($body);
+            if (is_array($feed) && in_array($feed['version'] ?? '', ['https://jsonfeed.org/version/1', 'https://jsonfeed.org/version/1.1'], true)) {
+                $format = $feed['version'] === 'https://jsonfeed.org/version/1.1' ? 'json_feed_1_1' : 'json_feed_1';
+                $title = self::text(self::string($feed['title'] ?? ''), 120);
+            } elseif ($feed instanceof SimpleXMLElement) {
+                $format = match ($feed->getName()) { 'rss' => 'rss', 'feed' => 'atom', 'RDF' => 'rss_1', default => 'unknown' };
+                $title = self::text((string) ($feed->channel->title ?? $feed->title ?? $feed->head->title), 120);
             }
             if ($format === 'unknown') { $sources = self::discovery($body, $url); if ($sources !== []) { $format = 'discovery'; } }
-            return ['format' => $format, 'url' => $url, 'title' => $title, 'items' => self::parse($body, $url), 'sources' => $sources];
+            $items = is_array($feed) ? self::jsonItems($feed, $url) : ($feed instanceof SimpleXMLElement ? self::items($feed, $url) : []);
+            return ['format' => $format, 'url' => $url, 'title' => $title, 'items' => $items, 'sources' => $sources];
         });
     }
 
     /** @return list<array<string, mixed>> */
     public static function parse(string $xml, string $baseUrl = ''): array
     {
-        return Client::withHostChecks(static fn (): array => str_starts_with(ltrim($xml, "\xEF\xBB\xBF \r\n\t"), '{') ? self::jsonItems($xml, $baseUrl) : self::items($xml, $baseUrl));
+        return Client::withHostChecks(static function () use ($xml, $baseUrl): array {
+            $feed = self::decode($xml);
+            return is_array($feed) ? self::jsonItems($feed, $baseUrl) : ($feed instanceof SimpleXMLElement ? self::items($feed, $baseUrl) : []);
+        });
+    }
+
+    /** @return array<mixed>|SimpleXMLElement|null */
+    private static function decode(string $body): array|SimpleXMLElement|null
+    {
+        if ($body === '' || strlen($body) > self::MAX_BYTES) { return null; }
+        if (str_starts_with(ltrim($body, "\xEF\xBB\xBF \r\n\t"), '{')) {
+            $feed = json_decode(ltrim($body, "\xEF\xBB\xBF"), true, 32);
+            return is_array($feed) ? $feed : null;
+        }
+        if (stripos($body, '<!DOCTYPE') !== false || !function_exists('simplexml_load_string')) { return null; }
+        $previous = libxml_use_internal_errors(true);
+        try { $feed = simplexml_load_string($body, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA); }
+        finally { libxml_clear_errors(); libxml_use_internal_errors($previous); }
+        return $feed instanceof SimpleXMLElement ? $feed : null;
     }
 
     /** @return list<array<string, mixed>> */
-    private static function items(string $xml, string $baseUrl): array
+    private static function items(SimpleXMLElement $feed, string $baseUrl): array
     {
-        if ($xml === '' || strlen($xml) > 2097152 || stripos($xml, '<!DOCTYPE') !== false || !function_exists('simplexml_load_string')) { return []; }
-        $previous = libxml_use_internal_errors(true);
-        try { $feed = simplexml_load_string($xml, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA); }
-        finally { libxml_clear_errors(); libxml_use_internal_errors($previous); }
-        if (!$feed instanceof SimpleXMLElement) { return []; }
         $atom = $feed->getName() === 'feed';
         $rdf = $feed->getName() === 'RDF' && isset($feed->children('http://purl.org/rss/1.0/')->channel);
         if (!$atom && !$rdf && ($feed->getName() !== 'rss' || !isset($feed->channel))) { return []; }
@@ -88,7 +98,7 @@ final class FeedParser
         $items = [];
         $seen = 0;
         foreach ($nodes as $node) {
-            if (++$seen > 100) { break; }
+            if (++$seen > self::MAX_ITEMS) { break; }
             $entry = $atom ? $node->children(self::ATOM) : ($rdf ? $node->children('http://purl.org/rss/1.0/') : $node);
             $base = self::base($baseUrl, $node);
             $audio = \TinyCat\Core\Links\Audio::enclosure($node, $base);
@@ -143,8 +153,8 @@ final class FeedParser
             $published = trim((string) ($entry->pubDate ?: $entry->published ?: $entry->updated ?: $node->children('http://purl.org/dc/elements/1.1/')->date));
             $timestamp = self::timestamp($published);
             $items[] = [
-                'guid' => $guid, 'title' => $title, 'description' => self::text($descriptionSource, 2097152), 'description_html' => $descriptionSource,
-                'content' => self::text(trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource), 2097152),
+                'guid' => $guid, 'title' => $title, 'description' => self::text($descriptionSource, self::MAX_BYTES), 'description_html' => $descriptionSource,
+                'content' => self::text(trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource), self::MAX_BYTES),
                 'content_html' => trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource),
                 'url' => Client::isSafeUrl($link) ? $link : '',
                 'image_url' => $images[0] ?? '', 'image_urls' => $images,
@@ -169,31 +179,30 @@ final class FeedParser
         return $value !== '' && strlen($value) <= 100 && !str_contains($value, "\0") ? strtotime($value) : false;
     }
 
-    /** @return list<array<string, mixed>> */
-    private static function jsonItems(string $body, string $base): array
+    /** @param array<mixed> $feed
+     * @return list<array<string, mixed>> */
+    private static function jsonItems(array $feed, string $base): array
     {
-        if (strlen($body) > 2097152) { return []; }
-        $feed = json_decode(ltrim($body, "\xEF\xBB\xBF"), true, 32);
-        if (!is_array($feed) || !in_array($feed['version'] ?? '', ['https://jsonfeed.org/version/1', 'https://jsonfeed.org/version/1.1'], true)
+        if (!in_array($feed['version'] ?? '', ['https://jsonfeed.org/version/1', 'https://jsonfeed.org/version/1.1'], true)
             || !is_string($feed['title'] ?? null) || !is_array($feed['items'] ?? null) || !array_is_list($feed['items'])) { return []; }
         $items = [];
-        foreach (array_slice($feed['items'], 0, 100) as $item) {
+        foreach (array_slice($feed['items'], 0, self::MAX_ITEMS) as $item) {
             if (!is_array($item) || !is_string($item['id'] ?? null) || $item['id'] === '' || strlen($item['id']) > 8192
                 || (!is_string($item['content_text'] ?? null) && !is_string($item['content_html'] ?? null))) { continue; }
             $html = self::string($item['content_html'] ?? '');
             $audio = '';
             $urls = [self::string($item['image'] ?? ''), self::string($item['banner_image'] ?? '')];
-            foreach (array_slice(is_array($item['attachments'] ?? null) ? $item['attachments'] : [], 0, 8) as $attachment) {
+            foreach (array_slice(is_array($item['attachments'] ?? null) ? $item['attachments'] : [], 0, self::MAX_ATTACHMENTS) as $attachment) {
                 if (is_array($attachment) && $audio === '' && str_starts_with(self::string($attachment['mime_type'] ?? ''), 'audio/')) {
                     $audio = \TinyCat\Core\Links\Audio::remote(Client::absoluteUrl($base, self::string($attachment['url'] ?? '')));
                 }
                 if (is_array($attachment) && str_starts_with(self::string($attachment['mime_type'] ?? ''), 'image/')) { $urls[] = self::string($attachment['url'] ?? ''); }
             }
             $images = [];
-            $embeddedImages = class_exists(SimpleXMLElement::class) ? self::images(new SimpleXMLElement('<item/>'), $base, [$html]) : [];
+            $embeddedImages = class_exists(SimpleXMLElement::class) ? self::htmlImages([$html], $base, []) : [];
             foreach (array_merge($urls, $embeddedImages) as $url) {
                 $url = Client::absoluteUrl($base, $url);
-                if ($url !== '' && strlen($url) <= 2048 && count($images) < 8 && Client::isSafeUrl($url) && !in_array($url, $images, true)) { $images[] = $url; }
+                if ($url !== '' && strlen($url) <= 2048 && count($images) < self::MAX_ATTACHMENTS && Client::isSafeUrl($url) && !in_array($url, $images, true)) { $images[] = $url; }
             }
             $url = Client::absoluteUrl($base, self::string($item['url'] ?? $item['external_url'] ?? ''));
             if ($url === '') { $url = $audio; }
@@ -209,9 +218,9 @@ final class FeedParser
             $description = self::string($item['summary'] ?? $item['content_text'] ?? $html);
             $fullText = self::string($item['content_text'] ?? '');
             $items[] = ['guid' => $item['id'], 'title' => self::text(self::string($item['title'] ?? ''), 500),
-                'description' => isset($item['summary']) || isset($item['content_text']) ? $description : self::text($html, 2097152),
+                'description' => isset($item['summary']) || isset($item['content_text']) ? $description : self::text($html, self::MAX_BYTES),
                 'description_html' => !isset($item['summary']) && !isset($item['content_text']) ? $html : '',
-                'content' => $fullText !== '' ? $fullText : self::text($html, 2097152), 'content_html' => $html,
+                'content' => $fullText !== '' ? $fullText : self::text($html, self::MAX_BYTES), 'content_html' => $html,
                 'url' => Client::isSafeUrl($url) ? $url : '',
                 'author' => self::text(implode(', ', array_filter($names)), 200), 'categories' => $tags,
                 'image_url' => $images[0] ?? '', 'image_urls' => $images,
@@ -225,7 +234,7 @@ final class FeedParser
     /** @return list<array<string, string>> */
     private static function discovery(string $body, string $base): array
     {
-        if ($base === '' || strlen($body) > 2097152 || !class_exists(\Dom\HTMLDocument::class)) { return []; }
+        if ($base === '' || strlen($body) > self::MAX_BYTES || !class_exists(\Dom\HTMLDocument::class)) { return []; }
         $previous = libxml_use_internal_errors(true);
         try {
             $dom = \Dom\HTMLDocument::createFromString($body, LIBXML_NOERROR | LIBXML_COMPACT);
@@ -262,7 +271,7 @@ final class FeedParser
         $candidates = [];
         $add = static function (string $url, string $imageBase) use (&$candidates): void {
             $url = Client::absoluteUrl($imageBase, html_entity_decode(trim($url), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-            if ($url !== '' && strlen($url) <= 2048 && count($candidates) < 8 && !in_array($url, $candidates, true) && Client::isSafeUrl($url)) { $candidates[] = $url; }
+            if ($url !== '' && strlen($url) <= 2048 && count($candidates) < self::MAX_ATTACHMENTS && !in_array($url, $candidates, true) && Client::isSafeUrl($url)) { $candidates[] = $url; }
         };
         $media = $node->children(self::MEDIA);
         $containers = [[$media, $base]];
@@ -292,6 +301,18 @@ final class FeedParser
                 $add((string) $image->attributes()['href'], self::base($base, $image));
             }
         }
+        return self::htmlImages($html, $base, $candidates);
+    }
+
+    /** @param list<string> $html
+     * @param list<string> $candidates
+     * @return list<string> */
+    private static function htmlImages(array $html, string $base, array $candidates): array
+    {
+        $add = static function (string $url, string $imageBase) use (&$candidates): void {
+            $url = Client::absoluteUrl($imageBase, html_entity_decode(trim($url), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            if ($url !== '' && strlen($url) <= 2048 && count($candidates) < self::MAX_ATTACHMENTS && !in_array($url, $candidates, true) && Client::isSafeUrl($url)) { $candidates[] = $url; }
+        };
         foreach ($html as $source) {
             if ($source === '' || !class_exists(\Dom\HTMLDocument::class)) { continue; }
             $previous = libxml_use_internal_errors(true);

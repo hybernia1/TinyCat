@@ -9,6 +9,15 @@ $jsonFeed = ['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Photo 
 $jsonItems = \TinyCat\Core\Feeds\FeedParser::parse(json_encode($jsonFeed), 'https://93.184.216.34/feed.json');
 $assert(array_column($jsonItems, 'guid') === ['old', 'new'], 'JSON Feed items retain stable IDs and chronological import order.');
 $assert($jsonItems[0]['image_url'] === 'https://93.184.216.34/old.png' && $jsonItems[0]['description'] === 'Older text', 'JSON Feed HTML content supplies safe images and normalized descriptions.');
+$jsonBody = json_encode($jsonFeed, JSON_THROW_ON_ERROR);
+$jsonDocument = \TinyCat\Core\Feeds\FeedParser::document($jsonBody, 'https://93.184.216.34/feed.json');
+$assert($jsonDocument['title'] === 'Photo feed' && $jsonDocument['items'] === $jsonItems, 'JSON document metadata and importer items share the same decoded feed.');
+$imageFeed = ['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Images', 'items' => [[
+    'id' => 'images', 'image' => '/first.png', 'attachments' => [['mime_type' => 'image/png', 'url' => '/second.png']],
+    'content_html' => '<img src="/second.png" data-src="/third.png"><img src="http://127.0.0.1/private">',
+]]];
+$imageItems = \TinyCat\Core\Feeds\FeedParser::document(json_encode($imageFeed, JSON_THROW_ON_ERROR), 'https://93.184.216.34/feed')['items'];
+$assert($imageItems[0]['image_urls'] === ['https://93.184.216.34/first.png', 'https://93.184.216.34/second.png', 'https://93.184.216.34/third.png'], 'JSON images retain source order, base resolution, deduplication and host checks.');
 $assert($jsonItems[1]['author'] === 'Item author' && $jsonItems[1]['categories'] === ['photo'], 'JSON Feed authors and categories override feed defaults and deduplicate tags.');
 $literalJson = \TinyCat\Core\Feeds\FeedParser::parse(json_encode(['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Plain text', 'items' => [['id' => 'literal', 'content_text' => '<example>Read more</example> https://93.184.216.34/reference']]], JSON_THROW_ON_ERROR))[0];
 $assert($literalJson['description'] === '<example>Read more</example> https://93.184.216.34/reference' && $literalJson['description_html'] === '', 'JSON Feed plain text is not interpreted as HTML or cleaned as a Social annotation.');
@@ -29,5 +38,8 @@ $assert($jsonDoc['format'] === 'json_feed_1_1' && count($jsonDoc['items']) === 1
 $rdf = '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel rdf:about="https://93.184.216.34/feed"><title>RDF feed</title></channel><item rdf:about="rdf-item"><title>RDF post</title><link>https://93.184.216.34/post</link><description>RDF text</description><dc:creator>RDF author</dc:creator><dc:date>2026-10-29T10:00:00Z</dc:date></item></rdf:RDF>';
 $rdfDoc = \TinyCat\Core\Feeds\FeedParser::document($rdf);
 $assert($rdfDoc['format'] === 'rss_1' && $rdfDoc['title'] === 'RDF feed' && $rdfDoc['items'][0]['guid'] === 'rdf-item' && $rdfDoc['items'][0]['author'] === 'RDF author', 'RSS 1.0 handles namespaces, RDF identity and Dublin Core metadata.');
+$assert($rdfDoc['items'] === \TinyCat\Core\Feeds\FeedParser::parse($rdf), 'RDF metadata and standalone parsing return identical items.');
+$invalidJson = \TinyCat\Core\Feeds\FeedParser::document('{"version":"https://jsonfeed.org/version/1.1","title":"Incomplete"}');
+$assert($invalidJson['format'] === 'json_feed_1_1' && $invalidJson['title'] === 'Incomplete' && $invalidJson['items'] === [], 'Recognized incomplete JSON retains metadata without producing items.');
 $discovery = \TinyCat\Core\Feeds\FeedParser::document('<!DOCTYPE html><html><head><link rel="alternate" type="application/feed+json" title="JSON" href="/feed.json"><link rel="alternate" type="application/rss+xml" href="http://127.0.0.1/private"></head></html>', 'https://93.184.216.34/blog');
 $assert($discovery['format'] === 'discovery' && $discovery['sources'] === [['name' => 'JSON', 'feed_url' => 'https://93.184.216.34/feed.json']], 'Website discovery advertises only supported, safe alternate feeds.');

@@ -37,7 +37,7 @@ final class Dashboard
     {
         try {
             $rows = \TinyCat\Database\Connection::all(
-                'SELECT cc.id, cc.content_id, cc.user_id, cc.body, cc.created_at, u.username, u.avatar_exists AS user_avatar_exists,  u.avatar_version AS user_avatar_version, u.updated_at AS user_updated_at, c.body AS content_body
+                'SELECT cc.content_id, cc.user_id, cc.body, cc.created_at, u.username, u.avatar_exists AS user_avatar_exists,  u.avatar_version AS user_avatar_version, u.updated_at AS user_updated_at
                  FROM social_comments cc
                  INNER JOIN users u ON u.id = cc.user_id
                  INNER JOIN social_posts c ON c.id = cc.content_id

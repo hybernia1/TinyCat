@@ -20,7 +20,7 @@ final class NotificationHistory
     {
         if (!\TinyCat\Core\Notifications\Delivery::available()) { return; }
         \TinyCat\Database\Transactions::run(static function () use ($oldId, $keeperId): void {
-            foreach (\TinyCat\Database\Connection::all(\TinyCat\Database\Connection::lockingSelect("SELECT * FROM notifications WHERE (subject_id=? AND type IN ('content_like','content_mention','report_resolved','report_dismissed')) OR (type IN ('content_comment','comment_mention') AND subject_id IN (SELECT id FROM social_comments WHERE content_id=?) AND (notification_key LIKE ? OR notification_key LIKE ?)) ORDER BY id"), [$oldId, $keeperId, 'content_comment:' . $oldId . ':%', 'comment_mention:' . $oldId . ':%']) as $row) {
+            foreach (\TinyCat\Database\Connection::all("SELECT * FROM notifications WHERE (subject_id=? AND type IN ('content_like','content_mention','report_resolved','report_dismissed')) OR (type IN ('content_comment','comment_mention') AND subject_id IN (SELECT id FROM social_comments WHERE content_id=?) AND (notification_key LIKE ? OR notification_key LIKE ?)) ORDER BY id FOR UPDATE", [$oldId, $keeperId, 'content_comment:' . $oldId . ':%', 'comment_mention:' . $oldId . ':%']) as $row) {
                 $key = (string) $row['notification_key'];
                 $type = (string) $row['type'];
                 $subjectId = in_array($type, NotificationPresentation::COMMENT_TYPES, true) ? (int) $row['subject_id'] : $keeperId;
@@ -30,7 +30,7 @@ final class NotificationHistory
                     // Also repair keys left with an earlier alias by a previous merge.
                     $key = $type . ':' . $keeperId . ':' . $parts[2];
                 }
-                $existing = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM notifications WHERE user_id=? AND notification_key=? AND id<>?'), [$row['user_id'], $key, $row['id']]);
+                $existing = \TinyCat\Database\Connection::one('SELECT * FROM notifications WHERE user_id=? AND notification_key=? AND id<>? FOR UPDATE', [$row['user_id'], $key, $row['id']]);
                 if ($existing !== null) {
                     \TinyCat\Database\Connection::update('notifications', [
                         'subject_id' => $subjectId,

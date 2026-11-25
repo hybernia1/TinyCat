@@ -8,8 +8,8 @@ final class Guard
     /** Autocomplete has its own database budget; it never consumes full searches. */
     public static function suggestions(): void
     {
-        if (\TinyCat\Core\Security\RateLimitPolicy::isExempt(\TinyCat\Core\Identity\Authentication::auth())) { return; }
         $user = \TinyCat\Core\Identity\Authentication::auth();
+        if (\TinyCat\Core\Security\RateLimitPolicy::isExempt($user)) { return; }
         $subject = $user !== null ? 'user:' . (int) $user['id'] : \TinyCat\Core\Security\RateLimiter::rate_limit_ip();
         if (!\TinyCat\Core\Security\RateLimiter::consume($subject, 'search_suggestions', Policy::SUGGESTION_WINDOW, Policy::SUGGESTION_MAX)) {
             throw new \TinyCat\Http\HttpException(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', ['retry_after' => \TinyCat\Core\Security\RateLimiter::window_retry_after(Policy::SUGGESTION_WINDOW)]);

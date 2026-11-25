@@ -65,9 +65,6 @@ import "../../../../Core/Ui/assets/toasts.js";
       qsa("[data-author-stat='followers']" + dataSelector("data-author-id", authorId)).forEach(function (node) {
         node.textContent = String(payload.followers_count || 0);
       });
-      qsa("[data-author-stat='following']" + dataSelector("data-author-id", authorId)).forEach(function (node) {
-        node.textContent = String(payload.following_count || 0);
-      });
     }
   }
   function prepareForms(root) {

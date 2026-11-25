@@ -10,6 +10,17 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 use TinyCat\Database\Connection;
 use TinyCat\Social\Search\Queries;
 
+final class SearchCountingPdo extends PDO
+{
+    public array $statements = [];
+
+    public function prepare(string $query, array $options = []): PDOStatement|false
+    {
+        $this->statements[] = $query;
+        return parent::prepare($query, $options);
+    }
+}
+
 
 $server = null;
 $created = false;
@@ -28,7 +39,7 @@ try {
         $server = new PDO($dsn, $db['user'], $db['password'], $options);
         $server->exec('CREATE DATABASE ' . $databaseName . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
         $created = true;
-        $pdo = new PDO($dsn . ';dbname=' . $databaseName, $db['user'], $db['password'], $options);
+        $pdo = new SearchCountingPdo($dsn . ';dbname=' . $databaseName, $db['user'], $db['password'], $options);
 
     Connection::set($pdo);
     $pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INTEGER, updated_at DATETIME, PRIMARY KEY(ip_address, action_name, bucket_start))');
@@ -99,6 +110,24 @@ try {
     $assert(!in_array(20003, array_column(Queries::collection('nebula quartz', 'content', [], 50, 'text')['items'], 'id'), true), 'Text-only search excludes link attachments.');
     $assert(Queries::collection('%nebula', 'tags')['items'] === [], 'Percent signs do not turn into a valid tag query.');
     $assert(\TinyCat\Core\Discovery\Search::suggestions('nebula')['content'] === [], 'Autocomplete does not return post suggestions.');
+    $results = [];
+    foreach (['all', 'tag', 'user'] as $type) {
+        $pdo->statements = [];
+        $results[$type] = \TinyCat\Social\Posts\Posts::status_editor_suggestions('nebula', $type, 2);
+        $sql = $pdo->statements;
+        $tagQueries = count(array_filter($sql, static fn (string $q): bool => str_contains($q, 'FROM social_terms')));
+        $userQueries = count(array_filter($sql, static fn (string $q): bool => str_contains($q, 'FROM users')));
+        $guardQueries = count(array_filter($sql, static fn (string $q): bool => str_contains($q, 'INSERT INTO ip_action_limits')));
+        $assert($tagQueries === ($type === 'user' ? 0 : 1) && $userQueries === ($type === 'tag' ? 0 : 1), 'Editor queries only selected suggestion sources.');
+        $assert($guardQueries === 1, 'Each editor suggestion request consumes exactly one guard budget.');
+    }
+    $assert($results['tag']['tags'] === $results['all']['tags'] && $results['user']['users'] === $results['all']['users'], 'Selected editor results match the combined response.');
+    $assert($results['tag']['users'] === [] && $results['user']['tags'] === [] && count($results['all']['tags']) <= 2 && count($results['all']['users']) <= 2, 'Editor keeps both response branches and the requested limit.');
+    foreach (['', str_repeat('a', 81)] as $query) {
+        $pdo->statements = [];
+        $empty = \TinyCat\Social\Posts\Posts::status_editor_suggestions($query, 'user');
+        $assert($empty['tags'] === [] && $empty['users'] === [] && $pdo->statements === [], 'Empty and overlong editor queries do not query or consume budget.');
+    }
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Guests count only published posts from active authors.');
     \TinyCat\Core\Identity\Authentication::reset(['id' => 1, 'role' => 'admin'], true);
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Admins use the same published tag counts as public readers.');

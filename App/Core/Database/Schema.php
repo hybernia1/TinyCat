@@ -7,7 +7,6 @@ use LogicException;
 use PDO;
 
 use Throwable;
-use InvalidArgumentException;
 
 final class Schema
 {
@@ -151,60 +150,4 @@ final class Schema
         if (!self::exists($pdo, $table) || array_diff($columns, self::columns($pdo, $table)) !== []) { throw new \RuntimeException('Historical schema is incompatible: ' . $table); }
     }
 
-    public static function requireMigration(PDO $pdo, string $migration, string $checksum): void
-    {
-        $stored = null;
-        foreach (Migrations::history($pdo, 'global', 'tinycat') as $row) { if ($row['migration'] === $migration) { $stored = $row['checksum']; break; } }
-        if (!is_string($stored) || !hash_equals($checksum, $stored)) { throw new \RuntimeException('Historical installation provenance is missing or invalid: ' . $migration); }
-    }
-
-    public static function nextId(PDO $pdo, string $table): int
-    {
-        $table = self::identifier($table);
-        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
-            $query = $pdo->prepare('SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?'); $query->execute([$table]); $next = $query->fetchColumn();
-            if ($next !== false && $next !== null) {
-                $valid = filter_var($next, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => PHP_INT_MAX - 1]]);
-                if ($valid === false) { throw new \RuntimeException('Historical ID space is exhausted.'); }
-                return $valid;
-            }
-        }
-        $last = (int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT COALESCE(MAX(id), 0) FROM ' . $table)->fetchColumn();
-        if ($last >= PHP_INT_MAX) { throw new \RuntimeException('Historical ID space is exhausted.'); }
-        return max(1, $last + 1);
-    }
-
-    public static function reserveIds(PDO $pdo, string $table, int $next): void
-    {
-        $table = self::identifier($table);
-        if ($next < 1) { throw new \InvalidArgumentException('Invalid historical sequence.'); }
-        $pdo->exec('ALTER TABLE ' . $table . ' AUTO_INCREMENT = ' . $next);
-    }
-
-    /** Remove obsolete references from an owner's table without deleting producer data.
-     * @param list<string> $columns */
-    public static function dropReferences(PDO $pdo, string $table, array $columns): void
-    {
-        self::identifier($table); foreach ($columns as $column) { self::identifier($column); }
-        if ($columns === []) { return; }
-        $query = $pdo->prepare('SELECT DISTINCT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND REFERENCED_TABLE_NAME IS NOT NULL AND COLUMN_NAME IN (' . implode(', ', array_fill(0, count($columns), '?')) . ')');
-        $query->execute([$table, ...$columns]);
-        foreach ($query->fetchAll(PDO::FETCH_COLUMN) as $constraint) { $pdo->exec('ALTER TABLE ' . $table . ' DROP FOREIGN KEY ' . self::identifier((string) $constraint)); }
-    }
-
-    /** @param array<string, string> $tables */
-    public static function rename(PDO $pdo, array $tables): void
-    {
-        $pending = [];
-        foreach ($tables as $old => $new) {
-            self::identifier($old); self::identifier($new);
-            if (self::exists($pdo, $old)) {
-                if (self::exists($pdo, $new)) { throw new \RuntimeException('Both historical and destination tables exist: ' . $new); }
-                $pending[$old] = $new;
-            } elseif (!self::exists($pdo, $new)) { throw new \RuntimeException('Historical migration source is missing: ' . $old); }
-        }
-        if ($pending === []) { return; }
-        $pairs = []; foreach ($pending as $old => $new) { $pairs[] = $old . ' TO ' . $new; }
-        $pdo->exec('RENAME TABLE ' . implode(', ', $pairs));
-    }
 }

@@ -219,21 +219,6 @@ final class Feed
     }
 
     /**
-     * @return array<mixed>
-     */
-    public static function public_status_ids_by_author(int $authorId, int $limit = 24): array
-    {
-        if ($authorId < 1) {
-            return [];
-        }
-
-        return \TinyCat\Social\Posts\Feed::public_status_ids_page(
-            \TinyCat\Social\Posts\Feed::public_status_author_id_query()->where('c.author_id = ?', $authorId),
-            $limit
-        );
-    }
-
-    /**
      * @param array<string, mixed>|null $selection
      * @return array<mixed>
      */
@@ -267,24 +252,6 @@ final class Feed
         $query = self::public_status_tag_id_query($termId);
 
         return \TinyCat\Social\Posts\Feed::public_status_cursor_page(self::archive_query($query, $type), $limit, $cursorAt, $cursorId, $selection);
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function public_status_ids_by_tag(string $tag, int $limit = 24): array
-    {
-        $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
-        $termId = \TinyCat\Social\Posts\Tags::status_term_id_exact($tag);
-
-        if ($termId < 1) {
-            return [];
-        }
-
-        return \TinyCat\Social\Posts\Feed::public_status_ids_page(
-            self::public_status_tag_id_query($termId),
-            $limit
-        );
     }
 
     /** @return array<string, mixed>|null */
@@ -471,21 +438,6 @@ final class Feed
             'cursor_at' => $publishedAt,
             'cursor_id' => $id,
         ];
-    }
-
-    /**
-     * @param array<mixed> $params
-     * @param array<mixed> $user
-     * @return array<mixed>
-     */
-    public static function status_feed_payload(string $context, int $limit, array $params = [], ?array $user = null): array
-    {
-        $feed = self::status_feed_context_items($context, $limit, $params, $user);
-        $items = $feed['items'];
-        unset($params['cursor_at'], $params['cursor_id']);
-        $params += $feed['selection']['cursor'];
-        $done = $feed['selection']['count'] < $limit;
-        return ['items' => Resource::posts($items, $user), 'count' => count($items), 'done' => $done, 'next_url' => $done ? '' : self::status_feed_next_url($context, $limit, $params)];
     }
 
 }

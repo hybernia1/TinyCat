@@ -89,9 +89,9 @@ import "./workspace.js";
       view.dataset.botPostsReady = "true";
       var state = JSON.parse(view.dataset.botPostsState);
       var postList = document.querySelector(state.list_target || "#bot-detail-posts-list");
-      if (postList) { postList.dataset.botPostsUrl = JSON.parse(view.dataset.botPostsState).url; }
+      if (postList) { postList.dataset.botPostsUrl = state.url; }
       var filterId = state.filter_modal || "bot-detail-posts-filter-modal";
-      var form = T.components.render("bots/post-filter-form", JSON.parse(view.dataset.botPostsState));
+      var form = T.components.render("bots/post-filter-form", state);
       U.filterPanel(filterId, form);
     });
     var list = document.querySelector("#bot-detail-posts-list");

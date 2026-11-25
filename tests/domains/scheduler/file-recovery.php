@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
+require_once __DIR__ . '/../../support/http-client-double.php';
 $source = dirname(__DIR__, 3); $root = TinyCat\Tools\Workspace::directory('tests/file-recovery-' . bin2hex(random_bytes(6)));
 $copy = static function (string $from, string $to) use (&$copy): void { if (is_file($from)) { copy($from, $to); return; } if (!is_dir($to)) { mkdir($to, 0700, true); } foreach (scandir($from) ?: [] as $entry) { if ($entry !== '.' && $entry !== '..') { $copy($from . '/' . $entry, $to . '/' . $entry); } } };
 $copy($source . '/App', $root . '/App'); mkdir($root . '/App/Modules/FileFixture/src', 0700, true); copy($source . '/tests/fixtures/files/Module.php', $root . '/App/Modules/FileFixture/src/Module.php');
@@ -28,6 +29,19 @@ $activate = static function (array $active, array $installed) use ($root, $plan,
 $activate([], ['fixture.files', 'tinycat.social']);
 TinyCat\Social\Posts\Schema::install($db);
 $db->exec('CREATE TABLE fixture_files(path TEXT)'); $db->exec("INSERT INTO fixture_files VALUES ('retained.bin')");
+TinyCat\Core\Files\References::withOwners(static function () use ($assert, $db): void {
+    $owners = TinyCat\Core\Files\References::owners();
+    TinyCat\Core\Files\References::withOwners(static function () use ($assert, $owners): void {
+        $assert(TinyCat\Core\Files\References::owners() === $owners, 'Nested operations share the verified owner inventory');
+    });
+    $assert(TinyCat\Core\Files\References::retained('fixture.files', ['retained.bin', 'new.bin']) === ['retained.bin'], 'Inventory scope reads current references');
+    $db->exec("INSERT INTO fixture_files VALUES ('new.bin')");
+    $assert(TinyCat\Core\Files\References::retained('fixture.files', ['new.bin']) === ['new.bin'], 'Inventory reuse never caches database references');
+    $db->exec("DELETE FROM fixture_files WHERE path = 'new.bin'");
+});
+try { TinyCat\Core\Files\References::withOwners(static function (): void { throw new RuntimeException('scope failure'); }); }
+catch (RuntimeException) {}
+$assert((new ReflectionProperty(TinyCat\Core\Files\References::class, 'operationOwners'))->getValue() === null, 'Failed operations release the inventory');
 mkdir($root . '/uploads/fixture', 0700, true);
 foreach (['retained.bin', 'orphan.bin', 'fresh.bin'] as $name) { file_put_contents($root . '/uploads/fixture/' . $name, $name); if ($name !== 'fresh.bin') { touch($root . '/uploads/fixture/' . $name, time() - 7200); } }
 $ids = Cleanup::taskIds();
@@ -80,4 +94,49 @@ for ($attempt = 0; $attempt < 60; $attempt++) {
 }
 $assert(!is_file($directory . '/bounded.webp') && !is_file($directory . '/bounded-maskable-512.png'), 'Small checkpointed batches eventually recover the complete orphan set');
 $assert(($GLOBALS['fixture_regular_runs'] ?? 0) === 0, 'Loading inactive definitions never executes regular maintenance callbacks');
+// Valid raster paths must not escape into a sibling with the same directory prefix.
+$base = $root . '/uploads/images'; mkdir($base, 0700, true);
+$sibling = $base . '-outside'; mkdir($sibling . '/11', 0700, true);
+$relative = '2027/11/' . str_repeat('c', 32) . '.webp';
+$outside = $sibling . '/11/' . str_repeat('c', 32) . '.webp'; file_put_contents($outside, 'protected');
+if (@symlink($sibling, $base . '/2027')) {
+    try {
+        TinyCat\Core\Files\RasterStorage::delete($relative);
+        $assert(is_file($outside), 'Raster deletion rejects a symlink into a sibling prefix');
+    } finally { unlink($base . '/2027'); }
+} else { echo "SKIP raster sibling-prefix regression: directory symlinks unavailable.\n"; }
+mkdir($base . '/2027/11', 0700, true); file_put_contents($base . '/' . $relative, 'orphan');
+TinyCat\Core\Files\RasterStorage::delete($relative);
+$assert(!is_file($base . '/' . $relative), 'Raster deletion still removes an unreferenced file inside its base');
+
+final class RecoveryRemoteRaster extends TinyCat\Core\Files\RasterStorage
+{
+    protected static function allowedRemote(string $url): bool { return !str_ends_with($url, '/denied'); }
+}
+$remote = 'https://93.184.216.34/raster';
+$beforeTemporary = glob(sys_get_temp_dir() . '/tinycat-image-*') ?: [];
+$beforeDownload = glob(sys_get_temp_dir() . '/.download-*') ?: [];
+$GLOBALS['sourceImageFixtures'][$remote] = 'invalid image';
+if (extension_loaded('gd') && function_exists('imagewebp')) {
+    try { RecoveryRemoteRaster::fromRemote($remote); $assert(false, 'Malformed remote images must fail'); }
+    catch (TinyCat\Core\Files\InvalidImage) {}
+    $canvas = imagecreatetruecolor(4, 3); ob_start(); imagepng($canvas); $GLOBALS['sourceImageFixtures'][$remote] = ob_get_clean(); imagedestroy($canvas);
+    $image = RecoveryRemoteRaster::fromRemote($remote);
+    $assert($image['width'] === 4 && $image['height'] === 3 && is_file($base . '/' . $image['path']), 'Streamed remote raster passes normal validation and WebP publication');
+    RecoveryRemoteRaster::delete($image['path']);
+} else { echo "SKIP remote raster validation and WebP conversion: GD/WebP unavailable.\n"; }
+$GLOBALS['sourceImageHeaders'] = ['HTTP/1.1 302 Found', 'Location: /denied'];
+$denied = false;
+try { RecoveryRemoteRaster::fromRemote($remote); }
+catch (RuntimeException) { $denied = true; }
+$assert($denied && !in_array('https://93.184.216.34/denied', $GLOBALS['sourceImageRequests'], true), 'Remote policy checks redirect destinations before transfer');
+unset($GLOBALS['sourceImageHeaders']);
+$GLOBALS['sourceImageFixtures'][$remote] = str_repeat('x', 10_485_761);
+$oversized = false;
+try { RecoveryRemoteRaster::fromRemote($remote); }
+catch (RuntimeException $exception) { $oversized = !$exception instanceof TinyCat\Core\Files\InvalidImage; }
+$assert($oversized, 'Transfer limit rejects oversized input before decoding');
+$assert(array_diff(glob(sys_get_temp_dir() . '/tinycat-image-*') ?: [], $beforeTemporary) === [], 'Remote success and failures clean raster temporary files');
+$assert(array_diff(glob(sys_get_temp_dir() . '/.download-*') ?: [], $beforeDownload) === [], 'Remote success and failures clean download temporary files');
+
 echo "PASS installed inactive file owners and branding recovery ($checks checks); workspace: $root\n";

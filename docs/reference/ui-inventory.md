@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-183 definic komponent, 391 CSS tříd, 124 CSS importů, 101 JS souborů, 28 UI služeb, 0 PHP partialů.
+182 definic komponent, 391 CSS tříd, 124 CSS importů, 101 JS souborů, 28 UI služeb, 0 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -186,7 +186,6 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `publishing/editor` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `publishing/image-field` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `publishing/attached-image` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
-| `publishing/body` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/attached-image, publishing/link, publishing/segments |
 | `publishing/comment-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/editor, ui/avatar |
 | `publishing/comment` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/comment, publishing/comment-form, publishing/like, publishing/segments, ui/avatar |
 | `publishing/like` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
@@ -341,7 +340,7 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 
 - [App/Core/Identity/Views.php](../../App/Core/Identity/Views.php): `accountEditorId`, `accountEditorUrl`, `statusLabels`, `userMenu`, `adminFormFields`, `avatar`
 - [App/Core/Notifications/Views.php](../../App/Core/Notifications/Views.php): `menu`, `items`
-- [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `tc_admin_datetime`, `tc_admin_datetime_iso`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_per_page_view_data`, `admin_pagination_view_data`
+- [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_pagination_view_data`
 - [App/Core/Updates/Views.php](../../App/Core/Updates/Views.php): `model`
 
 ## Všechny PHP šablony

@@ -55,16 +55,16 @@ class RasterStorage
     public static function fromRemote(string $url): array
     {
         if (!(bool) static::option('images.enabled', true)) { throw new RuntimeException('Image uploads are disabled.'); }
-        $response = \TinyCat\Http\Client::get($url, self::MAX_SOURCE_UPLOAD_SIZE, [
-            'accept' => 'image/jpeg,image/png,image/webp',
-            'policy' => static fn (string $candidate): bool => static::allowedRemote($candidate),
-        ]);
-        if ($response === null) { throw new RuntimeException('Source image could not be downloaded.'); }
         $temporary = tempnam(sys_get_temp_dir(), 'tinycat-image-');
         if ($temporary === false) { throw new RuntimeException('Could not create image file.'); }
         try {
-            $size = strlen($response['body']);
-            if (file_put_contents($temporary, $response['body']) !== $size) { throw new RuntimeException('Could not write image file.'); }
+            \TinyCat\Http\Client::download($url, $temporary, self::MAX_SOURCE_UPLOAD_SIZE, [
+                'accept' => 'image/jpeg,image/png,image/webp',
+                'policy' => static fn (string $candidate): bool => static::allowedRemote($candidate),
+            ]);
+            clearstatcache(true, $temporary);
+            $size = filesize($temporary);
+            if ($size === false) { throw new RuntimeException('Could not read image file size.'); }
             return self::storeFile($temporary, $size);
         } finally { if (is_file($temporary)) { unlink($temporary); } }
     }
@@ -221,7 +221,7 @@ class RasterStorage
         $file = \TinyCat\Support\Paths::basePath(static::BASE_DIRECTORY . '/' . $path);
         $directory = realpath(dirname($file));
 
-        return $base !== false && $directory !== false && str_starts_with($directory, $base) ? $file : '';
+        return $base !== false && $directory !== false && \TinyCat\Core\Modules\ModuleAutoload::inside($directory, $base) ? $file : '';
     }
 
     private static function deletePath(string $path): bool

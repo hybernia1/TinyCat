@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Site;
 
-use TinyCat\Http\Request;
 use TinyCat\Http\Response;
 use TinyCat\Social\Posts\Resource as Posts;
 use TinyCat\Support\Components;

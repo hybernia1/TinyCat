@@ -52,7 +52,7 @@ final class Interactions
     {
         return Transactions::run(static function () use ($kind, $id, $actor, $action, $commentId, $body, $parentId, $desired): array {
             // Every operation locks in the same order, including parent checks and reaction toggles.
-            $publication = Connection::one(Connection::lockingSelect('SELECT id FROM social_posts WHERE id = ? AND kind = ?'), [$id, $kind]);
+            $publication = Connection::one('SELECT id FROM social_posts WHERE id = ? AND kind = ? FOR UPDATE', [$id, $kind]);
             if ($publication === null) { self::fail('status_not_found', 404); }
             $target = self::target($kind, $id, $actor);
             $userId = (int) ($actor['id'] ?? 0);
@@ -61,7 +61,7 @@ final class Interactions
             if (($reaction && !$target->reactions) || (!$reaction && !$target->comments) || ($action === 'comment_like' && !$target->comments)) { self::fail('forbidden', 403); }
             $comment = null;
             if ($commentId > 0) {
-                $comment = Connection::one(Connection::lockingSelect('SELECT * FROM social_comments WHERE id = ? AND content_id = ?'), [$commentId, $id]);
+                $comment = Connection::one('SELECT * FROM social_comments WHERE id = ? AND content_id = ? FOR UPDATE', [$commentId, $id]);
                 if ($comment === null) { self::fail('comment_not_found', 404); }
             }
             $data = ['comment_id' => $commentId, 'body' => $body, 'before' => $comment ?? []];
@@ -86,7 +86,7 @@ final class Interactions
                 if (!$target->interact) { self::fail('forbidden', 403); }
                 $body = self::body($body);
                 if ($parentId > 0) {
-                    $parent = Connection::one(Connection::lockingSelect('SELECT * FROM social_comments WHERE id = ? AND content_id = ?'), [$parentId, $id]);
+                    $parent = Connection::one('SELECT * FROM social_comments WHERE id = ? AND content_id = ? FOR UPDATE', [$parentId, $id]);
                     if ($parent === null || Comments::status_comment_item_find($parentId, $kind) === null) { self::fail('comment_not_found', 404); }
                     $parentId = (int) ($parent['parent_id'] ?? 0) ?: $parentId;
                 }
@@ -129,7 +129,6 @@ final class Interactions
 
     public static function invalidate(): void
     {
-        $comments =& Comments::status_comments_cache(); $comments = [];
         $likes =& Reactions::status_user_liked_cache(); $likes = [];
         $commentLikes =& Reactions::status_comment_user_liked_cache(); $commentLikes = [];
     }

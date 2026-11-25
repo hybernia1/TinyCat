@@ -64,8 +64,8 @@ final class DuplicateCleanup
     private static function merge(int $oldId, int $keeperId): bool
     {
         return Transactions::run(static function () use ($oldId, $keeperId): bool {
-            $rows = Connection::all(Connection::lockingSelect('SELECT c.*,u.role AS author_role,u.status AS author_status
-                FROM social_posts c INNER JOIN users u ON u.id=c.author_id WHERE c.id IN (?,?) ORDER BY c.id'), [$keeperId, $oldId]);
+            $rows = Connection::all('SELECT c.*,u.role AS author_role,u.status AS author_status
+                FROM social_posts c INNER JOIN users u ON u.id=c.author_id WHERE c.id IN (?,?) ORDER BY c.id FOR UPDATE', [$keeperId, $oldId]);
             if (count($rows) !== 2) { return false; }
             [$keeper, $old] = $rows;
             if ((int) $keeper['id'] !== $keeperId || (int) $old['id'] !== $oldId || $keeperId >= $oldId

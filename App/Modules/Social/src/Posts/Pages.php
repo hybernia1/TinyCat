@@ -6,7 +6,6 @@ namespace TinyCat\Social\Posts;
 use TinyCat\Http\Request;
 use TinyCat\Http\Web;
 use TinyCat\Social\Moderation\Restrictions;
-use TinyCat\Social\Site\Pages as SitePages;
 use TinyCat\Core\Ui\Site as Presentation;
 use TinyCat\Support\Dates;
 use TinyCat\Support\Localization;

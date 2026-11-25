@@ -114,28 +114,6 @@ final class Administration
         return self::$filterBotId;
     }
 
-    public static function apiUrl(?int $id = null): string
-    {
-        return self::sourceActionUrl('', $id);
-    }
-
-    public static function sourceActionUrl(string $action = '', ?int $id = null): string
-    {
-        $query = [];
-        $filterBotId = self::filterId();
-        if ($filterBotId > 0) {
-            $query['bot'] = $filterBotId;
-        }
-
-        $path = '/api/bots/sources';
-        if ($id !== null) {
-            $path .= '/' . $id;
-            if ($action === 'run') { $path .= '/runs'; }
-        }
-
-        return \TinyCat\Support\AdminViews::admin_list_url($path, $query);
-    }
-
     /**
      * @return array<string, mixed>|null
      */
@@ -603,8 +581,6 @@ final class Administration
             'source' => self::prepareSourceInput($source),
             'constraints' => self::sourceConstraints(),
             'bots' => self::bots(),
-            'create' => $create,
-            'action' => self::apiUrl($create ? null : (int) $source['id']),
         ];
     }
 

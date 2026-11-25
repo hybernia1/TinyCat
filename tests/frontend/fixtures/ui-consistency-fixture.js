@@ -138,6 +138,22 @@
     E.hydrate(draft);
     const editorRoot = draft.querySelector('[data-status-editor]'), editorInput = E.getInput(editorRoot), suggestions = E.getBox(editorRoot);
     function typeDraft(text) { E.setText(editorInput,text,text.length); editorInput.dispatchEvent(new Event('input',{bubbles:true})); }
+    let syncValue;
+    editorRoot.addEventListener('tinycat:editor-sync', event => { syncValue = event.detail.value; });
+    typeDraft('Aktuální 🐈 draft');
+    check(typeof syncValue === 'string' && syncValue === 'Aktuální 🐈 draft', 'Editor sync event carries the current draft string');
+    for (const [marker,kind,method] of [['@','user','pointer'],['@','user','keyboard'],['#','tag','pointer'],['#','tag','keyboard']]) {
+      const prefix = '🐈 ahoj ', suffix = ' konec', text = prefix + marker + 'ja' + suffix;
+      E.setText(editorInput,text,(prefix + marker + 'ja').length);
+      editorInput.dispatchEvent(new Event('input',{bubbles:true}));
+      await new Promise(resolve => setTimeout(resolve,160));
+      const item = {type:kind,value:'jana',title:marker+'jana'};
+      pendingSuggestions[pendingSuggestions.length-1].resolve({ok:true,data:kind === 'user' ? {users:[item]} : {tags:[item]}}); await tick();
+      if (method === 'pointer') suggestions.querySelector('[data-status-editor-suggestion]').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));
+      else key(editorInput,'Enter');
+      check(E.getSource(editorRoot).value === prefix + marker + 'jana ' + suffix, 'Autocomplete preserves Unicode prefix and suffix for '+kind+' via '+method);
+    }
+    pendingSuggestions.length = 0;
     editorInput.focus(); typeDraft('@jan'); await new Promise(resolve => setTimeout(resolve,160));
     check(pendingSuggestions.length === 1, 'Mention autocomplete starts one debounced request');
     typeDraft('#');

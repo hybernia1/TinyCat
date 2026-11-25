@@ -4880,23 +4880,6 @@
       "loading": "lazy"
     }
   },
-  "publishing/body": {
-    "tag": "div",
-    "attrs": {"class": "stack stack-gap-16 publishing-content"},
-    "children": [
-      {
-        "tag": "div",
-        "attrs": {"class": "status-body publishing-text"},
-        "children": [{"component": "publishing/segments", "data": {"segments": {"get": "item.segments"}}}]
-      },
-      {"component": "publishing/attached-image", "data": {"item": {"get": "item"}}, "when": {"get": "item.image.url"}},
-      {
-        "each": {"get": "item.links"},
-        "as": "link",
-        "children": [{"component": "publishing/link", "data": {"link": {"get": "link"}}}]
-      }
-    ]
-  },
   "publishing/comment-form": {
     "tag": "form",
     "attrs": {

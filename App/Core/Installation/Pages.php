@@ -122,7 +122,8 @@ final class Pages
             if (!empty($state['database']) && is_array($state['database'])) {
                 try {
                     \TinyCat\Database\Connection::set(Installer::pdo($state['database']));
-                    foreach (array_keys($tables) as $table) { $statuses[$table] = Installer::table_exists($table); }
+                    $existing = array_flip(\TinyCat\Database\Schema::app_existing_tables(array_keys($tables)));
+                    foreach (array_keys($tables) as $table) { $statuses[$table] = isset($existing[$table]); }
                 } catch (Throwable $exception) { \TinyCat\Core\Runtime\Failure::report($exception); $data['table_error'] = \TinyCat\Core\Runtime\Failure::message($exception, \TinyCat\Support\Localization::t('common.request_failed')); }
             }
             $data['tables'] = [];

@@ -173,50 +173,6 @@ final class ViewData
         ];
     }
 
-    public static function status_comment_history_diff_html(string $before, string $after): string
-    {
-        $beforeChars = preg_split('//u', $before, -1, PREG_SPLIT_NO_EMPTY);
-        $afterChars = preg_split('//u', $after, -1, PREG_SPLIT_NO_EMPTY);
-
-        if ($beforeChars === false || $afterChars === false) {
-            $beforeChars = str_split($before);
-            $afterChars = str_split($after);
-        }
-
-        $beforeLength = count($beforeChars);
-        $afterLength = count($afterChars);
-        $prefixLength = 0;
-
-        while ($prefixLength < $beforeLength
-            && $prefixLength < $afterLength
-            && $beforeChars[$prefixLength] === $afterChars[$prefixLength]) {
-            $prefixLength++;
-        }
-
-        $suffixLength = 0;
-        while ($suffixLength < $beforeLength - $prefixLength
-            && $suffixLength < $afterLength - $prefixLength
-            && $beforeChars[$beforeLength - 1 - $suffixLength] === $afterChars[$afterLength - 1 - $suffixLength]) {
-            $suffixLength++;
-        }
-
-        $prefix = implode('', array_slice($beforeChars, 0, $prefixLength));
-        $removed = implode('', array_slice($beforeChars, $prefixLength, $beforeLength - $prefixLength - $suffixLength));
-        $added = implode('', array_slice($afterChars, $prefixLength, $afterLength - $prefixLength - $suffixLength));
-        $suffix = $suffixLength > 0 ? implode('', array_slice($beforeChars, -$suffixLength)) : '';
-        $html = \TinyCat\Support\Html::e($prefix);
-
-        if ($removed !== '') {
-            $html .= '<del class="status-comment-diff-removed">' . \TinyCat\Support\Html::e($removed) . '</del>';
-        }
-
-        if ($added !== '') {
-            $html .= '<ins class="status-comment-diff-added">' . \TinyCat\Support\Html::e($added) . '</ins>';
-        }
-
-        return $html . \TinyCat\Support\Html::e($suffix);
-    }
-
     /**
      * @param array<string, mixed> $item
      * @return array<string, mixed>
@@ -231,53 +187,6 @@ final class ViewData
                 'alt' => \TinyCat\Social\Posts\Images::status_image_alt_text($item),
             ],
         ];
-    }
-
-    public static function status_post_modal_id(int $contentId): string
-    {
-        return 'status-post-modal-' . max(0, $contentId);
-    }
-
-    public static function status_edit_modal_id(int $contentId): string
-    {
-        return 'status-edit-modal-' . max(0, $contentId);
-    }
-
-    public static function status_comment_edit_modal_id(int $commentId): string
-    {
-        return 'status-comment-edit-modal-' . max(0, $commentId);
-    }
-
-    public static function status_comment_history_modal_id(int $commentId): string
-    {
-        return 'status-comment-history-modal-' . max(0, $commentId);
-    }
-
-    public static function status_post_modal_url(int $contentId, string $action = ''): string
-    {
-        return '/api/statuses/' . $contentId;
-    }
-
-    public static function status_action_modal_url(string $type, int $contentId, string $action = ''): string
-    {
-        return $type === 'report' ? '/api/moderation/report-options?id=' . $contentId : '/api/statuses/' . $contentId . '?panel=edit';
-    }
-
-    public static function status_comment_edit_modal_url(int $commentId, int $contentId = 0): string
-    {
-        $id = $contentId > 0 ? $contentId : (int) (\TinyCat\Social\Discussion\Comments::status_comment_find($commentId)['content_id'] ?? 0);
-        return '/api/statuses/' . $id . '?panel=comment-edit&comment_id=' . $commentId;
-    }
-
-    public static function status_comment_history_modal_url(int $commentId, int $contentId = 0): string
-    {
-        $id = $contentId > 0 ? $contentId : (int) (\TinyCat\Social\Discussion\Comments::status_comment_find($commentId)['content_id'] ?? 0);
-        return '/api/statuses/' . $id . '/comments/' . $commentId . '/revisions';
-    }
-
-    public static function status_report_modal_id(int $contentId): string
-    {
-        return 'status-report-modal-' . max(0, $contentId);
     }
 
     /**

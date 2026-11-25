@@ -7,6 +7,25 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.7
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No new
+migration or configuration change is required. Existing data, uploaded files,
+module activation, task IDs and migration history are preserved.
+
+This maintenance release reduces repeated Core/Social work, preserves bounded
+search visibility checks and installed-owner file cleanup, and fixes editor
+suggestion ranges, editor synchronization and following counts. Deploy coherent
+runtime and generated assets through the standard signed updater.
+
+Custom integrations using removed internal forwarding methods must call their
+canonical owners directly. The unused `TinyCat\Database\Keyset` helper is
+removed; cursor selection belongs to the query owner. HTTP integrations use
+`Request::method()` rather than the removed `isPost()` convenience method.
+Core and Social remain independent signed products, each with separate update
+and fresh-install packages. Supported signed update and exact rollback remain
+required; earlier pending migrations still run normally.
+
 ## Upgrading to 8.0.6
 
 Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. SQLite is no

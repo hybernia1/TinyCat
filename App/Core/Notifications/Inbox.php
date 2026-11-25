@@ -22,14 +22,6 @@ class Inbox
         return Types::target(Types::hydrate([$notification])[0]);
     }
 
-    /**
-     * @param array<mixed> $notification
-     */
-    public static function url(array $notification): string
-    {
-        return self::targetUrl($notification);
-    }
-
     public static function unreadCount(int $userId): int
     {
         if ($userId < 1) {

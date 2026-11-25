@@ -35,13 +35,6 @@ final class Dates
         return self::toDateTime($value)->format($format);
     }
 
-    public static function dateValue(mixed $value = null, ?string $format = null): string
-    {
-        $format ??= (string) self::option('datetime.date', 'Y-m-d');
-
-        return self::toDateTime($value)->format($format);
-    }
-
     public static function dateIso(mixed $value = null): string
     {
         return self::toDateTime($value)->format((string) self::option('datetime.iso', DATE_ATOM));
@@ -124,28 +117,6 @@ final class Dates
         ];
     }
 
-    public static function datetime_format_preset_options(string $type, ?string $selected = null): string
-    {
-        $selected = trim((string) $selected);
-        $presets = match ($type) {
-            'date' => \TinyCat\Support\Dates::date_format_presets(),
-            'time' => \TinyCat\Support\Dates::time_format_presets(),
-            'datetime' => \TinyCat\Support\Dates::datetime_format_presets(),
-            default => [],
-        };
-        $sample = new DateTimeImmutable('2026-07-05 15:04:09');
-        $html = '';
-
-        foreach ($presets as $format => $label) {
-            $example = $sample->format((string) $format);
-            $html .= '<option value="' . \TinyCat\Support\Html::e($format) . '"' . ($selected === $format ? ' selected' : '') . '>'
-                . \TinyCat\Support\Html::e((string) $label . ' - ' . $example)
-                . '</option>';
-        }
-
-        return $html;
-    }
-
     public static function datetime_format_preset_exists(string $type, string $format): bool
     {
         $presets = match ($type) {
@@ -196,35 +167,6 @@ final class Dates
         }
 
         return $presets;
-    }
-
-    public static function timezone_preset_label(string $timezone, ?string $label = null): string
-    {
-        $date = new DateTimeImmutable('now', new DateTimeZone($timezone));
-        $offset = $date->format('P');
-
-        return '(UTC' . ($offset === '+00:00' ? '' : $offset) . ') ' . ($label ?: $timezone);
-    }
-
-    public static function timezone_options(?string $selected = null): string
-    {
-        $selected = trim((string) $selected);
-        $presets = \TinyCat\Support\Dates::timezone_presets();
-        $valid = array_flip(timezone_identifiers_list());
-
-        if ($selected !== '' && isset($valid[$selected]) && !isset($presets[$selected])) {
-            $presets = [$selected => $selected] + $presets;
-        }
-
-        $html = '';
-
-        foreach ($presets as $timezone => $label) {
-            $html .= '<option value="' . \TinyCat\Support\Html::e($timezone) . '"' . ($selected === $timezone ? ' selected' : '') . '>'
-                . \TinyCat\Support\Html::e(\TinyCat\Support\Dates::timezone_preset_label((string) $timezone, (string) $label))
-                . '</option>';
-        }
-
-        return $html;
     }
 
     public static function displayDateTime(mixed $value = null, ?string $format = null, ?bool $relative = null): string
