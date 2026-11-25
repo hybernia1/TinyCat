@@ -632,7 +632,7 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `icon-lg` | [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css) |
 | `identity-copy` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
 | `identity-copy-truncate` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
-| `identity-row` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
+| `identity-row` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css), [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
 | `identity-row-compact` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
 | `identity-row-inset` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
 | `image-preview-contain` | [App/Core/Ui/assets/styles/content-images-contain.css](../../App/Core/Ui/assets/styles/content-images-contain.css) |

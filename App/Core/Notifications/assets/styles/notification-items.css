@@ -1,11 +1,15 @@
 .notification-item {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2-5);
   align-items: center;
   padding: var(--space-3);
   border-top: 1px solid var(--border);
+}
+
+.notification-item > .identity-row {
+  flex: 1 1 16rem;
 }
 
 .notification-item:first-child {
@@ -17,6 +21,7 @@
 }
 
 .notification-actions {
+  margin-inline-start: auto;
   position: relative;
   z-index: 1;
   display: inline-flex;

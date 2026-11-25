@@ -249,6 +249,11 @@
     for (const scale of ['1.5','2']) {
       document.documentElement.style.setProperty('--ui-scale', scale);
       check(inboxRow.scrollWidth <= inboxRow.clientWidth + 1 && inbox.scrollWidth <= inbox.clientWidth + 1, 'Notification text and independent actions stay inside the page at scale '+scale);
+      const bounds = inboxRow.getBoundingClientRect();
+      for (const control of inboxRow.querySelectorAll('.avatar, .identity-copy, .notification-actions')) {
+        const rect = control.getBoundingClientRect();
+        check(rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1, 'Notification avatar, text and actions fit the row at scale '+scale);
+      }
     }
     document.documentElement.style.removeProperty('--ui-scale');
     colourSample.remove(); inboxHost.remove(); window.scrollTo(0,0);
