@@ -177,7 +177,7 @@ try {
     foreach (['-31 days', '-1 day'] as $age) {
         \TinyCat\Database\Connection::insert('scheduler_runs', ['task' => 'cleanup', 'mode' => 'cli', 'status' => 'completed', 'started_at' => \TinyCat\Support\Dates::dateDb($age), 'options_json' => '{}']);
     }
-    $historyCleanup = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('old_scheduler_runs', 500);
+    $historyCleanup = \TinyCat\Core\Tasks\Cleanup\Task::runTask('old_scheduler_runs', 500);
     if ($historyCleanup['changed'] !== 1 || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM scheduler_runs') !== 1) {
         throw new RuntimeException('Scheduler history retention must preserve recent runs.');
     }
@@ -198,7 +198,7 @@ try {
     foreach (['active', 'orphan'] as $hash) {
         \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => 1, 'feed_hash' => $hash, 'created_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
     }
-    $botCleanup = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('bot_history', 500);
+    $botCleanup = \TinyCat\Core\Tasks\Cleanup\Task::runTask('bot_history', 500);
     if ($botCleanup['changed'] !== 8 || (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM bot_source_runs WHERE status = 'current'") !== 50
         || (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM bot_source_runs WHERE status = 'running'") !== 1
         || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_feed_history') !== 1) {
@@ -208,17 +208,17 @@ try {
     \TinyCat\Database\Connection::insert('bot_source_runs', ['source_id' => 1, 'status' => 'error', 'started_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
     \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => 1, 'feed_hash' => 'forced-orphan', 'created_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
     $database->exec("CREATE TRIGGER fail_bot_history_cleanup BEFORE DELETE ON bot_feed_history FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced cleanup failure'");
-    $partialCleanup = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('bot_history', 500);
+    $partialCleanup = \TinyCat\Core\Tasks\Cleanup\Task::runTask('bot_history', 500);
     $database->exec('DROP TRIGGER fail_bot_history_cleanup');
     if (($partialCleanup['changed'] ?? 0) !== 1 || empty($partialCleanup['error']) || $partialCleanup['done']) {
         throw new RuntimeException('Partial cleanup failures must retain completed changes and report unfinished work.');
     }
 
     $databaseCleanupTasks = array_values(array_filter(
-        \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks(),
+        \TinyCat\Core\Tasks\Cleanup\Task::taskIds(),
         static fn (string $task): bool => in_array($task, ['orphan_terms', 'orphan_links', 'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications'], true)
     ));
-    $result = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, true, $databaseCleanupTasks);
+    $result = \TinyCat\Core\Tasks\Cleanup\Task::run(500, true, $databaseCleanupTasks);
     $imageCleanup = \TinyCat\Social\Posts\ImageStorage::cleanupOrphans(500, '2099/01');
     $changed = array_map(
         static fn (array $task): int => (int) ($task['changed'] ?? 0),
@@ -251,7 +251,7 @@ try {
         throw new RuntimeException('Scheduled cleanup did not preserve current rows.');
     }
 
-    $deferred = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, false, $databaseCleanupTasks);
+    $deferred = \TinyCat\Core\Tasks\Cleanup\Task::run(500, false, $databaseCleanupTasks);
 
     if (!empty($deferred['due']) || (int) \TinyCat\Core\Settings\Store::setting('cron.cleanup_last_run', 0) < time() - 5) {
         throw new RuntimeException('The hourly cleanup interval was not recorded.');

@@ -32,21 +32,12 @@ import "./controller.js";
     return dialog;
   }
   function avatar(data) {
-    var user = data.user, generated = user.avatar_custom === false, appearance = { version: 1 };
-    var parameters = generated ? Object.keys(data.appearance_options || {}).map(function (key) {
-      var option = data.appearance_options[key], choices = {};
-      option.values.forEach(function (value) { var choiceLabel = "account.avatar_" + (key === "gender" ? "gender_" : "") + value; choices[value] = U.text(choiceLabel); });
-      appearance[key] = user.avatar_appearance && user.avatar_appearance[key] || option.default;
-      var fieldLabel = "account.avatar_" + key;
-      return { key: key, label: U.text(fieldLabel), value: appearance[key], choices: choices, default: option.default };
-    }) : [];
-    var model = Object.assign({}, data, { generated: generated, appearance: appearance, parameters: parameters });
+    var user = data.user, model = data;
     var upload = U.form("/api/users/" + user.id + "/avatar", "PUT", T.components.render("users/avatar-upload", model));
-    var creator = generated ? U.form("/api/users/" + user.id + "/avatar", "PATCH", T.components.render("users/avatar-appearance", model)) : null;
-    var remove = user.avatar_url && !generated ? U.form("/api/users/" + user.id + "/avatar", "DELETE", T.components.render("users/avatar-remove", model)) : null;
-    var save = T.components.render("users/avatar-save", { form_id: creator ? creator.id : upload.id });
+    var remove = user.avatar_custom ? U.form("/api/users/" + user.id + "/avatar", "DELETE", T.components.render("users/avatar-remove", model)) : null;
+    var save = T.components.render("users/avatar-save", { form_id: upload.id });
     var actions = T.components.render("users/avatar-actions", { save_action: save, remove_form: remove });
-    return T.components.render("users/avatar-editor", { generated: generated, upload_form: upload, appearance_form: creator, actions: actions });
+    return T.components.render("users/avatar-editor", { upload_form: upload, actions: actions });
   }
   Object.assign(T.accounts, {
     editorModal: function (url, response, id) {

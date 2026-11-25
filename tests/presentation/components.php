@@ -24,8 +24,8 @@ $admin = ['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status'
 $member = ['id' => 2, 'username' => 'Member', 'role' => 'user', 'status' => 'active', 'avatar_exists' => 0];
 $accountMenu = \TinyCat\Core\Identity\Views::userMenu([
     'authUser' => $member, 'profileUrl' => '/author/2', 'profileNeedsEmail' => false, 'theme' => 'system',
-    'displayName' => 'Member', 'editModalId' => \TinyCat\Social\Profiles\Profiles::author_profile_edit_modal_id(2),
-    'editModalUrl' => \TinyCat\Social\Profiles\Profiles::author_profile_edit_modal_url(2),
+    'displayName' => 'Member', 'editModalId' => \TinyCat\Core\Identity\Views::accountEditorId(2),
+    'editModalUrl' => \TinyCat\Core\Identity\Views::accountEditorUrl(2),
 ]);
 \TinyCat\Core\Identity\Authentication::reset($admin, true);
 
@@ -60,7 +60,7 @@ $switcher = \TinyCat\Support\Components::render('ui/switcher', ['role' => 'navig
 $assert(str_contains($switcher, 'role="navigation"') && substr_count($switcher, '<a ') === 2 && substr_count($switcher, 'aria-current="page"') === 1 && str_contains($switcher, '&lt;All&gt;') && !str_contains($switcher, '<button'), 'Core switchers preserve navigation semantics, active state and escaped labels.');
 $statuses = ['active' => 'Active', 'ban' => 'Banned'];
 $locked = \TinyCat\Core\Identity\Views::adminFormFields(['user' => $admin, 'roles' => $roles, 'statuses' => $statuses]);
-$assert(str_contains($accountMenu, 'data-modal-open="account-editor-modal-2"') && str_contains($accountMenu, 'data-modal-url="/api/users/2/management?panel=account&amp;focus="') && !str_contains($accountMenu, 'profile-edit-modal-'), 'The account menu targets the unified account editor.');
+$assert(str_contains($accountMenu, 'data-modal-open="account-editor-modal-2"') && str_contains($accountMenu, 'data-modal-url="/api/users/2/management?panel=account"') && !str_contains($accountMenu, 'profile-edit-modal-'), 'The account menu targets the unified account editor.');
 $assert(str_contains($locked, 'name="role_locked" disabled') && !str_contains($locked, 'name="status_locked"'), 'The oldest administrator retains a locked role without a status selector.');
 $assert(str_contains($locked, 'name="role" value="admin"') && !str_contains($locked, 'name="status"'), 'Editing preserves the protected role without submitting a cached account status.');
 $assert(str_contains($locked, 'Admin &lt;unsafe&gt;') && !str_contains($locked, 'Admin <unsafe>'), 'Administrative account names remain escaped.');
@@ -138,8 +138,8 @@ $assert(str_contains($sidebar, 'href="/author/1"') && str_contains($sidebar, 'hr
 $assert(str_contains($sidebar, 'href="/tag/tinycat"'), 'Sidebar topics use their prepared destination.');
 $following = \TinyCat\Support\Components::render('users/following-profile', ['user' => \TinyCat\Social\Profiles\Profiles::resource($member)]);
 $assert(str_contains($following, 'Member') && str_contains($following, 'href="/author/2"'), 'Following cards preserve the profile and its destination.');
-$avatar = \TinyCat\Core\Identity\Views::avatar(['user' => ['id' => 99, 'author_id' => 2, 'author_name' => 'Member', 'avatar_exists' => 0]]);
-$assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar, '#user'), 'Post avatars belong to the author and render the shared fallback icon.');
+$avatar = \TinyCat\Core\Identity\Views::avatar(['user' => ['id' => 2, 'username' => 'Member', 'avatar_exists' => 0]]);
+$assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar, '#user'), 'Canonical account avatars render their identity and the shared fallback icon.');
 
 $settingsSchema = \TinyCat\Core\Settings\Resource::editor();
 $assert(count($settingsSchema['sections']) >= 2 && $settingsSchema['sections'][0]['key'] === 'site', 'Settings expose a JSON editor schema for deferred loading.');
@@ -207,8 +207,11 @@ $combinedScheduler = \TinyCat\Support\Components::render('scheduler/page', ['tar
 $assert(str_contains($combinedScheduler, 'id="scheduler-list"') && str_contains($combinedScheduler, 'data-history-fixture') && !str_contains($combinedScheduler, '<details') && !str_contains($combinedScheduler, 'fixture-token'), 'The task page renders only its independently refreshed list, without hidden connection details or credentials.');
 $rotationHtml = \TinyCat\Support\Components::render('scheduler/actions');
 $runDetailHtml = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => ['id' => 99, 'task' => 'cleanup', 'status' => 'completed', 'started_at' => '2026-11-24T01:00:00Z', 'finished_at' => '2026-11-24T01:00:01Z', 'duration_ms' => 1000, 'mode' => 'cli', 'actor' => ['username' => 'operator'], 'options' => ['cleanup_batch' => 50], 'summary' => ['count' => 0, 'changed' => 0]]]);
-$httpRunReport = \TinyCat\Support\Components::render('health/report', ['report' => ['checks' => [['id' => 'http', 'status' => 'critical', 'duration_ms' => 12, 'metrics' => ['total_ms' => 12], 'limits' => ['ttfb_warning_ms' => 800, 'ttfb_critical_ms' => 1800]]]]]);
-$assert(str_contains($httpRunReport, '>12</dd>') && !str_contains($httpRunReport, '800') && !str_contains($httpRunReport, '1800'), 'Health run details show measured values without repeating configured warning and critical thresholds.');
+$httpRun = \TinyCat\Core\Tasks\Health\Inspection::detail(['id' => 100, 'task' => 'site-health', 'summary' => ['health' => ['checks' => [['id' => 'http', 'status' => 'critical', 'duration_ms' => 12, 'metrics' => ['total_ms' => 12], 'limits' => ['ttfb_warning_ms' => 800, 'ttfb_critical_ms' => 1800]]]]]]);
+$httpRunReport = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $httpRun]);
+$assert(str_contains($httpRunReport, '>12</span>') && !str_contains($httpRunReport, '800') && !str_contains($httpRunReport, '1800'), 'The common run detail shows diagnostic measurements through shared tables without repeating configured thresholds.');
+$otherRunReport = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => ['id' => 101, 'task' => 'fixture.other', 'summary' => [], 'details' => [['title' => 'Other <task>', 'rows' => [['name' => 'Metric', 'value' => '<unsafe>']]]]]]);
+$assert(str_contains($otherRunReport, 'Other &lt;task&gt;') && str_contains($otherRunReport, '&lt;unsafe&gt;') && !str_contains($otherRunReport, '<unsafe>'), 'Any task can use the existing run modal and safe shared detail table without a task-specific component catalog.');
 $assert(!str_contains($runDetailHtml, 'class="card"') && str_contains($runDetailHtml, '<details class="disclosure-item">') && str_contains($runDetailHtml, '>99</dd>') && str_contains($runDetailHtml, 'operator') && str_contains($runDetailHtml, '>50</dd>'), 'Run details keep execution metadata and options inside a collapsed disclosure without nested cards.');
 $assert(!str_contains($schedulerHtml, '/api/scheduler/tokens') && str_contains($rotationHtml, 'action="/api/scheduler/tokens"') && str_contains($rotationHtml, 'data-confirm=') && str_contains($rotationHtml, 'name="_csrf"'), 'The resource dialog rotation action retains confirmation and CSRF without duplication in access details.');
 $assert($schedulerXPath->query('//section/header')->length === 0 && $schedulerXPath->query('//section/p//*[@data-help]')->length === 0 && $schedulerXPath->query('//section//*[@class="field"]//*[@data-help]')->length >= 2 && $schedulerXPath->query('//details')->length === 0, 'Configuration tabs omit duplicate headings and retain contextual field and scheduling hints.');

@@ -29,7 +29,7 @@ final class Comments
                     u.username AS author_name,
                     u.role AS author_role,
                     u.username AS author_username,
-                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version,
+                    u.avatar_exists AS author_avatar_exists,  u.avatar_version AS author_avatar_version,
                     u.updated_at AS author_updated_at,
                     c.author_id AS content_author_id,
                     EXISTS (SELECT 1 FROM social_comments reply INNER JOIN users reply_author ON reply_author.id = reply.user_id WHERE reply.content_id = cc.content_id AND reply.parent_id = cc.id AND reply_author.status = \'active\') AS has_replies,
@@ -169,18 +169,6 @@ final class Comments
             && (\TinyCat\Core\Identity\Roles::isAdmin($user) || (int) ($comment['user_id'] ?? 0) === $userId);
     }
 
-    /**
-     * @param array<mixed> $comment
-     * @return array<mixed>
-     */
-    public static function status_comment_history(array $comment): array { return \TinyCat\Core\Text\Revisions::read((string) ($comment['comments_diff'] ?? '')); }
-
-    /**
-     * @param array<mixed> $comment
-     * @param array<mixed> $actor
-     */
-    public static function status_comment_history_append(array $comment, string $body, array $actor): ?string { return \TinyCat\Core\Text\Revisions::append((string) ($comment['body'] ?? ''), $body, $actor, (string) ($comment['comments_diff'] ?? '')); }
-
     public static function status_comment_user_liked(int $commentId, int $userId): bool
     {
         if ($commentId < 1 || $userId < 1) {
@@ -303,5 +291,57 @@ final class Comments
         static $cache = [];
 
         return $cache;
+    }
+/** @return array<mixed> */
+    public static function readHistory(string $json): array
+    {
+        $json = trim($json);
+
+        if ($json === '') {
+            return [];
+        }
+
+        try {
+            $history = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return [];
+        }
+
+        if (!is_array($history)) {
+            return [];
+        }
+
+        return array_values(array_filter($history, static function (mixed $entry): bool {
+            return is_array($entry)
+                && is_array($entry['changes'] ?? null)
+                && is_array($entry['changes']['body'] ?? null);
+        }));
+    }
+
+    /** @param array<mixed> $actor */
+    public static function appendHistory(string $before, string $body, array $actor, string $json = ''): ?string
+    {
+
+        if ($body === $before) {
+            return null;
+        }
+
+        $history = self::readHistory($json);
+        $history[] = [
+            'at' => \TinyCat\Support\Dates::dateDb(),
+            'actor' => [
+                'id' => (int) ($actor['id'] ?? 0),
+                'username' => \TinyCat\Support\Text::plain_text_limit((string) ($actor['username'] ?? ''), 32),
+                'role' => (string) ($actor['role'] ?? ''),
+            ],
+            'changes' => [
+                'body' => [
+                    'from' => $before,
+                    'to' => $body,
+                ],
+            ],
+        ];
+
+        return json_encode($history, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }
 }

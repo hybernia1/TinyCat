@@ -51,14 +51,6 @@ final class ModulesPage
             ];
             $rows[] = $item;
         }
-        foreach ($snapshot['groups'] as &$group) {
-            $group['names'] = implode(', ', array_map(Administration::name(...), $group['modules']));
-            $group['actions'] = [];
-            foreach ($group['active'] ? [false] : ($group['partial'] ? [true, false] : [true]) as $enable) {
-                $group['actions'][] = ['id' => $group['id'], 'revision' => $snapshot['revision'], 'enabled' => $enable ? '1' : '0', 'disabled' => !$snapshot['manageable'], 'label' => Localization::t($enable ? 'modules.enable_group' : 'modules.disable_group')];
-            }
-        }
-        unset($group);
         $content = Components::render('ui/modules-page', ['snapshot' => $snapshot, 'rows' => $rows]);
         Page::render(['title' => Localization::t('modules.title'), 'current' => '/admin/modules', 'actions' => $snapshot['manageable'] ? AdminViews::modalAction('modal-modules-packages-creation', Localization::t('modules.packages.upload'), 'plus', '/api/modules/packages/creation') : ''], AdminViews::listCard(Localization::t('modules.title'), 'settings', 'modules-list', '', new Markup($content), primary: true));
     }

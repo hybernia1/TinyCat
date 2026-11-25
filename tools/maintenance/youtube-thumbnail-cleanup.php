@@ -6,7 +6,7 @@ if (!defined('TINYCAT')) { define('TINYCAT', true); }
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Database\Connection;
-use TinyCat\Core\Links\Providers;
+use TinyCat\Social\Posts\Providers;
 
 /** The returned paths may be removed only after checking all remaining references. */
 function youtubeThumbnailCleanup(PDO $pdo, bool $apply = false, ?string $backup = null): array

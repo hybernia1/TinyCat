@@ -175,7 +175,7 @@ try {
             \TinyCat\Social\Posts\Posts::status_delete_content($contentId);
         },
         'maintenance' => static function (): void {
-            \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('orphan_terms', 500);
+            \TinyCat\Core\Tasks\Cleanup\Task::runTask('orphan_terms', 500);
         },
     };
 

@@ -16,7 +16,7 @@ $db = tinycat_test_mysql_connect($archiveConfig);
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Core\Identity\Authentication::reset(null, true);
 foreach ([
-    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), role VARCHAR(40), status VARCHAR(24), avatar_exists INTEGER, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at DATETIME)',
+    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), role VARCHAR(40), status VARCHAR(24), avatar_exists INTEGER, avatar_version VARCHAR(32), updated_at DATETIME)',
     'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_sidebar_index (published_at,author_id,id))',
     'CREATE TABLE social_post_images (content_id INT UNSIGNED, path TEXT, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE social_post_links (content_id INT UNSIGNED, link_id INT UNSIGNED)',

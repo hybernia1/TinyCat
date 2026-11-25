@@ -25,7 +25,7 @@ $reject = static function (callable $action, string $message) use ($assert): voi
 };
 $normalize = static fn (array $files): array => array_map(static fn (string $file): string => str_replace('\\', '/', $file), $files);
 $resourceRoots = [
-    'App/Core/Identity', 'App/Core/Ui/assets/admin', 'App/Core/Health', 'App/Core/Installation',
+    'App/Core/Identity', 'App/Core/Ui/assets/admin', 'App/Core/Installation',
     'App/Core/Mail', 'App/Core/Notifications', 'App/Core/Publishing', 'App/Core/Tasks',
     'App/Core/Security', 'App/Core/Settings', 'App/Modules/Social', 'App/Core/Updates',
 ];
@@ -33,7 +33,7 @@ $ownedFiles = static fn (string $name): array => array_values(array_filter(array
 $assert($normalize(ClientAssets::manifests()) === $normalize([$root . '/App/Core/Ui/assets/module.json', ...$ownedFiles('module.json')]), 'One Social manifest and the explicit framework own the complete ordered asset catalog');
 $assert($normalize(Resources::files('components')) === $normalize([$root . '/App/Core/Ui/assets/components.json', ...$ownedFiles('components.json')]), 'Components use the same framework and functional ownership');
 $expected = [];
-$owners = ['Identity' => 'tinycat.accounts', 'Health' => 'tinycat.health', 'Mail' => 'tinycat.mail', 'Notifications' => 'tinycat.notifications', 'Tasks' => 'tinycat.scheduler', 'Security' => 'tinycat.security', 'Settings' => 'tinycat.settings', 'Support' => 'tinycat.support', 'Ui' => 'tinycat.ui', 'Updates' => 'tinycat.updates', 'Social' => 'tinycat.social'];
+$owners = ['Identity' => 'tinycat.accounts', 'Mail' => 'tinycat.mail', 'Notifications' => 'tinycat.notifications', 'Tasks' => 'tinycat.scheduler', 'Security' => 'tinycat.security', 'Settings' => 'tinycat.settings', 'Support' => 'tinycat.support', 'Ui' => 'tinycat.ui', 'Updates' => 'tinycat.updates', 'Social' => 'tinycat.social'];
 foreach ($owners as $owner => $id) {
     $directory = $root . ($owner === 'Social' ? '/App/Modules/Social' : '/App/Core/' . $owner);
     foreach (['translations' => 'lang', 'emails' => 'emails'] as $kind => $folder) {

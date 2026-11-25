@@ -185,7 +185,7 @@
     const avatarImage = '/avatar-fixture.svg';
     for (const state of ['empty', 'uploaded', 'generated']) {
       const user = { id: 2, username: 'Avatar fixture', avatar_url: state === 'empty' ? null : avatarImage, avatar_custom: state !== 'generated' };
-      const dialog = T.accounts.modal(new URL('/api/users/2/avatar', location.href), { data: { user, appearance_options: window.avatarFixtureOptions } }, 'avatar-layout-'+state);
+      const dialog = T.accounts.modal(new URL('/api/users/2/avatar', location.href), { data: { user } }, 'avatar-layout-'+state);
       dialog.dataset.open = 'true'; document.body.append(dialog);
       for (const theme of ['light', 'dark']) {
         document.documentElement.dataset.theme = theme;

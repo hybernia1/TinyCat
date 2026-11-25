@@ -13,11 +13,8 @@
     "rotate_confirm": "Ruotare il token cron? Le chiamate pianificate esistenti smetteranno di funzionare finché non verranno aggiornate.",
     "tasks": {
       "cleanup": "Pulizia",
-      "cleanup_help": "Rimuove tag e collegamenti inutilizzati, post orfani e immagini di anteprima, cache di dati scaduti, vecchi bucket con limite di velocità, token di ripristino scaduti e notifiche di lettura. Rimuove anche avatar orfani, file temporanei abbandonati e vecchi backup di aggiornamenti completati.",
-      "cleanup_schedule": "Programmazione oraria. I dovuti controlli interni impediscono che la pulizia venga eseguita troppo spesso.",
-      "feeds": "Fonti",
-      "feeds_help": "Pubblica elementi da origini attive il cui intervallo è scaduto.",
-      "feeds_schedule": "Pianificazione in base alla frequenza di polling richiesta, in genere ogni due minuti."
+      "cleanup_help": "Esegue la manutenzione dei dati del core, delle cache, dei file temporanei e dei backup degli aggiornamenti completati.",
+      "cleanup_schedule": "Programmazione oraria. I dovuti controlli interni impediscono che la pulizia venga eseguita troppo spesso."
     },
     "messages": {
       "token_rotated": "Il token cron è stato ruotato."
@@ -40,9 +37,7 @@
     "summary_count": "Elaborato: {count}",
     "summary_changed": "Modificato: {count}",
     "options": {
-      "bot_limit": "Limite sorgente",
-      "cleanup_batch": "Lotto di pulizia",
-      "source_id": "ID origine"
+      "cleanup_batch": "Lotto di pulizia"
     },
     "statuses": {
       "running": "In esecuzione",
@@ -59,7 +54,6 @@
     },
     "menu_title": "Attività",
     "cadence": {
-      "feeds": "Controllare ogni due minuti",
       "cleanup": "Una volta ogni ora"
     },
     "run_details": "Dettagli esecuzione",
@@ -71,5 +65,53 @@
     "run_id": "ID esecuzione",
     "parameters": "Parametri di esecuzione",
     "error": "Errore"
+  },
+  "health": {
+    "title": "Stato del sito",
+    "intro": "Daily operational checks with a recorded result and a notification to every active administrator.",
+    "schedule": "Schedule once a day. Every completed inspection notifies active administrators.",
+    "schedule_short": "Once a day",
+    "empty": "No inspection has run yet.",
+    "notification_ok": "Site health inspection completed: everything is OK.",
+    "notification_attention": "Site health inspection completed: something needs attention.",
+    "status": {
+      "ok": "OK",
+      "warning": "Needs attention",
+      "critical": "Problem detected",
+      "skipped": "Not checked",
+      "unknown": "Unknown"
+    },
+    "checks": {
+      "database": "Database",
+      "cache": "Cache",
+      "storage": "Application storage",
+      "uploads": "Uploads",
+      "disk": "Free disk space",
+      "runtime": "PHP extensions",
+      "scheduler": "Scheduled tasks",
+      "updates": "Update recovery state",
+      "http": "HTTP responsiveness"
+    },
+    "http": {
+      "total": "Request duration",
+      "errors": {
+        "configuration": "A valid site URL is missing from configuration.",
+        "unsupported": "Measurement requires cURL.",
+        "timeout": "The request timed out.",
+        "transport": "Connection or TLS verification failed.",
+        "response_limit": "The response exceeded the size limit; the transfer is incomplete.",
+        "disabled": "HTTP measurement is disabled."
+      }
+    },
+    "all_checks": "All checks",
+    "check_duration": "Inspection duration",
+    "scheduler": {
+      "ok": "Healthy.",
+      "missing": "No successful run recorded.",
+      "stale": "The last successful run is too old.",
+      "failed": "The latest run failed.",
+      "interrupted": "The latest run was interrupted.",
+      "unknown": "This older report has no details. Run a new inspection."
+    }
   }
 }

@@ -38,7 +38,7 @@ Resources::configure(Loader::load($root)->catalog);
 $custom = new NotificationType('fixture.order', static fn (array $rows): array => $rows, static fn (array $row): string => $row['target'] ?? '/orders/' . $row['subject_id'], subject: 'required', message: static fn (array $row): string => 'Order updated');
 $social = \TinyCat\Social\Posts\NotificationPresentation::types();
 $registries = new Registries([
-    'core.health' => new Contributions(notificationTypes: \TinyCat\Core\Health\Alerts::types()),
+    'core.health' => new Contributions(notificationTypes: \TinyCat\Core\Tasks\Health\Alerts::types()),
     'social' => new Contributions(notificationTypes: $social),
     'fixture' => new Contributions(notificationInbox: true, notificationTypes: [$custom], localizedRoutes: [new \TinyCat\Core\Modules\LocalizedRoute('fixture.orders', '^/orders/[0-9]+$')]),
 ]);

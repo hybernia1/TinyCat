@@ -106,7 +106,7 @@ $exercise = static function (PDO $db) use ($assert): void {
     $assert($db->query('SELECT published_at FROM social_posts WHERE id=1')->fetchColumn() === '2000-02-01 00:00:00', 'The keeper retains its original publication date.');
     $assert((int) $db->query('SELECT COUNT(*) FROM bot_feed_history')->fetchColumn() === 1, 'Cleanup does not change RSS GUID history.');
     $assert($db->query('SELECT path FROM social_post_images WHERE content_id=11')->fetchColumn() === '2026/11/shared.webp', 'The shared attachment stays attached to the keeper.');
-    $again = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('duplicate_bot_posts', 500);
+    $again = \TinyCat\Core\Tasks\Cleanup\Task::runTask('duplicate_bot_posts', 500);
     $assert($again['changed'] === 0 && $again['done'], 'The existing cleanup task dispatches this idempotent subtask.');
     $seed = $db->prepare("INSERT INTO social_posts (id,author_id,body,published_at,status,kind) VALUES (?,1,?,'2000-01-01','published','post')");
     for ($id = 1000; $id < 1650; $id++) { $seed->execute([$id, 'unique-' . $id]); }

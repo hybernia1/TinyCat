@@ -2,18 +2,18 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Core\Links\Providers;
-use TinyCat\Core\Text\LinkParser;
-use TinyCat\Core\Text\PostText;
-use TinyCat\Core\Text\Segments;
-use TinyCat\Core\Links\Presentation as Links;
+use TinyCat\Social\Posts\Providers;
+use TinyCat\Social\Posts\LinkParser;
+use TinyCat\Social\Bots\FeedPublication;
+use TinyCat\Social\Posts\InlinePresentation as Segments;
+use TinyCat\Social\Posts\Links as Links;
 
 /** Canonical media and text resources contain data only. */
 final class TextResource
 {
     /** @param list<array<mixed>> $attachments
      * @return array<string, mixed> */
-    public static function content(int $id, string $body, string $kind, array $attachments = []): array
+    public static function content(int $id, string $body, array $attachments = []): array
     {
         $links = array_values(array_filter($attachments, static fn (array $link): bool => !Links::status_link_is_internal($link)));
         foreach ($links as &$storedLink) {
@@ -47,12 +47,12 @@ final class TextResource
                 }
             }
         }
-        $segments = Segments::compactTags(Segments::text($body, $kind, array_column($cards, 'url_hash'), $id));
-        return ['segments' => $segments, ...Segments::splitTags($segments), 'links' => array_map(static fn (array $link): array => self::link($link, $kind, $id), $cards)];
+        $segments = Segments::compactTags(Segments::text($body, array_column($cards, 'url_hash'), $id));
+        return ['segments' => $segments, ...Segments::splitTags($segments), 'links' => array_map(static fn (array $link): array => self::link($link, $id), $cards)];
     }
     /** @param array<mixed> $link
      * @return array<string, mixed> */
-    public static function link(array $link, string $kind, int $contentId = 0): array
+    public static function link(array $link, int $contentId = 0): array
     {
         $map = Providers::googleMap((string) ($link['normalized_url'] ?? ''));
         if ($map !== null) { $link = array_replace($link, $map); }
@@ -64,12 +64,12 @@ final class TextResource
         $title = trim((string) ($link['title'] ?? ''));
         $embedUrl = Providers::embedUrl($link);
         $image = (string) ($link['image_url'] ?? '');
-        $image = $thumbnails['mobile'] === '' && Links::status_link_image_exists($image) ? $image : '';
-        return ['outbound_url' => self::outbound($link, $contentId, $kind), 'url' => (string) ($link['normalized_url'] ?? ''), 'title' => ($title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : (string) ($link['normalized_url'] ?? ''))),
+        $image = $thumbnails['mobile'] === '' && LinkImages::exists($image) ? $image : '';
+        return ['outbound_url' => self::outbound($link, $contentId), 'url' => (string) ($link['normalized_url'] ?? ''), 'title' => ($title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : (string) ($link['normalized_url'] ?? ''))),
             'display_url' => $displayUrl,
             'provider' => !empty($link['provider']) && $link['provider'] !== 'web' ? $link['provider'] : null,
             'link_type' => in_array($link['link_type'], ['video', 'audio'], true) ? $link['link_type'] : 'web',
-            'description' => PostText::cleanImportBoilerplate((string) ($link['description'] ?? '')), 'image_url' => $image,
+            'description' => FeedPublication::cleanImportBoilerplate((string) ($link['description'] ?? '')), 'image_url' => $image,
             'audio_url' => (string) ($link['audio_url'] ?? ''),
             'embed_url' => $embedUrl, 'embed_allowed' => Providers::embedAllowed($embedUrl), 'embed_origin' => $embedUrl !== '' ? 'https://' . parse_url($embedUrl, PHP_URL_HOST) : '',
             'thumbnail_url' => (string) ($thumbnails['fallback'] ?? ''), 'thumbnail_webp_url' => (string) ($thumbnails['webp'] ?? ''),
@@ -77,10 +77,10 @@ final class TextResource
     }
 
     /** @param array<mixed> $link */
-    private static function outbound(array $link, int $id, string $kind): string
+    private static function outbound(array $link, int $id): string
     {
         $url = (string) ($link['normalized_url'] ?? '');
-        $parsed = LinkParser::fromRaw($url); $outbound = \TinyCat\Core\Text\Policies::policy($kind)->outbound;
-        return $id > 0 && $parsed !== null && !Links::status_internal_url($url) && $outbound !== null ? $outbound($id, (string) $parsed['url_hash'], 0) : $url;
+        $parsed = LinkParser::fromRaw($url);
+        return $id > 0 && $parsed !== null && !Links::isInternal($url) ? ContentLinks::navigation($id, (string) $parsed['url_hash'], 0) : $url;
     }
 }

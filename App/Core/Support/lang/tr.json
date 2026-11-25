@@ -225,8 +225,6 @@
     "inactive": "Devre dışı",
     "enable": "Etkinleştir",
     "disable": "Devre dışı bırak",
-    "enable_group": "Grubu etkinleştir",
-    "disable_group": "Grubu devre dışı bırak",
     "needed_by": "Gerektiren: {modules}",
     "confirm": "Değişiklik uygulansın mı? Bağımlılıklar kontrol edilir ve veriler korunur.",
     "module": "Modül",

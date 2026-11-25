@@ -15,36 +15,10 @@ import "../../Ui/assets/toasts.js";
     var empty = qs("[data-avatar-upload-empty]", root);
     var emptyNote = qs("[data-avatar-upload-empty-note]", root);
     var form = root.closest("form");
-    var action = form ? qs("[data-avatar-upload-action]", form) : null;
-    var remove = form ? qs("[data-avatar-upload-remove]", form) : null;
     var editor = root.closest(".avatar-editor");
     var save = editor ? qs("[data-avatar-save]", root.closest(".modal") || editor) : null;
-    var appearanceForm = editor ? qs("[data-avatar-appearance-form]", editor) : null;
-    var toggle = editor ? qs("[data-avatar-creator-toggle]", editor) : null;
-    var parameters = appearanceForm ? TinyCat.dom.all("[data-avatar-parameter]", appearanceForm) : [];
-    function settings() {
-      var result = { version: 1 };
-      parameters.forEach(function (select) { result[select.dataset.avatarParameter] = select.value; });
-      return result;
-    }
     function syncSave(uploadReady) {
-      if (toggle) { toggle.hidden = uploadReady; }
-      if (appearanceForm) { appearanceForm.hidden = uploadReady || !toggle || toggle.getAttribute("aria-expanded") !== "true"; }
-      if (!save) { return; }
-      save.setAttribute("form", !uploadReady && appearanceForm ? appearanceForm.id : form.id);
-      save.disabled = !uploadReady && (!appearanceForm || JSON.stringify(settings()) === appearanceForm.dataset.originalAppearance);
-    }
-    function showAppearance() {
-      if (!appearanceForm || !originalSrc) { return; }
-      var url = new URL(originalSrc, window.location.href);
-      parameters.forEach(function (select) {
-        var key = select.dataset.avatarParameter;
-        if (select.value === select.dataset.avatarDefault) { url.searchParams.delete(key); }
-        else { url.searchParams.set(key, select.value); }
-      });
-      preview.src = url.pathname + url.search;
-      preview.hidden = false;
-      qs('[name="appearance"]', appearanceForm).value = JSON.stringify(settings());
+      if (save) { save.setAttribute("form", form.id); save.disabled = !uploadReady; }
     }
     var originalSrc = preview ? String(preview.getAttribute("src") || "") : "";
     var previewRequestId = 0;
@@ -57,23 +31,10 @@ import "../../Ui/assets/toasts.js";
 
     root.dataset.avatarUploadReady = "true";
     uploads.set(root, function () { disposed = true; selectionRequestId++; previewRequestId++; if (reader) { reader.abort(); reader = null; } });
-    if (toggle) {
-      toggle.addEventListener("click", function () {
-        var expanded = toggle.getAttribute("aria-expanded") !== "true";
-        toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
-        appearanceForm.hidden = !expanded;
-        if (expanded && parameters[0]) { parameters[0].focus(); }
-      });
-    }
-    parameters.forEach(function (select) {
-      select.addEventListener("change", function () { showAppearance(); syncSave(false); });
-    });
-
     function showOriginal() {
       syncSave(false);
       if (originalSrc) {
         preview.src = originalSrc;
-        showAppearance();
         preview.hidden = false;
       } else {
         preview.removeAttribute("src");
@@ -130,10 +91,6 @@ import "../../Ui/assets/toasts.js";
       var prepared;
       if (save) { save.disabled = true; }
 
-      if (action) {
-        action.value = "upload";
-      }
-
       if (!file || ["image/png", "image/jpeg", "image/webp"].indexOf(file.type) === -1) {
         showOriginal();
         return;
@@ -157,29 +114,6 @@ import "../../Ui/assets/toasts.js";
       }
     });
 
-    if (remove && form) {
-      remove.addEventListener("click", async function () {
-        var confirmed = await TinyCat.dialog.confirm({
-          title: root.dataset.avatarRemoveTitle || TinyCat.i18n.t("account.remove_avatar_title"),
-          message: root.dataset.avatarRemoveMessage || TinyCat.i18n.t("account.remove_avatar_confirm"),
-          confirmLabel: root.dataset.avatarRemoveOk || TinyCat.i18n.t("common.remove"),
-          cancelLabel: root.dataset.avatarRemoveCancel || TinyCat.i18n.t("common.cancel"),
-          variant: "danger"
-        });
-
-        if (!confirmed || !current()) {
-          return;
-        }
-
-        selectionRequestId++;
-        input.value = "";
-        if (action) {
-          action.value = "remove";
-        }
-
-        form.requestSubmit();
-      });
-    }
   }
   TinyCat.accounts.avatarUpload = {
     hydrate: function (root) { TinyCat.dom.all("[data-avatar-upload]", root).forEach(initAvatarUploadRoot); },

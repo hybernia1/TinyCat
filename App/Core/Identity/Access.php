@@ -21,12 +21,7 @@ final class Access
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('auth.login_required'), 401, 'unauthenticated', ['redirect' => '/login']);
         }
 
-        \TinyCat\Http\Web::redirect(self::authRedirectUrl($redirect ?? self::loginUrl()));
-    }
-
-    private static function loginUrl(): string
-    {
-        return '/login';
+        \TinyCat\Http\Web::redirect(self::authRedirectUrl($redirect ?? '/login'));
     }
 
     private static function authRedirectUrl(string $target): string

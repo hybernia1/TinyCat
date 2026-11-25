@@ -12,7 +12,7 @@ final readonly class Definition
 {
     public const PROVIDER_TYPES = [
         'routes' => Module::class,
-        'schema' => ProvidesSchema::class,
+        'schema' => ProvidesSchemas::class,
         'contributions' => ProvidesContributions::class,
         'services' => \TinyCat\Core\Runtime\InitializesModule::class,
     ];

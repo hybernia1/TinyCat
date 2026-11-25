@@ -3,7 +3,6 @@ declare(strict_types=1);
 namespace TinyCat\Core\Modules;
 
 use TinyCat\Http\Api;
-use TinyCat\Core\Modules\StorageModule;
 
 /** Explicit manifest selection. All functional modules use the same registration path. */
 final readonly class Loader
@@ -81,7 +80,7 @@ final readonly class Loader
     }
 
     /** @return array<string, ModuleSchema> */
-    public function schemas(bool $managed = false): array { return Providers::schemas($this->catalog, $managed); }
+    public function schemas(): array { return Providers::schemas($this->catalog); }
 
     /** @param class-string $interface
      * @return array<string, class-string> */
@@ -103,19 +102,13 @@ final readonly class Loader
     public function register(Api $api): array
     {
         $owners = [];
-        foreach ($this->providers(StorageModule::class) as $id => $class) {
-            foreach ($class::tables() as $table) {
-                if (preg_match('/^[a-z][a-z0-9_]*$/D', $table) !== 1 || isset($owners[$table])) { throw new \InvalidArgumentException('Invalid or duplicate module table: ' . $table); }
-                $owners[$table] = $id;
-            }
-        }
         $schemas = $this->schemas();
         $schemaOwners = Providers::schemaOwners($this->catalog);
         foreach ($schemas as $id => $schema) {
             $owner = $schemaOwners[$id] ?? $id;
-            foreach ($schema->tables as $table) { if (isset($owners[$table]) && $owners[$table] !== $owner) { throw new \InvalidArgumentException('Duplicate table owner: ' . $table); } $owners[$table] = $owner; }
+            foreach ($schema->tables as $table) { if (isset($owners[$table])) { throw new \InvalidArgumentException('Duplicate table owner: ' . $table); } $owners[$table] = $owner; }
         }
-        if ($schemas !== []) { $owners['module_installations'] = $owners['migrations'] = 'tinycat.core'; }
+        if ($schemas !== []) { $owners['migrations'] = 'tinycat.core'; $owners['module_installations'] = 'tinycat.core'; }
         Providers::routes($this->catalog, $api);
         return array_keys($owners);
     }

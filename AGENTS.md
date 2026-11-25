@@ -50,8 +50,15 @@ nikoli PHP adaptéry propojující domény.
 - Core/Discovery hostuje hledání a sitemap; aktivní vlastníci přispívají
   lazy `SearchSource` a `SitemapSection`. SQL, viditelnost a kanonické URL
   patří vlastníkovi. Nepřidávej seznam domén do core ani glob discovery.
-- Core/Tasks vlastní běh, zámky a persistentní historii v `scheduler_runs`.
-  HTTP/admin rozhraní plánovače patří také do core; CLI nesmí obejít runner.
+- Core/Tasks vlastní registraci, parametry, běh, souběh, zámky, plánování,
+  persistentní historii v `scheduler_runs` a společné API/administraci úloh.
+  Scheduler je vnitřní mechanismus Tasks, nikoli samostatná aplikace.
+  Health vlastní sondy, vyhodnocení a upozornění; diagnostika `site-health`,
+  `cleanup` a modulové importy jsou konkrétní úlohy stejného kontraktu.
+  CLI nesmí obejít runner. Historii čti přes Tasks; výsledky pro společný detail
+  dodává lazy callback definice jako `details` (název, volitelný stav a řádky
+  hodnot). Tasks používá existující společný modal a `ui/detail-table` bez znalosti
+  konkrétní úlohy. Health nemá vlastní komponentový katalog ani assetovou registraci.
 - Core nemá univerzální obsah, komentáře, tagy ani média. Social vlastní
   `social_posts` a vlastní diskuse,
   reakce, tagy, odkazy a média. Domény mají nezávislé číselné prostory a FK.
@@ -73,17 +80,30 @@ nikoli PHP adaptéry propojující domény.
   dashboard hostuje core; moduly připojují lazy `InformationSection` a `DashboardWidget`.
 - Článek a status ani jejich komentáře nesdílejí tabulku. Stejné číslo ID
   není stejný objekt. Sociální dotazy, exporty a údržba používají vlastní tabulky.
-- Feedový průchod vlastní `Core/Feeds/FeedPipeline`; `FeedSourceStore`
-  a `FeedTarget` implementuje vlastník zdroje a publikace. Cíl připravuje i přílohy.
+- `Core/Feeds/FeedParser` čte RSS, Atom a JSON Feed bez publikačních pravidel.
+  Zachovává obsah a formátová metadata; neodstraňuje odkazy ani redakční dovětky.
+  Importní průchod, zdroje, GUID, přílohy a WordPress obohacování vlastní
+  `Social/Bots`; přípravu sociálního textu vlastní `Social/Posts`.
   Náhled neclaimuje GUID ani nemění plánování. Zápis publikace a úspěšného GUID
   je atomický; ruční import používá Core/Tasks.
-- Textové renderování rozšiřuj pojmenovanými `Core/Text/Policies` a `TextPolicy`.
-  Volající předává druh textu explicitně; core nevolí politiku Socialu jako výchozí.
+- Core poskytuje lexikální práci s textem a URL. Publikační renderování,
+  kontext příspěvku a komentáře i textové politiky vlastní modul.
+  Core URL parser zachovává query data a nezná poskytovatele ani publikační limity.
+  Social vlastní tracking filtry, poskytovatele, přehrávače, hashtagy, emotikony,
+  jejich rozložení a historii komentářů. `Social/Posts/PostCreation` vlastní společnou přípravu textu;
+  importní redakční čištění zůstává v Bots a nepoužívá se na ruční příspěvky
+  ani komentáře. Textové registry ani callbackové politiky se neregistrují.
+  Core avatary přijímají kanonická data identity; mapování doménových SQL projekcí
+  provádí jejich vlastník. Cache náhledů odkazů včetně variant a úklidu vlastní Social.
   Pravidla URL a UTM vlastní každý modul; core poskytuje parser a aplikaci pravidel.
   Publikační a diskusní UI v `App/Modules/Social/assets/content` vlastní Social;
   zachovaná ID `publishing.*` nejsou core služba ani samostatný modul. Core/Ui
-  poskytuje pouze obecné formuláře, dialogy a vykreslovací mechanismy. RSS poskytuje Core/Feeds,
-  oEmbed hostuje Core/Discovery pro lazy `EmbedSource` vlastníka.
+  poskytuje pouze obecné formuláře, dialogy a vykreslovací mechanismy. Výstupní RSS
+  prezentuje `Core/Ui/Rss` včetně HTTP odpovědi; modul dodává finální metadata,
+  absolutní URL a autorizované položky. Vstupní feedy parsuje `Core/Feeds/FeedParser`,
+  oEmbed hostuje `Core/Discovery/Oembed` pro lazy `EmbedSource` vlastníka;
+  JSON/XML odpověď prezentuje `Core/Ui/Oembed`. Modul dodává dostupný objekt,
+  jeho typ a obsah vložení; core nevybírá sociální objekt ani jeho šablonu.
 
 - Nastavení, jejich popisky a `resources.emails` patří vlastníkům.
   Prezentaci editoru core odvozuje z lazy `SettingsSection`; nepřidávej druhou
@@ -104,10 +124,10 @@ nikoli PHP adaptéry propojující domény.
   staré modulové názvy jsou kompatibilní aliasy, nikoli další implementace.
   Doménový detail úlohy, dočasné adresáře, config overrides a definice řazení
   vlastní příslušná funkce; registrace jejich callbacky nevyhodnocuje.
-- Obecná schránka je v `Core/Notifications`, diagnostika v `Core/Health`.
+- Obecná schránka je v `Core/Notifications`, diagnostika v `Core/Tasks/Health`.
   Sociální předměty a události vlastní Social/Posts; core nečte tabulky publikací
   kvůli notifikacím. Typy, hydratace a odkazy jsou lazy příspěvky vlastníků.
-  HTTP tok drží `Core/Runtime/HttpKernel`, Social poskytuje úzkou `HttpPolicy`.
+  HTTP tok drží `Core/Runtime/HttpKernel`, `Core/Ui/Platform` jako `tinycat.core` poskytuje úzkou `HttpPolicy`; Social dodává lazy `PlayerOrigins` přes `Contributions/Registries`.
 - Doménové testy patří do `tests/domains/`, helpery do `tests/support/`
   a fixture/workers do `tests/fixtures/`. Workers nejsou samostatné testy.
   `feeds/` je nadále samostatná aplikace s vlastním README.

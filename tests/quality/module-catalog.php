@@ -92,6 +92,7 @@ try {
     file_put_contents($sourceRoot . '/App/Modules/Extra/module.json', json_encode($extra, JSON_THROW_ON_ERROR));
     file_put_contents($sourceRoot . '/App/Modules/Notes/Module.php', '<?php throw new RuntimeException("Module PHP must not execute");');
     $sources = TinyCat\Core\Modules\SourceModules::selection($sourceRoot);
+    $assert(TinyCat\Core\Modules\SourceModules::production($sourceRoot) === $sources, 'Production inventory preserves the validated metadata-only source selection');
     $assert(array_keys($sources) === ['fixture.extra', 'fixture.notes'], 'Source inventory reads new module IDs from JSON without a central list or PHP execution');
     $assert(TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.notes') === $sources, 'Standalone source selection includes transitive dependencies');
     $assert(array_keys(TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.extra')) === ['fixture.extra'], 'Standalone source selection excludes unrelated modules');
@@ -102,6 +103,11 @@ try {
     $extra['id'] = 'fixture.notes';
     file_put_contents($sourceRoot . '/App/Modules/Extra/module.json', json_encode($extra, JSON_THROW_ON_ERROR));
     $reject(static fn () => TinyCat\Core\Modules\SourceModules::selection($sourceRoot), 'Duplicate discovered module ID');
+    $reject(static fn () => TinyCat\Core\Modules\SourceModules::production($sourceRoot), 'Production inventory rejects duplicate metadata too');
+    $activationPlan = ['selection' => ['fixture.leaf' => 'leaf', 'fixture.middle' => 'middle', 'fixture.base' => 'base'], 'requires' => ['fixture.leaf' => ['fixture.middle'], 'fixture.middle' => ['fixture.base'], 'fixture.base' => []]];
+    $assert(TinyCat\Core\Modules\Distribution::activationIds($activationPlan, ['fixture.leaf', 'fixture.leaf'], true) === ['fixture.leaf', 'fixture.middle', 'fixture.base'], 'Activation deduplicates IDs and includes transitive module dependencies');
+    $assert(TinyCat\Core\Modules\Distribution::activationIds($activationPlan, ['fixture.leaf'], false) === ['fixture.leaf'], 'Deactivation never expands to dependencies');
+    $reject(static fn () => TinyCat\Core\Modules\Distribution::activationIds($activationPlan, ['fixture.group'], true), 'Undeclared IDs cannot enter activation through contribution groups');
     $alpha = $definition('alpha');
     $beta = $definition('beta', ['fixture.alpha']);
     $gamma = $definition('gamma');
@@ -185,9 +191,11 @@ try {
     foreach (['Alpha' => ['alpha', 'fixture_alpha'], 'Beta' => ['beta', 'fixture_beta'], 'Duplicate' => ['invalid', 'fixture_alpha'], 'Invalid' => ['invalid', 'invalid-table']] as $owner => [$id, $table]) {
         $directory = $temporary . '/App/Modules/Fixture' . $owner; mkdir($directory . '/src', 0700, true);
         $namespace = 'TinyCat\\Fixture' . $owner;
-        $source = '<?php namespace ' . $namespace . '; final class Module implements \\TinyCat\\Core\\Modules\\StorageModule { public static function tables(): array { return [' . var_export($table, true) . ']; } public static function register(\\TinyCat\\Http\\Api $api): void { \\TinyCat\\ModuleFixture\\Calls::$registered[] = ' . var_export(strtolower($owner), true) . '; } }';
+        mkdir($directory . '/migrations');
+        file_put_contents($directory . '/migrations/initial.php', '<?php return static function (\PDO $pdo): void { throw new \RuntimeException("Offline registration must not run DDL"); };');
+        $source = '<?php namespace ' . $namespace . '; final class Module implements \\TinyCat\\Core\\Modules\\Module, \\TinyCat\\Core\\Modules\\ProvidesSchemas { public static function schemas(): array { return ["fixture.' . strtolower($owner) . '" => new \\TinyCat\\Core\\Modules\\ModuleSchema(1, [' . var_export($table, true) . '], static function (\\PDO $pdo): void { throw new \\RuntimeException("Offline DDL"); }, [new \\TinyCat\\Core\\Modules\\SchemaMigration(1, "fixture.' . strtolower($owner) . '.initial", dirname(__DIR__) . "/migrations/initial.php")])]; } public static function register(\\TinyCat\\Http\\Api $api): void { \\TinyCat\\ModuleFixture\\Calls::$registered[] = ' . var_export(strtolower($owner), true) . '; } }';
         file_put_contents($directory . '/src/Module.php', $source);
-        file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.' . $id, 'namespace' => $namespace . '\\', 'providers' => ['routes' => $namespace . '\\Module']], JSON_THROW_ON_ERROR));
+        file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.' . $id, 'namespace' => $namespace . '\\', 'providers' => ['routes' => $namespace . '\\Module', 'schema' => $namespace . '\\Module'], 'resources' => ['migrations' => 'migrations']], JSON_THROW_ON_ERROR));
     }
     $adapter = Loader::fromSelection($temporary, [
         'fixture.beta' => TinyCat\FixtureBeta\Module::class,
@@ -195,7 +203,7 @@ try {
     ]);
     $tables = $adapter->register(new TinyCat\Http\Api());
     $assert(Calls::$registered === ['alpha', 'beta'], 'Module routes follow dependency order');
-    $assert($tables === ['fixture_alpha', 'fixture_beta'], 'Module table inventory follows dependency order');
+    $assert($tables === ['fixture_alpha', 'fixture_beta', 'migrations', 'module_installations'], 'Module table inventory follows dependency order');
     foreach ([TinyCat\FixtureDuplicate\Module::class, TinyCat\FixtureInvalid\Module::class] as $invalid) {
         Calls::$registered = [];
         $adapter = Loader::fromSelection($temporary, ['fixture.alpha' => TinyCat\FixtureAlpha\Module::class, 'fixture.invalid' => $invalid]);
@@ -205,9 +213,13 @@ try {
     $reject(static fn () => Loader::fromSelection($temporary, [TinyCat\FixtureAlpha\Module::class]), 'Legacy selection without stable ID');
     $reject(static fn () => Loader::fromSelection($temporary, ['fixture.alpha' => 123]), 'Invalid legacy class binding');
     $reject(static fn () => Loader::fromSelection($temporary, ['fixture.alpha' => 'Foreign\\Module']), 'Foreign legacy class binding');
+    $allSchemas = $legacy->schemas();
+    $schemaProviders = $legacy->providers(TinyCat\Core\Modules\ProvidesSchemas::class);
+    $assert(array_keys($schemaProviders) === ['tinycat.security', 'tinycat.accounts', 'tinycat.notifications', 'tinycat.settings', 'tinycat.social'], 'One schema provider contract enumerates core and optional owners in catalog order');
+    $assert(isset($allSchemas['tinycat.accounts'], $allSchemas['tinycat.publishing'], $allSchemas['tinycat.status'], $allSchemas['tinycat.bots']), 'Runtime table inventory includes every explicitly managed historical schema');
+    $assert($allSchemas['tinycat.accounts']->repairOnInstall && !$allSchemas['tinycat.accounts']->gateRoutes && $allSchemas['tinycat.publishing']->repairOnInstall && !$allSchemas['tinycat.publishing']->gateRoutes, 'Explicit installation repair and existing route readiness policies survive interface consolidation');
     // End-to-end inventory against all current built-ins, still without executing a handler.
     $expected = [];
-    foreach ($legacy->providers(TinyCat\Core\Modules\StorageModule::class) as $class) { $expected = [...$expected, ...$class::tables()]; }
     foreach ($legacy->schemas() as $schema) { $expected = [...$expected, ...$schema->tables]; }
     $expected = [...array_values(array_unique($expected)), 'migrations', 'module_installations'];
     $expected = array_values(array_unique($expected));
@@ -244,6 +256,10 @@ try {
             }
             if ($migration['id'] === 'tinycat.accounts.avatar-version') {
                 $assert($migration['file'] === 'App/Core/Identity/migrations/avatar-version.php' && $migration['version'] === 2 && hash_equals($migration['checksum'], \TinyCat\Database\ModuleSchemas::checksum($root . '/' . $migration['file'])), 'The new avatar migration remains executable and authenticated after the archived prefix');
+                continue;
+            }
+            if ($migration['id'] === 'tinycat.accounts.initials-avatar') {
+                $assert($migration['file'] === 'App/Core/Identity/migrations/initials-avatar.php' && $migration['version'] === 4 && hash_equals($migration['checksum'], \TinyCat\Database\ModuleSchemas::checksum($root . '/' . $migration['file'])), 'The initials migration remains executable and authenticated after the archived prefix');
                 continue;
             }
             $assert($migration['file'] === null && preg_match('/^[a-f0-9]{64}$/D', $migration['checksum']) === 1, 'Built-in history keeps its immutable ID, sequence and checksum without executable PHP: ' . $migration['id']);

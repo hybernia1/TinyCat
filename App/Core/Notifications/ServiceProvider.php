@@ -3,23 +3,17 @@ declare(strict_types=1);
 namespace TinyCat\Core\Notifications;
 use TinyCat\Core\Notifications\Inbox;
 
-final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Modules\ProvidesManagedSchema
+final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Modules\ProvidesSchemas
 {
 
 
-    public static function schema(): \TinyCat\Core\Modules\ModuleSchema { return Schema::schema(); }
+    public static function schemas(): array { return ['tinycat.notifications' => Schema::schema()]; }
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
         return new \TinyCat\Core\Modules\Contributions(notificationInbox: true, maintenance: [
             \TinyCat\Database\Retention::task('old_read_notifications', 'notifications', 'read_at IS NOT NULL AND read_at < ?', static fn (): array => [\TinyCat\Support\Dates::dateDb('-30 days')], 110),
         ]);
-    }
-
-    /** @return list<string> */
-    public static function tables(): array
-    {
-        return ['notifications'];
     }
 
     public static function register(\TinyCat\Http\Api $api): void

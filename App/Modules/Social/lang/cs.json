@@ -455,5 +455,19 @@
     "purpose_bot_sources": "Pravidla publikování RSS a Atom zdrojů pro bot účty.",
     "purpose_bot_feed_history": "Poslední hashe položek feedu zabraňující duplicitním příspěvkům botů.",
     "purpose_bot_source_runs": "Úsporná diagnostická historie kontrol a importů botích zdrojů."
+  },
+  "cron": {
+    "tasks": {
+      "feeds": "Zdroje",
+      "feeds_help": "Publikuje položky z aktivních zdrojů, jejichž interval právě vypršel.",
+      "feeds_schedule": "Naplánuj podle požadované frekvence kontroly, obvykle každé dvě minuty."
+    },
+    "options": {
+      "bot_limit": "Limit zdrojů",
+      "source_id": "ID zdroje"
+    },
+    "cadence": {
+      "feeds": "Kontrola každé dvě minuty"
+    }
   }
 }

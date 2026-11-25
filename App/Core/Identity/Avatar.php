@@ -27,15 +27,23 @@ final class Avatar
         'image/webp',
     ];
 
-    public static function url(int $userId, bool $exists, ?string $updatedAt = null, ?string $appearance = null, ?string $uploadVersion = null): string
+    public static function url(int $userId, bool $exists, ?string $updatedAt = null, ?string $username = null, ?string $uploadVersion = null): string
     {
         if ($userId < 1) { return ''; }
-        if (!$exists) { return GeneratedAvatar::url($userId, $appearance); }
+        if (!$exists) { return $username === null ? '/avatar/generated/v1/' . $userId . '.svg' : '/avatar/initials/v1/' . (rtrim(strtr(base64_encode($username), '+/', '-_'), '=') ?: '_') . '.svg'; }
 
         if (is_string($uploadVersion) && preg_match('/^[a-f0-9]{32}$/D', $uploadVersion) === 1) { return self::BASE_URL . '/' . $userId . '-' . $uploadVersion . '.webp'; }
         $version = trim((string) $updatedAt);
 
         return self::BASE_URL . '/' . $userId . '.webp' . ($version !== '' ? '?v=' . rawurlencode($version) : '');
+    }
+
+    public static function initialsSvg(string $username): string
+    {
+        $username = preg_replace('/[^\x09\x0A\x0D\x20-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $username) ?? '';
+        $initials = mb_strtoupper(mb_substr(trim($username), 0, 2, 'UTF-8'), 'UTF-8');
+        $initials = htmlspecialchars($initials !== '' ? $initials : '?', ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE, 'UTF-8');
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#637989"/><text x="100" y="100" dy=".35em" text-anchor="middle" fill="#fff" font-family="sans-serif" font-size="76" font-weight="600">' . $initials . '</text></svg>';
     }
 
     /**

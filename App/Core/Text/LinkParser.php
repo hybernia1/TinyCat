@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Core\Text;
 
-use TinyCat\Core\Links\Audio;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -12,44 +11,12 @@ if (!defined('TINYCAT')) {
 
 class LinkParser
 {
-    private const MAX_LINKS = 5;
-    private const TRACKING_PARAMS = [
-        '_hsenc',
-        '_hsmi',
-        '_openstat',
-        'ab_channel',
-        'ck_subscriber_id',
-        'dclid',
-        'fbclid',
-        'fb_action_ids',
-        'fb_action_types',
-        'fb_ref',
-        'fb_source',
-        'gclid',
-        'gbraid',
-        'igshid',
-        'mc_cid',
-        'mc_eid',
-        'mkt_tok',
-        'msclkid',
-        'oly_anon_id',
-        'oly_enc_id',
-        'ref_src',
-        'sc_customer',
-        'sc_eh',
-        'sc_llid',
-        'sc_src',
-        'srsltid',
-        'vero_id',
-        'wbraid',
-        'yclid',
-    ];
     /**
      * @return array<mixed>
      */
-    public static function extract(string $text, int $limit = self::MAX_LINKS): array
+    public static function extract(string $text, int $limit = PHP_INT_MAX): array
     {
-        $limit = max(1, min(10, $limit));
+        $limit = max(1, $limit);
 
         if ($text === '' || !preg_match_all(self::pattern(), $text, $matches)) {
             return [];
@@ -63,7 +30,7 @@ class LinkParser
             $raw = (string) $match;
             [$url] = self::splitTail($raw);
             if (!array_key_exists($url, $parsed)) {
-                $parsed[$url] = self::fromRaw($url);
+                $parsed[$url] = static::fromRaw($url);
             }
             $link = $parsed[$url];
 
@@ -106,23 +73,6 @@ class LinkParser
             return null;
         }
 
-        $video = \TinyCat\Core\Links\Providers::classify(self::normalizeUrl($parts, $host));
-
-        if ($video !== null) {
-            $normalizedUrl = $video['normalized_url'];
-
-            return [
-                'normalized_url' => $normalizedUrl,
-                'url_hash' => self::hash($normalizedUrl),
-                'provider' => $video['provider'],
-                'link_type' => $video['link_type'] ?? 'video',
-                'title' => $video['title'],
-                'description' => $video['description'],
-                'video_id' => $video['video_id'],
-                'display_url' => self::displayUrl($normalizedUrl),
-            ];
-        }
-
         $normalizedUrl = self::normalizeUrl($parts, $host);
 
         if ($normalizedUrl === '') {
@@ -130,17 +80,13 @@ class LinkParser
         }
 
         $displayUrl = $host . (($parts['path'] ?? '') !== '/' ? (string) ($parts['path'] ?? '') : '');
-        $audio = Audio::isDirect($normalizedUrl) ? $normalizedUrl : '';
 
         return [
             'normalized_url' => $normalizedUrl,
             'url_hash' => self::hash($normalizedUrl),
-            'provider' => '',
-            'link_type' => $audio !== '' ? 'audio' : 'web',
-            'audio_url' => $audio,
+            'link_type' => 'web',
             'title' => self::title($host, (string) ($parts['path'] ?? '')),
             'description' => $displayUrl,
-            'video_id' => '',
             'display_url' => $displayUrl,
         ];
     }
@@ -184,7 +130,7 @@ class LinkParser
     {
         $scheme = strtolower((string) ($parts['scheme'] ?? 'https'));
         $path = (string) ($parts['path'] ?? '/');
-        $query = self::cleanQuery((string) ($parts['query'] ?? ''));
+        $query = (string) ($parts['query'] ?? '');
         $portNumber = isset($parts['port']) ? (int) $parts['port'] : 0;
         $port = $portNumber > 0 && !(($scheme === 'http' && $portNumber === 80) || ($scheme === 'https' && $portNumber === 443))
             ? ':' . $portNumber
@@ -198,30 +144,6 @@ class LinkParser
             . (isset($parts['fragment']) && $parts['fragment'] !== '' ? '#' . $parts['fragment'] : '');
     }
 
-    private static function cleanQuery(string $query): string
-    {
-        if ($query === '') {
-            return '';
-        }
-        foreach (explode('&', $query) as $parameter) {
-            $name = strtolower(urldecode(explode('=', $parameter, 2)[0]));
-            if (in_array($name, ['signature', 'sig', 'hmac', 'x-amz-signature', 'x-goog-signature'], true)) { return $query; }
-        }
-
-        // Decode only the name for tracking detection. Rebuilding query data
-        // would alter repeated keys, dotted names, flags and signed values.
-        $kept = [];
-        foreach (explode('&', $query) as $parameter) {
-            $name = strtolower(urldecode(explode('=', $parameter, 2)[0]));
-            if (str_starts_with($name, 'utm_') || in_array($name, self::TRACKING_PARAMS, true)) {
-                continue;
-            }
-            $kept[] = $parameter;
-        }
-
-        return implode('&', $kept);
-    }
-
     private static function title(string $host, string $path): string
     {
         $path = trim($path, '/');
@@ -233,15 +155,6 @@ class LinkParser
         $last = trim(str_replace(['-', '_', '+'], ' ', rawurldecode($last)));
 
         return $last !== '' ? $last : $host;
-    }
-
-    private static function displayUrl(string $url): string
-    {
-        $parts = parse_url($url);
-        $host = self::host((string) ($parts['host'] ?? ''));
-        $path = (string) ($parts['path'] ?? '');
-
-        return $host . ($path !== '/' ? $path : '');
     }
 
     private static function withScheme(string $url): string

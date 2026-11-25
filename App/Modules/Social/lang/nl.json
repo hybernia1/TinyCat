@@ -455,5 +455,19 @@
     "purpose_bot_sources": "RSS en Atom-publicatieregels voor botaccounts.",
     "purpose_bot_feed_history": "Recente feeditem-hashes gebruikt om dubbele botposts te voorkomen.",
     "purpose_bot_source_runs": "Compacte diagnostische geschiedenis van botbroncontroles en -importen."
+  },
+  "cron": {
+    "tasks": {
+      "feeds": "bronnen",
+      "feeds_help": "Publiceert items uit actieve bronnen waarvan het interval afloopt.",
+      "feeds_schedule": "Plan volgens de vereiste pollingfrequentie, doorgaans elke twee minuten."
+    },
+    "options": {
+      "bot_limit": "Bronlimiet",
+      "source_id": "Bron-ID"
+    },
+    "cadence": {
+      "feeds": "Controleer elke twee minuten"
+    }
   }
 }

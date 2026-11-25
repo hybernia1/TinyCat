@@ -225,8 +225,6 @@
     "inactive": "Inactive",
     "enable": "Enable",
     "disable": "Disable",
-    "enable_group": "Enable group",
-    "disable_group": "Disable group",
     "needed_by": "Needed by: {modules}",
     "confirm": "Apply this module change? Dependencies are checked and existing data is retained.",
     "module": "Module",

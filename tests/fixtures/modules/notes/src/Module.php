@@ -44,7 +44,7 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
             return ['id' => Notes::create($title, (int) ($api->actor()['id'] ?? 0))];
         }, 'admin');
         \TinyCat\Http\Router::route('GET', '/pilot/notes', static function (): void {
-            if (!\TinyCat\Database\ModuleSchemas::ready(\TinyCat\Database\Connection::get(), ['demo.notes' => Schema::schema()])) { http_response_code(503); return; }
+            if (!\TinyCat\Database\ModuleSchemas::ready(\TinyCat\Database\Connection::get(), Schema::schemas())) { http_response_code(503); return; }
             echo \TinyCat\Support\View::render('index', ['items' => Notes::all(),
                 'styles' => \TinyCat\Support\ClientAssets::styles('/pilot/notes'), 'scripts' => \TinyCat\Support\ClientAssets::scripts('/pilot/notes'),
             ], Resources::catalog()->get('demo.notes')->resources['templates']);

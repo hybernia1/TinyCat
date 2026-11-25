@@ -455,5 +455,19 @@
     "purpose_bot_sources": "RSS y reglas de publicación Atom para cuentas de bot.",
     "purpose_bot_feed_history": "Se utilizan hashes de elementos del feed recientes para evitar publicaciones duplicadas de bots.",
     "purpose_bot_source_runs": "Historial de diagnóstico compacto de comprobaciones e importaciones de fuentes de bots."
+  },
+  "cron": {
+    "tasks": {
+      "feeds": "fuentes",
+      "feeds_help": "Publica elementos de fuentes activas cuyo intervalo vence.",
+      "feeds_schedule": "Programe de acuerdo con la frecuencia de votación requerida, generalmente cada dos minutos."
+    },
+    "options": {
+      "bot_limit": "Límite de fuente",
+      "source_id": "ID de fuente"
+    },
+    "cadence": {
+      "feeds": "Comprobar cada dos minutos"
+    }
   }
 }

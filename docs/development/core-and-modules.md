@@ -29,7 +29,7 @@ App/
     Links/                       # Parsery, metadata a prezentace odkazů
     Files/                       # Souborové mechanismy a reference vlastníků
     Feeds/                       # Parser a technický průchod importem
-    Tasks/                       # Scheduler včetně API, administrace a historie
+    Tasks/                       # Úlohy: běh, plánování, API, administrace a historie
     Mail/
     Notifications/
     Discovery/
@@ -75,7 +75,7 @@ předává vlastní odkazy přímo vlastnímu `Social/Posts/TextResource`.
 Transakční aktualizaci a mazání uložených dat poskytuje `Posts/Repository`.
 Diskuse a reakce volají přímo `Posts/InteractionPolicy`; vlastní interní registr
 vlastníků nemají. Nastavení a lokalizaci URL čtou z core a blokování odkazů
-z vlastní `Posts/Policy`. Textové politiky registrují přímo do `Core/Text/Policies`.
+z vlastní `Posts/Policy`. Sociální text připravuje přímo `Posts/PostCreation`, importní redakční čištění vlastní Bots.
 
 Účtové akce, uživatelská jména a avatary se volají přímo přes `Core/Identity`.
 Social nemá přeposílací třídy `Profiles/Actions`, `Profiles/Usernames`,
@@ -210,11 +210,20 @@ Popisky tabulek pro instalátor a klientskou prezentaci vlastních nastavení
 dodává vlastník ve svých překladech a assetech. Core vybírá tabulky z registrací;
 instalační text nepředpokládá přítomnost konkrétního funkčního modulu.
 
-Textové renderery `Core/Text/Segments` a `Social/Posts/TextResource` vyžadují
-explicitní druh textu. Registr `Core/Text/Policies` použije příspěvek vlastníka
-pro tento druh, nebo neutrální chování, pokud příspěvek neexistuje. Aktivní
-Social nemění renderování textu jiného vlastníka.
+Core nemá publikační renderer ani registr publikačních textových politik.
+`Social/Posts/InlinePresentation`, `TextResource` a `PostCreation` vlastní zpracování
+sociálního textu včetně kontextu příspěvku a komentáře. Core poskytuje pouze
+lexikální mechanismy; aktivní Social nemění text jiného vlastníka.
 
 Postup instalace, aktivace a aktualizace popisuje
 [provozní návod](../operations/module-deployment.md). Závazné transportní
 a UI kontrakty zůstávají v [modulech a transportu](modules.md).
+
+Identity exposes five lazy extension points through `Core/Identity/Integration`: `register`,
+`recovery` (Mail delivery), and `landing`, `profile`, `next` (optional module navigation).
+Registration availability uses the core setting; URL localization, metadata, page rendering
+and HTTP errors use their canonical core services directly. Authentication applies account
+and browser locale before locale routing; the Identity service provider owns the lazy
+readiness probe. Neither runs SQL during metadata registration. Administration owns primary
+admin protection, with a single explicit primary-ID snapshot per listing and fresh locking
+reads during account writes. No process-static primary-ID cache is retained.

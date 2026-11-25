@@ -100,8 +100,8 @@ check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.defini
 check(load("/admin/cron", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");
 for (const mode of [false, true, "min"]) {
   const health = load("/admin/cron", "cs", mode);
-  check(health.T.scheduler && health.T.settings && health.T.adminNavigation && health.T.adminDefinitions['core.scheduler-runs'] && health.definitions.includes('health/report'), "The unified scheduler delivers shared history, configuration and the health run extension.");
-  check(health.T.scheduler.result({dataset:{},getAttribute:name=>name==="action"?"/api/site-health/checks":null},{data:{}},null) === false, "Health API actions remain handled by the shared AJAX transport.");
+  check(health.T.scheduler && health.T.settings && health.T.adminNavigation && health.T.adminDefinitions['core.scheduler-runs'] && !health.definitions.includes('health/report') && health.definitions.includes('ui/detail-table'), "The unified scheduler delivers shared history, configuration and shared result tables without Health components.");
+  check(health.T.scheduler.result({dataset:{},getAttribute:name=>name==="action"?"/api/scheduler/tasks/site-health/runs":null},{data:{}},null) !== false, "Health task actions use the shared scheduler list transport.");
 
   const cron = load("/admin/cron", "cs", mode);
   const now = Date.UTC(2026, 9, 27, 12, 0, 0);

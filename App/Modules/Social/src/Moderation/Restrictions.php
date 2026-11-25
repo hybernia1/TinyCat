@@ -69,7 +69,7 @@ final class Restrictions
      */
     public static function moderation_action_count(array $user, string $action): int
     {
-        if (\TinyCat\Core\Security\RateLimitPolicy::isExempt($user)) { return 0; }
+        if (ActionPolicy::isExempt($user, $action)) { return 0; }
         [$window] = \TinyCat\Social\Moderation\Restrictions::moderation_action_rule($user, $action);
 
         return \TinyCat\Core\Security\RateLimiter::subject_action_count('user:' . (int) ($user['id'] ?? 0), $action, (int) $window);
@@ -141,7 +141,7 @@ final class Restrictions
      */
     public static function moderation_record_action(array $user, string $action): void
     {
-        if (\TinyCat\Core\Security\RateLimitPolicy::isExempt($user)) { return; }
+        if (ActionPolicy::isExempt($user, $action)) { return; }
         $userId = (int) ($user['id'] ?? 0);
 
         if ($userId < 1) {

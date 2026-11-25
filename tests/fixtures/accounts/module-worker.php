@@ -22,7 +22,7 @@ $userId = match ($authorization) { 'Bearer admin' => 1, 'Bearer member' => 2, de
 TinyCat\Core\Identity\Authentication::reset($userId > 0 ? TinyCat\Database\Connection::find('users', ['id' => $userId]) : null, true);
 $api = TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(
     new TinyCat\Core\Runtime\Configuration(['cache' => ['directory' => $workspace . '/cache'], 'auth' => ['registration' => ['enabled' => true, 'auto_approve' => true]]]),
-    identity: TinyCat\Core\Identity\Authentication::auth(...), ready: TinyCat\Core\Identity\Readiness::ready(...), locale: static fn (): string => 'en',
+    identity: TinyCat\Core\Identity\Authentication::auth(...), ready: TinyCat\Core\Identity\ServiceProvider::ready(...), locale: static fn (): string => 'en',
 ), TinyCat\Core\Modules\Loader::load($workspace));
 TinyCat\Core\Identity\Integration::configure(['recovery' => static function (string $email) use ($workspace): void {
     TinyCat\Core\Identity\Recovery::request($email, static function (int $id, string $token) use ($workspace): void { file_put_contents($workspace . '/delivered-token', $token); });

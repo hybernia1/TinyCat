@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Core\Text\LinkParser;
+use TinyCat\Social\Posts\LinkParser;
 
 /** Shared publication rules, independent of optional moderation interfaces. */
 final class Policy

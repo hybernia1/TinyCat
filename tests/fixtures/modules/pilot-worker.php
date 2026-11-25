@@ -14,9 +14,10 @@ $context = new \TinyCat\Core\Runtime\Context(new \TinyCat\Core\Runtime\Configura
 $api = \TinyCat\Core\Runtime\Application::boot($context, $modules);
 \TinyCat\Core\Settings\Api::register($api);
 $mode = PHP_SAPI === 'cli' ? ($argv[1] ?? '') : '';
+if (PHP_SAPI === 'cli') { set_exception_handler(static function (\Throwable $error): never { fwrite(STDERR, (string) $error . PHP_EOL); exit(1); }); }
 $pdo = \TinyCat\Database\Connection::get();
 if ($mode === 'install') {
-    \TinyCat\Database\ModuleSchemas::install($pdo, $modules->schemas());
+    \TinyCat\Database\ModuleSchemas::install($pdo, array_intersect_key($modules->schemas(), array_flip(['tinycat.support', 'demo.notes'])));
     $id = 'INTEGER PRIMARY KEY AUTO_INCREMENT';
     $pdo->exec('CREATE TABLE IF NOT EXISTS scheduler_runs (id ' . $id . ', task VARCHAR(100), mode VARCHAR(16), actor_id INT UNSIGNED NULL, status VARCHAR(24), started_at DATETIME, finished_at DATETIME NULL, duration_ms INTEGER NULL, options_json TEXT, summary_json TEXT NULL, error TEXT NULL)');
     echo "installed\n";

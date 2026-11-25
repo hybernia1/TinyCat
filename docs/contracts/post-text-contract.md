@@ -2,12 +2,14 @@
 
 Tělo nového i upravovaného sociálního příspěvku připravuje `Social/Posts/PostCreation::fromText()`.
 Ruční zadání, API, náhled bota a import používají stejnou přípravu vlastníka.
-`Core/Text/PostText::normalize()` poskytuje obecnou normalizaci bez odstraňování
-redakčních dovětků. Social výslovně vybírá `cleanImportBoilerplate()` přes
-`TextPolicy::prepare` před omezením délky a validací; následné rozpoznání zmínek
-zůstává v jeho `TextPolicy::normalize`. Současné chování Socialu se tím nemění,
-ale jiný druh textu či vlastník čištění nepřebírá automaticky. Pravidla níže se
-nevztahují na komentáře, životopisy ani jiná textová pole.
+`PostCreation::normalize()` vlastní společnou normalizaci bílých znaků a textu.
+Zmínky, tagy, odkazy a limity připravuje přímo Social bez registru politik.
+Komentáře navíc před touto přípravou validují vlastní limit a odstraňují externí
+URL v `Discussion/Interactions::body()`; jejich renderování zachovává ID komentáře.
+Ruční příspěvky, editace a komentáře zachovávají výzvy „Read more“ i dovětky
+„The post … appeared first on …“. Pouze botí import a jeho nezapisující náhled
+volají `FeedPublication::cleanImportBoilerplate()` před společnou přípravou.
+Níže uvedená redakční pravidla platí pro import a popisy karet, nikoli ruční těla.
 
 Stejné čištění se používá pro popis karty odkazu při ukládání metadat i při
 zobrazení již uloženého náhledu. Starší cache tak nevrací odstraněné dovětky.
@@ -27,12 +29,13 @@ zobrazení již uloženého náhledu. Starší cache tak nevrací odstraněné d
 - URL, jejich parametry, fragmenty, hashtagy a zmínky se zachovávají. Text se
   nepřekládá, neopravuje stylisticky a nevynucuje se nová šablona odstavců.
 
-RSS/Atom/JSON parser pro své anotace výslovně vybírá stejné volitelné čištění
+`Social/Bots/FeedPublication` pro své anotace výslovně vybírá stejné čištění
 a navíc odstraňuje HTML odkazy s přesným popiskem výzvy
 (včetně krátkých `More` a `Více`), zachovává mezery mezi HTML bloky a používá
 stejná pravidla pro výslednou anotaci. Dosavadní pravidlo pro odkazy v anotaci
 zůstává: obecné URL nahradí samostatný odkaz článku, podporovaná videa zůstávají.
-Toto pravidlo parseru se nepoužívá na ručně napsaná těla příspěvků.
+Core parser zachovává původní HTML a text bez těchto redakčních pravidel.
+Toto pravidlo sociálního importu se nepoužívá na ručně napsaná těla příspěvků.
 
 ## Limity ručního zadání a importu
 
@@ -48,7 +51,7 @@ v `Interactions::rules()` a při překročení limitu chybu pole `comment`.
 
 ## Transaction and publication result
 
-Edits lock the current post and image reference, then recheck existence, kind,
+Edits lock the current post and image reference, then recheck existence, Social post kind,
 ownership/authorization and the text-or-image invariant. A previously loaded
 image is not a write input. Deletion takes the same parent lock before reading
 cleanup references. Link and image preparation happens before the transaction;
@@ -85,3 +88,8 @@ ověří, že nezůstaly další bezpečné změny.
 
 Ověření: `php tests/domains/status/post-text.php`, `php tests/domains/status/write-path-integrity.php`,
 `php tests/domains/bots/run.php` a společná sada `php tests/run.php`.
+
+Tag normalization, token extraction and storage preparation use the canonical
+`Social/Posts/Tags::normalizeTag()`, `tagTokens()`, `extractTags()` and
+`normalizeTagText()` methods. `Tags::MAX_BYTES` is the shared storage byte limit.
+They preserve URL text, reject numeric tags and deduplicate normalized tags.

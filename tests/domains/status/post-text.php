@@ -8,7 +8,7 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 require_once __DIR__ . '/../../../tools/maintenance/post-text-cleanup.php';
 
-use TinyCat\Core\Text\PostText;
+use TinyCat\Social\Bots\FeedPublication;
 
 $checks = 0;
 $assert = static function (bool $condition) use (&$checks): void {
@@ -32,17 +32,17 @@ $cases = [
     "Text \u{200B} text https://example.com/a\u{200B}b?x=[...]" => "Text text https://example.com/a\u{200B}b?x=[...]",
 ];
 foreach ($cases as $before => $after) {
-    $assert(PostText::cleanImportBoilerplate($before) === $after);
-    $assert(PostText::cleanImportBoilerplate($after) === $after);
+    $assert(FeedPublication::cleanImportBoilerplate($before) === $after);
+    $assert(FeedPublication::cleanImportBoilerplate($after) === $after);
 }
-$assert(PostText::normalize('An excerpt. Continue reading') === 'An excerpt. Continue reading');
-$assert(PostText::normalize('The post Story appeared first on Site.') === 'The post Story appeared first on Site.');
+$assert(TinyCat\Social\Posts\PostCreation::normalize('An excerpt. Continue reading') === 'An excerpt. Continue reading');
+$assert(TinyCat\Social\Posts\PostCreation::normalize('The post Story appeared first on Site.') === 'The post Story appeared first on Site.');
 TinyCat\Social\Module::initialize();
-$assert(TinyCat\Social\Posts\PostCreation::fromText(str_repeat("The post X appeared first on Site.\n", 100) . 'Preserved tail')->body === 'Preserved tail');
-$assert(TinyCat\Social\Posts\PostCreation::fromText('An excerpt. Continue reading')->body === 'An excerpt.');
-$assert(PostText::isReadMore('READ MORE »'));
-$assert(!PostText::isReadMore('Read more about my work'));
-$description = TinyCat\Core\Feeds\FeedParser::descriptionText('<p>First</p><p>Second […] <a href="https://example.com/">Read <b>more</b> »</a></p>', 1200);
+$assert(TinyCat\Social\Posts\PostCreation::fromText(FeedPublication::cleanImportBoilerplate(str_repeat("The post X appeared first on Site.\n", 100) . 'Preserved tail'))->body === 'Preserved tail');
+$assert(TinyCat\Social\Posts\PostCreation::fromText('An excerpt. Continue reading')->body === 'An excerpt. Continue reading');
+$assert(FeedPublication::isReadMore('READ MORE »'));
+$assert(!FeedPublication::isReadMore('Read more about my work'));
+$description = TinyCat\Social\Bots\FeedPublication::descriptionText('<p>First</p><p>Second […] <a href="https://example.com/">Read <b>more</b> »</a></p>', 1200);
 $assert($description === 'First Second …');
 $assert(!PostTextCleanup::safe('Read more', ''));
 $assert(!PostTextCleanup::safe('#foo bar', '#foobar'));

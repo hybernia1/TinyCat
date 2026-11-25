@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Core\Identity;
 
-/** Explicit product policies. Defaults support an Accounts-only assembly. */
+/** Lazy account extensions owned by Mail and optional modules. Defaults support core-only Identity. */
 final class Integration
 {
     /** @var array<string, callable> */
@@ -14,21 +14,18 @@ final class Integration
     /** @param array<string, callable> $policies */
     public static function provide(string $owner, array $policies): void
     {
+        if (preg_match('/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$/D', $owner) !== 1) { throw new \InvalidArgumentException('Invalid provider owner.'); }
         foreach ($policies as $key => $_) {
-            if (!in_array($key, ['registration', 'register', 'recovery', 'landing', 'profile', 'url', 'path', 'next', 'privacy', 'image', 'render', 'not_found'], true)) { throw new \InvalidArgumentException('Unknown account extension.'); }
+            if (!in_array($key, ['register', 'recovery', 'landing', 'profile', 'next'], true)) { throw new \InvalidArgumentException('Unknown account extension.'); }
             if (isset(self::$owners[$key]) && self::$owners[$key] !== $owner) { throw new \LogicException('Conflicting account extension: ' . $key); }
-            self::$owners[$key] = $owner;
+            $policies[$key] = \Closure::fromCallable($policies[$key]);
         }
+        foreach ($policies as $key => $_) { self::$owners[$key] = $owner; }
         self::$policies = array_replace(self::$policies, $policies);
     }
 
     /** @param array<string, callable> $policies */
     public static function configure(array $policies): void { self::$policies = $policies; self::$owners = []; }
-
-    public static function registrationEnabled(): bool
-    {
-        return isset(self::$policies['registration']) ? (bool) (self::$policies['registration'])() : (bool) \TinyCat\Core\Runtime\Startup::option('auth.registration.enabled', false);
-    }
 
     /** @param array<mixed> $input
      * @return array<mixed> */
@@ -54,41 +51,8 @@ final class Integration
         return \TinyCat\Core\Ui\PublicWeb::enabled() && isset(self::$policies['profile']) ? (string) (self::$policies['profile'])($id) : null;
     }
 
-    public static function localUrl(string $path): string
-    {
-        return isset(self::$policies['url']) ? (string) (self::$policies['url'])($path) : \TinyCat\Support\LocalUrls::resolve($path);
-    }
-
-    public static function unlocalizedPath(string $path): string
-    {
-        return isset(self::$policies['path']) ? (string) (self::$policies['path'])($path) : \TinyCat\Http\LocaleRouting::split($path)['path'];
-    }
-
     public static function normalizeNext(string $url): string
     {
         return isset(self::$policies['next']) ? (string) (self::$policies['next'])($url) : $url;
-    }
-
-    public static function metaImage(): string
-    {
-        return isset(self::$policies['image']) ? (string) (self::$policies['image'])() : \TinyCat\Core\Ui\Site::site_meta_image_url();
-    }
-
-    public static function privacyUrl(): string
-    {
-        return isset(self::$policies['privacy']) ? (string) (self::$policies['privacy'])() : \TinyCat\Http\LocaleRouting::url('/privacy', \TinyCat\Support\Localization::locale());
-    }
-
-    public static function notFound(): void
-    {
-        if (isset(self::$policies['not_found'])) { (self::$policies['not_found'])(); return; }
-        \TinyCat\Core\Runtime\Errors::respond(404);
-    }
-
-    /** @param array<string, mixed> $page */
-    public static function render(array $page, string $content): void
-    {
-        if (isset(self::$policies['render'])) { (self::$policies['render'])($page, $content); return; }
-        \TinyCat\Core\Ui\Page::render($page, $content);
     }
 }

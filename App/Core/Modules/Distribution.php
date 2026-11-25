@@ -25,15 +25,11 @@ final class Distribution
         $schemas = self::definitions($available);
         $schemaOwners = Providers::schemaOwners($available->catalog);
         $records = []; $owners = []; $format = 3;
-        foreach ($available->providers(\TinyCat\Core\Modules\StorageModule::class) as $id => $provider) {
-            foreach ($provider::tables() as $table) { if (isset($owners[$table])) { throw new \RuntimeException('Duplicate module table owner: ' . $table); } $owners[$table] = $id; }
-            if ($provider::tables() !== [] && !in_array($id, $schemaOwners, true)) { throw new \RuntimeException('This domain has no standalone module schema: ' . $id); }
-        }
         foreach ($schemas as $id => $schema) {
             $migrations = [];
             $owner = $schemaOwners[$id] ?? $id;
             foreach ($schema->tables as $table) {
-                if (isset($owners[$table]) && $owners[$table] !== $owner) { throw new \RuntimeException('Duplicate module table owner: ' . $table); }
+                if (isset($owners[$table])) { throw new \RuntimeException('Duplicate module table owner: ' . $table); }
                 $owners[$table] = $owner;
             }
             foreach ($schema->migrations as $migration) {
@@ -75,7 +71,7 @@ final class Distribution
     /** @return array<string, ModuleSchema> */
     public static function definitions(Loader $modules): array
     {
-        return $modules->schemas(true);
+        return $modules->schemas();
     }
 
     /** @param array<mixed> $data
@@ -218,6 +214,25 @@ final class Distribution
     {
         $plan['active'] = $ids; self::validate($plan);
         return array_filter($plan['selection'], static fn (string $id): bool => in_array($id, $ids, true), ARRAY_FILTER_USE_KEY);
+    }
+
+    /** @param array<string, mixed> $plan
+     * @param list<string> $ids
+     * @return list<string> */
+    public static function activationIds(array $plan, array $ids, bool $activating): array
+    {
+        foreach ($ids as $id) {
+            if (!isset($plan['selection'][$id])) { throw new \InvalidArgumentException('Unknown module: ' . $id); }
+        }
+        $result = array_values(array_unique($ids));
+        if ($activating) {
+            for ($index = 0; $index < count($result); $index++) {
+                foreach ($plan['requires'][$result[$index]] as $dependency) {
+                    if (isset($plan['selection'][$dependency]) && !in_array($dependency, $result, true)) { $result[] = $dependency; }
+                }
+            }
+        }
+        return $result;
     }
 
     /** Reconstruct only immutable migration files, never a cached provider class.

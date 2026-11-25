@@ -25,7 +25,6 @@ final class Repository
                     locale,
                     theme,
                     avatar_exists,
-                    avatar_appearance,
                     avatar_version,
                     updated_at,
                     bio,
@@ -98,7 +97,7 @@ final class Repository
         if ($ids === []) { return []; }
         $roles = Roles::rolesWith('appears_in_people_rankings');
         if ($roles === []) { return []; }
-        $rows = \TinyCat\Database\Connection::all('SELECT id, username, username AS name, avatar_exists, avatar_appearance, avatar_version, updated_at, bio FROM users WHERE status = ? AND id IN (' . implode(', ', array_fill(0, count($ids), '?')) . ') AND role IN (' . implode(', ', array_fill(0, count($roles), '?')) . ')', ['active', ...$ids, ...$roles]);
+        $rows = \TinyCat\Database\Connection::all('SELECT id, username, username AS name, avatar_exists, avatar_version, updated_at, bio FROM users WHERE status = ? AND id IN (' . implode(', ', array_fill(0, count($ids), '?')) . ') AND role IN (' . implode(', ', array_fill(0, count($roles), '?')) . ')', ['active', ...$ids, ...$roles]);
         $current = array_column($rows, null, 'id');
         $result = [];
         foreach ($ranked as $row) {

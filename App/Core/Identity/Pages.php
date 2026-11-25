@@ -24,23 +24,23 @@ final class Pages
         $user = Authentication::auth();
         if ($user === null) { self::login(); return; }
         $next = Login::auth_request_next_url();
-        if (Integration::unlocalizedPath(Login::auth_next_path($next)) === '/') { $next = ''; }
+        if (\TinyCat\Http\LocaleRouting::split(Login::auth_next_path($next))['path'] === '/') { $next = ''; }
         $target = Login::auth_redirect_after_login($user, $next);
-        if (!in_array(Integration::unlocalizedPath(Login::auth_next_path($target)), ['/', '/account'], true)) { Web::redirect($target); }
+        if (!in_array(\TinyCat\Http\LocaleRouting::split(Login::auth_next_path($target))['path'], ['/', '/account'], true)) { Web::redirect($target); }
         self::account();
     }
 
     public static function account(): void
     {
         $user = Access::requireAuth('/login');
-        Integration::render([
+        \TinyCat\Core\Ui\Page::render([
             'title' => Localization::t('account.title'), 'current' => '/account', 'surface' => 'access',
             'meta' => ['robots' => 'noindex,nofollow'],
         ], Components::render('users/account-home', [
             'user' => $user,
-            'account_modal' => 'account-editor-modal-' . (int) $user['id'],
-            'account_url' => '/api/users/' . (int) $user['id'] . '/management?panel=account',
-            'logout_url' => Integration::localUrl('/logout'),
+            'account_modal' => Views::accountEditorId((int) $user['id']),
+            'account_url' => Views::accountEditorUrl((int) $user['id']),
+            'logout_url' => \TinyCat\Support\LocalUrls::resolve('/logout'),
         ]));
     }
 
@@ -54,7 +54,7 @@ final class Pages
             Localization::t($definition['title']), $definition['icon'], substr($definition['target'], 1), $definition['filterId'],
             new Markup(\TinyCat\Support\Components::render($definition['component'], $data)), primary: true,
         );
-        Integration::render([
+        \TinyCat\Core\Ui\Page::render([
             'title' => Localization::t('users.meta_title'), 'current' => $definition['path'],
             'actions' => AdminViews::modalAction('modal-users-creation', Localization::t('users.new_user'), 'user-plus', '/api/users/creation'),
         ], $content);
@@ -70,9 +70,8 @@ final class Pages
 
         $error = Session::flash('error');
         $message = Session::flash('success');
-        $old = Login::auth_form_state_previous('login');
 
-        Integration::render([
+        \TinyCat\Core\Ui\Page::render([
             'title' => Localization::t('auth.login_title'),
             'current' => '/login',
             'surface' => 'access',
@@ -80,10 +79,10 @@ final class Pages
             'meta' => [
                 'description' => Localization::t('auth.login_intro'),
                 'url' => '/login',
-                'image' => Integration::metaImage(),
+                'image' => \TinyCat\Core\Ui\Site::site_meta_image_url(),
                 'robots' => 'noindex,follow',
             ],
-        ], Components::render('users/auth-page', Resource::authenticationForm('login', $next) + ['old' => $old, 'error' => (string) $error, 'message' => (string) $message]));
+        ], Components::render('users/auth-page', Resource::authenticationForm('login', $next) + ['error' => (string) $error, 'message' => (string) $message]));
     }
 
     public static function register(): void
@@ -94,26 +93,24 @@ final class Pages
             Web::redirect(Login::auth_redirect_after_login(Authentication::auth(), $next));
         }
 
-        $old = Login::auth_form_state_previous('register');
-
-        Integration::render([
+        \TinyCat\Core\Ui\Page::render([
             'title' => Localization::t('auth.register_title'),
             'current' => '/register',
             'surface' => 'access',
             'meta' => [
                 'description' => Localization::t('auth.register_intro'),
                 'url' => '/register',
-                'image' => Integration::metaImage(),
+                'image' => \TinyCat\Core\Ui\Site::site_meta_image_url(),
                 'robots' => 'noindex,follow',
             ],
-        ], Components::render('users/auth-page', Resource::authenticationForm('register', $next) + ['old' => $old]));
+        ], Components::render('users/auth-page', Resource::authenticationForm('register', $next)));
     }
 
     public static function logout(): void
     {
         Access::requireAuth();
 
-        Integration::render([
+        \TinyCat\Core\Ui\Page::render([
             'title' => Localization::t('auth.logout_title'),
             'current' => '/logout',
             'surface' => 'access',
@@ -129,7 +126,7 @@ final class Pages
     {
         $recoveryToken = trim((string) Web::get('token', ''));
 
-        Integration::render([
+        \TinyCat\Core\Ui\Page::render([
             'title' => Localization::t('auth.recovery_title'),
             'current' => '/recovery',
             'surface' => 'access',
@@ -137,12 +134,12 @@ final class Pages
             'meta' => [
                 'description' => Localization::t($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro'),
                 'url' => '/recovery',
-                'image' => Integration::metaImage(),
+                'image' => \TinyCat\Core\Ui\Site::site_meta_image_url(),
                 'robots' => 'noindex,nofollow',
             ],
         ], Components::render('users/recovery-page', [
             'reset' => $recoveryToken !== '', 'token' => $recoveryToken, 'password_min' => Passwords::minLength(), 'password_max' => Passwords::maxLength(),
-            'captcha' => Captcha::configuration('recovery'), 'login_url' => Integration::localUrl('/login'), 'privacy_url' => Integration::privacyUrl(),
+            'captcha' => Captcha::configuration('recovery'), 'login_url' => \TinyCat\Support\LocalUrls::resolve('/login'), 'privacy_url' => \TinyCat\Http\LocaleRouting::url('/privacy', \TinyCat\Support\Localization::locale()),
         ]));
     }
 }

@@ -872,7 +872,7 @@ The following findings remain open.
    for different MySQL databases.
 3. **Medium: skipped runs can conceal failed or stale work.**
    [History::lastSuccessfulFor](../../App/Core/Tasks/History.php) includes
-   `not_due` as successful work, while [HealthCheck](../../App/Core/Tasks/HealthCheck.php)
+   `not_due` as successful work, while [scheduler probe](../../App/Core/Tasks/Health/Checks.php)
    examines failure only on the newest row. A stale completed run, a recent
    failure and a subsequent `not_due` changed the health result from `warning /
    failed` to `ok`, without completing any work. For cleanup this can occur when
@@ -918,7 +918,7 @@ are validated before execution starts.
 | --- | --- | --- | --- |
 | `feeds` | `tinycat.social` | limit 20, clamped 1?100; admin-only source ID | claims, atomic GUID/publication, independent queues, retries; backlog finding above |
 | `cleanup` | `tinycat.scheduler` | batch 500; hourly unless admin forces | rotating start, per-maintenance errors, bounded retention and file cursors |
-| `site-health` | `tinycat.health` | once per day; admin can force | isolated checks, transactional notifications/day completion, retry on delivery failure |
+| `site-health` | `tinycat.scheduler` | once per day; admin can force | isolated checks, transactional notifications/day completion, retry on delivery failure |
 
 The 14 maintenance contributions are: orphan terms/links, orphan status/link/avatar
 files, temporary files, update files, expired JSON cache files, action limits,

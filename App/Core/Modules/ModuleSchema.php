@@ -15,8 +15,10 @@ final readonly class ModuleSchema
 
     /** @param list<string> $tables
      * @param callable(PDO): void $install Current fresh schema and idempotent seeds.
-     * @param list<SchemaMigration> $migrations */
-    public function __construct(public int $version, public array $tables, callable $install, public array $migrations = [], public ?SchemaMigration $baseline = null, public ?SchemaMigration $legacy = null)
+     * @param list<SchemaMigration> $migrations
+     * @param bool $repairOnInstall Repeat the idempotent installer after explicit synchronization.
+     * @param bool $gateRoutes Require this stream to be ready before module JSON handlers run. */
+    public function __construct(public int $version, public array $tables, callable $install, public array $migrations = [], public ?SchemaMigration $baseline = null, public ?SchemaMigration $legacy = null, public bool $repairOnInstall = false, public bool $gateRoutes = true)
     {
         if ($version < 1 || $tables === [] || count($tables) !== count(array_unique($tables))) { throw new \InvalidArgumentException('Invalid module schema version or tables.'); }
         foreach ($tables as $table) {

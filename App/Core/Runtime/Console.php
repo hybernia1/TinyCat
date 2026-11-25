@@ -63,10 +63,7 @@ final class Console
                 if ($plan === null) { throw new \RuntimeException('This operation requires a built product descriptor. Build and extract the selected distribution first.'); }
                 if ($command === 'status') {
                     $state = Deployment::read($root);
-                    $available = Loader::fromSelection($root, \TinyCat\Core\Modules\PackageRegistry::featureSelection($root, $plan['selection'], $state['active'] ?? $plan['active']))->registries()->entries;
-                    $features = [];
-                    foreach ($available->features as $feature) { $features[$feature->id] = $feature->modules; }
-                    $result = ['product' => $plan['product'], 'version' => \TinyCat\Support\Version::CURRENT, 'available' => array_keys($plan['selection']), 'features' => $features, 'deployment' => $state, 'maintenance' => \TinyCat\Core\Updates\Manager::maintenanceActive()];
+                    $result = ['product' => $plan['product'], 'version' => \TinyCat\Support\Version::CURRENT, 'available' => array_keys($plan['selection']), 'deployment' => $state, 'maintenance' => \TinyCat\Core\Updates\Manager::maintenanceActive()];
                 } elseif ($command === 'task') {
                     $name = $arguments[2] ?? '';
                     $options = [];
@@ -96,7 +93,7 @@ final class Console
                     $state = Deployment::read($root);
                     $active = $state['active'] ?? $plan['active'];
                     $plan = Distribution::withDiscovered($root, $plan, array_slice($arguments, 2));
-                    $ids = \TinyCat\Core\Modules\FeatureSelection::expand($plan, array_slice($arguments, 2), $command === 'activate');
+                    $ids = Distribution::activationIds($plan, array_slice($arguments, 2), $command === 'activate');
                     foreach ($ids as $id) { if (!isset($plan['selection'][$id])) { throw new \TinyCat\Http\HttpException('Module is not available in this distribution.'); } }
                     if ($command !== 'upgrade' && $ids === []) { throw new \TinyCat\Http\HttpException('Specify at least one module ID.'); }
                     if ($command === 'activate') { $active = array_values(array_unique([...$active, ...$ids])); }

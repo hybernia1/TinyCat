@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../support/mysql.php';
 
 use TinyCat\Core\Identity\Authentication;
-use TinyCat\Core\Identity\Readiness;
+use TinyCat\Core\Identity\ServiceProvider;
 use TinyCat\Core\Runtime\Application;
 use TinyCat\Core\Runtime\Configuration;
 use TinyCat\Core\Runtime\Context;
@@ -21,11 +21,11 @@ TinyCat\Database\Connection::set(\tinycat_test_database($directory . '/identity.
 $modules = TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);
 $api = Application::boot(new Context(
     new Configuration(['app' => ['debug' => false], 'cache' => ['directory' => $directory . '/cache']]),
-    identity: Authentication::auth(...), ready: Readiness::ready(...), locale: static fn (): string => 'en',
+    identity: Authentication::auth(...), ready: ServiceProvider::ready(...), locale: static fn (): string => 'en',
 ), $modules);
 $api->get('/_identity', static function (): array {
     $user = Authentication::auth();
-    return ['id' => $user['id'] ?? null, 'role' => $user['role'] ?? null, 'csrf' => TinyCat\Core\Security\Csrf::token(), 'ready' => Readiness::ready(),
+    return ['id' => $user['id'] ?? null, 'role' => $user['role'] ?? null, 'csrf' => TinyCat\Core\Security\Csrf::token(), 'ready' => ServiceProvider::ready(),
         'product_loaded' => array_values(array_filter(get_declared_classes(), static fn (string $class): bool => preg_match('/^TinyCat\\\\(?:Users|Status|Bots|Settings|Notifications)\\\\/', $class) === 1))];
 });
 $api->post('/_sessions', static function (Request $request): array {

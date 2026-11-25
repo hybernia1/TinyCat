@@ -16,9 +16,9 @@ final class Policy
      * @param array<string, mixed>|null $actor */
     public static function resolve(int $id, ?array $actor): ?InteractionTarget
     {
-        $post = Posts::status_find($id);
-        if ($post === null || \TinyCat\Database\Connection::value("SELECT status FROM users WHERE id = ?", [(int) $post['author_id']]) !== 'active') { return null; }
-        return new InteractionTarget('tinycat.social', 'post', $id, Posts::status_url($id), Posts::status_can_view($post), $actor !== null, Posts::status_can_delete($post, $actor));
+        $post = \TinyCat\Social\Posts\Repository::find($id);
+        if ($post === null || $post['author_status'] !== 'active') { return null; }
+        return new InteractionTarget('tinycat.social', 'post', $id, Posts::status_url($id), \TinyCat\Social\Posts\Repository::visible($post), $actor !== null, \TinyCat\Social\Posts\Repository::canManage($post, $actor));
     }
 
     /**
@@ -46,14 +46,14 @@ final class Policy
         if ($action === 'comment') {
             \TinyCat\Social\Moderation\Restrictions::moderation_record_action($actor, 'comment');
             NotificationEvents::notifyContentOwner('content_comment', $target->id, $actor, $commentId);
-            $post = Posts::status_find($target->id);
+            $post = \TinyCat\Social\Posts\Repository::find($target->id);
             NotificationEvents::notifyMentions((string) $data['body'], $actor, $target->id, $commentId, [(int) ($post['author_id'] ?? 0)]);
         } elseif (in_array($action, ['react', 'comment_like'], true) && $data['liked']) {
             \TinyCat\Social\Moderation\Restrictions::moderation_record_action($actor, 'like');
             if ($action === 'react') { NotificationEvents::notifyContentOwner('content_like', $target->id, $actor); }
             else { NotificationEvents::notifyCommentOwner($commentId, $actor); }
         } elseif ($action === 'comment_update') {
-            $post = Posts::status_find($target->id);
+            $post = \TinyCat\Social\Posts\Repository::find($target->id);
             $skip = array_merge(NotificationEvents::mentionedUserIds((string) ($data['before']['body'] ?? '')), [(int) ($post['author_id'] ?? 0)]);
             NotificationEvents::notifyMentions((string) $data['body'], $actor, $target->id, $commentId, $skip);
         }

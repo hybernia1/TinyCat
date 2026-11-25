@@ -143,7 +143,8 @@
       "namespace": "TinyCat\\Core\\Tasks\\",
       "requires": [
         "tinycat.accounts",
-        "tinycat.settings"
+        "tinycat.settings",
+        "tinycat.notifications"
       ],
       "providers": {
         "routes": "TinyCat\\Core\\Tasks\\ServiceProvider",
@@ -159,27 +160,15 @@
     }
   },
   {
-    "directory": "Health",
+    "directory": "Tasks",
     "metadata": {
       "format": 1,
       "coreApi": 1,
       "id": "tinycat.health",
       "namespace": "TinyCat\\Core\\Health\\",
       "requires": [
-        "tinycat.notifications",
-        "tinycat.scheduler",
-        "tinycat.settings"
-      ],
-      "providers": {
-        "routes": "TinyCat\\Core\\Health\\ServiceProvider",
-        "contributions": "TinyCat\\Core\\Health\\ServiceProvider"
-      },
-      "resources": {
-        "translations": "lang",
-        "assets": "assets/module.json",
-        "components": "assets/components.json",
-        "componentExtensions": "assets/component-extensions.json"
-      }
+        "tinycat.scheduler"
+      ]
     }
   },
   {

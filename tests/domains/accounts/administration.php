@@ -17,7 +17,8 @@ require $root . '/App/Core/Runtime/autoload.php';
 TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(locale: static fn (): string => 'en'));
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($root, [
 ])->catalog);
-$pdo = \tinycat_test_database();
+$databaseConfig = \tinycat_test_database_config();
+$pdo = \tinycat_test_mysql_connect($databaseConfig);
 Connection::set($pdo);
 $pdo->exec("CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) UNIQUE, email VARCHAR(254) UNIQUE, password TEXT, role VARCHAR(40), status VARCHAR(24), bio TEXT DEFAULT (''), locale TEXT DEFAULT ('en'), theme VARCHAR(12) DEFAULT ('system'), created_at DATETIME DEFAULT ('2026-11-11 00:00:00'))");
 $pdo->exec('CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, token_hash TEXT, expires_at DATETIME, used_at TEXT)');
@@ -80,7 +81,20 @@ $participant = new Participant(prepareDelete: static function (array $user) use 
 $denied(static fn () => Administration::delete($actor, 1, ['fixture' => $participant]), 'super_admin_protected');
 $assert($guardCallbacks === 0 && $row(1)['role'] === 'admin' && $row(1)['status'] === 'active', 'Primary protection runs before deletion participants');
 $preparedBeforePromotion = Administration::prepare($actor, ['role' => 'user', 'status' => 'ban'], $row(5));
-Administration::update($actor, 5, ['role' => 'admin', 'status' => 'active']);
+// Retain an older repeatable-read snapshot while another connection promotes an older account.
+$pdo->beginTransaction();
+$assert((int) Connection::value("SELECT id FROM users WHERE role = 'admin' ORDER BY created_at, id LIMIT 1") === 1, 'Initial snapshot sees the existing primary');
+$assert((int) Connection::value('SELECT COUNT(*) FROM users') > 0, 'Establish an ordinary consistent-read snapshot');
+$contender = \tinycat_test_mysql_connect($databaseConfig);
+$contender->exec("UPDATE users SET role = 'admin', status = 'active' WHERE id = 5");
+$lockedPromotion = Connection::one(Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [5]);
+try {
+    $invalid(static fn () => Administration::persist($actor, $lockedPromotion, $preparedBeforePromotion), $protected);
+    $denied(static fn () => Administration::setActive($actor, $lockedPromotion, false), 'super_admin_protected');
+} finally { $pdo->rollBack(); }
+$denied(static fn () => Administration::delete($actor, 5), 'super_admin_protected');
+$assert(Administration::isPrimary(5) && !Administration::isPrimary(1), 'UI policy observes a competing promotion without a static cache');
+$contender = null;
 $assert(Administration::primaryId() === 5, 'Primary selection observes changed database state without stale mutation cache');
 $pdo->beginTransaction();
 try { $invalid(static fn () => Administration::persist($actor, $row(5), $preparedBeforePromotion), $protected); }
@@ -110,7 +124,7 @@ $assert(Administration::delete($actor, $created) === null, 'Repeated deletion re
 foreach (['TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) { $assert(!class_exists($class, false), 'Administrative domain did not load ' . $class); }
 $assert(array_column(Connection::all("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME"), 'name') === ['password_reset_tokens', 'users'], 'Administrative services need only account storage');
 TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $actor) : void {
-$assert(array_keys(TinyCat\Support\AdminViews::admin_user_statuses()) === Administration::statuses(), 'UI status labels match domain status policy');
+$assert(array_keys(\TinyCat\Core\Identity\Views::statusLabels()) === Administration::statuses(), 'UI status labels match domain status policy');
 });
 
 echo "PASS standalone account administration, primary protection and transaction integration ({$checks} checks)\n";

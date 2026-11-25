@@ -225,8 +225,6 @@
     "inactive": "Vypnutý",
     "enable": "Zapnout",
     "disable": "Vypnout",
-    "enable_group": "Zapnout skupinu",
-    "disable_group": "Vypnout skupinu",
     "needed_by": "Vyžadují: {modules}",
     "confirm": "Provést změnu modulů? Závislosti se ověří a existující data zůstanou zachována.",
     "module": "Modul",

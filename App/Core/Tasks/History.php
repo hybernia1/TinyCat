@@ -38,6 +38,17 @@ final class History
         return Connection::one('SELECT * FROM scheduler_runs WHERE task = ? ORDER BY id DESC LIMIT 1', [$task]);
     }
 
+    /** Recent canonical run resources, newest first, including inactive owners.
+     * @param list<string> $excludedStatuses
+     * @return list<array<string, mixed>> */
+    public static function recent(string $task, int $limit = 20, array $excludedStatuses = []): array
+    {
+        if (array_diff($excludedStatuses, Resource::STATUSES) !== []) { throw new \InvalidArgumentException('Unknown run status.'); }
+        $limit = max(1, min(100, $limit));
+        $excluded = $excludedStatuses === [] ? '' : ' AND status NOT IN (' . implode(', ', array_fill(0, count($excludedStatuses), '?')) . ')';
+        return array_values(array_map(Resource::run(...), Connection::all('SELECT * FROM scheduler_runs WHERE task = ?' . $excluded . ' ORDER BY id DESC LIMIT ' . $limit, [$task, ...$excludedStatuses])));
+    }
+
     /** @param list<string> $tasks
      * @return array<string, array<mixed>> */
     public static function latestFor(array $tasks, bool $workOnly = false): array

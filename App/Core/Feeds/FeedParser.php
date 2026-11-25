@@ -84,7 +84,6 @@ final class FeedParser
                 if ((string) ($siteLink['rel'] ?? 'alternate') === 'alternate') { $home = Client::absoluteUrl($baseUrl, (string) $siteLink['href']); break; }
             }
         }
-        $wordpressRoot = WordPressFeed::hint($generator, $home, $baseUrl);
         $nodes = $atom ? $feed->children(self::ATOM)->entry : ($rdf ? $feed->children('http://purl.org/rss/1.0/')->item : $channel->item);
         $items = [];
         $seen = 0;
@@ -144,15 +143,16 @@ final class FeedParser
             $published = trim((string) ($entry->pubDate ?: $entry->published ?: $entry->updated ?: $node->children('http://purl.org/dc/elements/1.1/')->date));
             $timestamp = self::timestamp($published);
             $items[] = [
-                'guid' => $guid, 'title' => $title, 'description' => self::descriptionText($descriptionSource, 1200),
-                'content' => self::descriptionText(trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource), 61000),
+                'guid' => $guid, 'title' => $title, 'description' => self::text($descriptionSource, 2097152), 'description_html' => $descriptionSource,
+                'content' => self::text(trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource), 2097152),
+                'content_html' => trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource),
                 'url' => Client::isSafeUrl($link) ? $link : '',
                 'image_url' => $images[0] ?? '', 'image_urls' => $images,
                 'audio_url' => $audio,
                 'author' => self::text($creator, 200), 'categories' => array_values(array_unique($categories)),
                 'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null,
                 '_timestamp' => $timestamp !== false ? $timestamp : 0,
-                '_wordpress_root' => $wordpressRoot,
+                'generator' => $generator, 'home_url' => $home, 'feed_url' => $baseUrl,
             ];
         }
         usort($items, static fn (array $a, array $b): int => $a['_timestamp'] <=> $b['_timestamp']);
@@ -209,8 +209,9 @@ final class FeedParser
             $description = self::string($item['summary'] ?? $item['content_text'] ?? $html);
             $fullText = self::string($item['content_text'] ?? '');
             $items[] = ['guid' => $item['id'], 'title' => self::text(self::string($item['title'] ?? ''), 500),
-                'description' => self::descriptionText($description, 1200),
-                'content' => self::descriptionText(trim($fullText) !== '' ? $fullText : $html, 61000),
+                'description' => isset($item['summary']) || isset($item['content_text']) ? $description : self::text($html, 2097152),
+                'description_html' => !isset($item['summary']) && !isset($item['content_text']) ? $html : '',
+                'content' => $fullText !== '' ? $fullText : self::text($html, 2097152), 'content_html' => $html,
                 'url' => Client::isSafeUrl($url) ? $url : '',
                 'author' => self::text(implode(', ', array_filter($names)), 200), 'categories' => $tags,
                 'image_url' => $images[0] ?? '', 'image_urls' => $images,
@@ -310,72 +311,6 @@ final class FeedParser
         $value = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
         return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
-    }
-
-    public static function descriptionText(string $value, int $limit): string
-    {
-        $value = preg_replace_callback(
-            '~<a\b([^>]*)>(.*?)</a\s*>~is',
-            static function (array $match): string {
-                $label = (string) $match[2];
-                $plainLabel = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-                if (\TinyCat\Core\Text\PostText::isReadMore($plainLabel)) { return ' '; }
-                $videoUrl = self::feedHtmlVideoUrl((string) $match[1], 'href');
-                if ($videoUrl === '') {
-                    return $label;
-                }
-
-                $labelText = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-                foreach (\TinyCat\Core\Text\LinkParser::extract($labelText) as $labelLink) {
-                    if ((string) ($labelLink['normalized_url'] ?? '') === $videoUrl) {
-                        return $label;
-                    }
-                }
-
-                return $label . ' ' . $videoUrl;
-            },
-            $value
-        ) ?? $value;
-        $value = preg_replace_callback(
-            '~<(?:iframe|embed)\b([^>]*)>(?:\s*</iframe\s*>)?~is',
-            static fn (array $match): string => self::feedHtmlVideoUrl((string) $match[1], 'src'),
-            $value
-        ) ?? $value;
-        $value = preg_replace('~<(?:br\b[^>]*|/(?:p|div|li|h[1-6]|blockquote)\s*)>~iu', ' ', $value) ?? $value;
-        $value = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        $value = preg_replace_callback(
-            \TinyCat\Core\Text\LinkParser::pattern(),
-            static function (array $match): string {
-                [$url, $tail] = \TinyCat\Core\Text\LinkParser::splitTail((string) ($match[0] ?? ''));
-                $videoUrl = self::supportedVideoUrl($url);
-                return ($videoUrl !== '' ? $videoUrl : '') . $tail;
-            },
-            $value
-        ) ?? '';
-        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
-        $value = preg_replace('/\s+([.,;:!?])/u', '$1', $value) ?? $value;
-        $value = \TinyCat\Core\Text\PostText::cleanImportBoilerplate(trim($value));
-
-        return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
-    }
-
-    private static function feedHtmlVideoUrl(string $attributes, string $name): string
-    {
-        $name = preg_quote($name, '~');
-        if (preg_match('~\b' . $name . '\s*=\s*(["\'])(.*?)\1~is', $attributes, $match) === 1) {
-            return self::supportedVideoUrl(html_entity_decode((string) $match[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        }
-        if (preg_match('~\b' . $name . '\s*=\s*([^\s>]+)~i', $attributes, $match) === 1) {
-            return self::supportedVideoUrl(html_entity_decode(trim((string) $match[1], "\"'"), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        }
-
-        return '';
-    }
-
-    private static function supportedVideoUrl(string $url): string
-    {
-        $link = \TinyCat\Core\Text\LinkParser::fromRaw(trim($url));
-        return ($link['link_type'] ?? '') === 'video' ? (string) ($link['normalized_url'] ?? '') : '';
     }
 
 }

@@ -32,7 +32,6 @@ if (($argv[1] ?? '') !== '--isolated') {
 
 use TinyCat\Database\Connection;
 use TinyCat\Social\Posts\Archive;
-use TinyCat\Core\Text\{Policies, TextPolicy};
 use TinyCat\Social\Posts\PostCreation;
 use TinyCat\Social\Posts\Repository;
 use TinyCat\Social\Posts\Queries;
@@ -51,7 +50,7 @@ $assert($coreTables === ['ip_action_limits', 'migrations', 'module_installations
 $assert(!$core->catalog->has('tinycat.publishing') && !$core->catalog->has('tinycat.social'), 'Core has no implicit publication capability or domain owner');
 foreach (['Status', 'Users', 'Bots', 'Notifications', 'Moderation', 'Settings', 'Site', 'Search'] as $domain) { $assert(!is_dir($workspace . '/App/Modules/' . $domain), 'No physical product sources: ' . $domain); }
 $modules = TinyCat\Core\Modules\Loader::load($workspace);
-$modules->initialize(); Policies::forget('post');
+$modules->initialize();
 $api = TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(new TinyCat\Core\Runtime\Configuration(['datetime' => ['timezone' => 'UTC'], 'publishing' => ['base_url' => 'https://publication.example']]), locale: static fn (): string => 'en'), $modules);
 $assert(array_keys(TinyCat\Core\Identity\Participants::current()) === ['tinycat.accounts', 'tinycat.social'], 'Only selected owners contribute account lifecycle');
 $assert(TinyCat\Core\Modules\Registrations::current()->owner('maintenance', 'orphan_terms') === 'tinycat.social', 'Existing maintenance ID has the publishing owner');
@@ -68,14 +67,15 @@ $draft = PostCreation::fromText(" <b>Hello</b> @reader #Mixed_CASE\r\nhttps://ex
 $assert($draft->rejection === null && $draft->tags === ['mixed-case'] && str_contains($draft->body, '@reader'), 'Generic preparation normalizes text and tags without social mention lookup');
 $assert(count($draft->links) === 1 && !str_contains($draft->links[0]['normalized_url'], 'utm_'), 'Canonical links use shared parsing');
 $id = PostCreation::create(1, $draft, $draft->links, publishedAt: '2000-01-01 12:00:00');
-$assert(Queries::find($id)['body'] === $draft->body && Repository::canEdit(Repository::find($id), $writer) && Repository::canEdit(Repository::find($id), $admin), 'Public projection and owner/admin policy work without social tables');
-$assert(!Repository::canEdit(Repository::find($id), ['id' => 9, 'role' => 'user']) && !Repository::canEdit(null, $admin), 'Unrelated actors and missing posts are not editable');
+$assert(Queries::find($id)['body'] === $draft->body && \TinyCat\Social\Posts\Repository::canManage(Repository::find($id), $writer) && \TinyCat\Social\Posts\Repository::canManage(Repository::find($id), $admin), 'Public projection and owner/admin policy work without social tables');
+$assert(!\TinyCat\Social\Posts\Repository::canManage(Repository::find($id), ['id' => 9, 'role' => 'user']) && !\TinyCat\Social\Posts\Repository::canManage(null, $admin), 'Unrelated actors and missing posts are not editable');
 $second = PostCreation::create(1, PostCreation::fromText('Second #mixed_case'), [], publishedAt: '2000-01-01 12:00:00');
 $future = PostCreation::create(1, PostCreation::fromText('Future'), [], publishedAt: '2999-01-01 12:00:00');
 $hidden = PostCreation::create(1, PostCreation::fromText('Hidden'), [], publishedAt: '2000-01-01 12:00:00');
 Connection::update('social_posts', ['status' => 'hidden'], ['id' => $hidden]);
 $disabled = PostCreation::create(2, PostCreation::fromText('Disabled author'), [], publishedAt: '2000-01-01 12:00:00');
 $assert(Queries::find($future) === null && Queries::find($hidden) === null && Queries::find($disabled) === null, 'Visibility excludes future, hidden and disabled-author content');
+$assert(!Repository::visible(Repository::find($disabled)) && !Repository::visible(Repository::find($future)) && !Repository::visible(Repository::find($hidden)), 'Author state and publication visibility apply to raw objects too');
 $page = Queries::page(1); $next = Queries::page(1, $page[0]['published_at'], (int) $page[0]['id']);
 $assert((int) $page[0]['id'] === $second && (int) $next[0]['id'] === $id, 'Equal timestamps use a stable descending ID cursor');
 $assert(count(Queries::page(tag: 'mixed_case')) === 2 && count(Queries::page(media: 'links')) === 1 && count(Queries::page(media: 'text')) === 1, 'Tag and media selection do not depend on social projections');
@@ -95,12 +95,11 @@ catch (PDOException) { $assert(Repository::find($id)['body'] === $update->body, 
 $pdo->exec('DROP TRIGGER reject_update');
 $originalOptions = TinyCat\Core\Runtime\Startup::$options;
 TinyCat\Core\Runtime\Startup::$options = static fn (string $key, mixed $default): mixed => $key === 'moderation.blocked_urls' ? 'blocked.test' : ($originalOptions !== null ? $originalOptions($key, $default) : TinyCat\Support\Config::get($key, $default));
-Policies::provide('tinycat.social', 'post', new TextPolicy(normalize: static fn (string $text): string => str_replace('@reader', '@1', $text)));
 $blocked = PostCreation::fromText('https://blocked.test');
-$assert($blocked->rejection['code'] === 'blocked_url' && PostCreation::fromText('@reader')->body === '@1', 'Product policies are explicit lazy inputs');
+$assert($blocked->rejection['code'] === 'blocked_url', 'Social URL policy rejects blocked hosts');
 $assert(TinyCat\Support\Localization::t($blocked->rejection['message_key'], ['host' => 'blocked.test']) !== $blocked->rejection['message_key'], 'Policy rejection text does not require Moderation sources');
 try { PostCreation::create(1, $blocked, []); $assert(false, 'Rejected draft cannot be persisted'); } catch (InvalidArgumentException) { $assert(true, 'Shared writer rejects policy failures'); }
-TinyCat\Core\Runtime\Startup::$options = $originalOptions; Policies::forget('post');
+TinyCat\Core\Runtime\Startup::$options = $originalOptions;
 $assert(PostCreation::fromText('#' . str_repeat('x', 33))->rejection['code'] === 'status_tag_too_long', 'Tag bounds use the same publishing validation');
 $assert(TinyCat\Support\Localization::t('account.messages.status_tag_too_long', ['max' => '32']) !== 'account.messages.status_tag_too_long', 'Publishing owns its validation catalog');
 mkdir($workspace . '/uploads/status-images/2000/01', 0700, true); $imagePath = '2000/01/' . str_repeat('a', 32) . '.webp';

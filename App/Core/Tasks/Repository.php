@@ -40,12 +40,6 @@ final class Repository
     }
 
     /** @return array<mixed>|null */
-    public static function latest(string $task): ?array
-    {
-        return \TinyCat\Core\Tasks\History::latest($task);
-    }
-
-    /** @return array<mixed>|null */
     public static function find(int $id): ?array
     {
         return Connection::one('SELECT sr.*, u.username AS actor_username FROM scheduler_runs sr LEFT JOIN users u ON u.id = sr.actor_id WHERE sr.id = ?', [$id]);

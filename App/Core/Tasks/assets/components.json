@@ -507,6 +507,51 @@
           ""
         ]
       },
+      {
+        "each": {"get": "item.details"},
+        "as": "detail",
+        "children": [
+          {
+            "tag": "details",
+            "attrs": {"class": "disclosure-item"},
+            "children": [
+              {
+                "tag": "summary",
+                "attrs": {"class": "disclosure-summary"},
+                "children": [
+                  {
+                    "tag": "span",
+                    "attrs": {"class": "cluster gap-2"},
+                    "children": [
+                      {"tag": "strong", "children": [{"get": "detail.title"}]},
+                      {
+                        "component": "ui/status-badge",
+                        "data": {
+                          "label": {"get": "detail.status.name"},
+                          "tone": {"get": "detail.status.code"},
+                          "text": true
+                        },
+                        "when": {"get": "detail.status"}
+                      }
+                    ]
+                  },
+                  {"icon": "chevron-down", "class": "icon disclosure-chevron"}
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {"class": "disclosure-body"},
+                "children": [
+                  {
+                    "component": "ui/detail-table",
+                    "data": {"title": {"get": "detail.title"}, "rows": {"get": "detail.rows"}}
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
       {"extensions": "scheduler/run-detail"},
       {
         "tag": "details",

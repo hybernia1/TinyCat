@@ -69,7 +69,7 @@ final class Queries
             'url' => \TinyCat\Social\Posts\Posts::status_url($id),
             'author_url' => \TinyCat\Social\Profiles\Profiles::author_url($authorId),
             'published_at' => $publishedAt !== '' ? \TinyCat\Support\Dates::dateIso($publishedAt) : '',
-            'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($item),
+            'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($item),
         ];
     }
 
@@ -79,7 +79,7 @@ final class Queries
     public static function public_search_suggestion_tags(string $query, int $limit): array
     {
         if (strpbrk($query, '%!') !== false) { return []; }
-        $tagQuery = \TinyCat\Social\Posts\Tags::status_tag_normalize($query);
+        $tagQuery = \TinyCat\Social\Posts\Tags::normalizeTag($query);
 
         if ($tagQuery === '') {
             return [];
@@ -98,7 +98,7 @@ final class Queries
             ['active', \TinyCat\Support\Dates::dateDb(), Connection::escapeLike($tagQuery) . '%']
         );
         foreach ($rows as $tag) {
-            $name = \TinyCat\Social\Posts\Tags::status_tag_normalize((string) ($tag['name'] ?? ''));
+            $name = \TinyCat\Social\Posts\Tags::normalizeTag((string) ($tag['name'] ?? ''));
 
             if ($name === '') {
                 continue;
@@ -132,7 +132,7 @@ final class Queries
         $users = [];
 
         foreach (\TinyCat\Database\Query::select(
-            'SELECT u.id, u.username, u.username AS name, u.avatar_exists, u.avatar_appearance, u.avatar_version, u.updated_at, u.bio
+            'SELECT u.id, u.username, u.username AS name, u.avatar_exists,  u.avatar_version, u.updated_at, u.bio
                 FROM users u'
         )
             ->where('u.status = ?', 'active')
@@ -152,7 +152,7 @@ final class Queries
                 'title' => (string) ($user['name'] ?? ''),
                 'excerpt' => \TinyCat\Social\Search\Queries::public_search_excerpt((string) ($user['bio'] ?? ''), $query, 90),
                 'url' => \TinyCat\Social\Profiles\Profiles::author_url($id),
-                'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($user),
+                'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($user),
             ];
         }
 
@@ -225,7 +225,7 @@ final class Queries
         $selection = new \TinyCat\Database\Query(
             'SELECT c.id, c.body, c.author_id, c.published_at, matches.link_excerpt,
                     u.username AS author_name, u.username AS author_username,
-                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version, u.updated_at AS author_updated_at
+                    u.avatar_exists AS author_avatar_exists,  u.avatar_version AS author_avatar_version, u.updated_at AS author_updated_at
              FROM (SELECT id, published_at, MAX(link_excerpt) AS link_excerpt FROM (
                  SELECT * FROM (SELECT c.id, c.published_at, NULL AS link_excerpt FROM social_posts c INNER JOIN users u ON u.id = c.author_id
                  WHERE u.status = ? AND c.published_at <= ? AND c.status = \'published\' AND c.kind = \'post\' AND ' . $body . $cursorSql . '
@@ -275,12 +275,12 @@ final class Queries
     {
         $tag = $type === 'tags';
         if ($tag && strpbrk($query, '%!') !== false) { return []; }
-        $needle = $tag ? \TinyCat\Social\Posts\Tags::status_tag_normalize($query) : ltrim($query, '@');
+        $needle = $tag ? \TinyCat\Social\Posts\Tags::normalizeTag($query) : ltrim($query, '@');
         if ($needle === '') { return []; }
         $column = $tag ? 'name' : 'username';
         $table = $tag ? 'social_terms' : 'users';
         $where = $tag ? '' : "status = 'active' AND ";
-        $sql = 'SELECT * FROM (SELECT ' . ($tag ? 'id, name' : 'id, username, bio, avatar_exists, avatar_appearance, avatar_version, updated_at')
+        $sql = 'SELECT * FROM (SELECT ' . ($tag ? 'id, name' : 'id, username, bio, avatar_exists, avatar_version, updated_at')
             . ', CASE WHEN ' . $column . ' = ? THEN 0 WHEN ' . $column . " LIKE ? ESCAPE '!' THEN 1 ELSE 2 END AS search_rank"
             . ' FROM ' . $table . ' WHERE ' . $where . $column . " LIKE ? ESCAPE '!') matches";
         $params = [$needle, Connection::escapeLike($needle) . '%', '%' . Connection::escapeLike($needle) . '%'];
@@ -296,7 +296,7 @@ final class Queries
             $id = (int) $row['id'];
             $item = $tag
                 ? ['id' => $id, 'type' => 'tag', 'title' => '#' . $row['name'], 'url' => \TinyCat\Social\Posts\Tags::tag_url((string) $row['name']), 'posts_count' => (int) $row['posts_count']]
-                : ['id' => $id, 'type' => 'user', 'title' => $row['username'], 'url' => \TinyCat\Social\Profiles\Profiles::author_url($id), 'excerpt' => self::public_search_excerpt((string) ($row['bio'] ?? ''), $query, 90), 'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($row)];
+                : ['id' => $id, 'type' => 'user', 'title' => $row['username'], 'url' => \TinyCat\Social\Profiles\Profiles::author_url($id), 'excerpt' => self::public_search_excerpt((string) ($row['bio'] ?? ''), $query, 90), 'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($row)];
             $item['cursor_rank'] = (int) $row['search_rank'];
             $item['cursor_name'] = (string) ($tag ? $row['name'] : $row['username']);
             return $item;

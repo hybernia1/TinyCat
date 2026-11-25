@@ -53,7 +53,7 @@ config.php` a `php tests/release/installation-api.php`. Nepřepisuj tím provozn
 ani osobní konfiguraci. Lokální Windows průchod nedokládá POSIX garance.
 
 Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitních
-99 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
+101 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 
@@ -190,7 +190,7 @@ PHP generátory a workers pro klientské testy jsou v `tests/presentation/fixtur
 JavaScript fixture v `tests/frontend/fixtures/`, HTTP router a data v
 `tests/http/fixtures/` a zahrnované scénáře v `tests/http/cases/`.
 Společná podpora patří do `tests/support/`; sdílená data a konfigurace do
-`tests/fixtures/`. Výchozí seznam obsahuje 99 skupin a frontendový 40
+`tests/fixtures/`. Výchozí seznam obsahuje 101 skupin a frontendový 40
 scénářů. Nová skupina `tests/release/build-preparation.php` ověřuje životnost
 cache, invalidaci, oba ZIP backendy a publikaci připraveného výstupu.
 `tests/quality/module-catalog.php` ověřuje offline načtení metadat, závislosti,
@@ -300,3 +300,15 @@ without CAPTCHA, and session-independent autocomplete. The MySQL limiter group
 uses a disposable `tinycat_quota_*` database and one child worker to verify that
 a concurrent reservation with an older snapshot cannot exceed the last slot;
 rejected writes roll back. It never changes the live application's counters.
+
+`php tests/release/update-rehearsal.php --baseline-version=8.0.5` uses the same
+signed artifact/update/rollback scenario against the current published release.
+It verifies the actual retired Core text, feed, link and file paths in addition
+to the seven module contracts and the retired Identity Locale/Readiness adapters. The default still covers minimum supported 6.0.10.
+Both retain original PHP policy/provider classes during the update and compare
+the full managed inventory after rollback; source Version stays unchanged.
+
+Avatar regressions cover account schema 3?4 (and supported earlier schemas), removal of
+appearance storage, preservation of custom uploads and immutable versions, Unicode/XML
+initials and immutable name URLs. HTTP tests retain upload/removal, authorization, CSRF
+and image validators; the retired appearance PATCH endpoint must remain absent.

@@ -45,7 +45,7 @@ final class Pages
                 'type' => 'website',
                 'jsonld' => [
                     '@context' => 'https://schema.org', '@type' => 'WebSite',
-                    '@id' => Presentation::absolute_url(Feed::homePath()), 'url' => Presentation::absolute_url(Feed::homePath()),
+                    '@id' => \TinyCat\Support\LocalUrls::absolute(Feed::homePath()), 'url' => \TinyCat\Support\LocalUrls::absolute(Feed::homePath()),
                     'name' => Presentation::site_name(), 'description' => Presentation::site_meta_description(),
                 ],
             ],
@@ -107,8 +107,8 @@ final class Pages
                 'image_alt' => $statusImageUrl !== '' ? \TinyCat\Social\Posts\Images::status_image_alt_text($item) : '',
                 'type' => 'article',
                 'published_time' => (string) ($item['published_at'] ?? ''),
-                'author' => Presentation::absolute_url(Profiles::author_url((int) ($item['author_id'] ?? 0))),
-                'tags' => Tags::status_tags_from_text((string) ($item['body'] ?? '')),
+                'author' => \TinyCat\Support\LocalUrls::absolute(Profiles::author_url((int) ($item['author_id'] ?? 0))),
+                'tags' => Tags::extractTags((string) ($item['body'] ?? '')),
                 'rss' => Profiles::author_feed_url((int) ($item['author_id'] ?? 0)),
                 'jsonld' => array_filter([
                     '@context' => 'https://schema.org',
@@ -138,7 +138,7 @@ final class Pages
             return array_filter([
                 '@type' => 'Comment',
                 'identifier' => (string) $comment['id'],
-                'url' => Presentation::absolute_url($postUrl),
+                'url' => \TinyCat\Support\LocalUrls::absolute($postUrl),
                 'text' => (string) $comment['body'],
                 'datePublished' => !empty($comment['created_at']) ? Dates::dateTime((string) $comment['created_at'], DATE_ATOM) : null,
                 'author' => StructuredData::author($comment),
@@ -166,7 +166,7 @@ final class Pages
     /** @return array<string, mixed>|null */
     public static function tagData(?string $tag = null): ?array
     {
-        $tag = Tags::status_tag_normalize(($tag ?? (string) Web::get('tag', '')));
+        $tag = Tags::normalizeTag(($tag ?? (string) Web::get('tag', '')));
 
         if ($tag === '') {
             return null;
@@ -195,10 +195,10 @@ final class Pages
         $tagStructuredData = [
             '@context' => 'https://schema.org',
             '@type' => 'CollectionPage',
-            '@id' => Presentation::absolute_url($pageUrl),
-            'url' => Presentation::absolute_url($pageUrl),
+            '@id' => \TinyCat\Support\LocalUrls::absolute($pageUrl),
+            'url' => \TinyCat\Support\LocalUrls::absolute($pageUrl),
             'name' => Localization::t('public.tag_feed_title', ['tag' => '#' . $tag]),
-            'isPartOf' => ['@id' => Presentation::absolute_url('/')],
+            'isPartOf' => ['@id' => \TinyCat\Support\LocalUrls::absolute('/')],
             'mainEntity' => StructuredData::itemList(array_values($statusItems)),
         ];
 

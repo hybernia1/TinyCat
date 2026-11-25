@@ -65,7 +65,7 @@ for ($attempt = 0; $attempt < 20; $attempt++) {
 $assert(!is_file(Paths::basePath('uploads/avatars/2.webp')), 'An old avatar without an owner is removed.');
 foreach (['1.webp', '3.webp', 'unrelated.txt', '.avatar-backup-recover'] as $name) { $assert(is_file(Paths::basePath('uploads/avatars/' . $name)), 'Live, new and recovery files survive avatar cleanup.'); }
 for ($attempt = 0; $attempt < 30; $attempt++) {
-    $result = \TinyCat\Core\Tasks\FileCleanup::temporary(10);
+    $result = \TinyCat\Core\Tasks\Cleanup\Files::temporary(10);
     if (!$result['has_more']) { break; }
 }
 $assert(!is_file(Paths::basePath('uploads/avatars/.avatar-abandoned')) && !is_file(Paths::basePath('uploads/status-images/2026/10/.image-abandoned')), 'Old disposable upload files are removed.');
@@ -100,9 +100,9 @@ if (@symlink($root . '/outside', $root . '/scan/linked')) {
 $assert(\TinyCat\Core\Security\RateLimitPolicy::retentionSeconds() === 86400, 'Current rate-limit windows require only a day of retained buckets.');
 $insert = $database->prepare('INSERT INTO ip_action_limits VALUES (?)');
 foreach ([-90000, -7200, -60] as $age) { $insert->execute([date('Y-m-d H:i:s', time() + $age)]); }
-$assert(\TinyCat\Core\Tasks\Cleanup::cleanup_has_rows('old_action_limits'), 'Rate-limit cleanup selects buckets older than its policy retention.');
+$assert(\TinyCat\Core\Tasks\Cleanup\Task::hasPending('old_action_limits'), 'Rate-limit cleanup selects buckets older than its policy retention.');
 $database->exec('DELETE FROM ip_action_limits ORDER BY bucket_start LIMIT 1');
-$assert(!\TinyCat\Core\Tasks\Cleanup::cleanup_has_rows('old_action_limits'), 'Rate-limit cleanup preserves recent and active windows.');
+$assert(!\TinyCat\Core\Tasks\Cleanup\Task::hasPending('old_action_limits'), 'Rate-limit cleanup preserves recent and active windows.');
 
 $backup = static function (string $name, int $days, bool $completed = true, bool $db = false) use ($file): void {
     $base = 'storage/updates/backups/' . $name;
@@ -174,14 +174,14 @@ $seenCursor = null;
 $database->beforePrepare = static function (string $query) use (&$seenCursor): void {
     if ($seenCursor === null && str_contains($query, 'FROM users')) { $seenCursor = \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task'); }
 };
-$full = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, true);
+$full = \TinyCat\Core\Tasks\Cleanup\Task::run(500, true);
 $assert(array_key_first($full['results']) === 'orphan_avatar_files', 'A full cleanup resumes from its persisted successor instead of restarting the first task.');
-$maintenanceOrder = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks();
+$maintenanceOrder = \TinyCat\Core\Tasks\Cleanup\Task::taskIds();
 $successor = $maintenanceOrder[((int) array_search('orphan_avatar_files', $maintenanceOrder, true) + 1) % count($maintenanceOrder)];
 $assert($seenCursor === $successor, 'The following task is persisted before database cleanup begins, so an interrupted worker cannot starve later tasks.');
 $assert(isset($full['results']['update_files']), 'Other task failures and pending staging cannot prevent the backup task from getting a turn.');
 $cursorBeforePartial = \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task');
-\TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, true, ['old_action_limits']);
+\TinyCat\Core\Tasks\Cleanup\Task::run(500, true, ['old_action_limits']);
 $assert(\TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task') === $cursorBeforePartial, 'A targeted cleanup does not disturb the full scheduler cursor.');
 
 echo "PASS isolated cleanup retention ({$checks} checks)\n";

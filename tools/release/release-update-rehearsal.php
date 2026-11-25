@@ -19,7 +19,7 @@ $options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'direct-web'
 $cachedAutoload = array_key_exists('cached-autoload', $options);
 $directWeb = array_key_exists('direct-web', $options);
 $baselineVersion = (string) ($options['baseline-version'] ?? $baselineVersion);
-if (preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/D', $baselineVersion) !== 1 || version_compare($baselineVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<') || version_compare($baselineVersion, $version, '>=')) { throw new InvalidArgumentException('Use a completed supported release older than the candidate.'); }
+if (preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/D', $baselineVersion) !== 1 || version_compare($baselineVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<')) { throw new InvalidArgumentException('Use a completed supported release older than the candidate.'); }
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/release-update-' . bin2hex(random_bytes(6));
@@ -178,6 +178,37 @@ try {
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
     $version = (string) $manifest['version'];
+    if (version_compare($baselineVersion, $version, '>=')) { throw new InvalidArgumentException('The published baseline must be older than the signed artifact.'); }
+    $retiredContracts = array_values(array_intersect([
+        'App/Core/Modules/ProvidesInstallation.php',
+        'App/Core/Modules/FeatureGroup.php',
+        'App/Core/Modules/FeatureSelection.php',
+        'App/Core/Modules/ProvidesSchema.php',
+        'App/Core/Modules/ProvidesManagedSchema.php',
+        'App/Core/Modules/ProvidesManagedSchemas.php',
+        'App/Core/Modules/StorageModule.php',
+        'App/Core/Text/Policies.php',
+        'App/Core/Text/TextPolicy.php',
+        'App/Core/Feeds/FeedEntry.php',
+        'App/Core/Feeds/FeedPipeline.php',
+        'App/Core/Feeds/FeedSourceStore.php',
+        'App/Core/Feeds/FeedTarget.php',
+        'App/Core/Feeds/Rss.php',
+        'App/Core/Feeds/SourceUrl.php',
+        'App/Core/Feeds/WordPressFeed.php',
+        'App/Core/Files/RemoteImageCache.php',
+        'App/Core/Links/Outbound.php',
+        'App/Core/Links/Presentation.php',
+        'App/Core/Links/Providers.php',
+        'App/Core/Text/Hashtags.php',
+        'App/Core/Text/PostText.php',
+        'App/Core/Text/Revisions.php',
+        'App/Core/Text/Segments.php',
+        'App/Core/Identity/Locale.php',
+        'App/Core/Identity/Readiness.php',
+        'App/Core/Identity/GeneratedAvatar.php',
+        'App/Core/Identity/avatar-options.json',
+    ], $manifest['delete']));
     $packagePath = $artifactRoot . '/' . basename((string) ($manifest['package'] ?? ''));
     $keyEncoded = trim((string) file_get_contents((string) ($options['key'] ?? (\TinyCat\Tools\Workspace::directory('keys') . '/update-signing.key'))));
     $secretKey = base64_decode($keyEncoded, true);
@@ -210,6 +241,7 @@ try {
     exec('git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion), $archiveOutput, $archiveExit);
     if ($archiveExit !== 0) { throw new RuntimeException('Cannot extract the published supported baseline.'); }
     $extractZip($baselineArchive, $installRoot);
+    $retiredContracts = array_values(array_filter($retiredContracts, static fn (string $relative): bool => is_file($installRoot . '/' . $relative)));
     $installConfig = $baseConfig;
     $installConfig['database'] = [...$databaseConfig, 'name' => $databaseName];
     $installConfig['app'] = [...(array) ($baseConfig['app'] ?? []), 'url' => 'http://localhost'];
@@ -276,6 +308,17 @@ PHP;
         $assert(true, 'Representative shared-storage users, posts, comments, reactions, tags, links and notifications are seeded.');
     }
 
+    $accountColumns = $database->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
+    $fixtureAvatarId = (int) $database->query('SELECT MIN(id) FROM users')->fetchColumn();
+    $fixtureAvatarVersion = in_array('avatar_version', $accountColumns, true) ? str_repeat('d', 32) : null;
+    $database->exec('UPDATE users SET avatar_exists=1' . ($fixtureAvatarVersion !== null ? ", avatar_version='" . $fixtureAvatarVersion . "'" : '') . ' WHERE id=' . $fixtureAvatarId);
+    if (in_array('avatar_appearance', $accountColumns, true)) {
+        $database->prepare('UPDATE users SET avatar_appearance=? WHERE id=?')->execute(['{"version":1,"fur":"ginger"}', $fixtureAvatarId]);
+    }
+    $fixtureAvatar = $installRoot . '/uploads/avatars/' . $fixtureAvatarId . ($fixtureAvatarVersion !== null ? '-' . $fixtureAvatarVersion : '') . '.webp';
+    if (!is_dir(dirname($fixtureAvatar))) { mkdir(dirname($fixtureAvatar), 0700, true); }
+    $canvas = imagecreatetruecolor(2, 2); imagewebp($canvas, $fixtureAvatar); imagedestroy($canvas);
+    $fixtureAvatarHash = hash_file('sha256', $fixtureAvatar);
     $beforeDatabase = $databaseFingerprint($database);
     $beforeSchemaHistory = $database->query("SELECT stream AS module_id, migration, sequence AS version, checksum, applied_at FROM migrations WHERE kind = 'schema' ORDER BY stream, sequence")->fetchAll(PDO::FETCH_ASSOC);
     $beforeGlobalHistory = $database->query("SELECT migration, release_version AS version, checksum, applied_at FROM migrations WHERE kind = 'global' AND stream = 'tinycat' ORDER BY migration")->fetchAll(PDO::FETCH_ASSOC);
@@ -330,9 +373,34 @@ if (__CACHED_AUTOLOAD__ && (!function_exists('opcache_is_script_cached') || !opc
 }
 if (!TinyCat\Database\Schema::app_db_ready()) { throw new RuntimeException('Baseline schema must be ready before the web update.'); }
 foreach ([TinyCat\Database\Migrations::class, TinyCat\Database\ModuleSchemas::class, TinyCat\Core\Modules\ModuleSchema::class, TinyCat\Core\Modules\SchemaMigration::class, TinyCat\Core\Tasks\Schema::class, TinyCat\Core\Modules\Lifecycle::class] as $class) { if (!class_exists($class)) { throw new RuntimeException('Missing baseline class.'); } }
+if (!class_exists(TinyCat\Core\Text\Policies::class) || !class_exists(TinyCat\Core\Text\TextPolicy::class)) { throw new RuntimeException('Original text policy classes must be loaded before update.'); }
+foreach (['Locale', 'Readiness', 'GeneratedAvatar'] as $identityClass) {
+    if (is_file(__ROOT__ . '/App/Core/Identity/' . $identityClass . '.php') && !class_exists('TinyCat\\Core\\Identity\\' . $identityClass)) { throw new RuntimeException('Original Identity class was not loaded: ' . $identityClass); }
+}
+// This code runs inside the immutable supported baseline, before its files change.
+// Cache both original schema provider contracts and schema objects explicitly.
+$cachedAccountSchema = TinyCat\Core\Identity\ServiceProvider::schema();
+$cachedSocialSchemas = TinyCat\Social\Module::schemas();
+$cachedSchemaParameters = (new ReflectionMethod(TinyCat\Core\Modules\ModuleSchema::class, '__construct'))->getNumberOfParameters();
+$cachedAccountInterfaces = class_implements(TinyCat\Core\Identity\ServiceProvider::class);
+$cachedSocialInterfaces = class_implements(TinyCat\Social\Module::class);
+$retiredContracts = __RETIRED_CONTRACTS__;
+foreach ($retiredContracts as $relative) {
+    if (!is_file(__ROOT__ . '/' . $relative)) { throw new RuntimeException('The original contract must exist before update: ' . $relative); }
+}
 $check = TinyCat\Core\Updates\Manager::check(true);
 if (empty($check['available']) || empty($check['compatible'])) { throw new RuntimeException('The published updater does not offer the stable update.'); }
 $result = TinyCat\Core\Updates\Manager::installLatest();
+foreach ($retiredContracts as $relative) {
+    if (is_file(__ROOT__ . '/' . $relative)) { throw new RuntimeException('The signed update must physically remove the retired contract: ' . $relative); }
+}
+if ($cachedSchemaParameters !== (new ReflectionMethod(TinyCat\Core\Modules\ModuleSchema::class, '__construct'))->getNumberOfParameters()
+    || $cachedAccountInterfaces !== class_implements(TinyCat\Core\Identity\ServiceProvider::class)
+    || $cachedSocialInterfaces !== class_implements(TinyCat\Social\Module::class)
+    || $cachedAccountSchema->version !== TinyCat\Core\Identity\ServiceProvider::schema()->version
+    || array_keys($cachedSocialSchemas) !== array_keys(TinyCat\Social\Module::schemas())) {
+    throw new RuntimeException('The updater must finish with the original schema classes and provider contracts still loaded.');
+}
 $operation = json_decode((string) file_get_contents(__ROOT__ . '/storage/updates/operation.json'), true, 512, JSON_THROW_ON_ERROR);
 $backup = __ROOT__ . '/storage/updates/backups/' . $operation['backup'];
 $metadata = json_decode((string) file_get_contents($backup . '/backup.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -340,14 +408,17 @@ echo json_encode(['backup' => $backup, 'pending_migrations' => isset($metadata['
 PHP;
     }
     $updateRunner = str_replace(
-        ['__ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__CACHED_AUTOLOAD__'],
-        [var_export($installRoot, true), var_export($manifestPath, true), var_export($signaturePath, true), var_export($packagePath, true), $cachedAutoload ? 'true' : 'false'],
+        ['__ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__CACHED_AUTOLOAD__', '__RETIRED_CONTRACTS__'],
+        [var_export($installRoot, true), var_export($manifestPath, true), var_export($signaturePath, true), var_export($packagePath, true), $cachedAutoload ? 'true' : 'false', var_export($retiredContracts, true)],
         $updateRunner
     );
     [$updateExit, $updateOutput] = $run($updateRunner);
     $update = json_decode(implode("\n", $updateOutput), true);
     if ($updateExit !== 0 || !is_array($update)) {
         throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
+    }
+    foreach ($retiredContracts as $relative) {
+        $assert(!is_file($installRoot . '/' . $relative), 'The supported update physically removes the retired contract: ' . $relative);
     }
     $assert(!is_file($installRoot . '/App/autoload.php'), 'The signed update removes the public autoload facade.');
     [$rescueExit, $rescueOutput] = $run('$argv = ["console.php", "help"]; require ' . var_export($rescue['file'], true) . ';');
@@ -364,6 +435,10 @@ PHP;
     $convertedGlobal = $database->query("SELECT migration, release_version AS version, checksum, applied_at FROM migrations WHERE kind = 'global' AND stream = 'tinycat' ORDER BY migration")->fetchAll(PDO::FETCH_ASSOC);
     $assert($convertedGlobal === $beforeGlobalHistory, 'Global migration versions, checksums and timestamps survive conversion.');
     $assert(($update['pending_migrations'] ?? null) === ($expectedPending !== [] || $modulePending), 'Pending migrations match the baseline registry.');
+    $upgradedColumns = $database->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
+    $assert(!in_array('avatar_appearance', $upgradedColumns, true) && in_array('avatar_exists', $upgradedColumns, true) && in_array('avatar_version', $upgradedColumns, true), 'Signed account upgrade removes only appearance columns.');
+    $assert((int) $database->query("SELECT version FROM module_installations WHERE module_id='tinycat.accounts'")->fetchColumn() === 4, 'Signed updater applies the new account schema step.');
+    $assert(hash_file('sha256', $fixtureAvatar) === $fixtureAvatarHash && (int) $database->query('SELECT avatar_exists FROM users WHERE id=' . $fixtureAvatarId)->fetchColumn() === 1, 'Signed update preserves uploaded avatar bytes and flags.');
     $afterDeployment = json_decode((string) file_get_contents($installRoot . '/storage/deployment.json'), true, 512, JSON_THROW_ON_ERROR);
     $assert($afterDeployment['installed'] === $installedOwners && $afterDeployment['active'] === $beforeDeployment['active'], 'A platform package preserves installed and active owners without activating an uninstalled module.');
     $assert(($update['applied_migrations'] ?? null) === $expectedPending, 'Only migrations absent from the baseline run.');
@@ -411,6 +486,7 @@ PHP;
     $restoredInventory = $inventory($installRoot);
     $assert($restoredInventory === $beforeInventory, 'Rollback restores the exact managed baseline tree.');
     $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback restores the exact pre-update database content and schema.');
+    $assert(hash_file('sha256', $fixtureAvatar) === $fixtureAvatarHash, 'Rollback retains original custom avatar bytes alongside restored appearance data.');
     $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/Core/Runtime/autoload.php', true)
         . "; \TinyCat\Core\Runtime\Application::start(); (new ReflectionMethod(TinyCat\\Core\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
     [$clearCacheExit, $clearCacheOutput] = $run($clearOldCache);
@@ -425,6 +501,7 @@ PHP;
         'package_size' => (int) ($manifest['size'] ?? 0),
         'files' => count((array) ($manifest['files'] ?? [])),
         'deletions' => count((array) ($manifest['delete'] ?? [])),
+        'retired_contracts' => count($retiredContracts),
         'migrations' => count((array) ($manifest['migrations'] ?? [])),
         'database_counts' => $beforeDatabase['counts'],
         'checks' => $checks,

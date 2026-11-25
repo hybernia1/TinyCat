@@ -4,14 +4,14 @@ declare(strict_types=1);
 namespace TinyCat\Social\Posts;
 
 use TinyCat\Core\Links\Audio;
-use TinyCat\Core\Links\Providers;
-use TinyCat\Core\Text\LinkParser;
-use TinyCat\Core\Text\PostText;
+use TinyCat\Social\Posts\Providers;
+use TinyCat\Social\Posts\LinkParser;
+use TinyCat\Social\Bots\FeedPublication;
 
 use RuntimeException;
 use Throwable;
 
-class Links extends \TinyCat\Core\Links\Presentation
+class Links extends \TinyCat\Core\Links\Urls
 {
     private const METADATA_FAILURE_TTL = 300;
 
@@ -80,7 +80,7 @@ class Links extends \TinyCat\Core\Links\Presentation
             'provider' => \TinyCat\Support\Text::plain_text_limit($taxonomy['provider'], 40),
             'link_type' => $taxonomy['link_type'],
             'title' => \TinyCat\Support\Text::plain_text_limit((string) ($link['title'] ?? ''), 255),
-            'description' => \TinyCat\Support\Text::plain_text_limit(PostText::cleanImportBoilerplate((string) ($link['description'] ?? '')), 500),
+            'description' => \TinyCat\Support\Text::plain_text_limit(FeedPublication::cleanImportBoilerplate((string) ($link['description'] ?? '')), 500),
             'image_url' => Providers::youtubeThumbnails($normalizedUrl) !== [] ? '' : \TinyCat\Support\Text::plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
             'video_id' => \TinyCat\Support\Text::plain_text_limit((string) ($link['video_id'] ?? ''), 80),
             'audio_url' => \TinyCat\Support\Text::plain_text_limit((string) ($link['audio_url'] ?? ''), 2048),
@@ -172,7 +172,7 @@ class Links extends \TinyCat\Core\Links\Presentation
             return $title !== '' && !Providers::titleIsPlaceholder($title);
         }
 
-        $fallback = \TinyCat\Core\Text\LinkParser::fromRaw((string) ($link['normalized_url'] ?? ''));
+        $fallback = \TinyCat\Social\Posts\LinkParser::fromRaw((string) ($link['normalized_url'] ?? ''));
         $fallbackTitle = trim((string) ($fallback['title'] ?? ''));
         $fallbackDescription = trim((string) ($fallback['description'] ?? ''));
         $hasTitle = $title !== '' && ($fallbackTitle === '' || strcasecmp($title, $fallbackTitle) !== 0);
@@ -204,12 +204,10 @@ class Links extends \TinyCat\Core\Links\Presentation
 
     public static function status_link_image_cache(string $imageUrl, string $variant = 'card'): string
     {
-        return Policy::blockedHost($imageUrl) === '' ? \TinyCat\Core\Files\RemoteImageCache::store($imageUrl, $variant) : '';
+        return Policy::blockedHost($imageUrl) === '' ? \TinyCat\Social\Posts\LinkImages::store($imageUrl, $variant) : '';
     }
 
     /** @return array{changed: int, has_more: bool} */
-    public static function cleanupOrphanImages(int $limit, string $relativeDirectory = ''): array { return \TinyCat\Core\Files\RemoteImageCache::cleanup($limit, $relativeDirectory); }
-    public static function status_link_image_exists(string $url): bool { return \TinyCat\Core\Files\RemoteImageCache::exists($url); }
 
     /**
      * @param array<mixed> $link
@@ -230,7 +228,7 @@ class Links extends \TinyCat\Core\Links\Presentation
             // A failed attempt must not make old metadata fresh for another day.
             $prepared['_metadata_updated_at'] = (string) ($cached['updated_at'] ?? '1970-01-01 00:00:00');
         } else {
-            $prepared = \TinyCat\Core\Links\Metadata::enrich($link);
+            $prepared = \TinyCat\Social\Posts\LinkMetadata::enrich($link);
             if (empty($prepared['_metadata_fetched'])) {
                 \TinyCat\Support\Cache::put($failureKey, true, self::METADATA_FAILURE_TTL, 0);
                 if ($cached !== null) {
@@ -457,5 +455,93 @@ class Links extends \TinyCat\Core\Links\Presentation
         $links = \TinyCat\Social\Posts\Links::status_links_cache([$contentId]);
         $rows = $links[$contentId] ?? [];
         return is_array($rows) ? array_values(array_filter($rows, is_array(...))) : [];
+    }
+    public static function status_external_url_pattern(): string
+    {
+        return '~(?<![@\p{L}\p{N}_])(?:https?://|www\.)[^\s<>"\']+~iu';
+    }
+
+    public static function status_strip_external_urls(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        $text = (string) preg_replace_callback(self::status_external_url_pattern(), static function (array $match): string {
+            [$url, $tail] = \TinyCat\Social\Posts\LinkParser::splitTail((string) ($match[0] ?? ''));
+
+            if (self::isInternal($url)) {
+                return $url . $tail;
+            }
+
+            return $tail;
+        }, $text);
+
+        $text = (string) preg_replace('/[ \t]{2,}/', ' ', $text);
+        $text = (string) preg_replace('/\s+([.,;:!?])/u', '$1', $text);
+        $text = (string) preg_replace('/[ \t]+\R/u', "\n", $text);
+        $text = (string) preg_replace('/\R[ \t]+/u', "\n", $text);
+        $text = (string) preg_replace('/\R{3,}/u', "\n\n", $text);
+
+        return trim($text);
+    }
+
+    /**
+     * @return list<array<mixed>>
+     */
+    public static function status_links_from_text(string $text): array
+    {
+        return array_values(array_filter(
+            \TinyCat\Social\Posts\LinkParser::extract($text),
+            static fn (array $link): bool => !self::status_link_is_internal($link)
+        ));
+    }
+
+    /** @param array<mixed>|string $link */
+    public static function status_link_is_internal(array|string $link): bool
+    {
+        if (is_array($link)) {
+            foreach (['normalized_url'] as $key) {
+                $url = trim((string) ($link[$key] ?? ''));
+
+                if ($url !== '' && self::isInternal($url)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $url = trim($link);
+
+        return $url !== '' && self::isInternal($url);
+    }
+
+/** @param array<mixed> $link */
+    public static function status_link_display_url(array $link): string
+    {
+        $url = (string) ($link['normalized_url'] ?? '');
+        $parts = parse_url($url);
+
+        if (!is_array($parts)) {
+            return $url;
+        }
+
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        $path = (string) ($parts['path'] ?? '');
+
+        return trim($host . ($path !== '/' ? $path : ''));
+    }
+
+    /**
+     * @param array<mixed> $link
+     * @return array<mixed>
+     */
+    public static function status_video_thumbnail_sources(array $link): array
+    {
+        $youtube = Providers::youtubeThumbnails((string) ($link['normalized_url'] ?? ''));
+        if ($youtube !== []) { return ['webp' => '', 'fallback' => $youtube['desktop'], 'mobile' => $youtube['mobile']]; }
+        $image = (string) ($link['image_url'] ?? '');
+        return ['webp' => '', 'fallback' => \TinyCat\Social\Posts\LinkImages::exists($image) ? $image : '', 'mobile' => ''];
     }
 }

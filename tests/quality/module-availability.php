@@ -62,13 +62,13 @@ file_put_contents($directory . '/src/Module.php', <<<'PHP'
 <?php
 namespace Fixture\LocalNotes;
 file_put_contents(__DIR__ . '/loaded', 'yes');
-final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesSchema
+final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesSchemas
 {
     public static function register(\TinyCat\Http\Api $api): void {}
-    public static function schema(): \TinyCat\Core\Modules\ModuleSchema
+    public static function schemas(): array
     {
         $file = dirname(__DIR__) . '/migrations/1.php';
-        return new \TinyCat\Core\Modules\ModuleSchema(1, ['local_notes'], require $file, [new \TinyCat\Core\Modules\SchemaMigration(1, 'fixture.localnotes.initial', $file)]);
+        return ['fixture.localnotes' => new \TinyCat\Core\Modules\ModuleSchema(1, ['local_notes'], require $file, [new \TinyCat\Core\Modules\SchemaMigration(1, 'fixture.localnotes.initial', $file)])];
     }
 }
 PHP);

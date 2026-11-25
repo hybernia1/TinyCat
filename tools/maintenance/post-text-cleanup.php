@@ -6,8 +6,8 @@ if (!defined('TINYCAT')) { define('TINYCAT', true); }
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Database\Connection;
-use TinyCat\Core\Text\LinkParser;
-use TinyCat\Core\Text\PostText;
+use TinyCat\Social\Posts\LinkParser;
+use TinyCat\Social\Bots\FeedPublication;
 use TinyCat\Social\Posts\Tags;
 
 /** A saved plan is also the exact before/after backup. No metadata is rewritten. */
@@ -20,7 +20,7 @@ final class PostTextCleanup
         preg_match_all('/(?<![\p{L}\p{N}_])@[\p{L}\p{N}_-]+/u', $before, $oldMentions);
         preg_match_all('/(?<![\p{L}\p{N}_])@[\p{L}\p{N}_-]+/u', $after, $newMentions);
         return $after !== '' && $oldLinks === $newLinks && $oldMentions === $newMentions
-            && Tags::status_tag_tokens_from_text($before) === Tags::status_tag_tokens_from_text($after);
+            && Tags::tagTokens($before) === Tags::tagTokens($after);
     }
 
     public static function plan(PDO $pdo): array
@@ -34,7 +34,7 @@ final class PostTextCleanup
             foreach ($rows as $row) {
                 $cursor = (int) $row['id'];
                 $plan['scanned']++;
-                $after = PostText::cleanImportBoilerplate($row['body']);
+                $after = FeedPublication::cleanImportBoilerplate($row['body']);
                 if ($after === $row['body']) { continue; }
                 if (!self::safe($row['body'], $after)) { $plan['skipped'][] = $cursor; continue; }
                 $plan['changes'][] = $row + ['after' => $after];
@@ -68,7 +68,7 @@ final class PostTextCleanup
                 $cases = [];
                 $parameters = [];
                 foreach ($batch as $row) {
-                    if (PostText::cleanImportBoilerplate($row['body']) !== $row['after'] || !self::safe($row['body'], $row['after'])) {
+                    if (FeedPublication::cleanImportBoilerplate($row['body']) !== $row['after'] || !self::safe($row['body'], $row['after'])) {
                         throw new RuntimeException('Plan no longer matches cleanup rules.');
                     }
                     $current = $currentRows[(int) $row['id']] ?? null;

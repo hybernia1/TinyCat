@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Discussion;
 
-use TinyCat\Core\Text\Segments;
+use TinyCat\Social\Posts\InlinePresentation as Segments;
 
 /** Social comment data, capabilities and prepared thread presentation. */
 final class Resource
@@ -24,9 +24,9 @@ final class Resource
         $own = $actor !== null && (int) $actor['id'] === $authorId;
         $admin = \TinyCat\Core\Identity\Roles::isAdmin($actor);
         return ['id' => $id, 'content_id' => $target->id, 'parent_id' => (int) ($row['parent_id'] ?? 0),
-            'author' => ['id' => $authorId, 'username' => (string) ($row['author_name'] ?? ''), 'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($row)],
+            'author' => ['id' => $authorId, 'username' => (string) ($row['author_name'] ?? ''), 'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($row)],
             'body' => (string) $row['body'], 'editable_body' => (string) $row['body'],
-            'segments' => Segments::compactTags(Segments::text((string) $row['body'], $target->kind, [], $target->id, $id)),
+            'segments' => Segments::compactTags(Segments::text((string) $row['body'], [], $target->id, $id)),
             'created_at' => \TinyCat\Support\Dates::dateIso((string) $row['created_at']),
             'likes_count' => (int) ($row['likes_count'] ?? 0), 'liked' => $actor !== null && Comments::status_comment_user_liked($id, (int) $actor['id']),
             'capabilities' => ['edit' => $own || $admin, 'delete' => $own || $admin || $target->manage, 'interact' => $target->interact],

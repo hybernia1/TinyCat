@@ -6,33 +6,6 @@ namespace TinyCat\Core\Links;
 /** Audio file discovery shared by feed imports and page metadata. */
 class Audio
 {
-    public static function rozhlasId(string $url): string
-    {
-        $parts = parse_url($url);
-        return is_array($parts) && in_array(strtolower($parts['host'] ?? ''), ['www.mujrozhlas.cz', 'mujrozhlas.cz'], true)
-            && in_array($parts['scheme'] ?? '', ['http', 'https'], true) && !isset($parts['user']) && !isset($parts['pass']) && !isset($parts['port'])
-            && preg_match('~^/rapi/view/episode/([a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})/?$~D', $parts['path'] ?? '', $match) === 1 ? $match[1] : '';
-    }
-
-    /** @param array<mixed> $payload
-     * @return array<string, string> */
-    public static function rozhlasMetadata(array $payload, string $id): array
-    {
-        if (($payload['data']['id'] ?? '') !== $id || ($payload['data']['type'] ?? '') !== 'episode') { return []; }
-        $attributes = $payload['data']['attributes'] ?? [];
-        if (!is_array($attributes)) { return []; }
-        $meta = ['provider' => 'mujrozhlas', 'title' => is_string($attributes['title'] ?? null) ? $attributes['title'] : '',
-            'description' => is_string($attributes['description'] ?? null) ? $attributes['description'] : ''];
-        foreach ((array) ($attributes['audioLinks'] ?? []) as $audio) {
-            if (!is_array($audio) || !is_string($audio['url'] ?? null)) { continue; }
-            $url = self::remote($audio['url']);
-            if ($url !== '') { $meta['audio_url'] = $url; $meta['link_type'] = 'audio'; break; }
-        }
-        $image = $attributes['asset']['url'] ?? '';
-        if (is_string($image) && $image !== '') { $meta['image_url'] = $image; }
-        return $meta;
-    }
-
     public static function direct(string $url): string
     {
         return self::isDirect($url) ? self::remote($url) : '';

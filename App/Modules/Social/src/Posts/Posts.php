@@ -35,10 +35,10 @@ final class Posts
         $suggestions = \TinyCat\Core\Discovery\Search::suggestions($query, $limit, ['tags', 'users'], minimum: 1);
         if ($type === 'all' || $type === 'tag') {
             $seen = [];
-            $tagQuery = \TinyCat\Social\Posts\Tags::status_tag_normalize($query);
+            $tagQuery = \TinyCat\Social\Posts\Tags::normalizeTag($query);
 
             foreach (($suggestions['tags'] ?? []) as $tag) {
-                $name = \TinyCat\Social\Posts\Tags::status_tag_normalize((string) ($tag['title'] ?? $tag['name'] ?? ''));
+                $name = \TinyCat\Social\Posts\Tags::normalizeTag((string) ($tag['title'] ?? $tag['name'] ?? ''));
 
                 if ($name === '' || isset($seen[$name])) {
                     continue;
@@ -90,54 +90,6 @@ final class Posts
     }
 
     /**
-     * @return array<mixed>|null
-     */
-    public static function status_find(int $id): ?array
-    {
-        $post = \TinyCat\Social\Posts\Repository::find($id);
-        return $post !== null && ($post['kind'] ?? 'post') === 'post' ? $post : null;
-    }
-
-    /**
-     * @param array<mixed> $item
-     * @param array<mixed> $user
-     */
-    public static function status_can_edit(?array $item, ?array $user): bool
-    {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::canEdit($item, $user);
-    }
-
-    /**
-     * @param array<mixed> $item
-     * @param array<mixed> $user
-     */
-    public static function status_can_delete(?array $item, ?array $user): bool
-    {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::canEdit($item, $user);
-    }
-
-    /**
-     * @param array<mixed> $params
-     */
-    public static function status_api_url(string $action, array $params = [], bool $html = true): string
-    {
-        $action = str_replace('_', '-', $action);
-        $id = max(0, (int) ($params['id'] ?? 0));
-        $commentId = max(0, (int) ($params['comment_id'] ?? 0));
-        if ($commentId > 0 && $id < 1) { $id = (int) (\TinyCat\Social\Discussion\Comments::status_comment_find($commentId)['content_id'] ?? 0); }
-        $base = '/api/statuses/' . $id;
-        return match ($action) {
-            'create' => '/api/statuses',
-            'react', 'like' => $base . '/likes/me',
-            'comment' => $base . '/comments',
-            'comment-like' => $base . '/comments/' . $commentId . '/likes/me',
-            'comment-update', 'comment-delete' => $base . '/comments/' . $commentId,
-            'report' => '/api/moderation/reports',
-            default => $base,
-        };
-    }
-
-    /**
      * @param array<mixed> $user
      * @return array<mixed>
      */
@@ -177,23 +129,4 @@ final class Posts
         }, $deleteImageFile);
     }
 
-    public static function public_home_feed_api_url(string $feed = 'all', bool $html = false): string
-    {
-        return '/api/statuses?' . http_build_query(['feed' => $feed === 'following' ? 'following' : 'all', 'limit' => \TinyCat\Social\Posts\Feed::public_status_initial_page_limit()]);
-    }
-
-    /**
-     * @param array<mixed> $user
-     * @return array<mixed>
-     */
-    public static function public_home_feed_payload(string $feed = 'all', ?array $user = null): array
-    {
-        return Feed::status_feed_payload('home', \TinyCat\Social\Posts\Feed::public_status_initial_page_limit(), ['feed' => $feed], $user);
-    }
-
-    /** @param array<string, mixed>|null $item */
-    public static function status_can_view(?array $item): bool
-    {
-        return ($item['kind'] ?? 'post') === 'post' && \TinyCat\Social\Posts\Repository::visible($item);
-    }
 }

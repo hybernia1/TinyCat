@@ -34,7 +34,7 @@ final class Site
         $description = trim((string) \TinyCat\Core\Runtime\Startup::option('site.meta_description', ''));
 
         return $description !== ''
-            ? \TinyCat\Core\Ui\Site::meta_text($description, 180)
+            ? \TinyCat\Support\Text::excerpt($description, 180)
             : '';
     }
 
@@ -53,8 +53,6 @@ final class Site
         return \TinyCat\Core\Ui\Site::site_logo_url() ?: \TinyCat\Core\Ui\Site::site_favicon_url();
     }
 
-    public static function absolute_url(string $url = ''): string { return \TinyCat\Support\LocalUrls::absolute($url); }
 
-    public static function meta_text(string $text, int $limit = 180): string { return \TinyCat\Support\Text::excerpt($text, $limit); }
 
 }

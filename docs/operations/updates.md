@@ -7,6 +7,33 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.6
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. SQLite is no
+longer a runtime or test backend. No configuration change is required.
+
+The account stream advances from 3 to 4 and drops only `users.avatar_appearance`.
+Current installations use fresh-v4; published fresh-v1/v2/v3 and migration checksums
+remain unchanged. Custom uploaded avatar flags, immutable versions and files are retained.
+The appearance PATCH endpoint, cat renderer and options JSON are removed; the existing
+upload/remove dialog remains. Fallback SVG uses actual username initials without per-row
+lookups. Deploy coherent runtime/assets and run the standard locked lifecycle with its
+journal and database backup. Supported signed update and exact rollback must restore
+original account appearance data along with all other baseline data.
+
+The signed packages retire obsolete core feed/text helpers, separate Health
+implementation files and duplicate module contracts. Core and Social retain
+their independent package ownership. Existing task IDs, migration stream IDs,
+published migration checksums and installed module activation are preserved.
+Module authors use `ProvidesSchemas` with explicit schema policies rather than
+the removed singular/managed variants or `StorageModule`. Feature-group aliases
+are removed; activation accepts module IDs and resolves their dependencies.
+
+The cat appearance PATCH API is removed; avatar upload and removal remain.
+Manual posts and comments retain editorial wording, while feed imports and
+previews explicitly apply their own boilerplate cleanup. Use the shared Tasks
+administrator endpoint instead of the removed standalone health-check adapter.
+
 ## Upgrading to 8.0.5
 
 Requires completed **6.0.10 or newer** and PHP 8.4. No new migration or

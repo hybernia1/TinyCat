@@ -12,12 +12,12 @@ if (!defined('TINYCAT')) {
 
 class Metadata
 {
-    private const USER_AGENT = 'TinyCatLinkPreview/1.0';
-    private const HTML_LIMIT = 360000;
-    private const OEMBED_LIMIT = 32768;
-    private const TIMEOUT = 4;
-    private const IMAGE_TIMEOUT = 8;
-    private const IMAGE_LIMIT = 5242880;
+    protected const USER_AGENT = 'TinyCatLinkPreview/1.0';
+    protected const HTML_LIMIT = 360000;
+    protected const OEMBED_LIMIT = 32768;
+    protected const TIMEOUT = 4;
+    protected const IMAGE_TIMEOUT = 8;
+    protected const IMAGE_LIMIT = 5242880;
 
     /**
      * @return array<mixed>
@@ -33,7 +33,7 @@ class Metadata
                 return $link;
             }
 
-            $meta = self::fetch($url);
+            $meta = static::fetch($url);
 
             if ($meta === []) {
                 return $link;
@@ -58,24 +58,24 @@ class Metadata
     /**
      * @return array<mixed>
      */
-    private static function fetchOembed(string $oembedUrl, string $url): array
+    protected static function fetchOembed(string $oembedUrl, string $url): array
     {
-        $payload = self::fetchJson($oembedUrl, self::OEMBED_LIMIT);
+        $payload = static::fetchJson($oembedUrl, static::OEMBED_LIMIT);
         if ($payload === []) { return []; }
 
         $meta = [];
-        $title = self::cleanText((string) ($payload['title'] ?? ''), 255);
+        $title = static::cleanText((string) ($payload['title'] ?? ''), 255);
         if ($title === '' && is_string($payload['html'] ?? null)) {
-            $document = self::document($payload['html']);
+            $document = static::document($payload['html']);
             $quote = $document?->getElementsByTagName('blockquote')->item(0);
             if ($quote !== null) {
                 $paragraph = $quote->getElementsByTagName('p')->item(0);
-                $title = self::cleanText($paragraph->textContent ?? $quote->textContent ?? '', 255);
+                $title = static::cleanText($paragraph->textContent ?? $quote->textContent ?? '', 255);
             }
         }
-        $description = self::cleanText((string) ($payload['description'] ?? ''), 500);
-        if ($description === '' && Providers::classify($url) !== null) {
-            $description = self::cleanText((string) ($payload['author_name'] ?? ''), 500);
+        $description = static::cleanText((string) ($payload['description'] ?? ''), 500);
+        if ($description === '' && static::useAuthorDescription($url)) {
+            $description = static::cleanText((string) ($payload['author_name'] ?? ''), 500);
         }
         $thumbnail = \TinyCat\Http\Client::absoluteUrl($url, (string) ($payload['thumbnail_url'] ?? ''));
 
@@ -87,7 +87,7 @@ class Metadata
             $meta['description'] = $description;
         }
 
-        if ($thumbnail !== '' && self::safeUrl($thumbnail)) {
+        if ($thumbnail !== '' && static::safeUrl($thumbnail)) {
             $meta['image_url'] = $thumbnail;
         }
 
@@ -96,22 +96,22 @@ class Metadata
 
     /** @param list<string> $headers
      * @return array<mixed> */
-    private static function fetchJson(string $endpoint, int $limit, array $headers = []): array
+    protected static function fetchJson(string $endpoint, int $limit, array $headers = []): array
     {
-        $response = self::request($endpoint, $limit, 'application/json', false, self::TIMEOUT, $headers);
-        if ($response === null || !self::isJson((string) ($response['content_type'] ?? ''))) { return []; }
+        $response = static::request($endpoint, $limit, 'application/json', false, static::TIMEOUT, $headers);
+        if ($response === null || !static::isJson((string) ($response['content_type'] ?? ''))) { return []; }
         $payload = json_decode((string) ($response['body'] ?? ''), true);
         return is_array($payload) ? $payload : [];
     }
 
     /** @param array<string, string> $metadata
      * @return array<string, string> */
-    private static function cleanMetadata(array $metadata): array
+    protected static function cleanMetadata(array $metadata): array
     {
         foreach (['title' => 255, 'description' => 500] as $field => $limit) {
-            if (isset($metadata[$field])) { $metadata[$field] = self::cleanText($metadata[$field], $limit); }
+            if (isset($metadata[$field])) { $metadata[$field] = static::cleanText($metadata[$field], $limit); }
         }
-        if (!empty($metadata['image_url']) && !self::safeUrl($metadata['image_url'])) { unset($metadata['image_url']); }
+        if (!empty($metadata['image_url']) && !static::safeUrl($metadata['image_url'])) { unset($metadata['image_url']); }
         return array_filter($metadata);
     }
 
@@ -123,55 +123,15 @@ class Metadata
         return \TinyCat\Http\Client::withHostChecks(static function () use ($url): array {
             $audio = Audio::direct($url);
             if ($audio !== '') { return ['audio_url' => $audio, 'link_type' => 'audio']; }
-            $structured = Providers::structuredRequest($url);
-            if ($structured !== null) {
-                $metadata = self::cleanMetadata(Providers::structuredMetadata(self::fetchJson($structured['url'], self::HTML_LIMIT, $structured['headers']), $url));
-                if ($metadata !== []) { return $metadata; }
-            }
-            $scrape = Providers::scrapeUrl($url);
-            if ($scrape !== '') {
-                $response = self::request($scrape, self::HTML_LIMIT, 'text/html,application/xhtml+xml', true);
-                if ($response === null || !self::isHtml((string) ($response['content_type'] ?? ''))) {
-                    return self::cleanMetadata(array_intersect_key(Providers::googleMap($url) ?? [], ['title' => true, 'description' => true]));
-                }
-                $document = self::document((string) ($response['body'] ?? ''));
-                $metadata = $document !== null ? self::cleanMetadata(Providers::scrapedMetadata($document, $url)) : [];
-                $fallback = Providers::fallbackScrapeUrl($url);
-                if (empty($metadata['image_url']) && $fallback !== '') {
-                    $response = self::request($fallback, self::HTML_LIMIT, 'text/html,application/xhtml+xml', true);
-                    $document = $response !== null && self::isHtml((string) ($response['content_type'] ?? '')) ? self::document((string) ($response['body'] ?? '')) : null;
-                    if ($document !== null) { $metadata = array_replace(self::cleanMetadata(Providers::scrapedMetadata($document, $url)), array_filter($metadata)); }
-                }
-                return $metadata;
-            }
-            $rule = Providers::classify($url);
-            $wordpress = $rule === null ? Providers::wordpressUrl($url) : '';
-            $endpoint = $wordpress !== '' ? '' : Providers::oembedUrl($url);
-            if ($rule !== null && $endpoint === '') {
-                return ['title' => $rule['title'], 'description' => $rule['description']];
-            }
-            if (!self::safeUrl($url)) { return []; }
-            $metadata = [];
-            if ($wordpress !== '') {
-                $metadata = self::cleanMetadata(Providers::wordpressMetadata(self::fetchJson($wordpress, self::HTML_LIMIT), $url));
-                if (Providers::metadataComplete($metadata)) { return $metadata; }
-            } elseif ($endpoint !== '') {
-                $metadata = self::fetchOembed($endpoint, $url);
-                if ($metadata !== [] && ($rule !== null || Providers::metadataComplete($metadata))) { return $metadata; }
-            }
-            if ($rule !== null) { return []; }
-            $response = self::request($url, self::HTML_LIMIT, 'text/html,application/xhtml+xml', true);
-
-            if ($response === null || !self::isHtml((string) ($response['content_type'] ?? ''))) { return $metadata; }
-            $html = self::parseHtml((string) ($response['body'] ?? ''), (string) ($response['url'] ?? $url), $endpoint);
-            return array_replace($html, array_filter($metadata));
-
+            $response = static::request($url, static::HTML_LIMIT, 'text/html,application/xhtml+xml', true);
+            return $response !== null && static::isHtml((string) ($response['content_type'] ?? ''))
+                ? static::parseHtml((string) ($response['body'] ?? ''), (string) ($response['url'] ?? $url)) : [];
         });
     }
 
     public static function isSafeRemoteUrl(string $url): bool
     {
-        return self::safeUrl($url);
+        return static::safeUrl($url);
     }
 
     /**
@@ -180,12 +140,12 @@ class Metadata
     public static function fetchImage(string $url): ?array
     {
         return \TinyCat\Http\Client::withHostChecks(static function () use ($url): ?array {
-            $response = self::request(
+            $response = static::request(
                 $url,
-                self::IMAGE_LIMIT,
+                static::IMAGE_LIMIT,
                 'image/webp,image/jpeg,image/png,image/gif',
                 false,
-                self::IMAGE_TIMEOUT
+                static::IMAGE_TIMEOUT
             );
 
             if ($response === null || !str_starts_with(strtolower((string) ($response['content_type'] ?? '')), 'image/')) {
@@ -197,7 +157,7 @@ class Metadata
         });
     }
 
-    private static function document(string $html): ?\Dom\HTMLDocument
+    protected static function document(string $html): ?\Dom\HTMLDocument
     {
         if ($html === '' || !class_exists(\Dom\HTMLDocument::class)) {
             return null;
@@ -221,9 +181,9 @@ class Metadata
     /**
      * @return array<mixed>
      */
-    private static function parseHtml(string $html, string $baseUrl, string $attemptedEndpoint = ''): array
+    protected static function parseHtml(string $html, string $baseUrl, string $attemptedEndpoint = ''): array
     {
-        $dom = self::document($html);
+        $dom = static::document($html);
         if ($dom === null) { return []; }
 
         $meta = [];
@@ -239,7 +199,7 @@ class Metadata
             'twitter_image' => '',
             'image' => '',
         ];
-        $candidates['title'] = self::cleanText($dom->title, 255);
+        $candidates['title'] = static::cleanText($dom->title, 255);
 
         foreach ($dom->getElementsByTagName('meta') as $node) {
             $name = strtolower(trim((string) ($node->getAttribute('property') ?: $node->getAttribute('name'))));
@@ -250,19 +210,19 @@ class Metadata
             }
 
             if ($name === 'og:title') {
-                $candidates['og_title'] = self::cleanText($content, 255);
+                $candidates['og_title'] = static::cleanText($content, 255);
             } elseif ($name === 'twitter:title') {
-                $candidates['twitter_title'] = self::cleanText($content, 255);
+                $candidates['twitter_title'] = static::cleanText($content, 255);
             } elseif ($name === 'description') {
-                $candidates['description'] = self::cleanText($content, 500);
+                $candidates['description'] = static::cleanText($content, 500);
             } elseif ($name === 'og:description') {
-                $candidates['og_description'] = self::cleanText($content, 500);
+                $candidates['og_description'] = static::cleanText($content, 500);
             } elseif ($name === 'twitter:description') {
-                $candidates['twitter_description'] = self::cleanText($content, 500);
+                $candidates['twitter_description'] = static::cleanText($content, 500);
             } elseif (in_array($name, ['og:image:secure_url', 'og:image', 'twitter:image', 'twitter:image:src', 'image'], true)) {
                 $image = \TinyCat\Http\Client::absoluteUrl($baseUrl, $content);
 
-                if ($image !== '' && self::safeUrl($image)) {
+                if ($image !== '' && static::safeUrl($image)) {
                     $key = match ($name) {
                         'og:image:secure_url' => 'og_image_secure',
                         'og:image' => 'og_image',
@@ -284,7 +244,7 @@ class Metadata
             }
 
             $image = \TinyCat\Http\Client::absoluteUrl($baseUrl, (string) $node->getAttribute('href'));
-            if ($image !== '' && self::safeUrl($image)) {
+            if ($image !== '' && static::safeUrl($image)) {
                 $candidates['image'] = $image;
                 break;
             }
@@ -306,16 +266,6 @@ class Metadata
                 if ($audio !== '') { $meta['audio_url'] = $audio; $meta['link_type'] = 'audio'; break; }
             }
         }
-        $endpoint = Providers::discover($dom, $baseUrl);
-        if (Providers::wordpressUrl($baseUrl) !== '') {
-            $meta['provider'] = 'wordpress';
-            $meta['link_type'] = 'web';
-        }
-        if ($endpoint !== '' && $endpoint !== $attemptedEndpoint && Providers::wordpressUrl($baseUrl) === '' && in_array('', $meta, true)) {
-            // Keep richer HTML metadata on this first request, notably the article image.
-            $meta = array_replace(self::fetchOembed($endpoint, $baseUrl), array_filter($meta));
-        }
-
         return array_filter($meta, static fn (mixed $value): bool => trim((string) $value) !== '');
     }
 
@@ -323,34 +273,34 @@ class Metadata
      * @return array<mixed>|null
      * @param list<string> $headers
      */
-    private static function request(string $url, int $limit, string $accept, bool $allowTruncated = false, int $timeout = self::TIMEOUT, array $headers = []): ?array
+    protected static function request(string $url, int $limit, string $accept, bool $allowTruncated = false, int $timeout = self::TIMEOUT, array $headers = []): ?array
     {
         return \TinyCat\Http\Client::get($url, $limit, [
             'accept' => $accept, 'timeout' => $timeout, 'truncate' => $allowTruncated, 'headers' => $headers,
-            'policy' => static fn (string $next): bool => self::safeUrl($next) && (!$allowTruncated || Providers::canFetchHtml($next)), 'user_agent' => self::USER_AGENT,
+            'policy' => static fn (string $next): bool => static::safeUrl($next), 'user_agent' => static::USER_AGENT,
         ]);
     }
 
-    private static function safeUrl(string $url): bool
+    protected static function safeUrl(string $url): bool
     {
         return \TinyCat\Http\Client::isSafeUrl($url);
     }
 
-    private static function isHtml(string $contentType): bool
+    protected static function isHtml(string $contentType): bool
     {
         $contentType = strtolower($contentType);
 
         return $contentType === '' || str_contains($contentType, 'text/html') || str_contains($contentType, 'application/xhtml+xml');
     }
 
-    private static function isJson(string $contentType): bool
+    protected static function isJson(string $contentType): bool
     {
         $contentType = strtolower($contentType);
 
         return $contentType === '' || str_contains($contentType, 'application/json') || str_contains($contentType, 'text/json');
     }
 
-    private static function cleanText(string $text, int $limit): string
+    protected static function cleanText(string $text, int $limit): string
     {
         $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $text = trim((string) preg_replace('/\s+/u', ' ', $text));
@@ -368,4 +318,5 @@ class Metadata
             : rtrim(substr($text, 0, $limit));
     }
 
+    protected static function useAuthorDescription(string $url): bool { return false; }
 }

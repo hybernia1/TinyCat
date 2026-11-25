@@ -48,6 +48,13 @@ final class ActionPolicy
         };
     }
 
+    /** @param array<mixed> $user */
+    public static function isExempt(array $user, string $action): bool
+    {
+        return \TinyCat\Core\Security\RateLimitPolicy::isExempt($user)
+            || ($action === 'post' && ($user['role'] ?? '') === 'bot');
+    }
+
     public static function register(): void
     {
         \TinyCat\Core\Security\RateLimitPolicy::defineRequest('tinycat.social', 'follow', ['scope' => 'account', 'window' => 3600, 'max' => 120]);

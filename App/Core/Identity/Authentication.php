@@ -413,4 +413,14 @@ final class Authentication
 
         return in_array($role, $roles, true);
     }
+
+    public static function applyLocale(): void
+    {
+        $user = Authentication::auth();
+        $locale = \TinyCat\Support\Languages::language_code((string) ($user['locale'] ?? ''));
+        $packages = \TinyCat\Support\Languages::language_packages();
+        if ($locale !== '' && array_key_exists($locale, $packages)) { \TinyCat\Support\Localization::locale($locale); return; }
+        $detected = \TinyCat\Support\Languages::language_detect((string) ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? ''), array_keys($packages));
+        if ($detected !== null) { \TinyCat\Support\Localization::locale($detected); }
+    }
 }

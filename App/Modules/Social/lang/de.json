@@ -455,5 +455,19 @@
     "purpose_bot_sources": "RSS- und Atom-Veröffentlichungsregeln für Bot-Konten.",
     "purpose_bot_feed_history": "Aktuelle Feed-Element-Hashes werden verwendet, um doppelte Bot-Beiträge zu verhindern.",
     "purpose_bot_source_runs": "Kompakter Diagnoseverlauf von Bot-Quellenprüfungen und -Importen."
+  },
+  "cron": {
+    "tasks": {
+      "feeds": "Quellen",
+      "feeds_help": "Veröffentlicht Elemente aus aktiven Quellen, deren Intervall fällig ist.",
+      "feeds_schedule": "Planen Sie entsprechend der erforderlichen Abfragehäufigkeit, normalerweise alle zwei Minuten."
+    },
+    "options": {
+      "bot_limit": "Quellenlimit",
+      "source_id": "Quell-ID"
+    },
+    "cadence": {
+      "feeds": "Überprüfen Sie alle zwei Minuten"
+    }
   }
 }

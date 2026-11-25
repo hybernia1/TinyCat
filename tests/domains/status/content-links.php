@@ -8,7 +8,7 @@ require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runti
 
 use TinyCat\Core\Settings\Store;
 use TinyCat\Social\Posts\ContentLinks;
-use TinyCat\Core\Text\LinkParser;
+use TinyCat\Social\Posts\LinkParser;
 
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, []);

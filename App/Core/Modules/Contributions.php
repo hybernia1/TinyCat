@@ -15,7 +15,6 @@ final readonly class Contributions
      * @param list<EntryPage> $homepages
      * @param list<EntryPage> $dashboards
      * @param list<SettingsSection> $settings
-     * @param list<FeatureGroup> $features
      * @param list<SitemapSection> $sitemaps
      * @param list<SearchSource> $search
      * @param list<CrawlerHint> $crawlerHints
@@ -24,7 +23,8 @@ final readonly class Contributions
      * @param list<DashboardWidget> $widgets
      * @param list<EmbedSource> $embeds
      * @param list<ComponentLookup> $componentLookups
-     * @param list<DashboardStats> $statistics */
+     * @param list<DashboardStats> $statistics
+     * @param list<PlayerOrigins> $playerOrigins */
     public function __construct(
         public array $tasks = [],
         public array $navigation = [],
@@ -37,7 +37,6 @@ final readonly class Contributions
         public array $homepages = [],
         public array $dashboards = [],
         public array $settings = [],
-        public array $features = [],
         public bool $mailDelivery = false,
         public array $sitemaps = [],
         public array $search = [],
@@ -48,5 +47,6 @@ final readonly class Contributions
         public array $embeds = [],
         public array $componentLookups = [],
         public array $statistics = [],
+        public array $playerOrigins = [],
     ) {}
 }

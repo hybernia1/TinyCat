@@ -94,7 +94,7 @@ final class DocumentData
         $metaRss = $document['rss'];
         $metaPrev = trim((string) ($meta['prev'] ?? ''));
         $metaNext = trim((string) ($meta['next'] ?? ''));
-        $privacyUrl = \TinyCat\Core\Ui\Site::absolute_url($pageUrls['/privacy']);
+        $privacyUrl = \TinyCat\Support\LocalUrls::absolute($pageUrls['/privacy']);
         $metaJsonLd = $document['jsonld'];
         $metaJsonLdJson = is_array($metaJsonLd)
             ? json_encode($metaJsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
@@ -108,9 +108,9 @@ final class DocumentData
         $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? '');
         $analyticsConfigured = \TinyCat\Core\Ui\Site::site_google_analytics_configured();
         $cookieConsentTextKey = \TinyCat\Core\Ui\Site::site_captcha_enabled() ? 'privacy.cookie_consent_text_captcha' : 'privacy.cookie_consent_text';
-        $metaRssUrl = $metaRss !== '' ? \TinyCat\Core\Ui\Site::absolute_url($metaRss) : '';
-        $metaPrevUrl = $metaPrev !== '' ? \TinyCat\Core\Ui\Site::absolute_url($metaPrev) : '';
-        $metaNextUrl = $metaNext !== '' ? \TinyCat\Core\Ui\Site::absolute_url($metaNext) : '';
+        $metaRssUrl = $metaRss !== '' ? \TinyCat\Support\LocalUrls::absolute($metaRss) : '';
+        $metaPrevUrl = $metaPrev !== '' ? \TinyCat\Support\LocalUrls::absolute($metaPrev) : '';
+        $metaNextUrl = $metaNext !== '' ? \TinyCat\Support\LocalUrls::absolute($metaNext) : '';
         $profileUrl = $authUser !== null ? (\TinyCat\Core\Identity\Integration::profileUrl((int) $authUser['id']) ?? '') : '';
         $profileNeedsEmail = $authUser !== null && trim((string) ($authUser['email'] ?? '')) === '';
         $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([

@@ -14,9 +14,9 @@ final class Login
     {
         $user ??= Authentication::auth();
         $target = self::auth_safe_next_url(Integration::landing($user));
-        $path = Integration::unlocalizedPath(self::auth_next_path($target));
+        $path = \TinyCat\Http\LocaleRouting::split(self::auth_next_path($target))['path'];
         if (($path === '/admin' || str_starts_with($path, '/admin/')) && !Roles::isAdmin($user)) { $target = ''; }
-        return $target !== '' ? $target : Integration::localUrl(\TinyCat\Core\Ui\PublicWeb::enabled() ? '/' : (Roles::isAdmin($user) ? '/admin' : '/account'));
+        return $target !== '' ? $target : \TinyCat\Support\LocalUrls::resolve(\TinyCat\Core\Ui\PublicWeb::enabled() ? '/' : (Roles::isAdmin($user) ? '/admin' : '/account'));
     }
 
     public static function auth_next_path(string $next): string
@@ -37,7 +37,7 @@ final class Login
             return '';
         }
 
-        $path = Integration::unlocalizedPath(self::auth_next_path($next));
+        $path = \TinyCat\Http\LocaleRouting::split(self::auth_next_path($next))['path'];
         if (!\TinyCat\Core\Ui\PublicWeb::enabled() && ($path === '/' || \TinyCat\Http\Router::isPublicWebPath($path))) { return ''; }
 
         if (
@@ -88,7 +88,7 @@ final class Login
     {
         $next = \TinyCat\Core\Identity\Login::auth_safe_next_url($next);
 
-        return Integration::localUrl($path) . ($next !== '' ? '?next=' . rawurlencode($next) : '');
+        return \TinyCat\Support\LocalUrls::resolve($path) . ($next !== '' ? '?next=' . rawurlencode($next) : '');
     }
 
     /**
@@ -120,57 +120,6 @@ final class Login
             'password' => (string) \TinyCat\Http\Request::current()->input('password', ''),
             'remember' => \TinyCat\Http\Request::current()->input('remember', ''),
         ];
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function auth_form_state_from_request(string $context): array
-    {
-        return match ($context) {
-            'login' => [
-                'username' => \TinyCat\Core\Identity\Login::auth_form_text_input('username', \TinyCat\Core\Identity\Email::maxLength()),
-                'remember' => (string) \TinyCat\Http\Request::current()->input('remember', '') === '1',
-            ],
-            'register' => [
-                'username' => \TinyCat\Core\Identity\Usernames::normalize(\TinyCat\Core\Identity\Login::auth_form_text_input('username', \TinyCat\Core\Identity\Usernames::maxLength())),
-                'email' => \TinyCat\Core\Identity\Email::normalize(\TinyCat\Core\Identity\Login::auth_form_text_input('email', \TinyCat\Core\Identity\Email::maxLength())),
-                'platform_terms' => (string) \TinyCat\Http\Request::current()->input('platform_terms', '') === '1',
-            ],
-            default => [],
-        };
-    }
-
-    public static function auth_form_state_remember(string $context): void
-    {
-        if (!in_array($context, ['login', 'register'], true)) {
-            return;
-        }
-
-        \TinyCat\Http\Session::flash('auth_form_' . $context, \TinyCat\Core\Identity\Login::auth_form_state_from_request($context));
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function auth_form_state_previous(string $context): array
-    {
-        if (!in_array($context, ['login', 'register'], true)) {
-            return [];
-        }
-
-        $state = \TinyCat\Http\Session::flash('auth_form_' . $context);
-
-        return is_array($state) ? $state : [];
-    }
-
-    public static function auth_form_text_input(string $key, int $maxLength): string
-    {
-        $value = trim((string) \TinyCat\Http\Request::current()->input($key, ''));
-
-        return function_exists('mb_substr')
-            ? mb_substr($value, 0, $maxLength)
-            : substr($value, 0, $maxLength);
     }
 
     /**
@@ -219,13 +168,6 @@ final class Login
     public static function auth_modal_url(string $mode = 'login', string $next = ''): string
     {
         return '/api/users/authentication?' . http_build_query(['mode' => self::auth_modal_mode($mode), 'next' => \TinyCat\Core\Identity\Login::auth_safe_next_url($next)]);
-    }
-
-    public static function auth_next_from_url(string $url): string
-    {
-        parse_str((string) (parse_url($url, PHP_URL_QUERY) ?: ''), $query);
-
-        return \TinyCat\Core\Identity\Login::auth_safe_next_url(is_string($query['next'] ?? null) ? $query['next'] : '');
     }
 
     /**

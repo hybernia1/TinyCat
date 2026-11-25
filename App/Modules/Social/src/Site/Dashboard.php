@@ -29,7 +29,7 @@ final class Dashboard
     public static function commentsWidget(): array
     {
         $rows = self::recentComments(5);
-        return ['items' => array_map(static fn (array $row): array => ['user' => ['id' => (int) $row['user_id'], 'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($row)], 'label' => '@' . $row['username'], 'detail' => \TinyCat\Support\Text::plain_text_limit((string) $row['body'], 180), 'url' => $row['content_url'], 'time' => \TinyCat\Support\Dates::displayDateTime((string) $row['created_at'])], $rows)];
+        return ['items' => array_map(static fn (array $row): array => ['user' => ['id' => (int) $row['user_id'], 'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($row)], 'label' => '@' . $row['username'], 'detail' => \TinyCat\Support\Text::plain_text_limit((string) $row['body'], 180), 'url' => $row['content_url'], 'time' => \TinyCat\Support\Dates::displayDateTime((string) $row['created_at'])], $rows)];
     }
 
     /** @return list<array<string, mixed>> */
@@ -37,7 +37,7 @@ final class Dashboard
     {
         try {
             $rows = \TinyCat\Database\Connection::all(
-                'SELECT cc.id, cc.content_id, cc.user_id, cc.body, cc.created_at, u.username, u.avatar_exists AS user_avatar_exists, u.avatar_appearance AS user_avatar_appearance, u.avatar_version AS user_avatar_version, u.updated_at AS user_updated_at, c.body AS content_body
+                'SELECT cc.id, cc.content_id, cc.user_id, cc.body, cc.created_at, u.username, u.avatar_exists AS user_avatar_exists,  u.avatar_version AS user_avatar_version, u.updated_at AS user_updated_at, c.body AS content_body
                  FROM social_comments cc
                  INNER JOIN users u ON u.id = cc.user_id
                  INNER JOIN social_posts c ON c.id = cc.content_id

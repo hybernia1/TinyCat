@@ -5,8 +5,9 @@ namespace TinyCat\Social\Bots;
 use RuntimeException;
 
 /** Social owns bot identities, bounded GUID history and publication timelines. */
-final class FeedStore implements \TinyCat\Core\Feeds\FeedSourceStore
+final class FeedStore
 {
+    /** @param array<string, mixed> $source */
     public function claim(array $source, bool $force): bool
     {
         $id = (int) ($source['id'] ?? 0);
@@ -15,12 +16,22 @@ final class FeedStore implements \TinyCat\Core\Feeds\FeedSourceStore
         $where = $force ? '' : ' AND (next_run_at IS NULL OR next_run_at <= ?)';
         return $id > 0 && \TinyCat\Database\Connection::exec('UPDATE bot_sources SET next_run_at = ?, last_checked_at = ?, last_error = NULL WHERE id = ? AND enabled = 1' . $where, $force ? [$next, $now, $id] : [$next, $now, $id, $now]) > 0;
     }
+    /** @param array<string, mixed> $source */
     public function start(array $source, int $schedulerRunId): int { return Importer::createSourceRun((int) $source['id'], $schedulerRunId); }
+    /** @param array<string, mixed> $source
+     * @param list<string> $hashes
+     * @return array<string, bool> */
     public function history(array $source, array $hashes): array { return self::feedHistoryHashes((int) $source['bot_user_id'], Importer::feedSourceHash((string) $source['feed_url']), $hashes); }
+    /** @param array<string, mixed> $source
+     * @param array<string, mixed>|null $link */
     public function duplicate(array $source, ?array $link): bool
     {
         return $link !== null && \TinyCat\Database\Connection::value("SELECT 1 FROM social_links l INNER JOIN social_post_links cl ON cl.link_id = l.id INNER JOIN social_posts c ON c.id = cl.content_id WHERE l.url_hash = ? AND c.author_id = ? AND c.kind = 'post' LIMIT 1", [$link['url_hash'], (int) $source['bot_user_id']]) !== null;
     }
+    /** Revalidate source identity and record the GUID, publication and mapping atomically.
+     * The callback receives the source-owned publication time. Network work precedes this call.
+     * @param array<string, mixed> $source
+     * @param callable(string): int $write */
     public function commit(array $source, string $hash, callable $write): int
     {
         return $this->commitIdentity($source, Importer::feedSourceHash((string) $source['feed_url']), $hash, $write);
@@ -56,6 +67,7 @@ final class FeedStore implements \TinyCat\Core\Feeds\FeedSourceStore
             return $contentId;
         });
     }
+    /** @param array<string, mixed> $source */
     public function finish(array $source, int $runId, string $status, int $itemsSeen, string $error): void
     {
         if ($error !== '') { \TinyCat\Database\Connection::update('bot_sources', ['last_error' => $error], ['id' => (int) $source['id']]); }

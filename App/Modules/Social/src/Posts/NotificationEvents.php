@@ -138,7 +138,7 @@ final class NotificationEvents
             return;
         }
 
-        $status = \TinyCat\Social\Posts\Posts::status_find($contentId);
+        $status = \TinyCat\Social\Posts\Repository::find($contentId);
         $ownerId = (int) ($status['author_id'] ?? 0);
         $actorId = (int) ($actor['id'] ?? 0);
 
@@ -223,8 +223,8 @@ final class NotificationEvents
         $actor = \TinyCat\Core\Mail\Templates::email_user($actorId);
         \TinyCat\Core\Mail\Templates::email_template_send($template, $userId, [
             'actor' => (string) ($actor['username'] ?? \TinyCat\Support\Localization::t('notifications.someone')),
-            'actor_url' => \TinyCat\Core\Ui\Site::absolute_url('/author/' . $actorId),
-            'content_url' => \TinyCat\Core\Ui\Site::absolute_url('/status/' . $contentId),
+            'actor_url' => \TinyCat\Support\LocalUrls::absolute('/author/' . $actorId),
+            'content_url' => \TinyCat\Support\LocalUrls::absolute('/status/' . $contentId),
         ]);
     }
 }

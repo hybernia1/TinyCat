@@ -269,7 +269,7 @@ final class Administration
         \TinyCat\Http\Request::current()->validated(['username' => 'required|string', 'status' => 'string']);
         $username = \TinyCat\Core\Identity\Usernames::normalize((string) \TinyCat\Http\Request::current()->input('username', ''));
         $status = (string) \TinyCat\Http\Request::current()->input('status', 'active');
-        $statuses = \TinyCat\Support\AdminViews::admin_user_statuses();
+        $statuses = \TinyCat\Core\Identity\Views::statusLabels();
         $errors = [];
 
         if (!\TinyCat\Core\Identity\Usernames::valid($username)) {
@@ -278,7 +278,7 @@ final class Administration
             $errors['username'][] = \TinyCat\Http\Response::issue('user_username_taken', \TinyCat\Support\Localization::t('users.messages.username_taken'));
         }
 
-        if (!array_key_exists($status, $statuses)) {
+        if (!in_array($status, \TinyCat\Core\Identity\Administration::statuses(), true)) {
             $errors['status'][] = \TinyCat\Http\Response::issue('user_status_invalid', \TinyCat\Support\Localization::t('users.validation.status_invalid'));
         }
 
@@ -306,7 +306,7 @@ final class Administration
         $payload = [
             'items' => array_map([self::class, 'accountResource'], $viewData['accounts']),
             'pagination' => $viewData['pagination'],
-            'statuses' => \TinyCat\Support\AdminViews::admin_user_statuses(),
+            'statuses' => \TinyCat\Core\Identity\Views::statusLabels(),
             'filters' => $viewData['filters'],
         ];
 
@@ -378,7 +378,7 @@ final class Administration
             'username' => (string) ($account['username'] ?? ''),
             'status' => (string) ($account['status'] ?? ''),
             'bio' => (string) ($account['bio'] ?? ''),
-            'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($account),
+            'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($account),
             'source_count' => (int) ($account['source_count'] ?? 0),
             'active_source_count' => (int) ($account['active_source_count'] ?? 0),
             'post_count' => (int) ($account['post_count'] ?? 0),
@@ -398,7 +398,7 @@ final class Administration
 
         return [
             'q' => $query,
-            'status' => array_key_exists($status, \TinyCat\Support\AdminViews::admin_user_statuses()) ? $status : '',
+            'status' => in_array($status, \TinyCat\Core\Identity\Administration::statuses(), true) ? $status : '',
         ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Bots\Sorting::accounts());
     }
 
@@ -473,7 +473,7 @@ final class Administration
         }
 
         $feedHash = \TinyCat\Social\Bots\Importer::feedSourceHash($feedUrl);
-        if (!\TinyCat\Core\Links\Metadata::isSafeRemoteUrl($feedUrl) || $feedHash === '') {
+        if (!\TinyCat\Social\Posts\LinkMetadata::isSafeRemoteUrl($feedUrl) || $feedHash === '') {
             $errors['feed_url'][] = \TinyCat\Http\Response::issue('bot_feed_url', \TinyCat\Support\Localization::t('bots.validation.feed_url'));
         } elseif (\TinyCat\Social\Bots\Importer::sourceDuplicateExists($feedUrl, max(0, (int) $sourceId))) {
             $errors['feed_url'][] = \TinyCat\Http\Response::issue('bot_feed_duplicate', \TinyCat\Support\Localization::t('bots.validation.feed_duplicate'));

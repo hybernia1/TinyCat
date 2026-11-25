@@ -183,9 +183,9 @@ final class Actions
     public static function status_json_report(int $contentId, array $user): array
     {
         $userId = (int) ($user['id'] ?? 0);
-        $item = \TinyCat\Social\Posts\Posts::status_find($contentId);
+        $item = \TinyCat\Social\Posts\Repository::find($contentId);
 
-        if ($contentId < 1 || $userId < 1 || !\TinyCat\Social\Posts\Posts::status_can_view($item)) {
+        if ($contentId < 1 || $userId < 1 || !\TinyCat\Social\Posts\Repository::visible($item)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
         }
 
@@ -204,7 +204,7 @@ final class Actions
             $content = \TinyCat\Database\Connection::one(
                 \TinyCat\Database\Connection::lockingSelect('SELECT * FROM social_posts WHERE kind = \'post\' AND id = ?'), [$contentId]
             );
-            if (!\TinyCat\Social\Posts\Posts::status_can_view($content)) {
+            if (!\TinyCat\Social\Posts\Repository::visible($content)) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
             }
             \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'report');
@@ -236,9 +236,9 @@ final class Actions
      */
     public static function status_json_update(int $contentId, array $user): array
     {
-        $item = \TinyCat\Social\Posts\Posts::status_find($contentId);
+        $item = \TinyCat\Social\Posts\Repository::find($contentId);
 
-        if (!\TinyCat\Social\Posts\Posts::status_can_edit($item, $user)) {
+        if (!\TinyCat\Social\Posts\Repository::canManage($item, $user)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden');
         }
 
@@ -278,7 +278,7 @@ final class Actions
                 if (!\TinyCat\Core\Identity\Roles::isAdmin($user)) { self::status_json_require_not_muted($user); }
                 $author = \TinyCat\Database\Connection::find('users', ['id' => (int) ($current['author_id'] ?? 0)]);
                 self::status_json_require_unique_body($author ?: $user, $body, $contentId);
-                if (Posts::status_can_view($current) && \TinyCat\Social\Profiles\Roles::receivesNotifications((string) ($author['role'] ?? ''))) {
+                if (\TinyCat\Social\Posts\Repository::visible($current) && \TinyCat\Social\Profiles\Roles::receivesNotifications((string) ($author['role'] ?? ''))) {
                     NotificationEvents::notifyMentions($body, $user, $contentId, 0, NotificationEvents::mentionedUserIds((string) ($current['body'] ?? '')));
                 }
             });
@@ -311,9 +311,9 @@ final class Actions
      */
     public static function status_json_delete(int $contentId, array $user): array
     {
-        $item = \TinyCat\Social\Posts\Posts::status_find($contentId);
+        $item = \TinyCat\Social\Posts\Repository::find($contentId);
 
-        if (!\TinyCat\Social\Posts\Posts::status_can_delete($item, $user)) {
+        if (!\TinyCat\Social\Posts\Repository::canManage($item, $user)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden');
         }
 

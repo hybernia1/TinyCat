@@ -122,7 +122,6 @@ created or rotated explicitly through the administrator-only token API.
 | GET | `/api/scheduler/health` | HTTPS Scheduler Bearer token, no execution |
 | POST | `/api/scheduler/executions` | HTTPS Scheduler Bearer token |
 | GET | `/api/site-health` | Administrator, latest diagnostic and recent history; no execution |
-| POST | `/api/site-health/checks` | Administrator and CSRF, manual inspection through scheduler execution |
 
 Both scheduler credential transports require HTTPS, reject cross-site browser
 requests and use private no-store responses. Proxy scheme handling follows the
@@ -152,6 +151,17 @@ or its execution mode. HEAD probes never execute work.
 The hourly cleanup interval remains in effect. Duplicate bot-post merging keeps
 its independent limit of 500 copies per invocation. POST execution options retain
 their existing task-specific names.
+
+New administrator clients execute diagnostics through
+`POST /api/scheduler/tasks/site-health/runs`, just like other tasks.
+`GET /api/site-health` interprets canonical Tasks history for the dashboard; it
+owns no run store. The removed `/api/site-health/checks` write adapter has no
+route. The built-in diagnostic task lives in `Core/Tasks/Health`, cleanup in
+`Core/Tasks/Cleanup`; both register through the Tasks provider. The lazy Health
+detail callback supplies data to the shared run modal and detail table, including
+existing persisted reports. Health has no asset catalog or independent provider. The existing `tinycat.health`
+capability ID remains metadata only for signed descriptors and supported updaters;
+Tasks owns its runtime, resources and contributions.
 
 `site-health` is a daily scheduler task, distinct from the scheduler connectivity
 probe `/api/scheduler/health`. It accepts no task options. Each completed check
@@ -230,6 +240,11 @@ remote pages. RSS authors expose their public names and canonical profile URLs.
 
 ## Users
 
+Account status values come from `Core/Identity/Administration::statuses()`
+(`active`, `waiting`, `ban`). API options expose these canonical values;
+`Core/Identity/Views::statusLabels()` derives translated labels for presentation.
+
+
 | Method | Path | Access |
 | --- | --- | --- |
 | GET | `/api/users/authentication` | Public form configuration |
@@ -252,27 +267,27 @@ remote pages. RSS authors expose their public names and canonical profile URLs.
 | GET | `/api/profiles/{id}/following` | Signed-in user, cursor list |
 
 Public profiles contain only `id`, `username`, `bio`, `url`, `avatar_url`,
-`avatar_custom` and `avatar_appearance`.
+`avatar_custom`.
 Private representations add email, preferences, role and account status. Password
 hashes and recovery tokens are never resource fields. Path IDs cannot be overridden
 by body IDs. User list filters retain `q`, `role`, `status`, `updated_from`,
 `updated_to`, `page` and `per_page`; pagination includes `total`, `page`, `per_page`,
 `last_page`, `has_prev` and `has_next`. Following uses `cursor_at` and `cursor_id`.
 
-Users without a custom image receive a deterministic generated cat portrait.
-`PATCH /api/users/{id}/avatar` accepts `{"appearance":{"version":1,"gender":"female"}}`;
-allowed genders are `neutral`, `male` and `female`. The creator also accepts `fur`,
-`expression`, `accessory`, `outfit` and `background`; `auto` preserves each original generated layer.
-The avatar management GET response includes `appearance_options`, with field
-defaults and valid values from `App/Modules/Accounts/src/avatar-options.json`. Omitted
-parameters preserve their saved values. Form submissions may send
-`appearance` as a JSON string. The server validates the schema and saves the
-normalized JSON in `users.avatar_appearance`. Appearance updates require owner or
-administrator authorization and CSRF, and are rejected while a custom image is
-active. Uploading an image preserves the stored appearance; deleting that image
-restores the configured generated portrait. Generated image URLs include the
-appearance variant and support immutable caching without a database lookup in
-the renderer.
+Users without a custom upload receive a simple circular SVG containing the first two
+Unicode characters of their username, uppercased with mbstring. Digits remain characters;
+empty names use `?`. SVG XML is escaped and has no external resources or configurable
+appearance. Canonical account/author/actor projections supply username with avatar data.
+`/avatar/initials/v1/{base64url-username}.svg` is immutable and needs no database lookup.
+A changed username changes this URL. Legacy `/avatar/generated/v1/{id}.svg` addresses
+only resolve current account identity and redirect, cached for five minutes; old appearance
+parameters have no effect. `/avatar/{username}` continues to resolve uploaded images or initials.
+
+`GET /api/users/{id}/avatar` returns the authorized upload/remove resource. PUT uploads
+JPEG/PNG/WebP and DELETE removes a custom image, restoring initials. Authorization, CSRF,
+limits and transactional file lifecycle are unchanged. PATCH appearance and its options,
+editor and `avatar_appearance` data are removed. The account schema's new step 4 drops only
+`users.avatar_appearance`; `avatar_exists`, `avatar_version` and custom image files remain.
 
 Administration lists accept `sort` and `direction=asc|desc`, alongside their
 existing filters. Sorting happens before pagination, with an ID tie-breaker.
@@ -348,11 +363,11 @@ the 2,000-character limit and extraction of links, mentions and hashtags. Line
 endings become LF, horizontal whitespace is collapsed, line edges are trimmed,
 and paragraph gaps contain at most one empty line. ZWJ emoji remain intact.
 Bracketed truncation markers `[…]` and `[...]` become `…`; missing article text
-is not reconstructed. Isolated read-more calls, terminal calls after sentence
-punctuation and automatic `The post … appeared first on …` suffixes are removed.
-Ordinary sentences containing these words remain text. Link descriptions use
-the same cleanup, including already-cached descriptions when displayed.
-Comments and other account text fields retain their existing rules.
+is not reconstructed. Manual posts, edits and comments preserve read-more calls
+and automatic `The post … appeared first on …` wording. Only Bots import/preview
+and link descriptions explicitly select editorial cleanup before canonical Social
+preparation; already-cached card descriptions receive the same display cleanup.
+Comments retain their own limit, URL removal and authorization rules.
 
 YouTube link resources expose `thumbnail_mobile_url` and `thumbnail_url` for
 small and medium direct CDN images. Cards use the mobile source through a
@@ -718,18 +733,17 @@ token reuse, CAPTCHA configuration and rejection of presentation fields.
 
 ## Module administration
 
-`GET /api/modules` requires an administrator and returns `items`, `groups`,
+`GET /api/modules` requires an administrator and returns `items`, `problems`,
 `manageable`, and `revision`. Items contain canonical IDs, names, activation,
 installation and required flags, functional dependency IDs and active dependent IDs.
 The built-in functional inventory contains Social; mandatory
-framework capabilities never appear as items. Groups are reserved for explicitly
-declared custom feature groups. The inventory comes
+framework capabilities never appear as items. The inventory comes
 from the available distribution; it includes inactive owners without executing
 their contribution callbacks. No configuration secrets or PHP source paths are returned.
 
 `POST /api/modules/activation` requires an administrator and CSRF. The JSON or
-form payload is `{id, enabled, revision}`; the target may be a module or declared
-feature group. Enabling includes its dependencies. Required modules and active
+form payload is `{id, enabled, revision}`; the target is a canonical module ID.
+Enabling includes its dependencies. Required modules and active
 dependents prevent unsafe disabling. A stale revision returns 409, invalid
 dependencies return 422. Success returns 201 with `active`, a backup ID and
 `redirect: /admin/modules`. Clients reload the whole page after a change.
@@ -895,3 +909,10 @@ The normal JSON envelope contains `data.id`, `data.items` (stable metric `key`
 and integer `value`) and `data.url`. Labels are resolved by the shared component
 catalog, not returned by the domain resource. Unknown, inactive or hidden groups
 return 404. Only the selected owner's lazy loader executes.
+
+Sociální text připravuje přímo `Social/Posts/PostCreation::fromText()`.
+Ruční příspěvky a komentáře zachovávají redakční dovětky; pouze import a jeho
+preview vybírají redakční čištění v Bots před společnou validací. Historie
+komentáře nadále vrací pole `items` se stejnými `at`, `actor` a `changes.body`.
+Account editor používá kanonické URL z `Core/Identity/Views::accountEditorUrl()`;
+resource zůstává autorizovanými JSON daty bez HTML a komponentových definic.

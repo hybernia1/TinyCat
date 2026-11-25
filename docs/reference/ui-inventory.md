@@ -4,15 +4,12 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-187 definic komponent, 393 CSS tříd, 124 CSS importů, 101 JS souborů, 28 UI služeb, 0 PHP partialů.
+183 definic komponent, 391 CSS tříd, 124 CSS importů, 101 JS souborů, 28 UI služeb, 0 PHP partialů.
 
 ## Deklarativní komponenty
 
 | Název | Zdroj | Závislosti |
 | --- | --- | --- |
-| `health/report` | [App/Core/Health/assets/components.json](../../App/Core/Health/assets/components.json) | health/scheduler-findings, ui/status-badge |
-| `health/scheduler-findings` | [App/Core/Health/assets/components.json](../../App/Core/Health/assets/components.json) | — |
-| `health/scheduler-run-detail` | [App/Core/Health/assets/components.json](../../App/Core/Health/assets/components.json) | health/report |
 | `users/admin-fields` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/field, ui/select, users/avatar-control |
 | `users/admin-row` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/activation-action, ui/api-action, ui/modal-trigger, users/identity-row |
 | `users/list` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/empty-state, ui/list-toolbar, ui/pagination, ui/sort-heading, users/admin-row |
@@ -29,7 +26,6 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `users/password-form` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/field |
 | `users/account-editor` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | users/avatar-control |
 | `users/avatar-upload` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | — |
-| `users/avatar-appearance` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/select |
 | `users/avatar-remove` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | — |
 | `users/avatar-save` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | — |
 | `users/avatar-actions` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/editor-actions |
@@ -58,7 +54,7 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `scheduler/status` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | ui/status-badge |
 | `scheduler/list` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/icon, scheduler/name, scheduler/status, scheduler/task-row, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
 | `scheduler/filter-form` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | ui/select |
-| `scheduler/run-detail` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/name, scheduler/option, scheduler/status |
+| `scheduler/run-detail` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/name, scheduler/option, scheduler/status, ui/detail-table, ui/status-badge |
 | `scheduler/name` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
 | `scheduler/icon` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
 | `scheduler/option` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
@@ -343,9 +339,9 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 
 ## PHP renderery
 
-- [App/Core/Identity/Views.php](../../App/Core/Identity/Views.php): `userMenu`, `adminFormFields`, `avatar`
+- [App/Core/Identity/Views.php](../../App/Core/Identity/Views.php): `accountEditorId`, `accountEditorUrl`, `statusLabels`, `userMenu`, `adminFormFields`, `avatar`
 - [App/Core/Notifications/Views.php](../../App/Core/Notifications/Views.php): `menu`, `items`
-- [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `tc_admin_options`, `tc_admin_datetime`, `tc_admin_datetime_iso`, `admin_user_statuses`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_per_page_view_data`, `admin_pagination_view_data`
+- [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `tc_admin_datetime`, `tc_admin_datetime_iso`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_per_page_view_data`, `admin_pagination_view_data`
 - [App/Core/Updates/Views.php](../../App/Core/Updates/Views.php): `model`
 
 ## Všechny PHP šablony
@@ -547,9 +543,7 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `archive-actions` | [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) |
 | `archive-filter` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css) |
 | `avatar` | [App/Core/Ui/assets/styles/avatar.css](../../App/Core/Ui/assets/styles/avatar.css), [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css), [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
-| `avatar-creator-toggle` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
-| `avatar-editor-appearance` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-controls` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-remove` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-fallback` | [App/Core/Ui/assets/styles/avatar.css](../../App/Core/Ui/assets/styles/avatar.css) |
@@ -607,7 +601,7 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `empty-state-compact` | [App/Core/Ui/assets/styles/empty-state.css](../../App/Core/Ui/assets/styles/empty-state.css) |
 | `empty-state-icon` | [App/Core/Ui/assets/styles/empty-state.css](../../App/Core/Ui/assets/styles/empty-state.css) |
 | `empty-state-label` | [App/Core/Ui/assets/styles/empty-state.css](../../App/Core/Ui/assets/styles/empty-state.css) |
-| `field` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css), [App/Core/Ui/assets/styles/filter-menu.css](../../App/Core/Ui/assets/styles/filter-menu.css) |
+| `field` | [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css), [App/Core/Ui/assets/styles/filter-menu.css](../../App/Core/Ui/assets/styles/filter-menu.css) |
 | `field-error` | [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css) |
 | `field-inline` | [App/Core/Ui/assets/styles/field-inline-desktop.css](../../App/Core/Ui/assets/styles/field-inline-desktop.css), [App/Core/Ui/assets/styles/field-inline.css](../../App/Core/Ui/assets/styles/field-inline.css) |
 | `filter-chip` | [App/Core/Ui/assets/styles/filter-chips.css](../../App/Core/Ui/assets/styles/filter-chips.css) |

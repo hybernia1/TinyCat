@@ -455,5 +455,19 @@
     "purpose_bot_sources": "Règles de publication RSS et Atom pour les comptes de robots.",
     "purpose_bot_feed_history": "Hachages d'éléments de fil récents utilisés pour éviter les publications de robots en double.",
     "purpose_bot_source_runs": "Historique de diagnostic compact des vérifications et des importations de sources de robots."
+  },
+  "cron": {
+    "tasks": {
+      "feeds": "Sources",
+      "feeds_help": "Publie les éléments à partir de sources actives dont l'intervalle est dû.",
+      "feeds_schedule": "Planifiez en fonction de la fréquence d'interrogation requise, généralement toutes les deux minutes."
+    },
+    "options": {
+      "bot_limit": "Limite de source",
+      "source_id": "Identifiant de la source"
+    },
+    "cadence": {
+      "feeds": "Vérifiez toutes les deux minutes"
+    }
   }
 }

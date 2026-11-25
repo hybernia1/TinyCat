@@ -508,3 +508,13 @@ Toasts have no border. Long explanations must wrap without moving the symbol.
 Buttons retain their established primary, secondary, danger and ghost variants.
 Retain accessible names, focus feedback and the existing confirmation and
 notification lifecycle.
+
+## Account avatar fallback
+
+Without a custom upload, account avatars use one circular SVG renderer with the first
+two Unicode username characters, uppercase via mbstring. Digits are retained; an empty
+name uses `?`. Owners supply canonical username alongside ID and upload metadata,
+including joined authors, comment authors and notification actors. Core does not infer
+names from domain projections or query per rendered row. Username-derived immutable
+URLs change when the name changes. The account avatar dialog provides upload/remove
+only; no appearance, palette, gender or other generated-avatar editor is registered.

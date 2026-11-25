@@ -10,7 +10,7 @@ final class Queries
     public static function query(): \TinyCat\Database\Query
     {
         return Archive::visible(new \TinyCat\Database\Query('SELECT c.*, u.username AS author_username,
-            u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version,
+            u.avatar_exists AS author_avatar_exists,  u.avatar_version AS author_avatar_version,
             ci.path AS image_path, ci.width AS image_width, ci.height AS image_height, ci.bytes AS image_bytes
             FROM social_posts c INNER JOIN users u ON u.id = c.author_id LEFT JOIN social_post_images ci ON ci.content_id = c.id'))
             ->where('u.status = ?', 'active');
@@ -26,7 +26,7 @@ final class Queries
         [$cursor, $params] = Archive::cursor($at, $id); if ($cursor !== '') { $query->where($cursor, ...$params); }
         [$filter, $params] = Archive::predicate($media); if ($filter !== '') { $query->where($filter, ...$params); }
         if ($author > 0) { $query->where('c.author_id = ?', $author); }
-        if ($tag !== '') { $query->where('EXISTS (SELECT 1 FROM social_post_tags ct INNER JOIN social_terms t ON t.id = ct.term_id WHERE ct.content_id = c.id AND t.name = ?)', Tags::status_tag_normalize($tag)); }
+        if ($tag !== '') { $query->where('EXISTS (SELECT 1 FROM social_post_tags ct INNER JOIN social_terms t ON t.id = ct.term_id WHERE ct.content_id = c.id AND t.name = ?)', Tags::normalizeTag($tag)); }
         return $query->order('c.published_at DESC, c.id DESC')->limit(max(1, min(100, $limit)))->all();
     }
 }

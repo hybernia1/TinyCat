@@ -24,7 +24,7 @@ final class Resource
     {
         $id = (int) ($item['id'] ?? 0);
         $body = (string) ($item['body'] ?? '');
-        $presentation = \TinyCat\Social\Posts\TextResource::content($id, $body, 'post', Links::status_links_for_content($id));
+        $presentation = \TinyCat\Social\Posts\TextResource::content($id, $body, Links::status_links_for_content($id));
         $segments = $presentation['segments'];
         $at = (string) ($item['published_at'] ?? '');
         return [
@@ -33,19 +33,19 @@ final class Resource
             'body' => $body,
             'editable_body' => Mentions::mentions_for_editing((string) ($item['body'] ?? '')),
             'segments' => $segments,
-            ...\TinyCat\Core\Text\Segments::splitTags($segments),
+            ...\TinyCat\Social\Posts\InlinePresentation::splitTags($segments),
             'published_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'status' => (string) ($item['status'] ?? 'published'),
             'context' => self::context($item),
             'login_url' => \TinyCat\Core\Identity\Login::auth_url_with_next('/login', Posts::status_url($id)),
             'login_modal_url' => \TinyCat\Core\Identity\Login::auth_modal_url('login', Posts::status_url($id)),
-            'image' => ['url' => \TinyCat\Social\Posts\Images::status_image_url($item), 'description' => \TinyCat\Core\Ui\Site::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Core\Ui\Site::site_name()],
+            'image' => ['url' => \TinyCat\Social\Posts\Images::status_image_url($item), 'description' => \TinyCat\Support\Text::excerpt(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Core\Ui\Site::site_name()],
             'links' => $presentation['links'],
             'likes_count' => (int) ($item['likes_count'] ?? 0),
             'comments_count' => (int) ($item['comments_count'] ?? 0),
             'liked' => $user !== null && Reactions::status_user_liked($id, (int) $user['id']),
-            'capabilities' => ['edit' => Posts::status_can_edit($item, $user), 'delete' => Posts::status_can_delete($item, $user),
-                'report' => Posts::status_can_view($item) && $user !== null && (int) $user['id'] !== (int) ($item['author_id'] ?? 0), 'interact' => $user !== null && Posts::status_can_view($item)],
+            'capabilities' => ['edit' => \TinyCat\Social\Posts\Repository::canManage($item, $user), 'delete' => \TinyCat\Social\Posts\Repository::canManage($item, $user),
+                'report' => \TinyCat\Social\Posts\Repository::visible($item) && $user !== null && (int) $user['id'] !== (int) ($item['author_id'] ?? 0), 'interact' => $user !== null && \TinyCat\Social\Posts\Repository::visible($item)],
         ];
     }
 
@@ -55,7 +55,7 @@ final class Resource
     public static function context(array $item): array
     {
         return ['author' => trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? '')),
-            'excerpt' => \TinyCat\Core\Ui\Site::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 80),
+            'excerpt' => \TinyCat\Support\Text::excerpt(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 80),
             'id' => max(0, (int) ($item['id'] ?? $item['content_id'] ?? 0))];
     }
 
@@ -66,7 +66,7 @@ final class Resource
     private static function author(array $item): array
     {
         $id = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
-        return ['id' => $id, 'username' => (string) ($item['author_name'] ?? ''), 'url' => \TinyCat\Social\Profiles\Profiles::author_url($id), 'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($item)];
+        return ['id' => $id, 'username' => (string) ($item['author_name'] ?? ''), 'url' => \TinyCat\Social\Profiles\Profiles::author_url($id), 'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($item)];
     }
 
     /**
@@ -75,7 +75,7 @@ final class Resource
      */
     public static function link(array $link, int $contentId = 0): array
     {
-        return \TinyCat\Social\Posts\TextResource::link($link, 'post', $contentId);
+        return \TinyCat\Social\Posts\TextResource::link($link, $contentId);
     }
 
     /**
@@ -90,7 +90,7 @@ final class Resource
         return ['constraints' => self::constraints(), 'id' => $id, 'content_id' => (int) ($comment['content_id'] ?? 0), 'parent_id' => (int) ($comment['parent_id'] ?? 0),
             'author' => self::author($comment), 'body' => (string) ($comment['body'] ?? ''),
             'editable_body' => Mentions::mentions_for_editing((string) ($comment['body'] ?? '')),
-            'segments' => \TinyCat\Core\Text\Segments::compactTags(\TinyCat\Core\Text\Segments::text((string) ($comment['body'] ?? ''), 'post', [], (int) ($comment['content_id'] ?? 0), $id)),
+            'segments' => \TinyCat\Social\Posts\InlinePresentation::compactTags(\TinyCat\Social\Posts\InlinePresentation::text((string) ($comment['body'] ?? ''), [], (int) ($comment['content_id'] ?? 0), $id)),
             'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'likes_count' => (int) ($comment['likes_count'] ?? 0),
             'has_replies' => (bool) ($comment['has_replies'] ?? false),

@@ -28,15 +28,15 @@ foreach ([
     'http://[::ffff:127.0.0.1]/',
     'https://user:password@93.184.216.34/private',
 ] as $url) {
-    $assert(!\TinyCat\Core\Links\Metadata::isSafeRemoteUrl($url), 'Remote URL guard accepted: ' . $url);
+    $assert(!\TinyCat\Social\Posts\LinkMetadata::isSafeRemoteUrl($url), 'Remote URL guard accepted: ' . $url);
 }
 
 $assert(
-    \TinyCat\Core\Links\Metadata::isSafeRemoteUrl('https://93.184.216.34/public'),
+    \TinyCat\Social\Posts\LinkMetadata::isSafeRemoteUrl('https://93.184.216.34/public'),
     'Remote URL guard rejected a globally routable IPv4 literal.'
 );
 $assert(
-    \TinyCat\Core\Links\Metadata::isSafeRemoteUrl('https://[2606:4700:4700::1111]/public'),
+    \TinyCat\Social\Posts\LinkMetadata::isSafeRemoteUrl('https://[2606:4700:4700::1111]/public'),
     'Remote URL guard rejected a globally routable IPv6 literal.'
 );
 
@@ -57,8 +57,8 @@ $assert(
     'An incomplete author avatar projection prevented the user avatar fallback.'
 );
 $assert(
-    \TinyCat\Core\Identity\Avatars::user_avatar_url(['author_id' => 99, 'author_avatar_exists' => 1, 'author_updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/99.webp?v=2026-08-11%2012%3A00%3A00',
-    'A complete author avatar projection did not retain its avatar URL.'
+    \TinyCat\Core\Identity\Avatars::user_avatar_url(['author_id' => 99, 'author_avatar_exists' => 1, 'author_updated_at' => '2026-08-11 12:00:00']) === '',
+    'Core must not interpret a Social author projection.'
 );
 $assert(
     \TinyCat\Core\Identity\Profile::canEdit(['id' => 7], ['id' => 7, 'role' => 'member']),
@@ -156,26 +156,13 @@ $linkSource = (string) file_get_contents(__DIR__ . '/../../../App/Core/Http/Clie
 $assert(str_contains($linkSource, 'CURLOPT_FOLLOWLOCATION => false'), 'cURL redirects are not handled manually.');
 $assert(str_contains($linkSource, "'follow_location' => 0"), 'Stream redirects are not handled manually.');
 
-$generated = \TinyCat\Core\Identity\GeneratedAvatar::svg(42);
-$assert($generated === \TinyCat\Core\Identity\GeneratedAvatar::svg(42), 'Generated avatars are deterministic.');
-$assert(\TinyCat\Core\Identity\Avatar::url(42, false) === '/avatar/generated/v1/42.svg', 'Users without uploads receive a versioned generated avatar.');
-$assert(\TinyCat\Core\Identity\Avatar::url(0, false) === '', 'Anonymous placeholders never become user avatars.');
-$assert(\TinyCat\Core\Identity\GeneratedAvatar::appearance('{"gender":"female","future":"ignored"}') === ['version' => 1, 'gender' => 'female', 'fur' => 'auto', 'expression' => 'auto', 'accessory' => 'auto', 'outfit' => 'auto', 'background' => 'auto'], 'Appearance has a normalized versioned shape.');
-$assert(\TinyCat\Core\Identity\GeneratedAvatar::appearance('broken') === ['version' => 1, 'gender' => 'neutral', 'fur' => 'auto', 'expression' => 'auto', 'accessory' => 'auto', 'outfit' => 'auto', 'background' => 'auto'], 'Malformed stored appearance uses neutral defaults.');
-$assert(\TinyCat\Core\Identity\GeneratedAvatar::svg(42, 'female') !== $generated && \TinyCat\Core\Identity\GeneratedAvatar::svg(42, 'male') !== $generated, 'All three gender variants have a distinct illustration.');
-$assert(\TinyCat\Core\Identity\Avatars::user_avatar_url(['author_id' => 42, 'author_avatar_exists' => 0, 'author_avatar_appearance' => '{"gender":"female"}']) === '/avatar/generated/v1/42.svg?gender=female', 'Joined author appearance reaches the generated avatar URL.');
-$customAppearance = ['gender' => 'female', 'fur' => 'lilac', 'expression' => 'smile', 'accessory' => 'glasses'];
-$customSvg = \TinyCat\Core\Identity\GeneratedAvatar::svg(42, 'neutral', $customAppearance);
-$assert(str_contains($customSvg, 'fill="#c7a3cf"') && $customSvg !== $generated, 'Creator parameters select the requested SVG layers and fur colour.');
-$assert(\TinyCat\Core\Identity\GeneratedAvatar::url(42, json_encode($customAppearance)) === '/avatar/generated/v1/42.svg?gender=female&fur=lilac&expression=smile&accessory=glasses', 'Creator parameters have a canonical cacheable image URL.');
-$colourSvg = \TinyCat\Core\Identity\GeneratedAvatar::svg(42, 'neutral', ['outfit' => 'sage', 'background' => 'peach']);
-$assert(str_contains($colourSvg, 'fill="#558675"') && str_contains($colourSvg, 'fill="#f3d7ce"'), 'Outfit and background apply their independent palettes.');
-$assert(\TinyCat\Core\Identity\GeneratedAvatar::svg(42, 'neutral', ['outfit' => 'auto', 'background' => 'auto']) === $generated, 'Default colours preserve existing generated avatars.');
-$avatars = [];
-for ($id = 1; $id <= 1000; $id++) { $avatars[] = \TinyCat\Core\Identity\GeneratedAvatar::svg($id); }
-$assert(count(array_unique($avatars)) === 1000, 'A sample of 1000 users has visually distinct avatar geometry or colours.');
+$svg = \TinyCat\Core\Identity\Avatar::initialsSvg('?9lu?ou?k?');
+$assert(str_contains($svg, '>?9</text>'), 'Unicode initials uppercase the first two characters and preserve digits.');
+$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsSvg('<&unsafe'), '>&lt;&amp;</text>'), 'Untrusted initials are XML escaped.');
+$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsSvg(''), '>?</text>'), 'Empty identities have a deterministic placeholder.');
+$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsSvg('?'), '>?</text>'), 'Single Unicode characters remain intact.');
 $svgDocument = new DOMDocument();
-$assert($svgDocument->loadXML($generated) && $svgDocument->documentElement?->localName === 'svg', 'Generated avatars are valid self-contained SVG images.');
+$assert($svgDocument->loadXML($svg) && $svgDocument->documentElement?->localName === 'svg', 'Initial avatars are standalone valid SVG.');
 
 if ($failures !== []) {
     foreach ($failures as $failure) {

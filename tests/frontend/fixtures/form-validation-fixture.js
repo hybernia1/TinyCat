@@ -231,9 +231,9 @@
     window.fetch = async (url,options) => {
       const pathname = new URL(url,location.href).pathname;
       if (pathname === '/api/settings/editor') return new Response(JSON.stringify({ok:true,status:200,code:"ok",params:{},message:null,data:window.settingsSchema,meta:{}}),{headers:{'Content-Type':'application/json'}});
-      check(pathname === '/api/site-health/checks' && options.method === 'POST', 'Health checks use the shared POST transport');
+      check(pathname === '/api/scheduler/tasks/site-health/runs' && options.method === 'POST', 'Health checks use the shared POST transport');
       sessionStorage.setItem('health-ajax','true');
-      return new Response(JSON.stringify({ok:true,status:201,code:'health_check_finished',params:{},message:null,data:{execution:{ok:true},redirect:'/admin/cron?task=site-health'},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}});
+      return new Response(JSON.stringify({ok:true,status:201,code:'scheduler_run_finished',params:{},message:null,data:{execution:{ok:true},redirect:'/admin/cron?task=site-health'},meta:{}}),{status:201,headers:{'Content-Type':'application/json'}});
     };
     T.lifecycle.start(); toggle.click();
     check(document.body.classList.contains('admin-nav-open'), 'Health hamburger navigation opens');

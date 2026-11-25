@@ -225,8 +225,6 @@
     "inactive": "Inactief",
     "enable": "Inschakelen",
     "disable": "Uitschakelen",
-    "enable_group": "Groep inschakelen",
-    "disable_group": "Groep uitschakelen",
     "needed_by": "Vereist door: {modules}",
     "confirm": "Wijziging toepassen? Afhankelijkheden worden gecontroleerd en gegevens blijven behouden.",
     "module": "Module",

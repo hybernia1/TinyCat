@@ -19,7 +19,7 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
         foreach ($rows as $row) {
             $id = (int) $row['id'];
             if (empty($references[$id])) { $report['orphans'][] = $id; continue; }
-            $canonical = \TinyCat\Core\Text\LinkParser::fromRaw((string) $row['normalized_url']);
+            $canonical = \TinyCat\Social\Posts\LinkParser::fromRaw((string) $row['normalized_url']);
             if ($canonical === null) { $report['uncertain'][] = ['id' => $id, 'reason' => 'invalid_url']; continue; }
             $targets = [];
             $complete = true;
@@ -27,10 +27,10 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 $contentId = (int) $reference['content_id'];
                 if (!isset($bodyLinks[$contentId])) {
                     $bodyLinks[$contentId] = [];
-                    preg_match_all(\TinyCat\Core\Text\LinkParser::pattern(), (string) $reference['optimizer_body'], $matches);
+                    preg_match_all(\TinyCat\Social\Posts\LinkParser::pattern(), (string) $reference['optimizer_body'], $matches);
                     foreach ($matches[0] as $raw) {
-                        [$rawUrl] = \TinyCat\Core\Text\LinkParser::splitTail($raw);
-                        $parsed = \TinyCat\Core\Text\LinkParser::fromRaw($rawUrl);
+                        [$rawUrl] = \TinyCat\Social\Posts\LinkParser::splitTail($raw);
+                        $parsed = \TinyCat\Social\Posts\LinkParser::fromRaw($rawUrl);
                         if ($parsed !== null) { $bodyLinks[$contentId][$parsed['normalized_url']] = $parsed; }
                     }
                 }
@@ -38,8 +38,8 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 foreach ($bodyLinks[$contentId] as $url => $candidate) {
                     // The former normalizer removed www and all fragments.
                     $legacyUrl = explode('#', (string) preg_replace('~^(https?://)www\.~i', '$1', $url), 2)[0];
-                    $legacy = \TinyCat\Core\Text\LinkParser::fromRaw($legacyUrl);
-                    $oldMap = \TinyCat\Core\Links\Providers::googleMap($url) !== null && str_contains($url, "'")
+                    $legacy = \TinyCat\Social\Posts\LinkParser::fromRaw($legacyUrl);
+                    $oldMap = \TinyCat\Social\Posts\Providers::googleMap($url) !== null && str_contains($url, "'")
                         && explode("'", $legacyUrl, 2)[0] === $canonical['normalized_url'];
                     if ($url === $canonical['normalized_url'] || ($legacy['normalized_url'] ?? null) === $canonical['normalized_url'] || $oldMap) { $candidates[$url] = $candidate; }
                 }
@@ -54,7 +54,7 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 $report['uncertain'][] = ['id' => $id, 'reason' => 'conflicting_or_missing_post_urls'];
             }
             if ($row['normalized_url'] !== $canonical['normalized_url'] || $row['url_hash'] !== $canonical['url_hash']) { $report['normalized'][] = $id; }
-            $score = (!empty($row['image_url']) && \TinyCat\Social\Posts\Links::status_link_image_exists((string) $row['image_url']) ? 8 : 0)
+            $score = (!empty($row['image_url']) && \TinyCat\Social\Posts\LinkImages::exists((string) $row['image_url']) ? 8 : 0)
                 + (!empty($row['title']) && $row['title'] !== $canonical['title'] ? 2 : 0)
                 + (!empty($row['description']) && $row['description'] !== $canonical['description'] ? 1 : 0);
             $groups[$canonical['url_hash']][] = ['row' => $row, 'canonical' => $canonical, 'score' => $score];
@@ -102,7 +102,7 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 if (array_key_exists('audio_url', $group[0]['row'])) {
                     $audioColumns = ', audio_url = ?, link_type = ?';
                     $values[] = $winner['audio_url'] ?? '';
-                    $values[] = \TinyCat\Core\Links\Providers::taxonomy($winner)['link_type'];
+                    $values[] = \TinyCat\Social\Posts\Providers::taxonomy($winner)['link_type'];
                 }
                 $values[] = $winner['id'];
                 $database->prepare('UPDATE social_links SET normalized_url = ?, url_hash = ?, title = ?, description = ?, image_url = ?, video_id = ?' . $audioColumns . ' WHERE id = ?')->execute($values);

@@ -89,9 +89,9 @@ try {
 <?php
 declare(strict_types=1);
 namespace Fixture\Collision;
-final class Provider implements \TinyCat\Core\Modules\ProvidesSchema {
-    public static function schema(): \TinyCat\Core\Modules\ModuleSchema {
-        return new \TinyCat\Core\Modules\ModuleSchema(1, ['users'], static function (\PDO $pdo): void { throw new \RuntimeException('DDL must not execute'); }, [new \TinyCat\Core\Modules\SchemaMigration(1, 'fixture.collision.0001', dirname(__DIR__) . '/database/0001.php')]);
+final class Provider implements \TinyCat\Core\Modules\ProvidesSchemas {
+    public static function schemas(): array {
+        return ['fixture.collision' => new \TinyCat\Core\Modules\ModuleSchema(1, ['users'], static function (\PDO $pdo): void { throw new \RuntimeException('DDL must not execute'); }, [new \TinyCat\Core\Modules\SchemaMigration(1, 'fixture.collision.0001', dirname(__DIR__) . '/database/0001.php')])];
     }
 }
 PHP;
@@ -104,7 +104,7 @@ PHP;
     $baseline = $compile();
     Resources::withCatalog($modules->catalog, static function () use ($assert, $compile): void {
         $files = $compile();
-        $assert(\TinyCat\Core\Health\ServiceProvider::taskLabels()['pilot.notes.refresh']['label'] === 'pilot.notes.refresh', 'Task IDs without explicit admin titles remain literal labels, never required translation keys');
+        $assert(\TinyCat\Core\Tasks\Presentation::tasks()['pilot.notes.refresh']['title'] === 'pilot.notes.refresh', 'Task IDs without explicit admin titles remain literal labels, never required translation keys');
         $manifest = json_decode($files['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR);
         $scope = $manifest['clients']['/pilot/notes'];
         $assert(str_contains($files[ltrim($scope['app']['raw'], '/')], 'pilotNotes'), 'Co-located module JavaScript is bundled');

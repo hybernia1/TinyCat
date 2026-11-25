@@ -14,7 +14,7 @@ final class Schema
             new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.status.initial', null, 'e94c1eba1a0c100ba9b8518a52d86c6a647d6ba5cefb92c18b79e77b2172d54b'),
             new \TinyCat\Core\Modules\SchemaMigration(2, 'tinycat.status.owned-storage', null, 'ce7f29e138ebb726138646e90b9be45f325206ea3403896bea3a74d243cb36f3'),
             new \TinyCat\Core\Modules\SchemaMigration(3, 'tinycat.status.notification-subjects', null, '7323c8bd227a9401f4f973b4992d49a85bde0bd07aab3712f6fae3f48ea7b281'),
-        ], new \TinyCat\Core\Modules\SchemaMigration(3, 'tinycat.status.fresh-current', dirname(__DIR__, 2) . '/migrations/publishing/interactions/fresh-v2.php'));
+        ], new \TinyCat\Core\Modules\SchemaMigration(3, 'tinycat.status.fresh-current', dirname(__DIR__, 2) . '/migrations/publishing/interactions/fresh-v2.php'), repairOnInstall: true, gateRoutes: false);
     }
 
     public static function install(\PDO $database): void

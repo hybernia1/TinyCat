@@ -19,24 +19,8 @@ final class Avatars
             return '';
         }
 
-        foreach ([
-            ['author_id', 'author_avatar_exists', 'author_updated_at'],
-            ['actor_id', 'actor_avatar_exists', 'actor_updated_at'],
-            ['user_id', 'user_avatar_exists', 'user_updated_at'],
-            ['id', 'avatar_exists', 'updated_at'],
-        ] as [$idKey, $existsKey, $updatedAtKey]) {
-            if (!array_key_exists($idKey, $user) || !array_key_exists($existsKey, $user)) {
-                continue;
-            }
-
-            $userId = (int) ($user[$idKey] ?? 0);
-
-            if ($userId > 0) {
-                return \TinyCat\Core\Identity\Avatar::url($userId, (int) ($user[$existsKey] ?? 0) === 1, $user[$updatedAtKey] ?? null, $user[str_replace('avatar_exists', 'avatar_appearance', $existsKey)] ?? null, $user[str_replace('avatar_exists', 'avatar_version', $existsKey)] ?? null);
-            }
-        }
-
-        return '';
+        return \TinyCat\Core\Identity\Avatar::url((int) ($user['id'] ?? 0), (int) ($user['avatar_exists'] ?? 0) === 1,
+            $user['updated_at'] ?? null, $user['username'] ?? null, $user['avatar_version'] ?? null);
     }
 
     /**
@@ -79,48 +63,14 @@ final class Avatars
         ];
     }
 
-    /** @param array<mixed> $user
-     * @return array<mixed> */
-    public static function updateAppearance(array $user): array
+    public static function avatarEditModalId(int $userId): string
     {
-        $input = \TinyCat\Http\Request::current()->input('appearance', null);
-        if (is_string($input)) { $input = json_decode($input, true); }
-        $options = GeneratedAvatar::options();
-        $valid = is_array($input) && array_diff(array_keys($input), ['version', ...array_keys($options)]) === []
-            && (!isset($input['version']) || $input['version'] === 1);
-        if ($valid) {
-            foreach ($options as $key => $option) {
-                if (array_key_exists($key, $input) && (!is_string($input[$key]) || !in_array($input[$key], $option['values'], true))) { $valid = false; }
-            }
-        }
-        if (!$valid) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.avatar_invalid'), 422, 'avatar_invalid');
-        }
-        try {
-            $updated = Avatar::replace((int) $user['id'], null, false, static function (array $locked) use ($input): array {
-                if ((int) ($locked['avatar_exists'] ?? 0) === 1) {
-                    throw new InvalidArgumentException(\TinyCat\Support\Localization::t('account.messages.avatar_invalid'));
-                }
-                $settings = array_replace(GeneratedAvatar::appearance($locked['avatar_appearance'] ?? null), (array) $input);
-                $appearance = json_encode(GeneratedAvatar::appearance(json_encode($settings, JSON_THROW_ON_ERROR)), JSON_THROW_ON_ERROR);
-                $changes = ['avatar_appearance' => $appearance, 'updated_at' => self::user_avatar_updated_at($locked)];
-                \TinyCat\Database\Connection::update('users', $changes, ['id' => (int) $locked['id']]);
-                return array_replace($locked, $changes);
-            });
-        } catch (InvalidArgumentException $exception) {
-            \TinyCat\Http\Response::error($exception->getMessage(), 422, 'avatar_invalid');
-        }
-        return ['user' => Resource::identity($updated), 'message' => \TinyCat\Support\Localization::t('account.messages.avatar_saved'), 'code' => 'avatar_saved'];
+        return 'avatar-edit-modal-' . max(0, $userId);
     }
 
-    public static function author_avatar_edit_modal_id(int $authorId): string
+    public static function avatarEditModalUrl(int $userId): string
     {
-        return 'avatar-edit-modal-' . max(0, $authorId);
-    }
-
-    public static function author_avatar_edit_modal_url(int $authorId): string
-    {
-        return '/api/users/' . $authorId . '/avatar';
+        return '/api/users/' . $userId . '/avatar';
     }
 
     /** @param array<mixed> $user

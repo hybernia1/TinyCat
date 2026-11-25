@@ -15,7 +15,7 @@ final class Api
         $api->get('/moderation/report-options', static function (Request $r): array {
             $r->validated(['id' => 'required|integer']);
             $item = \TinyCat\Social\Posts\Feed::public_status_item((int) $r->input('id'));
-            if ($item === null || !\TinyCat\Social\Posts\Posts::status_can_view($item)) {
+            if ($item === null || !\TinyCat\Social\Posts\Repository::visible($item)) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
             }
             return ['reasons' => array_keys(\TinyCat\Social\Posts\Posts::status_report_reasons()), 'note_max_length' => \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH];

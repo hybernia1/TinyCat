@@ -6,6 +6,9 @@ namespace TinyCat\Social\Bots;
 use Throwable;
 use RuntimeException;
 use PDOException;
+use TinyCat\Core\Feeds\FeedParser;
+use TinyCat\Social\Posts\LinkParser;
+use TinyCat\Http\{Client, Session};
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -16,17 +19,6 @@ final class Importer
 {
     public const DEFAULT_PUBLICATION_INTERVAL = 30;
 
-    private function __construct()
-    {
-    }
-
-    /**
-     * @return array<string, array{runner: callable(array<string, mixed>): array<string, mixed>, options: array<string, int>, admin: array<string, string>}>
-     */
-    public static function scheduledTasks(): array
-    {
-        return ['feeds' => self::scheduledTask()->definition()];
-    }
 
     public static function scheduledTask(): \TinyCat\Core\Modules\ScheduledTask
     {
@@ -115,7 +107,7 @@ final class Importer
 
     public static function feedSourceHash(string $url): string
     {
-        $url = \TinyCat\Core\Feeds\SourceUrl::normalize($url);
+        $url = self::normalizeSourceUrl($url);
         return $url !== '' ? hash('sha256', $url) : '';
     }
 
@@ -285,7 +277,86 @@ final class Importer
      */
     public static function runSource(array $source, bool $force = false, int $schedulerRunId = 0): array
     {
-        return (new \TinyCat\Core\Feeds\FeedPipeline(new FeedStore(), new FeedPublication()))->run($source, $force, $schedulerRunId);
+        return (new self())->run($source, $force, $schedulerRunId);
     }
 
+    private static function normalizeSourceUrl(string $url): string
+    {
+        $parts = parse_url(trim($url)); if (!is_array($parts)) { return ''; }
+        $scheme = strtolower((string) ($parts['scheme'] ?? '')); $host = strtolower(rtrim((string) ($parts['host'] ?? ''), '.'));
+        if (!in_array($scheme, ['http', 'https'], true) || $host === '') { return ''; }
+        $port = (int) ($parts['port'] ?? 0); $default = ($scheme === 'http' && $port === 80) || ($scheme === 'https' && $port === 443);
+        $path = (string) ($parts['path'] ?? '/'); $path = $path === '/' ? '/' : rtrim($path, '/');
+        return $scheme . '://' . $host . ($port > 0 && !$default ? ':' . $port : '') . $path . (isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '');
+    }
+    public function __construct(private FeedStore $store = new FeedStore(), private FeedPublication $target = new FeedPublication()) {}
+
+    /** @param array<string, mixed> $source
+     * @return array<string, mixed> */
+    public function run(array $source, bool $force = false, int $schedulerRunId = 0): array
+    {
+        return Client::withConnectionReuse(function () use ($source, $force, $schedulerRunId): array {
+            if (!$this->store->claim($source, $force)) { return ['source_id' => (int) $source['id'], 'status' => 'skipped']; }
+            $runId = $this->store->start($source, $schedulerRunId);
+            try {
+                $items = Session::withoutLock(static fn (): array => FeedParser::fetch((string) $source['feed_url']));
+                if ($items === []) { throw new \RuntimeException('Source contains no usable items.'); }
+            } catch (\Throwable $error) { return $this->complete($source, $runId, 0, [], [], $error); }
+            return $this->import($source, $items, $runId);
+        });
+    }
+
+    /** No claims, history, publication writes or scheduling changes.
+     * @param array<string, mixed> $source
+     * @param array<string, mixed> $item */
+    public function preview(array $source, array $item): \TinyCat\Social\Posts\PostCreation { return $this->target->prepare($source, $item); }
+
+    /** @param array<string, mixed> $source
+     * @param list<array<string, mixed>> $items
+     * @return array<string, mixed> */
+    public function import(array $source, array $items, int $runId = 0): array
+    {
+        $seen = count($items); $ids = []; $skipped = [];
+        try {
+            $history = $this->store->history($source, array_map(self::hash(...), $items));
+            $items = Session::withoutLock(fn (): array => $this->target->enrich($source, array_values(array_filter($items, static fn (array $item): bool => !isset($history[self::hash($item)])))));
+            foreach ($items as $item) {
+                $hash = self::hash($item);
+                if (isset($history[$hash])) { continue; }
+                $history[$hash] = true;
+                $link = LinkParser::fromRaw((string) ($item['url'] ?? ''));
+                if ($this->store->duplicate($source, $link)) { continue; }
+                $entry = $this->preview($source, $item);
+                $rejection = $entry->rejection;
+                if ($rejection !== null) { $skipped[] = ['item_hash' => $hash, 'code' => $rejection['code'], 'params' => $rejection['params']]; continue; }
+                $attachments = Session::withoutLock(fn (): array => $this->target->attachments($source, $item, $entry));
+                $image = $attachments['image'];
+                if ($entry->body === '' && $image === null) { $skipped[] = ['item_hash' => $hash, 'code' => 'status_required', 'params' => []]; continue; }
+                try {
+                    $links = $attachments['links'];
+                    $ids[] = $this->store->commit($source, $hash, fn (string $at): int => $this->target->publish($source, $entry, $links, $image, $at));
+                } catch (\Throwable $error) {
+                    if ($image !== null) { $this->target->discard($image); }
+                    throw $error;
+                }
+            }
+        } catch (\Throwable $error) { return $this->complete($source, $runId, $seen, $ids, $skipped, $error); }
+        return $this->complete($source, $runId, $seen, $ids, $skipped);
+    }
+
+    /** @param array<string, mixed> $item */
+    private static function hash(array $item): string { return hash('sha256', (string) ($item['guid'] ?? '')); }
+
+    /** @param array<string, mixed> $source
+     * @param list<int> $ids
+     * @param list<array<string, mixed>> $skipped
+     * @return array<string, mixed> */
+    private function complete(array $source, int $runId, int $seen, array $ids, array $skipped, ?\Throwable $error = null): array
+    {
+        if ($error !== null) { \TinyCat\Core\Runtime\Failure::report($error); }
+        $status = $error !== null ? 'error' : ($ids !== [] ? 'posted' : 'current');
+        $message = $error !== null ? FeedParser::text(\TinyCat\Core\Runtime\Failure::message($error, 'Feed import failed.'), 500) : '';
+        $this->store->finish($source, $runId, $status, $seen, $message);
+        return ['source_id' => (int) $source['id'], 'status' => $status, 'content_id' => $ids[0] ?? 0, 'content_ids' => $ids, 'imported_count' => count($ids), 'skipped_items' => $skipped] + ($error !== null ? ['error' => $message] : []);
+    }
 }

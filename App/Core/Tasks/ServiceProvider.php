@@ -1,32 +1,41 @@
 <?php
 declare(strict_types=1);
 namespace TinyCat\Core\Tasks;
-use TinyCat\Core\Tasks\Cleanup;
-use TinyCat\Core\Tasks\FileCleanup;
-use TinyCat\Core\Tasks\HealthCheck;
+use TinyCat\Core\Tasks\Cleanup\Task as CleanupTask;
+use TinyCat\Core\Tasks\Cleanup\Files;
+use TinyCat\Core\Tasks\Health\Checks;
+use TinyCat\Core\Tasks\Health\Inspection;
+use TinyCat\Core\Tasks\Health\Alerts;
 
-final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions
+final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesContributions
 {
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
+        $probes = [];
+        foreach (Checks::localDefinitions() as $id => $run) { $probes[] = new \TinyCat\Core\Modules\HealthProbe($id, $run, count($probes) * 10); }
+        $probes[] = new \TinyCat\Core\Modules\HealthProbe('scheduler', Checks::scheduler(...), 70);
         return new \TinyCat\Core\Modules\Contributions(
             componentLookups: [
                 new \TinyCat\Core\Modules\ComponentLookup('scheduler.tasks', static fn (): array => Presentation::tasks()),
                 new \TinyCat\Core\Modules\ComponentLookup('scheduler.options', static fn (): array => Presentation::options()),
             ],
-            tasks: [Cleanup::scheduledTask()],
+            tasks: [CleanupTask::scheduledTask(), Inspection::scheduledTask()],
+            temporaryDirectories: [
+                new \TinyCat\Core\Modules\TemporaryDirectory('health-uploads', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/.health-probes'), 50),
+                new \TinyCat\Core\Modules\TemporaryDirectory('health-storage', static fn (): string => \TinyCat\Support\Paths::basePath('storage/health-probes'), 60),
+            ],
+            widgets: [new \TinyCat\Core\Modules\DashboardWidget('core.health', Inspection::widget(...), 10, type: 'status', title: static fn (): string => \TinyCat\Support\Localization::t('health.title'), icon: 'shield')],
+            notificationTypes: Alerts::types(),
             navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.scheduler.admin', static fn (): array => self::adminNavigation(), 50)],
-            health: [new \TinyCat\Core\Modules\HealthProbe('scheduler', static fn (): array => HealthCheck::run(), 70)],
+            health: $probes,
             maintenance: [
-                new \TinyCat\Core\Modules\MaintenanceTask('temporary_files', static fn (int $batch): array => FileCleanup::temporary($batch), 60),
+                new \TinyCat\Core\Modules\MaintenanceTask('temporary_files', static fn (int $batch): array => Files::temporary($batch), 60),
                 \TinyCat\Database\Retention::task('old_scheduler_runs', 'scheduler_runs', 'started_at < ?', static fn (): array => [\TinyCat\Support\Dates::dateDb('-30 days')], 120),
             ],
         );
     }
 
-    /** @return list<string> */
-    public static function tables(): array { return []; }
 
     /** @return array<string, mixed> */
     public static function adminNavigation(): array

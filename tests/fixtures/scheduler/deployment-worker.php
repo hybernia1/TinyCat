@@ -92,12 +92,11 @@ try {
     $_SERVER['REQUEST_URI'] = match ($action) {
         'trigger' => '/api/scheduler/triggers/cleanup', 'probe' => '/api/scheduler/health',
         'api' => '/api/scheduler/executions', 'admin' => '/api/scheduler/tasks/cleanup/runs',
-        'health' => '/api/site-health/checks',
+        'health' => '/api/scheduler/tasks/site-health/runs',
     };
     $_POST = ['task' => 'cleanup'];
     $api = new TinyCat\Http\Api(static fn (): array => ['id' => 1, 'role' => 'admin']);
     TinyCat\Core\Tasks\Api::register($api);
-    TinyCat\Core\Health\Api::register($api);
     TinyCat\Http\Router::dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
 } catch (Throwable $error) {
     echo json_encode(['rejected' => $error->getMessage()], JSON_THROW_ON_ERROR);

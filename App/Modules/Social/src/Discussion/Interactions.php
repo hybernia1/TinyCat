@@ -84,7 +84,7 @@ final class Interactions
             }
             if ($action === 'comment') {
                 if (!$target->interact) { self::fail('forbidden', 403); }
-                $body = self::body($body, $kind);
+                $body = self::body($body);
                 if ($parentId > 0) {
                     $parent = Connection::one(Connection::lockingSelect('SELECT * FROM social_comments WHERE id = ? AND content_id = ?'), [$parentId, $id]);
                     if ($parent === null || Comments::status_comment_item_find($parentId, $kind) === null) { self::fail('comment_not_found', 404); }
@@ -100,8 +100,8 @@ final class Interactions
                 if (!$own && !$admin && !($action === 'comment_delete' && $target->manage)) { self::fail($action === 'comment_update' ? 'comment_edit_forbidden' : 'comment_forbidden', 403); }
                 if ($action === 'comment_update') {
                     if (!$target->interact && !$admin) { self::fail('forbidden', 403); }
-                    $body = self::body($body, $kind); $data['body'] = $body;
-                    $history = Comments::status_comment_history_append($comment, $body, $actor);
+                    $body = self::body($body); $data['body'] = $body;
+                    $history = Comments::appendHistory((string) $comment['body'], $body, $actor, (string) ($comment['comments_diff'] ?? ''));
                     if ($history === null) { return $data + ['changed' => false]; }
                     InteractionPolicy::before($action, $target, $actor, $data);
                     Connection::update('social_comments', ['body' => $body, 'comments_diff' => $history], ['id' => $commentId]);
@@ -116,12 +116,12 @@ final class Interactions
         });
     }
 
-    public static function body(string $body, string $kind): string
+    public static function body(string $body): string
     {
         \TinyCat\Http\Validator::validated(self::rules(), ['comment' => $body]);
         Policy::requireAllowedUrls($body);
         $body = Links::status_strip_external_urls($body);
-        $draft = PostCreation::fromText($body, $kind);
+        $draft = PostCreation::fromText($body);
         if ($draft->rejection !== null) { Response::error(Localization::t($draft->rejection['message_key'], $draft->rejection['params']), 422, $draft->rejection['code']); }
         if (trim($draft->body) === '') { self::fail('comment_required', 422); }
         return $draft->body;

@@ -22,6 +22,7 @@ final class Startup
 
     public static function provideHttp(string $owner, HttpPolicy $policy): void
     {
+        if (preg_match('/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$/D', $owner) !== 1) { throw new \InvalidArgumentException('Invalid provider owner.'); }
         if (self::$httpOwner !== null && self::$httpOwner !== $owner) { throw new \LogicException('Conflicting HTTP policy providers.'); }
         self::$httpOwner = $owner; self::$http = $policy;
     }

@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../support/mysql.php';
 
 use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Avatars;
-use TinyCat\Core\Identity\GeneratedAvatar;
+use TinyCat\Core\Identity\AvatarHttp;
 use TinyCat\Core\Identity\Resource;
 use TinyCat\Http\Request;
 use TinyCat\Http\Router;
@@ -30,7 +30,7 @@ $api->get('/_avatars', static fn (): array => ['user' => Resource::privateProfil
     'loaded_product' => array_values(array_filter(get_declared_classes(), static fn (string $class): bool => preg_match('/^TinyCat\\\\(?:Users|Status|Bots|Moderation|Settings|Site|Notifications)\\\\/', $class) === 1))], 'user');
 $api->put('/_avatars/avatar', static fn (): array => Avatars::user_avatar_update_request(Authentication::auth()));
 $api->delete('/_avatars/avatar', static fn (): array => Avatars::user_avatar_update_request(Authentication::auth()));
-$api->patch('/_avatars/appearance', static fn (): array => Avatars::updateAppearance(Authentication::auth()));
-Router::route(['GET', 'HEAD'], '/avatar/generated/v1/{id:[1-9][0-9]*[.]svg}', static fn (string $id) => GeneratedAvatar::respond((int) $id));
+Router::route(['GET', 'HEAD'], '/avatar/initials/v1/{identity:[A-Za-z0-9_-]+[.]svg}', static fn (string $identity) => AvatarHttp::initials(substr($identity, 0, -4)));
+Router::route(['GET', 'HEAD'], '/avatar/generated/v1/{id:[1-9][0-9]*[.]svg}', static fn (string $id) => AvatarHttp::byId((int) $id));
 Router::route(['GET', 'HEAD'], '/avatar/{username}', static fn (string $username) => TinyCat\Core\Identity\AvatarHttp::respond($username));
 if (!Router::dispatch(Request::current()->path())) { TinyCat\Http\Document::notFound('Not found.'); }

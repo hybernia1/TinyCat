@@ -63,6 +63,8 @@ $assert($status === 422 && $invalidUpload['code'] === 'avatar_invalid', 'Admins 
 $seedLimit('user:1', 'follow', 3600);
 [$status] = $request('PUT', '/api/profiles/2/followers/me', [], 'admin', $csrf);
 $assert($status === 200, 'Admins bypass exhausted follow budgets.');
+// Earlier requests may cross a fixed-window boundary; seed the bucket this request uses.
+$seedLimit('127.0.0.1', 'login', 900);
 [$status] = $request('POST', '/api/users/sessions', ['username' => 'admin', 'role' => 'admin'], '', $csrf);
 $assert($status === 429, 'A claimed administrator name or role cannot bypass anonymous login budgets.');
 [$status] = $request('POST', '/logout', [], 'user', $csrf + ['Accept' => 'application/json']);

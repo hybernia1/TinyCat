@@ -7,17 +7,11 @@ use Throwable;
 
 final class Tags
 {
-    public static function status_tag_normalize(string $tag): string { return \TinyCat\Core\Text\Hashtags::normalize($tag, self::status_tag_max_length()); }
-    public static function status_tag_max_length(): int { return 32; }
-    /** @return list<string> */
-    public static function status_tag_tokens_from_text(string $text): array { return \TinyCat\Core\Text\Hashtags::tokens($text); }
-    /** @return list<string> */
-    public static function status_tags_from_text(string $text): array { return \TinyCat\Core\Text\Hashtags::extract($text, self::status_tag_max_length()); }
-    public static function normalize_tags_for_storage(string $text): string { return \TinyCat\Core\Text\Hashtags::normalizeText($text, self::status_tag_max_length()); }
+    public const MAX_BYTES = 32;
 
     public static function status_term_id(string $tag): int
     {
-        $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
+        $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
 
         if ($tag === '') {
             return 0;
@@ -60,7 +54,7 @@ final class Tags
 
     public static function status_term_id_exact(string $tag): int
     {
-        $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
+        $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
 
         if ($tag === '') {
             return 0;
@@ -155,14 +149,14 @@ final class Tags
 
     public static function tag_url(string $tag): string
     {
-        $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
+        $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
 
         return \TinyCat\Support\LocalUrls::resolve($tag !== '' ? '/tag/' . rawurlencode($tag) : '/');
     }
 
     public static function tag_feed_url(string $tag, string $media = ''): string
     {
-        $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
+        $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
 
         $media = Archive::type($media);
         return $tag !== '' ? '/tag/' . rawurlencode($tag) . '/feed' . ($media !== '' ? '?media=' . $media : '') : '/';
@@ -214,7 +208,7 @@ final class Tags
             $tags = [];
 
             foreach ($rows as $row) {
-                $name = \TinyCat\Social\Posts\Tags::status_tag_normalize((string) ($row['name'] ?? ''));
+                $name = \TinyCat\Social\Posts\Tags::normalizeTag((string) ($row['name'] ?? ''));
 
                 if ($name === '') {
                     continue;
@@ -232,4 +226,33 @@ final class Tags
         });
     }
 
+    private const TAG_PATTERN = '/(?<![\p{L}\p{N}\p{M}_.@#-])#([\p{L}\p{N}][\p{L}\p{N}\p{M}_-]*)/u';
+
+    public static function normalizeTag(string $tag): string
+    {
+        $tag = \TinyCat\Support\Text::slug(ltrim(trim($tag), "# \t\n\r\0\x0B"));
+        return !ctype_digit($tag) && strlen($tag) <= self::MAX_BYTES ? $tag : '';
+    }
+
+    /** @return list<string> */
+    public static function tagTokens(string $text): array
+    {
+        if (!preg_match_all(self::TAG_PATTERN, \TinyCat\Core\Text\InlineText::withoutLinks($text), $matches)) { return []; }
+        return array_values(array_filter($matches[1], static fn (string $tag): bool => preg_match('/^\p{N}+$/u', $tag) !== 1));
+    }
+
+    /** @return list<string> */
+    public static function extractTags(string $text): array
+    {
+        $tags = [];
+        foreach (self::tagTokens($text) as $token) { $tag = self::normalizeTag($token); if ($tag !== '') { $tags[$tag] = $tag; } }
+        return array_values($tags);
+    }
+
+    public static function normalizeTagText(string $text): string
+    {
+        return \TinyCat\Core\Text\InlineText::map($text, static fn (string $part): string => (string) preg_replace_callback(self::TAG_PATTERN, static function (array $match): string {
+            $tag = self::normalizeTag($match[1]); return $tag !== '' ? '#' . $tag : $match[0];
+        }, $part));
+    }
 }

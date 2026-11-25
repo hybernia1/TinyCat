@@ -601,7 +601,10 @@ final class Cache
         }
 
         try {
-            return $client->set(self::memcachedKey($key), $payload, time() + max(1, $ttl) + max(0, $staleTtl));
+            // Relative expiry avoids clock skew between PHP and the cache server.
+            // Memcached interprets durations above 30 days as Unix timestamps.
+            $retention = max(1, $ttl) + max(0, $staleTtl);
+            return $client->set(self::memcachedKey($key), $payload, $retention <= 2_592_000 ? $retention : time() + $retention);
         } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
             return false;
         }

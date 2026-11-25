@@ -30,8 +30,9 @@ final class SourceModules
     /** @return array<string, string> Production modules, excluding development fixtures. */
     public static function production(string $root): array
     {
-        $selection = self::selection($root);
-        $definitions = self::inventory($root)['definitions'];
+        $inventory = self::inventory($root);
+        if ($inventory['errors'] !== []) { throw new \InvalidArgumentException(implode(' ', $inventory['errors'])); }
+        $selection = $inventory['selection']; $definitions = $inventory['definitions'];
         return array_filter($selection, static fn (string $id): bool => !$definitions[$id]->development, ARRAY_FILTER_USE_KEY);
     }
 

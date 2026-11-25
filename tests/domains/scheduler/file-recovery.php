@@ -10,7 +10,7 @@ $manifest = ['format' => 1, 'coreApi' => 1, 'id' => 'fixture.files', 'namespace'
 file_put_contents($root . '/App/Modules/FileFixture/module.json', json_encode($manifest, JSON_THROW_ON_ERROR));
 define('TINYCAT', true); require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Core\Modules\{Loader, Distribution, Deployment, Resources, Registrations};
-use TinyCat\Core\Tasks\Cleanup;
+use TinyCat\Core\Tasks\Cleanup\Task as Cleanup;
 use TinyCat\Core\Ui\Branding;
 use TinyCat\Database\Connection;
 (new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
@@ -30,24 +30,24 @@ TinyCat\Social\Posts\Schema::install($db);
 $db->exec('CREATE TABLE fixture_files(path TEXT)'); $db->exec("INSERT INTO fixture_files VALUES ('retained.bin')");
 mkdir($root . '/uploads/fixture', 0700, true);
 foreach (['retained.bin', 'orphan.bin', 'fresh.bin'] as $name) { file_put_contents($root . '/uploads/fixture/' . $name, $name); if ($name !== 'fresh.bin') { touch($root . '/uploads/fixture/' . $name, time() - 7200); } }
-$ids = Cleanup::cron_cleanup_tasks();
+$ids = Cleanup::taskIds();
 $assert(in_array('fixture_file_orphans', $ids, true) && !in_array('fixture_active_only', $ids, true), 'Installed inactive owners contribute only opted-in file recovery');
-Cleanup::cleanup_task_run('fixture_file_orphans', 500); Cleanup::cleanup_task_run('fixture_file_orphans', 500);
+Cleanup::runTask('fixture_file_orphans', 500); Cleanup::runTask('fixture_file_orphans', 500);
 $assert(is_file($root . '/uploads/fixture/retained.bin') && is_file($root . '/uploads/fixture/fresh.bin') && !is_file($root . '/uploads/fixture/orphan.bin'), 'Repeated inactive recovery protects references and active preparation');
 $activate(['fixture.files'], ['fixture.files', 'tinycat.social']);
-$ids = Cleanup::cron_cleanup_tasks(); $assert(count(array_filter($ids, static fn (string $id): bool => $id === 'fixture_file_orphans')) === 1 && in_array('fixture_active_only', $ids, true), 'Active contributions are deduplicated and keep default tasks');
-$activate([], ['tinycat.social']); $assert(!in_array('fixture_file_orphans', Cleanup::cron_cleanup_tasks(), true), 'Uninstalled sources do not execute even while their folder remains');
+$ids = Cleanup::taskIds(); $assert(count(array_filter($ids, static fn (string $id): bool => $id === 'fixture_file_orphans')) === 1 && in_array('fixture_active_only', $ids, true), 'Active contributions are deduplicated and keep default tasks');
+$activate([], ['tinycat.social']); $assert(!in_array('fixture_file_orphans', Cleanup::taskIds(), true), 'Uninstalled sources do not execute even while their folder remains');
 $activate([], ['fixture.files', 'tinycat.social']);
 file_put_contents($root . '/uploads/fixture/protected.bin', 'do not lose'); touch($root . '/uploads/fixture/protected.bin', time() - 7200);
 $provider = $root . '/App/Modules/FileFixture/src/Module.php'; rename($provider, $provider . '.missing');
 $rejected = false;
-try { Cleanup::cleanup_task_run('fixture_file_orphans', 500); }
+try { Cleanup::runTask('fixture_file_orphans', 500); }
 catch (Throwable) { $rejected = true; }
 $assert($rejected && is_file($root . '/uploads/fixture/protected.bin'), 'Even a previously loaded missing provider stops before unlink');
 rename($provider . '.missing', $provider);
 $manifestPath = $root . '/App/Modules/FileFixture/module.json'; rename($manifestPath, $manifestPath . '.missing');
 $rejected = false;
-try { Cleanup::cleanup_task_run('orphan_status_image_files', 500); }
+try { Cleanup::runTask('orphan_status_image_files', 500); }
 catch (Throwable) { $rejected = true; }
 $assert($rejected && is_file($root . '/uploads/fixture/protected.bin'), 'An incomplete owner map never partially deletes');
 rename($manifestPath . '.missing', $manifestPath);
@@ -60,7 +60,7 @@ foreach ([$retained, $orphan] as $path) { file_put_contents($root . '/uploads/st
 file_put_contents($root . '/uploads/status-images/2026/11/.image-abandoned', 'abandoned preparation');
 touch($root . '/uploads/status-images/2026/11/.image-abandoned', time() - 172801);
 file_put_contents($root . '/uploads/status-images/2026/11/.image-active', 'active preparation');
-Cleanup::cleanup_task_run('orphan_status_image_files', 500);
+Cleanup::runTask('orphan_status_image_files', 500);
 $assert(is_file($root . '/uploads/status-images/' . $retained) && !is_file($root . '/uploads/status-images/' . $orphan), 'Inactive Social still protects its current data while recovering abandoned files');
 $assert(!is_file($root . '/uploads/status-images/2026/11/.image-abandoned') && is_file($root . '/uploads/status-images/2026/11/.image-active'), 'Inactive owner recovery also removes aged preparations while preserving active ones');
 // Branding orphan sets include variants left by an interrupted preparation.

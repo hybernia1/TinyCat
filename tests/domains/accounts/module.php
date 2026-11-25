@@ -39,13 +39,13 @@ $assert = static function (bool $value, string $message) use (&$checks): void { 
 foreach (['Users', 'Status', 'Bots'] as $domain) { $assert(!is_dir($workspace . '/App/Modules/' . $domain) && !is_dir($workspace . '/App/Modules/' . $domain . '/assets'), 'Excluded physical domain: ' . $domain); }
 $modules = TinyCat\Core\Modules\Loader::load($workspace);
 TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(locale: static fn (): string => 'en'), $modules);
-$assert(TinyCat\Core\Identity\ServiceProvider::tables() === ['users', 'password_reset_tokens'], 'Accounts owns only account tables');
+$assert(TinyCat\Core\Identity\ServiceProvider::schemas()['tinycat.accounts']->tables === ['users', 'password_reset_tokens'], 'Accounts owns only account tables');
 $assert(array_keys(TinyCat\Core\Identity\Participants::current()) === ['tinycat.accounts'], 'Only selected lifecycle providers are resolved');
 $assert(TinyCat\Core\Modules\Registrations::current()->owner('maintenance', 'orphan_avatar_files') === 'tinycat.accounts', 'Stable avatar maintenance has its new owner');
 $pdo = \tinycat_test_database();
 
 TinyCat\Database\Connection::set($pdo);
-$assert(!TinyCat\Core\Identity\Readiness::ready(), 'Missing account schema is unready without DDL at startup');
+$assert(!TinyCat\Core\Identity\ServiceProvider::ready(), 'Missing account schema is unready without DDL at startup');
 TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Core\Security\Schema::install($pdo);
 TinyCat\Core\Identity\Schema::install($pdo); // Fresh install is safe to repeat.
 $tables = $pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
@@ -57,7 +57,7 @@ TinyCat\Database\ModuleSchemas::install($pdo, TinyCat\Core\Modules\Distribution:
 $insert = $pdo->prepare('INSERT INTO users(username, email, password, role, locale) VALUES (?, ?, ?, ?, ?)');
 foreach ([['Admin', 'admin@example.test', 'admin'], ['Member', 'member@example.test', 'user']] as [$name, $email, $role]) { $insert->execute([$name, $email, password_hash('Secret-123456', PASSWORD_DEFAULT), $role, 'en']); }
 $insert = null;
-$assert(TinyCat\Core\Identity\Readiness::ready(), 'Installed assembly is ready after an account with a password exists');
+$assert(TinyCat\Core\Identity\ServiceProvider::ready(), 'Installed assembly is ready after an account with a password exists');
 $assert((int) $pdo->query('SELECT COUNT(*) FROM settings')->fetchColumn() === 0, 'Fresh settings fixture starts empty');
 TinyCat\Core\Installation\Installer::default_settings(['locale' => 'en']);
 $assert(TinyCat\Core\Settings\Store::setting('site.public_enabled') === false, 'Fresh core-only installation starts without a public website');
@@ -190,14 +190,14 @@ try {
     $assert(array_diff($foreignTables, ['users']) === [], 'Fresh inbox has no foreign keys to publication or social tables');
     $savedRegistries = \TinyCat\Core\Modules\Registrations::current();
     $orderType = new \TinyCat\Core\Modules\NotificationType('fixture.order', static fn (array $rows): array => $rows, static fn (array $row): string => '/orders/' . (int) json_decode((string) $row['payload_json'], true)['order_id']);
-    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture.platform' => new \TinyCat\Core\Modules\Contributions(notificationTypes: [$orderType, ...\TinyCat\Core\Health\Alerts::types()])]));
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture.platform' => new \TinyCat\Core\Modules\Contributions(notificationTypes: [$orderType, ...\TinyCat\Core\Tasks\Health\Alerts::types()])]));
     $notice = \TinyCat\Core\Notifications\Delivery::record(1, 'fixture.order', 'order:42', payload: ['order_id' => 42]);
     $assert($notice['created'] && \TinyCat\Core\Notifications\Inbox::open($notice['id'], 1) === '/orders/42', 'Opaque non-publication subjects work without Social');
     $duplicate = \TinyCat\Core\Notifications\Delivery::record(1, 'fixture.order', 'order:42', payload: ['order_id' => 42], refresh: false);
     $assert(!$duplicate['created'] && \TinyCat\Core\Notifications\Inbox::unreadCount(1) === 0, 'Idempotent system delivery preserves read state');
     $assert(\TinyCat\Core\Notifications\Inbox::open($notice['id'], 2) === '/notifications', 'Another account cannot open the notification');
     \TinyCat\Core\Settings\Store::reset();
-    $inspection = \TinyCat\Core\Health\Service::run(['mode' => 'admin', 'scheduler_run_id' => 42]);
+    $inspection = \TinyCat\Core\Tasks\Health\Inspection::run(['mode' => 'admin', 'scheduler_run_id' => 42]);
     $assert($inspection['ok'] && $inspection['changed'] === 1, 'Health delivers to the active administrator without Social or fake actors');
     $assert(\TinyCat\Core\Notifications\Inbox::items(1)[0]['actor_id'] === null, 'Inbox lists actorless system notices without social tables');
     \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries());
@@ -218,7 +218,7 @@ try {
     [$status] = $request('/api/users/2', 'DELETE', [], 'admin'); $assert($status === 200, 'Selected account lifecycle supports deletion without social tables');
     $assert((int) TinyCat\Database\Connection::value('SELECT COUNT(*) FROM password_reset_tokens WHERE user_id = 2') === 0, 'Recovery records follow account deletion');
     [$status] = $request('/api/profiles/2/following', actor: 'member'); $assert($status === 404, 'Social endpoints are absent');
-    [$status, , $svg] = $request('/avatar/generated/v1/2.svg'); $assert($status === 200 && str_starts_with($svg, '<svg'), 'Avatar route is owned by Accounts');
+    [$status, , $svg] = $request('/avatar/initials/v1/TWVtYmVy.svg'); $assert($status === 200 && str_starts_with($svg, '<svg'), 'Avatar route is owned by Accounts');
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     TinyCat\Database\Connection::set(\tinycat_test_database()); $pdo = null;

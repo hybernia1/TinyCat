@@ -37,14 +37,16 @@ $exercise = static function (PDO $db) use ($root, $assert, $assertIndexes): void
     $db->exec("INSERT INTO users(id,username,password,role,status,created_at,updated_at) VALUES (1,'fixture-admin','fixture','admin','active','2026-01-01','2026-01-01'),(2,'fixture-user','fixture','user','waiting','2026-01-01','2026-01-01')");
     $db->exec("INSERT INTO notifications(id,user_id,type,notification_key,read_at,created_at,updated_at) VALUES (1,1,'fixture.unknown','first',NULL,'2026-01-01','2026-01-01'),(2,1,'fixture.unknown','second','2026-01-02','2026-01-01','2026-01-01'),(3,2,'fixture.unknown','other',NULL,'2026-01-01','2026-01-01')");
     $before = [$db->query('SELECT * FROM users ORDER BY id')->fetchAll(PDO::FETCH_ASSOC), $db->query('SELECT * FROM notifications ORDER BY id')->fetchAll(PDO::FETCH_ASSOC)];
+    foreach ($before[0] as &$user) { unset($user['avatar_appearance']); }
+    unset($user);
     // Simulate DDL completed before an interrupted journal write; the migration resumes.
     $db->exec('CREATE INDEX users_updated_asc_index ON users(updated_at ASC, id DESC)');
     $db->exec('CREATE INDEX notifications_user_created_id_index ON notifications(user_id, created_at DESC, id DESC)');
     $assert(ModuleSchemas::pending($db, $schemas), 'Version 2 installations need read-index migrations.');
     ModuleSchemas::upgrade($db, $schemas);
-    $assert(!ModuleSchemas::pending($db, $schemas) && ModuleSchemas::ready($db, $schemas), 'Upgraded owners are ready at version 3.');
+    $assert(!ModuleSchemas::pending($db, $schemas) && ModuleSchemas::ready($db, $schemas), 'Upgraded owners are ready at their current schema versions.');
     ModuleSchemas::upgrade($db, $schemas);
-    $assert($before === [$db->query('SELECT * FROM users ORDER BY id')->fetchAll(PDO::FETCH_ASSOC), $db->query('SELECT * FROM notifications ORDER BY id')->fetchAll(PDO::FETCH_ASSOC)], 'Upgrade and repetition preserve all account and inbox data.');
+    $assert($before === [$db->query('SELECT * FROM users ORDER BY id')->fetchAll(PDO::FETCH_ASSOC), $db->query('SELECT * FROM notifications ORDER BY id')->fetchAll(PDO::FETCH_ASSOC)], 'Upgrade and repetition preserve account and inbox data except retired avatar appearance.');
     $assertIndexes($db);
     $assert(array_column($db->query('SELECT id FROM notifications WHERE user_id=1 ORDER BY created_at DESC,id DESC LIMIT 6')->fetchAll(PDO::FETCH_ASSOC), 'id') === [2, 1], 'Preview order retains ID tie-breaking and recipient isolation.');
     $assert((int) $db->query('SELECT COUNT(*) FROM notifications WHERE user_id=1 AND read_at IS NULL')->fetchColumn() === 1, 'Unread count remains exact.');

@@ -45,6 +45,11 @@ try {
         $expired = Cache::read('expiry') === null;
     } while (!$expired && hrtime(true) < $expiryDeadline);
     $expect($expired, 'Memcached expires stale data within the bounded deadline.');
+    foreach ([2_592_000, 2_592_001] as $retention) {
+        $expect(Cache::put('long-expiry', ['retained'], $retention, 0), 'Long expiry write succeeds.');
+        $longKey = (new ReflectionMethod(Cache::class, 'memcachedKey'))->invoke(null, 'long-expiry');
+        $expect(is_string($client->get($longKey)), 'Durations on both sides of the 30-day boundary remain on the real primary.');
+    }
     // Simulate an unavailable primary with a refused loopback port.
     $offline = new Memcached(); $offline->addServer('127.0.0.1', 1);
     (new ReflectionProperty(Cache::class, 'memcachedClient'))->setValue(null, $offline);
@@ -80,7 +85,7 @@ try {
     $expect(Cache::get('installation') === ['first'], 'Other installation mutation preserves the first.');
     echo "PASS real Memcached fallback, recovery, invalidation and expiry ({$checks} checks)\n";
 } finally {
-    foreach (['replacement', 'expiry', 'offline', 'partition', 'installation'] as $key) { Cache::forget($key); }
+    foreach (['replacement', 'expiry', 'long-expiry', 'offline', 'partition', 'installation'] as $key) { Cache::forget($key); }
 }
 
 $process = proc_open([PHP_BINARY, __DIR__ . '/concurrency.php', 'memcached'], [0 => ['pipe', 'r'], 1 => STDOUT, 2 => STDERR], $pipes);

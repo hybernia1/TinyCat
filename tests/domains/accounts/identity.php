@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../../tools/support/workspace.php';
 
 use TinyCat\Core\Identity\Authentication;
-use TinyCat\Core\Identity\Readiness;
+use TinyCat\Core\Identity\ServiceProvider;
 use TinyCat\Core\Identity\Roles;
 use TinyCat\Database\Connection;
 
@@ -27,17 +27,17 @@ $server = null;
 $pdo = \tinycat_test_database($directory . '/identity.database.json');
 try {
     Connection::set($pdo);
-    $assert(!Readiness::ready(), 'Missing schema is not ready');
+    $assert(!ServiceProvider::ready(), 'Missing schema is not ready');
     $pdo->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), email TEXT, password TEXT, role VARCHAR(40), status VARCHAR(24))');
     $pdo->exec('CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, token_hash TEXT, expires_at DATETIME, used_at TEXT)');
-    $assert(!Readiness::ready(), 'Empty accounts are not ready');
+    $assert(!ServiceProvider::ready(), 'Empty accounts are not ready');
     $password = 'Identity-fixture-42';
     $hash = Authentication::authPassword($password);
     $insert = $pdo->prepare('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)');
     foreach ([[1, 'Admin', 'admin@example.test', $hash, 'admin', 'active'], [2, 'Member', 'member@example.test', $hash, 'user', 'active'],
         [3, 'Bot', null, $hash, 'bot', 'active'], [4, 'Banned', null, $hash, 'user', 'ban'], [5, 'Waiting', null, $hash, 'user', 'waiting'],
         [6, 'Unknown', null, $hash, 'unknown', 'active']] as $row) { $insert->execute($row); }
-    $assert(Readiness::ready(), 'Accounts readiness needs only the users table');
+    $assert(ServiceProvider::ready(), 'Accounts readiness needs only the users table');
     $assert(Roles::rolesWith('allows_login') === ['admin', 'user'] && Roles::rolesWith('managed_by_core_admin') === ['admin', 'user'], 'Account capabilities retain order and meaning');
     $assert(!Roles::allowsLogin('bot') && !Roles::allowsLogin('unknown'), 'Noninteractive and unknown roles cannot log in');
     foreach (['TinyCat\\Social\\Profiles\\Roles', 'TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Core\\Settings\\Store'] as $class) {

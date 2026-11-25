@@ -118,7 +118,6 @@ foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Identity\\Login
 }
 $assert(array_column(Connection::all("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY name"), 'name') === ['password_reset_tokens', 'users'], 'Only account and reset-token tables are needed');
 TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $userId) : void {
-$assert(Passwords::errors('short', 'short') === Passwords::fieldErrors('short', 'short')['password'], 'Password summaries retain canonical field validation errors');
 TinyCat\Core\Identity\Recovery::replaceToken($userId, hash('sha256', 'compatibility'), TinyCat\Support\Dates::dateDb('+1 hour'));
 $assert(Connection::value('SELECT token_hash FROM password_reset_tokens') === hash('sha256', 'compatibility'), 'Legacy recovery writes through the canonical owner');
 });

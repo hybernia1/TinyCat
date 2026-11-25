@@ -14,12 +14,12 @@ final class ViewData
     {
         $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? ''));
         $body = \TinyCat\Social\Posts\Links::status_strip_external_urls((string) ($item['body'] ?? ''));
-        $body = \TinyCat\Core\Ui\Site::meta_text($body, 90);
+        $body = \TinyCat\Support\Text::excerpt($body, 90);
 
         if ($body !== '') {
             $title = $author !== '' ? $author . ': ' . $body : $body;
 
-            return \TinyCat\Core\Ui\Site::meta_text($title, $limit);
+            return \TinyCat\Support\Text::excerpt($title, $limit);
         }
 
         $linkTitle = \TinyCat\Social\Posts\ViewData::status_meta_link_title($item, 90);
@@ -27,7 +27,7 @@ final class ViewData
         if ($linkTitle !== '') {
             $title = $author !== '' ? $author . ': ' . $linkTitle : $linkTitle;
 
-            return \TinyCat\Core\Ui\Site::meta_text($title, $limit);
+            return \TinyCat\Support\Text::excerpt($title, $limit);
         }
 
         if ($author !== '') {
@@ -57,9 +57,9 @@ final class ViewData
                 continue;
             }
 
-            $title = \TinyCat\Core\Ui\Site::meta_text((string) ($link['title'] ?? ''), $limit);
+            $title = \TinyCat\Support\Text::excerpt((string) ($link['title'] ?? ''), $limit);
 
-            if ($title !== '' && !\TinyCat\Core\Links\Providers::titleIsPlaceholder($title)) {
+            if ($title !== '' && !\TinyCat\Social\Posts\Providers::titleIsPlaceholder($title)) {
                 return $title;
             }
         }
@@ -89,7 +89,7 @@ final class ViewData
             $imageUrl = trim((string) ($thumbnail['fallback'] ?? ''));
 
             if ($imageUrl !== '') {
-                return \TinyCat\Core\Ui\Site::absolute_url($imageUrl);
+                return \TinyCat\Support\LocalUrls::absolute($imageUrl);
             }
         }
 
@@ -102,7 +102,7 @@ final class ViewData
     public static function status_meta_description(array $item): string
     {
         $body = \TinyCat\Social\Posts\Links::status_strip_external_urls((string) ($item['body'] ?? ''));
-        $body = \TinyCat\Core\Ui\Site::meta_text($body, 180);
+        $body = \TinyCat\Support\Text::excerpt($body, 180);
 
         if ($body !== '') {
             return $body;
@@ -124,7 +124,7 @@ final class ViewData
      */
     public static function status_meta_image(array $item): string
     {
-        return \TinyCat\Social\Posts\Images::status_image_url($item) ?: \TinyCat\Social\Posts\ViewData::status_meta_link_image($item) ?: \TinyCat\Core\Identity\Avatars::user_avatar_url($item) ?: \TinyCat\Core\Ui\Site::site_meta_image_url();
+        return \TinyCat\Social\Posts\Images::status_image_url($item) ?: \TinyCat\Social\Posts\ViewData::status_meta_link_image($item) ?: \TinyCat\Social\Profiles\Profiles::avatarUrl($item) ?: \TinyCat\Core\Ui\Site::site_meta_image_url();
     }
 
     /**

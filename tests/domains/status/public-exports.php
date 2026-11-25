@@ -54,8 +54,8 @@ foreach ([['bad><injected' => 'value'], ['nested' => ['unexpected']], ['number' 
     try { Xml::elements($invalid); throw new RuntimeException('Invalid XML field was accepted.'); }
     catch (LogicException) { $assert(true, 'Invalid XML names and unsupported values are rejected.'); }
 }
-$rssItem = ['itemTitle' => 'Audio', 'itemUrl' => 'https://example.test/audio', 'publishedDate' => '', 'creator' => 'Owner', 'creatorUrl' => '', 'categories' => [], 'imageUrl' => '', 'rssBody' => 'Description', 'enclosure' => ['url' => '/audio.mp3', 'type' => 'audio/mpeg', 'length' => 321]];
-$rss = simplexml_load_string(\TinyCat\Core\Feeds\Rss::render('Feed', 'Description', '/', 'https://example.test/feed', [$rssItem]));
+$rssItem = ['title' => 'Audio', 'url' => 'https://example.test/audio', 'published_date' => '', 'creator' => 'Owner', 'creator_url' => '', 'categories' => [], 'image_url' => '', 'html' => 'Description', 'enclosure' => ['url' => 'https://example.test/audio.mp3', 'type' => 'audio/mpeg', 'length' => 321]];
+$rss = simplexml_load_string(\TinyCat\Core\Ui\Rss::render('Feed', 'Description', 'https://example.test/', 'https://example.test/feed', [$rssItem]));
 $assert($rss !== false && (string) $rss->channel->item->enclosure['type'] === 'audio/mpeg' && (string) $rss->channel->item->enclosure['length'] === '321', 'Generic RSS preserves owner-supplied enclosure metadata instead of assuming WebP.');
 // Exercise deep offset partitioning with gaps, hidden rows, inactive authors and optional images.
 for ($i = 0; $i < 45; $i++) {

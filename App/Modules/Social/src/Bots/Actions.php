@@ -29,7 +29,7 @@ final class Actions
         }
 
         $status = (string) \TinyCat\Http\Request::current()->input('status', $account['status']);
-        if (!array_key_exists($status, \TinyCat\Support\AdminViews::admin_user_statuses())) {
+        if (!in_array($status, \TinyCat\Core\Identity\Administration::statuses(), true)) {
             \TinyCat\Http\Response::validation(['status' => [\TinyCat\Http\Response::issue('user_status_invalid', \TinyCat\Support\Localization::t('users.validation.status_invalid'))]]);
         }
 

@@ -455,5 +455,19 @@
     "purpose_bot_sources": "Bot hesapları için RSS ve Atom yayınlama kuralları.",
     "purpose_bot_feed_history": "Yinelenen bot gönderilerini önlemek için kullanılan son yayın öğesi karmaları.",
     "purpose_bot_source_runs": "Bot kaynak kontrolleri ve içe aktarmalarının kompakt tanılama geçmişi."
+  },
+  "cron": {
+    "tasks": {
+      "feeds": "kaynakları",
+      "feeds_help": "Etkin kaynaklardan gelen, aralığının dolması gereken öğeleri yayınlar.",
+      "feeds_schedule": "Gerekli yoklama sıklığına göre planlama yapın; genellikle her iki dakikada bir."
+    },
+    "options": {
+      "bot_limit": "Kaynak sınırı",
+      "source_id": "Kaynak Kimliği"
+    },
+    "cadence": {
+      "feeds": "Her iki dakikada bir kontrol edin"
+    }
   }
 }

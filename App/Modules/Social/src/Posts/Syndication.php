@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Core\Text\LinkParser;
+use TinyCat\Social\Posts\LinkParser;
 
 use TinyCat\Social\Posts\Links;
 
@@ -40,7 +40,7 @@ final class Syndication
             $rows = \TinyCat\Social\Search\Queries::public_search_content_rows($query, 50, '', 0, $media);
             $rssItems = Export::byIds(array_map('intval', array_column($rows, 'id')));
         } elseif ($rssType === 'tag') {
-            $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
+            $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
 
             $termId = $tag !== '' ? \TinyCat\Social\Posts\Tags::status_term_id_exact($tag) : 0;
             if ($termId < 1) {
@@ -62,7 +62,7 @@ final class Syndication
             }
 
             $authorName = \TinyCat\Social\Profiles\Profiles::user_display_name($author);
-            $rssImage = \TinyCat\Core\Identity\Avatars::user_avatar_url($author) ?: $rssImage;
+            $rssImage = \TinyCat\Social\Profiles\Profiles::avatarUrl($author) ?: $rssImage;
             $rssTitle = $authorName;
             $rssDescription = 'Public posts by ' . $authorName;
             $rssLink = \TinyCat\Social\Profiles\Profiles::author_url((int) $author['id']);
@@ -76,7 +76,7 @@ final class Syndication
         if ($rssType !== 'search' && $media !== '') { $rssLink .= '?media=' . $media; }
 
         $siteName = \TinyCat\Core\Ui\Site::site_name();
-        $selfUrl = \TinyCat\Core\Ui\Site::absolute_url($rssSelfLink);
+        $selfUrl = \TinyCat\Support\LocalUrls::absolute($rssSelfLink);
         $locale = \TinyCat\Support\Localization::defaultLocale();
         $items = [];
         // Load all preview candidates once; exporting a feed must not fetch remote metadata.
@@ -84,25 +84,26 @@ final class Syndication
         foreach ($rssItems as $item) {
             $body = trim((string) ($item['body'] ?? ''));
             $itemTitle = ViewData::status_meta_title($item, 100);
-            $itemUrl = \TinyCat\Core\Ui\Site::absolute_url(\TinyCat\Social\Posts\Posts::status_url((int) ($item['id'] ?? 0)));
+            $itemUrl = \TinyCat\Support\LocalUrls::absolute(\TinyCat\Social\Posts\Posts::status_url((int) ($item['id'] ?? 0)));
             $publishedAt = (string) ($item['published_at'] ?? '');
             $publishedDate = $publishedAt !== '' ? \TinyCat\Support\Dates::dateTime($publishedAt, DATE_RSS) : '';
             $attachedImage = \TinyCat\Social\Posts\Images::status_image_url($item);
             $imageUrl = $attachedImage !== '' ? $attachedImage : ViewData::status_meta_link_image($item);
+            $imageUrl = $imageUrl !== '' ? \TinyCat\Support\LocalUrls::absolute($imageUrl) : '';
             $imageType = $attachedImage !== '' ? 'image/webp' : '';
             $imageAlt = $attachedImage !== '' ? \TinyCat\Social\Posts\Images::status_image_alt_text($item) : $itemTitle;
             $imageBytes = max(0, (int) ($item['image_bytes'] ?? 0));
-            $rssBody = \TinyCat\Core\Feeds\Rss::html($body);
+            $rssBody = \TinyCat\Core\Ui\Rss::html($body);
             if ($imageUrl !== '') {
-                $rssBody .= \TinyCat\Support\Components::render('status/rss-image', ['url' => \TinyCat\Core\Ui\Site::absolute_url($imageUrl), 'alt' => $imageAlt]);
+                $rssBody .= \TinyCat\Support\Components::render('status/rss-image', ['url' => \TinyCat\Support\LocalUrls::absolute($imageUrl), 'alt' => $imageAlt]);
             }
-            $categories = array_map(static fn (string $tag): array => ['name' => $tag, 'url' => Tags::tag_url($tag)], Tags::status_tags_from_text($body));
+            $categories = array_map(static fn (string $tag): array => ['name' => $tag, 'url' => \TinyCat\Support\LocalUrls::absolute(Tags::tag_url($tag))], Tags::extractTags($body));
             $creator = (string) ($item['author_name'] ?? '');
-            $creatorUrl = \TinyCat\Core\Ui\Site::absolute_url(\TinyCat\Http\LocaleRouting::canonical(\TinyCat\Social\Profiles\Profiles::author_url((int) $item['author_id'])));
+            $creatorUrl = \TinyCat\Support\LocalUrls::absolute(\TinyCat\Http\LocaleRouting::canonical(\TinyCat\Social\Profiles\Profiles::author_url((int) $item['author_id'])));
 
             $enclosure = $attachedImage !== '' ? ['url' => $imageUrl, 'length' => $imageBytes, 'type' => $imageType] : null;
-            $items[] = compact('itemTitle', 'itemUrl', 'publishedDate', 'imageUrl', 'imageType', 'rssBody', 'categories', 'creator', 'creatorUrl', 'enclosure');
+            $items[] = ['title' => $itemTitle, 'url' => $itemUrl, 'published_date' => $publishedDate, 'image_url' => $imageUrl, 'image_type' => $imageType, 'html' => $rssBody, 'categories' => $categories, 'creator' => $creator, 'creator_url' => $creatorUrl, 'enclosure' => $enclosure];
         }
-        \TinyCat\Http\Document::respond(\TinyCat\Core\Feeds\Rss::render($rssTitle, $rssDescription, $rssLink, $selfUrl, $items, $rssImage, $locale), 'application/rss+xml');
+        \TinyCat\Core\Ui\Rss::respond($rssTitle . ' | ' . $siteName, $rssDescription, \TinyCat\Support\LocalUrls::absolute($rssLink), $selfUrl, $items, $rssImage !== '' ? \TinyCat\Support\LocalUrls::absolute($rssImage) : '', $locale);
     }
 }

@@ -9,9 +9,9 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\
 
 use TinyCat\Core\Links\Audio;
 use TinyCat\Social\Posts\Links;
-use TinyCat\Core\Text\LinkParser;
-use TinyCat\Core\Links\Metadata;
-use TinyCat\Core\Links\Providers;
+use TinyCat\Social\Posts\LinkParser;
+use TinyCat\Social\Posts\LinkMetadata as Metadata;
+use TinyCat\Social\Posts\Providers;
 use TinyCat\Core\Feeds\FeedParser;
 
 $checks = 0;
@@ -44,10 +44,10 @@ $assert($meta['audio_url'] === 'https://93.184.216.34/episode.ogg', 'HTML audio 
 $id = '921ff6c4-997a-3349-8d08-c8a5b759a832';
 $url = 'https://www.mujrozhlas.cz/rapi/view/episode/' . $id;
 $assert(Providers::structuredRequest($url)['url'] === 'https://api.mujrozhlas.cz/episodes/' . $id, 'Episode links use the mujRozhlas API.');
-$assert(Audio::rozhlasId(str_replace('mujrozhlas.cz', 'mujrozhlas.cz.evil.test', $url)) === '', 'Lookalike hosts cannot select a provider.');
-$meta = Audio::rozhlasMetadata(['data'=>['type'=>'episode', 'id'=>$id, 'attributes'=>['title'=>'Episode', 'audioLinks'=>[['url'=>$media]]]]], $id);
+$assert(\TinyCat\Social\Posts\Providers::rozhlasId(str_replace('mujrozhlas.cz', 'mujrozhlas.cz.evil.test', $url)) === '', 'Lookalike hosts cannot select a provider.');
+$meta = \TinyCat\Social\Posts\Providers::rozhlasMetadata(['data'=>['type'=>'episode', 'id'=>$id, 'attributes'=>['title'=>'Episode', 'audioLinks'=>[['url'=>$media]]]]], $id);
 $assert($meta['audio_url'] === $media && $meta['link_type'] === 'audio', 'Provider audio URLs are extracted.');
-$assert(Audio::rozhlasMetadata(['data'=>['type'=>'episode', 'id'=>'wrong']], $id) === [], 'Mismatched episode metadata is rejected.');
+$assert(\TinyCat\Social\Posts\Providers::rozhlasMetadata(['data'=>['type'=>'episode', 'id'=>'wrong']], $id) === [], 'Mismatched episode metadata is rejected.');
 $link = Links::status_link_prepare_metadata(LinkParser::fromRaw('https://93.184.216.34/episode'), null, false,
     ['url_hash'=>'', 'title'=>'Episode', 'description'=>'Summary', 'image_urls'=>[], 'audio_url'=>$media]);
 $assert($link['audio_url'] === $media && $link['link_type'] === 'audio', 'Feed source audio reaches prepared links without artwork.');

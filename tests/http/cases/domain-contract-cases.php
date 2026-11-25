@@ -121,11 +121,11 @@ $assert($status === 200, 'The created root comment remains independently removab
 [$status, $payload] = $request('POST', '/api/statuses/10/comments', ['comment' => 'JSON reply <b>literal</b>', 'parent_id' => 10], 'user', $csrf);
 $assert($status === 201 && $payload['data']['comment']['parent_id'] === 10 && !isset($payload['data']['comment']['html']), 'AJAX replies return a complete comment resource instead of rendered markup.');
 $commentId = $payload['data']['comment']['id'];
-$assert(str_starts_with($payload['data']['comment']['author']['avatar_url'], '/avatar/generated/v1/2.svg'), 'New replies carry the avatar of their author rather than an empty fallback.');
+$assert(str_starts_with($payload['data']['comment']['author']['avatar_url'], '/avatar/initials/v1/' . rtrim(strtr(base64_encode('member'), '+/', '-_'), '=')), 'New replies carry the avatar of their author rather than an empty fallback.');
 [$commentsStatus, $commentTree] = $request('GET', '/api/statuses/10/comments?parent_id=10');
 $replyWithAvatar = null;
 foreach ($commentTree['data']['items'] as $reply) { if ($reply['id'] === $commentId) { $replyWithAvatar = $reply; } }
-$assert($commentsStatus === 200 && $replyWithAvatar !== null && str_starts_with($replyWithAvatar['author']['avatar_url'], '/avatar/generated/v1/2.svg'), 'Reloading nested replies preserves the correct author avatar.');
+$assert($commentsStatus === 200 && $replyWithAvatar !== null && str_starts_with($replyWithAvatar['author']['avatar_url'], '/avatar/initials/v1/' . rtrim(strtr(base64_encode('member'), '+/', '-_'), '=')), 'Reloading nested replies preserves the correct author avatar.');
 [$commentsStatus, $rootPage] = $request('GET', '/api/statuses/10/comments?limit=1');
 $assert($commentsStatus === 200 && count($rootPage['data']['items']) === 1 && $rootPage['data']['items'][0]['has_replies'] && $rootPage['data']['items'][0]['replies'] === [] && $rootPage['meta']['pagination']['next_url'] !== '', 'Root page is bounded and advertises lazy replies and continuation.');
 [$commentsStatus, $replyPage] = $request('GET', '/api/statuses/10/comments?parent_id=10&limit=1');

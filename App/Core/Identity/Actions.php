@@ -30,7 +30,7 @@ final class Actions
     {
         $next = \TinyCat\Core\Identity\Login::auth_request_next_url();
 
-        if (!\TinyCat\Core\Identity\Integration::registrationEnabled()) {
+        if (!(bool) \TinyCat\Core\Runtime\Startup::option('auth.registration.enabled', false)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('auth.registration_disabled'), 403, 'registration_disabled');
         }
 
@@ -87,11 +87,11 @@ final class Actions
         $role = (string) \TinyCat\Http\Web::get('role', '');
         $status = (string) \TinyCat\Http\Web::get('status', '');
 
-        if (!array_key_exists($role, \TinyCat\Core\Identity\ReadModel::roles())) {
+        if (!array_key_exists($role, \TinyCat\Core\Identity\Roles::coreAdminLabels())) {
             $role = '';
         }
 
-        if (!array_key_exists($status, \TinyCat\Support\AdminViews::admin_user_statuses())) {
+        if (!in_array($status, \TinyCat\Core\Identity\Administration::statuses(), true)) {
             $status = '';
         }
 
@@ -181,17 +181,6 @@ final class Actions
         return ['message' => \TinyCat\Support\Localization::t('account.messages.password_saved'), 'code' => 'password_saved'];
     }
     /**
-     * @param array<mixed> $params
-     */
-    public static function tc_admin_users_api_url(array $params = [], bool $withFilters = true): string
-    {
-        $query = $withFilters ? array_replace(self::tc_admin_users_list_params(), $params) : $params;
-        $id = max(0, (int) ($query['id'] ?? 0));
-        unset($query['id']);
-        return \TinyCat\Support\AdminViews::admin_list_url(\TinyCat\Core\Ui\Admin\Definitions::value('core.users', 'endpoint') . ($id > 0 ? '/' . $id : ''), $query);
-    }
-
-    /**
      * @param array<mixed> $filters
      * @param array<mixed> $pagination
      * @return array<mixed>
@@ -238,20 +227,21 @@ final class Actions
         $stats = \TinyCat\Core\Identity\ReadModel::tc_admin_users_stats();
         $unfiltered = array_filter(array_intersect_key($filters, array_flip(['q', 'role', 'status', 'updated_from', 'updated_to'])), static fn (mixed $value): bool => $value !== '') === [];
         $page = \TinyCat\Core\Identity\Actions::tc_admin_users_page($filters, $unfiltered ? $stats['total'] : null);
-        $users = array_map('TinyCat\\Core\\Identity\\Resource::legacyUser', $page['items']);
+        $primaryId = Administration::primaryId();
+        $users = array_map(static fn (array $user): array => Resource::legacyUser($user, $primaryId), $page['items']);
         $payload = [
             'items' => $users,
             'pagination' => $page['pagination'],
             'stats' => $stats,
-            'roles' => \TinyCat\Core\Identity\ReadModel::roles(),
-            'statuses' => \TinyCat\Support\AdminViews::admin_user_statuses(),
+            'roles' => \TinyCat\Core\Identity\Roles::coreAdminLabels(),
+            'statuses' => \TinyCat\Core\Identity\Views::statusLabels(),
             'filters' => $filters,
         ];
 
         if ($id !== null) {
             $payload['id'] = $id;
             $item = \TinyCat\Core\Identity\ReadModel::tc_admin_user_by_id($id) ?? [];
-            $payload['item'] = \TinyCat\Core\Identity\Resource::legacyUser($item);
+            $payload['item'] = \TinyCat\Core\Identity\Resource::legacyUser($item, $primaryId);
         }
 
         return $payload;
@@ -305,6 +295,26 @@ final class Actions
     }
 
     /** @return array<mixed> */
+    private static function adminUserMessages(): array
+    {
+        return [
+            'username.required' => \TinyCat\Support\Localization::t('users.validation.username_required'),
+            'username.string' => \TinyCat\Support\Localization::t('users.validation.username_invalid'),
+            'username.max' => \TinyCat\Support\Localization::t('users.validation.username_max'),
+            'password.required' => \TinyCat\Support\Localization::t('users.validation.password_required'),
+            'password.string' => \TinyCat\Support\Localization::t('users.validation.password_required'),
+            'password.min' => \TinyCat\Support\Localization::t('users.validation.password_min', ['min' => (string) \TinyCat\Core\Identity\Passwords::minLength()]),
+            'password.max' => \TinyCat\Support\Localization::t('users.validation.password_max', ['max' => (string) \TinyCat\Core\Identity\Passwords::maxLength()]),
+            'role.required' => \TinyCat\Support\Localization::t('users.validation.role_required'),
+            'role.string' => \TinyCat\Support\Localization::t('users.validation.role_invalid'),
+            'role.in' => \TinyCat\Support\Localization::t('users.validation.role_invalid'),
+            'status.required' => \TinyCat\Support\Localization::t('users.validation.status_required'),
+            'status.string' => \TinyCat\Support\Localization::t('users.validation.status_invalid'),
+            'status.in' => \TinyCat\Support\Localization::t('users.validation.status_invalid'),
+        ];
+    }
+
+    /** @return array<mixed> */
     private static function adminUserInput(?int $id = null): array
     {
         $passwordRule = 'nullable|string';
@@ -319,7 +329,7 @@ final class Actions
             $rules = ['username' => 'required|string|max:' . \TinyCat\Core\Identity\Usernames::maxLength()] + $rules;
         }
 
-        $data = \TinyCat\Http\Request::current()->validated($rules, \TinyCat\Core\Identity\ReadModel::tc_admin_user_validation_messages());
+        $data = \TinyCat\Http\Request::current()->validated($rules, self::adminUserMessages());
 
         $data['bio'] = \TinyCat\Http\Request::current()->input('bio', '');
         return $data;

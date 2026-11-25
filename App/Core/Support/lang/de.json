@@ -225,8 +225,6 @@
     "inactive": "Inaktiv",
     "enable": "Aktivieren",
     "disable": "Deaktivieren",
-    "enable_group": "Gruppe aktivieren",
-    "disable_group": "Gruppe deaktivieren",
     "needed_by": "Benötigt von: {modules}",
     "confirm": "Modulauswahl ändern? Abhängigkeiten werden geprüft und Daten bleiben erhalten.",
     "module": "Modul",

@@ -14,14 +14,14 @@ final class Metadata
         $plain = static fn (string $value): string => (string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
         $title = $plain((string) ($page['title'] ?? Site::site_name()));
         $title = $title === Site::site_name() ? $title : $title . ' | ' . Site::site_name();
-        $metaTitle = $plain(Site::meta_text((string) ($meta['title'] ?? $title), 120));
-        $absolute = static fn (string $url): string => $url !== '' ? Site::absolute_url($url) : '';
+        $metaTitle = $plain(\TinyCat\Support\Text::excerpt((string) ($meta['title'] ?? $title), 120));
+        $absolute = static fn (string $url): string => $url !== '' ? \TinyCat\Support\LocalUrls::absolute($url) : '';
         $image = $absolute(trim((string) ($meta['image'] ?? Site::site_meta_image_url())));
         $locale = \TinyCat\Support\Localization::locale();
         $locales = ['cs' => 'cs_CZ', 'en' => 'en_US', 'de' => 'de_DE', 'es' => 'es_ES', 'fr' => 'fr_FR', 'pt' => 'pt_BR', 'ru' => 'ru_RU', 'it' => 'it_IT', 'nl' => 'nl_NL', 'pl' => 'pl_PL', 'tr' => 'tr_TR', 'uk' => 'uk_UA'];
         return [
             'title' => $title, 'meta_title' => $metaTitle,
-            'description' => $plain(Site::meta_text((string) ($meta['description'] ?? Site::site_meta_description()), 180)),
+            'description' => $plain(\TinyCat\Support\Text::excerpt((string) ($meta['description'] ?? Site::site_meta_description()), 180)),
             'url' => $absolute(\TinyCat\Http\LocaleRouting::canonical((string) ($meta['url'] ?? $page['current'] ?? '/'))),
             'type' => (string) ($meta['type'] ?? 'website'),
             'locale' => $locales[$locale] ?? str_replace('-', '_', $locale),

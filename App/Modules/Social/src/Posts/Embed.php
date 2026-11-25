@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Core\Links\Providers;
+use TinyCat\Social\Posts\Providers;
 
 
 use TinyCat\Social\Posts\Links;
@@ -24,7 +24,7 @@ final class Embed
 
     public static function discoveryUrl(int $id, string $format = 'json'): string
     {
-        return Presentation::absolute_url('/oembed') . '?' . http_build_query(['url' => Presentation::absolute_url('/status/' . $id), 'format' => $format]);
+        return \TinyCat\Core\Discovery\Oembed::discoveryUrl(\TinyCat\Support\LocalUrls::absolute('/status/' . $id), $format);
     }
 
     /** @return array<string, mixed>|null */
@@ -44,7 +44,7 @@ final class Embed
     /** @param array<string, mixed> $item */
     public static function iframe(array $item, int $width = 550, int $height = 600): string
     {
-        $src = Presentation::absolute_url('/status/' . (int) $item['id'] . '/embed') . '?maxheight=' . $height;
+        $src = \TinyCat\Support\LocalUrls::absolute('/status/' . (int) $item['id'] . '/embed') . '?maxheight=' . $height;
         return '<iframe class="tinycat-embed wp-embedded-content" src="' . Html::e($src) . '" width="' . $width . '" height="' . $height
             . '" title="' . Html::e((string) $item['author_name'] . ' · ' . Presentation::site_name())
             . '" loading="lazy" referrerpolicy="strict-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation" style="border:0;max-width:100%;width:' . $width . 'px"></iframe>';
@@ -58,7 +58,7 @@ final class Embed
         $media = [];
         foreach (array_slice(array_values($links), 0, 3) as $link) {
             $card = Resource::link($link, (int) $item['id']);
-            $card['outbound_url'] = Presentation::absolute_url($card['outbound_url']);
+            $card['outbound_url'] = \TinyCat\Support\LocalUrls::absolute($card['outbound_url']);
             $card['url'] = \TinyCat\Core\Security\Sanitizer::sanitize_html_url($card['url']);
             if ($card['url'] === '') { continue; }
             $media[] = $card;
@@ -71,15 +71,15 @@ final class Embed
     {
         $item = self::find($id);
         if ($item === null) { return null; }
-        return ['url' => Presentation::absolute_url('/status/' . $id),
-            'frame_url' => Presentation::absolute_url('/status/' . $id . '/embed'),
+        return ['url' => \TinyCat\Support\LocalUrls::absolute('/status/' . $id),
+            'frame_url' => \TinyCat\Support\LocalUrls::absolute('/status/' . $id . '/embed'),
             'snippet' => self::code($item)];
     }
 
     /** @param array<string, mixed> $item */
     private static function code(array $item): string
     {
-        return self::iframe($item) . "\n" . '<script async src="' . Html::e(Presentation::absolute_url('/assets/embed.js')) . '"></script>';
+        return self::iframe($item) . "\n" . '<script async src="' . Html::e(\TinyCat\Support\LocalUrls::absolute('/assets/embed.js')) . '"></script>';
     }
 
     /** @return array<string, mixed>|null */
@@ -89,10 +89,9 @@ final class Embed
         $item = self::find((int) $match[1]);
         if ($item === null) { return null; }
         $data = [
-            'version' => '1.0', 'type' => 'rich',
-            'provider_name' => Presentation::site_name(), 'provider_url' => Presentation::absolute_url('/'),
-            'author_name' => (string) $item['author_name'], 'author_url' => Presentation::absolute_url('/author/' . (int) $item['author_id']),
-            'title' => Presentation::meta_text((string) $item['body'], 120) ?: (string) $item['author_name'],
+            'type' => 'rich',
+            'author_name' => (string) $item['author_name'], 'author_url' => \TinyCat\Support\LocalUrls::absolute('/author/' . (int) $item['author_id']),
+            'title' => \TinyCat\Support\Text::excerpt((string) $item['body'], 120) ?: (string) $item['author_name'],
             'width' => $width, 'height' => $height, 'html' => self::iframe($item, $width, $height), 'cache_age' => 0,
         ];
         $image = \TinyCat\Social\Posts\Images::status_image_url($item);
@@ -103,7 +102,7 @@ final class Embed
             $thumbnail = (string) ($link['image_url'] ?: $link['thumbnail_url']);
         }
         if ($thumbnail !== '') {
-            $data['thumbnail_url'] = Presentation::absolute_url($thumbnail);
+            $data['thumbnail_url'] = \TinyCat\Support\LocalUrls::absolute($thumbnail);
             if ($image !== '' && (int) $item['image_width'] > 0 && (int) $item['image_height'] > 0) {
                 $data['thumbnail_width'] = (int) $item['image_width']; $data['thumbnail_height'] = (int) $item['image_height'];
             }
@@ -129,14 +128,14 @@ final class Embed
             if (!$like instanceof \DOMElement) { continue; }
             $link = $document->createElement('a');
             $link->setAttribute('class', $like->getAttribute('class'));
-            $link->setAttribute('href', Presentation::absolute_url($resource['url']));
+            $link->setAttribute('href', \TinyCat\Support\LocalUrls::absolute($resource['url']));
             $link->setAttribute('aria-label', Localization::t('account.status_like_for', ['context' => (string) $item['author_name']]));
             while ($like->firstChild !== null) { $link->appendChild($like->firstChild); }
             $like->parentNode?->replaceChild($link, $like);
         }
         foreach ($document->getElementsByTagName('a') as $link) {
             $href = $link->getAttribute('href');
-            if (str_starts_with($href, '/')) { $link->setAttribute('href', Presentation::absolute_url($href)); }
+            if (str_starts_with($href, '/')) { $link->setAttribute('href', \TinyCat\Support\LocalUrls::absolute($href)); }
             $link->setAttribute('target', '_blank');
             $link->setAttribute('rel', trim($link->getAttribute('rel') . ' noopener noreferrer'));
         }
@@ -148,7 +147,7 @@ final class Embed
         }
         foreach ($xpath->query('//figure[contains(@class,"status-image")]//img') ?: [] as $image) {
             if (!$image instanceof \DOMElement) { continue; }
-            $image->setAttribute('src', Presentation::absolute_url($image->getAttribute('src')));
+            $image->setAttribute('src', \TinyCat\Support\LocalUrls::absolute($image->getAttribute('src')));
             if ((int) ($item['image_width'] ?? 0) > 0 && (int) ($item['image_height'] ?? 0) > 0) {
                 $image->setAttribute('width', (string) $item['image_width']);
                 $image->setAttribute('height', (string) $item['image_height']);
@@ -172,7 +171,7 @@ final class Embed
         if ($item === null) { Document::notFound(Localization::t('public.status_not_found')); return; }
         $media = self::media($item);
         $html = View::render('embed', [
-            'author' => (string) $item['author_name'], 'url' => Presentation::absolute_url('/status/' . $id),
+            'author' => (string) $item['author_name'], 'url' => \TinyCat\Support\LocalUrls::absolute('/status/' . $id),
             'siteName' => Presentation::site_name(),
             'card' => self::card($item, $media),
             'cardStyles' => \TinyCat\Support\ClientAssets::styles('/status'),

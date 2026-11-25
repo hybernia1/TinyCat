@@ -12,10 +12,22 @@ if (count(spl_autoload_functions()) !== $autoloaders || class_exists(\TinyCat\Co
 if (($argv[1] ?? '') === '--framework') {
     $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);
     \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['driver' => 'mysql']]), $loader);
-    foreach ([\TinyCat\Core\Identity\Pages::class, \TinyCat\Core\Identity\Authentication::class, \TinyCat\Core\Identity\Readiness::class, \TinyCat\Core\Tasks\Pages::class, \TinyCat\Core\Tasks\Tokens::class, \TinyCat\Core\Installation\Pages::class, \TinyCat\Core\Updates\Pages::class, \TinyCat\Core\Ui\Admin\Diagnostics::class, \TinyCat\Core\Runtime\Errors::class] as $class) {
+    foreach ([\TinyCat\Core\Identity\Pages::class, \TinyCat\Core\Identity\Authentication::class, \TinyCat\Core\Tasks\Pages::class, \TinyCat\Core\Tasks\Tokens::class, \TinyCat\Core\Installation\Pages::class, \TinyCat\Core\Updates\Pages::class, \TinyCat\Core\Ui\Admin\Diagnostics::class, \TinyCat\Core\Runtime\Errors::class] as $class) {
         if (class_exists($class, false)) { throw new RuntimeException('Framework registration eagerly loaded ' . $class); }
     }
     if (session_status() !== PHP_SESSION_NONE || class_exists(\TinyCat\Database\Connection::class, false)) { throw new RuntimeException('Framework registration opened runtime state.'); }
+    $feed = \TinyCat\Core\Feeds\FeedParser::parse('<rss><channel><item><guid>core-only</guid><title>Story</title><description>Read more https://93.184.216.34/story</description></item></channel></rss>');
+    if (($feed[0]['description'] ?? '') !== 'Read more https://93.184.216.34/story') { throw new RuntimeException('Core feed parsing must preserve editorial text without Social.'); }
+    $url = 'https://youtu.be/abc123?utm_source=keep&fbclid=keep#part';
+    $parsed = \TinyCat\Core\Text\LinkParser::fromRaw($url);
+    if (($parsed['normalized_url'] ?? '') !== $url || isset($parsed['provider'])) { throw new RuntimeException('Core URL parsing must preserve query data without a provider policy.'); }
+    if (count(\TinyCat\Core\Text\LinkParser::extract(implode(' ', array_map(static fn (int $n): string => 'https://example.com/' . $n, range(1, 12))))) !== 12) { throw new RuntimeException('Core URL extraction must not impose the Social link budget.'); }
+    if (\TinyCat\Core\Text\InlineText::map(':) #tag @12', static fn (string $text): string => $text) !== ':) #tag @12') { throw new RuntimeException('Core text must not apply Social inline syntax.'); }
+    $metadata = (new ReflectionMethod(\TinyCat\Core\Links\Metadata::class, 'parseHtml'))->invoke(null, '<title>Generic page</title><meta name="description" content="Read more">', 'https://93.184.216.34/');
+    if ($metadata !== ['title' => 'Generic page', 'description' => 'Read more']) { throw new RuntimeException('Core metadata parsing must not apply provider or editorial rules.'); }
+    foreach (get_included_files() as $included) {
+        if (str_contains(str_replace('\\', '/', $included), '/App/Modules/')) { throw new RuntimeException('Core feed parsing loaded a functional module.'); }
+    }
     echo "PASS framework callbacks defer page handlers, identity, diagnostics and scheduler authorization\n";
     exit;
 }
@@ -46,7 +58,7 @@ $assert(\TinyCat\Support\Localization::locale() === 'cs', 'Locale uses the suppl
 $assert((new ReflectionMethod(\TinyCat\Support\Cache::class, 'driver'))->invoke(null) === 'filesystem', 'Cache uses supplied technical configuration.');
 $assert(\TinyCat\Database\Schema::app_db_ready() && $readyCalls === 1, 'Readiness uses the supplied callback and in-memory DSN.');
 $assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'") === 0, 'The configured database contains no social or account tables.');
-$assert(\TinyCat\Core\Text\Segments::text('#tag @user', 'fixture.text') === [['type' => 'text', 'text' => '#tag @user']], 'Core renders an explicit neutral text kind without any functional owner or domain tables.');
+$assert(\TinyCat\Core\Text\InlineText::map('#tag @user', static fn (string $text): string => $text) === '#tag @user', 'Core renders an explicit neutral text kind without any functional owner or domain tables.');
 \TinyCat\Http\Router::route('GET', '/_kernel-probe', static function (): void { echo 'kernel'; });
 ob_start();
 $matched = \TinyCat\Http\Router::dispatch('/_kernel-probe', 'GET');
@@ -74,11 +86,11 @@ try { \TinyCat\Core\Runtime\Application::start(); throw new RuntimeException('Du
 catch (LogicException) { $assert(\TinyCat\Core\Modules\Resources::revision() === $revision, 'Duplicate start fails before changing shared state.'); }
 
 // Platform services remain available when no functional module is selected.
-foreach ([\TinyCat\Core\Tasks\Runner::class, \TinyCat\Core\Tasks\History::class, \TinyCat\Core\Tasks\Cleanup::class, \TinyCat\Core\Mail\Smtp::class, \TinyCat\Core\Settings\Store::class] as $class) {
+foreach ([\TinyCat\Core\Tasks\Runner::class, \TinyCat\Core\Tasks\History::class, \TinyCat\Core\Tasks\Cleanup\Task::class, \TinyCat\Core\Mail\Smtp::class, \TinyCat\Core\Settings\Store::class] as $class) {
     $assert(class_exists($class), 'Platform implementation is available without a module: ' . $class);
 }
-$assert(\TinyCat\Core\Tasks\HealthCheck::run()['metrics'] === [], 'Task diagnostics do not invent business tasks.');
-$assert(\TinyCat\Core\Tasks\FileCleanup::temporary(1) === ['changed' => 0, 'has_more' => false], 'An empty catalog supplies no temporary directories.');
+$assert(\TinyCat\Core\Tasks\Health\Checks::scheduler()['metrics'] === [], 'Task diagnostics do not invent business tasks.');
+$assert(\TinyCat\Core\Tasks\Cleanup\Files::temporary(1) === ['changed' => 0, 'has_more' => false], 'An empty catalog supplies no temporary directories.');
 $assert(\TinyCat\Core\Mail\Smtp::email_smtp_send('invalid', 'subject', 'body') === false, 'Unconfigured SMTP fails without loading account validation.');
 $assert(\TinyCat\Core\Tasks\Execution::health()['available_tasks'] === [], 'Core execution metadata does not need the Scheduler module.');
 foreach (['Accounts', 'Scheduler', 'Settings', 'Mail', 'Bots', 'Status'] as $owner) {

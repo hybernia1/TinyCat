@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 namespace TinyCat\Core\Tasks;
-use TinyCat\Core\Tasks\Tasks;
 
 use TinyCat\Support\AdminViews;
 use TinyCat\Http\Web;

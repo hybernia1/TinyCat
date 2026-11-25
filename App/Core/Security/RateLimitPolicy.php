@@ -25,19 +25,20 @@ final class RateLimitPolicy
     /** @param array{scope: string, window: int, max: int} $rule */
     public static function defineRequest(string $owner, string $action, array $rule): void
     {
+        if (preg_match('/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$/D', $owner) !== 1) { throw new \InvalidArgumentException('Invalid provider owner.'); }
         if (isset(self::REQUESTS[$action]) || preg_match('/^[a-z][a-z0-9_-]{0,63}$/D', $action) !== 1) { throw new \InvalidArgumentException('Reserved or invalid request-budget ID.'); }
         if (isset(self::$owners[$action]) && self::$owners[$action] !== $owner) { throw new \LogicException('Duplicate request budget: ' . $action); }
         if (!in_array($rule['scope'], ['ip', 'account'], true) || $rule['window'] < 1 || $rule['max'] < 1) { throw new \InvalidArgumentException('Invalid request budget.'); }
         self::$owners[$action] = $owner; self::$requests[$action] = $rule;
     }
     /** @param list<int> $windows */
-    public static function retainWindows(string $owner, array $windows): void { foreach ($windows as $window) { if ($window < 1) { throw new \InvalidArgumentException('Invalid retention window.'); } } self::$retention[$owner] = $windows; }
+    public static function retainWindows(string $owner, array $windows): void { if (preg_match('/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$/D', $owner) !== 1) { throw new \InvalidArgumentException('Invalid provider owner.'); } foreach ($windows as $window) { if ($window < 1) { throw new \InvalidArgumentException('Invalid retention window.'); } } self::$retention[$owner] = $windows; }
 
     /** Only a server-authenticated role grants exemption; request fields never do.
      * @param array<string, mixed>|null $user */
     public static function isExempt(?array $user): bool
     {
-        return in_array($user['role'] ?? '', ['admin', 'bot'], true);
+        return ($user['role'] ?? '') === 'admin';
     }
 
     /** @return array{scope: string, window: int, max: int} */

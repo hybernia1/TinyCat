@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Core\Identity;
 
-/** Account capabilities; social presentation and notification policy live elsewhere. */
+/** Core account capabilities; optional role policies belong to their owner. */
 final class Roles
 {
     private const POLICIES = [

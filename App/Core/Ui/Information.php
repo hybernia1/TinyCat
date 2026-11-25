@@ -35,12 +35,12 @@ final class Information
     {
         $siteName = Site::site_name(); $siteCaptchaEnabled = Site::site_captcha_enabled(); $siteGoogleAnalyticsConfigured = Site::site_google_analytics_configured();
         $sections = new Markup(self::sections('privacy'));
-        $url = Site::absolute_url(\TinyCat\Http\LocaleRouting::url('/privacy'));
+        $url = \TinyCat\Support\LocalUrls::absolute(\TinyCat\Http\LocaleRouting::url('/privacy'));
         Page::render(['title' => Localization::t('privacy.title'), 'current' => '/privacy', 'public' => true, 'surface' => PublicWeb::enabled() ? 'public' : 'access', 'asset_path' => PublicWeb::enabled() ? '/privacy' : '/access/privacy', 'meta' => [
             'url' => $url, 'type' => 'website', 'jsonld' => [
                 '@context' => 'https://schema.org', '@type' => 'WebPage', '@id' => $url . '#webpage',
                 'url' => $url, 'name' => Localization::t('privacy.title'), 'inLanguage' => Localization::locale(),
-                'isPartOf' => ['@type' => 'WebSite', 'url' => Site::absolute_url('/'), 'name' => $siteName],
+                'isPartOf' => ['@type' => 'WebSite', 'url' => \TinyCat\Support\LocalUrls::absolute('/'), 'name' => $siteName],
             ],
         ]], Components::render('ui/privacy-page', compact('siteName', 'siteCaptchaEnabled', 'siteGoogleAnalyticsConfigured', 'sections')));
     }
@@ -50,7 +50,7 @@ final class Information
         $description = Site::site_meta_description();
         if ($description !== '') { $body .= $description . "\n\n"; }
         $body .= 'Interface languages: ' . implode(', ', array_keys(\TinyCat\Support\Languages::language_packages())) . ".\n\n";
-        $body .= '- [Homepage](' . Site::absolute_url('/') . ")\n- [Privacy and rules](" . Site::absolute_url('/privacy') . ")\n- [Sitemap](" . Site::absolute_url('/sitemap.xml') . ")\n- [Robots rules](" . Site::absolute_url('/robots.txt') . ")\n\n";
+        $body .= '- [Homepage](' . \TinyCat\Support\LocalUrls::absolute('/') . ")\n- [Privacy and rules](" . \TinyCat\Support\LocalUrls::absolute('/privacy') . ")\n- [Sitemap](" . \TinyCat\Support\LocalUrls::absolute('/sitemap.xml') . ")\n- [Robots rules](" . \TinyCat\Support\LocalUrls::absolute('/robots.txt') . ")\n\n";
         $body .= self::sections('llms');
         if ($full) { $body .= self::sections('llms-full'); }
         ResponseDocument::respond($body, 'text/plain');

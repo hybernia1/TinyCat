@@ -14,7 +14,7 @@ final readonly class Registries
     /** @param array<string, Contributions> $modules */
     public function __construct(array $modules = [])
     {
-        $tasks = []; $navigation = []; $health = []; $maintenance = []; $temporaryDirectories = []; $configOverrides = []; $notificationTypes = []; $notificationInbox = false; $homepages = []; $dashboards = []; $settings = []; $features = []; $mailDelivery = false; $sitemaps = []; $search = []; $crawlerHints = []; $localizedRoutes = []; $information = []; $widgets = []; $statistics = []; $embeds = []; $componentLookups = []; $owners = [];
+        $configOverrides = []; $notificationInbox = false; $mailDelivery = false; $owners = [];
         foreach ($modules as $owner => $bundle) {
             if ($bundle->mailDelivery) {
                 if ($mailDelivery) { throw new InvalidArgumentException('Duplicate mail delivery provider.'); }
@@ -24,26 +24,6 @@ final readonly class Registries
                 if ($notificationInbox) { throw new InvalidArgumentException('Duplicate notification inbox provider.'); }
                 $notificationInbox = true; $owners['service:notification-inbox'] = $owner;
             }
-            foreach (['task' => $bundle->tasks, 'navigation' => $bundle->navigation, 'health' => $bundle->health, 'maintenance' => $bundle->maintenance, 'temporary' => $bundle->temporaryDirectories, 'notification' => $bundle->notificationTypes, 'homepage' => $bundle->homepages, 'dashboard' => $bundle->dashboards, 'settings' => $bundle->settings, 'feature' => $bundle->features, 'sitemap' => $bundle->sitemaps, 'search' => $bundle->search, 'crawler-hint' => $bundle->crawlerHints, 'localized-route' => $bundle->localizedRoutes, 'information' => $bundle->information, 'widget' => $bundle->widgets, 'dashboard-stats' => $bundle->statistics, 'embed' => $bundle->embeds, 'component-lookup' => $bundle->componentLookups] as $kind => $entries) {
-                foreach ($entries as $entry) {
-                    if (preg_match('/^[a-z][a-z0-9_.-]*$/D', $entry->id) !== 1) { throw new InvalidArgumentException('Invalid contribution ID: ' . $entry->id); }
-                    $key = $kind . ':' . $entry->id;
-                    if (isset($owners[$key])) { throw new InvalidArgumentException('Duplicate ' . $key . ' (' . $owners[$key] . ', ' . $owner . ')'); }
-                    $owners[$key] = $owner;
-                }
-            }
-            $componentLookups = [...$componentLookups, ...$bundle->componentLookups];
-            $tasks = [...$tasks, ...$bundle->tasks];
-            $navigation = [...$navigation, ...$bundle->navigation];
-            $health = [...$health, ...$bundle->health];
-            $maintenance = [...$maintenance, ...$bundle->maintenance];
-            $temporaryDirectories = [...$temporaryDirectories, ...$bundle->temporaryDirectories];
-            $notificationTypes = [...$notificationTypes, ...$bundle->notificationTypes];
-            $homepages = [...$homepages, ...$bundle->homepages];
-            $dashboards = [...$dashboards, ...$bundle->dashboards];
-            $settings = [...$settings, ...$bundle->settings];
-            $features = [...$features, ...$bundle->features];
-            $sitemaps = [...$sitemaps, ...$bundle->sitemaps]; $search = [...$search, ...$bundle->search]; $crawlerHints = [...$crawlerHints, ...$bundle->crawlerHints]; $localizedRoutes = [...$localizedRoutes, ...$bundle->localizedRoutes]; $information = [...$information, ...$bundle->information]; $widgets = [...$widgets, ...$bundle->widgets]; $statistics = [...$statistics, ...$bundle->statistics]; $embeds = [...$embeds, ...$bundle->embeds];
             foreach ($bundle->configOverrides as $key) {
                 if (preg_match('/^[a-z][a-z0-9_.-]*$/D', $key) !== 1) { throw new InvalidArgumentException('Invalid config override key.'); }
                 if (isset($owners['config:' . $key])) { throw new InvalidArgumentException('Duplicate config override: ' . $key); }
@@ -52,28 +32,26 @@ final readonly class Registries
             }
         }
         $this->entries = new Contributions(
-            tasks: self::ordered($tasks),
-            navigation: self::ordered($navigation),
-            health: self::ordered($health),
-            maintenance: self::ordered($maintenance),
-            temporaryDirectories: self::ordered($temporaryDirectories),
-            configOverrides: $configOverrides,
-            notificationTypes: $notificationTypes,
-            notificationInbox: $notificationInbox,
-            homepages: self::ordered($homepages),
-            dashboards: self::ordered($dashboards),
-            settings: self::ordered($settings),
-            features: self::ordered($features),
-            mailDelivery: $mailDelivery,
-            sitemaps: self::ordered($sitemaps),
-            search: self::ordered($search),
-            crawlerHints: self::ordered($crawlerHints),
-            localizedRoutes: self::ordered($localizedRoutes),
-            information: self::ordered($information),
-            widgets: self::ordered($widgets),
-            statistics: self::ordered($statistics),
-            embeds: self::ordered($embeds),
-            componentLookups: self::ordered($componentLookups),
+            tasks: self::collect($modules, 'tasks', ScheduledTask::class, 'task', $owners),
+            navigation: self::collect($modules, 'navigation', NavigationItem::class, 'navigation', $owners),
+            health: self::collect($modules, 'health', HealthProbe::class, 'health', $owners),
+            maintenance: self::collect($modules, 'maintenance', MaintenanceTask::class, 'maintenance', $owners),
+            temporaryDirectories: self::collect($modules, 'temporaryDirectories', TemporaryDirectory::class, 'temporary', $owners),
+            notificationTypes: self::collect($modules, 'notificationTypes', NotificationType::class, 'notification', $owners),
+            homepages: self::collect($modules, 'homepages', EntryPage::class, 'homepage', $owners),
+            dashboards: self::collect($modules, 'dashboards', EntryPage::class, 'dashboard', $owners),
+            settings: self::collect($modules, 'settings', SettingsSection::class, 'settings', $owners),
+            sitemaps: self::collect($modules, 'sitemaps', SitemapSection::class, 'sitemap', $owners),
+            search: self::collect($modules, 'search', SearchSource::class, 'search', $owners),
+            crawlerHints: self::collect($modules, 'crawlerHints', CrawlerHint::class, 'crawler-hint', $owners),
+            localizedRoutes: self::collect($modules, 'localizedRoutes', LocalizedRoute::class, 'localized-route', $owners),
+            information: self::collect($modules, 'information', InformationSection::class, 'information', $owners),
+            widgets: self::collect($modules, 'widgets', DashboardWidget::class, 'widget', $owners),
+            statistics: self::collect($modules, 'statistics', DashboardStats::class, 'dashboard-stats', $owners),
+            embeds: self::collect($modules, 'embeds', EmbedSource::class, 'embed', $owners),
+            componentLookups: self::collect($modules, 'componentLookups', ComponentLookup::class, 'component-lookup', $owners),
+            playerOrigins: self::collect($modules, 'playerOrigins', PlayerOrigins::class, 'player-origins', $owners),
+            configOverrides: $configOverrides, notificationInbox: $notificationInbox, mailDelivery: $mailDelivery,
         );
         $this->owners = $owners;
     }
@@ -101,12 +79,28 @@ final readonly class Registries
         return $this->entries->maintenance[0]->id ?? '';
     }
 
-    /** @template T of ComponentLookup|ScheduledTask|NavigationItem|HealthProbe|MaintenanceTask|TemporaryDirectory|EntryPage|SettingsSection|FeatureGroup|SitemapSection|SearchSource|CrawlerHint|LocalizedRoute|InformationSection|DashboardWidget|DashboardStats|EmbedSource
-     * @param list<T> $entries
+    /** @template T of NotificationType|PlayerOrigins|ComponentLookup|ScheduledTask|NavigationItem|HealthProbe|MaintenanceTask|TemporaryDirectory|EntryPage|SettingsSection|SitemapSection|SearchSource|CrawlerHint|LocalizedRoute|InformationSection|DashboardWidget|DashboardStats|EmbedSource
+     * @param array<string, Contributions> $modules
+     * @param class-string<T> $type
+     * @param array<string, string> $owners
      * @return list<T> */
-    private static function ordered(array $entries): array
+    private static function collect(array $modules, string $property, string $type, string $kind, array &$owners): array
     {
-        usort($entries, static fn ($a, $b): int => $a->order <=> $b->order ?: strcmp($a->id, $b->id));
+        $entries = [];
+        foreach ($modules as $owner => $bundle) {
+            foreach ($bundle->$property as $entry) {
+                if (!$entry instanceof $type) { throw new InvalidArgumentException('Invalid contribution type: ' . $property); }
+                if (preg_match('/^[a-z][a-z0-9_.-]*$/D', $entry->id) !== 1) { throw new InvalidArgumentException('Invalid contribution ID: ' . $entry->id); }
+                $key = $kind . ':' . $entry->id;
+                if (isset($owners[$key])) { throw new InvalidArgumentException('Duplicate ' . $key . ' (' . $owners[$key] . ', ' . $owner . ')'); }
+                $owners[$key] = $owner;
+                $entries[] = $entry;
+            }
+        }
+        // Inbox type order is the declaration order; all ordered contributions use ID as a stable tie-breaker.
+        if ($type !== NotificationType::class) {
+            usort($entries, static fn ($a, $b): int => $a instanceof NotificationType || $b instanceof NotificationType ? 0 : ($a->order <=> $b->order ?: strcmp($a->id, $b->id)));
+        }
         return $entries;
     }
 }

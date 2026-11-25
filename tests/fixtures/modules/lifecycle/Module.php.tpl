@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Modules\@@NAMESPACE@@;
 
-final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesSchema, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle
+final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesSchemas, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle
 {
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
     {
@@ -11,13 +11,13 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
         ));
     }
 
-    public static function schema(): \TinyCat\Core\Modules\ModuleSchema
+    public static function schemas(): array
     {
         $root = dirname(__DIR__); $migrations = [];
         for ($version = 1; $version <= @@VERSION@@; $version++) { $migrations[] = new \TinyCat\Core\Modules\SchemaMigration($version, '@@ID@@.' . $version, $root . '/migrations/' . $version . '.php'); }
-        return new \TinyCat\Core\Modules\ModuleSchema(@@VERSION@@, ['@@TABLE@@'], static function (\PDO $pdo) use ($migrations): void {
+        return ['@@ID@@' => new \TinyCat\Core\Modules\ModuleSchema(@@VERSION@@, ['@@TABLE@@'], static function (\PDO $pdo) use ($migrations): void {
             foreach ($migrations as $migration) { $apply = require $migration->file; $apply($pdo); }
-        }, $migrations);
+        }, $migrations)];
     }
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions

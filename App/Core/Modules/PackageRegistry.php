@@ -30,7 +30,7 @@ final class PackageRegistry
         $packages ??= self::read($root);
         if ($packages === []) { return Distribution::validate($plan); }
         $tables = [];
-        $frameworkSchemas = Loader::fromSelection($root, [])->schemas(true);
+        $frameworkSchemas = Loader::fromSelection($root, [])->schemas();
         foreach ($frameworkSchemas as $schema) { foreach ($schema->tables as $table) { $tables[$table] = true; } }
         foreach ($plan['schemas'] as $schema) { foreach ($schema['tables'] as $table) { $tables[$table] = true; } }
         foreach ($packages as $id => $package) {
@@ -75,15 +75,6 @@ final class PackageRegistry
             'manifest' => json_decode((string) file_get_contents($root . '/' . $selection[$id]), true, 64, JSON_THROW_ON_ERROR),
             'schemas' => $schemas, 'files' => $files,
         ]);
-    }
-
-    /** Inactive uploaded PHP is not needed to display the module manager.
-     * @param array<string, string> $selection
-     * @param list<string> $active
-     * @return array<string, string> */
-    public static function featureSelection(string $root, array $selection, array $active): array
-    {
-        return Loader::availableSelection($root, array_intersect_key($selection, array_flip($active)));
     }
 
     /** Core updates cannot replace independently owned module files.

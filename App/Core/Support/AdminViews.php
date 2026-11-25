@@ -29,19 +29,6 @@ final class AdminViews
         ]);
     }
 
-    /**
-     * @param array<mixed> $options
-     */
-    public static function tc_admin_options(array $options, ?string $selected = null): string
-    {
-        $html = '';
-
-        foreach ($options as $value => $label) {
-            $html .= '<option value="' . \TinyCat\Support\Html::e($value) . '"' . ((string) $selected === (string) $value ? ' selected' : '') . '>' . \TinyCat\Support\Html::e($label) . '</option>';
-        }
-
-        return $html;
-    }
 
     public static function tc_admin_datetime(string $value): string
     {
@@ -53,17 +40,6 @@ final class AdminViews
         return $value === '' ? '' : \TinyCat\Support\Dates::dateIso($value);
     }
 
-    /**
-     * @return array<mixed>
-     */
-    public static function admin_user_statuses(): array
-    {
-        return [
-            'active' => \TinyCat\Support\Localization::t('users.statuses.active'),
-            'waiting' => \TinyCat\Support\Localization::t('users.statuses.waiting'),
-            'ban' => \TinyCat\Support\Localization::t('users.statuses.ban'),
-        ];
-    }
 
     public static function admin_filter_text(string $value, int $limit = 120): string
     {

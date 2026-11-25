@@ -225,8 +225,6 @@
     "inactive": "Nieaktywny",
     "enable": "Włącz",
     "disable": "Wyłącz",
-    "enable_group": "Włącz grupę",
-    "disable_group": "Wyłącz grupę",
     "needed_by": "Wymagany przez: {modules}",
     "confirm": "Zastosować zmianę? Zależności zostaną sprawdzone, a dane zachowane.",
     "module": "Moduł",

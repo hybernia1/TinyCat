@@ -21,6 +21,9 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
 
 - Načtení metadat ani sestavení příspěvků nevyžaduje databázi, session, síť nebo
   zápis na disk. Callback předávej jako callable; nevyhodnocuj jej při registraci.
+- Zachovej také odložené načtení provozních tříd: `static fn () => Handler::run()`
+  může odložit autoload až na spuštění, zatímco `Handler::run(...)` ověřuje metodu
+  již při sestavení callbacku. Tyto zápisy nezaměňuj plošně kvůli délce.
 - `initialize()` nastavuje pouze procesové politiky a cache. Nevytváří tabulky,
   nečte provozní data ani neprovádí skryté migrace.
 - Modul vlastní celý agregát, SQL, autorizaci a viditelnost. Využívá společné DB,
@@ -77,12 +80,14 @@ ověř podle dopadu v [pravidlech repozitáře](../../AGENTS.md#ověření).
 
 ## Aktuální Social
 
-`Module.php` vlastní registraci vnitřních částí v pojmenovaných privátních metodách.
-Šest sad `Contributions` dál skládá přes `Registries`, včetně kontroly duplicit
-a pořadí. `Posts` vlastní příspěvek,
+`Module.php` sestavuje jediný `Contributions` vlastníka `tinycat.social`.
+Core `Registries` kontroluje duplicity a řadí příspěvky všech vlastníků; modul
+nevytváří vnitřní registry ani další vlastníky. Pojmenované privátní metody
+oddělují registraci rout, politik identity a interní publikační politiky Socialu.
+`Posts` vlastní příspěvek,
 jeho zápis, čtení, feed, tagy, odkazy a přílohy; `Discussion` komentáře a reakce;
 `Profiles` veřejné profily a sledování, `Bots` importy a boty, `Moderation` moderaci,
-`Search` hledání a `Site` veřejné téma a stránky. Toto členění nevytváří
+`Search` hledání a `Site` veřejné stránky a příspěvky do core prezentace. Toto členění nevytváří
 další framework ani samostatné moduly. Přesuny musí aktualizovat všechny volající
 a nesmějí měnit historická ID, endpointy nebo data jen kvůli názvosloví.
 
@@ -94,3 +99,29 @@ Malý adaptér má smysl, pokud drží konkrétní kontrakt nebo politiku, např
 Blog byl z aktuálních zdrojů odstraněn. Historické releasy a audity popisují
 tehdejší stav; nejsou šablonou nového modulu. Instalovaný historický vlastník se
 nesmí obejít přepsáním deploymentu ani smazáním dat.
+
+Jediný schema kontrakt `ProvidesSchemas::schemas()` vrací mapu stabilních
+historických ID streamů na `ModuleSchema`. `ModuleSchema::tables` je autoritativní
+inventář tabulek pro registraci, build i explicitní lifecycle. Bezdatový provider
+nepotřebuje schéma ani prázdný seznam tabulek. Kolize tabulek a streamů se odmítají
+před registrací první routy, bez SQL a instalačních callbacků. Všechny historické
+streamy Socialu zůstávají zachované.
+
+`repairOnInstall` povoluje opakovanou opravu idempotentního DDL při explicitní
+instalační synchronizaci; `gateRoutes` zapíná automatickou readiness JSON rout
+modulu. Nové moduly používají výchozí hodnoty `false` a `true`. Core a Social
+zachovávají své dosavadní explicitní readiness a opravy DDL pomocí `true` a `false`.
+Podepsaný updater rekonstruuje schémata z ověřených descriptorů a migračních
+souborů, nikoli z providerů již načtených v PHP. Publikované formáty descriptorů,
+ID streamů, verze a checksumy se nemění.
+
+Aktivace přijímá pouze ID modulů a doplňuje jejich skutečné závislosti.
+Pořadí registrace určuje validovaný katalog. Skupiny aktivace neexistují.
+
+Social používá přímo `Posts/PostCreation`, `InlinePresentation` a `TextResource`;
+textové politiky nejsou příspěvkový kontrakt ani registry ownerů/kindů.
+Komentáře zachovávají vlastní pravidla URL a autorizovanou historii
+`Discussion/Comments::readHistory()` / `appendHistory()` nad `comments_diff`.
+Editor účtu definuje výhradně `Core/Identity/Views::accountEditorId()` a
+`accountEditorUrl()`; modul předává ID účtu a volitelný fokus autorizovanému
+JSON resource. Formuláře a modalový lifecycle se neduplikují.

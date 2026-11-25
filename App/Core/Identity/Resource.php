@@ -8,7 +8,7 @@ use TinyCat\Core\Identity\Roles;
 use TinyCat\Core\Identity\Administration;
 use TinyCat\Core\Identity\Profile;
 
-/** Safe account serialization; social URLs and product policy are explicit inputs. */
+/** Safe account serialization; public URLs and product policy are explicit inputs. */
 final class Resource
 {
     /** @return array<string, mixed> */
@@ -24,7 +24,7 @@ final class Resource
         $next = Login::auth_safe_next_url($next);
         $other = $mode === 'register' ? 'login' : 'register';
         return self::authentication($mode, $next, Login::auth_url_with_next('/' . $other, $next), Login::auth_modal_url($other, $next),
-            Integration::registrationEnabled(),
+            (bool) \TinyCat\Core\Runtime\Startup::option('auth.registration.enabled', false),
             \TinyCat\Core\Security\Captcha::configuration($mode, $mode === 'register' || \TinyCat\Core\Security\Captcha::loginRequired()));
     }
 
@@ -45,7 +45,7 @@ final class Resource
     {
         $data = ['id' => (int) ($user['id'] ?? 0), 'username' => (string) ($user['username'] ?? $user['author_name'] ?? ''), 'bio' => (string) ($user['bio'] ?? '')];
         if ($publicUrl !== null) { $data['url'] = $publicUrl; }
-        return $data + ['avatar_url' => Avatars::user_avatar_url($user), 'avatar_custom' => (int) ($user['avatar_exists'] ?? 0) === 1, 'avatar_appearance' => GeneratedAvatar::appearance($user['avatar_appearance'] ?? null)];
+        return $data + ['avatar_url' => Avatars::user_avatar_url($user), 'avatar_custom' => (int) ($user['avatar_exists'] ?? 0) === 1];
     }
 
     /** @param array<mixed> $user
@@ -79,7 +79,6 @@ final class Resource
             'theme' => Profile::theme((string) ($user['theme'] ?? 'system')),
             'avatar_url' => Avatars::user_avatar_url($user),
             'avatar_custom' => (int) ($user['avatar_exists'] ?? 0) === 1,
-            'avatar_appearance' => GeneratedAvatar::appearance($user['avatar_appearance'] ?? null),
         ];
     }
 
@@ -107,11 +106,13 @@ final class Resource
     }
     /** @param array<mixed> $user
      * @return array<mixed> */
-    public static function legacyUser(array $user): array
+    public static function legacyUser(array $user, ?int $primaryId = null): array
     {
         if ($user === []) {
             return [];
         }
+
+        $protected = Administration::isPrimary((int) ($user['id'] ?? 0), $primaryId);
 
         return [
             'id' => (int) ($user['id'] ?? 0),
@@ -123,8 +124,8 @@ final class Resource
             'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($user),
             'created_at' => !empty($user['created_at']) ? \TinyCat\Support\Dates::dateIso($user['created_at']) : '',
             'updated_at' => !empty($user['updated_at']) ? \TinyCat\Support\Dates::dateIso($user['updated_at']) : '',
-            'protected' => \TinyCat\Core\Identity\ReadModel::tc_admin_user_is_super_admin($user),
-            'can_delete' => !\TinyCat\Core\Identity\ReadModel::tc_admin_user_is_super_admin($user),
+            'protected' => $protected,
+            'can_delete' => !$protected,
         ];
     }
 }

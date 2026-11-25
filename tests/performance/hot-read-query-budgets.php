@@ -30,6 +30,7 @@ $budgets = [
     'tag' => 5,
     'author' => 17,
     'search' => 8,
+    'admin-users' => 6,
 ];
 $actual = [];
 $failures = [];
@@ -115,6 +116,7 @@ function runScenario(string $scenario): void
         'tag' => exerciseTag(),
         'author' => exerciseAuthor(),
         'search' => exerciseSearch(),
+        'admin-users' => exerciseAdministration(),
         default => throw new InvalidArgumentException('Unknown query-budget scenario: ' . $scenario),
     };
 
@@ -142,7 +144,7 @@ function configureTestCore(PDO $database): void
 function createFixture(PDO $database): void
 {
     foreach ([
-        'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) NOT NULL, email TEXT, password TEXT, role VARCHAR(40) NOT NULL, status VARCHAR(24) NOT NULL, locale TEXT, theme VARCHAR(12), avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at DATETIME, updated_at DATETIME)',
+        'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) NOT NULL, email TEXT, password TEXT, role VARCHAR(40) NOT NULL, status VARCHAR(24) NOT NULL, locale TEXT, theme VARCHAR(12), avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at DATETIME, updated_at DATETIME)',
         'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT NOT NULL, author_id INT UNSIGNED NOT NULL, published_at DATETIME NOT NULL, status VARCHAR(24) NOT NULL DEFAULT (\'published\'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
         'CREATE TABLE social_post_images (content_id INT UNSIGNED PRIMARY KEY, path TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)',
         'CREATE TABLE social_post_likes (content_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL, PRIMARY KEY (content_id, user_id))',
@@ -217,7 +219,7 @@ function exerciseStatus(): void
 
     \TinyCat\Social\Posts\Feed::status_preload_feed([$item]);
     $comments = \TinyCat\Social\Discussion\Comments::status_comments(1);
-    \TinyCat\Social\Discussion\Comments::status_preload_comment_tree_user_likes($comments, (int) ($user['id'] ?? 0));
+    \TinyCat\Social\Posts\Resource::comments($comments, $user);
     exerciseStatusImages([$item]);
 
     $pending = $comments;
@@ -229,7 +231,6 @@ function exerciseStatus(): void
         }
 
         \TinyCat\Social\Discussion\Comments::status_comment_can_delete($comment, $user);
-        \TinyCat\Social\Posts\Posts::status_api_url('comment-like', ['id' => (int) $comment['content_id'], 'comment_id' => (int) $comment['id']]);
         \TinyCat\Social\Posts\ViewData::status_comment_edit_modal_url((int) $comment['id'], (int) $comment['content_id']);
         \TinyCat\Social\Posts\ViewData::status_comment_history_modal_url((int) $comment['id'], (int) $comment['content_id']);
         \TinyCat\Social\Discussion\Comments::status_comment_user_liked((int) ($comment['id'] ?? 0), (int) ($user['id'] ?? 0));
@@ -280,6 +281,7 @@ function exerciseSearch(): void
 function exerciseStatusImages(array $items): void
 {
     foreach ($items as $item) {
+        if (!str_starts_with(\TinyCat\Social\Profiles\Profiles::avatarUrl((array) $item), '/avatar/initials/v1/')) { throw new RuntimeException('Feed projection lost canonical username initials.'); }
         \TinyCat\Social\Posts\Images::status_image_url((array) $item);
         \TinyCat\Social\Posts\Images::status_image_jsonld((array) $item);
     }
@@ -305,4 +307,22 @@ final class QueryCountingPdo extends PDO
     {
         return $this->queryCount;
     }
+}
+
+/** Two independent payloads must each select primary policy once, regardless of row count. */
+function exerciseAdministration(): void
+{
+    $database = \TinyCat\Database\Connection::get();
+    $database->exec("UPDATE users SET role = 'admin' WHERE id = 1");
+    for ($id = 3; $id <= 100; $id++) {
+        $database->exec("INSERT INTO users (id, username, role, status, created_at) VALUES (" . $id . ", 'budget_user_" . $id . "', 'user', 'active', '2026-02-01')");
+    }
+    $_GET = ['per_page' => '100', 'sort' => 'username', 'direction' => 'asc'];
+    \TinyCat\Http\Request::reset();
+    $first = \TinyCat\Core\Identity\Actions::tc_admin_users_api_payload();
+    $protected = static fn (array $payload): array => array_column(array_filter($payload['items'], static fn (array $user): bool => $user['protected']), 'id');
+    if (count($first['items']) !== 100 || $protected($first) !== [1]) { throw new RuntimeException('Full account list must identify one protected administrator: ' . json_encode(['count' => count($first['items']), 'protected' => $protected($first), 'pagination' => $first['pagination'], 'filters' => $first['filters']])); }
+    $database->exec("UPDATE users SET role = 'admin', created_at = '2025-01-01' WHERE id = 2");
+    $second = \TinyCat\Core\Identity\Actions::tc_admin_users_api_payload();
+    if (count($second['items']) !== 100 || $protected($second) !== [2]) { throw new RuntimeException('A later account payload must observe the current primary without a process-static cache.'); }
 }

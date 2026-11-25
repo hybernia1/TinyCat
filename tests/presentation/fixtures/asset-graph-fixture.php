@@ -24,7 +24,7 @@ if ($mode === '--scheduler-help') {
     exit;
 }
 if ($mode === '--health-action') {
-    echo json_encode(\TinyCat\Support\Components::render('ui/api-action', ['url' => '/api/site-health/checks', 'method' => 'POST', 'label' => 'Run check']), JSON_THROW_ON_ERROR);
+    echo json_encode(\TinyCat\Support\Components::render('ui/api-action', ['url' => '/api/scheduler/tasks/site-health/runs', 'method' => 'POST', 'label' => 'Run check']), JSON_THROW_ON_ERROR);
     exit;
 }
 if ($mode === '--installation') {

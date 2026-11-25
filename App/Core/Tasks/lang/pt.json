@@ -13,11 +13,8 @@
     "rotate_confirm": "Girar o token cron? As chamadas agendadas existentes deixarão de funcionar até serem atualizadas.",
     "tasks": {
       "cleanup": "Limpeza",
-      "cleanup_help": "Remove tags e links não utilizados, postagens órfãs e imagens de visualização, caches de dados expirados, buckets de limite de taxa antigos, tokens de redefinição expirados e notificações de leitura. Também remove avatares órfãos, arquivos temporários abandonados e backups antigos de atualizações concluídas.",
-      "cleanup_schedule": "Agende de hora em hora. As devidas verificações internas evitam que a limpeza seja executada com muita frequência.",
-      "feeds": "fontes",
-      "feeds_help": "Publica itens de fontes ativas cujo intervalo é devido.",
-      "feeds_schedule": "Agende de acordo com a frequência de votação necessária, normalmente a cada dois minutos."
+      "cleanup_help": "Faz a manutenção dos dados do núcleo, caches, ficheiros temporários e cópias de atualizações concluídas.",
+      "cleanup_schedule": "Agende de hora em hora. As devidas verificações internas evitam que a limpeza seja executada com muita frequência."
     },
     "messages": {
       "token_rotated": "O token cron foi girado."
@@ -40,9 +37,7 @@
     "summary_count": "Processado: {count}",
     "summary_changed": "Alterado: {count}",
     "options": {
-      "bot_limit": "Limite de origem",
-      "cleanup_batch": "Lote de limpeza",
-      "source_id": "ID da fonte"
+      "cleanup_batch": "Lote de limpeza"
     },
     "statuses": {
       "running": "Correndo",
@@ -59,7 +54,6 @@
     },
     "menu_title": "Tarefas",
     "cadence": {
-      "feeds": "Verifique a cada dois minutos",
       "cleanup": "Uma vez por hora"
     },
     "run_details": "Detalhes da execução",
@@ -71,5 +65,53 @@
     "run_id": "ID de execução",
     "parameters": "Executar parâmetros",
     "error": "Erro"
+  },
+  "health": {
+    "title": "Saúde do site",
+    "intro": "Daily operational checks with a recorded result and a notification to every active administrator.",
+    "schedule": "Schedule once a day. Every completed inspection notifies active administrators.",
+    "schedule_short": "Once a day",
+    "empty": "No inspection has run yet.",
+    "notification_ok": "Site health inspection completed: everything is OK.",
+    "notification_attention": "Site health inspection completed: something needs attention.",
+    "status": {
+      "ok": "OK",
+      "warning": "Needs attention",
+      "critical": "Problem detected",
+      "skipped": "Not checked",
+      "unknown": "Unknown"
+    },
+    "checks": {
+      "database": "Database",
+      "cache": "Cache",
+      "storage": "Application storage",
+      "uploads": "Uploads",
+      "disk": "Free disk space",
+      "runtime": "PHP extensions",
+      "scheduler": "Scheduled tasks",
+      "updates": "Update recovery state",
+      "http": "HTTP responsiveness"
+    },
+    "http": {
+      "total": "Request duration",
+      "errors": {
+        "configuration": "A valid site URL is missing from configuration.",
+        "unsupported": "Measurement requires cURL.",
+        "timeout": "The request timed out.",
+        "transport": "Connection or TLS verification failed.",
+        "response_limit": "The response exceeded the size limit; the transfer is incomplete.",
+        "disabled": "HTTP measurement is disabled."
+      }
+    },
+    "all_checks": "All checks",
+    "check_duration": "Inspection duration",
+    "scheduler": {
+      "ok": "Healthy.",
+      "missing": "No successful run recorded.",
+      "stale": "The last successful run is too old.",
+      "failed": "The latest run failed.",
+      "interrupted": "The latest run was interrupted.",
+      "unknown": "This older report has no details. Run a new inspection."
+    }
   }
 }

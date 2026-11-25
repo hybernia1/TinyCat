@@ -30,7 +30,7 @@ final class Platform
                 \TinyCat\Http\Web::redirect('/install');
             }, beforeDispatch: static function (string $path): void {
                 if (LocaleRouting::supports($path) || Router::isApiPath($path)) {
-                    \TinyCat\Core\Identity\Locale::apply(); LocaleRouting::apply();
+                    \TinyCat\Core\Identity\Authentication::applyLocale(); LocaleRouting::apply();
                     header('Vary: Accept-Language, X-TinyCat-Locale', false);
                 }
             }, notFound: static function (): void { Errors::respond(404); },
@@ -45,7 +45,7 @@ final class Platform
 
     public static function contributions(): Contributions
     {
-        return new Contributions(sitemaps: [new \TinyCat\Core\Modules\SitemapSection('pages', static fn (): int => count(Information::pages()), static fn (int $limit, int $offset): array => array_slice(Information::pages(), $offset, $limit), 10)], crawlerHints: [new \TinyCat\Core\Modules\CrawlerHint('tinycat.core.llms', static fn (): string => 'AI and LLM context: ' . Site::absolute_url('/llms.txt'))], componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('dashboard.statistics', Admin\Statistics::fieldLookup(...))], localizedRoutes: [
+        return new Contributions(sitemaps: [new \TinyCat\Core\Modules\SitemapSection('pages', static fn (): int => count(Information::pages()), static fn (int $limit, int $offset): array => array_slice(Information::pages(), $offset, $limit), 10)], crawlerHints: [new \TinyCat\Core\Modules\CrawlerHint('tinycat.core.llms', static fn (): string => 'AI and LLM context: ' . \TinyCat\Support\LocalUrls::absolute('/llms.txt'))], componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('dashboard.statistics', Admin\Statistics::fieldLookup(...))], localizedRoutes: [
             new LocalizedRoute('core.home', '^/$'),
             new LocalizedRoute('core.identity', '^/(?:login|register|logout)$', ['next']),
             new LocalizedRoute('core.recovery', '^/recovery$', ['token']),

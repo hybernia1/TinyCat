@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 namespace TinyCat\Core\Tasks;
-use TinyCat\Core\Tasks\Tasks;
-use TinyCat\Core\Tasks\Execution;
 
 use TinyCat\Http\Request;
 use TinyCat\Http\Result;
@@ -11,6 +9,7 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
+        $api->get('/site-health', Health\Inspection::snapshot(...), 'admin');
         $api->get('/scheduler/configuration', Administration::configuration(...), 'admin');
         $api->get('/scheduler/triggers/{task:' . \TinyCat\Core\Modules\ScheduledTask::ID_PATTERN . '}', static function (Request $request, array $params): Result {
             $task = $params['task'];

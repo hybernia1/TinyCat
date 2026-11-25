@@ -9,9 +9,15 @@ use TinyCat\Http\{Document, Web};
 /** Session-independent oEmbed transport; providers resolve only local public content. */
 final class Oembed
 {
+    public static function discoveryUrl(string $url, string $format = 'json'): string
+    {
+        if (!in_array($format, ['json', 'xml'], true)) { throw new \InvalidArgumentException('Unsupported oEmbed format.'); }
+        return \TinyCat\Support\LocalUrls::absolute('/oembed') . '?' . http_build_query(['url' => $url, 'format' => $format]);
+    }
+
     public static function localPath(string $url): ?string
     {
-        $base = parse_url(Site::absolute_url('/')); $parts = parse_url($url);
+        $base = parse_url(\TinyCat\Support\LocalUrls::absolute('/')); $parts = parse_url($url);
         if (!is_array($base) || !is_array($parts) || isset($parts['user']) || isset($parts['pass'])
             || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
             || strtolower($parts['host'] ?? '') !== strtolower($base['host'] ?? '') || $parts['scheme'] !== ($base['scheme'] ?? '')
@@ -31,10 +37,8 @@ final class Oembed
         $path = self::localPath($url); $data = null;
         if ($path !== null) { foreach (Registrations::current()->entries->embeds as $source) { $data = ($source->resolve)($path, $width, $height); if ($data !== null) { break; } } }
         if ($data === null) { Document::jsonError(404, 'Content not found.'); return; }
-        $data = ['version' => '1.0', 'type' => 'rich', 'provider_name' => Site::site_name(), 'provider_url' => Site::absolute_url('/'), 'width' => $width, 'height' => $height, 'cache_age' => 0] + $data;
-        if ($format === 'xml') {
-            Document::respond('<?xml version="1.0" encoding="UTF-8"?><oembed>' . \TinyCat\Support\Xml::elements($data) . '</oembed>', 'text/xml');
-        } else { Document::respond(json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'application/json', 0); }
+        $data += ['type' => 'rich', 'provider_name' => Site::site_name(), 'provider_url' => \TinyCat\Support\LocalUrls::absolute('/'), 'width' => $width, 'height' => $height, 'cache_age' => 0];
+        \TinyCat\Core\Ui\Oembed::respond($data, $format);
     }
 
     private static function dimension(string $name, int $maximum): ?int

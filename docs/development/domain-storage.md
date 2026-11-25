@@ -41,11 +41,11 @@ Identitu určuje vlastník a konkrétní endpoint, nikoli globální číselný 
 
 | Core | Co vlastní modul |
 | --- | --- |
-| `Core/Text`: parser, hashtagové tokeny, revize, segmenty a pojmenované `TextPolicy` | Limity textu, případné zmínky, SQL tagů a komentářů |
-| `Core/Links`: metadata, prezentace, UTM a autorizované odchozí odkazy | Připojené odkazy, jejich SQL cache a pravidla URL |
-| `Core/Files`: validace a konverze rastru, cache náhledů | Přílohy, oprávnění, kvóty a databázové reference |
-| `Core/Feeds`: parser a průchod importem | Zdroj, claim, GUID historie, příprava příloh a vlastní zápis |
-| `Core/Ui`: formuláře, dialogy, komponentový renderer a AJAX | Editor příspěvku, diskuse, resource, oprávnění, akce a transportní URL |
+| `Core/Text`: URL parser a lexikální transformace textu | Publikační politiky, segmenty, limity, zmínky, tagy a historie komentářů |
+| `Core/Links`: obecná metadata, klasifikace lokálních URL a aplikace UTM | Poskytovatelé, prezentace, autorizované odchozí odkazy a pravidla URL |
+| `Core/Files`: validace a konverze rastru, reference souborů | Cache náhledů, varianty, cesty, přílohy, oprávnění, kvóty a databázové reference |
+| `Core/Feeds`: parser vstupních formátů | Průchod importem, zdroj, claim, GUID historie, příprava příloh a vlastní zápis |
+| `Core/Ui`: formuláře, dialogy, komponentový renderer, AJAX a prezentace RSS | Editor příspěvku, diskuse, resource, oprávnění, výběr feedu, akce a transportní URL |
 | `Core/Database`: transakce a stabilní kurzor | Dotazy, řádkové zámky a cizí klíče vlastní funkce |
 | `Core/Discovery`: hledání, sitemap a oEmbed | Viditelnost a kanonická URL svého výsledku |
 

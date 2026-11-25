@@ -2,12 +2,11 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Identity;
 use TinyCat\Core\Identity\Authentication;
-use TinyCat\Core\Identity\Readiness;
 use TinyCat\Core\Identity\Participants;
 use TinyCat\Core\Identity\Integration;
 use TinyCat\Core\Identity\Setup;
 
-final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle, \TinyCat\Core\Runtime\InitializesModule, \TinyCat\Core\Modules\ProvidesManagedSchema, \TinyCat\Core\Modules\ProvidesSetup
+final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle, \TinyCat\Core\Runtime\InitializesModule, \TinyCat\Core\Modules\ProvidesSchemas, \TinyCat\Core\Modules\ProvidesSetup
 {
     /** @param array<string, mixed> $input
      * @return array<string, mixed> */
@@ -18,14 +17,14 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
         $data = Setup::input($input + ['password_confirm' => $input['password'] ?? '']);
         Setup::administrator($data['username'], $data['password'], $data['locale']);
     }
-    public static function schema(): \TinyCat\Core\Modules\ModuleSchema { return Schema::schema(); }
+    public static function schemas(): array { return ['tinycat.accounts' => Schema::schema()]; }
 
     public static function initialize(): void
     {
         Integration::configure([]);
         Participants::configure(\TinyCat\Core\Modules\Loader::fromCatalog(\TinyCat\Core\Modules\Resources::catalog()));
         \TinyCat\Core\Runtime\Startup::$identity = static fn (): ?array => Authentication::auth();
-        \TinyCat\Core\Runtime\Startup::$readiness[] = static fn (): bool => Readiness::ready();
+        \TinyCat\Core\Runtime\Startup::$readiness[] = static fn (): bool => self::ready();
     }
 
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
@@ -45,21 +44,17 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
         ]);
     }
 
-    /** @return list<string> */
-    public static function tables(): array
-    {
-        return ['users', 'password_reset_tokens'];
-    }
-
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/avatar/generated/v1/{user_id:[1-9][0-9]*[.]svg}', static function (string $user_id): void {
-            GeneratedAvatar::respond((int) $user_id);
+            AvatarHttp::byId((int) $user_id);
         });
 
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/avatar/initials/v1/{identity:[A-Za-z0-9_-]+[.]svg}', static function (string $identity): void { AvatarHttp::initials(substr($identity, 0, -4)); });
+
         \TinyCat\Http\Router::route('GET', '/avatar/{username:' . \TinyCat\Core\Identity\Usernames::pattern() . '}', static function (string $username): void {
-            \TinyCat\Core\Identity\AvatarHttp::respond($username, static function (): void { Integration::notFound(); });
+            \TinyCat\Core\Identity\AvatarHttp::respond($username, static function (): void { \TinyCat\Core\Runtime\Errors::respond(404); });
         });
 
         \TinyCat\Http\Router::route('GET', \TinyCat\Core\Ui\Admin\Definitions::route('core.users'), static function (): void { Pages::administration(); });
@@ -71,6 +66,23 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
             ['GET', '/recovery', static function (): void { Pages::recovery(); }],
         ] as [$methods, $path, $handler]) {
             \TinyCat\Http\Router::route($methods, $path, $handler);
+        }
+    }
+
+    public static function ready(): bool
+    {
+        try {
+            return (int) \TinyCat\Database\Connection::value(
+                sprintf(
+                    'SELECT 1 FROM %s WHERE %s IS NOT NULL AND %s <> ? LIMIT 1',
+                    \TinyCat\Database\Schema::app_sql_identifier('users'),
+                    \TinyCat\Database\Schema::app_sql_identifier('password'),
+                    \TinyCat\Database\Schema::app_sql_identifier('password')
+                ),
+                ['']
+            ) > 0;
+        } catch (\Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
+            return false;
         }
     }
 }

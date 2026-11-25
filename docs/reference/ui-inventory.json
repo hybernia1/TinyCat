@@ -2,44 +2,6 @@
   "scope": "Current working tree; static source audit, not visual verification. CSS repeated selectors are candidates, not proven defects.",
   "components": [
     {
-      "name": "health/report",
-      "source": "App/Core/Health/assets/components.json",
-      "dependencies": [
-        "health/scheduler-findings",
-        "ui/status-badge"
-      ],
-      "inputs": [
-        "_key",
-        "check.duration_ms",
-        "check.id",
-        "check.metrics",
-        "check.metrics.error",
-        "check.status",
-        "report.checks",
-        "value"
-      ]
-    },
-    {
-      "name": "health/scheduler-findings",
-      "source": "App/Core/Health/assets/components.json",
-      "dependencies": [],
-      "inputs": [
-        "_key",
-        "metrics",
-        "reason"
-      ]
-    },
-    {
-      "name": "health/scheduler-run-detail",
-      "source": "App/Core/Health/assets/components.json",
-      "dependencies": [
-        "health/report"
-      ],
-      "inputs": [
-        "item.summary.health"
-      ]
-    },
-    {
       "name": "users/admin-fields",
       "source": "App/Core/Identity/assets/components.json",
       "dependencies": [
@@ -123,10 +85,6 @@
         "captcha",
         "form_url",
         "next",
-        "old.email",
-        "old.platform_terms",
-        "old.remember",
-        "old.username",
         "options.email_max_bytes",
         "options.password_max_length",
         "options.password_min_bytes",
@@ -149,7 +107,6 @@
         "message",
         "mode",
         "next",
-        "old",
         "options",
         "register",
         "registration_enabled",
@@ -200,7 +157,6 @@
         "message",
         "mode",
         "next",
-        "old",
         "options",
         "register",
         "registration_enabled",
@@ -311,27 +267,9 @@
       "source": "App/Core/Identity/assets/components.json",
       "dependencies": [],
       "inputs": [
-        "generated",
         "user.avatar_url",
         "user.id",
         "user.username"
-      ]
-    },
-    {
-      "name": "users/avatar-appearance",
-      "source": "App/Core/Identity/assets/components.json",
-      "dependencies": [
-        "ui/select"
-      ],
-      "inputs": [
-        "appearance",
-        "parameter.choices",
-        "parameter.default",
-        "parameter.key",
-        "parameter.label",
-        "parameter.value",
-        "parameters",
-        "user.id"
       ]
     },
     {
@@ -365,8 +303,6 @@
       "dependencies": [],
       "inputs": [
         "actions",
-        "appearance_form",
-        "generated",
         "upload_form"
       ]
     },
@@ -749,13 +685,21 @@
       "dependencies": [
         "scheduler/name",
         "scheduler/option",
-        "scheduler/status"
+        "scheduler/status",
+        "ui/detail-table",
+        "ui/status-badge"
       ],
       "inputs": [
         "_key",
+        "detail.rows",
+        "detail.status",
+        "detail.status.code",
+        "detail.status.name",
+        "detail.title",
         "item.actor",
         "item.actor.id",
         "item.actor.username",
+        "item.details",
         "item.duration_ms",
         "item.error",
         "item.finished_at",
@@ -1413,12 +1357,6 @@
       ],
       "inputs": [
         "_key",
-        "action",
-        "group.actions",
-        "group.active_count",
-        "group.modules",
-        "group.name",
-        "group.names",
         "item.activation",
         "item.blocked",
         "item.dependencies",
@@ -1430,7 +1368,6 @@
         "item.tone",
         "problem",
         "rows",
-        "snapshot.groups",
         "snapshot.manageable",
         "snapshot.problems"
       ]
@@ -1568,6 +1505,7 @@
         "row.attributes",
         "row.badge",
         "row.label",
+        "row.name",
         "row.tone",
         "row.value",
         "rows",
@@ -3899,32 +3837,6 @@
         "selector": ".following-modal-grid .avatar"
       }
     ],
-    "avatar-creator-toggle": [
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 55,
-        "context": [],
-        "selector": ".avatar-creator-toggle"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 56,
-        "context": [],
-        "selector": ".avatar-creator-toggle[hidden]"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 57,
-        "context": [],
-        "selector": ".avatar-creator-toggle .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 58,
-        "context": [],
-        "selector": ".avatar-creator-toggle[aria-expanded=\"true\"] .icon"
-      }
-    ],
     "avatar-editor": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
@@ -3951,34 +3863,6 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".avatar-editor .avatar-upload"
-      }
-    ],
-    "avatar-editor-appearance": [
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 52,
-        "context": [],
-        "selector": ".avatar-editor-appearance[hidden]"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 53,
-        "context": [],
-        "selector": ".avatar-editor-appearance .field"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 59,
-        "context": [],
-        "selector": ".avatar-editor-appearance"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".avatar-editor-appearance"
       }
     ],
     "avatar-editor-controls": [
@@ -5251,12 +5135,6 @@
     ],
     "field": [
       {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 53,
-        "context": [],
-        "selector": ".avatar-editor-appearance .field"
-      },
-      {
         "source": "App/Core/Ui/assets/styles/fields.css",
         "line": 1,
         "context": [],
@@ -5687,18 +5565,6 @@
         "line": 6,
         "context": [],
         "selector": ".avatar-upload-empty .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 57,
-        "context": [],
-        "selector": ".avatar-creator-toggle .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 58,
-        "context": [],
-        "selector": ".avatar-creator-toggle[aria-expanded=\"true\"] .icon"
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
@@ -12809,6 +12675,9 @@
     {
       "source": "App/Core/Identity/Views.php",
       "methods": [
+        "accountEditorId",
+        "accountEditorUrl",
+        "statusLabels",
         "userMenu",
         "adminFormFields",
         "avatar"
@@ -12827,10 +12696,8 @@
         "activationNotice",
         "listCard",
         "modalAction",
-        "tc_admin_options",
         "tc_admin_datetime",
         "tc_admin_datetime_iso",
-        "admin_user_statuses",
         "admin_filter_text",
         "admin_per_page_options",
         "admin_per_page",

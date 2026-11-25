@@ -7,5 +7,5 @@ require $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Applicat
 // The old active provider is now cached in PHP. The updater must use the signed migration plan.
 if (!class_exists(TinyCat\Modules\LifecycleNotes\Module::class)) { throw new RuntimeException('Old provider was not loaded.'); }
 $result = TinyCat\Core\Updates\Manager::installLocalPackage($argv[2], $argv[3], $argv[4]);
-$result['cached_provider_version'] = TinyCat\Modules\LifecycleNotes\Module::schema()->version;
+$result['cached_provider_version'] = TinyCat\Modules\LifecycleNotes\Module::schemas()['fixture.notes']->version;
 echo json_encode($result, JSON_THROW_ON_ERROR) . "\n";

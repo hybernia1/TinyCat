@@ -22,6 +22,34 @@ $reject = static function (callable $action, string $message) use ($assert): voi
     try { $action(); } catch (InvalidArgumentException) { $assert(true, $message); return; }
     throw new RuntimeException($message . ' was accepted.');
 };
+$originCalls = 0;
+$source = new \TinyCat\Core\Modules\PlayerOrigins('fixture.players', static function () use (&$originCalls): array { $originCalls++; return ['https://player.example']; });
+$originBundle = new Contributions(playerOrigins: [$source]);
+$originRegistry = new Registries(['fixture.one' => $originBundle, 'fixture.two' => new Contributions(playerOrigins: [new \TinyCat\Core\Modules\PlayerOrigins('fixture.other', static fn (): array => ['https://other.example', 'https://player.example'])])]);
+$assert($originCalls === 0, 'Player origins remain lazy at registration');
+$assert($originRegistry->owner('player-origins', 'fixture.players') === 'fixture.one', 'Player origins retain their owner');
+$reject(static fn () => new Registries(['fixture.one' => $originBundle, 'fixture.two' => $originBundle]), 'Duplicate player origin contribution');
+Registrations::configure($originRegistry);
+$assert(\TinyCat\Core\Modules\PlayerOrigins::current() === ['https://other.example', 'https://player.example'], 'Modules merge and deduplicate player origins');
+Registrations::configure(new Registries());
+$assert(\TinyCat\Core\Modules\PlayerOrigins::current() === [], 'Core alone adds no external players');
+foreach (["https://player.example; script-src *", 'https://*.example', 'http://example.com', 'https://example.com/path', "https://example.com\r\nX-Test: yes", 'https://user@example.com', 'https://example.com:99999'] as $invalid) {
+    $reject(static fn () => \TinyCat\Core\Modules\PlayerOrigins::validate([$invalid]), 'Unsafe player origin');
+}
+$identityCalls = 0;
+\TinyCat\Core\Identity\Integration::provide('fixture.identity', ['next' => static function (string $url) use (&$identityCalls): string { $identityCalls++; return $url; }]);
+try { \TinyCat\Core\Identity\Integration::provide('fixture.conflict', ['landing' => static fn (): string => '/', 'next' => static fn (string $url): string => $url]); throw new RuntimeException('Identity collision accepted'); }
+catch (LogicException) { $assert($identityCalls === 0, 'Identity registration and collisions remain lazy'); }
+\TinyCat\Core\Identity\Integration::provide('tinycat.social', ['landing' => static fn (): string => '/social']);
+$assert(\TinyCat\Core\Identity\Integration::landing(null) === '/social', 'Failed identity registration does not claim earlier keys');
+foreach (['registration', 'url', 'path', 'privacy', 'image', 'render', 'not_found'] as $slot) {
+    try { \TinyCat\Core\Identity\Integration::provide('fixture.retired', [$slot => static fn (): string => 'unused']); throw new RuntimeException('Retired Identity slot accepted'); }
+    catch (InvalidArgumentException) { $assert(true, 'Retired account extension is rejected: ' . $slot); }
+}
+\TinyCat\Core\Identity\Integration::configure([]);
+\TinyCat\Core\Security\RateLimitPolicy::defineRequest('fixture.one', 'fixture-budget', ['scope' => 'account', 'window' => 60, 'max' => 2]);
+try { \TinyCat\Core\Security\RateLimitPolicy::defineRequest('fixture.two', 'fixture-budget', ['scope' => 'ip', 'window' => 1, 'max' => 100]); throw new RuntimeException('Budget collision accepted'); }
+catch (LogicException) { $assert(\TinyCat\Core\Security\RateLimitPolicy::requestRule('fixture-budget')['max'] === 2, 'Conflicting budget owner cannot replace policy'); }
 $configuration = new Configuration(['key.path' => 'literal', 'key' => ['path' => 'nested'], 'null' => null, 'zero' => 0]);
 $assert($configuration->get('key.path') === 'literal', 'Literal dotted keys retain precedence');
 $assert($configuration->get('null', 'fallback') === null && $configuration->get('zero') === 0, 'Null and zero are not missing values');
@@ -32,6 +60,10 @@ $values['nested']['value'] = 'after';
 $assert($snapshot->get('nested.value') === 'before', 'A configuration snapshot does not observe later input mutations');
 $modules = Loader::load($root);
 $registries = $modules->registries();
+Registrations::configure($registries);
+$healthCapability = $modules->catalog->get('tinycat.health');
+$assert($healthCapability->providers === [] && $healthCapability->resources === [], 'The signed Health capability is metadata only, with no independent provider or assets');
+$assert($registries->owner('task', 'site-health') === 'tinycat.scheduler' && $registries->owner('task', 'cleanup') === 'tinycat.scheduler', 'Tasks owns both built-in tasks without a separate Health service');
 foreach (['TinyCat\\Support\\Config', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Database\\Connection', 'TinyCat\\Http\\Session'] as $class) {
     $assert(!class_exists($class, false), 'Registry collection did not load ' . $class);
 }
@@ -51,6 +83,11 @@ $assert(in_array('orphan_branding_files', $maintenanceIds, true) && $registries-
 $assert($registries->initialMaintenance() === 'update_files', 'The existing initial cleanup cursor is preserved by its owner');
 $assert($registries->owner('task', 'feeds') === 'tinycat.social' && $registries->owner('maintenance', 'old_password_reset_tokens') === 'tinycat.accounts', 'Tasks and retention have explicit owners');
 $assert($registries->task('feeds')->options === ['bot_limit' => 20], 'Feed defaults remain stable');
+foreach (['task' => 'feeds', 'maintenance' => 'bot_history', 'sitemap' => 'authors', 'embed' => 'social.posts', 'player-origins' => 'social.players', 'widget' => 'social.comments'] as $kind => $id) {
+    $assert($registries->owner($kind, $id) === 'tinycat.social', 'Social contributions retain one module owner: ' . $kind . ':' . $id);
+}
+$reject(static fn () => new Registries(['tinycat.social' => new Contributions(tasks: [$registries->task('feeds'), $registries->task('feeds')])]), 'Duplicate contributions within one owner are rejected by core');
+
 $bundle = new Contributions(tasks: [$registries->task('feeds')]);
 $lookupCalls = 0;
 $lookup = new \TinyCat\Core\Modules\ComponentLookup('fixture.lookup', static function () use (&$lookupCalls): array { $lookupCalls++; return []; });
@@ -58,8 +95,11 @@ $lookupBundle = new Contributions(componentLookups: [$lookup]);
 $reject(static fn () => new Registries(['fixture.one' => $lookupBundle, 'fixture.two' => $lookupBundle]), 'Duplicate component lookup IDs across owners');
 $assert($lookupCalls === 0, 'Component lookup registrations do not evaluate presentation builders');
 $reject(static fn () => new Registries(['fixture.one' => $bundle, 'fixture.two' => $bundle]), 'Duplicate task IDs across owners');
-foreach (['navigation', 'health', 'maintenance', 'localizedRoutes', 'information', 'widgets', 'embeds'] as $kind) {
+foreach (array_keys(get_object_vars($registries->entries)) as $kind) {
+    if (in_array($kind, ['configOverrides', 'mailDelivery', 'notificationInbox'], true) || $registries->entries->$kind === []) { continue; }
     $entries = $registries->entries->$kind;
+    $duplicate = new Contributions(...[$kind => [$entries[0], $entries[0]]]);
+    $reject(static fn () => new Registries(['fixture.owner' => $duplicate]), 'Duplicate ' . $kind . ' IDs within one owner');
     $bundle = new Contributions(...[$kind => [$entries[0]]]);
     $reject(static fn () => new Registries(['fixture.one' => $bundle, 'fixture.two' => $bundle]), 'Duplicate ' . $kind . ' IDs across owners');
 }
@@ -115,15 +155,15 @@ $assert(\TinyCat\Core\Ui\Admin\Navigation::administration()[1]['label'] !== $men
 $withoutBots = new Catalog(array_values(array_filter($modules->catalog->definitions(), static fn ($definition): bool => $definition->id !== 'tinycat.social')));
 Resources::withCatalog($withoutBots, static function () use ($assert): void {
     $assert(!isset(\TinyCat\Core\Tasks\Tasks::definitions()['feeds']), 'Removing Bots removes its task');
-    $assert(!in_array('bot_history', \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks(), true), 'Removing Bots removes its maintenance');
+    $assert(!in_array('bot_history', \TinyCat\Core\Tasks\Cleanup\Task::taskIds(), true), 'Removing Bots removes its maintenance');
     $assert(count(\TinyCat\Core\Ui\Admin\Navigation::administration()) === 7, 'Removing Social retains only framework navigation including the dashboard');
-    $assert(\TinyCat\Core\Tasks\HealthCheck::run()['metrics'] === ['cleanup' => 'ok'], 'Scheduler diagnostics work without bot tables when Bots is absent');
+    $assert(\TinyCat\Core\Tasks\Health\Checks::scheduler()['metrics'] === ['cleanup' => 'ok'], 'Scheduler diagnostics work without bot tables when Bots is absent');
 });
 $assert(isset(\TinyCat\Core\Tasks\Tasks::definitions()['feeds']), 'Leaving a selection scope restores registrations');
 $fingerprint = Resources::fingerprint();
 Resources::withCatalog(new Catalog([]), static function () use ($assert, $fingerprint): void {
     $assert(Resources::fingerprint() !== $fingerprint, 'A scoped selection invalidates the cached fingerprint');
-    $assert(\TinyCat\Core\Tasks\Tasks::definitions() === [] && \TinyCat\Core\Ui\Admin\Navigation::administration() === [] && \TinyCat\Core\Health\Checks::definitions() === [] && \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks() === [], 'An empty selection has no domain contributions');
+    $assert(\TinyCat\Core\Tasks\Tasks::definitions() === [] && \TinyCat\Core\Ui\Admin\Navigation::administration() === [] && \TinyCat\Core\Tasks\Health\Checks::definitions() === [] && \TinyCat\Core\Tasks\Cleanup\Task::taskIds() === [], 'An empty selection has no domain contributions');
 });
 $assert(Resources::fingerprint() === $fingerprint, 'Leaving a scope restores the fingerprint of the original selection');
 
@@ -142,7 +182,7 @@ try {
         \TinyCat\Core\Modules\Providers::validateAll($selection);
         $cached = $ownership->getValue();
         $assert(count($cached) === 1, 'Startup caches successful ownership by definition identity');
-        $reject(static fn () => \TinyCat\Core\Modules\Providers::checked($definition, 'routes', \TinyCat\Core\Modules\StorageModule::class), 'A cached provider still has to implement the requested interface');
+        $reject(static fn () => \TinyCat\Core\Modules\Providers::checked($definition, 'routes', \TinyCat\Core\Modules\ProvidesSchemas::class), 'A cached provider still has to implement the requested interface');
         \TinyCat\Core\Modules\Providers::duringStartup(new Catalog([]), static function () use ($ownership, $cached, $assert): void {
             $assert($ownership->getValue() !== $cached && count($ownership->getValue()) === 0, 'A different catalog receives a separate startup cache');
         });
@@ -160,10 +200,14 @@ try {
     $product = 'fixture.product';
     $plan = ['format' => 3, 'framework' => \TinyCat\Core\Runtime\Framework::CAPABILITIES, 'schemaOwners' => [], 'product' => &$product, 'legacy' => false, 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => []];
     \TinyCat\Core\Modules\Distribution::validate($plan);
+    $invalidPlan = $plan;
+    $invalidPlan['framework'][] = 'fixture.unknown';
+    try { \TinyCat\Core\Modules\Distribution::validate($invalidPlan); throw new LogicException('Unknown framework accepted'); }
+    catch (RuntimeException) { $assert(true, 'Unknown framework capabilities remain rejected'); }
     $product = 'INVALID'; $invalid = false;
     try { \TinyCat\Core\Modules\Distribution::validate($plan); } catch (RuntimeException) { $invalid = true; }
     $assert($invalid, 'Mutating a referenced descriptor value cannot mutate its successful validation snapshot');
-    $consumerSelection = new Catalog([$fixture->catalog->get('fixture.provider'), ...array_values(array_filter($modules->catalog->definitions(), static fn ($definition): bool => in_array($definition->id, ['tinycat.security', 'tinycat.accounts', 'tinycat.notifications', 'tinycat.settings', 'tinycat.scheduler', 'tinycat.health'], true)))]);
+    $consumerSelection = new Catalog([$fixture->catalog->get('fixture.provider'), ...array_values(array_filter($modules->catalog->definitions(), static fn ($definition): bool => in_array($definition->id, ['tinycat.security', 'tinycat.accounts', 'tinycat.notifications', 'tinycat.settings', 'tinycat.scheduler'], true)))]);
     Resources::withCatalog($consumerSelection, static function () use ($collected, $assert, $reject): void {
         Registrations::configure($collected);
         $assert(\TinyCat\Core\Tasks\Tasks::definitions()['fixture.task']['admin']['title'] === 'fixture.task', 'A task without custom admin labels still has safe display metadata');
@@ -171,8 +215,8 @@ try {
         $assert($context['options'] === ['batch' => 1, 'target' => 7], 'A new task owns its normalization and administrator-only parameters');
         $reject(static fn () => \TinyCat\Core\Tasks\Tasks::context('fixture.task', ['mode' => 'http', 'options' => ['target' => 7]]), 'Administrative options on HTTP execution');
         $reject(static fn () => \TinyCat\Core\Tasks\Execution::contexts('all', ['target' => 7], 'admin'), 'Targeted options on all-task execution');
-        $assert(isset(\TinyCat\Core\Health\Checks::definitions()['fixture.probe']), 'A new provider contributes a health probe without running it');
-        $assert(\TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks() === ['fixture.cleanup'], 'A new provider contributes maintenance without running it');
+        $assert(isset(\TinyCat\Core\Tasks\Health\Checks::definitions()['fixture.probe']), 'A new provider contributes a health probe without running it');
+        $assert(\TinyCat\Core\Tasks\Cleanup\Task::taskIds() === ['fixture.cleanup'], 'A new provider contributes maintenance without running it');
     });
 } finally { unlink($temporary . '/App/Modules/RegistryFixture/src/Module.php'); unlink($temporary . '/App/Modules/RegistryFixture/module.json'); rmdir($temporary . '/App/Modules/RegistryFixture/src'); rmdir($temporary . '/App/Modules/RegistryFixture'); rmdir($temporary . '/App/Modules'); rmdir($temporary . '/App'); rmdir($temporary); }
 

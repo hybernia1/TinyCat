@@ -1482,52 +1482,6 @@
         }
       },
       {
-        "each": {"get": "snapshot.groups"},
-        "as": "group",
-        "children": {
-          "tag": "section",
-          "attrs": {"class": "card"},
-          "children": [
-            {
-              "tag": "div",
-              "attrs": {"class": "card-body cluster gap-2"},
-              "children": [
-                {
-                  "tag": "div",
-                  "attrs": {"class": "min-w-0"},
-                  "children": [
-                    {
-                      "tag": "strong",
-                      "children": [
-                        {"get": "group.name"},
-                        " ",
-                        {
-                          "tag": "span",
-                          "attrs": {"class": "text-muted"},
-                          "children": [{"get": "group.active_count"}, " / ", {"count": {"get": "group.modules"}}]
-                        }
-                      ]
-                    },
-                    {"tag": "p", "attrs": {"class": "table-meta table-text m-0"}, "children": [{"get": "group.names"}]}
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attrs": {"class": "cluster"},
-                  "children": [
-                    {
-                      "each": {"get": "group.actions"},
-                      "as": "action",
-                      "children": {"component": "ui/module-activation", "data": {"get": "action"}}
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
         "tag": "div",
         "attrs": {"class": "table-wrap min-w-0"},
         "children": [
@@ -2032,7 +1986,11 @@
                 "children": {
                   "tag": "tr",
                   "children": [
-                    {"tag": "th", "attrs": {"scope": "row"}, "children": [{"get": "row.label"}]},
+                    {
+                      "tag": "th",
+                      "attrs": {"scope": "row"},
+                      "children": [{"or": [{"get": "row.label"}, {"get": "row.name"}]}]
+                    },
                     {
                       "tag": "td",
                       "attrs": {"class": "is-resource-text"},

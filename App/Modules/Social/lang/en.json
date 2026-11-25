@@ -455,5 +455,19 @@
     "purpose_bot_sources": "RSS and Atom publishing rules for bot accounts.",
     "purpose_bot_feed_history": "Recent feed item hashes used to prevent duplicate bot posts.",
     "purpose_bot_source_runs": "Compact diagnostic history of bot source checks and imports."
+  },
+  "cron": {
+    "tasks": {
+      "feeds": "sources",
+      "feeds_help": "Publishes items from active sources whose interval is due.",
+      "feeds_schedule": "Schedule according to the required polling frequency, typically every two minutes."
+    },
+    "options": {
+      "bot_limit": "Source limit",
+      "source_id": "Source ID"
+    },
+    "cadence": {
+      "feeds": "Check every two minutes"
+    }
   }
 }

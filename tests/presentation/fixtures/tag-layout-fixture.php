@@ -9,8 +9,8 @@ require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runti
 $tags = '#postaday #abandoned #attractions ' . implode(' ', array_map(static fn (int $i): string => '#tag-' . $i, range(1, 99)));
 $items = [];
 foreach (["English headline\n\nEnglish paragraph.\n\n" . $tags, $tags, 'English #inline-tag paragraph.', 'English prose without tags.'] as $body) {
-    $segments = TinyCat\Core\Text\Segments::compactTags(TinyCat\Core\Text\Segments::text($body, 'post'));
-    $item = ['segments' => $segments, ...TinyCat\Core\Text\Segments::splitTags($segments)];
+    $segments = TinyCat\Social\Posts\InlinePresentation::compactTags(TinyCat\Social\Posts\InlinePresentation::text($body));
+    $item = ['segments' => $segments, ...TinyCat\Social\Posts\InlinePresentation::splitTags($segments)];
     $items[] = ['item' => $item, 'html' => TinyCat\Support\Components::render('status/body', ['item' => $item])];
 }
 echo json_encode($items, JSON_THROW_ON_ERROR);

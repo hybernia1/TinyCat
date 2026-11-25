@@ -24,10 +24,11 @@ final class Feed
                     ci.width AS image_width,
                     ci.height AS image_height,
                     ci.bytes AS image_bytes,
+                    u.status AS author_status,
                     u.username AS author_username,
                     u.username AS author_name,
                     u.role AS author_role,
-                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.avatar_version AS author_avatar_version,
+                    u.avatar_exists AS author_avatar_exists,  u.avatar_version AS author_avatar_version,
                     u.updated_at AS author_updated_at,
                     (
                         SELECT COUNT(*)
@@ -245,7 +246,7 @@ final class Feed
         ?array &$selection = null
     ): array
     {
-        $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
+        $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
 
         if ($tag === '') {
             return [];
@@ -273,7 +274,7 @@ final class Feed
      */
     public static function public_status_ids_by_tag(string $tag, int $limit = 24): array
     {
-        $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize($tag);
+        $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
         $termId = \TinyCat\Social\Posts\Tags::status_term_id_exact($tag);
 
         if ($termId < 1) {
@@ -410,7 +411,7 @@ final class Feed
         }
 
         if ($context === 'tag') {
-            $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize((string) ($params['tag'] ?? ''));
+            $tag = \TinyCat\Social\Posts\Tags::normalizeTag((string) ($params['tag'] ?? ''));
 
             return [
                 'items' => \TinyCat\Social\Posts\Feed::public_status_items_by_tag($tag, $limit, $cursorAt, $cursorId, $type, $selection),

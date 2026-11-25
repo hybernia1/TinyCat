@@ -89,7 +89,7 @@ try {
         $assert($database->query('SELECT audio_url FROM social_links WHERE id = 2')->fetchColumn() === 'https://93.184.216.34/episode.mp3' && $database->query('SELECT link_type FROM social_links WHERE id = 2')->fetchColumn() === 'audio', $driver . ': merging retains audio from a duplicate and its archive classification.');
         $assert($after['content'] === $before['content'] && $after['bot_feed_history'] === $before['bot_feed_history'], $driver . ': post bodies and bot GUID history remain byte-for-byte intact.');
         $assert((int) $database->query('SELECT COUNT(*) FROM social_post_links WHERE link_id = 2')->fetchColumn() === 2 && count($after['content_links']) === count($before['content_links']) - 1, $driver . ': merging preserves all posts and collapses overlapping relations.');
-        $assert($database->query('SELECT normalized_url FROM social_links WHERE id = 5')->fetchColumn() === \TinyCat\Core\Text\LinkParser::fromRaw($map)['normalized_url'], $driver . ': legacy coordinate apostrophes are recovered.');
+        $assert($database->query('SELECT normalized_url FROM social_links WHERE id = 5')->fetchColumn() === \TinyCat\Social\Posts\LinkParser::fromRaw($map)['normalized_url'], $driver . ': legacy coordinate apostrophes are recovered.');
         $assert($database->query('SELECT normalized_url FROM social_links WHERE id = 4')->fetchColumn() === 'https://distinct.example/item', $driver . ': conflicting www hosts are not globally merged.');
         $again = $optimize($database);
         $assert($again['normalized'] === [] && $again['recovered'] === [] && $again['merged'] === [] && $again['orphans'] === [], $driver . ': a second run has no changes.');

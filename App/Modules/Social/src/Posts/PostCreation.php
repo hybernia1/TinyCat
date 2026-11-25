@@ -6,8 +6,6 @@ namespace TinyCat\Social\Posts;
 use TinyCat\Social\Posts\Links;
 use TinyCat\Social\Posts\Policy;
 
-use TinyCat\Core\Text\PostText;
-
 use InvalidArgumentException;
 use TinyCat\Database\Connection;
 use TinyCat\Database\Transactions;
@@ -29,11 +27,9 @@ final readonly class PostCreation
     {
     }
 
-    public static function fromText(string $text, string $kind = 'post'): self
+    public static function fromText(string $text): self
     {
-        $policy = \TinyCat\Core\Text\Policies::policy($kind);
-        $body = PostText::normalize(\TinyCat\Support\Text::strip_html_tags_preserving_text($text));
-        if ($policy->prepare !== null) { $body = ($policy->prepare)($body); }
+        $body = self::normalize(\TinyCat\Support\Text::strip_html_tags_preserving_text($text));
         $body = \TinyCat\Support\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);
         $host = Policy::blockedHost($body);
         $rejection = $host !== ''
@@ -41,19 +37,50 @@ final readonly class PostCreation
             : self::tagRejection($body);
         if ($rejection !== null) { return new self($body, [], [], $rejection); }
 
-        $normalize = $policy->normalize;
-        $body = $normalize !== null ? $normalize($body) : $body;
-        $body = Tags::normalize_tags_for_storage($body);
+        $body = Mentions::normalize_mentions_for_storage($body);
+        $body = Tags::normalizeTagText($body);
         $body = \TinyCat\Support\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);
-        return new self($body, Tags::status_tags_from_text($body), Links::status_links_from_text($body), null);
+        return new self($body, Tags::extractTags($body), Links::status_links_from_text($body), null);
+    }
+
+    public static function normalize(string $body): string
+    {
+        $body = str_replace(["\r\n", "\r", "\u{2028}", "\u{2029}"], "\n", $body);
+        $body = preg_replace('/[^\S\n]+/u', ' ', $body) ?? $body;
+        $lines = explode("\n", $body);
+        foreach ($lines as &$line) {
+            $line = trim($line);
+            // Protect literal URLs, including their query strings and fragments.
+            preg_match_all(LinkParser::pattern(), $line, $urls, PREG_OFFSET_CAPTURE);
+            $parts = [];
+            $offset = 0;
+            foreach ($urls[0] as [$url, $position]) {
+                $parts[] = substr($line, $offset, $position - $offset);
+                $parts[] = $url;
+                $offset = $position + strlen($url);
+            }
+            $parts[] = substr($line, $offset);
+            foreach ($parts as $index => &$part) {
+                if ($index % 2 === 0) {
+                    $part = preg_replace('/[\x{200B}\x{FEFF}]/u', '', $part) ?? $part;
+                    $part = preg_replace('/[^\S\n]+/u', ' ', $part) ?? $part;
+                    $part = preg_replace('/\[\s*(?:\.{3}|…)\s*\]/u', '…', $part) ?? $part;
+                }
+            }
+            unset($part);
+            $line = implode('', $parts);
+            $line = trim($line);
+        }
+        unset($line);
+        return trim(preg_replace('/\n{3,}/', "\n\n", implode("\n", $lines)) ?? '');
     }
 
     /** @return array{code: string, message_key: string, params: array<string, int|string>}|null */
     public static function tagRejection(string $body): ?array
     {
-        foreach (Tags::status_tag_tokens_from_text($body) as $token) {
-            if (strlen(\TinyCat\Support\Text::slug((string) $token)) > Tags::status_tag_max_length()) {
-                return ['code' => 'status_tag_too_long', 'message_key' => 'account.messages.status_tag_too_long', 'params' => ['max' => (string) Tags::status_tag_max_length()]];
+        foreach (Tags::tagTokens($body) as $token) {
+            if (strlen(\TinyCat\Support\Text::slug((string) $token)) > Tags::MAX_BYTES) {
+                return ['code' => 'status_tag_too_long', 'message_key' => 'account.messages.status_tag_too_long', 'params' => ['max' => (string) Tags::MAX_BYTES]];
             }
         }
         return null;
@@ -73,9 +100,8 @@ final readonly class PostCreation
      * @param list<array<mixed>> $preparedLinks
      * @param array<mixed>|null $image
      */
-    public static function create(int $authorId, self $draft, array $preparedLinks, ?array $image = null, ?string $publishedAt = null, string $kind = 'post'): int
+    public static function create(int $authorId, self $draft, array $preparedLinks, ?array $image = null, ?string $publishedAt = null): int
     {
-        if (preg_match('/^[a-z][a-z0-9_.-]{0,39}$/D', $kind) !== 1) { throw new InvalidArgumentException('Invalid publication kind.'); }
         if ($draft->rejection !== null) {
             throw new InvalidArgumentException('Cannot persist rejected post content.');
         }
@@ -83,9 +109,9 @@ final readonly class PostCreation
             throw new InvalidArgumentException('A post requires an author and text or an image.');
         }
 
-        return Transactions::run(static function () use ($authorId, $draft, $preparedLinks, $image, $publishedAt, $kind): int {
+        return Transactions::run(static function () use ($authorId, $draft, $preparedLinks, $image, $publishedAt): int {
             $contentId = (int) Connection::insert('social_posts', [
-                'kind' => $kind,
+                'kind' => 'post',
                 'body' => $draft->body,
                 'author_id' => $authorId,
                 'published_at' => $publishedAt ?? \TinyCat\Support\Dates::dateDb(),

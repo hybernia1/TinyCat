@@ -47,7 +47,7 @@ data a pravidla až po UI. Vypnutí odstraní runtime příspěvky, zachová dat
 | Účty | Identity, přihlášení, správu a oprávnění | Doménové vazby a pravidla. |
 | Doménová data | DB, transakce, parsery textu/odkazů a soubory | Vlastní entity, tabulky, FK, pravidla a repository. |
 | Diskuse a reakce | Formátování, editor, revize a AJAX UI | Vlastní tabulky, autorizovaný cíl, transakce a události. |
-| Importy | FeedParser a FeedPipeline | FeedSourceStore, FeedTarget a vlastní zdroje. |
+| Importy | FeedParser pro RSS, Atom a JSON Feed | Vlastní importní průchod, zdroje, historie a publikace. |
 | Úlohy | Tasks, zámky, historii a rozhraní | ScheduledTask a pracovní callback. |
 | Nastavení | Settings a společný editor | Vlastní klíče, sekce, validaci a překlady. |
 | Oznámení a pošta | Notifications a Mail | Událost, příjemce, odkazy a vlastní šablony. |
@@ -58,13 +58,10 @@ Modul nemusí používat všechny schopnosti. Veřejná stránka funguje bez Soc
 Nevytvářej druhý HTTP klient, DB vrstvu, scheduler, překladač nebo modalový systém.
 Závislost na jiném funkčním modulu musí být výslovná a skutečně potřebná.
 
-Pro obecný ASCII segment URL použij `TinyCat\Core\Text\Slugger::slug($text)`.
-Jde o čistý převod validního UTF-8 přes `iconv`, normalizaci na malá písmena
-a pomlčky; prázdný výsledek je povolený. Slugger nečte DB, nenastavuje locale,
-nevybírá doménu, ID, URL cestu ani pravidla přesměrování. Stabilní identitu
-a skládání URL vlastní modul. Historické `Support\Text::slug()` zachovává
-původní pravidla existujících konzumentů; jejich uložené identifikátory se
-kvůli novému mechanismu nepřepočítávají.
+Pro ASCII segment URL použij `TinyCat\Support\Text::slug($text)`.
+Převod používá ICU, případně iconv, a podporuje vlastní oddělovač.
+Stabilní identitu, skládání URL a pravidla přesměrování vlastní modul.
+Uložené identifikátory se při změnách konzumentů nepřepočítávají.
 
 ## 1. Adresář a manifest
 
@@ -280,8 +277,9 @@ neupravuj ručně. Podrobnosti: [překlady](../contracts/translations.md).
 ## 4. Data, migrace a API
 
 Modul bez vlastních tabulek nepotřebuje schema provider. Pro vlastní data
-implementuj `ProvidesSchema`, deklaruj provider `schema` v manifestu a vrať
-`ModuleSchema`: aktuální verzi, vlastněné tabulky, fresh instalaci a úplnou
+implementuj `ProvidesSchemas`, deklaruj provider `schema` v manifestu a z metody
+`schemas()` vrať mapu stabilní ID streamu => `ModuleSchema`: aktuální verzi,
+vlastněné tabulky, fresh instalaci a úplnou
 posloupnost `SchemaMigration` od verze 1. Soubory patří do vlastního
 `migrations/`, deklarovaného v `resources`. [Testovací Notes](../../tests/fixtures/modules/notes/src/Module.php)
 ověřuje lifecycle modulu; není vzorem úplného CRUD editoru.
@@ -301,8 +299,12 @@ entitu. Tabulky core nepřihlašuj jako vlastnictví modulu.
 
 Publikované migrační soubory, ID a checksumy jsou neměnné. Změna znamená novou
 migraci a aktualizaci současného instalačního schématu; fresh a upgrade musí
-dosáhnout stejného stavu. `ProvidesManagedSchemas` řeší historické streamy,
-není výchozím vzorem nového modulu. Na MySQL má účet `INT UNSIGNED`;
+dosáhnout stejného stavu. Jediný kontrakt `ProvidesSchemas` zachovává i více
+historických streamů. `ModuleSchema::tables` je jediný zdroj vlastnictví tabulek;
+bezdatový provider žádný prázdný seznam neimplementuje. `repairOnInstall` výslovně
+povoluje opakovanou opravu idempotentního DDL při explicitní instalaci a
+`gateRoutes` určuje automatickou readiness JSON rout. Běžný nový modul používá
+výchozí hodnoty `false` a `true`. Na MySQL má účet `INT UNSIGNED`;
 vazby na účet musí mít odpovídající typ. Vlastní entity a jejich vztahy
 zapisuj atomicky. Média a metadata připrav před transakcí, staré soubory
 maž po commitu.
@@ -388,8 +390,9 @@ callbacky se při registraci neprovádějí.
 | `health`, `temporaryDirectories` | `HealthProbe`, `TemporaryDirectory`: diagnostika a dočasné soubory. |
 
 Úlohy včetně ručního tlačítka a CLI používej přes Core/Tasks, nikoli voláním
-pracovního callbacku mimo runner. Importy používají společnou `FeedPipeline`
-s vlastními `FeedSourceStore` a `FeedTarget`; viz [importy](../operations/feed-imports.md).
+pracovního callbacku mimo runner. Core poskytuje `FeedParser` bez publikačních
+pravidel. Importní průchod a mapování do domény vlastní modul;
+viz [importy Socialu](../operations/feed-imports.md).
 `ScheduledTask` používá ID `[a-z][a-z0-9_.-]{0,39}`; `all` je rezervované
 pro výběr všech úloh. Výchozí parametry jsou celá čísla, další povolené
 parametry jednotlivých transportů deklaruje `modeOptions`. Volitelné
@@ -398,6 +401,24 @@ jako `batch`; core nezná doménové názvy parametrů. Normalizace proběhne je
 před spuštěním vybraných úloh a stejné hodnoty dostane historie i callback.
 Neplatný konkrétní cíl odmítni; nepřeváděj ho na spuštění celé dávky.
 `healthAge` a `detail` jsou lazy callbacky vlastníka; registrace nečte DB.
+`detail` dostane kanonický resource běhu. Pro společný detail může doplnit
+`details`: seznam položek s `title`, volitelným `status` (`name`, `code`) a
+`rows` (`name`, `value`). Tasks je zobrazí ve společném modalu a tabulce.
+Specifické doménové UI může vlastník připojit přes `componentExtensions`
+sdíleného `scheduler/run-detail`. API nevrací HTML ani názvy komponent.
+Bez aktivního vlastníka zůstane dostupný základní detail.
+Definici úlohy předávej jako `ScheduledTask` v `Contributions::tasks`;
+nepřidávej souběžnou registraci přes pole získané z `definition()`.
+Tasks vlastní registraci, parametry, spouštění, plánování, souběh, zámky,
+historii a společnou administraci. Scheduler je jeho vnitřní mechanismus;
+`ScheduledTask` je zachovaný název kontraktu také pro ručně spustitelnou práci.
+Nová úloha potřebuje definici a handler, nikoli vlastní aplikaci nebo historii.
+Health vlastní sondy, vyhodnocení a upozornění; `site-health` přispívá do Tasks
+stejně jako `cleanup` a modulové importy. `Tasks/Health/Checks::scheduler` sleduje stáří a
+chyby běhů podle lazy `healthAge`, nespouští diagnostiku.
+Nedávné běhy poskytuje `Tasks/History::recent`, s vyřazením zvolených stavů
+před omezením počtu. Administrační adaptéry používají `Tasks/Actions::execute`;
+nové klienty připojuj na `POST /api/scheduler/tasks/{task}/runs`.
 Diskuse a reakce používají `InteractionPolicy` pro explicitní druh publikace.
 Podrobné návaznosti rozebírá [transport](modules.md).
 

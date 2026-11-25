@@ -18,7 +18,9 @@ kvůli sdílenému editoru nebo stejnému číselnému ID.
 `Social/Posts/TextResource` vlastní sociální resource a prezentaci. Social ověří cíl a načte
 autorizované přílohy, komentáře a stav reakcí. Zápis zamkne vlastní agregát,
 ověří rodiče komentáře i jeho vazbu a atomicky zapíše změnu a limiter.
-`Core/Text/Revisions` pomůže s formátem historie; tabulku vlastní modul.
+`Social/Discussion/Comments` vlastní formát historie komentáře včetně aktéra
+a změn těla. Čtení a zápis historie jsou přímo součástí tohoto vlastníka;
+tabulku vlastní Social.
 
 `Database/Transactions::afterCommit` odkládá vedlejší efekty po vnějším
 spravovaném commitu. Při rollbacku se zahodí. Vnější transakce s takovými efekty
@@ -126,19 +128,39 @@ Render callbacky se při registraci nevolají. Widget používá společné komp
 administrace; serverová autorizace jeho dat stále patří vlastníkovi. Vypnutý modul
 nepřispívá cestami, informačním obsahem ani widgety.
 
-`Core/Text/Policies::provide(owner, name, policy)` registruje pojmenované čisté
-renderovací hooky. Social používá `post`. Politiky nemají SQL;
-normování a validaci uloženého textu určuje vlastník.
+`Social/Posts/PostCreation` připravuje sociální text přímo bez registru politik.
+Core nemá kontrakt pro přípravu nebo vykreslování příspěvků; normalizaci,
+validaci a prezentaci doménového textu určuje jeho vlastník.
 
 Blokování URL a UTM má každý modul samostatné. Social zachovává historické klíče
 `moderation.blocked_urls` a `content_links.*`; další modul deklaruje své klíče.
 Normalizaci poskytuje `Core/Security/UrlRules` a `Core/Links/Tracking`.
 
-`Core/Text/Segments`, `Core/Links/Presentation` a UI komponenty sdílejí text,
-odkazy, obrázky a přehrávače. `Core/Links/Outbound` přijímá autorizovaný text
-a lazy přístup k přílohám. RSS serializuje `Core/Feeds/Rss`, výběr řádků dodává
-vlastník. oEmbed hostuje `Core/Discovery/Oembed` pro aktivní `EmbedSource`;
+`Core/Text/LinkParser` zachovává query parametry a neklasifikuje poskytovatele.
+`Core/Links/Metadata` čte obecné HTML, Open Graph, audio a obrázky přes společný
+HTTP klient. Konkrétní služby a jejich metadata vlastní `Social/Posts/Providers`
+a `LinkMetadata`; obecný parser ani síťovou vrstvu nekopírují.
+`Core/Text/InlineText` umožňuje transformovat text mimo doslovné URL.
+Social vlastní celý renderer `InlinePresentation`, hashtagy, emotikony,
+rozložení tagů a přehrávače. `Social/Posts/ContentLinks` přijímá autorizovaný
+text a lazy přístup k přílohám.
+Social přispívá povolené originy přehrávačů lazy přes typované `PlayerOrigins` v `Contributions/Registries` (sloučení, kontrola kolizí ID a validace HTTPS originů před CSP);
+core bez modulu žádné externí přehrávače nepovoluje.
+Výstupní RSS prezentuje `Core/Ui/Rss::respond`, které používá společnou HTTP
+odpověď včetně ETag, podmíněného GET a HEAD. Modul vlastní routu, výběr a viditelnost
+řádků; předává finální titulek, popis, absolutní URL, jazyk a položky.
+Renderer nečte nastavení instalace ani nezná druh entity. Položky mají `title`,
+`url` a volitelně `html`, `published_date` (RSS datum), `creator`, `creator_url`,
+`categories`, `image_url`, `image_type` a `enclosure`. `html` připravuje vlastník;
+pro prostý text může použít bezpečný helper `Rss::html`.
+oEmbed hostuje `Core/Discovery/Oembed` pro aktivní `EmbedSource`;
 cizí origin odmítne bez stahování a vlastník ověřuje veřejnou viditelnost.
+Discovery URL vytváří `Core/Discovery/Oembed::discoveryUrl` z kanonické URL
+vlastníka. `Core/Ui/Oembed` serializuje a odesílá standardní JSON/XML přes
+společný HTTP dokument, bez aplikační JSON obálky. Modul dodává typ (`link`,
+`photo`, `video` nebo `rich`), metadata a případné HTML vložení; endpoint zachová
+jeho typ a doplní výchozí údaje instalace. Tato podpora nevyžaduje Social ani
+jeho modal pro sdílení.
 
 ## Ověření změn
 
@@ -153,3 +175,5 @@ cizí origin odmítne bez stahování a vlastník ověřuje veřejnou viditelnos
 Historická mapa již odstraněných endpointů a hotové etapy migrace byly
 z dokumentace odstraněny. Jejich obsah zůstává v historii Gitu; nepředstavují
 podporované aliasy aktuálního API.
+
+`Core/Ui/Platform` registers `HttpPolicy` as `tinycat.core`. Social registers identity extensions as `tinycat.social`; historical contribution IDs and migration streams keep their original IDs. Only Social publication quotas exempt bot authors for the `post` operation; core request, CAPTCHA and cooldown protections still apply.

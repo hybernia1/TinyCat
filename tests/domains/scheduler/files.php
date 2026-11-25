@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 use TinyCat\Support\Cache;
 use TinyCat\Support\Config;
 use TinyCat\Support\Paths;
-use TinyCat\Social\Posts\Links;
+use TinyCat\Social\Posts\LinkImages;
 
 (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['driver' => 'filesystem'], 'database' => ['driver' => 'mysql']]);
@@ -41,7 +41,7 @@ $assert(!is_file(Cache::file(hash('sha256', 'expired') . '.json')) && !is_file(C
 $assert(Cache::read('fresh') === ['new' => true] && Cache::read('stale') === ['previous' => true], 'Fresh data and the stale refresh window survive cleanup.');
 $assert(Cache::read('legacy') === ['legacy' => true], 'Legacy raw JSON remains readable during rollout.');
 $assert(is_file(Cache::file('app.js', 'assets')) && is_file(Cache::file('active.lock', 'locks')), 'Cache cleanup preserves generated assets and active lock files.');
-$result = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('expired_cache_files', 500);
+$result = \TinyCat\Core\Tasks\Cleanup\Task::runTask('expired_cache_files', 500);
 $assert($result['done'] && $result['changed'] === 0, 'The scheduler dispatches file cache cleanup.');
 
 $testDatabaseConfig = tinycat_test_database_config();
@@ -64,7 +64,7 @@ $database->exec('CREATE TABLE bot_source_runs (id INT UNSIGNED NOT NULL AUTO_INC
 $database->exec("INSERT INTO users VALUES (1, 'fixture-bot', 'bot', 'active')");
 $database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, interval_minutes) VALUES (1, 1, 1, 'http://127.0.0.1/blocked-feed', 60)");
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['bots.cleanup_last_run' => time()]);
-$feedTask = \TinyCat\Social\Bots\Importer::scheduledTasks()['feeds']['runner'];
+$feedTask = \TinyCat\Social\Bots\Importer::scheduledTask()->runner;
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
 $assert(!$result['ok'] && $result['status'] === 'failed' && $result['summary']['summary']['error'] === 1, 'A failed feed import makes the cron result fail instead of claiming success.');
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
@@ -155,17 +155,17 @@ try {
     $files['other'] = $directory . '/unrelated.txt';
     file_put_contents($files['other'], 'preserve');
     touch($files['other'], time() - 7200);
-    $result = Links::cleanupOrphanImages(1, $month);
+    $result = LinkImages::cleanup(1, $month);
     $assert($result['changed'] <= 1 && $result['has_more'], 'A bounded directory visit may encounter a preserved file first, independent of filesystem order.');
-    $result = Links::cleanupOrphanImages(1, $month);
+    $result = LinkImages::cleanup(1, $month);
     $assert($result['changed'] <= 1, 'Link image cleanup bounds inspection and deletion independently of references.');
-    for ($attempt = 0; $attempt < 10 && $result['has_more']; $attempt++) { $result = Links::cleanupOrphanImages(1, $month); }
+    for ($attempt = 0; $attempt < 10 && $result['has_more']; $attempt++) { $result = LinkImages::cleanup(1, $month); }
     $assert(!$result['has_more'], 'Link image cleanup resumes through preserved files and completes its bounded scan.');
     $assert(is_file($files['stored']) && is_file($files['fresh']) && is_file($files['other']), 'Referenced previews, new files and unrelated files survive cleanup.');
     $assert(!is_file($files['orphan-a']) && !is_file($files['orphan-b']), 'Old unreferenced previews are removed.');
-    $assert(Links::cleanupOrphanImages(500, $month)['changed'] === 0, 'Repeated cleanup is idempotent.');
+    $assert(LinkImages::cleanup(500, $month)['changed'] === 0, 'Repeated cleanup is idempotent.');
     try {
-        Links::cleanupOrphanImages(500, '../');
+        LinkImages::cleanup(500, '../');
         $assert(false, 'Path traversal must be rejected.');
     } catch (InvalidArgumentException) {
         $assert(true, 'Path traversal is rejected.');
@@ -262,7 +262,7 @@ try {
     $assert($execution['ok'] && $normalizations === 1 && $observed === 2, 'Execution normalizes exactly once even for a non-idempotent owner callback.');
     $assert(strlen($lockName) <= 64, 'Long valid task IDs fit the MySQL advisory lock name limit.');
     $queriesBefore = $database->prepared;
-    $health = \TinyCat\Core\Tasks\HealthCheck::run();
+    $health = \TinyCat\Core\Tasks\Health\Checks::scheduler();
     $assert($health['metrics'][$taskId] === 'ok', 'Bulk health checks recognize a completed contributed task.');
     $assert($database->prepared - $queriesBefore === 2, 'Scheduler health uses two bulk queries independently of task-specific probes.');
     $match = new ReflectionMethod(\TinyCat\Http\Router::class, 'routeMatch');

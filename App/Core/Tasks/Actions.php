@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 namespace TinyCat\Core\Tasks;
-use TinyCat\Core\Tasks\Tasks;
-use TinyCat\Core\Tasks\Execution;
 
 use TinyCat\Http\Result;
 use TinyCat\Http\Response;
@@ -25,10 +23,7 @@ final class Actions
 
     public static function run(string $task): Result
     {
-        $definition = Tasks::definitions()[$task] ?? null;
-        if ($definition === null) { Response::error(Localization::t('cron.unknown_task'), 404, 'scheduler_unknown_task'); }
-        $user = \TinyCat\Core\Identity\Authentication::auth();
-        $execution = \TinyCat\Http\Session::withoutLock(static fn (): array => Execution::run($task, $definition['options'], 'admin', (int) ($user['id'] ?? 0))['tasks'][$task]);
+        $execution = self::execute($task)['tasks'][$task];
         $code = empty($execution['ok']) ? 'scheduler_run_failed' : (($execution['status'] ?? '') === 'already_running' ? 'scheduler_already_running' : 'scheduler_run_finished');
         $key = match ($code) {
             'scheduler_run_failed' => 'cron.run_failed',
@@ -36,6 +31,17 @@ final class Actions
             default => 'cron.run_finished',
         };
         return self::listResult(Administration::payload() + ['execution' => $execution], Localization::t($key), $code, ['type' => empty($execution['ok']) ? 'danger' : 'success']);
+    }
+
+    /** Canonical administrator admission, actor attribution and session unlocking.
+     * All administrator task actions use this admission path.
+     * @return array<string, mixed> */
+    public static function execute(string $task): array
+    {
+        $definition = Tasks::definitions()[$task] ?? null;
+        if ($definition === null) { Response::error(Localization::t('cron.unknown_task'), 404, 'scheduler_unknown_task'); }
+        $user = \TinyCat\Core\Identity\Authentication::auth();
+        return \TinyCat\Http\Session::withoutLock(static fn (): array => Execution::run($task, $definition['options'], 'admin', (int) ($user['id'] ?? 0)));
     }
 
     public static function rotateToken(): Result

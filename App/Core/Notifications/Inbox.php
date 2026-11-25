@@ -56,7 +56,7 @@ class Inbox
     public static function items(int $userId, int $limit = 80, string $cursorAt = '', int $cursorId = 0): array
     {
         if ($userId < 1) { return []; }
-        $query = \TinyCat\Database\Query::select('SELECT n.*, u.username AS actor_name, u.username AS actor_username, u.avatar_exists AS actor_avatar_exists, u.avatar_appearance AS actor_avatar_appearance, u.avatar_version AS actor_avatar_version, u.updated_at AS actor_updated_at FROM notifications n LEFT JOIN users u ON u.id = n.actor_id')->where('n.user_id = ?', $userId);
+        $query = \TinyCat\Database\Query::select('SELECT n.*, u.username AS actor_name, u.username AS actor_username, u.avatar_exists AS actor_avatar_exists,  u.avatar_version AS actor_avatar_version, u.updated_at AS actor_updated_at FROM notifications n LEFT JOIN users u ON u.id = n.actor_id')->where('n.user_id = ?', $userId);
         if ($cursorAt !== '' && $cursorId > 0) { $query->where('(n.created_at < ? OR (n.created_at = ? AND n.id < ?))', $cursorAt, $cursorAt, $cursorId); }
         return Types::hydrate($query->order('n.created_at DESC, n.id DESC')->limit(max(1, min(200, $limit)))->all());
     }

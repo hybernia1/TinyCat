@@ -225,8 +225,6 @@
     "inactive": "Inativo",
     "enable": "Ativar",
     "disable": "Desativar",
-    "enable_group": "Ativar grupo",
-    "disable_group": "Desativar grupo",
     "needed_by": "Exigido por: {modules}",
     "confirm": "Aplicar a alteração? As dependências são verificadas e os dados preservados.",
     "module": "Módulo",

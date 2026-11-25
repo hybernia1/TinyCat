@@ -71,7 +71,7 @@ final class SitemapData
         $entries = [];
         foreach ($rows as $row) {
             $url = match ($section) {
-                'tags' => ($tag = \TinyCat\Social\Posts\Tags::status_tag_normalize((string) ($row['name'] ?? ''))) !== '' ? \TinyCat\Social\Posts\Tags::tag_url($tag) : '',
+                'tags' => ($tag = \TinyCat\Social\Posts\Tags::normalizeTag((string) ($row['name'] ?? ''))) !== '' ? \TinyCat\Social\Posts\Tags::tag_url($tag) : '',
                 default => \TinyCat\Social\Posts\Posts::status_url((int) ($row['id'] ?? 0)),
             };
 

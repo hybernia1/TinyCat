@@ -15,7 +15,7 @@ final class Discovery
         $body .= "Use `GET /search/all?q={query}&collection=content` with a URL-encoded query between 3 and 80 characters to find matching public posts. Search result pages are `noindex`, but their canonical public result URLs may be used for navigation. Respect rate limits and any CAPTCHA response; do not use API endpoints directly.\n\n";
         $body .= "Public RSS feeds are available at `/tag/{tag}/feed` and `/author/{id}/feed`. Public URL patterns are `/author/{id}`, `/author/{id}/feed`, `/tag/{tag}`, `/tag/{tag}/feed`, and `/status/{id}`. Only publicly visible content should be indexed. Do not index private account pages, administration, notifications, search results, login, registration, recovery, or API endpoints. Use the sitemap and canonical page URLs as the complete, current URL inventory.\n\n";
         $body .= "## Optional\n\n";
-        $body .= '- [Recent public-post sample](' . \TinyCat\Core\Ui\Site::absolute_url('/llms-full.txt') . '): TinyCat extension with a recent public-post sample; skip it when only site-level context is needed.' . "\n";
+        $body .= '- [Recent public-post sample](' . \TinyCat\Support\LocalUrls::absolute('/llms-full.txt') . '): TinyCat extension with a recent public-post sample; skip it when only site-level context is needed.' . "\n";
 
         return $body;
     }
@@ -44,9 +44,9 @@ final class Discovery
 
             $body .= '### ' . ($author !== '' ? $author : 'Public post') . "\n\n";
             $body .= '- Published: ' . $publishedAt . "\n";
-            $body .= '- [Open post](' . \TinyCat\Core\Ui\Site::absolute_url(\TinyCat\Social\Posts\Posts::status_url($statusId)) . ")\n";
+            $body .= '- [Open post](' . \TinyCat\Support\LocalUrls::absolute(\TinyCat\Social\Posts\Posts::status_url($statusId)) . ")\n";
             if ($imageUrl !== '') {
-                $body .= '- [Attached image](' . \TinyCat\Core\Ui\Site::absolute_url($imageUrl) . ")\n";
+                $body .= '- [Attached image](' . \TinyCat\Support\LocalUrls::absolute($imageUrl) . ")\n";
             }
             if ($text !== '') {
                 $body .= "\n> " . str_replace("\n", "\n> ", str_replace(["\r\n", "\r"], "\n", $text)) . "\n\n";

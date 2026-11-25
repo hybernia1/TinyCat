@@ -65,7 +65,7 @@ $assert($otherStatus === 200 && $otherHtml === $html, 'Embed output is independe
 $assert($errorStatus === 500 && !isset($errorHeaders['set-cookie']) && !str_contains($errorBody, '<html') && !str_contains($errorBody, 'SELECT'), 'Embed failures stay session-free and do not fall back to the interactive application shell.');
 [$status, $sharing] = $request('GET', '/api/statuses/910001/embed');
 $assert($status === 200 && $sharing['data']['frame_url'] === 'http://localhost/status/910001/embed' && str_contains($sharing['data']['snippet'], '<iframe'), 'The standard modal receives its preview URL and copyable snippet through a public JSON resource.');
-$assert(str_contains($html, '/avatar/generated/v1/910001.svg'), 'Authors without an upload use their generated avatar in embeds.');
+$assert(str_contains($html, '/avatar/initials/v1/'), 'Authors without an upload use their generated avatar in embeds.');
 $embedDb->exec("UPDATE users SET avatar_exists=1, updated_at='2020-01-01 12:00:00' WHERE id=910001");
 [$status, $avatarHtml] = $exportRequest('/status/910001/embed');
 $avatarDom = new DOMDocument(); @$avatarDom->loadHTML($avatarHtml); $avatarXPath = new DOMXPath($avatarDom);

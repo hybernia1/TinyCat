@@ -86,7 +86,7 @@ try { RateLimiter::request_retry_after('upload'); throw new RuntimeException('Mi
 catch (InvalidArgumentException) { $checks++; }
 try { \TinyCat\Core\Security\RateLimitPolicy::requestRule('typo'); throw new RuntimeException('Unknown action accepted.'); }
 catch (InvalidArgumentException) { $checks++; }
-foreach (['admin', 'bot'] as $role) {
+foreach (['admin'] as $role) {
     $exempt = ['id' => 50, 'role' => $role];
     \TinyCat\Core\Identity\Authentication::reset($exempt, true);
     $assert(\TinyCat\Core\Security\RateLimitPolicy::isExempt($exempt), $role . ' is exempt by policy.');
@@ -99,6 +99,19 @@ foreach (['admin', 'bot'] as $role) {
     \TinyCat\Social\Search\Guard::suggestions();
     $assert(!isset($_SESSION['_tinycat_suggestion_guard']), $role . ' does not consume the suggestion quota.');
 }
+$bot = ['id' => 50, 'role' => 'bot'];
+\TinyCat\Core\Identity\Authentication::reset($bot, true);
+$assert(!\TinyCat\Core\Security\RateLimitPolicy::isExempt($bot), 'Bot has no global core exemption.');
+$assert(RateLimiter::request_retry_after('upload', 50) > 0, 'Bot cannot bypass the exhausted upload budget.');
+$assert(RateLimiter::session_action_retry_after('status_' . $create, $interval, false) > 0, 'Bot cannot bypass a session cooldown.');
+$assert(\TinyCat\Social\Moderation\ActionPolicy::isExempt($bot, 'post'), 'Social permits bot publication imports.');
+foreach (['comment', 'like', 'report', 'search', 'other'] as $action) {
+    $assert(!\TinyCat\Social\Moderation\ActionPolicy::isExempt($bot, $action), 'Bot exemption does not apply to ' . $action);
+}
+Restrictions::moderation_record_action($bot, 'post');
+$assert(Restrictions::moderation_action_count($bot, 'post') === 0, 'Bot imports do not consume publication quotas.');
+Restrictions::moderation_record_action($bot, 'comment');
+$assert(Restrictions::moderation_action_count($bot, 'comment') === 1, 'Other bot actions still consume quotas.');
 \TinyCat\Core\Identity\Authentication::reset(null, true);
 $pdo->exec("INSERT INTO social_posts(kind, author_id) VALUES ('post', 1), ('post', 1), ('post', 1)");
 for ($article = 0; $article < 20; $article++) { $pdo->exec("INSERT INTO social_posts(kind, author_id) VALUES ('article', 1)"); }
@@ -156,7 +169,7 @@ try {
     throw new RuntimeException('Autocomplete bypassed its database budget');
 } catch (\TinyCat\Http\HttpException $error) { $assert($error->status === 429, 'Autocomplete survives discarded sessions.'); }
 $assert(RateLimiter::rate_limit_ip_action_count('search_guest', 300) === 1, 'Autocomplete never consumes full searches.');
-foreach (['admin', 'bot'] as $role) {
+foreach (['admin'] as $role) {
     \TinyCat\Core\Identity\Authentication::reset(['id' => 99, 'role' => $role], true);
     $assert(\TinyCat\Social\Search\Guard::public_search_guard('nebula') === null, 'Verified privileged role bypasses search quota.');
     \TinyCat\Social\Search\Guard::suggestions();

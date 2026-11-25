@@ -8,7 +8,7 @@ use TinyCat\Core\Modules\Definition;
 use TinyCat\Core\Modules\Contributions;
 use TinyCat\Core\Modules\ModuleSchema;
 use TinyCat\Core\Modules\ProvidesContributions;
-use TinyCat\Core\Modules\ProvidesSchema;
+use TinyCat\Core\Modules\ProvidesSchemas;
 use TinyCat\Http\Api;
 use TinyCat\Core\Modules\Module;
 
@@ -69,16 +69,14 @@ final class Providers
     }
 
     /** @return array<string, ModuleSchema> */
-    public static function schemas(Catalog $catalog, bool $managed = false): array
+    public static function schemas(Catalog $catalog): array
     {
-        return ModuleAutoload::withCatalog($catalog, static function () use ($catalog, $managed): array {
+        return ModuleAutoload::withCatalog($catalog, static function () use ($catalog): array {
             $schemas = []; $ids = [];
             if ($catalog->has('tinycat.support') && isset($catalog->get('tinycat.support')->resources['migrations'])) { $schemas['tinycat.support'] = \TinyCat\Core\Tasks\Schema::schema($catalog->get('tinycat.support')->root); }
             foreach ($catalog->definitions() as $definition) {
                 self::validate($definition);
                 if (!isset($definition->providers['schema'])) { continue; }
-                $class = $definition->providers['schema'];
-                if (!$managed && (is_subclass_of($class, ProvidesManagedSchema::class) || is_subclass_of($class, ProvidesManagedSchemas::class))) { continue; }
                 $streams = self::streams($definition);
                 foreach ($streams as $stream => $schema) {
                 if (preg_match('/^[a-z][a-z0-9.-]+$/D', $stream) !== 1) { throw new \InvalidArgumentException('Invalid schema stream ID.'); }
@@ -101,7 +99,7 @@ final class Providers
 
     public static function routes(Catalog $catalog, Api $api): void
     {
-        $schemas = self::schemas($catalog);
+        $schemas = array_filter(self::schemas($catalog), static fn (ModuleSchema $schema): bool => $schema->gateRoutes);
         $owners = self::schemaOwners($catalog);
         ModuleAutoload::withCatalog($catalog, static function () use ($catalog, $api, $schemas, $owners): void {
             foreach ($catalog->definitions() as $definition) {
@@ -131,7 +129,7 @@ final class Providers
         $source = realpath($sourcePath);
         if ($definition->manifest !== null && $source !== false && !ModuleAutoload::inside($source, $definition->root)) { throw new \InvalidArgumentException('Module source directory escapes its root.'); }
         $interfaces = Definition::PROVIDER_TYPES;
-        foreach ($definition->providers as $kind => $class) { self::provider($definition, $kind, $kind === 'schema' && is_subclass_of($class, ProvidesSchemas::class) ? ProvidesSchemas::class : $interfaces[$kind]); }
+        foreach ($definition->providers as $kind => $class) { self::provider($definition, $kind, $interfaces[$kind]); }
         if (self::$validated !== null) { self::$validated[$definition] = true; }
     }
 
@@ -195,9 +193,7 @@ final class Providers
     /** @return array<string, ModuleSchema> */
     private static function streams(Definition $definition): array
     {
-        $class = $definition->providers['schema'];
-        if (is_subclass_of($class, ProvidesSchemas::class)) { return $class::schemas(); }
-        $provider = self::provider($definition, 'schema', ProvidesSchema::class);
-        return [$definition->id => $provider::schema()];
+        $provider = self::provider($definition, 'schema', ProvidesSchemas::class);
+        return $provider::schemas();
     }
 }

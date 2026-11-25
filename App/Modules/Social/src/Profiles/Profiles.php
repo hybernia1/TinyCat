@@ -28,16 +28,6 @@ final class Profiles
         return $id > 0 ? '/author/' . $id . '/feed' . ($media !== '' ? '?media=' . $media : '') : '/';
     }
 
-    public static function author_profile_edit_modal_id(int $authorId): string
-    {
-        return 'account-editor-modal-' . max(0, $authorId);
-    }
-
-    public static function author_profile_edit_modal_url(int $authorId, string $focus = ''): string
-    {
-        return '/api/users/' . $authorId . '/management?' . http_build_query(['panel' => 'account', 'focus' => $focus]);
-    }
-
     /**
      * @param array<mixed> $user
      * @return array<string, mixed>
@@ -45,5 +35,18 @@ final class Profiles
     public static function resource(array $user): array
     {
         return \TinyCat\Core\Identity\Resource::profile($user, Profiles::author_url((int) ($user['id'] ?? 0)));
+    }
+    /** @param array<mixed>|null $row */
+    public static function avatarUrl(?array $row): string
+    {
+        if ($row === null) { return ''; }
+        foreach ([['author_id', 'author_avatar_exists', 'author_updated_at', 'author_name'], ['actor_id', 'actor_avatar_exists', 'actor_updated_at', 'actor_name'], ['user_id', 'user_avatar_exists', 'user_updated_at', 'username'], ['id', 'avatar_exists', 'updated_at', 'username']] as [$id, $exists, $updated, $name]) {
+            if (!array_key_exists($id, $row) || !array_key_exists($exists, $row)) { continue; }
+            if ((int) $row[$id] > 0) {
+                return \TinyCat\Core\Identity\Avatars::user_avatar_url(['id' => $row[$id], 'username' => $row[$name] ?? $row['author_username'] ?? $row['actor_username'] ?? null, 'avatar_exists' => $row[$exists], 'updated_at' => $row[$updated] ?? null,
+                    'avatar_version' => $row[str_replace('avatar_exists', 'avatar_version', $exists)] ?? null]);
+            }
+        }
+        return '';
     }
 }

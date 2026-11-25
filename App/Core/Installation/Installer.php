@@ -98,11 +98,10 @@ final class Installer
     {
         $pdo = \TinyCat\Database\Connection::get();
         $catalog = \TinyCat\Core\Modules\Resources::catalog();
-        $standaloneSchemas = \TinyCat\Core\Modules\Providers::schemas($catalog);
-        foreach (\TinyCat\Core\Modules\Providers::schemas($catalog, true) as $id => $schema) {
+        foreach (\TinyCat\Core\Modules\Providers::schemas($catalog) as $id => $schema) {
             \TinyCat\Database\ModuleSchemas::synchronize($pdo, [$id => $schema]);
-            // Managed owners also repair restartable DDL, such as missing indexes.
-            if (!isset($standaloneSchemas[$id])) { ($schema->install)($pdo); }
+            // Owners explicitly opt into repairing restartable DDL, such as missing indexes.
+            if ($schema->repairOnInstall) { ($schema->install)($pdo); }
         }
         \TinyCat\Database\Migrations::prepare($pdo);
     }

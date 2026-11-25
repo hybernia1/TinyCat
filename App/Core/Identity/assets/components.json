@@ -352,7 +352,6 @@
             "class": "input",
             "name": "username",
             "type": "text",
-            "value": {"get": "old.username"},
             "autocomplete": "username",
             "required": true,
             "autocapitalize": "none",
@@ -372,7 +371,6 @@
             "class": "input",
             "name": "email",
             "type": "email",
-            "value": {"get": "old.email"},
             "data-max-bytes": {"get": "options.email_max_bytes"},
             "autocomplete": "email",
             "data-email-check-url": "/api/users/registrations/email-checks"
@@ -417,16 +415,7 @@
         "attrs": {"class": "check-line"},
         "when": {"get": "register"},
         "children": [
-          {
-            "tag": "input",
-            "attrs": {
-              "type": "checkbox",
-              "name": "platform_terms",
-              "value": "1",
-              "required": true,
-              "checked": {"if": [{"get": "old.platform_terms"}, true, null]}
-            }
-          },
+          {"tag": "input", "attrs": {"type": "checkbox", "name": "platform_terms", "value": "1", "required": true}},
           {
             "tag": "span",
             "children": [
@@ -446,15 +435,7 @@
         "attrs": {"class": "check-line"},
         "when": {"not": {"get": "register"}},
         "children": [
-          {
-            "tag": "input",
-            "attrs": {
-              "type": "checkbox",
-              "name": "remember",
-              "value": "1",
-              "checked": {"if": [{"get": "old.remember"}, true, null]}
-            }
-          },
+          {"tag": "input", "attrs": {"type": "checkbox", "name": "remember", "value": "1"}},
           {"tag": "span", "children": [{"t": "auth.remember_me"}]}
         ]
       },
@@ -500,8 +481,7 @@
           "next": {"get": "next"},
           "form_url": {"get": "form_url"},
           "captcha": {"get": "captcha"},
-          "options": {"get": "options"},
-          "old": {"get": "old"}
+          "options": {"get": "options"}
         },
         "when": {"not": {"and": [{"get": "register"}, {"not": {"get": "registration_enabled"}}]}}
       },
@@ -670,7 +650,6 @@
                   "registration_enabled": {"get": "registration_enabled"},
                   "captcha": {"get": "captcha"},
                   "options": {"get": "options"},
-                  "old": {"get": "old"},
                   "error": {"get": "error"},
                   "message": {"get": "message"}
                 }
@@ -1157,20 +1136,6 @@
                     "children": [{"icon": "user"}]
                   }
                 ]
-              },
-              {
-                "tag": "button",
-                "attrs": {
-                  "type": "button",
-                  "class": "btn btn-icon avatar-creator-toggle",
-                  "aria-label": {"t": "account.avatar_creator"},
-                  "title": {"t": "account.avatar_creator"},
-                  "aria-expanded": "false",
-                  "aria-controls": {"concat": ["avatar-appearance-form-", {"get": "user.id"}]},
-                  "data-avatar-creator-toggle": ""
-                },
-                "when": {"get": "generated"},
-                "children": [{"icon": "chevron-right"}]
               }
             ]
           },
@@ -1216,38 +1181,6 @@
       }
     ]
   },
-  "users/avatar-appearance": {
-    "tag": "form",
-    "attrs": {
-      "id": {"concat": ["avatar-appearance-form-", {"get": "user.id"}]},
-      "class": "avatar-editor-appearance",
-      "data-avatar-appearance-form": "",
-      "data-modal-close-on-success": "true",
-      "hidden": true,
-      "data-original-appearance": {"json": {"get": "appearance"}}
-    },
-    "children": [
-      {
-        "each": {"get": "parameters"},
-        "as": "parameter",
-        "children": {
-          "component": "ui/select",
-          "data": {
-            "label": {"get": "parameter.label"},
-            "value": {"get": "parameter.value"},
-            "choices": {"get": "parameter.choices"},
-            "attributes": {
-              "class": "select",
-              "data-avatar-parameter": {"get": "parameter.key"},
-              "data-avatar-default": {"get": "parameter.default"},
-              "data-avatar-gender": {"if": [{"eq": [{"get": "parameter.key"}, "gender"]}, "", null]}
-            }
-          }
-        }
-      },
-      {"tag": "input", "attrs": {"type": "hidden", "name": "appearance", "value": {"json": {"get": "appearance"}}}}
-    ]
-  },
   "users/avatar-remove": {
     "tag": "form",
     "attrs": {
@@ -1287,11 +1220,7 @@
   "users/avatar-editor": {
     "tag": "div",
     "attrs": {"class": "avatar-editor"},
-    "children": [
-      {"slot": {"get": "upload_form"}},
-      {"slot": {"get": "appearance_form"}, "when": {"get": "generated"}},
-      {"slot": {"get": "actions"}}
-    ]
+    "children": [{"slot": {"get": "upload_form"}}, {"slot": {"get": "actions"}}]
   },
   "users/admin-form": {
     "tag": "form",

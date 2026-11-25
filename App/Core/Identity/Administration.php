@@ -40,10 +40,13 @@ final class Administration
 
     public static function primaryId(): int
     {
-        return (int) Connection::value('SELECT id FROM users WHERE role = ? ORDER BY created_at ASC, id ASC LIMIT 1', ['admin']);
+        $sql = 'SELECT id FROM users WHERE role = ? ORDER BY created_at ASC, id ASC LIMIT 1';
+        return (int) Connection::value(Connection::get()->inTransaction() ? Connection::lockingSelect($sql) : $sql, ['admin']);
     }
 
-    public static function isPrimary(int $id): bool { return $id > 0 && $id === self::primaryId(); }
+    /** $primaryId is an explicit snapshot for one read payload; writes always read current locked policy. */
+    /** $primaryId is a snapshot for one read payload; writes always read current locked policy. */
+    public static function isPrimary(int $id, ?int $primaryId = null): bool { return $id > 0 && $id === ($primaryId ?? self::primaryId()); }
 
     /** @param array<mixed> $actor
      * @param array<mixed> $input

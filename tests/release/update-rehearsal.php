@@ -13,8 +13,8 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $options = getopt('', ['baseline-version::']);
 $baselineVersion = (string) ($options['baseline-version'] ?? \TinyCat\Support\Version::MINIMUM_UPDATE);
-if ($baselineVersion !== \TinyCat\Support\Version::MINIMUM_UPDATE) {
-    throw new InvalidArgumentException('Use the supported update baseline.');
+if (!in_array($baselineVersion, [\TinyCat\Support\Version::MINIMUM_UPDATE, \TinyCat\Support\Version::CURRENT], true)) {
+    throw new InvalidArgumentException('Use the minimum or current published update baseline.');
 }
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/update-rehearsal-' . bin2hex(random_bytes(6));
 $candidateRoot = $temporaryRoot . '/candidate';
@@ -25,7 +25,43 @@ $artifactRoot = $temporaryRoot . '/dist';
 $signingKey = $temporaryRoot . '/signing.key';
 require_once $root . '/App/Core/Support/Version.php';
 $sourceVersion = \TinyCat\Support\Version::CURRENT;
-$candidateVersion = version_compare($sourceVersion, $baselineVersion, '>') ? $sourceVersion : implode('.', [(int) explode('.', $baselineVersion)[0], (int) explode('.', $baselineVersion)[1], (int) explode('.', $baselineVersion)[2] + 1]);
+// Exercise the pending release's deletions without changing the checkout version.
+$candidateParts = explode('.', version_compare($sourceVersion, $baselineVersion, '>') ? $sourceVersion : $baselineVersion);
+$candidateVersion = implode('.', [(int) $candidateParts[0], (int) $candidateParts[1], (int) $candidateParts[2] + 1]);
+$retiredContracts = [
+    'App/Core/Modules/ProvidesInstallation.php',
+    'App/Core/Modules/FeatureGroup.php',
+    'App/Core/Modules/FeatureSelection.php',
+    'App/Core/Modules/ProvidesSchema.php',
+    'App/Core/Modules/ProvidesManagedSchema.php',
+    'App/Core/Modules/ProvidesManagedSchemas.php',
+    'App/Core/Modules/StorageModule.php',
+    'App/Core/Text/Policies.php',
+    'App/Core/Text/TextPolicy.php',
+];
+if ($baselineVersion === '8.0.5') {
+    $retiredContracts = [...$retiredContracts,
+        'App/Core/Feeds/FeedEntry.php',
+        'App/Core/Feeds/FeedPipeline.php',
+        'App/Core/Feeds/FeedSourceStore.php',
+        'App/Core/Feeds/FeedTarget.php',
+        'App/Core/Feeds/Rss.php',
+        'App/Core/Feeds/SourceUrl.php',
+        'App/Core/Feeds/WordPressFeed.php',
+        'App/Core/Files/RemoteImageCache.php',
+        'App/Core/Links/Outbound.php',
+        'App/Core/Links/Presentation.php',
+        'App/Core/Links/Providers.php',
+        'App/Core/Text/Hashtags.php',
+        'App/Core/Text/PostText.php',
+        'App/Core/Text/Revisions.php',
+        'App/Core/Text/Segments.php',
+        'App/Core/Identity/Locale.php',
+        'App/Core/Identity/Readiness.php',
+        'App/Core/Identity/GeneratedAvatar.php',
+        'App/Core/Identity/avatar-options.json',
+    ];
+}
 $failures = [];
 $managedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $managedRootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
@@ -225,6 +261,9 @@ try {
     }
 
     $extractZip($baselineArchive, $installRoot);
+    foreach ($retiredContracts as $relative) {
+        $assert(is_file($installRoot . '/' . $relative), 'Published baseline contains the retired contract before update: ' . $relative);
+    }
     file_put_contents($installRoot . '/config.php', $configSource($publicKey), LOCK_EX);
 
     foreach (['storage', 'uploads'] as $runtimeDirectory) {
@@ -262,6 +301,15 @@ PHP);
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
     $packagePath = $artifactRoot . '/tinycat-' . $candidateVersion . '.zip';
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
+    foreach ($retiredContracts as $relative) {
+        $assert(in_array($relative, $manifest['delete'], true), 'The signed pending-release manifest deletes the retired contract: ' . $relative);
+        $assert(!is_file($candidateRoot . '/' . $relative), 'The candidate has no compatibility copy of the retired contract: ' . $relative);
+    }
+    foreach (['Policies.php', 'TextPolicy.php'] as $retiredPolicy) {
+        $relative = 'App/Modules/Social/src/Posts/' . $retiredPolicy;
+        $ownsSocial = isset($manifest['files']['App/Modules/Social/src/Module.php']);
+        $assert(in_array($relative, $manifest['delete'], true) === $ownsSocial, 'Social policy cleanup follows the actual package owner: ' . $relative);
+    }
     $rescue = \TinyCat\Tests\prepareReleaseRescue($installRoot, $run);
     $rescueFile = $rescue['file'];
     $rescueHash = $rescue['hash'];
@@ -269,6 +317,10 @@ PHP);
 define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
 require $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
+if (!class_exists(TinyCat\Core\Text\Policies::class) || !class_exists(TinyCat\Core\Text\TextPolicy::class)) { throw new RuntimeException('Original text policy classes were not loaded.'); }
+foreach (['Locale', 'Readiness', 'GeneratedAvatar'] as $identityClass) {
+    if (is_file($root . '/App/Core/Identity/' . $identityClass . '.php') && !class_exists('TinyCat\\Core\\Identity\\' . $identityClass)) { throw new RuntimeException('Original Identity class was not loaded: ' . $identityClass); }
+}
 $invoke = static function (string $method, mixed ...$arguments): mixed {
     return (new ReflectionMethod(TinyCat\Core\Updates\Manager::class, $method))->invoke(null, ...$arguments);
 };

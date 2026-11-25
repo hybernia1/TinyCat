@@ -24,7 +24,7 @@ $assert(!\TinyCat\Social\Profiles\Roles::receivesNotifications('bot'), 'Bot acco
 $assert(!\TinyCat\Core\Identity\Roles::managedByCoreAdmin('bot'), 'Bot accounts use their dedicated administration.');
 $assert(\TinyCat\Social\Profiles\Roles::profileSchemaType('bot') === 'Organization', 'Bot profiles retain their schema type.');
 $assert(array_diff(\TinyCat\Social\Bots\Schema::tables(), \TinyCat\Database\Schema::app_required_tables()) === [], 'Bot storage is required by core.');
-$assert(array_keys(\TinyCat\Social\Bots\Importer::scheduledTasks()) === ['feeds'], 'Feeds are always available to the scheduler.');
+$assert(\TinyCat\Social\Bots\Importer::scheduledTask()->id === 'feeds', 'Feeds are always available to the scheduler.');
 $assert(!is_file(\TinyCat\Support\Paths::publicPath('admin/extensions.php')), 'Extension administration must be removed.');
 $assert(!method_exists(\TinyCat\Core\Discovery\Sitemap::class, 'registerExtension'), 'Sitemaps cannot register extension sections.');
 
@@ -72,8 +72,16 @@ $assert(\TinyCat\Core\Feeds\FeedParser::parse('<!DOCTYPE rss [<!ENTITY x SYSTEM 
 $assert(\TinyCat\Core\Feeds\FeedParser::parse('<other/>') === [], 'Unrecognized XML documents have no feed items.');
 $assert(count(\TinyCat\Core\Feeds\FeedParser::parse('<rss><channel>' . str_repeat('<item><guid>x</guid><title>x</title></item>', 105) . '</channel></rss>')) === 100, 'Feed work is bounded to one hundred entries.');
 
-$videoDescription = \TinyCat\Core\Feeds\FeedParser::descriptionText( '<a href="https://youtu.be/abc123?si=share">Watch</a> https://example.com/remove', 2000);
+$videoDescription = \TinyCat\Social\Bots\FeedPublication::descriptionText( '<a href="https://youtu.be/abc123?si=share">Watch</a> https://example.com/remove', 2000);
 $assert(str_contains($videoDescription, 'https://www.youtube.com/watch?v=abc123') && !str_contains($videoDescription, 'example.com'), 'Bot descriptions retain canonical video URLs and remove article links.');
+
+$rawDescription = '<p>Story. <a href="https://93.184.216.34/story">Read more</a> https://93.184.216.34/reference</p>';
+$neutralItem = \TinyCat\Core\Feeds\FeedParser::parse('<rss><channel><item><guid>neutral</guid><title>Story</title><description><![CDATA[' . $rawDescription . ']]></description><category>World News</category></item></channel></rss>')[0];
+$assert($neutralItem['description_html'] === $rawDescription && str_contains($neutralItem['description'], 'Read more') && str_contains($neutralItem['description'], '/reference'), 'Core parsing preserves editorial text, original HTML and ordinary URLs.');
+$assert($neutralItem['categories'] === ['World News'], 'Core categories remain data without hashtag normalization.');
+$assert(\TinyCat\Social\Bots\FeedPublication::renderPost(['post_template' => '{{description}}'], $neutralItem) === 'Story.', 'Only the Social publication applies editorial and link rules to the parsed item.');
+$longItem = \TinyCat\Core\Feeds\FeedParser::parse('<rss><channel><item><guid>long</guid><title>Story</title><description>' . str_repeat('word ', 400) . '</description></item></channel></rss>')[0];
+$assert(strlen($longItem['description']) > 1200, 'The parser does not apply the Social annotation length limit.');
 
 foreach (['en', 'cs'] as $code) {
     $assert(\TinyCat\Support\Localization::t('bots.title', [], $code) !== 'bots.title', 'Bot translations must ship in core: ' . $code);

@@ -22,13 +22,14 @@ $db = \tinycat_test_database($root . '/avatars.database.json');
 Connection::set($db); ModuleSchemas::install($db, ['tinycat.accounts' => $oldSchema]);
 $db->exec("INSERT INTO users (id, username, avatar_exists) VALUES (1, 'legacy', 1)");
 ModuleSchemas::upgrade($db, ['tinycat.accounts' => Schema::schema()]); ModuleSchemas::upgrade($db, ['tinycat.accounts' => Schema::schema()]);
-$assert((int) ModuleSchemas::state($db, 'tinycat.accounts')['version'] === 3 && Connection::find('users', ['id' => 1])['avatar_version'] === null, 'Managed upgrade is repeatable and preserves legacy avatars');
+$assert((int) ModuleSchemas::state($db, 'tinycat.accounts')['version'] === 4 && Connection::find('users', ['id' => 1])['avatar_version'] === null, 'Managed upgrade is repeatable and preserves legacy uploads');
 mkdir($root . '/uploads/avatars', 0700, true); $legacy = $root . '/uploads/avatars/1.webp'; file_put_contents($legacy, 'legacy');
 $assert(str_starts_with(Avatars::user_avatar_url(Connection::find('users', ['id' => 1])), '/uploads/avatars/1.webp?'), 'Legacy database references keep their public path');
 $save = static function (string $bytes) use ($root): array {
     $prepared = $root . '/uploads/avatars/.avatar-' . bin2hex(random_bytes(5)); file_put_contents($prepared, $bytes);
     return Avatar::replace(1, $prepared, false, static fn (array $user): array => $user);
 };
+$assert(!in_array('avatar_appearance', $db->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN), true), 'Upgrade removes only obsolete appearance storage');
 $first = $save('first immutable image'); $firstFile = $root . Avatar::url(1, true, uploadVersion: $first['avatar_version']);
 $second = $save('second immutable image'); $secondFile = $root . Avatar::url(1, true, uploadVersion: $second['avatar_version']);
 $assert($first['avatar_version'] !== $second['avatar_version'] && !is_file($firstFile) && file_get_contents($secondFile) === 'second immutable image' && !is_file($legacy), 'Rapid replacements use different immutable names and clean only superseded paths');
@@ -88,7 +89,7 @@ if (is_file($configFile) && in_array('mysql', PDO::getAvailableDrivers(), true))
         $columns = array_column($mysql->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_ASSOC), 'Field');
         $assert(!in_array('avatar_version', $columns, true) && (int) ModuleSchemas::state($mysql, 'tinycat.accounts')['version'] === 1, 'Snapshot rollback restores both MySQL schema and migration journal');
         ModuleSchemas::upgrade($mysql, ['tinycat.accounts' => Schema::schema()]);
-        $assert((int) ModuleSchemas::state($mysql, 'tinycat.accounts')['version'] === 3, 'Upgrade can be repeated after a real rollback with current PHP classes already loaded');
+        $assert((int) ModuleSchemas::state($mysql, 'tinycat.accounts')['version'] === 4, 'Upgrade can be repeated after a real rollback with current PHP classes already loaded');
         // A real competing worker prepares its immutable bytes before waiting for users row lock.
         Connection::set($mysql); file_put_contents($legacy, 'legacy current image');
         Avatar::delete(1);
@@ -141,4 +142,23 @@ if (is_file($configFile) && in_array('mysql', PDO::getAvailableDrivers(), true))
         Connection::set($db);
     } finally { $mysql = null; $server->exec('DROP DATABASE IF EXISTS ' . $name); }
 } else { echo "SKIP avatar MySQL migration/rollback: configured pdo_mysql unavailable.\n"; }
+// Explicit published-v3 appearance data and custom versions survive exact rollback.
+$v3File = $root . '/App/Core/Identity/migrations/fresh-v3.php';
+$v3 = new ModuleSchema(3, ['users', 'password_reset_tokens'], require $v3File,
+    array_values(array_filter(Schema::schema()->migrations, static fn (SchemaMigration $migration): bool => $migration->version <= 3)),
+    new SchemaMigration(3, 'tinycat.accounts.fresh-v3', $v3File));
+$previous = \tinycat_test_database();
+ModuleSchemas::install($previous, ['tinycat.accounts' => $v3]);
+$previous->prepare('INSERT INTO users (id, username, avatar_exists, avatar_version, avatar_appearance) VALUES (9, ?, 1, ?, ?)')->execute(['Custom', str_repeat('c', 32), '{"fur":"ginger"}']);
+$original = $previous->query('SELECT * FROM users WHERE id=9')->fetch(PDO::FETCH_ASSOC);
+$custom = $root . '/uploads/avatars/9-' . str_repeat('c', 32) . '.webp'; file_put_contents($custom, 'retained custom bytes');
+$snapshot = $root . '/v3-snapshot'; mkdir($snapshot, 0700);
+\TinyCat\Database\Snapshots::write($previous, $snapshot);
+ModuleSchemas::upgrade($previous, ['tinycat.accounts' => Schema::schema()]);
+$retained = $previous->query('SELECT * FROM users WHERE id=9')->fetch(PDO::FETCH_ASSOC);
+$expected = $original; unset($expected['avatar_appearance']);
+$assert($retained === $expected && file_get_contents($custom) === 'retained custom bytes', 'Version3?4 drops only appearance and preserves exact custom metadata and bytes');
+\TinyCat\Database\Snapshots::restore($previous, $snapshot);
+$assert($previous->query('SELECT * FROM users WHERE id=9')->fetch(PDO::FETCH_ASSOC) === $original && (int) ModuleSchemas::state($previous, 'tinycat.accounts')['version'] === 3, 'Rollback restores appearance data, all custom metadata and the original journal');
+
 echo "PASS immutable avatar migration, crash recovery and file rollback ($checks checks); workspace: $root\n";

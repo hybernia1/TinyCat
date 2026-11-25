@@ -44,7 +44,7 @@ final class AuthorPages
         $authorId = (int) $author['id'];
         $authorName = Profiles::user_display_name($author);
         $bio = trim((string) ($author['bio'] ?? ''));
-        $avatarUrl = Avatars::user_avatar_url($author);
+        $avatarUrl = \TinyCat\Social\Profiles\Profiles::avatarUrl($author);
         $memberSince = (string) ($author['created_at'] ?? '');
         $current = Profiles::author_url($authorId);
         $archiveType = Archive::type((string) Web::get('media', ''));
@@ -75,33 +75,33 @@ final class AuthorPages
         $followCounts = Following::author_follow_counts($authorId);
         $activityStats = AuthorStatistics::author_activity_stats($authorId);
         $publicPostCount = (int) ($activityStats['posts'] ?? 0);
-        $authorEntityId = Presentation::absolute_url($current) . '#author';
+        $authorEntityId = \TinyCat\Support\LocalUrls::absolute($current) . '#author';
         $authorStructuredData = [
             '@context' => 'https://schema.org',
             '@type' => 'ProfilePage',
-            '@id' => Presentation::absolute_url($pageUrl),
-            'url' => Presentation::absolute_url($pageUrl),
+            '@id' => \TinyCat\Support\LocalUrls::absolute($pageUrl),
+            'url' => \TinyCat\Support\LocalUrls::absolute($pageUrl),
             'dateCreated' => $memberSince !== '' ? Dates::dateTime($memberSince, DATE_ATOM) : null,
             'dateModified' => (string) ($author['updated_at'] ?? '') !== '' ? Dates::dateTime((string) $author['updated_at'], DATE_ATOM) : null,
             'mainEntity' => [
                 '@type' => Roles::profileSchemaType((string) ($author['role'] ?? '')),
                 '@id' => $authorEntityId,
-                'url' => Presentation::absolute_url($current),
+                'url' => \TinyCat\Support\LocalUrls::absolute($current),
                 'name' => $authorName,
                 'alternateName' => (string) ($author['username'] ?? ''),
                 'identifier' => (string) $authorId,
                 'description' => $bio !== '' ? $bio : null,
-                'image' => $avatarUrl !== '' ? Presentation::absolute_url($avatarUrl) : null,
+                'image' => $avatarUrl !== '' ? \TinyCat\Support\LocalUrls::absolute($avatarUrl) : null,
             ],
             'hasPart' => array_map(\TinyCat\Social\Posts\StructuredData::post(...), array_values($statusItems)),
         ];
         $authorStructuredData = array_filter($authorStructuredData, static fn (mixed $value): bool => $value !== null && $value !== []);
         $authorStructuredData['mainEntity'] = array_filter($authorStructuredData['mainEntity']);
 
-        $authorProfileEditModalId = Profiles::author_profile_edit_modal_id($authorId);
-        $authorProfileEditModalUrl = Profiles::author_profile_edit_modal_url($authorId, 'bio');
-        $authorAvatarEditModalId = Avatars::author_avatar_edit_modal_id($authorId);
-        $authorAvatarEditModalUrl = Avatars::author_avatar_edit_modal_url($authorId);
+        $authorProfileEditModalId = \TinyCat\Core\Identity\Views::accountEditorId($authorId);
+        $authorProfileEditModalUrl = \TinyCat\Core\Identity\Views::accountEditorUrl($authorId, 'bio');
+        $authorAvatarEditModalId = Avatars::avatarEditModalId($authorId);
+        $authorAvatarEditModalUrl = Avatars::avatarEditModalUrl($authorId);
         $authorFollowingModalId = Following::author_following_modal_id($authorId);
         $authorFollowingModalUrl = Following::author_following_modal_url($authorId);
         $authorFeedUrl = Profiles::author_feed_url($authorId, $archiveType);

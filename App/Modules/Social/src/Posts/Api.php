@@ -46,7 +46,7 @@ final class Api
         $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/revisions', static function (Request $r, array $p): array {
             $comment = self::commentTarget($p);
             if (!Comments::status_comment_can_edit($comment, IdentityApi::actor())) { Response::error(\TinyCat\Support\Localization::t('auth.forbidden'), 403, 'forbidden'); }
-            return ['items' => Comments::status_comment_history($comment)];
+            return ['items' => Comments::readHistory((string) ($comment['comments_diff'] ?? ''))];
         }, 'user');
         foreach (['put', 'delete'] as $method) {
             $api->$method('/statuses/{id:[0-9]+}/likes/me', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_react((int) $p['id'], IdentityApi::actor(), $r->method() === 'PUT'), 'react'));
@@ -74,7 +74,7 @@ final class Api
      * @return array{url: string, original_url: string} */
     private static function contentLink(Request $request, array $params): array
     {
-        return \TinyCat\Core\Links\Outbound::response($request, ContentLinks::resolve((int) $params['id'], $params['hash'], (int) ($params['commentId'] ?? 0)));
+        return \TinyCat\Social\Posts\ContentLinks::response($request, ContentLinks::resolve((int) $params['id'], $params['hash'], (int) ($params['commentId'] ?? 0)));
     }
 
     private static function listing(Request $request): Result
@@ -119,8 +119,8 @@ final class Api
         if (!$editing && $item === null && ($canonicalId = Repository::redirectTarget($id)) !== null) {
             $id = $canonicalId; $item = Feed::public_status_item($id);
         }
-        if ($item === null || (!$editing && !Posts::status_can_view($item))) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
-        if ($editing && !Posts::status_can_edit($item, $user)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden'); }
+        if ($item === null || (!$editing && !\TinyCat\Social\Posts\Repository::visible($item))) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
+        if ($editing && !\TinyCat\Social\Posts\Repository::canManage($item, $user)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden'); }
         $items = Resource::posts([$item], $user);
         $page = Comments::page($id);
         if (Request::current()->input('panel') === 'comment-edit') {

@@ -50,8 +50,8 @@ try {
         $failed = match ($action) {
             'runner', 'prepared' => ($result['status'] ?? '') === 'failed',
             'execution', 'console' => ($result['ok'] ?? true) === false,
-            'admin' => ($result['data']['execution']['status'] ?? '') === 'failed' && $result['code'] === 'scheduler_run_failed',
-            default => ($result['ok'] ?? true) === false && $result['code'] === ($action === 'health' ? 'health_check_failed' : 'scheduler_run_failed'),
+            'admin', 'health' => ($result['data']['execution']['status'] ?? '') === 'failed' && $result['code'] === 'scheduler_run_failed',
+            default => ($result['ok'] ?? true) === false && $result['code'] === 'scheduler_run_failed',
         };
         $assert($failed && $count() === 0 && !is_file($root . '/called'), $action . ' cannot bypass deployment admission or start history: ' . json_encode($result) . ' ' . file_get_contents($root . '/worker.log'));
         if (in_array($action, ['scheduled', 'console'], true)) { $assert($exit === 1, $action . ' CLI preserves failure exit status.'); }

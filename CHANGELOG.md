@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.0.6 - 2026-11-25
+
+- Simplify core and Social ownership: keep publication, discussion, import policies and media data in Social; share RSS and oEmbed presentation through core contracts.
+- Consolidate built-in diagnostics and cleanup under Tasks, retaining task IDs, run history, notification links and the common administration.
+- Use one module schema contract and authoritative table metadata. Remove feature groups, unused installation contracts, duplicate registration paths and legacy forwarding methods while retaining signed update and rollback compatibility.
+- Simplify Identity integration and primary-administrator protection. Use one policy for presentation and locked writes without stale process caches or per-row queries.
+- Replace configurable cat avatars with Unicode username initials in SVG. Retain custom avatar upload/removal and immutable file versions; account schema 4 removes only the obsolete appearance column.
+- Preserve editorial wording in manual posts and comments; explicitly clean feed-import boilerplate before the shared publication preparation. Keep import previews read-only and publication/GUID writes atomic.
+- Remove SQLite runtime/test support; MySQL/MariaDB is the only supported database backend. Historical migrations and published checksums remain unchanged.
+- Use relative Memcached expiry for short-lived entries so clock skew does not expire new cache data immediately; preserve timestamp expiry above the protocol's 30-day boundary.
+- Update source, API, native UI, migration and signed-package regressions, including physical retirement of old files and exact rollback with original PHP classes already loaded.
+
 ## 8.0.5 - 2026-11-24
 
 - Unify scheduled tasks, run history and lazy tabbed connection details at `/admin/cron`; site-health notifications and dashboard links open the recorded run. Remove the separate health and task-list pages.

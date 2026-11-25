@@ -6,8 +6,8 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 use TinyCat\Support\Config;
-use TinyCat\Core\Health\HttpCheck;
-use TinyCat\Core\Health\Service;
+use TinyCat\Core\Tasks\Health\HttpCheck;
+use TinyCat\Core\Tasks\Health\Inspection;
 use TinyCat\Http\SiteProbe;
 
 $checks = 0;
@@ -59,7 +59,7 @@ try {
     $assert(is_float($fast['metrics']['ttfb_ms']) && $fast['metrics']['ttfb_ms'] > 0 && $fast['metrics']['total_ms'] >= $fast['metrics']['ttfb_ms'], 'Real cURL timings use milliseconds and preserve total versus first-byte timing.');
     $requests = array_map(static fn (string $line): array => json_decode($line, true), file($root . '/requests.jsonl', FILE_IGNORE_NEW_LINES));
     $assert($requests[0] === ['method' => 'GET', 'auth' => false, 'cookie' => false], 'The measurement uses GET without browser credentials or cookies.');
-    $report = Service::inspect(['http' => HttpCheck::run(...)]);
+    $report = Inspection::inspect(['http' => HttpCheck::run(...)]);
     $assert(isset($report['checks'][0]['metrics']['ttfb_ms'], $report['checks'][0]['limits']['ttfb_warning_ms']), 'The resource report preserves both measured values and the limits used for that inspection.');
     $db = \tinycat_test_database();
     $db->exec('CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)');
@@ -85,7 +85,7 @@ try {
     $runId = \TinyCat\Core\Tasks\History::start('site-health', ['mode' => 'cli']);
     \TinyCat\Core\Tasks\History::finish($runId, \TinyCat\Core\Tasks\Tasks::result('completed', details: ['health' => $report]), 5);
     $configure(['health' => ['http' => ['ttfb_warning_ms' => 10, 'ttfb_critical_ms' => 20]]]);
-    $saved = Service::snapshot();
+    $saved = Inspection::snapshot();
     $assert($saved['history'][0]['http']['metrics'] == $report['checks'][0]['metrics'] && $saved['history'][0]['http']['limits']['ttfb_warning_ms'] === 800, 'Durable history keeps real measured timings and the original limits after configuration changes.');
     $configure(['app' => ['url' => 'http://' . $address . '/slow'], 'health' => ['http' => ['ttfb_warning_ms' => 100, 'ttfb_critical_ms' => 1000]]]);
     $slow = HttpCheck::run();

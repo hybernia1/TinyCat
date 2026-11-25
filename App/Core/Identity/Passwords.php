@@ -57,17 +57,4 @@ final class Passwords
         return array_map(static fn (array $keys): array => array_map(static fn (string $key): string => \TinyCat\Support\Localization::t($key, ['min' => (string) self::minLength()]), $keys), self::issueKeys($password, $passwordConfirm));
     }
 
-    /**
-     * @return array<mixed>
-     */
-    public static function errors(string $password, string $passwordConfirm): array
-    {
-        $messages = [];
-
-        foreach (self::fieldErrors($password, $passwordConfirm) as $fieldMessages) {
-            $messages = array_merge($messages, $fieldMessages);
-        }
-
-        return $messages;
-    }
 }

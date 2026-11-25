@@ -8,18 +8,18 @@ $oldSource = (string) file_get_contents($addon . '/migrations/1.php');
 $assert($exit === 0 && preg_match('/^[a-f0-9]{64}$/D', trim($text)) === 1, 'Read the published checksum through the candidate migration mechanism: ' . $error);
 $oldChecksum = trim($text);
 $source = (string) file_get_contents($addon . '/src/Module.php');
-$start = strpos($source, '    public static function schema():');
+$start = strpos($source, '    public static function schemas():');
 $end = strpos($source, '    public static function contributions():', $start);
 if ($start === false || $end === false) { throw new RuntimeException('Invalid archive fixture provider.'); }
 $replacement = <<<'PHP'
-    public static function schema(): \TinyCat\Core\Modules\ModuleSchema
+    public static function schemas(): array
     {
         $root = dirname(__DIR__);
         $fresh = new \TinyCat\Core\Modules\SchemaMigration(2, 'fixture.addon.fresh-v2', $root . '/migrations/fresh-v2.php');
-        return new \TinyCat\Core\Modules\ModuleSchema(2, ['lifecycle_addon'], static function (\PDO $pdo) use ($root): void {
+        return ['fixture.addon' => new \TinyCat\Core\Modules\ModuleSchema(2, ['lifecycle_addon'], static function (\PDO $pdo) use ($root): void {
             $apply = require $root . '/migrations/fresh-v2.php'; $apply($pdo);
         }, [new \TinyCat\Core\Modules\SchemaMigration(1, 'fixture.addon.1', null, '@@CHECKSUM@@'),
-            new \TinyCat\Core\Modules\SchemaMigration(2, 'fixture.addon.2', $root . '/migrations/2.php')], $fresh);
+            new \TinyCat\Core\Modules\SchemaMigration(2, 'fixture.addon.2', $root . '/migrations/2.php')], $fresh)];
     }
 
 PHP;

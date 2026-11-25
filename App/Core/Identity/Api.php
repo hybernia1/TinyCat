@@ -20,7 +20,7 @@ final class Api
         $api->get('/users/authentication', self::authentication(...));
         $api->post('/users/sessions', static fn (): Result => self::result(Login::auth_login_request()), 'public', 200);
         $api->post('/users/registrations/email-checks', static function (): array {
-            if (!\TinyCat\Core\Identity\Integration::registrationEnabled()) { Response::error(\TinyCat\Support\Localization::t('auth.registration_disabled'), 403, 'registration_disabled'); }
+            if (!(bool) \TinyCat\Core\Runtime\Startup::option('auth.registration.enabled', false)) { Response::error(\TinyCat\Support\Localization::t('auth.registration_disabled'), 403, 'registration_disabled'); }
             return self::emailAvailability();
         }, 'public', 200);
         $api->post('/users/me/email-checks', static fn (): array => self::emailAvailability((int) self::actor()['id']), 'user', 200);
@@ -84,8 +84,7 @@ final class Api
             }
             return ['deleted_id' => $id];
         }, 'admin');
-        $api->get('/users/{id:[0-9]+}/avatar', static fn (Request $r, array $p): array => ['user' => self::avatarProfile((int) $p['id']), 'appearance_options' => GeneratedAvatar::options()], 'user');
-        $api->patch('/users/{id:[0-9]+}/avatar', static fn (Request $r, array $p): Result => self::result(Avatars::updateAppearance(self::target((int) $p['id']))));
+        $api->get('/users/{id:[0-9]+}/avatar', static fn (Request $r, array $p): array => ['user' => self::avatarProfile((int) $p['id'])], 'user');
         foreach (['put', 'delete'] as $method) {
             $api->$method('/users/{id:[0-9]+}/avatar', static function (Request $r, array $p): Result {
                 return self::result(Avatars::user_avatar_update_request(self::target((int) $p['id'])));
@@ -148,8 +147,8 @@ final class Api
         $data = ['user' => Resource::privateProfile($user, Integration::profileUrl((int) ($user['id'] ?? 0))), 'options' => Resource::options(),
             'capabilities' => ['edit' => true, 'password' => (int) $actor['id'] === (int) $user['id']]];
         if (Roles::isAdmin($actor)) {
-            $data['administration'] = ['roles' => array_keys(\TinyCat\Core\Identity\ReadModel::roles()), 'statuses' => array_keys(\TinyCat\Support\AdminViews::admin_user_statuses())];
-            $data['user']['protected'] = ReadModel::tc_admin_user_is_super_admin($user);
+            $data['administration'] = ['roles' => array_keys(\TinyCat\Core\Identity\Roles::coreAdminLabels()), 'statuses' => \TinyCat\Core\Identity\Administration::statuses()];
+            $data['user']['protected'] = Administration::isPrimary((int) ($user['id'] ?? 0));
         }
         return $data;
     }

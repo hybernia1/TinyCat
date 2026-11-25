@@ -25,7 +25,7 @@ if (($argv[1] ?? '') !== '--isolated') {
 define('TINYCAT', true);
 $root = $argv[2];
 require $root . '/App/Core/Runtime/autoload.php';
-use TinyCat\Core\Health\Service;
+use TinyCat\Core\Tasks\Health\Inspection;
 use TinyCat\Core\Tasks\Execution;
 use TinyCat\Support\Config;
 use TinyCat\Core\Settings\Store;
@@ -36,8 +36,8 @@ use TinyCat\Database\Connection;
 $db = \tinycat_test_database_as(TinyCatTestLockPDO::class);
 Connection::set($db);
 foreach ([
-    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, role VARCHAR(40), status VARCHAR(24))',
-    "INSERT INTO users VALUES (1, 'admin', 'active'), (2, 'admin', 'active'), (3, 'user', 'active'), (4, 'bot', 'active'), (5, 'admin', 'inactive')",
+    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(80), role VARCHAR(40), status VARCHAR(24))',
+    "INSERT INTO users (id, role, status) VALUES (1, 'admin', 'active'), (2, 'admin', 'active'), (3, 'user', 'active'), (4, 'bot', 'active'), (5, 'admin', 'inactive')",
     'CREATE TABLE notifications (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, actor_id INT UNSIGNED, subject_id INT UNSIGNED, payload_json TEXT, type TEXT, notification_key VARCHAR(190), read_at TEXT, created_at DATETIME, updated_at DATETIME, UNIQUE(user_id, notification_key))',
     'CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)',
     'CREATE TABLE scheduler_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, task TEXT, mode TEXT, actor_id INT UNSIGNED, status VARCHAR(24), started_at DATETIME, finished_at DATETIME, duration_ms INTEGER, options_json TEXT, summary_json TEXT, error TEXT)',
@@ -48,16 +48,17 @@ $db->advisoryLock = static function () use (&$lock): int { return $lock; };
 $db->advisoryRelease = static fn (): int => 1;
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
-$report = Service::inspect(['one' => static fn (): string => 'ok', 'two' => static function (): never { throw new RuntimeException('SECRET database password'); }, 'three' => static fn (): string => 'warning']);
+$report = Inspection::inspect(['one' => static fn (): string => 'ok', 'two' => static function (): never { throw new RuntimeException('SECRET database password'); }, 'three' => static fn (): string => 'warning']);
 $assert($report['status'] === 'critical' && count($report['checks']) === 3, 'One failed probe cannot prevent later checks.');
 $assert(!str_contains(json_encode($report), 'SECRET'), 'Diagnostic reports never expose exception details or credentials.');
-$assert(Service::inspect(['warning' => static fn (): string => 'warning'])['status'] === 'warning', 'Warnings produce an attention result.');
-$assert(Service::inspect([])['status'] === 'unknown', 'An empty diagnostic is never reported healthy.');
-$assert(Service::snapshot()['stale'], 'Before the first run, health is unknown and stale.');
-$findings = \TinyCat\Support\Components::render('health/scheduler-findings', ['metrics' => ['custom-owner-task' => 'missing', 'site-health' => 'ok']]);
+$assert(Inspection::inspect(['warning' => static fn (): string => 'warning'])['status'] === 'warning', 'Warnings produce an attention result.');
+$assert(Inspection::inspect([])['status'] === 'unknown', 'An empty diagnostic is never reported healthy.');
+$assert(Inspection::snapshot()['stale'], 'Before the first run, health is unknown and stale.');
+$findingsDetail = \TinyCat\Core\Tasks\Health\Inspection::detail(['summary' => ['health' => ['checks' => [['id' => 'scheduler', 'status' => 'warning', 'duration_ms' => 1, 'metrics' => ['custom-owner-task' => 'missing', 'site-health' => 'ok']]]]]]);
+$findings = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $findingsDetail]);
 $assert(str_contains($findings, 'custom-owner-task') && str_contains($findings, \TinyCat\Support\Localization::t('health.title')), 'Scheduler findings show arbitrary owner tasks and use registered labels instead of a fixed task list.');
 $db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('cleanup', 'completed', UTC_TIMESTAMP())");
-$schedulerCheck = \TinyCat\Core\Health\Checks::definitions()['scheduler'];
+$schedulerCheck = \TinyCat\Core\Tasks\Health\Checks::definitions()['scheduler'];
 $db->exec("INSERT INTO bot_sources VALUES (1)");
 $probe = $schedulerCheck();
 $assert($probe['metrics'] === ['cleanup' => 'ok', 'feeds' => 'missing'], 'Scheduler reports identify the missing task without blaming healthy cleanup.');
@@ -82,13 +83,21 @@ $assert($result['ok'] && $task['status'] === 'completed' && $task['summary']['he
 $assert($task['changed'] === 2 && (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === 2, 'Every active administrator receives a notification, excluding ordinary users, bots and inactive administrators.');
 $assert((int) $db->query('SELECT COUNT(*) FROM notifications WHERE actor_id IS NOT NULL')->fetchColumn() === 0, 'System notifications have no invented human actor.');
 $runId = (int) $db->query("SELECT MAX(id) FROM scheduler_runs WHERE task = 'site-health'")->fetchColumn();
-$assert(\TinyCat\Core\Health\Alerts::send(true, $runId) === 0, 'Retrying notification delivery for one run is idempotent.');
+$assert(\TinyCat\Core\Tasks\Health\Alerts::send(true, $runId) === 0, 'Retrying notification delivery for one run is idempotent.');
 $assert(\TinyCat\Core\Notifications\Inbox::targetUrl(['type' => 'site_health_attention']) === '/admin/cron?task=site-health', 'Both health notification variants link to the shared task history with the health filter.');
 $assert(\TinyCat\Core\Notifications\Inbox::targetUrl(['type' => 'site_health_attention', 'notification_key' => 'site_health:' . $runId]) === '/admin/cron?task=site-health#modal=scheduler/runs/' . $runId, 'Existing health notification keys open the exact run through the shared modal deep link.');
-$assert(\TinyCat\Core\Health\ServiceProvider::widget()['url'] === '/admin/cron?task=site-health#modal=scheduler/runs/' . $runId, 'The dashboard opens its latest health run through the same modal deep link.');
+$assert(\TinyCat\Core\Tasks\Health\Inspection::widget()['url'] === '/admin/cron?task=site-health#modal=scheduler/runs/' . $runId, 'The dashboard opens its latest health run through the same modal deep link.');
+$detail = \TinyCat\Core\Tasks\Administration::runDetail($runId);
+$assert($detail !== null && count($detail['details']) === count($task['summary']['health']['checks']) && $detail['summary']['health'] === $task['summary']['health'], 'Health detail uses the registered owner callback and the persisted report.');
+$html = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $detail]);
+$assert(str_contains($html, \TinyCat\Support\Localization::t('health.checks.http')) && str_contains($html, \TinyCat\Support\Localization::t('health.checks.scheduler')), 'The common run modal renders diagnostic checks from owner data.');
+$plainDetail = \TinyCat\Core\Tasks\Administration::runDetail((int) $db->query("SELECT MAX(id) FROM scheduler_runs WHERE task = 'cleanup'")->fetchColumn());
+$assert(!array_key_exists('details', $plainDetail), 'Other tasks do not receive health-specific detail data.');
 $repeat = Execution::run('site-health');
 $assert($repeat['tasks']['site-health']['status'] === 'not_due' && (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === 2, 'Repeated cron requests on the same day do not rerun probes or send duplicate notifications.');
-$assert(Service::snapshot()['status'] === 'ok' && !Service::snapshot()['stale'], 'A skipped duplicate does not replace the latest diagnostic report.');
+$assert(Inspection::snapshot()['status'] === 'ok' && !Inspection::snapshot()['stale'], 'A skipped duplicate does not replace the latest diagnostic report.');
+$recent = \TinyCat\Core\Tasks\History::recent('site-health', 1, ['not_due']);
+$assert(count($recent) === 1 && $recent[0]['id'] === $runId && $recent[0]['summary']['health'] === $detail['summary']['health'], 'Tasks provides bounded canonical history and filters skipped invocations before applying the limit.');
 $lock = 0;
 $busy = Execution::run('site-health', [], 'admin', 1);
 $assert($busy['tasks']['site-health']['status'] === 'already_running' && (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === 2, 'A concurrent inspection cannot send another notification.');
@@ -103,7 +112,7 @@ $assert($manual['ok'] && $manual['tasks']['site-health']['summary']['health']['s
 $assert((int) $db->query("SELECT COUNT(*) FROM notifications WHERE type = 'site_health_attention'")->fetchColumn() === 2, 'A manual follow-up notifies administrators of problems.');
 unlink($root . '/uploads/.health-probes');
 $db->exec("UPDATE scheduler_runs SET summary_json = replace(summary_json, '" . date('Y-m-d') . "', '2000-01-01') WHERE task = 'site-health'");
-$assert(Service::snapshot()['stale'] && Service::snapshot()['status'] === 'unknown', 'An old green result cannot conceal a missing scheduled inspection.');
+$assert(Inspection::snapshot()['stale'] && Inspection::snapshot()['status'] === 'unknown', 'An old green result cannot conceal a missing scheduled inspection.');
 Store::setSetting('health.last_completed_day', '2000-01-01', 'string', 'health');
 $beforeFailure = (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn();
 $db->exec("CREATE TRIGGER reject_health_notice BEFORE INSERT ON notifications FOR EACH ROW BEGIN IF NEW.user_id = 2 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected delivery failure'; END IF; END");
@@ -111,7 +120,7 @@ $failed = Execution::run('site-health');
 $assert(!$failed['ok'] && Store::setting('health.last_completed_day') === '2000-01-01', 'Failed notification delivery does not mark the day completed.');
 $assert((int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === $beforeFailure, 'Failure on the second administrator rolls back partial notification delivery.');
 $db->exec('DROP TRIGGER reject_health_notice');
-$assert(Service::snapshot()['latest_failed'] && Service::snapshot()['status'] === 'unknown', 'A failed latest inspection is visible independently of the last report.');
+$assert(Inspection::snapshot()['latest_failed'] && Inspection::snapshot()['status'] === 'unknown', 'A failed latest inspection is visible independently of the last report.');
 $retry = Execution::run('site-health');
 $assert($retry['ok'] && $retry['tasks']['site-health']['status'] === 'completed', 'A failed daily inspection can be retried immediately.');
 foreach (glob($root . '/storage/health-probes/*') ?: [] as $path) { $assert(false, 'No storage probes may remain after an inspection.'); }

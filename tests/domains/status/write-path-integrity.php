@@ -96,7 +96,7 @@ $database->rollBack();
 
 
 foreach ([
-    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, theme VARCHAR(12), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at DATETIME, role VARCHAR(40) NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status VARCHAR(24) NOT NULL, created_at DATETIME, muted_until TEXT)',
+    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, theme VARCHAR(12), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), updated_at DATETIME, role VARCHAR(40) NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status VARCHAR(24) NOT NULL, created_at DATETIME, muted_until TEXT)',
     "CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT NOT NULL DEFAULT (''), author_id INT UNSIGNED NOT NULL, published_at DATETIME NOT NULL DEFAULT ('2026-01-01 00:00:00'), status VARCHAR(24) NOT NULL DEFAULT ('published'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))",
     'CREATE TABLE social_post_likes (content_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL)',
     'CREATE TABLE social_comments (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, parent_id INT UNSIGNED, user_id INT UNSIGNED NOT NULL, body TEXT, created_at DATETIME, INDEX content_comments_content_index (content_id,parent_id,created_at))',
@@ -139,15 +139,15 @@ $assert(
 $assert($value('SELECT password FROM users WHERE id = 1') === 'first-password', 'Token reuse cannot overwrite the new password.');
 
 $tagText = implode(' ', array_map(static fn (int $id): string => '#tag' . $id, range(1, 12)));
-$assert(count(\TinyCat\Social\Posts\Tags::status_tags_from_text($tagText)) === 12, 'Tag parsing does not truncate at ten unique tags.');
-$assert(\TinyCat\Social\Posts\Tags::status_tag_normalize(str_repeat('a', 33)) === '', 'The storage-backed per-tag length bound remains.');
+$assert(count(\TinyCat\Social\Posts\Tags::extractTags($tagText)) === 12, 'Tag parsing does not truncate at ten unique tags.');
+$assert(\TinyCat\Social\Posts\Tags::normalizeTag(str_repeat('a', 33)) === '', 'The storage-backed per-tag length bound remains.');
 
-$youtube = \TinyCat\Core\Text\LinkParser::fromRaw('https://youtu.be/abc123');
+$youtube = \TinyCat\Social\Posts\LinkParser::fromRaw('https://youtu.be/abc123');
 $assert(is_array($youtube) && !array_key_exists('embed_url', $youtube), 'Video parser retains only the canonical video identifier.');
-$assert(\TinyCat\Core\Links\Providers::embedUrl(['provider' => 'youtube', 'video_id' => 'abc123']) === 'https://www.youtube.com/embed/abc123', 'YouTube embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Core\Links\Providers::embedUrl(['provider' => 'vimeo', 'video_id' => '987654']) === 'https://player.vimeo.com/video/987654', 'Vimeo embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Core\Links\Providers::embedUrl(['provider' => 'dailymotion', 'video_id' => 'x9demo']) === 'https://www.dailymotion.com/embed/video/x9demo', 'Dailymotion embed URL is derived from its canonical identifier.');
-$assert(\TinyCat\Core\Links\Providers::embedUrl(['provider' => 'unknown', 'video_id' => 'abc123']) === '', 'Unknown video providers cannot produce an embed URL.');
+$assert(\TinyCat\Social\Posts\Providers::embedUrl(['provider' => 'youtube', 'video_id' => 'abc123']) === 'https://www.youtube.com/embed/abc123', 'YouTube embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Social\Posts\Providers::embedUrl(['provider' => 'vimeo', 'video_id' => '987654']) === 'https://player.vimeo.com/video/987654', 'Vimeo embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Social\Posts\Providers::embedUrl(['provider' => 'dailymotion', 'video_id' => 'x9demo']) === 'https://www.dailymotion.com/embed/video/x9demo', 'Dailymotion embed URL is derived from its canonical identifier.');
+$assert(\TinyCat\Social\Posts\Providers::embedUrl(['provider' => 'unknown', 'video_id' => 'abc123']) === '', 'Unknown video providers cannot produce an embed URL.');
 $assert(!array_key_exists('embed_url', \TinyCat\Social\Posts\Links::status_link_data((array) $youtube)), 'Link persistence excludes the derived embed URL.');
 
 
@@ -162,7 +162,7 @@ final class FailedLinkTransport
         return false;
     }
 }
-$failedLink = \TinyCat\Core\Text\LinkParser::fromRaw('http://93.184.216.34/unavailable');
+$failedLink = \TinyCat\Social\Posts\LinkParser::fromRaw('http://93.184.216.34/unavailable');
 $failureKey = 'link-metadata-failure-v1-' . hash('sha256', (string) $failedLink['normalized_url']);
 stream_wrapper_unregister('http');
 stream_wrapper_register('http', FailedLinkTransport::class);
@@ -203,7 +203,7 @@ $assert($tagFailed, 'A non-unique tag relation failure is propagated.');
 $assert((int) $value('SELECT term_id FROM social_post_tags WHERE content_id = 100') === 1, 'Failed tag synchronization restores the old relation.');
 $assert((int) $value('SELECT COUNT(*) FROM social_terms') === 1, 'Failed tag synchronization rolls back newly created terms.');
 $database->exec('DROP TRIGGER fail_tag_attach');
-\TinyCat\Social\Posts\Tags::status_sync_tags(100, \TinyCat\Social\Posts\Tags::status_tags_from_text($tagText));
+\TinyCat\Social\Posts\Tags::status_sync_tags(100, \TinyCat\Social\Posts\Tags::extractTags($tagText));
 $assert((int) $value('SELECT COUNT(*) FROM social_post_tags WHERE content_id = 100') === 12, 'Successful tag synchronization persists every valid tag.');
 
 $now = \TinyCat\Support\Dates::dateDb();
@@ -236,7 +236,15 @@ $assert($draft instanceof \TinyCat\Social\Posts\PostCreation, 'The canonical dra
 $assert($draft->body === "Hello @2 #mixed-case\nhttps://alpha.example", 'The shared draft cleans markup, line endings, mentions and tags.');
 $assert($draft->tags === ['mixed-case'] && count($draft->links) === 1, 'Draft relations are extracted from the normalized stored text.');
 $cleanDraft = \TinyCat\Social\Posts\PostCreation::fromText("  Manual  post […]\n\n\nRead more → https://alpha.example #Mixed_CASE");
-$assert($cleanDraft->body === "Manual post …\n\nhttps://alpha.example #mixed-case" && $cleanDraft->tags === ['mixed-case'] && count($cleanDraft->links) === 1, 'Manual posts, edits and bot imports share whitespace and boilerplate cleanup before relation extraction.');
+$assert($cleanDraft->body === "Manual post …\n\nRead more → https://alpha.example #mixed-case" && $cleanDraft->tags === ['mixed-case'] && count($cleanDraft->links) === 1, 'Manual posts and edits preserve editorial wording while normalizing whitespace and relations.');
+$commentText = \TinyCat\Social\Discussion\Interactions::body('An excerpt. Continue reading The post Story appeared first on Site.');
+$assert($commentText === 'An excerpt. Continue reading The post Story appeared first on Site.', 'Comments preserve editorial wording through their own URL and length policy.');
+$historyJson = \TinyCat\Social\Discussion\Comments::appendHistory('Before', 'After', ['id' => 2, 'username' => 'Actor', 'role' => 'user']);
+$history = \TinyCat\Social\Discussion\Comments::readHistory($historyJson);
+$assert(count($history) === 1 && $history[0]['actor']['id'] === 2 && $history[0]['changes']['body'] === ['from' => 'Before', 'to' => 'After'] && $history[0]['at'] !== '', 'History preserves timestamp, authorship and exact comments_diff body changes.');
+$assert(\TinyCat\Social\Discussion\Comments::appendHistory('Same', 'Same', $owner ?? []) === null && \TinyCat\Social\Discussion\Comments::readHistory('broken') === [], 'Unchanged text and malformed historical JSON retain their semantics.');
+$importDraft = (new \TinyCat\Social\Bots\FeedPublication())->prepare(['post_template' => '{{title}}'], ['title' => "An excerpt. Continue reading\nThe post Story appeared first on Site.\nhttps://alpha.example/?a=[...]#part"]);
+$assert($importDraft->body === "An excerpt.\n\nhttps://alpha.example/?a=[...]#part", 'Import and pure preview select editorial cleanup before canonical normalization while preserving literal query and fragment.');
 $cleanCard = \TinyCat\Social\Posts\Resource::link(['normalized_url' => 'https://alpha.example', 'description' => 'Cached  preview […] Read more', 'link_type' => 'web']);
 $assert($cleanCard['description'] === 'Cached preview …', 'Previously cached metadata follows the same rules in server and API link-card resources.');
 $textConstraints = \TinyCat\Social\Posts\Resource::constraints();
@@ -314,7 +322,7 @@ $database->exec('CREATE TABLE bot_source_runs (id INT UNSIGNED NOT NULL AUTO_INC
 $database->exec("INSERT INTO bot_source_runs (id, source_id, status) VALUES (1, 2, 'running')");
 $database->exec('CREATE TABLE scheduler_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, status VARCHAR(24), finished_at DATETIME, duration_ms INTEGER, summary_json TEXT, error TEXT)');
 $database->exec("INSERT INTO scheduler_runs (id, status) VALUES (1, 'running')");
-$importItems = new \TinyCat\Core\Feeds\FeedPipeline(new \TinyCat\Social\Bots\FeedStore(), new \TinyCat\Social\Bots\FeedPublication());
+$importItems = new \TinyCat\Social\Bots\Importer(new \TinyCat\Social\Bots\FeedStore(), new \TinyCat\Social\Bots\FeedPublication());
 $source = ['id' => 2, 'bot_user_id' => 1, 'feed_url' => 'https://feed.example/rss', 'post_template' => '{{title}}'];
 $database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Social\Bots\Importer::feedSourceHash($source['feed_url'])]);
 $items = [
@@ -349,7 +357,7 @@ $relaxed = $config->getValue();
 $relaxed['moderation']['blocked_urls'] = '';
 $config->setValue(null, $relaxed);
 // Fresh fixture metadata prevents a remote preview fetch when the URL is admitted.
-$admittedLink = \TinyCat\Core\Text\LinkParser::fromRaw($items[0]['title']);
+$admittedLink = \TinyCat\Social\Posts\LinkParser::fromRaw($items[0]['title']);
 $insertLink->execute([$admittedLink['normalized_url'], $admittedLink['url_hash'], 'web', 'link', 'Cached article', '', '', '', $now, $now]);
 $afterPolicyChange = $importItems->import($source, [$items[0]], 1);
 $assert($afterPolicyChange['status'] === 'posted' && $afterPolicyChange['skipped_items'] === [], 'Removing a URL block admits the original previously rejected item.');
@@ -386,7 +394,7 @@ $queueRows = \TinyCat\Database\Connection::all('SELECT * FROM social_posts WHERE
 $assert($batch['status'] === 'posted' && $batch['imported_count'] === 3 && count($queueRows) === 3, 'One run saves every new valid item and suppresses repeated GUIDs.');
 $assert(strtotime($queueRows[1]['published_at']) - strtotime($queueRows[0]['published_at']) === 1800
     && strtotime($queueRows[2]['published_at']) - strtotime($queueRows[1]['published_at']) === 1800, 'Default publication slots are 30 minutes apart.');
-$assert(\TinyCat\Social\Posts\Posts::status_can_view($queueRows[0]) && !\TinyCat\Social\Posts\Posts::status_can_view($queueRows[1]), 'The first slot is public immediately and later slots remain hidden.');
+$assert(\TinyCat\Social\Posts\Repository::visible($queueRows[0]) && !\TinyCat\Social\Posts\Repository::visible($queueRows[1]), 'The first slot is public immediately and later slots remain hidden.');
 $batchSummary = (new ReflectionMethod(\TinyCat\Social\Bots\Importer::class, 'scheduledResult'))->invoke(null, [$batch]);
 $assert($batchSummary['changed'] === 3, 'Scheduler change counts include every imported post.');
 $queueSource['publication_interval_minutes'] = 45;
@@ -416,7 +424,7 @@ $preview = imagecreatetruecolor(184, 172);
 imagewebp($preview, $feedPreviewPath);
 imagedestroy($preview);
 try {
-    $videoLink = \TinyCat\Core\Text\LinkParser::fromRaw('https://youtu.be/feed123?si=share');
+    $videoLink = \TinyCat\Social\Posts\LinkParser::fromRaw('https://youtu.be/feed123?si=share');
     \TinyCat\Social\Posts\Links::status_link_upsert(array_replace($videoLink, ['title' => 'Cached feed video', 'image_url' => $feedPreviewUrl, '_metadata_updated_at' => $now]));
     $feedWithLinks = array_replace($source, ['post_template' => "{{title}}\n{{url}}\nhttps://youtu.be/feed123?si=share"]);
     $feedItem = ['guid' => 'normalized-image-card', 'title' => 'RSS article title', 'description' => 'RSS article summary',
@@ -619,16 +627,16 @@ foreach (['social_posts', 'social_post_likes', 'social_comments', 'social_commen
     $assert((int) $value("SELECT COUNT(*) FROM {$table} WHERE {$column} {$where}") === 0, "Successful status deletion removes {$table}.");
 }
 
-$assert(!\TinyCat\Social\Posts\Posts::status_can_view(['published_at' => '2020-01-01', 'status' => 'hidden']), 'Moderation-hidden posts cannot be viewed or interacted with.');
-$assert(\TinyCat\Social\Posts\Posts::status_can_view(['published_at' => '2020-01-01', 'status' => 'published']), 'Dismissed reports keep published posts visible.');
+$assert(!\TinyCat\Social\Posts\Repository::visible(['published_at' => '2020-01-01', 'status' => 'hidden']), 'Moderation-hidden posts cannot be viewed or interacted with.');
+$assert(\TinyCat\Social\Posts\Repository::visible(['published_at' => '2020-01-01', 'status' => 'published']), 'Dismissed reports keep published posts visible.');
 $owner = ['id' => 1, 'role' => 'user'];
 $other = ['id' => 2, 'role' => 'user'];
 $admin = ['id' => 9, 'role' => 'admin'];
-$assert(\TinyCat\Social\Posts\Posts::status_can_edit(['author_id' => 1], $owner), 'A status owner may edit a published status.');
-$assert(\TinyCat\Social\Posts\Posts::status_can_edit(['author_id' => 1, 'status' => 'hidden'], $owner), 'A status owner may edit hidden content without publishing it.');
-$assert(\TinyCat\Social\Posts\Posts::status_can_edit(['author_id' => 1, 'status' => 'hidden'], $admin), 'An administrator may edit hidden content.');
-$assert(!\TinyCat\Social\Posts\Posts::status_can_delete(['author_id' => 1], $other), 'Another user may not delete a status.');
-$assert(\TinyCat\Social\Posts\Posts::status_can_delete(['author_id' => 1], $admin), 'An administrator may delete a status.');
+$assert(\TinyCat\Social\Posts\Repository::canManage(['author_id' => 1], $owner), 'A status owner may edit a published status.');
+$assert(\TinyCat\Social\Posts\Repository::canManage(['author_id' => 1, 'status' => 'hidden'], $owner), 'A status owner may edit hidden content without publishing it.');
+$assert(\TinyCat\Social\Posts\Repository::canManage(['author_id' => 1, 'status' => 'hidden'], $admin), 'An administrator may edit hidden content.');
+$assert(!\TinyCat\Social\Posts\Repository::canManage(['author_id' => 1], $other), 'Another user may not delete a status.');
+$assert(\TinyCat\Social\Posts\Repository::canManage(['author_id' => 1], $admin), 'An administrator may delete a status.');
 $assert(\TinyCat\Social\Discussion\Comments::status_comment_can_edit(['user_id' => 2], $other), 'A comment author may edit the comment.');
 $assert(!\TinyCat\Social\Discussion\Comments::status_comment_can_edit(['user_id' => 2], $owner), 'The status owner may not rewrite another user comment.');
 $assert(\TinyCat\Social\Discussion\Comments::status_comment_can_delete(['user_id' => 2, 'content_id' => 200], $owner), 'The status owner may delete a comment on the status.');
@@ -718,7 +726,7 @@ $assert($result['status'] === 'resolved', 'Review resolves a group of reports.')
 $assert($value('SELECT body FROM social_posts WHERE id = 9500') === 'Preserved evidence', 'Review preserves the original post.');
 $assert($value('SELECT path FROM social_post_images WHERE content_id = 9500') === '2026/01/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp', 'Review preserves image evidence.');
 $assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2, 'Review keeps and resolves every open report.');
-$assert(!\TinyCat\Social\Posts\Posts::status_can_view(\TinyCat\Social\Posts\Posts::status_find(9500)), 'Review hides the preserved post publicly.');
+$assert(!\TinyCat\Social\Posts\Repository::visible(\TinyCat\Social\Posts\Repository::find(9500)), 'Review hides the preserved post publicly.');
 $assert(count(\TinyCat\Social\Moderation\Reports::detail(9500)['reports']) === 2, 'The administrator detail retains the complete report history after review.');
 $preview = \TinyCat\Social\Moderation\Reports::detail(9500)['preview'];
 $assert($preview['item']['body'] === 'Preserved evidence' && $preview['item']['image']['url'] !== '', 'The hidden post preview retains the standard frontend post and image resource.');
@@ -738,8 +746,8 @@ $assert((int) $value('SELECT subject_id FROM notifications WHERE id = 9500') ===
 $database->exec("INSERT INTO social_posts (id, author_id, body) VALUES (9502, 1, 'Kept evidence')");
 $database->exec("INSERT INTO content_reports (id, content_id, reporter_id, status) VALUES (9502, 9502, 2, 'open')");
 \TinyCat\Social\Moderation\Reports::tc_admin_moderation_review_report(9502, 'dismiss');
-$kept = \TinyCat\Social\Posts\Posts::status_find(9502);
-$assert(\TinyCat\Social\Posts\Posts::status_can_view($kept) && \TinyCat\Social\Posts\Posts::status_can_edit($kept, $owner), 'Dismissal leaves the original post visible and editable.');
+$kept = \TinyCat\Social\Posts\Repository::find(9502);
+$assert(\TinyCat\Social\Posts\Repository::visible($kept) && \TinyCat\Social\Posts\Repository::canManage($kept, $owner), 'Dismissal leaves the original post visible and editable.');
 $assert($value('SELECT status FROM content_reports WHERE id = 9502') === 'dismissed', 'Dismissal remains in the report history.');
 
 $_POST = ['reason' => 'spam', 'note' => 'A new report after dismissal'];
@@ -760,9 +768,9 @@ $_POST = ['body' => 'Edited while hidden', 'status' => 'published'];
 \TinyCat\Http\Request::reset();
 $hiddenEdit = \TinyCat\Social\Posts\Actions::status_json_update(9500, $owner);
 $assert($hiddenEdit['item']['body'] === 'Edited while hidden' && $hiddenEdit['item']['status'] === 'hidden', 'An authorized author can edit a hidden post without publishing it.');
-$assert(!\TinyCat\Social\Posts\Posts::status_can_view(\TinyCat\Social\Posts\Posts::status_find(9500)), 'Editing does not undo the administrator visibility decision.');
+$assert(!\TinyCat\Social\Posts\Repository::visible(\TinyCat\Social\Posts\Repository::find(9500)), 'Editing does not undo the administrator visibility decision.');
 \TinyCat\Social\Moderation\Reports::publish(9500);
-$assert(\TinyCat\Social\Posts\Posts::status_can_view(\TinyCat\Social\Posts\Posts::status_find(9500)), 'Explicit administrative publication makes hidden content visible again.');
+$assert(\TinyCat\Social\Posts\Repository::visible(\TinyCat\Social\Posts\Repository::find(9500)), 'Explicit administrative publication makes hidden content visible again.');
 $assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2, 'Publication does not reopen or discard resolved reports.');
 $_POST = ['reason' => 'abuse', 'note' => 'New evidence after administrative publication'];
 \TinyCat\Http\Request::reset();
@@ -772,7 +780,7 @@ $assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 95
 
 // URL protection survives lost GUID history and works across feed identities.
 $url = 'https://dedup.example/article';
-$link = \TinyCat\Core\Text\LinkParser::fromRaw($url);
+$link = \TinyCat\Social\Posts\LinkParser::fromRaw($url);
 $database->prepare('INSERT INTO social_links (normalized_url, url_hash) VALUES (?, ?)')->execute([$link['normalized_url'], $link['url_hash']]);
 $linkId = (int) $database->lastInsertId();
 $database->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (98001, 1, 'Existing queued article', '2099-01-01 00:00:00')");

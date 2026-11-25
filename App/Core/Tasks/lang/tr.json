@@ -13,11 +13,8 @@
     "rotate_confirm": "Cron jetonu döndürülsün mü? Mevcut planlanmış aramalar güncellenene kadar çalışmayı durduracaktır.",
     "tasks": {
       "cleanup": "Temizlik",
-      "cleanup_help": "Kullanılmayan etiketleri ve bağlantıları, artık yayın ve önizleme resimlerini, süresi dolmuş veri önbelleklerini, eski hız sınırı paketlerini, süresi dolmuş sıfırlama belirteçlerini ve okuma bildirimlerini kaldırır. Sahipsiz avatarları, terk edilmiş geçici dosyaları ve tamamlanan güncellemelerin eski yedeklerini de kaldırır.",
-      "cleanup_schedule": "Saatlik program. Dahili durum kontrolleri temizleme işleminin çok sık yapılmasını önler.",
-      "feeds": "kaynakları",
-      "feeds_help": "Etkin kaynaklardan gelen, aralığının dolması gereken öğeleri yayınlar.",
-      "feeds_schedule": "Gerekli yoklama sıklığına göre planlama yapın; genellikle her iki dakikada bir."
+      "cleanup_help": "Çekirdek verilerini, önbellekleri, geçici dosyaları ve tamamlanan güncelleme yedeklerini temizler.",
+      "cleanup_schedule": "Saatlik program. Dahili durum kontrolleri temizleme işleminin çok sık yapılmasını önler."
     },
     "messages": {
       "token_rotated": "Cron jetonu döndürüldü."
@@ -40,9 +37,7 @@
     "summary_count": "İşlendi: {count}",
     "summary_changed": "Değiştirildi: {count}",
     "options": {
-      "bot_limit": "Kaynak sınırı",
-      "cleanup_batch": "Temizleme toplu işlemi",
-      "source_id": "Kaynak Kimliği"
+      "cleanup_batch": "Temizleme toplu işlemi"
     },
     "statuses": {
       "running": "Çalışıyor",
@@ -59,7 +54,6 @@
     },
     "menu_title": "Görevler",
     "cadence": {
-      "feeds": "Her iki dakikada bir kontrol edin",
       "cleanup": "Saatte bir"
     },
     "run_details": "Çalıştırma ayrıntıları",
@@ -71,5 +65,53 @@
     "run_id": "Çalıştırma Kimliği",
     "parameters": "Çalıştırma parametreleri",
     "error": "Hatası"
+  },
+  "health": {
+    "title": "Site sağlığı",
+    "intro": "Daily operational checks with a recorded result and a notification to every active administrator.",
+    "schedule": "Schedule once a day. Every completed inspection notifies active administrators.",
+    "schedule_short": "Once a day",
+    "empty": "No inspection has run yet.",
+    "notification_ok": "Site health inspection completed: everything is OK.",
+    "notification_attention": "Site health inspection completed: something needs attention.",
+    "status": {
+      "ok": "OK",
+      "warning": "Needs attention",
+      "critical": "Problem detected",
+      "skipped": "Not checked",
+      "unknown": "Unknown"
+    },
+    "checks": {
+      "database": "Database",
+      "cache": "Cache",
+      "storage": "Application storage",
+      "uploads": "Uploads",
+      "disk": "Free disk space",
+      "runtime": "PHP extensions",
+      "scheduler": "Scheduled tasks",
+      "updates": "Update recovery state",
+      "http": "HTTP responsiveness"
+    },
+    "http": {
+      "total": "Request duration",
+      "errors": {
+        "configuration": "A valid site URL is missing from configuration.",
+        "unsupported": "Measurement requires cURL.",
+        "timeout": "The request timed out.",
+        "transport": "Connection or TLS verification failed.",
+        "response_limit": "The response exceeded the size limit; the transfer is incomplete.",
+        "disabled": "HTTP measurement is disabled."
+      }
+    },
+    "all_checks": "All checks",
+    "check_duration": "Inspection duration",
+    "scheduler": {
+      "ok": "Healthy.",
+      "missing": "No successful run recorded.",
+      "stale": "The last successful run is too old.",
+      "failed": "The latest run failed.",
+      "interrupted": "The latest run was interrupted.",
+      "unknown": "This older report has no details. Run a new inspection."
+    }
   }
 }

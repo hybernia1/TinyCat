@@ -3,9 +3,9 @@ declare(strict_types=1);
 namespace TinyCat\Core\Settings;
 use TinyCat\Core\Settings\Store;
 
-final class ServiceProvider implements \TinyCat\Core\Modules\ProvidesFileReferences, \TinyCat\Core\Modules\ProvidesManagedSchema, \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Runtime\InitializesModule
+final class ServiceProvider implements \TinyCat\Core\Modules\ProvidesFileReferences, \TinyCat\Core\Modules\ProvidesSchemas, \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Runtime\InitializesModule
 {
-    public static function schema(): \TinyCat\Core\Modules\ModuleSchema { return Schema::schema(); }
+    public static function schemas(): array { return ['tinycat.settings' => Schema::schema()]; }
 
     public static function initialize(): void
     {
@@ -32,12 +32,6 @@ final class ServiceProvider implements \TinyCat\Core\Modules\ProvidesFileReferen
         if ($group !== 'branding' || $candidates === []) { return []; }
         $rows = \TinyCat\Database\Connection::all("SELECT setting_value FROM settings WHERE setting_key IN ('site.logo_path', 'site.favicon_path', 'site.logo_url', 'site.favicon_url')");
         return array_values(array_intersect($candidates, array_map(static fn (array $row): string => str_starts_with((string) $row['setting_value'], '/uploads/site/') ? substr((string) $row['setting_value'], 14) : (string) $row['setting_value'], $rows)));
-    }
-
-    /** @return list<string> */
-    public static function tables(): array
-    {
-        return ['settings'];
     }
 
     public static function register(\TinyCat\Http\Api $api): void

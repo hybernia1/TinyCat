@@ -55,7 +55,7 @@ final class Mentions
 
     public static function status_author_url_mention(string $url): string
     {
-        $path = \TinyCat\Social\Posts\Links::status_internal_url_path($url);
+        $path = \TinyCat\Social\Posts\Links::internalPath($url);
         $path = \TinyCat\Http\LocaleRouting::split($path)['path'];
 
         if ($path === '' || preg_match('~^/author/([0-9]+)/?$~', $path, $match) !== 1) {
@@ -73,7 +73,7 @@ final class Mentions
 
         return (string) preg_replace_callback($pattern, static function (array $match): string {
             $raw = (string) $match[1];
-            [$url, $tail] = \TinyCat\Core\Text\LinkParser::splitTail($raw);
+            [$url, $tail] = \TinyCat\Social\Posts\LinkParser::splitTail($raw);
             $mention = \TinyCat\Social\Posts\Mentions::status_author_url_mention($url);
 
             return $mention !== '' ? $mention . $tail : $raw;

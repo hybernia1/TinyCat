@@ -35,7 +35,7 @@ final class EntryPages
         Router::route(['GET', 'HEAD'], '/', static function (): void {
             if (!\TinyCat\Core\Ui\PublicWeb::enabled()) {
                 $user = \TinyCat\Core\Identity\Authentication::auth();
-                \TinyCat\Http\Web::redirect($user === null ? \TinyCat\Core\Identity\Integration::localUrl('/login') : \TinyCat\Core\Identity\Login::auth_landing_url($user));
+                \TinyCat\Http\Web::redirect($user === null ? \TinyCat\Support\LocalUrls::resolve('/login') : \TinyCat\Core\Identity\Login::auth_landing_url($user));
             }
             $page = self::homepage();
             if ($page !== null) { ($page->render)(); return; }

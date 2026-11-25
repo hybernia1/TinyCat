@@ -268,7 +268,7 @@ try {
         $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_source_runs WHERE source_id = ?', [$sourceId]) === 1, 'Current schema synchronization preserves run history.');
         $knownHashes = (new ReflectionMethod(\TinyCat\Social\Bots\FeedStore::class, 'feedHistoryHashes'))->invoke(null, $botId, $feedHash, [$historyHash]);
         $assert(isset($knownHashes[$historyHash]), 'Current schema synchronization preserves duplicate protection.');
-        $feedTask = \TinyCat\Social\Bots\Importer::scheduledTasks()['feeds']['runner'];
+        $feedTask = \TinyCat\Social\Bots\Importer::scheduledTask()->runner;
         $feedResult = $feedTask(['options' => ['bot_limit' => 20]]);
         $assert($feedResult['ok'] && $feedResult['count'] === 0, 'Built-in scheduler respects a future source schedule.');
 
