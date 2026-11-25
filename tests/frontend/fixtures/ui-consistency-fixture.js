@@ -248,7 +248,8 @@
     check(inbox.querySelectorAll('h1').length === 1 && !inbox.querySelector('article.card') && inbox.getBoundingClientRect().width >= inboxHost.clientWidth - 1, 'Inbox keeps one heading, no outer card and uses its full core container');
     for (const scale of ['1.5','2']) {
       document.documentElement.style.setProperty('--ui-scale', scale);
-      check(inboxRow.scrollWidth <= inboxRow.clientWidth + 1 && inbox.scrollWidth <= inbox.clientWidth + 1, 'Notification text and independent actions stay inside the page at scale '+scale);
+      const geometry = {viewport:innerWidth,row:[inboxRow.clientWidth,inboxRow.scrollWidth],page:[inbox.clientWidth,inbox.scrollWidth],overflow:Array.from(inbox.querySelectorAll('*')).filter(node=>node.getBoundingClientRect().right>inbox.getBoundingClientRect().right+1).map(node=>({tag:node.tagName,class:node.className,width:node.getBoundingClientRect().width,scroll:node.scrollWidth})).slice(0,8)};
+      check(inboxRow.scrollWidth <= inboxRow.clientWidth + 1 && inbox.scrollWidth <= inbox.clientWidth + 1, 'Notification text and independent actions stay inside the page at scale '+scale+' '+JSON.stringify(geometry));
       const bounds = inboxRow.getBoundingClientRect();
       for (const control of inboxRow.querySelectorAll('.avatar, .identity-copy, .notification-actions')) {
         const rect = control.getBoundingClientRect();
