@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/http-client-double.php';
 
 
@@ -11,8 +13,8 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
-if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-    echo "SKIP write-path integrity: pdo_sqlite is unavailable.\n";
+if (!in_array('mysql', PDO::getAvailableDrivers(), true)) {
+    echo "SKIP write-path integrity: pdo_mysql is unavailable.\n";
     exit(0);
 }
 
@@ -38,7 +40,7 @@ final class StatusFailurePDO extends PDO
         return parent::commit();
     }
 }
-$database = new StatusFailurePDO('sqlite::memory:');
+$database = \tinycat_test_database_as(StatusFailurePDO::class);
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 $completed = false;
@@ -50,7 +52,7 @@ $booted->setValue(null, true);
 $config = new ReflectionProperty(\TinyCat\Support\Config::class, 'config');
 $config->setValue(null, [
     'app' => ['url' => 'http://localhost'],
-    'database' => ['driver' => 'sqlite'],
+    'database' => ['driver' => 'mysql'],
     'install' => ['complete' => true, 'locale' => 'en'],
     'i18n' => ['locale' => 'en'],
     'datetime' => ['timezone' => 'UTC'],
@@ -94,27 +96,27 @@ $database->rollBack();
 
 
 foreach ([
-    'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, theme TEXT, avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at TEXT, role TEXT NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT, muted_until TEXT)',
-    "CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INTEGER PRIMARY KEY, body TEXT NOT NULL DEFAULT '', author_id INTEGER NOT NULL, published_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', status TEXT NOT NULL DEFAULT 'published')",
-    'CREATE TABLE social_post_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL)',
-    'CREATE TABLE social_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT)',
-    'CREATE TABLE social_comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL)',
-    'CREATE TABLE social_terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)',
-    'CREATE TABLE social_post_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, UNIQUE (content_id, term_id))',
-    'CREATE TABLE social_links (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
-    'CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, UNIQUE (content_id, link_id))',
-    'CREATE TABLE social_post_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
-    'CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, reporter_id INTEGER, status TEXT)',
-    'CREATE TABLE notifications (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, actor_id INTEGER, subject_id INTEGER, payload_json TEXT, type TEXT NOT NULL, notification_key TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE (user_id, notification_key))',
-    'CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, token_hash TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, used_at TEXT)',
-    'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE (user_id, follower_id))',
+    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, theme VARCHAR(12), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at DATETIME, role VARCHAR(40) NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status VARCHAR(24) NOT NULL, created_at DATETIME, muted_until TEXT)',
+    "CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT NOT NULL DEFAULT (''), author_id INT UNSIGNED NOT NULL, published_at DATETIME NOT NULL DEFAULT ('2026-01-01 00:00:00'), status VARCHAR(24) NOT NULL DEFAULT ('published'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))",
+    'CREATE TABLE social_post_likes (content_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL)',
+    'CREATE TABLE social_comments (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, parent_id INT UNSIGNED, user_id INT UNSIGNED NOT NULL, body TEXT, created_at DATETIME, INDEX content_comments_content_index (content_id,parent_id,created_at))',
+    'CREATE TABLE social_comment_likes (comment_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL)',
+    'CREATE TABLE social_terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(254) NOT NULL UNIQUE)',
+    'CREATE TABLE social_post_tags (content_id INT UNSIGNED NOT NULL, term_id INT UNSIGNED NOT NULL, UNIQUE (content_id, term_id))',
+    'CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash VARCHAR(254) NOT NULL UNIQUE, provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)',
+    'CREATE TABLE social_post_links (content_id INT UNSIGNED NOT NULL, link_id INT UNSIGNED NOT NULL, created_at DATETIME, UNIQUE (content_id, link_id))',
+    'CREATE TABLE social_post_images (content_id INT UNSIGNED PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
+    'CREATE TABLE content_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, reporter_id INT UNSIGNED, status VARCHAR(24))',
+    'CREATE TABLE notifications (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL, actor_id INT UNSIGNED, subject_id INT UNSIGNED, payload_json TEXT, type TEXT NOT NULL, notification_key VARCHAR(190) NOT NULL, read_at TEXT, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE (user_id, notification_key))',
+    'CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL, token_hash VARCHAR(254) NOT NULL UNIQUE, expires_at DATETIME NOT NULL, used_at TEXT)',
+    'CREATE TABLE user_followers (user_id INT UNSIGNED NOT NULL, follower_id INT UNSIGNED NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE (user_id, follower_id))',
 ] as $sql) {
     $database->exec($sql);
 }
 
 $database->exec("INSERT INTO users (id, username, email, locale, role, bio, password, status, created_at) VALUES (1, 'owner', NULL, 'en', 'user', 'old bio', 'old-password', 'active', '2025-01-01 00:00:00'), (2, 'actor', NULL, 'en', 'user', '', 'actor-password', 'active', '2025-01-01 00:00:00')");
 $database->exec("INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (1, 'old-token', '2030-01-01 00:00:00')");
-$database->exec('CREATE TRIGGER fail_recovery_token BEFORE INSERT ON password_reset_tokens WHEN NEW.token_hash = \'new-token\' BEGIN SELECT RAISE(ABORT, \'forced recovery failure\'); END');
+$database->exec('CREATE TRIGGER fail_recovery_token BEFORE INSERT ON password_reset_tokens FOR EACH ROW BEGIN IF NEW.token_hash = \'new-token\' THEN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced recovery failure\'; END IF; END');
 $recoveryFailed = false;
 try {
     \TinyCat\Core\Identity\Recovery::replaceToken(1, 'new-token', '2030-01-01 00:00:00');
@@ -190,7 +192,7 @@ try {
 $database->exec('INSERT INTO social_posts (id, author_id) VALUES (100, 1), (200, 1), (300, 2)');
 $database->exec("INSERT INTO social_terms (id, name) VALUES (1, 'old')");
 $database->exec('INSERT INTO social_post_tags (content_id, term_id) VALUES (100, 1)');
-$database->exec('CREATE TRIGGER fail_tag_attach BEFORE INSERT ON social_post_tags WHEN NEW.term_id = 3 BEGIN SELECT RAISE(ABORT, \'forced tag failure\'); END');
+$database->exec('CREATE TRIGGER fail_tag_attach BEFORE INSERT ON social_post_tags FOR EACH ROW BEGIN IF NEW.term_id = 3 THEN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced tag failure\'; END IF; END');
 $tagFailed = false;
 try {
     \TinyCat\Social\Posts\Tags::status_sync_tags(100, ['alpha', 'beta']);
@@ -211,7 +213,7 @@ $insertLink->execute(['https://old.example', 'old', 'web', 'link', 'Old', '', ''
 $insertLink->execute(['https://alpha.example', hash('sha256', 'https://alpha.example'), 'web', 'link', 'Alpha title', '', '', '', $now, $now]);
 $insertLink->execute(['https://beta.example', hash('sha256', 'https://beta.example'), 'web', 'link', 'Beta title', '', '', '', $now, $now]);
 $database->exec("INSERT INTO social_post_links (content_id, link_id, created_at) VALUES (100, 1, '$now')");
-$database->exec('CREATE TRIGGER fail_link_attach BEFORE INSERT ON social_post_links WHEN NEW.link_id = 3 BEGIN SELECT RAISE(ABORT, \'forced link failure\'); END');
+$database->exec('CREATE TRIGGER fail_link_attach BEFORE INSERT ON social_post_links FOR EACH ROW BEGIN IF NEW.link_id = 3 THEN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced link failure\'; END IF; END');
 $links = [
     ['normalized_url' => 'https://alpha.example', 'url_hash' => hash('sha256', 'https://alpha.example')],
     ['normalized_url' => 'https://beta.example', 'url_hash' => hash('sha256', 'https://beta.example')],
@@ -244,7 +246,7 @@ $boundedDraft = \TinyCat\Social\Posts\PostCreation::fromText(str_repeat('x', 200
 $assert(mb_strlen($boundedDraft->body) === 2000 && $boundedDraft->tags === [], 'Tags outside the shared text limit cannot leave invisible relations.');
 $image = ['path' => 'fixture.webp', 'width' => 10, 'height' => 20, 'bytes' => 100];
 $beforeCreation = (int) $value('SELECT COUNT(*) FROM social_posts');
-$database->exec('CREATE TRIGGER fail_post_links BEFORE INSERT ON social_post_links BEGIN SELECT RAISE(ABORT, \'forced post failure\'); END');
+$database->exec('CREATE TRIGGER fail_post_links BEFORE INSERT ON social_post_links FOR EACH ROW BEGIN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced post failure\'; END');
 try {
     \TinyCat\Social\Posts\PostCreation::create(1, $draft, $links, $image);
     $assert(false, 'The shared writer must propagate relation failures.');
@@ -267,17 +269,17 @@ foreach ([0, 1] as $authorId) {
     }
 }
 
-$database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, last_imported_at TEXT, last_error TEXT, bot_user_id INTEGER DEFAULT 1, feed_hash TEXT, enabled INTEGER DEFAULT 1)');
-$database->exec('PRAGMA foreign_keys = ON');
-$database->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY REFERENCES social_posts(id) ON DELETE CASCADE, source_id INTEGER NOT NULL)');
-$database->exec('CREATE TABLE bot_feed_history (bot_user_id INTEGER, feed_hash TEXT, item_hash TEXT, created_at TEXT, UNIQUE (bot_user_id, feed_hash, item_hash))');
+$database->exec('CREATE TABLE bot_sources (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, last_imported_at TEXT, last_error TEXT, bot_user_id INT UNSIGNED DEFAULT 1, feed_hash CHAR(64), enabled INTEGER DEFAULT 1)');
+
+$database->exec('CREATE TABLE bot_source_posts (content_id INT UNSIGNED PRIMARY KEY REFERENCES social_posts(id) ON DELETE CASCADE, source_id INT UNSIGNED NOT NULL)');
+$database->exec('CREATE TABLE bot_feed_history (bot_user_id INT UNSIGNED, feed_hash CHAR(64), item_hash CHAR(64), created_at DATETIME, UNIQUE (bot_user_id, feed_hash, item_hash))');
 $database->exec('INSERT INTO bot_sources (id) VALUES (1)');
 $persistFeed = require __DIR__ . '/../../support/feed-writer.php';
 $feedHash = hash('sha256', 'fixture-feed');
 $database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 1')->execute([$feedHash]);
 $itemHash = hash('sha256', 'fixture-item');
 $beforePosts = (int) $value('SELECT COUNT(*) FROM social_posts');
-$database->exec('CREATE TRIGGER fail_bot_link BEFORE INSERT ON social_post_links BEGIN SELECT RAISE(ABORT, \'forced bot link failure\'); END');
+$database->exec('CREATE TRIGGER fail_bot_link BEFORE INSERT ON social_post_links FOR EACH ROW BEGIN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced bot link failure\'; END');
 try {
     $persistFeed(1, 1, $feedHash, $itemHash, \TinyCat\Social\Posts\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links);
     $assert(false, 'Bot link storage errors must propagate.');
@@ -288,7 +290,7 @@ $assert((int) $value('SELECT COUNT(*) FROM social_posts') === $beforePosts && (i
 $assert($value('SELECT last_imported_at FROM bot_sources WHERE id = 1') === null, 'A failed import does not mark its source imported.');
 $assert((int) $value("SELECT COUNT(*) FROM social_terms WHERE name = 'rollback'") === 0, 'A failed bot import rolls back new tags.');
 $database->exec('DROP TRIGGER fail_bot_link');
-$database->exec('CREATE TRIGGER fail_bot_history BEFORE INSERT ON bot_feed_history BEGIN SELECT RAISE(ABORT, \'forced history failure\'); END');
+$database->exec('CREATE TRIGGER fail_bot_history BEFORE INSERT ON bot_feed_history FOR EACH ROW BEGIN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced history failure\'; END');
 try {
     $persistFeed(1, 1, $feedHash, $itemHash, \TinyCat\Social\Posts\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links);
     $assert(false, 'History storage failures must propagate.');
@@ -308,9 +310,9 @@ try {
 
 // Feed validation must reject content without swallowing technical failures.
 $database->exec('INSERT INTO bot_sources (id) VALUES (2)');
-$database->exec('CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id INTEGER, status TEXT, started_at TEXT, items_seen INTEGER, error TEXT)');
+$database->exec('CREATE TABLE bot_source_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, source_id INT UNSIGNED, status VARCHAR(24), started_at DATETIME, items_seen INTEGER, error TEXT)');
 $database->exec("INSERT INTO bot_source_runs (id, source_id, status) VALUES (1, 2, 'running')");
-$database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, status TEXT, finished_at TEXT, duration_ms INTEGER, summary_json TEXT, error TEXT)');
+$database->exec('CREATE TABLE scheduler_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, status VARCHAR(24), finished_at DATETIME, duration_ms INTEGER, summary_json TEXT, error TEXT)');
 $database->exec("INSERT INTO scheduler_runs (id, status) VALUES (1, 'running')");
 $importItems = new \TinyCat\Core\Feeds\FeedPipeline(new \TinyCat\Social\Bots\FeedStore(), new \TinyCat\Social\Bots\FeedPublication());
 $source = ['id' => 2, 'bot_user_id' => 1, 'feed_url' => 'https://feed.example/rss', 'post_template' => '{{title}}'];
@@ -357,7 +359,7 @@ $repaired['post_template'] = 'Repaired item';
 $retry = $importItems->import($repaired, [$items[1]], 1);
 $assert($retry['status'] === 'posted' && $retry['skipped_items'] === [], 'A repaired template can publish a previously rejected feed item.');
 $technical = [['guid' => 'technical', 'title' => 'Technical retry #retry'], ['guid' => 'after-error', 'title' => 'Must wait']];
-$database->exec('CREATE TRIGGER fail_import_post BEFORE INSERT ON social_posts BEGIN SELECT RAISE(ABORT, \'forced import failure\'); END');
+$database->exec('CREATE TRIGGER fail_import_post BEFORE INSERT ON social_posts FOR EACH ROW BEGIN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced import failure\'; END');
 $failed = $importItems->import($source, $technical, 1);
 $assert($failed['status'] === 'error' && $failed['skipped_items'] === [], 'Database failures remain technical errors, not content skips.');
 $assert((int) $value("SELECT COUNT(*) FROM social_posts WHERE body = 'Must wait'") === 0, 'A technical error stops the run before subsequent items.');
@@ -395,7 +397,7 @@ $otherSource = array_replace($queueSource, ['id' => 4, 'feed_url' => 'https://qu
 $otherBatch = $importItems->import($otherSource, [['guid' => 'other-source', 'title' => 'Other source']], 1);
 $otherAt = (string) $value('SELECT published_at FROM social_posts WHERE id = ' . $otherBatch['content_id']);
 $assert(abs(strtotime($otherAt) - time()) < 5 && $otherAt < $continuedAt, 'A second source starts its own timeline independently of the same bot account.');
-$database->exec("CREATE TRIGGER fail_second_queue_item BEFORE INSERT ON social_posts WHEN NEW.body = 'Queue failure' BEGIN SELECT RAISE(ABORT, 'forced second item failure'); END");
+$database->exec("CREATE TRIGGER fail_second_queue_item BEFORE INSERT ON social_posts FOR EACH ROW BEGIN IF NEW.body = 'Queue failure' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced second item failure'; END IF; END");
 $partialItems = [['guid' => 'queue-e', 'title' => 'Before failure'], ['guid' => 'queue-f', 'title' => 'Queue failure'], ['guid' => 'queue-g', 'title' => 'After failure']];
 $partial = $importItems->import($queueSource, $partialItems, 1);
 $assert($partial['status'] === 'error' && $partial['imported_count'] === 1, 'A partial failure reports the posts already committed.');
@@ -502,7 +504,7 @@ $assert((int) $value("SELECT COUNT(*) FROM social_posts WHERE id = {$createdStat
 
 // A durable inbox failure rolls publication and its relations back together.
 $beforeStatusFailure = (int) $value('SELECT COUNT(*) FROM social_posts');
-$database->exec("CREATE TRIGGER reject_status_notification BEFORE INSERT ON notifications BEGIN SELECT RAISE(ABORT, 'injected status inbox failure'); END");
+$database->exec("CREATE TRIGGER reject_status_notification BEFORE INSERT ON notifications FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected status inbox failure'; END");
 $_POST = ['body' => 'Atomic publication @owner #atomic-failure'];
 \TinyCat\Http\Request::reset();
 try { \TinyCat\Social\Posts\Actions::status_json_create($actor); $assert(false, 'Inbox failure must abort create.'); }
@@ -574,7 +576,7 @@ $database->exec("DELETE FROM notifications WHERE user_id = 1 AND notification_ke
 $database->exec("INSERT INTO social_comments (id, content_id, parent_id, user_id, body) VALUES (10, 200, NULL, 2, 'parent'), (11, 200, 10, 3, 'reply'), (20, 100, NULL, 2, 'status comment')");
 $database->exec('INSERT INTO social_comment_likes (comment_id, user_id) VALUES (10, 4), (11, 4), (20, 4)');
 $database->exec("INSERT INTO notifications (id, user_id, subject_id, type, notification_key, created_at, updated_at) VALUES (1, 1, 10, 'content_comment', 'test:1', '$now', '$now'), (2, 1, 11, 'content_comment', 'test:2', '$now', '$now'), (3, 1, 20, 'content_comment', 'test:3', '$now', '$now'), (4, 1, 100, 'content_like', 'test:4', '$now', '$now')");
-$database->exec('CREATE TRIGGER fail_comment_delete BEFORE DELETE ON social_comments WHEN OLD.id = 10 BEGIN SELECT RAISE(ABORT, \'forced comment failure\'); END');
+$database->exec('CREATE TRIGGER fail_comment_delete BEFORE DELETE ON social_comments FOR EACH ROW BEGIN IF OLD.id = 10 THEN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced comment failure\'; END IF; END');
 $commentFailed = false;
 try {
     \TinyCat\Social\Discussion\Comments::status_delete_comment_rows(10);
@@ -594,7 +596,7 @@ $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id IN (10
 $database->exec("INSERT INTO social_post_likes (content_id, user_id) VALUES (100, 2)");
 $database->exec("INSERT INTO social_post_images (content_id, path) VALUES (100, 'status.webp')");
 $database->exec("INSERT INTO content_reports (id, content_id, reporter_id, status) VALUES (1, 100, 2, 'open')");
-$database->exec('CREATE TRIGGER fail_content_delete BEFORE DELETE ON social_posts WHEN OLD.id = 100 BEGIN SELECT RAISE(ABORT, \'forced social_posts failure\'); END');
+$database->exec('CREATE TRIGGER fail_content_delete BEFORE DELETE ON social_posts FOR EACH ROW BEGIN IF OLD.id = 100 THEN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced social_posts failure\'; END IF; END');
 $contentFailed = false;
 try {
     \TinyCat\Social\Posts\Posts::status_delete_content(100, true, true, false);
@@ -690,7 +692,7 @@ $wpLinkId = \TinyCat\Social\Posts\Links::status_link_upsert(['normalized_url' =>
 $assert($value('SELECT provider FROM social_links WHERE id = ' . $wpLinkId) === 'wordpress' && $value('SELECT link_type FROM social_links WHERE id = ' . $wpLinkId) === 'web', 'Recognized WordPress social_links persist their platform separately from social_posts type.');
 
 // Stored-link normalization, merging, dry-run and rollback are covered by
-// tests/tools/link-optimizer.php against the current Social tables on SQLite/MySQL.
+// tests/tools/link-optimizer.php against the current Social tables on MySQL.
 $preparedDuplicates = \TinyCat\Social\Posts\Links::prepareLinks([
     ['normalized_url' => 'https://alpha.example?utm_source=one', 'url_hash' => 'stale-one'],
     ['normalized_url' => 'https://alpha.example?utm_source=two', 'url_hash' => 'stale-two'],
@@ -703,7 +705,7 @@ $assert($firstVariantId > 0 && $firstVariantId === $secondVariantId, 'Writing eq
 // Exercise the actual review transaction: evidence must survive a moderation decision.
 $database->exec('ALTER TABLE users ADD COLUMN muted_by INTEGER');
 $database->exec('ALTER TABLE users ADD COLUMN muted_reason TEXT');
-foreach (['reviewed_at TEXT', 'reviewed_by INTEGER', 'action_note TEXT', 'reason TEXT', 'note TEXT', 'created_at TEXT'] as $column) {
+foreach (['reviewed_at TEXT', 'reviewed_by INTEGER', 'action_note TEXT', 'reason TEXT', 'note TEXT', 'created_at DATETIME'] as $column) {
     $database->exec('ALTER TABLE content_reports ADD COLUMN ' . $column);
 }
 \TinyCat\Core\Identity\Authentication::reset(null, true);

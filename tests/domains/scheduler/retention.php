@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Run against an isolated application tree: no fixture ever sweeps real uploads or backups.
 if (($argv[1] ?? '') !== '--isolated') {
     $root = sys_get_temp_dir() . '/tinycat-retention-' . bin2hex(random_bytes(10));
@@ -32,11 +34,11 @@ use TinyCat\Core\Updates\Cleanup;
 
 (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $root . '/storage/cache']]);
-$database = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$database = \tinycat_test_database_as(TinyCatTestLockPDO::class);
 \TinyCat\Database\Connection::set($database);
-$database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, avatar_exists INTEGER NOT NULL DEFAULT 1, avatar_version VARCHAR(32))');
+$database->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, avatar_exists INTEGER NOT NULL DEFAULT 1, avatar_version VARCHAR(32))');
 $database->exec('INSERT INTO users (id) VALUES (1)');
-$database->exec('CREATE TABLE ip_action_limits (bucket_start TEXT)');
+$database->exec('CREATE TABLE ip_action_limits (bucket_start DATETIME)');
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $file = static function (string $relative, int $age = 259200, string $content = 'fixture') use ($root): string {
@@ -99,7 +101,7 @@ $assert(\TinyCat\Core\Security\RateLimitPolicy::retentionSeconds() === 86400, 'C
 $insert = $database->prepare('INSERT INTO ip_action_limits VALUES (?)');
 foreach ([-90000, -7200, -60] as $age) { $insert->execute([date('Y-m-d H:i:s', time() + $age)]); }
 $assert(\TinyCat\Core\Tasks\Cleanup::cleanup_has_rows('old_action_limits'), 'Rate-limit cleanup selects buckets older than its policy retention.');
-$database->exec('DELETE FROM ip_action_limits WHERE bucket_start = (SELECT MIN(bucket_start) FROM ip_action_limits)');
+$database->exec('DELETE FROM ip_action_limits ORDER BY bucket_start LIMIT 1');
 $assert(!\TinyCat\Core\Tasks\Cleanup::cleanup_has_rows('old_action_limits'), 'Rate-limit cleanup preserves recent and active windows.');
 
 $backup = static function (string $name, int $days, bool $completed = true, bool $db = false) use ($file): void {
@@ -164,17 +166,14 @@ for ($attempt = 0; $attempt < 16; $attempt++) { $assert(Cleanup::run(1)['changed
 $assert(!is_file($root . '/storage/updates/downloads/.tinycat-download-single'), 'Even a single-entry budget eventually gives downloads a turn.');
 
 // The scheduler records the successor before a task starts, not after it completes.
-$database->exec('CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)');
+$database->exec('CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)');
 \TinyCat\Core\Settings\Store::reset();
 \TinyCat\Core\Settings\Store::setSetting('cron.cleanup_next_task', 'orphan_avatar_files', 'string', 'cron');
 $insert->execute([date('Y-m-d H:i:s', time() - 90000)]);
 $seenCursor = null;
-$database->sqliteCreateFunction('capture_cleanup_cursor', static function () use (&$seenCursor): int {
-    $seenCursor = \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task');
-    return 1;
-});
-$database->exec('ALTER TABLE users RENAME TO users_base');
-$database->exec('CREATE VIEW users AS SELECT capture_cleanup_cursor() AS id, 1 AS avatar_exists, NULL AS avatar_version FROM users_base');
+$database->beforePrepare = static function (string $query) use (&$seenCursor): void {
+    if ($seenCursor === null && str_contains($query, 'FROM users')) { $seenCursor = \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task'); }
+};
 $full = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, true);
 $assert(array_key_first($full['results']) === 'orphan_avatar_files', 'A full cleanup resumes from its persisted successor instead of restarting the first task.');
 $maintenanceOrder = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks();

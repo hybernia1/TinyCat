@@ -1,48 +1,52 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../../tools/support/workspace.php';
 
 require_once __DIR__ . '/../support/cache-isolation.php';
 
-if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-    echo "SKIP API HTTP contract: pdo_sqlite is unavailable.\n";
+if (!in_array('mysql', PDO::getAvailableDrivers(), true)) {
+    echo "SKIP API HTTP contract: pdo_mysql is unavailable.\n";
     exit(0);
 }
 
 $root = dirname(__DIR__, 2);
 $temporary = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/api-contract-' . bin2hex(random_bytes(6));
 mkdir($temporary, 0775, true);
-$databasePath = $temporary . '/database.sqlite';
-$database = new PDO('sqlite:' . $databasePath);
+$databasePath = $temporary . '/database.database.json';
+$database = \tinycat_test_database($databasePath);
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 foreach ([
-    'CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT DEFAULT "system", avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, bio TEXT DEFAULT "", email_notifications INTEGER DEFAULT 0, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)',
-    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY AUTOINCREMENT, author_id INTEGER, body TEXT, published_at TEXT, status TEXT NOT NULL DEFAULT \'published\')',
-    'CREATE TABLE social_post_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, UNIQUE(content_id, user_id))',
-    'CREATE TABLE social_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT, comments_diff TEXT)',
-    'CREATE TABLE social_comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, UNIQUE(comment_id, user_id))',
-    'CREATE TABLE social_terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)',
-    'CREATE TABLE social_post_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, UNIQUE(content_id, term_id))',
-    'CREATE TABLE social_links (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
-    'CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, UNIQUE(content_id, link_id))',
-    'CREATE TABLE social_post_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
-    'CREATE TABLE content_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER NOT NULL, reporter_id INTEGER, reason TEXT, note TEXT, status TEXT, created_at TEXT, updated_at TEXT, reviewed_at TEXT, reviewed_by INTEGER, action_note TEXT)',
-    'CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, actor_id INTEGER, subject_id INTEGER, payload_json TEXT, type TEXT NOT NULL, notification_key TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(user_id, notification_key))',
-    'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, follower_id))',
-    'CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)',
-    'CREATE TABLE moderation_actions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, action TEXT, created_at TEXT)',
-    'CREATE TABLE ip_action_limits (ip_address TEXT, action_name TEXT, bucket_start TEXT, action_count INTEGER, updated_at TEXT, UNIQUE(ip_address, action_name, bucket_start))',
-    'CREATE TABLE bot_sources (id INTEGER PRIMARY KEY AUTOINCREMENT, bot_user_id INTEGER NOT NULL, name TEXT NOT NULL, feed_url TEXT NOT NULL, feed_hash TEXT UNIQUE NOT NULL, interval_minutes INTEGER DEFAULT 60, publication_interval_minutes INTEGER DEFAULT 30, post_template TEXT NOT NULL, enabled INTEGER DEFAULT 1, last_checked_at TEXT, last_imported_at TEXT, next_run_at TEXT, last_error TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)',
-    'CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY, source_id INTEGER NOT NULL)',
-    'CREATE TABLE bot_feed_history (bot_user_id INTEGER, feed_hash TEXT, item_hash TEXT, created_at TEXT, PRIMARY KEY (bot_user_id, feed_hash, item_hash))',
-    'CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id INTEGER, status TEXT, started_at TEXT, items_seen INTEGER, error TEXT)',
-    'CREATE TABLE settings (id INTEGER PRIMARY KEY AUTOINCREMENT, setting_key TEXT UNIQUE NOT NULL, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER DEFAULT 1)',
+    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) UNIQUE NOT NULL, email TEXT, password TEXT, role VARCHAR(40) NOT NULL, status VARCHAR(24) NOT NULL, locale TEXT, theme VARCHAR(12) DEFAULT ("system"), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, bio TEXT DEFAULT (""), email_notifications INTEGER DEFAULT 0, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)',
+    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, status VARCHAR(24) NOT NULL DEFAULT (\'published\'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
+    'CREATE TABLE social_post_likes (content_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL, UNIQUE(content_id, user_id))',
+    'CREATE TABLE social_comments (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, parent_id INT UNSIGNED, user_id INT UNSIGNED NOT NULL, body TEXT, created_at DATETIME, comments_diff TEXT, INDEX content_comments_content_index (content_id,parent_id,created_at))',
+    'CREATE TABLE social_comment_likes (comment_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL, UNIQUE(comment_id, user_id))',
+    'CREATE TABLE social_terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(254) NOT NULL UNIQUE)',
+    'CREATE TABLE social_post_tags (content_id INT UNSIGNED NOT NULL, term_id INT UNSIGNED NOT NULL, UNIQUE(content_id, term_id))',
+    'CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash VARCHAR(254) NOT NULL UNIQUE, provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)',
+    'CREATE TABLE social_post_links (content_id INT UNSIGNED NOT NULL, link_id INT UNSIGNED NOT NULL, created_at DATETIME, UNIQUE(content_id, link_id))',
+    'CREATE TABLE social_post_images (content_id INT UNSIGNED PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
+    'CREATE TABLE content_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, reporter_id INT UNSIGNED, reason TEXT, note TEXT, status VARCHAR(24), created_at DATETIME, updated_at DATETIME, reviewed_at TEXT, reviewed_by INTEGER, action_note TEXT)',
+    'CREATE TABLE notifications (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL, actor_id INT UNSIGNED, subject_id INT UNSIGNED, payload_json TEXT, type TEXT NOT NULL, notification_key VARCHAR(190) NOT NULL, read_at TEXT, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE(user_id, notification_key))',
+    'CREATE TABLE user_followers (user_id INT UNSIGNED NOT NULL, follower_id INT UNSIGNED NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, follower_id))',
+    'CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, token_hash TEXT, expires_at DATETIME, used_at TEXT)',
+    'CREATE TABLE moderation_actions (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, action TEXT, created_at DATETIME)',
+    'CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INTEGER, updated_at DATETIME, UNIQUE(ip_address, action_name, bucket_start))',
+    'CREATE TABLE bot_sources (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, bot_user_id INT UNSIGNED NOT NULL, name TEXT NOT NULL, feed_url TEXT NOT NULL, feed_hash VARCHAR(254) UNIQUE NOT NULL, interval_minutes INTEGER DEFAULT 60, publication_interval_minutes INTEGER DEFAULT 30, post_template TEXT NOT NULL, enabled INTEGER DEFAULT 1, last_checked_at DATETIME, last_imported_at TEXT, next_run_at DATETIME, last_error TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)',
+    'CREATE TABLE bot_source_posts (content_id INT UNSIGNED PRIMARY KEY, source_id INT UNSIGNED NOT NULL)',
+    'CREATE TABLE bot_feed_history (bot_user_id INT UNSIGNED, feed_hash CHAR(64), item_hash CHAR(64), created_at DATETIME, PRIMARY KEY (bot_user_id, feed_hash, item_hash))',
+    'CREATE TABLE bot_source_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, source_id INT UNSIGNED, status VARCHAR(24), started_at DATETIME, items_seen INTEGER, error TEXT)',
+    'CREATE TABLE settings (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, setting_key VARCHAR(254) UNIQUE NOT NULL, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER DEFAULT 1)',
     "INSERT INTO users (id, username, role, status) VALUES (1, 'admin', 'admin', 'active'), (2, 'member', 'user', 'active'), (3, 'feedbot', 'bot', 'active')",
 ] as $sql) {
     $database->exec($sql);
 }
 define('TINYCAT', true);
+$database->exec('CREATE FULLTEXT INDEX content_body_fulltext ON social_posts(body)');
+$database->exec('CREATE FULLTEXT INDEX links_search_fulltext ON social_links(normalized_url,title,description)');
 $redirectMigration = require $root . '/migrations/20261102_001_compact_content_redirects.php';
 $database->exec('ALTER TABLE social_posts RENAME TO content');
 $redirectMigration($database);
@@ -170,7 +174,7 @@ try {
     [$status, $payload] = $request('GET', '/api/scheduler/tasks', null, 'admin');
     $assert($status === 200 && count($payload['data']['items']) === 3 && $payload['data']['runs'] === [], 'Cron list exposes the registered task definitions and an empty initial history.');
     $assert(isset($payload['meta']['pagination']) && !array_key_exists('pagination', $payload['data']) && !array_key_exists('per_page', $payload['data']['filters']), 'Cron GET pagination follows the shared metadata contract.');
-    $schedulerDatabase = new PDO('sqlite:' . $databasePath);
+    $schedulerDatabase = \tinycat_test_database($databasePath);
     $schedulerDatabase->prepare('INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)')->execute(['bots.cleanup_last_run', (string) time(), 'int', 'bots']);
     $schedulerDatabase = null;
     [$status, $payload] = $request('POST', '/api/scheduler/tasks/feeds/runs?per_page=50', [], 'admin', $csrf);
@@ -184,23 +188,23 @@ try {
     $assert($status === 403, 'Run details require administrator access.');
     [$status] = $request('GET', '/api/scheduler/runs/999999', null, 'admin');
     $assert($status === 404, 'A missing run returns a standard not-found response.');
-    $schedulerDatabase = new PDO('sqlite:' . $databasePath);
+    $schedulerDatabase = \tinycat_test_database($databasePath);
     $schedulerDatabase->exec("DELETE FROM settings WHERE setting_key = 'bots.cleanup_last_run'");
     $schedulerDatabase = null;
     [$status, $busy] = $request('POST', '/api/scheduler/tasks/feeds/runs?per_page=50', [], 'admin', $csrf + ['X-Test-Scheduler-Lock' => '0']);
     $assert($status === 201 && $busy['code'] === 'scheduler_already_running' && $busy['data']['execution']['skipped'] && $busy['meta']['pagination']['per_page'] === 50, 'Concurrent cron requests use the stable busy code and shared pagination contract.');
-    $schedulerDatabase = new PDO('sqlite:' . $databasePath);
-    $schedulerDatabase->exec("CREATE TRIGGER scheduler_fixture_failure BEFORE INSERT ON scheduler_runs BEGIN SELECT RAISE(ABORT, 'fixture history unavailable'); END");
+    $schedulerDatabase = \tinycat_test_database($databasePath);
+    $schedulerDatabase->exec("CREATE TRIGGER scheduler_fixture_failure BEFORE INSERT ON scheduler_runs FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'fixture history unavailable'; END");
     $schedulerDatabase = null;
     [$status, $failed] = $request('POST', '/api/scheduler/tasks/feeds/runs?per_page=50', [], 'admin', $csrf);
     $assert($failed['code'] === 'scheduler_run_failed' && !$failed['data']['execution']['ok'] && $failed['meta']['type'] === 'danger' && $failed['meta']['pagination']['per_page'] === 50, 'Failed cron executions have a stable failure code while returning the refreshed list.');
-    $schedulerDatabase = new PDO('sqlite:' . $databasePath);
+    $schedulerDatabase = \tinycat_test_database($databasePath);
     $schedulerDatabase->exec('DROP TRIGGER scheduler_fixture_failure');
     $schedulerDatabase = null;
     [$status] = $request('POST', '/api/scheduler/tasks/unknown/runs', [], 'admin', $csrf);
     $assert($status === 404, 'Unknown cron tasks cannot execute arbitrary jobs.');
 
-    $settingsDatabase = new PDO('sqlite:' . $databasePath);
+    $settingsDatabase = \tinycat_test_database($databasePath);
     [$status] = $request('GET', '/api/settings/editor');
     $assert($status === 401, 'Settings resources require authentication.');
     [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Forbidden']], 'user', $csrf);
@@ -215,7 +219,7 @@ try {
     [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => '  Canonical name  ']], 'admin', $csrf);
     $assert($status === 200 && $settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.name'")->fetchColumn() === 'Canonical name', 'A partial settings write normalizes its submitted value.');
     $assert($settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.home_title'")->fetchColumn() === 'Original title', 'Unsubmitted settings remain unchanged.');
-    $settingsDatabase->exec("CREATE TRIGGER reject_settings BEFORE UPDATE ON settings WHEN NEW.setting_key = 'site.home_title' BEGIN SELECT RAISE(ABORT, 'Fixture settings failure'); END");
+    $settingsDatabase->exec("CREATE TRIGGER reject_settings BEFORE UPDATE ON settings FOR EACH ROW BEGIN IF NEW.setting_key = 'site.home_title' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fixture settings failure'; END IF; END");
     [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Rolled back', 'site.home_title' => 'Reject']], 'admin', $csrf);
     $assert($status === 500 && $settingsDatabase->query("SELECT setting_value FROM settings WHERE setting_key = 'site.name'")->fetchColumn() === 'Canonical name', 'Database failure rolls back the complete settings batch.');
     $settingsDatabase->exec('DROP TRIGGER reject_settings');
@@ -329,7 +333,7 @@ try {
     [$status, $invalidInterval] = $request('PATCH', '/api/bots/sources/' . $sourceId, $source + ['publication_interval_minutes' => 0], 'admin', $csrf);
     $assert($status === 422 && isset($invalidInterval['error']['details']['errors']['publication_interval_minutes']), 'Invalid publication intervals return field validation errors.');
 
-    $sourceDatabase = new PDO('sqlite:' . $databasePath);
+    $sourceDatabase = \tinycat_test_database($databasePath);
     $previewDocument = json_encode(['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Preview feed', 'items' => [['id' => 'preview-only', 'title' => 'Preview post', 'content_text' => 'Preview text', 'url' => '/entry']]]);
     $previewInput = ['document' => $previewDocument, 'feed_url' => 'https://93.184.216.34/feed', 'post_template' => '{{title}}'];
     [$status] = $request('POST', '/api/bots/sources/previews', $previewInput, 'user', $csrf);

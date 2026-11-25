@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
@@ -49,8 +51,8 @@ $assert(Audio::rozhlasMetadata(['data'=>['type'=>'episode', 'id'=>'wrong']], $id
 $link = Links::status_link_prepare_metadata(LinkParser::fromRaw('https://93.184.216.34/episode'), null, false,
     ['url_hash'=>'', 'title'=>'Episode', 'description'=>'Summary', 'image_urls'=>[], 'audio_url'=>$media]);
 $assert($link['audio_url'] === $media && $link['link_type'] === 'audio', 'Feed source audio reaches prepared links without artwork.');
-$db = new PDO('sqlite::memory:');
-$db->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)');
+$db = \tinycat_test_database();
+$db->exec('CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT, url_hash CHAR(64), provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), created_at DATETIME, updated_at DATETIME)');
 $migration = require __DIR__ . '/../../../migrations/20261031_001_link_audio.php';
 $db->exec('ALTER TABLE social_links RENAME TO links');
 $migration($db);

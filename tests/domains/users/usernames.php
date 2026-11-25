@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
 define('TINYCAT', true);
@@ -22,12 +24,11 @@ foreach (['A', '123', '１２３', '_Alice', '.Alice', 'Alice.', 'Alice-', 'Alic
 $assert(\TinyCat\Core\Identity\Usernames::normalize('  Žaneta.Novák  ') === 'Žaneta.Novák', 'Normalization must preserve display case and diacritics.');
 $assert(\TinyCat\Core\Identity\Usernames::key('ŽANETA.NOVÁK') === \TinyCat\Core\Identity\Usernames::key('žaneta.novák'), 'Mention lookup keys must be case insensitive for Unicode.');
 
-if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-    $database = new PDO('sqlite::memory:');
+if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
+    $database = \tinycat_test_database();
     $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $database->sqliteCreateCollation('USERNAME_CASE', static fn (string $a, string $b): int => strcmp(\TinyCat\Core\Identity\Usernames::key($a), \TinyCat\Core\Identity\Usernames::key($b)));
-    $database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT COLLATE USERNAME_CASE UNIQUE NOT NULL, status TEXT NOT NULL)');
+    $database->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) UNIQUE NOT NULL, status VARCHAR(24) NOT NULL)');
     $insert = $database->prepare("INSERT INTO users (id, username, status) VALUES (?, ?, 'active')");
     foreach ([1 => 'Žaneta.Novák', 2 => 'Jan-Novak', 3 => 'old_user_', 7 => '2Pac', 8 => str_repeat('a', 32)] as $id => $name) {
         $insert->execute([$id, $name]);

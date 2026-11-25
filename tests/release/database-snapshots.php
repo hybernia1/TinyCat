@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 define('TINYCAT', true);
 require dirname(__DIR__, 2) . '/App/Core/Runtime/autoload.php';
 use TinyCat\Database\Snapshots;
@@ -11,25 +13,25 @@ $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $exercise = static function (PDO $pdo, string $driver, string $target) use ($assert): void {
     mkdir($target, 0700);
-    $mysql = $driver === 'mysql';
-    $pdo->exec($mysql ? 'SET FOREIGN_KEY_CHECKS=1' : 'PRAGMA foreign_keys=ON');
-    $pdo->exec('CREATE TABLE parents (id INTEGER PRIMARY KEY, label VARCHAR(200) NOT NULL)');
-    $pdo->exec('CREATE TABLE children (id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL, payload BLOB, flags ' . ($mysql ? 'BIT(9)' : 'INTEGER') . ', derived INTEGER GENERATED ALWAYS AS (parent_id + 1) STORED, FOREIGN KEY(parent_id) REFERENCES parents(id))');
+
+    $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+    $pdo->exec('CREATE TABLE parents (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, label VARCHAR(200) NOT NULL)');
+    $pdo->exec('CREATE TABLE children (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, parent_id INT UNSIGNED NOT NULL, payload BLOB, flags ' . ('BIT(9)') . ', derived INTEGER GENERATED ALWAYS AS (parent_id + 1) STORED, FOREIGN KEY(parent_id) REFERENCES parents(id))');
     $pdo->exec("INSERT INTO parents VALUES (1, 'Original; 🐈')");
-    $pdo->exec("INSERT INTO children(id, parent_id, payload, flags) VALUES (1, 1, X'00FF80273B0A', " . ($mysql ? "b'100000001'" : '257') . ')');
+    $pdo->exec("INSERT INTO children(id, parent_id, payload, flags) VALUES (1, 1, X'00FF80273B0A', " . ("b'100000001'") . ')');
     $pdo->exec('CREATE VIEW visible_children AS SELECT id, derived FROM children');
-    $pdo->exec($mysql ? "CREATE TRIGGER protect_parent BEFORE UPDATE ON parents FOR EACH ROW BEGIN IF NEW.id <> OLD.id THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'immutable; id'; END IF; END" : "CREATE TRIGGER protect_parent BEFORE UPDATE OF id ON parents BEGIN SELECT RAISE(ABORT, 'immutable; id'); END");
-    if ($mysql) {
-        $pdo->exec('CREATE TABLE batch_rows (id INTEGER PRIMARY KEY, payload TEXT NOT NULL)');
+    $pdo->exec("CREATE TRIGGER protect_parent BEFORE UPDATE ON parents FOR EACH ROW BEGIN IF NEW.id <> OLD.id THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'immutable; id'; END IF; END");
+
+        $pdo->exec('CREATE TABLE batch_rows (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, payload TEXT NOT NULL)');
         $insert = $pdo->prepare('INSERT INTO batch_rows VALUES (?, ?)');
         $pdo->beginTransaction();
         for ($id = 1; $id <= 601; $id++) { $insert->execute([$id, str_repeat('row-' . $id . ';', 64)]); }
         $pdo->commit();
-    }
+
     $identity = Snapshots::identity($pdo);
-    $buffered = $mysql ? $pdo->getAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY) : null;
+    $buffered = $pdo->getAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY);
     Snapshots::write($pdo, $target);
-    if ($mysql) {
+
         $assert($pdo->getAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY) === $buffered, 'MySQL export restores the caller buffering option');
         $sql = file_get_contents($target . '/database.sql');
         $index = file_get_contents($target . '/database.index.jsonl');
@@ -80,7 +82,7 @@ $exercise = static function (PDO $pdo, string $driver, string $target) use ($ass
             file_put_contents($target . '/database.sql', $sql);
             file_put_contents($target . '/database.index.jsonl', $index);
         }
-    }
+
     $pdo->exec('DROP VIEW visible_children'); $pdo->exec('DROP TRIGGER protect_parent');
     $pdo->exec('DROP TABLE children'); $pdo->exec("UPDATE parents SET label = 'Changed'");
     $pdo->exec('CREATE TABLE introduced (id INTEGER)');
@@ -91,14 +93,14 @@ $exercise = static function (PDO $pdo, string $driver, string $target) use ($ass
     $assert((int) $pdo->query('SELECT derived FROM visible_children')->fetchColumn() === 2, $driver . ' restores generated columns and views');
     try { $pdo->exec('UPDATE parents SET id = 2'); $assert(false, $driver . ' must restore triggers'); } catch (PDOException) { $assert(true, $driver . ' restores compound triggers'); }
     try { $pdo->query('SELECT * FROM introduced'); $assert(false, $driver . ' must remove introduced tables'); } catch (PDOException) { $assert(true, $driver . ' restores exact table set'); }
-    if ($mysql) {
+
         $assert((int) $pdo->query('SELECT COUNT(*) FROM batch_rows')->fetchColumn() === 601
             && $pdo->query('SELECT payload FROM batch_rows WHERE id = 601')->fetchColumn() === str_repeat('row-601;', 64), 'MySQL restores every row across export and transaction batch boundaries');
         // Historical writers emitted one INSERT per row. Restore that exact indexed layout too.
         $legacy = $target . '/legacy';
         mkdir($legacy, 0700);
         $legacySql = ''; $legacyIndex = '';
-        foreach (['SET NAMES utf8mb4', 'SET FOREIGN_KEY_CHECKS=0', 'CREATE TABLE historical (id INTEGER PRIMARY KEY, label TEXT)'] as $statement) {
+        foreach (['SET NAMES utf8mb4', 'SET FOREIGN_KEY_CHECKS=0', 'CREATE TABLE historical (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, label TEXT)'] as $statement) {
             $source = $statement . ";\n";
             $legacyIndex .= json_encode([strlen($legacySql), strlen($source)]) . "\n";
             $legacySql .= $source;
@@ -116,31 +118,18 @@ $exercise = static function (PDO $pdo, string $driver, string $target) use ($ass
         Snapshots::restore($pdo, $legacy);
         $assert((int) $pdo->query('SELECT COUNT(*) FROM historical')->fetchColumn() === 301, 'MySQL reads historical two-field indexes and single-row INSERT statements');
         Snapshots::restore($pdo, $target);
-    }
+
     $assert(Snapshots::identity($pdo) === $identity, $driver . ' destination identity is stable');
     Snapshots::restore($pdo, $target);
     $assert((int) $pdo->query('SELECT COUNT(*) FROM children')->fetchColumn() === 1, $driver . ' supports retrying restoration');
 };
-$server = null; $pdo = null; $created = false; $name = 'tinycat_snapshot_test_' . bin2hex(random_bytes(6));
+$pdo = null;
 try {
-    $pdo = new PDO('sqlite:' . $directory . '/live.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $exercise($pdo, 'sqlite', $directory . '/sqlite'); $pdo = null;
-    $configuration = is_file(dirname(__DIR__, 2) . '/config.php') ? require dirname(__DIR__, 2) . '/config.php' : [];
-    $db = $configuration['database'] ?? [];
-    if (isset($db['host'], $db['user']) && in_array('mysql', PDO::getAvailableDrivers(), true)) {
-        $dsn = 'mysql:host=' . $db['host'] . ';port=' . (int) ($db['port'] ?? 3306) . ';charset=utf8mb4';
-        try { $server = new PDO($dsn, $db['user'], $db['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]); }
-        catch (PDOException) { echo "SKIP MySQL snapshot: server unavailable.\n"; }
-        if ($server !== null) {
-            try { $server->exec('CREATE DATABASE `' . $name . '` CHARACTER SET utf8mb4'); $created = true; }
-            catch (PDOException) { echo "SKIP MySQL snapshot: isolated database creation unavailable.\n"; }
-            if ($created) { $pdo = new PDO($dsn . ';dbname=' . $name, $db['user'], $db['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]); $exercise($pdo, 'mysql', $directory . '/mysql'); }
-        }
-    } else { echo "SKIP MySQL snapshot: configuration or driver unavailable.\n"; }
+    $pdo = tinycat_test_database();
+    $exercise($pdo, 'mysql', $directory . '/mysql');
     echo "PASS database snapshot restoration ({$checks} checks)\n";
 } finally {
     $pdo = null;
-    if ($created && $server !== null && preg_match('/^tinycat_snapshot_test_[a-f0-9]{12}$/D', $name) === 1) { $server->exec('DROP DATABASE `' . $name . '`'); }
     $resolved = realpath($directory); $temporary = realpath(sys_get_temp_dir());
     if ($resolved !== false && $temporary !== false && str_starts_with($resolved, $temporary . DIRECTORY_SEPARATOR . 'tinycat-snapshot-')) {
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($resolved, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $file) { $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname()); }

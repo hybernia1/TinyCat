@@ -25,9 +25,7 @@ final class AuthorStatistics
             // Drive received-like counts from this author's rows. Starting from
             // the global likes tables can make MySQL scan every like before it
             // filters by the post or comment owner.
-            $receivedLikesJoin = \TinyCat\Database\Connection::driver() === 'mysql'
-                ? 'STRAIGHT_JOIN'
-                : 'INNER JOIN';
+            $receivedLikesJoin = 'STRAIGHT_JOIN';
             $stats = \TinyCat\Database\Connection::one(
                 'SELECT
                         (

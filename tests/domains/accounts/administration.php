@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 use TinyCat\Core\Identity\Administration;
 use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Deletion;
@@ -15,10 +17,10 @@ require $root . '/App/Core/Runtime/autoload.php';
 TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(locale: static fn (): string => 'en'));
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($root, [
 ])->catalog);
-$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$pdo = \tinycat_test_database();
 Connection::set($pdo);
-$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE COLLATE NOCASE, email TEXT UNIQUE COLLATE NOCASE, password TEXT, role TEXT, status TEXT, bio TEXT DEFAULT '', locale TEXT DEFAULT 'en', theme TEXT DEFAULT 'system', created_at TEXT DEFAULT '2026-11-11 00:00:00')");
-$pdo->exec('CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)');
+$pdo->exec("CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) UNIQUE, email VARCHAR(254) UNIQUE, password TEXT, role VARCHAR(40), status VARCHAR(24), bio TEXT DEFAULT (''), locale TEXT DEFAULT ('en'), theme VARCHAR(12) DEFAULT ('system'), created_at DATETIME DEFAULT ('2026-11-11 00:00:00'))");
+$pdo->exec('CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, token_hash TEXT, expires_at DATETIME, used_at TEXT)');
 $hash = Authentication::authPassword('Admin-fixture-42');
 $insert = $pdo->prepare("INSERT INTO users (id, username, email, password, role, status, bio, created_at) VALUES (?, ?, ?, ?, ?, 'active', 'Original bio', ?)");
 foreach ([[1, 'Primary', 'primary@example.test', $hash, 'admin', '2026-01-01'], [2, 'Admin', 'admin@example.test', $hash, 'admin', '2026-02-01'], [3, 'Member', 'member@example.test', $hash, 'user', '2026-03-01'], [4, 'Bot', null, $hash, 'bot', '2026-04-01'], [5, 'Older', null, $hash, 'user', '2025-01-01']] as $data) { $insert->execute($data); }
@@ -92,7 +94,7 @@ $pdo->beginTransaction();
 try { Administration::persist($actor, $row(3), $prepared + ['username' => 'Forged', 'id' => 999, 'avatar_exists' => 1]); $pdo->commit(); }
 catch (Throwable $exception) { if ($pdo->inTransaction()) { $pdo->rollBack(); } throw $exception; }
 $assert($row(3)['username'] === 'Member' && $row(3)['bio'] === 'Prepared', 'Prepared persistence also whitelists writable fields');
-$pdo->exec("CREATE TRIGGER fail_admin_write BEFORE UPDATE ON users WHEN NEW.id = 3 BEGIN SELECT RAISE(ABORT, 'injected admin SQL failure'); END");
+$pdo->exec("CREATE TRIGGER fail_admin_write BEFORE UPDATE ON users FOR EACH ROW BEGIN IF NEW.id = 3 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected admin SQL failure'; END IF; END");
 try { Administration::update($actor, 3, ['role' => 'admin', 'status' => 'ban']); throw new LogicException('SQL failure was ignored'); }
 catch (PDOException) { $assert($row(3)['role'] === 'user' && $row(3)['bio'] === 'Prepared' && !$pdo->inTransaction(), 'Failed administrative write rolls back'); }
 $pdo->exec('DROP TRIGGER fail_admin_write');
@@ -106,7 +108,7 @@ $deleted = Administration::delete($actor, $created, ['fixture' => $participant])
 $assert((int) $deleted['id'] === $created && Connection::find('users', ['id' => $created]) === null && $guardCallbacks === 1, 'Administrative deletion uses registered domain effects');
 $assert(Administration::delete($actor, $created) === null, 'Repeated deletion remains harmless');
 foreach (['TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) { $assert(!class_exists($class, false), 'Administrative domain did not load ' . $class); }
-$assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'sqlite_sequence'"), 'name') === ['users', 'password_reset_tokens'], 'Administrative services need only account storage');
+$assert(array_column(Connection::all("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME"), 'name') === ['password_reset_tokens', 'users'], 'Administrative services need only account storage');
 TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $actor) : void {
 $assert(array_keys(TinyCat\Support\AdminViews::admin_user_statuses()) === Administration::statuses(), 'UI status labels match domain status policy');
 });

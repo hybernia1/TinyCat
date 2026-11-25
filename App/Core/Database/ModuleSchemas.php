@@ -225,7 +225,7 @@ final class ModuleSchemas
 
     private static function connection(PDO $pdo): void
     {
-        if (!in_array($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), ['mysql', 'sqlite'], true) || $pdo->getAttribute(PDO::ATTR_ERRMODE) !== PDO::ERRMODE_EXCEPTION) { throw new RuntimeException('Module schemas require MySQL/SQLite with PDO exceptions enabled.'); }
+        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql' || $pdo->getAttribute(PDO::ATTR_ERRMODE) !== PDO::ERRMODE_EXCEPTION) { throw new RuntimeException('Module schemas require MySQL/MariaDB with PDO exceptions enabled.'); }
     }
 
     private static function tableExists(PDO $pdo, string $table): bool
@@ -260,17 +260,12 @@ final class ModuleSchemas
 
     private static function locked(PDO $pdo, string $id, callable $action): void
     {
-        $mysql = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
         if ($pdo->inTransaction()) { throw new RuntimeException('Module schema changes require a dedicated connection outside a transaction.'); }
-        $database = '';
-        if ($mysql) { $query = $pdo->prepare('SELECT DATABASE()'); $query->execute(); $database = (string) $query->fetchColumn(); }
+        $query = $pdo->prepare('SELECT DATABASE()'); $query->execute(); $database = (string) $query->fetchColumn();
         $name = 'tc-module-' . substr(hash('sha256', $database . ':' . $id), 0, 40);
-        if ($mysql) {
-            $lock = $pdo->prepare('SELECT GET_LOCK(?, 0)'); $lock->execute([$name]);
-            if ((int) $lock->fetchColumn() !== 1) { throw new RuntimeException('Module schema operation is already running.'); }
-        } else { $pdo->exec('BEGIN IMMEDIATE'); }
-        try { $action(); if (!$mysql) { $pdo->exec('COMMIT'); } }
-        catch (\Throwable $error) { if (!$mysql) { $pdo->exec('ROLLBACK'); } throw $error; }
-        finally { if ($mysql) { $release = $pdo->prepare('SELECT RELEASE_LOCK(?)'); $release->execute([$name]); } }
+        $lock = $pdo->prepare('SELECT GET_LOCK(?, 0)'); $lock->execute([$name]);
+        if ((int) $lock->fetchColumn() !== 1) { throw new RuntimeException('Module schema operation is already running.'); }
+        try { $action(); }
+        finally { $release = $pdo->prepare('SELECT RELEASE_LOCK(?)'); $release->execute([$name]); }
     }
 }

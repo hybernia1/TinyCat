@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
@@ -153,16 +155,13 @@ PHP;
 
     $schema = $schemas['demo.notes'];
     $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC];
-    $sqliteConfig = ['dsn' => 'sqlite:' . $directory . '/http.sqlite'];
-    $pdo = new PDO($sqliteConfig['dsn'], null, null, $options);
-    $pdo->exec('CREATE TABLE settings (id INTEGER PRIMARY KEY AUTOINCREMENT, setting_key TEXT UNIQUE NOT NULL, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER DEFAULT 1)');
-    $old = new PDO('sqlite::memory:', null, null, $options);
+    $databaseConfig = tinycat_test_database_config($directory . '/http.database.json');
+    $pdo = tinycat_test_database($directory . '/http.database.json');
+    $pdo->exec('CREATE TABLE settings (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, setting_key VARCHAR(254) UNIQUE NOT NULL, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER DEFAULT 1)');
+    $old = \tinycat_test_database();
     $structure = static function (PDO $connection): array {
-        if ($connection->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
-            return ['columns' => $connection->query('SHOW COLUMNS FROM pilot_notes')->fetchAll(PDO::FETCH_ASSOC),
-                'indexes' => array_map(static fn (array $row): array => array_intersect_key($row, array_flip(['Key_name', 'Non_unique', 'Seq_in_index', 'Column_name'])), $connection->query('SHOW INDEX FROM pilot_notes')->fetchAll(PDO::FETCH_ASSOC))];
-        }
-        return ['columns' => $connection->query('PRAGMA table_info(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC), 'indexes' => $connection->query('PRAGMA index_list(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC), 'foreign_keys' => $connection->query('PRAGMA foreign_key_list(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC)];
+        return ['columns' => $connection->query('SHOW COLUMNS FROM pilot_notes')->fetchAll(PDO::FETCH_ASSOC),
+            'indexes' => array_map(static fn (array $row): array => array_intersect_key($row, array_flip(['Key_name', 'Non_unique', 'Seq_in_index', 'Column_name'])), $connection->query('SHOW INDEX FROM pilot_notes')->fetchAll(PDO::FETCH_ASSOC))];
     };
     $checkpointMatrix = require $root . '/tests/fixtures/modules/archived-history.php';
     $matrix = static function (PDO $fresh, PDO $upgrade) use ($schema, $assert, $reject, $structure, $checkpointMatrix): void {
@@ -187,20 +186,20 @@ PHP;
         $checkpointMatrix($fresh, $upgrade);
     };
     $matrix($pdo, $old);
-    $failure = new PDO('sqlite::memory:', null, null, $options);
+    $failure = \tinycat_test_database();
     $initial = new ModuleSchema(1, $schema->tables, require $schema->migrations[0]->file, [$schema->migrations[0]]);
     ModuleSchemas::install($failure, ['demo.notes' => $initial]);
     $beforeFailure = $structure($failure);
     $failureFile = $directory . '/Notes/database/migrations/failure.php';
     file_put_contents($failureFile, '<?php declare(strict_types=1); return static function (PDO $pdo): void { $pdo->exec("ALTER TABLE pilot_notes ADD COLUMN aborted INTEGER"); throw new RuntimeException("injected migration failure"); };');
     $badSchema = new ModuleSchema(2, $schema->tables, $schema->install, [$schema->migrations[0], new \TinyCat\Core\Modules\SchemaMigration(2, 'demo.notes.failure', $failureFile)]);
-    $reject(static fn () => ModuleSchemas::upgrade($failure, ['demo.notes' => $badSchema]), 'Failed SQLite module migration');
-    $assert($structure($failure) === $beforeFailure && (int) ModuleSchemas::state($failure, 'demo.notes')['version'] === 1, 'SQLite rolls back both DDL and migration state on failure');
+    $reject(static fn () => ModuleSchemas::upgrade($failure, ['demo.notes' => $badSchema]), 'Failed module migration');
+    $assert(in_array('aborted', array_column($structure($failure)['columns'], 'Field'), true) && (int) ModuleSchemas::state($failure, 'demo.notes')['version'] === 1, 'MySQL retains partial DDL without advancing the migration journal');
     $failure = null;
     unlink($failureFile);
     $old = null;
 
-    file_put_contents($directory . '/database.json', json_encode($sqliteConfig, JSON_THROW_ON_ERROR));
+    file_put_contents($directory . '/database.json', json_encode($databaseConfig, JSON_THROW_ON_ERROR));
     chmod($directory . '/database.json', 0600);
     file_put_contents($directory . '/enabled', '1');
     mkdir($directory . '/sessions', 0700);
@@ -231,13 +230,13 @@ PHP;
         return ['status' => $status, 'body' => is_string($body) ? $body : '', 'json' => is_string($body) ? json_decode($body, true) : null];
     };
     for ($attempt = 0; $attempt < 50; $attempt++) { if ($request('/_pilot/csrf')['status'] === 200) { break; } usleep(100000); }
-    file_put_contents($directory . '/database.json', json_encode(['dsn' => 'sqlite:' . $directory . '/uninstalled.sqlite'], JSON_THROW_ON_ERROR));
+    file_put_contents($directory . '/database.json', json_encode(tinycat_test_database_config($directory . '/uninstalled.database.json'), JSON_THROW_ON_ERROR));
     $notReady = $request('/api/pilot/notes');
     $assert($notReady['status'] === 503 && $notReady['json']['code'] === 'module_not_ready', 'Uninstalled module API fails before its handler runs');
-    $empty = new PDO('sqlite:' . $directory . '/uninstalled.sqlite', null, null, $options);
-    $assert((int) $empty->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'")->fetchColumn() === 0, 'HTTP readiness checks never install schema automatically');
+    $empty = \tinycat_test_database($directory . '/uninstalled.database.json');
+    $assert((int) $empty->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'")->fetchColumn() === 0, 'HTTP readiness checks never install schema automatically');
     $empty = null;
-    file_put_contents($directory . '/database.json', json_encode($sqliteConfig, JSON_THROW_ON_ERROR));
+    file_put_contents($directory . '/database.json', json_encode($databaseConfig, JSON_THROW_ON_ERROR));
     $assert($request('/api/pilot/notes')['status'] === 200, 'Selected manifest API is reachable');
     $assert($request('/api/_pilot/gate')['status'] === 503, 'A nested module gate cannot override a failed parent readiness policy');
     $assert($request('/api/pilot/notes', ['title' => 'forbidden'])['status'] === 401, 'API write requires an authenticated actor');
@@ -268,22 +267,6 @@ PHP;
 
     require $root . '/tests/fixtures/modules/fresh-baseline.php';
 
-    if (is_file($root . '/config.php')) {
-        $base = require $root . '/config.php';
-        $config = $base['database'] ?? [];
-        if (isset($config['host'], $config['user'])) {
-            $dsn = 'mysql:host=' . $config['host'] . ';port=' . ($config['port'] ?? 3306) . ';charset=utf8mb4';
-            $mysql = new PDO($dsn, $config['user'], $config['password'] ?? '', $options);
-            foreach (['fresh', 'upgrade'] as $kind) {
-                $name = 'tinycat_pilot_' . $kind . '_' . bin2hex(random_bytes(5));
-                $mysql->exec('CREATE DATABASE `' . $name . '` CHARACTER SET utf8mb4'); $mysqlNames[$kind] = $name;
-            }
-            $fresh = new PDO($dsn . ';dbname=' . $mysqlNames['fresh'], $config['user'], $config['password'] ?? '', $options);
-            $upgrade = new PDO($dsn . ';dbname=' . $mysqlNames['upgrade'], $config['user'], $config['password'] ?? '', $options);
-            $matrix($fresh, $upgrade);
-            $fresh = null; $upgrade = null;
-        } else { echo "SKIP module pilot MySQL matrix: no local MySQL configuration\n"; }
-    } else { echo "SKIP module pilot MySQL matrix: no local configuration file\n"; }
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     if ($mysql instanceof PDO) { foreach ($mysqlNames as $name) { if (!preg_match('/^tinycat_pilot_(?:fresh|upgrade)_[a-f0-9]+$/D', $name)) { throw new RuntimeException('Invalid disposable database name.'); } $mysql->exec('DROP DATABASE `' . $name . '`'); } }

@@ -1,20 +1,22 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 
 // No workspace database or cache is used by this rendering fixture.
-$database = new PDO('sqlite::memory:');
-$database->exec('CREATE TABLE users (id INTEGER, username TEXT, role TEXT, created_at TEXT)');
+$database = \tinycat_test_database();
+$database->exec('CREATE TABLE users (id INTEGER, username VARCHAR(254), role VARCHAR(40), created_at DATETIME)');
 $database->exec("INSERT INTO users VALUES (1, 'admin', 'admin', '2026-01-01')");
-$database->exec('CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER)');
-$database->exec('CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)');
-$database->exec('CREATE TABLE social_post_images (content_id INTEGER, path TEXT)');
-$database->exec('CREATE TABLE social_post_likes (content_id INTEGER, user_id INTEGER)');
-$database->exec('CREATE TABLE social_comment_likes (comment_id INTEGER, user_id INTEGER)');
+$database->exec('CREATE TABLE social_post_links (content_id INT UNSIGNED, link_id INT UNSIGNED)');
+$database->exec('CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash CHAR(64), provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)');
+$database->exec('CREATE TABLE social_post_images (content_id INT UNSIGNED, path TEXT)');
+$database->exec('CREATE TABLE social_post_likes (content_id INT UNSIGNED, user_id INT UNSIGNED)');
+$database->exec('CREATE TABLE social_comment_likes (comment_id INT UNSIGNED, user_id INT UNSIGNED)');
 \TinyCat\Database\Connection::set($database);
 \TinyCat\Core\Settings\Schema::install($database);
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);

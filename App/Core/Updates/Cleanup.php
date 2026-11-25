@@ -54,7 +54,7 @@ final class Cleanup
                     $marker = json_decode((string) file_get_contents($path . '/completed.json'), true);
                     $verified[$path] = is_array($metadata) && is_array($marker)
                         && (($marker['retiring'] ?? false) === true || (is_array($metadata['files'] ?? null) && self::payloadExists($path, $metadata['files'])
-                        && (empty($metadata['database_backup_required']) || is_file($path . '/database.sql') || is_file($path . '/database.sqlite'))));
+                        && (empty($metadata['database_backup_required']) || is_file($path . '/database.sql'))));
                 }
                 return $verified[$path];
             };
@@ -164,7 +164,7 @@ final class Cleanup
         foreach ($completed as $path => $timestamp) {
             $metadata = json_decode((string) file_get_contents($path . '/backup.json'), true);
             if (!is_array($metadata) || !is_array($metadata['files'] ?? null)
-                || (!empty($metadata['database_backup_required']) && !is_file($path . '/database.sql') && !is_file($path . '/database.sqlite'))
+                || (!empty($metadata['database_backup_required']) && !is_file($path . '/database.sql'))
                 || !self::payloadExists($path, $metadata['files'])) { continue; }
             $protected[] = $path;
             if (count($protected) >= $keep) { break; }

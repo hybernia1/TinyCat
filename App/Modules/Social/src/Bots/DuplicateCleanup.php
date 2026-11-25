@@ -15,7 +15,7 @@ final class DuplicateCleanup
         $conditions = [];
         foreach (['social_post_links' => ['link_id'], 'social_post_tags' => ['term_id'], 'social_post_images' => ['path', 'width', 'height', 'bytes']] as $table => $keys) {
             $equal = implode(' AND ', array_map(static fn (string $key): string => $key === 'path'
-                ? (Connection::driver() === 'mysql' ? 'BINARY a.path=BINARY b.path' : 'a.path=b.path COLLATE BINARY')
+                ? ('BINARY a.path=BINARY b.path')
                 : 'a.' . $key . '=b.' . $key, $keys));
             foreach ([[$newer, $older], [$older, $newer]] as [$left, $right]) {
                 $conditions[] = 'NOT EXISTS (SELECT 1 FROM ' . $table . ' a WHERE a.content_id=' . $left . '.id AND NOT EXISTS (SELECT 1 FROM ' . $table . ' b WHERE b.content_id=' . $right . '.id AND ' . $equal . '))';
@@ -37,7 +37,7 @@ final class DuplicateCleanup
     {
         $window = max(256, min(1000, $limit * 2));
         $now = Dates::dateDb();
-        $body = Connection::driver() === 'mysql' ? 'BINARY k.body = BINARY c.body' : 'k.body = c.body COLLATE BINARY';
+        $body = 'BINARY k.body = BINARY c.body';
         $rows = Connection::all("SELECT c.id,
             (SELECT k.id FROM social_posts k WHERE k.id<c.id AND k.author_id=c.author_id
                 AND k.kind='post' AND k.status='published' AND k.published_at<=? AND " . $body . '
@@ -57,11 +57,7 @@ final class DuplicateCleanup
 
     private static function cursorFile(): string
     {
-        if (Connection::driver() === 'mysql') { $identity = 'mysql:' . (string) Connection::value('SELECT DATABASE()'); }
-        else {
-            $main = array_find(Connection::all('PRAGMA database_list'), static fn (array $row): bool => $row['name'] === 'main');
-            $identity = 'sqlite:' . (($main['file'] ?? '') !== '' ? $main['file'] : getmypid() . ':' . spl_object_id(Connection::get()));
-        }
+        $identity = 'mysql:' . (string) Connection::value('SELECT DATABASE()');
         return \TinyCat\Support\Cache::file('duplicate-bots-' . hash('sha256', $identity) . '.json', 'maintenance-cursors');
     }
 

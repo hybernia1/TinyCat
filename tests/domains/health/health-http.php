@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php';
@@ -59,8 +61,8 @@ try {
     $assert($requests[0] === ['method' => 'GET', 'auth' => false, 'cookie' => false], 'The measurement uses GET without browser credentials or cookies.');
     $report = Service::inspect(['http' => HttpCheck::run(...)]);
     $assert(isset($report['checks'][0]['metrics']['ttfb_ms'], $report['checks'][0]['limits']['ttfb_warning_ms']), 'The resource report preserves both measured values and the limits used for that inspection.');
-    $db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $db->exec('CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)');
+    $db = \tinycat_test_database();
+    $db->exec('CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)');
     \TinyCat\Database\Connection::set($db);
     $urlField = ['key' => 'app.url', 'type' => 'site_url'];
     foreach (['http://user:secret@example.com', 'https://example.com/?token=secret', 'https://example.com/#fragment', 'file:///etc/passwd', 'https://example.com/\\evil', "https://example.com/\npath"] as $invalidUrl) {

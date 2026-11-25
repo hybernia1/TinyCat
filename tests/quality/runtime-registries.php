@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../../tools/support/workspace.php';
 
 use TinyCat\Core\Modules\Loader;
@@ -100,7 +102,7 @@ $reverse = new Registries(['fixture.owner' => new Contributions(tasks: array_rev
 $assert(array_map(static fn ($entry): string => $entry->id, $reverse->entries->tasks) === ['feeds', 'cleanup', 'site-health'], 'Contributor ordering cannot change declared task order');
 
 // Bind only test configuration; never open the real installation database.
-\TinyCat\Support\Config::configure(new Configuration(['database' => ['dsn' => 'sqlite::memory:'], 'cache' => ['driver' => 'filesystem']]));
+\TinyCat\Support\Config::configure(new Configuration(['database' => tinycat_test_database_config(), 'cache' => ['driver' => 'filesystem']]));
 $assert((new ReflectionMethod(\TinyCat\Support\Cache::class, 'driver'))->invoke(null) === 'filesystem' && !class_exists(\TinyCat\Core\Settings\Store::class, false), 'Technical cache configuration does not load Settings');
 \TinyCat\Support\Localization::locale('en');
 $menu = \TinyCat\Core\Ui\Admin\Navigation::administration();
@@ -108,7 +110,7 @@ $assert(count($menu) === 9 && $menu[0]['href'] === '/admin' && $menu[1]['href'] 
 $assert(in_array('/admin/modules', array_column($menu, 'href'), true), 'Core module management is present in administration');
 \TinyCat\Support\Localization::locale('cs');
 $assert(\TinyCat\Core\Ui\Admin\Navigation::administration()[1]['label'] !== $menu[1]['label'], 'Navigation labels resolve in the current language at render time');
-\TinyCat\Database\Connection::exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, task TEXT, status TEXT, started_at TEXT)');
+\TinyCat\Database\Connection::exec('CREATE TABLE scheduler_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, task TEXT, status VARCHAR(24), started_at DATETIME)');
 \TinyCat\Database\Connection::exec('INSERT INTO scheduler_runs (task, status, started_at) VALUES (?, ?, ?)', ['cleanup', 'completed', date('Y-m-d H:i:s')]);
 $withoutBots = new Catalog(array_values(array_filter($modules->catalog->definitions(), static fn ($definition): bool => $definition->id !== 'tinycat.social')));
 Resources::withCatalog($withoutBots, static function () use ($assert): void {

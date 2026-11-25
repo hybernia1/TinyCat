@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Uses the disposable database and HTTP server from api-contract.php.
-$seed = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$seed = \tinycat_test_database($databasePath);
 foreach (['GET', 'POST'] as $retiredSettingsMethod) {
     $retiredSettings = file_get_contents('http://' . $address . '/admin/settings', false, stream_context_create(['http' => ['method' => $retiredSettingsMethod, 'header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
     $retiredHeaders = http_get_last_response_headers() ?? [];

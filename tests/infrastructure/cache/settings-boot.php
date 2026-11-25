@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
@@ -11,6 +13,7 @@ final class SettingsBootPDO extends PDO
 {
     public int $transactionChecks = 0;
     public function __construct() {}
+    public function getAttribute(int $attribute): mixed { return $attribute === PDO::ATTR_DRIVER_NAME ? 'mysql' : parent::getAttribute($attribute); }
     public function prepare(string $query, array $options = []): PDOStatement|false { throw new PDOException('injected unavailable database'); }
     public function inTransaction(): bool { $this->transactionChecks++; throw new PDOException('injected operational connection failure'); }
 }
@@ -29,12 +32,12 @@ foreach ([[], ['install' => ['complete' => false]], ['install' => ['complete' =>
     $assert($unavailable->transactionChecks === 0, 'Pre-DB fallback precedes transaction inspection');
     $assert(Cache::read('core_autoload_settings') === null, 'Pre-DB failure never fills shared cache');
 }
-$configure(['install' => ['complete' => true], 'database' => ['driver' => 'sqlite']]);
+$configure(['install' => ['complete' => true], 'database' => ['driver' => 'mysql']]);
 try { Store::config('site.name'); $assert(false, 'Configured operational failure must be visible'); }
 catch (PDOException $error) { $assert(str_contains($error->getMessage(), 'operational'), 'Configured DB failure is propagated'); }
-$db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$db = \tinycat_test_database();
 Connection::set($db);
-$db->exec('CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_group TEXT, setting_value TEXT, setting_type TEXT, autoload INTEGER)');
+$db->exec('CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_group TEXT, setting_value TEXT, setting_type TEXT, autoload INTEGER)');
 Store::setSetting('site.name', 'committed'); Store::setSetting('cron.token', 'committed-secret');
 $assert(Store::setting('site.name') === 'committed', 'Warm committed settings snapshot');
 Store::setting('cron.token');

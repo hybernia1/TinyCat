@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-$systemDb = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+require_once __DIR__ . '/../../support/mysql.php';
+
+$systemDb = \tinycat_test_database($databasePath);
 [$status, $installation] = $request('GET', '/api/installation');
 $assert($status === 404 && $installation['code'] === 'not_found' && $installation['data'] === null, 'Installed sites do not expose setup status.');
 [$status] = $request('POST', '/api/installation/steps/language', ['locale' => 'en']);
@@ -69,7 +71,7 @@ foreach (['all', 'unknown'] as $task) {
 }
 [$status, $execution] = $request('GET', '/api/scheduler/triggers/cleanup?task=feeds&options[cleanup_batch]=1', null, '', $basic + ['X-Test-Scheduler-Lock' => '0']);
 $assert($status === 200 && $execution['data']['selected_task'] === 'cleanup' && $execution['data']['tasks']['cleanup']['status'] === 'already_running', 'Web-cron uses shared execution locks and selects the task from its fixed URL.');
-$systemDb->exec("INSERT OR REPLACE INTO settings (setting_key,setting_value,setting_type,setting_group) VALUES ('cron.cleanup_last_run','" . time() . "','int','cron')");
+$systemDb->exec("REPLACE INTO settings (setting_key,setting_value,setting_type,setting_group) VALUES ('cron.cleanup_last_run','" . time() . "','int','cron')");
 foreach (['' => 500, '?cleanup_batch=500' => 500, '?cleanup_batch=1000' => 1000, '?cleanup_batch=2500' => 2500, '?cleanup_batch=5000' => 5000, '?cleanup_batch=99999' => 1000, '?batch=5000' => 5000, '?batch=2500' => 2500] as $query => $expectedBatch) {
     [$status, $execution] = $request('GET', '/api/scheduler/triggers/cleanup' . $query, null, '', $basic);
     $storedOptions = json_decode((string) $systemDb->query("SELECT options_json FROM scheduler_runs WHERE task='cleanup' ORDER BY id DESC LIMIT 1")->fetchColumn(), true);

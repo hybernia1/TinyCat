@@ -45,7 +45,7 @@ final class PostTextCleanup
 
     private static function database(PDO $pdo): string
     {
-        return $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? (string) $pdo->query('SELECT DATABASE()')->fetchColumn() : 'sqlite';
+        return (string) $pdo->query('SELECT DATABASE()')->fetchColumn();
     }
 
     public static function apply(PDO $pdo, array $plan, bool $restore = false): int

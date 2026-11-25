@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
@@ -8,7 +10,7 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 use TinyCat\Database\Connection;
 use TinyCat\Social\Search\Queries;
 
-$mysql = in_array('--mysql', $argv, true);
+
 $server = null;
 $created = false;
 $databaseName = 'tinycat_search_test_' . bin2hex(random_bytes(6));
@@ -18,7 +20,7 @@ $assert = static function (bool $value, string $message) use (&$checks): void {
     if (!$value) { throw new RuntimeException($message); }
 };
 try {
-    if ($mysql) {
+
         $config = require (getenv('TINYCAT_TEST_MYSQL_CONFIG') ?: __DIR__ . '/../../../config.php');
         $db = $config['database'];
         $dsn = 'mysql:host=' . $db['host'] . ';port=' . ($db['port'] ?? 3306) . ';charset=utf8mb4';
@@ -27,19 +29,16 @@ try {
         $server->exec('CREATE DATABASE ' . $databaseName . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
         $created = true;
         $pdo = new PDO($dsn . ';dbname=' . $databaseName, $db['user'], $db['password'], $options);
-    } else {
-        if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) { echo "SKIP search: pdo_sqlite unavailable.\n"; exit(0); }
-        $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-    }
+
     Connection::set($pdo);
     $pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INTEGER, updated_at DATETIME, PRIMARY KEY(ip_address, action_name, bucket_start))');
-    $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username VARCHAR(80), role VARCHAR(20), bio TEXT, status VARCHAR(16), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at DATETIME)');
-    $pdo->exec('CREATE TABLE social_terms (id INTEGER PRIMARY KEY, name VARCHAR(80))');
-    $pdo->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, status VARCHAR(20) NOT NULL DEFAULT \'published\', published_at DATETIME' . ($mysql ? ', FULLTEXT KEY content_body_fulltext (body)' : '') . ')');
-    $pdo->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url TEXT, title TEXT, description TEXT, link_type VARCHAR(16)' . ($mysql ? ', FULLTEXT KEY links_search_fulltext (normalized_url, title, description)' : '') . ')');
-    $pdo->exec('CREATE TABLE social_post_images (content_id INTEGER)');
-    $pdo->exec('CREATE TABLE social_post_tags (content_id INTEGER, term_id INTEGER)');
-    $pdo->exec('CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER)');
+    $pdo->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(80), role VARCHAR(20), bio TEXT, status VARCHAR(16), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at DATETIME)');
+    $pdo->exec('CREATE TABLE social_terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(80))');
+    $pdo->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, status VARCHAR(20) NOT NULL DEFAULT \'published\', published_at DATETIME' . (', FULLTEXT KEY content_body_fulltext (body)') . ', INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
+    $pdo->exec('CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT, title TEXT, description TEXT, link_type VARCHAR(16)' . (', FULLTEXT KEY links_search_fulltext (normalized_url, title, description)') . ')');
+    $pdo->exec('CREATE TABLE social_post_images (content_id INT UNSIGNED)');
+    $pdo->exec('CREATE TABLE social_post_tags (content_id INT UNSIGNED, term_id INT UNSIGNED)');
+    $pdo->exec('CREATE TABLE social_post_links (content_id INT UNSIGNED, link_id INT UNSIGNED)');
     $pdo->exec("INSERT INTO users (id, username, status, bio) VALUES (1, 'nebula', 'active', 'secret biography'), (2, 'xnebula', 'active', ''), (3, 'nebula-more', 'active', ''), (4, 'nebula-hidden', 'blocked', ''), (5, 'name_under', 'active', ''), (6, 'nameXunder', 'active', ''), (7, '100%real', 'active', '')");
     $pdo->exec("INSERT INTO social_terms (id, name) VALUES (1, 'nebula'), (2, 'xnebula'), (3, 'nebula-more')");
     $insert = $pdo->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
@@ -137,7 +136,7 @@ try {
     $suggestionCount = \TinyCat\Core\Security\RateLimiter::rate_limit_ip_action_count('search_suggestions', 60);
     \TinyCat\Social\Search\Guard::suggestions();
     $assert($_SESSION['_tinycat_search_guard'] === ['count' => 7] && \TinyCat\Core\Security\RateLimiter::rate_limit_ip_action_count('search_suggestions', 60) === $suggestionCount + 1, 'Autocomplete uses a separate search budget.');
-    echo 'PASS search semantics (' . ($mysql ? 'MySQL/MariaDB' : 'SQLite') . ", {$checks} checks)\n";
+    echo 'PASS search semantics (' . ('MySQL/MariaDB') . ", {$checks} checks)\n";
 } finally {
     if ($server instanceof PDO) { Connection::set($server); }
     $pdo = null;

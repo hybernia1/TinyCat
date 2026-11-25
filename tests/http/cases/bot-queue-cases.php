@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
-$queueDb = new PDO('sqlite:' . $databasePath);
+
+require_once __DIR__ . '/../../support/mysql.php';
+$queueDb = \tinycat_test_database($databasePath);
 $queueDb->exec("INSERT INTO users (id,username,role,status) VALUES (901,'Queue fixture','bot','active')");
 $queueDb->exec("INSERT INTO social_posts (id,author_id,body,published_at) VALUES (9001,901,'Queue test','2099-01-01 12:00:00'), (9002,2,'Human future','2099-01-01 12:00:00'), (9003,901,'Unknown feed','2099-01-01 12:00:00')");
 $queueDb->prepare('INSERT INTO bot_sources (id,bot_user_id,name,feed_url,feed_hash,post_template) VALUES (902,901,?,?,?,?)')->execute(['Queue feed', 'https://93.184.216.34/queue-test', hash('sha256', 'queue-test-feed'), '{{title}}']);

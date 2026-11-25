@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 
 if (PHP_SAPI !== 'cli') {
@@ -8,8 +10,8 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
-if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-    echo "SKIP hot-read query budgets: pdo_sqlite is unavailable.\n";
+if (!in_array('mysql', PDO::getAvailableDrivers(), true)) {
+    echo "SKIP hot-read query budgets: pdo_mysql is unavailable.\n";
     exit(0);
 }
 
@@ -79,7 +81,7 @@ function runScenario(string $scenario): void
     require_once $root . '/App/Core/Links/Metadata.php';
     require_once $root . '/App/Modules/Social/src/Profiles/Roles.php';
 
-    $database = new QueryCountingPdo('sqlite::memory:');
+    $database = \tinycat_test_database_as(QueryCountingPdo::class);
     $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     configureTestCore($database);
@@ -126,7 +128,7 @@ function configureTestCore(PDO $database): void
     $config = new ReflectionProperty(\TinyCat\Support\Config::class, 'config');
     $config->setValue(null, [
         'app' => ['url' => 'http://localhost'],
-        'database' => ['driver' => 'sqlite'],
+        'database' => ['driver' => 'mysql'],
         'install' => ['complete' => true, 'locale' => 'en'],
         'cache' => ['driver' => 'filesystem'],
         'security' => ['captcha' => ['enabled' => false]],
@@ -140,17 +142,17 @@ function configureTestCore(PDO $database): void
 function createFixture(PDO $database): void
 {
     foreach ([
-        'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT, avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT, updated_at TEXT)',
-        'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, body TEXT NOT NULL, author_id INTEGER NOT NULL, published_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT \'published\')',
-        'CREATE TABLE social_post_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)',
-        'CREATE TABLE social_post_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (content_id, user_id))',
-        'CREATE TABLE social_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL)',
-        'CREATE TABLE social_comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (comment_id, user_id))',
-        'CREATE TABLE social_terms (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE)',
-        'CREATE TABLE social_post_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, PRIMARY KEY (content_id, term_id))',
-        'CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
-        'CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, PRIMARY KEY (content_id, link_id))',
-        'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (user_id, follower_id))',
+        'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) NOT NULL, email TEXT, password TEXT, role VARCHAR(40) NOT NULL, status VARCHAR(24) NOT NULL, locale TEXT, theme VARCHAR(12), avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at DATETIME, updated_at DATETIME)',
+        'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT NOT NULL, author_id INT UNSIGNED NOT NULL, published_at DATETIME NOT NULL, status VARCHAR(24) NOT NULL DEFAULT (\'published\'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
+        'CREATE TABLE social_post_images (content_id INT UNSIGNED PRIMARY KEY, path TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)',
+        'CREATE TABLE social_post_likes (content_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL, PRIMARY KEY (content_id, user_id))',
+        'CREATE TABLE social_comments (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, parent_id INT UNSIGNED, user_id INT UNSIGNED NOT NULL, body TEXT NOT NULL, created_at DATETIME NOT NULL, INDEX content_comments_content_index (content_id,parent_id,created_at))',
+        'CREATE TABLE social_comment_likes (comment_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL, PRIMARY KEY (comment_id, user_id))',
+        'CREATE TABLE social_terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(254) NOT NULL UNIQUE)',
+        'CREATE TABLE social_post_tags (content_id INT UNSIGNED NOT NULL, term_id INT UNSIGNED NOT NULL, PRIMARY KEY (content_id, term_id))',
+        'CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash CHAR(64) NOT NULL, provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)',
+        'CREATE TABLE social_post_links (content_id INT UNSIGNED NOT NULL, link_id INT UNSIGNED NOT NULL, PRIMARY KEY (content_id, link_id))',
+        'CREATE TABLE user_followers (user_id INT UNSIGNED NOT NULL, follower_id INT UNSIGNED NOT NULL, created_at DATETIME NOT NULL, PRIMARY KEY (user_id, follower_id))',
     ] as $sql) {
         $database->exec($sql);
     }
@@ -160,6 +162,8 @@ function createFixture(PDO $database): void
     $user->execute([2, 'benchmark_viewer', password_hash('benchmark', PASSWORD_DEFAULT), 'user', 'active', 'en', 'system', '', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
     $database->exec("INSERT INTO social_terms (id, name) VALUES (1, 'benchmark'), (2, 'performance')");
 
+    $database->exec('CREATE FULLTEXT INDEX content_body_fulltext ON social_posts(body)');
+    $database->exec('CREATE FULLTEXT INDEX links_search_fulltext ON social_links(normalized_url,title,description)');
     $content = $database->prepare('INSERT INTO social_posts (id, body, author_id, published_at) VALUES (?, ?, 1, ?)');
     $tag = $database->prepare('INSERT INTO social_post_tags (content_id, term_id) VALUES (?, ?)');
 

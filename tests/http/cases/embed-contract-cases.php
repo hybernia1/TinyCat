@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-$embedDb = new PDO('sqlite:' . $databasePath);
+require_once __DIR__ . '/../../support/mysql.php';
+
+$embedDb = \tinycat_test_database($databasePath);
 $embedDb->exec("INSERT INTO users (id, username, role, status) VALUES (910001, 'embedauthor', 'user', 'active'), (910002, 'embedhidden', 'user', 'inactive')");
 $insertEmbed = $embedDb->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
 $insertEmbed->execute([910001, 910001, "Embed <script>alert(1)</script> & #test https://example.com/path\nSecond line", '2020-01-01 12:00:00']);

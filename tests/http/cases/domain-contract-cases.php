@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Runs against the same isolated HTTP server and disposable database as api-contract.php.
 [$status, $tagSuggestion] = $request('GET', '/api/search/suggestions?type=tag&q=1980s', null, 'user');
 $assert($status === 200 && in_array('1980s', array_column($tagSuggestion['data']['tags'], 'value'), true), 'Authenticated autocomplete preserves mixed numeric-letter tags.');
@@ -146,7 +148,7 @@ $assert($status === 201 && isset($payload['data']['item']['segments']), 'Status 
 $assert(($payload['data']['item']['links'][0]['provider_name'] ?? '') === 'Facebook', 'Creating a linked post returns a validated link card instead of failing after the write.');
 $postId = $payload['data']['item']['id'];
 $assert(count($payload['data']['item']['links']) === 1 && array_column(array_filter($payload['data']['item']['segments'], static fn (array $segment): bool => $segment['type'] === 'link'), 'url') === ['https://google.com/search?q=TinyCat'], 'Only the first URL becomes a card; the other remains a clickable text link.');
-$relationsDb = new PDO('sqlite:' . $databasePath);
+$relationsDb = \tinycat_test_database($databasePath);
 $assert((int) $relationsDb->query('SELECT COUNT(*) FROM social_post_links WHERE content_id = ' . $postId)->fetchColumn() === 2, 'Both link relations remain stored despite displaying one card.');
 $relationsDb = null;
 $pure($payload);
@@ -177,7 +179,7 @@ foreach (['pl-PL' => 'pl', 'tr-TR' => 'tr'] as $browserLocale => $expectedLocale
         'platform_terms' => '1',
     ], '', $csrf + ['Accept-Language' => $browserLocale . ',en;q=0.8']);
     $assert($status === 201 && $payload['data']['user']['locale'] === $expectedLocale, 'Registration persists the detected browser locale: ' . $browserLocale);
-    $localeDatabase = new PDO('sqlite:' . $databasePath);
+    $localeDatabase = \tinycat_test_database($databasePath);
     $localeQuery = $localeDatabase->prepare('SELECT locale FROM users WHERE id = ?');
     $localeQuery->execute([$payload['data']['user_id']]);
     $assert($localeQuery->fetchColumn() === $expectedLocale, 'The new account stores its interface locale.');
@@ -197,7 +199,7 @@ $pure($payload);
 $assert($status === 201 && $payload['data']['accepted'], 'Recovery acknowledges an unknown account without disclosing account existence.');
 [$status, $payload] = $request('POST', '/api/users/password-resets/confirm', ['token' => 'missing', 'password' => 'New-password-45', 'password_confirm' => 'New-password-45'], '', $csrf);
 $assert($status === 422 && isset($payload['error']['details']['errors']['token']), 'Recovery confirmation validates the token through the canonical error contract.');
-$seed = new PDO('sqlite:' . $databasePath);
+$seed = \tinycat_test_database($databasePath);
 $seed->prepare('INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (2, ?, ?)')->execute([hash('sha256', 'fixture-recovery-token'), '2030-01-01 00:00:00']);
 [$status, $payload] = $request('POST', '/api/users/password-resets/confirm', ['token' => 'fixture-recovery-token', 'password' => 'New-password-45', 'password_confirm' => 'New-password-45'], '', $csrf);
 $assert($status === 200 && $payload['data']['password_changed'], 'Recovery consumes the token and updates the password atomically.');

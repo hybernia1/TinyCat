@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
 $source = dirname(__DIR__, 3); $root = TinyCat\Tools\Workspace::directory('tests/file-recovery-' . bin2hex(random_bytes(6)));
 $copy = static function (string $from, string $to) use (&$copy): void { if (is_file($from)) { copy($from, $to); return; } if (!is_dir($to)) { mkdir($to, 0700, true); } foreach (scandir($from) ?: [] as $entry) { if ($entry !== '.' && $entry !== '..') { $copy($from . '/' . $entry, $to . '/' . $entry); } } };
@@ -14,7 +16,7 @@ use TinyCat\Database\Connection;
 (new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(TinyCat\Support\Config::class, 'config'))->setValue(null, ['datetime' => ['timezone' => 'UTC']]);
 $checks = 0; $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
-$db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]); Connection::set($db);
+$db = \tinycat_test_database(); Connection::set($db);
 TinyCat\Core\Identity\Schema::install($db); TinyCat\Core\Settings\Schema::install($db);
 $selection = ['fixture.files' => 'App/Modules/FileFixture/module.json', 'tinycat.social' => 'App/Modules/Social/module.json'];
 $all = Loader::fromSelection($root, $selection); Resources::configure($all->catalog);

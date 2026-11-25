@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
@@ -21,7 +23,7 @@ imagewebp($image, $imagePath);
 imagedestroy($image);
 $server = null;
 $databaseName = 'tinycat_link_optimizer_' . bin2hex(random_bytes(6));
-$connections = ['sqlite' => new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION])];
+$connections = [];
 $settings = \TinyCat\Support\Config::get('database', []);
 try {
     if (is_array($settings) && !empty($settings['host']) && array_key_exists('user', $settings)) {
@@ -32,10 +34,9 @@ try {
     }
     foreach ($connections as $driver => $database) {
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        if ($driver === 'sqlite') { $database->exec('PRAGMA foreign_keys = ON'); }
-        $database->exec('CREATE TABLE social_posts (id INTEGER PRIMARY KEY, body TEXT NOT NULL)');
-        $database->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url VARCHAR(2048) NOT NULL, url_hash CHAR(64) NOT NULL UNIQUE, provider VARCHAR(40), link_type VARCHAR(20), title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)');
-        $database->exec('CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, PRIMARY KEY (content_id, link_id), FOREIGN KEY (content_id) REFERENCES social_posts(id), FOREIGN KEY (link_id) REFERENCES social_links(id))');
+        $database->exec('CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT NOT NULL)');
+        $database->exec('CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url VARCHAR(2048) NOT NULL, url_hash CHAR(64) NOT NULL UNIQUE, provider VARCHAR(40), link_type VARCHAR(20), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)');
+        $database->exec('CREATE TABLE social_post_links (content_id INT UNSIGNED NOT NULL, link_id INT UNSIGNED NOT NULL, created_at DATETIME, PRIMARY KEY (content_id, link_id), FOREIGN KEY (content_id) REFERENCES social_posts(id), FOREIGN KEY (link_id) REFERENCES social_links(id))');
         $database->exec('CREATE TABLE bot_feed_history (item_hash VARCHAR(64) PRIMARY KEY)');
         $database->exec("INSERT INTO bot_feed_history VALUES ('original-guid')");
         $map = "https://www.google.com/maps/place/50%C2%B006'18.5%22N+14%C2%B025'24.3%22E/@50.105135,14.423416,17z";
@@ -74,7 +75,7 @@ try {
         $assert($refused && $before === $snapshot(), $driver . ': writes require a backup path.');
         $database->exec($driver === 'mysql'
             ? "CREATE TRIGGER fail_optimizer BEFORE UPDATE ON social_links FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced optimizer failure'"
-            : "CREATE TRIGGER fail_optimizer BEFORE UPDATE ON social_links BEGIN SELECT RAISE(ABORT, 'forced optimizer failure'); END");
+            : "CREATE TRIGGER fail_optimizer BEFORE UPDATE ON social_links FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced optimizer failure'; END");
         $failedBackup = $temporary . '/' . $driver . '-failed.json';
         try { $optimize($database, true, $failedBackup); $assert(false, 'Forced failure ignored.'); } catch (PDOException) { $assert($before === $snapshot(), $driver . ': database failure rolls back all staged identities and relations.'); }
         $assert(json_decode((string) file_get_contents($failedBackup), true)['links'] === $before['links'], $driver . ': verified backup predates database writes.');

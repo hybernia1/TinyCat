@@ -68,7 +68,7 @@ final class Queue
     public static function publish(int $id): Result
     {
         $error = Transactions::run(static function () use ($id): ?string {
-            $row = Connection::one('SELECT c.published_at, u.status FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.kind = \'post\' AND c.id = ? AND u.role = ?' . (Connection::driver() === 'mysql' ? ' FOR UPDATE' : ''), [$id, 'bot']);
+            $row = Connection::one('SELECT c.published_at, u.status FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.kind = \'post\' AND c.id = ? AND u.role = ?' . (' FOR UPDATE'), [$id, 'bot']);
             if ($row === null) { return 'missing'; }
             if ($row['status'] !== 'active') { return 'inactive'; }
             $now = Dates::dateDb();

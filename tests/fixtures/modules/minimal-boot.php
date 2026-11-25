@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 define('TINYCAT', true);
 require dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
 $autoloaders = count(spl_autoload_functions());
@@ -9,7 +11,7 @@ require_once dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
 if (count(spl_autoload_functions()) !== $autoloaders || class_exists(\TinyCat\Core\Runtime\Application::class, false) || session_status() !== PHP_SESSION_NONE) { throw new RuntimeException('Autoload entrypoints must be idempotent and must not start the application.'); }
 if (($argv[1] ?? '') === '--framework') {
     $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);
-    \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['dsn' => 'sqlite::memory:']]), $loader);
+    \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['driver' => 'mysql']]), $loader);
     foreach ([\TinyCat\Core\Identity\Pages::class, \TinyCat\Core\Identity\Authentication::class, \TinyCat\Core\Identity\Readiness::class, \TinyCat\Core\Tasks\Pages::class, \TinyCat\Core\Tasks\Tokens::class, \TinyCat\Core\Installation\Pages::class, \TinyCat\Core\Updates\Pages::class, \TinyCat\Core\Ui\Admin\Diagnostics::class, \TinyCat\Core\Runtime\Errors::class] as $class) {
         if (class_exists($class, false)) { throw new RuntimeException('Framework registration eagerly loaded ' . $class); }
     }
@@ -19,7 +21,7 @@ if (($argv[1] ?? '') === '--framework') {
 }
 if (($argv[1] ?? '') === '--social') {
     $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json']);
-    \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['dsn' => 'sqlite::memory:']]), $loader);
+    \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['driver' => 'mysql']]), $loader);
     foreach ([\TinyCat\Social\Bots\Pages::class, \TinyCat\Social\Bots\Resource::class, \TinyCat\Social\Posts\AuthorPages::class, \TinyCat\Social\Profiles\Repository::class, \TinyCat\Social\Posts\Pages::class, \TinyCat\Social\Posts\Embed::class, \TinyCat\Social\Site\Pages::class, \TinyCat\Social\Site\Discovery::class] as $class) {
         if (class_exists($class, false)) { throw new RuntimeException('Social registration eagerly loaded ' . $class); }
     }
@@ -29,9 +31,11 @@ if (($argv[1] ?? '') === '--social') {
 }
 $identityCalls = 0; $readyCalls = 0;
 $context = new \TinyCat\Core\Runtime\Context(new \TinyCat\Core\Runtime\Configuration([
-    'database' => ['dsn' => 'sqlite::memory:'], 'i18n' => ['locale' => 'cs'], 'cache' => ['driver' => 'filesystem'],
+    'database' => tinycat_test_database_config(), 'i18n' => ['locale' => 'cs'], 'cache' => ['driver' => 'filesystem'],
 ]), identity: static function () use (&$identityCalls): array { $identityCalls++; return ['id' => 7]; }, ready: static function () use (&$readyCalls): bool { $readyCalls++; return true; });
+$includedBeforeBoot = get_included_files();
 $api = \TinyCat\Core\Runtime\Application::boot($context);
+set_exception_handler(static function (Throwable $error): never { fwrite(STDERR, (string) $error . PHP_EOL); exit(1); });
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 $assert($identityCalls === 0 && $readyCalls === 0, 'Boot must not evaluate identity or account readiness.');
@@ -41,7 +45,7 @@ $assert(\TinyCat\Core\Modules\Registrations::current()->entries->tasks === [], '
 $assert(\TinyCat\Support\Localization::locale() === 'cs', 'Locale uses the supplied configuration.');
 $assert((new ReflectionMethod(\TinyCat\Support\Cache::class, 'driver'))->invoke(null) === 'filesystem', 'Cache uses supplied technical configuration.');
 $assert(\TinyCat\Database\Schema::app_db_ready() && $readyCalls === 1, 'Readiness uses the supplied callback and in-memory DSN.');
-$assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'") === 0, 'The configured database contains no social or account tables.');
+$assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'") === 0, 'The configured database contains no social or account tables.');
 $assert(\TinyCat\Core\Text\Segments::text('#tag @user', 'fixture.text') === [['type' => 'text', 'text' => '#tag @user']], 'Core renders an explicit neutral text kind without any functional owner or domain tables.');
 \TinyCat\Http\Router::route('GET', '/_kernel-probe', static function (): void { echo 'kernel'; });
 ob_start();
@@ -54,7 +58,7 @@ foreach (['TinyCat\\Social\\Profiles\\Api', 'TinyCat\\Core\\Identity\\Authentica
     $assert(!class_exists($class, false), 'Minimal runtime did not load ' . $class);
 }
 $configFile = str_replace('\\', '/', dirname(__DIR__, 3) . '/config.php');
-$assert(!in_array($configFile, array_map(static fn (string $file): string => str_replace('\\', '/', $file), get_included_files()), true), 'Minimal runtime did not read the local configuration file.');
+$assert(!in_array($configFile, array_map(static fn (string $file): string => str_replace('\\', '/', $file), array_diff(get_included_files(), $includedBeforeBoot)), true), 'Minimal runtime did not read the local configuration file.');
 $revision = \TinyCat\Core\Modules\Resources::revision();
 $policyCalls = 0;
 \TinyCat\Http\Middleware::register('fixture.access', static function () use (&$policyCalls): void { $policyCalls++; });

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Avatars;
 use TinyCat\Core\Identity\GeneratedAvatar;
@@ -9,14 +11,14 @@ use TinyCat\Http\Request;
 use TinyCat\Http\Router;
 
 $workspace = getenv('TINYCAT_AVATAR_WORKSPACE');
-if (!is_string($workspace) || !is_file($workspace . '/avatar.sqlite')) { throw new RuntimeException('Missing avatar fixture.'); }
+if (!is_string($workspace) || !is_file($workspace . '/avatar.database.json')) { throw new RuntimeException('Missing avatar fixture.'); }
 $path = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if (preg_match('~^/uploads/avatars/[1-9][0-9]*(?:-[a-f0-9]{32})?[.]webp$~D', $path) && is_file($workspace . $path)) { return false; }
 define('TINYCAT', true);
 require $workspace . '/App/Core/Runtime/autoload.php';
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($workspace, [
 ])->catalog);
-$pdo = new PDO('sqlite:' . $workspace . '/avatar.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$pdo = \tinycat_test_database($workspace . '/avatar.database.json');
 TinyCat\Database\Connection::set($pdo);
 Authentication::reset(($_SERVER['HTTP_AUTHORIZATION'] ?? '') === 'Bearer avatar-user' ? $pdo->query('SELECT * FROM users WHERE id = 1')->fetch() : null, true);
 $api = TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(

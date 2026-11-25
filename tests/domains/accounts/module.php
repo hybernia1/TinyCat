@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Exercise the selected module, its real routes and build in a physical product copy.
 $sourceRoot = dirname(__DIR__, 3);
 if (($argv[1] ?? '') !== '--isolated') {
@@ -40,16 +42,16 @@ TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(locale: 
 $assert(TinyCat\Core\Identity\ServiceProvider::tables() === ['users', 'password_reset_tokens'], 'Accounts owns only account tables');
 $assert(array_keys(TinyCat\Core\Identity\Participants::current()) === ['tinycat.accounts'], 'Only selected lifecycle providers are resolved');
 $assert(TinyCat\Core\Modules\Registrations::current()->owner('maintenance', 'orphan_avatar_files') === 'tinycat.accounts', 'Stable avatar maintenance has its new owner');
-$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec('PRAGMA foreign_keys = ON');
+$pdo = \tinycat_test_database();
+
 TinyCat\Database\Connection::set($pdo);
 $assert(!TinyCat\Core\Identity\Readiness::ready(), 'Missing account schema is unready without DDL at startup');
 TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Core\Security\Schema::install($pdo);
 TinyCat\Core\Identity\Schema::install($pdo); // Fresh install is safe to repeat.
-$tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
+$tables = $pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $assert($tables === ['ip_action_limits', 'password_reset_tokens', 'users'], 'Fresh assembly creates no social, bot or content tables');
-$pdo = new PDO('sqlite:' . $workspace . '/accounts.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec('PRAGMA foreign_keys = ON');
+$pdo = \tinycat_test_database($workspace . '/accounts.database.json');
+
 TinyCat\Database\Connection::set($pdo);
 TinyCat\Database\ModuleSchemas::install($pdo, TinyCat\Core\Modules\Distribution::definitions($modules));
 $insert = $pdo->prepare('INSERT INTO users(username, email, password, role, locale) VALUES (?, ?, ?, ?, ?)');
@@ -184,7 +186,7 @@ try {
     $assert($status === 200, 'Core-only settings can reopen the public surface without a build');
     // Use the same physical copy (without Social) to exercise shared inbox/health services.
     \TinyCat\Core\Notifications\Schema::install($pdo);
-    $foreignTables = array_column($pdo->query('PRAGMA foreign_key_list(notifications)')->fetchAll(PDO::FETCH_ASSOC), 'table');
+    $foreignTables = array_column($pdo->query("SELECT REFERENCED_TABLE_NAME AS `table` FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='notifications' AND REFERENCED_TABLE_NAME IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC), 'table');
     $assert(array_diff($foreignTables, ['users']) === [], 'Fresh inbox has no foreign keys to publication or social tables');
     $savedRegistries = \TinyCat\Core\Modules\Registrations::current();
     $orderType = new \TinyCat\Core\Modules\NotificationType('fixture.order', static fn (array $rows): array => $rows, static fn (array $row): string => '/orders/' . (int) json_decode((string) $row['payload_json'], true)['order_id']);
@@ -202,8 +204,8 @@ try {
     $assert(\TinyCat\Core\Notifications\Inbox::open($notice['id'], 1) === '/notifications', 'Inactive subject owner falls back safely');
     \TinyCat\Core\Modules\Registrations::configure($savedRegistries);
 
-    $legacy = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-    $legacy->exec('CREATE TABLE notifications (id INTEGER PRIMARY KEY, notification_key TEXT, read_at TEXT, created_at TEXT, updated_at TEXT)');
+    $legacy = \tinycat_test_database();
+    $legacy->exec('CREATE TABLE notifications (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, notification_key VARCHAR(190), read_at TEXT, created_at DATETIME, updated_at DATETIME)');
     $legacy->exec("INSERT INTO notifications VALUES (77, 'legacy:key', '2026-01-01', '2025-12-01', '2026-01-01')");
     $before = $legacy->query('SELECT * FROM notifications')->fetch();
     $upgrade = require $sourceRoot . '/migrations/20261112_001_notification_payload.php';
@@ -219,7 +221,7 @@ try {
     [$status, , $svg] = $request('/avatar/generated/v1/2.svg'); $assert($status === 200 && str_starts_with($svg, '<svg'), 'Avatar route is owned by Accounts');
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
-    TinyCat\Database\Connection::set(new PDO('sqlite::memory:')); $pdo = null;
+    TinyCat\Database\Connection::set(\tinycat_test_database()); $pdo = null;
 }
 $assert(!is_file($workspace . '/product-loads.log'), 'All HTTP scenarios avoid loading product classes');
 foreach (get_declared_classes() as $class) { $assert(!preg_match('/^TinyCat\\\\(?:Users|Status|Bots|Settings|Site|Moderation|Notifications)\\\\/', $class), 'Build avoids loading ' . $class); }

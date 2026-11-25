@@ -132,15 +132,11 @@ final class NotificationHistory
      * @param non-empty-list<string> $types */
     private static function removeSubjects(string $from, string $subject, string $where, array $params, array $types): void
     {
-        if (\TinyCat\Database\Connection::driver() === 'mysql') {
-            // Equality on the first index column permits a ref lookup on (type, subject_id).
-            // An IN list here can turn the delete target into a repeated full scan.
-            $sql = 'DELETE n FROM ' . $from . ' INNER JOIN notifications n ON n.subject_id = ' . $subject . ' AND n.type = ? WHERE ' . $where;
-            foreach ($types as $type) { \TinyCat\Database\Connection::exec($sql, [$type, ...$params]); }
-            return;
-        }
-        $marks = implode(', ', array_fill(0, count($types), '?'));
-        \TinyCat\Database\Connection::exec('DELETE FROM notifications WHERE type IN (' . $marks . ') AND subject_id IN (SELECT ' . $subject . ' FROM ' . $from . ' WHERE ' . $where . ')', [...$types, ...$params]);
+
+        // Equality on the first index column permits a ref lookup on (type, subject_id).
+        // An IN list here can turn the delete target into a repeated full scan.
+        $sql = 'DELETE n FROM ' . $from . ' INNER JOIN notifications n ON n.subject_id = ' . $subject . ' AND n.type = ? WHERE ' . $where;
+        foreach ($types as $type) { \TinyCat\Database\Connection::exec($sql, [$type, ...$params]); }
     }
 
 }

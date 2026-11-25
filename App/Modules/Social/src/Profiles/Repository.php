@@ -64,9 +64,7 @@ final class Repository
         }
 
         $ranked = \TinyCat\Support\Cache::rememberArray($cacheKey, 3600, static function () use ($limit, $days): array {
-            $feedIndex = \TinyCat\Database\Connection::driver() === 'mysql'
-                ? ' FORCE INDEX (content_feed_index)'
-                : '';
+            $feedIndex = ' FORCE INDEX (content_feed_index)';
             $rankedRoles = \TinyCat\Social\Profiles\Roles::rolesWith('appears_in_people_rankings');
             $rolePlaceholders = implode(', ', array_fill(0, count($rankedRoles), '?'));
             $authors = \TinyCat\Database\Query::select(

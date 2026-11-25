@@ -127,7 +127,7 @@ stránkou. Nad stejnými fixture porovnává elementy, atributy a text PHP a kli
 včetně stavů host/přihlášený, avataru, médií, formulářů a modalů.
 CSRF token a verze sprite jsou při porovnání normalizované.
 
-`tests/presentation/components.php` ověřuje administraci v izolované SQLite
+`tests/presentation/components.php` ověřuje administraci v izolované MySQL
 fixture, zamčení správce, správné akce a odmítnutí nebezpečných atributů/slotů.
 `tests/quality/render-only-partials.php` hlídá závislosti všech zbývajících partialů.
 HTTP kontrakty hlídají čistý JSON a query budgets počet databázových dotazů.

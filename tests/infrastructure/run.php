@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 
 use \TinyCat\Database\Connection;
@@ -165,11 +167,11 @@ $assert(Csrf::verify(\TinyCat\Core\Security\Csrf::token()) && !Csrf::verify('inc
 \TinyCat\Http\Session::flash('foundation', 'once');
 $assert(Session::flash('foundation') === 'once' && \TinyCat\Http\Session::flash('foundation') === null, 'Flash state is consumed once across the compatibility boundary.');
 
-if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-    $database = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
+    $database = \tinycat_test_database();
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     $assert(Connection::get() === $database && \TinyCat\Database\Connection::get() === $database, 'Core and modules share one PDO connection.');
-    Connection::exec('CREATE TABLE records (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL)');
+    Connection::exec('CREATE TABLE records (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(254) UNIQUE NOT NULL)');
     $id = Connection::insert('records', ['name' => 'first']);
     $assert(\TinyCat\Database\Connection::find('records', ['id' => $id])['name'] === 'first', 'Legacy reads observe module writes.');
     $assert(Query::select('SELECT name FROM records')->whereIn('id', [$id])->value() === 'first', 'The namespaced query builder executes against the shared connection.');
@@ -225,8 +227,8 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     });
     $assert(end($effects) === 'next transaction', 'A subsequent transaction gets an independent clean queue.');
     $assert(\TinyCat\Core\Database\Statements::quote('Order') === '`Order`'
-        && \TinyCat\Core\Database\Statements::quote('_column', false) === '"_column"'
-        && \TinyCat\Core\Database\Statements::identifier('owner.records', true) === 'owner.records', 'Shared identifier validation preserves qualified names and driver-specific quoting.');
+        && \TinyCat\Core\Database\Statements::quote('_column') === '`_column`'
+        && \TinyCat\Core\Database\Statements::identifier('owner.records', true) === 'owner.records', 'Shared identifier validation preserves qualified names and MySQL quoting.');
     foreach (["name\n", 'a; DROP TABLE records', 'a.b', ''] as $identifier) {
         $throws(static fn () => \TinyCat\Core\Database\Statements::quote($identifier), InvalidArgumentException::class);
     }
@@ -249,7 +251,8 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         Transactions::afterCommit(static function () use (&$once): void { $once[] = 'next'; }, 'fixture.once');
     });
     $assert($once === ['first', 'independent', 'next'], 'Rollback and a previous commit cannot suppress named effects in later transactions.');
-    $probe = new class('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]) extends PDO {
+    $testDatabaseConfig = tinycat_test_database_config();
+    $probe = new class ($testDatabaseConfig['dsn'], $testDatabaseConfig['user'], $testDatabaseConfig['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]) extends PDO {
         /** @var list<string> */
         public array $reads = [];
         public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
@@ -278,7 +281,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $probe->reads = [];
         $status = \TinyCat\Database\Schema::app_db_status([]);
         $assert($status['connected'] && $probe->reads === ['SELECT 1'], 'An empty schema requirement still checks connectivity.');
-        $probe->exec('CREATE TABLE module_installations (module_id TEXT PRIMARY KEY, version INTEGER, status TEXT)');
+        $probe->exec('CREATE TABLE module_installations (module_id VARCHAR(190) PRIMARY KEY, version INTEGER, status VARCHAR(24))');
         $probe->exec('CREATE TABLE another_table (id INTEGER)');
         $probe->exec("INSERT INTO module_installations VALUES ('fixture.one', 1, 'ready'), ('fixture.two', 1, 'ready')");
         $schemas = [];
@@ -305,15 +308,31 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     }
     $configuration = \TinyCat\Support\Config::get();
     $mismatched = $configuration;
-    $mismatched['database']['driver'] = 'mysql';
+    $mismatched['database']['driver'] = 'unsupported';
     (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $mismatched);
     try {
-        $assert(Connection::driver() === 'sqlite', 'Driver selection follows the injected connection rather than configuration.');
+        $assert(Connection::driver() === 'mysql', 'The injected MySQL connection remains authoritative over unused configuration.');
         $assert(\TinyCat\Database\Schema::app_existing_tables(['records', 'missing']) === ['records'], 'Schema inspection uses the actual connection driver.');
     } finally {
         (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
     }
-    Connection::exec('CREATE TABLE query_items (id INTEGER PRIMARY KEY, category TEXT)');
+    $connectionState = new ReflectionProperty(Connection::class, 'pdo');
+    try {
+        foreach ([['driver' => 'unsupported'], ['dsn' => 'unsupported:fixture']] as $unsupported) {
+            $connectionState->setValue(null, null);
+            (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, ['database' => $unsupported]);
+            $throws(Connection::get(...), RuntimeException::class);
+        }
+        $unsupported = new class extends PDO {
+            public function __construct() {}
+            public function getAttribute(int $attribute): mixed { return 'unsupported'; }
+        };
+        $throws(static fn () => Connection::set($unsupported), RuntimeException::class);
+    } finally {
+        $connectionState->setValue(null, $database);
+        (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
+    }
+    Connection::exec('CREATE TABLE query_items (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, category TEXT)');
     Connection::exec("INSERT INTO query_items VALUES (1, 'a'), (2, 'a'), (3, 'a'), (4, 'b'), (5, 'b'), (6, 'c')");
     $filtered = (new Query('SELECT id FROM query_items'))->whereIn('category', ['a', 'b'])->order('id DESC')->limit(2, 1);
     $assert($filtered->count() === 5 && array_column($filtered->all(), 'id') === [4, 3], 'Counting ignores pagination without mutating the paginated data query.');
@@ -321,17 +340,16 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     $assert($grouped->count() === 3 && count($grouped->all()) === 1, 'Grouped query counts count groups rather than source rows.');
     $assert((new Query('SELECT DISTINCT category FROM query_items'))->count() === 3, 'Distinct projections retain their counting semantics.');
     $assert((new Query('SELECT id FROM query_items'))->whereIn('id', [])->count() === 0, 'An empty IN filter safely counts zero rows.');
-    $displayCalls = 0;
-    $database->sqliteCreateFunction('display_value', static function (int $id) use (&$displayCalls): int { $displayCalls++; return $id; });
-    $display = (new Query('SELECT display_value(id) AS label FROM query_items'))->where('id > ?', 2)->limit(1);
-    $assert($display->count('SELECT id FROM query_items') === 4 && $displayCalls === 0, 'A lightweight count preserves filters without evaluating display projections.');
-    $assert(count($display->all()) === 1 && $displayCalls === 1, 'The original display projection remains available after counting.');
+    Connection::exec('SET @display_calls=0');
+    $display = (new Query('SELECT (@display_calls := @display_calls + 1) AS label FROM query_items'))->where('id > ?', 2)->limit(1);
+    $assert($display->count('SELECT id FROM query_items') === 4 && (int) Connection::value('SELECT @display_calls') === 0, 'A lightweight count preserves filters without evaluating display projections.');
+    $assert(count($display->all()) === 1 && (int) Connection::value('SELECT @display_calls') === 1, 'The original display projection remains available after counting.');
     $literal = '100%_!';
     Connection::exec('CREATE TABLE literal_search (label TEXT)');
     Connection::insert('literal_search', ['label' => $literal]);
     Connection::insert('literal_search', ['label' => '100X_!']);
     $assert((new Query('SELECT label FROM literal_search'))->where("label LIKE ? ESCAPE '!'", Connection::escapeLike($literal))->count() === 1, 'LIKE escaping treats percent, underscore and the escape character literally.');
-    Connection::exec('CREATE TABLE atomic_values (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, value TEXT, extra INTEGER CHECK (extra >= 0))');
+    Connection::exec('CREATE TABLE atomic_values (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(254) UNIQUE NOT NULL, value TEXT, extra INTEGER CHECK (extra >= 0))');
     Connection::upsert('atomic_values', ['name' => 'one'], ['value' => 'initial', 'extra' => 7]);
     $firstId = Connection::find('atomic_values', ['name' => 'one'])['id'];
     Connection::upsert('atomic_values', ['name' => 'one'], ['value' => null]);

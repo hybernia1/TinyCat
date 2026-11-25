@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
 define('TINYCAT', true);
@@ -139,10 +141,10 @@ $test('cache diagnostics expose a supported driver', static function () use ($ex
 });
 
 $test('cached autoload settings omit secret values', static function () use ($expect): void {
-    $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $database = \tinycat_test_database();
     $database->exec(
         'CREATE TABLE settings (
-            setting_key TEXT PRIMARY KEY,
+            setting_key VARCHAR(190) PRIMARY KEY,
             setting_group TEXT NOT NULL,
             setting_value TEXT NULL,
             setting_type TEXT NOT NULL,
@@ -176,8 +178,8 @@ $test('cached autoload settings omit secret values', static function () use ($ex
 });
 
 $test('transactional settings saves coalesce invalidation and preserve rollback', static function () use ($expect): void {
-    $database = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-    $database->exec('CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_group TEXT NOT NULL, setting_value TEXT, setting_type TEXT NOT NULL, autoload INTEGER NOT NULL)');
+    $database = \tinycat_test_database();
+    $database->exec('CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_group TEXT NOT NULL, setting_value TEXT, setting_type TEXT NOT NULL, autoload INTEGER NOT NULL)');
     \TinyCat\Database\Connection::set($database);
     \TinyCat\Core\Settings\Store::reset();
     \TinyCat\Support\Cache::forget('core_autoload_settings');

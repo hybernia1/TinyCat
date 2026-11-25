@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 $root = $argv[1]; $phase = $argv[2];
+require_once __DIR__ . '/../../support/mysql.php';
 $state = isset($argv[3]) ? json_decode((string) file_get_contents($argv[3]), true, 512, JSON_THROW_ON_ERROR) : [];
+$state = $state + tinycat_test_database_config($root . '/avatars.database.json');
 define('TINYCAT', true);
 require $root . '/App/Core/Runtime/autoload.php';
-$pdo = new class ($state['dsn'] ?? ('sqlite:' . $root . '/avatars.sqlite'), $state['user'] ?? null, $state['password'] ?? null) extends PDO {
+$pdo = new class ($state['dsn'], $state['user'] ?? null, $state['password'] ?? null) extends PDO {
     public string $pause = '';
     public string $ready = '';
     public function beginTransaction(): bool {

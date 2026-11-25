@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-$outboundDb = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+require_once __DIR__ . '/../../support/mysql.php';
+
+$outboundDb = \tinycat_test_database($databasePath);
 $outboundDb->exec("INSERT INTO users (id, username, role, status) VALUES (980001, 'outboundfixture', 'user', 'active')");
 $outboundRaw = 'https://target.example/story?x=1&x=2&utm_source=original#section';
 $outboundDb->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (980001, 980001, ?, ?)')->execute([$outboundRaw, '2000-01-01']);

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 
 define('TINYCAT', true);
@@ -8,10 +10,10 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 // Rendering fixtures must not depend on an installed workspace/CI database.
-$database = new PDO('sqlite::memory:');
-$database->exec('CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER)');
-$database->exec('CREATE TABLE social_post_images (content_id INTEGER, path TEXT)');
-$database->exec('CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)');
+$database = \tinycat_test_database();
+$database->exec('CREATE TABLE social_post_links (content_id INT UNSIGNED, link_id INT UNSIGNED)');
+$database->exec('CREATE TABLE social_post_images (content_id INT UNSIGNED, path TEXT)');
+$database->exec('CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash CHAR(64), provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)');
 \TinyCat\Database\Connection::set($database);
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Core\Identity\Authentication::reset(null, true);

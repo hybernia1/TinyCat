@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
@@ -11,7 +13,7 @@ use TinyCat\Support\Components;
 \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration(['install' => ['complete' => false, 'locale' => 'en']]));
 \TinyCat\Support\Localization::locale('en');
 // Presentation must work before a usable application database exists.
-\TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
+\TinyCat\Database\Connection::set(\tinycat_test_database());
 $assert = static function (bool $condition, string $message): void {
     if (!$condition) { throw new RuntimeException($message); }
 };

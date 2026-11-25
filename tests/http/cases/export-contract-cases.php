@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-$exportDb = new PDO('sqlite:' . $databasePath);
+require_once __DIR__ . '/../../support/mysql.php';
+
+$exportDb = \tinycat_test_database($databasePath);
 $exportDb->exec("INSERT INTO users (id, username, role, status) VALUES (900001, 'exportactive', 'bot', 'active'), (900002, 'exporthidden', 'bot', 'inactive')");
 $insertExport = $exportDb->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
 $insertExport->execute([900001, 900001, "Export <script>bad</script> & ]]> \x01\n#ExportPublic #exportpublic https://example.test/page?a=1&b=2#fragment", '2020-01-01 00:00:00']);

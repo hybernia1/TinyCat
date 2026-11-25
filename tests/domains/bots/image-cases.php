@@ -48,7 +48,7 @@ try {
     $wideImage = $importItems->import($imageSource, [['guid' => 'image-too-wide', 'image_urls' => [$badImageUrl]]], 1);
     $assert($wideImage['status'] === 'error', 'Source images respect the same source dimension limit as uploads.');
     $historyCount = (int) $value('SELECT COUNT(*) FROM bot_feed_history');
-    $database->exec("CREATE TRIGGER fail_image_insert BEFORE INSERT ON social_post_images BEGIN SELECT RAISE(ABORT, 'image relation failure'); END");
+    $database->exec("CREATE TRIGGER fail_image_insert BEFORE INSERT ON social_post_images FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'image relation failure'; END");
     $paths = glob($root . '/uploads/status-images/' . date('Y/m') . '/*.webp') ?: [];
     $imageFailure = $importItems->import($imageSource, [['guid' => 'image-rollback', 'image_urls' => [$imageUrl]]], 1);
     $database->exec('DROP TRIGGER fail_image_insert');

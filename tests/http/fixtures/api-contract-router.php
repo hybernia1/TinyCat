@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
 // Only legacy or immutable avatar fixture WebP assets bypass the front controller.
@@ -22,10 +24,10 @@ if (preg_match('~^/cache/assets/([A-Za-z0-9._-]+[.]svg)$~D', $assetPath, $asset)
     if (is_file($file)) { header('Content-Type: image/svg+xml'); readfile($file); return; }
 }
 
-$database = new PDO('sqlite:' . (string) getenv('TINYCAT_API_TEST_DATABASE'));
+$database = \tinycat_test_database_as(TinyCatTestLockPDO::class, (string) getenv('TINYCAT_API_TEST_DATABASE'));
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$database->sqliteCreateFunction('GET_LOCK', static fn (): int => (int) ($_SERVER['HTTP_X_TEST_SCHEDULER_LOCK'] ?? 1));
-$database->sqliteCreateFunction('RELEASE_LOCK', static fn (): int => 1);
+$database->advisoryLock = static fn (): int => (int) ($_SERVER['HTTP_X_TEST_SCHEDULER_LOCK'] ?? 1);
+$database->advisoryRelease = static fn (): int => 1;
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
@@ -33,7 +35,7 @@ $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     'app' => ['debug' => false, 'url' => 'http://localhost'],
     'health' => ['http' => ['enabled' => false]],
     'i18n' => ['locale' => 'en'],
-    'database' => ['driver' => 'sqlite'],
+    'database' => ['driver' => 'mysql'],
     'install' => ['complete' => true],
     'performance' => ['cache' => ['enabled' => false]],
     'auth' => ['registration' => ['enabled' => true, 'auto_approve' => true]],
@@ -78,7 +80,7 @@ if (getenv('TINYCAT_API_FOUNDATION_TEST') === '1') {
 
 \TinyCat\Http\Router::route('GET', '/fixture-failure', static function (): void {
     echo 'PRIVATE_PARTIAL_OUTPUT';
-    \TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
+    \TinyCat\Database\Connection::set(\tinycat_test_database());
     throw new RuntimeException('PRIVATE_FAILURE_DETAIL');
 });
 \TinyCat\Http\Router::route(['GET', 'HEAD'], '/fixture-maintenance', static function (): void {
@@ -92,6 +94,6 @@ foreach ([400, 401, 403, 404, 405, 422, 429, 500, 502, 503] as $errorStatus) {
     }
 }
 if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && $embedDocument) {
-    \TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
+    \TinyCat\Database\Connection::set(\tinycat_test_database());
 }
 require __DIR__ . '/../../../index.php';

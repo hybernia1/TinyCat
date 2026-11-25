@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../../support/mysql.php';
+
 // Extends the existing signed lifecycle fixture; every installation and DB is disposable.
 if ($packagePhase === 'install') {
     $makeModule('addon', 1, ['tinycat.accounts']);
@@ -10,11 +12,11 @@ if ($packagePhase === 'install') {
     [$exit, $text, $error] = $console(['module-install', $moduleZip]);
     $assert($exit === 0, 'Existing installation accepts an independent module ZIP: ' . $text . $error);
     $registryBytes = file_get_contents($root . '/App/module-packages.json');
-    $assert(!$pdo->query("SELECT name FROM sqlite_master WHERE name = 'lifecycle_addon'")->fetchColumn(), 'Uploading an inactive module does not run its schema');
+    $assert(!$pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME= 'lifecycle_addon'")->fetchColumn(), 'Uploading an inactive module does not run its schema');
     $status = json_decode($console(['status'])[1], true);
     $assert(in_array('fixture.addon', $status['available'], true) && !in_array('fixture.addon', $status['deployment']['active'], true), 'Uploaded module is available but not activated');
     [$exit, $text, $error] = $console(['activate', 'fixture.addon']);
-    $assert($exit === 0 && $pdo->query("SELECT name FROM sqlite_master WHERE name = 'lifecycle_addon'")->fetchColumn() === 'lifecycle_addon', 'First activation migrates the module through the common lifecycle: ' . $text . $error);
+    $assert($exit === 0 && $pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME= 'lifecycle_addon'")->fetchColumn() === 'lifecycle_addon', 'First activation migrates the module through the common lifecycle: ' . $text . $error);
     $pdo->exec("INSERT INTO lifecycle_addon(body) VALUES ('Retained addon data')");
     $addonHash = hash_file('sha256', $root . '/App/Modules/Addon/src/Module.php');
     // An inventory cannot authorize paths outside the module, extra ZIP files or changed bytes.
@@ -38,15 +40,15 @@ if ($packagePhase === 'install') {
     foreach (['App/Core', 'assets'] as $path) { $copy($root . '/' . $path, $coreHost . '/' . $path); }
     $copy($root . '/App/Console.php', $coreHost . '/App/Console.php');
     file_put_contents($coreHost . '/App/modules.php', '<?php return [];');
-    file_put_contents($coreHost . '/config.php', '<?php return ' . var_export(['database' => ['dsn' => 'sqlite:' . $coreHost . '/core.sqlite'], 'i18n' => ['locale' => 'en']], true) . ';');
+    file_put_contents($coreHost . '/config.php', '<?php return ' . var_export(['database' => tinycat_test_database_config($coreHost . '/core.database.json'), 'i18n' => ['locale' => 'en']], true) . ';');
     $prepare = 'define("TINYCAT", true); require "App/Core/Runtime/autoload.php"; $p=TinyCat\\Core\\Modules\\Distribution::describe(getcwd(), "fixture.core", []); file_put_contents("App/distribution.json", json_encode($p));';
     [$exit, $text, $error] = $run([PHP_BINARY, '-r', $prepare], $coreHost); $assert($exit === 0, 'Create core-only descriptor: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $coreHost . '/App/Console.php', 'install'], $coreHost, $administrator); $assert($exit === 0, 'Core-only CLI install creates its administrator: ' . $text . $error);
-    $coreDb = new PDO('sqlite:' . $coreHost . '/core.sqlite');
-    $assert(count($coreDb->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 8, 'Core-only installation has exactly eight framework tables');
+    $coreDb = \tinycat_test_database($coreHost . '/core.database.json');
+    $assert(count($coreDb->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'")->fetchAll()) === 8, 'Core-only installation has exactly eight framework tables');
     [$exit, $text, $error] = $run([PHP_BINARY, $coreHost . '/App/Console.php', 'module-install', $moduleZip], $coreHost); $assert($exit === 0, 'Core-only installation receives its first module ZIP: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $coreHost . '/App/Console.php', 'activate', 'fixture.addon'], $coreHost); $assert($exit === 0, 'First module activates without Social: ' . $text . $error);
-    $assert(count($coreDb->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 9, 'First activation adds only the module-owned table');
+    $assert(count($coreDb->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'")->fetchAll()) === 9, 'First activation adds only the module-owned table');
     $coreDb = null;
 }
 
@@ -68,5 +70,5 @@ if ($packagePhase === 'after-core-update') {
     $assert($exit !== 0 && is_file($root . '/storage/maintenance.json'), 'A failed module migration retains the common maintenance and recovery journal');
     $operation = json_decode(file_get_contents($root . '/storage/updates/operation.json'), true);
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]);
-    $assert($exit === 0 && file_get_contents($root . '/App/module-packages.json') === $registryBytes && $pdo->query('SELECT body FROM lifecycle_addon')->fetchColumn() === 'Retained addon data' && !$pdo->query("SELECT name FROM sqlite_master WHERE name='failed_migration'")->fetchColumn(), 'Rollback of a failed module update restores files, registry and DB: ' . $text . $error);
+    $assert($exit === 0 && file_get_contents($root . '/App/module-packages.json') === $registryBytes && $pdo->query('SELECT body FROM lifecycle_addon')->fetchColumn() === 'Retained addon data' && !$pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='failed_migration'")->fetchColumn(), 'Rollback of a failed module update restores files, registry and DB: ' . $text . $error);
 }

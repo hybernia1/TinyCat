@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
 if (($argv[1] ?? '') !== '--isolated') {
@@ -31,19 +33,19 @@ use TinyCat\Database\Connection;
 
 (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $root . '/storage/cache', 'driver' => 'filesystem'], 'health' => ['http' => ['enabled' => false]]]);
-$db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$db = \tinycat_test_database_as(TinyCatTestLockPDO::class);
 Connection::set($db);
 foreach ([
-    'CREATE TABLE users (id INTEGER PRIMARY KEY, role TEXT, status TEXT)',
+    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, role VARCHAR(40), status VARCHAR(24))',
     "INSERT INTO users VALUES (1, 'admin', 'active'), (2, 'admin', 'active'), (3, 'user', 'active'), (4, 'bot', 'active'), (5, 'admin', 'inactive')",
-    'CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, actor_id INTEGER, subject_id INTEGER, payload_json TEXT, type TEXT, notification_key TEXT, read_at TEXT, created_at TEXT, updated_at TEXT, UNIQUE(user_id, notification_key))',
-    'CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)',
-    'CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, task TEXT, mode TEXT, actor_id INTEGER, status TEXT, started_at TEXT, finished_at TEXT, duration_ms INTEGER, options_json TEXT, summary_json TEXT, error TEXT)',
+    'CREATE TABLE notifications (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, actor_id INT UNSIGNED, subject_id INT UNSIGNED, payload_json TEXT, type TEXT, notification_key VARCHAR(190), read_at TEXT, created_at DATETIME, updated_at DATETIME, UNIQUE(user_id, notification_key))',
+    'CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)',
+    'CREATE TABLE scheduler_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, task TEXT, mode TEXT, actor_id INT UNSIGNED, status VARCHAR(24), started_at DATETIME, finished_at DATETIME, duration_ms INTEGER, options_json TEXT, summary_json TEXT, error TEXT)',
     'CREATE TABLE bot_sources (enabled INTEGER)',
 ] as $sql) { $db->exec($sql); }
 $lock = 1;
-$db->sqliteCreateFunction('GET_LOCK', static function () use (&$lock): int { return $lock; });
-$db->sqliteCreateFunction('RELEASE_LOCK', static fn (): int => 1);
+$db->advisoryLock = static function () use (&$lock): int { return $lock; };
+$db->advisoryRelease = static fn (): int => 1;
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 $report = Service::inspect(['one' => static fn (): string => 'ok', 'two' => static function (): never { throw new RuntimeException('SECRET database password'); }, 'three' => static fn (): string => 'warning']);
@@ -54,22 +56,22 @@ $assert(Service::inspect([])['status'] === 'unknown', 'An empty diagnostic is ne
 $assert(Service::snapshot()['stale'], 'Before the first run, health is unknown and stale.');
 $findings = \TinyCat\Support\Components::render('health/scheduler-findings', ['metrics' => ['custom-owner-task' => 'missing', 'site-health' => 'ok']]);
 $assert(str_contains($findings, 'custom-owner-task') && str_contains($findings, \TinyCat\Support\Localization::t('health.title')), 'Scheduler findings show arbitrary owner tasks and use registered labels instead of a fixed task list.');
-$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('cleanup', 'completed', datetime('now'))");
+$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('cleanup', 'completed', UTC_TIMESTAMP())");
 $schedulerCheck = \TinyCat\Core\Health\Checks::definitions()['scheduler'];
 $db->exec("INSERT INTO bot_sources VALUES (1)");
 $probe = $schedulerCheck();
 $assert($probe['metrics'] === ['cleanup' => 'ok', 'feeds' => 'missing'], 'Scheduler reports identify the missing task without blaming healthy cleanup.');
-$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'completed', datetime('now', '-2 hours'))");
+$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'completed', DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 HOUR))");
 $assert($schedulerCheck()['metrics']['feeds'] === 'stale', 'Old successful runs report stale scheduling.');
-$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'failed', datetime('now'))");
+$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'failed', UTC_TIMESTAMP())");
 $assert($schedulerCheck()['metrics']['feeds'] === 'failed', 'The latest failure is preserved even when an older success exists.');
 $db->exec("UPDATE scheduler_runs SET status = 'interrupted' WHERE task = 'feeds' AND status = 'failed'");
 $assert($schedulerCheck()['metrics']['feeds'] === 'interrupted', 'Interrupted jobs have a distinct diagnostic reason.');
-$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'not_due', datetime('now'))");
+$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'not_due', UTC_TIMESTAMP())");
 $assert($schedulerCheck()['metrics']['feeds'] === 'interrupted', 'Skipped invocations cannot conceal an unresolved interrupted run.');
-$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'completed', datetime('now'))");
+$db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('feeds', 'completed', UTC_TIMESTAMP())");
 $assert($schedulerCheck()['metrics']['feeds'] === 'ok', 'Real completion resolves the previous failure.');
-$db->exec("UPDATE scheduler_runs SET started_at = datetime('now', '-2 hours') WHERE task = 'feeds' AND status = 'completed'");
+$db->exec("UPDATE scheduler_runs SET started_at = DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 HOUR) WHERE task = 'feeds' AND status = 'completed'");
 $db->exec("DELETE FROM scheduler_runs WHERE task = 'feeds' AND status = 'interrupted'");
 $assert($schedulerCheck()['metrics']['feeds'] === 'stale', 'A recent skipped invocation cannot refresh the age of real work.');
 $db->exec("DELETE FROM scheduler_runs WHERE task = 'feeds'");
@@ -104,7 +106,7 @@ $db->exec("UPDATE scheduler_runs SET summary_json = replace(summary_json, '" . d
 $assert(Service::snapshot()['stale'] && Service::snapshot()['status'] === 'unknown', 'An old green result cannot conceal a missing scheduled inspection.');
 Store::setSetting('health.last_completed_day', '2000-01-01', 'string', 'health');
 $beforeFailure = (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn();
-$db->exec("CREATE TRIGGER reject_health_notice BEFORE INSERT ON notifications WHEN NEW.user_id = 2 BEGIN SELECT RAISE(ABORT, 'injected delivery failure'); END");
+$db->exec("CREATE TRIGGER reject_health_notice BEFORE INSERT ON notifications FOR EACH ROW BEGIN IF NEW.user_id = 2 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected delivery failure'; END IF; END");
 $failed = Execution::run('site-health');
 $assert(!$failed['ok'] && Store::setting('health.last_completed_day') === '2000-01-01', 'Failed notification delivery does not mark the day completed.');
 $assert((int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === $beforeFailure, 'Failure on the second administrator rolls back partial notification delivery.');

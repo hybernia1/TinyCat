@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 // Run against a copied application: the real installation and its modules are untouched.
 if (($argv[1] ?? '') !== '--isolated') {
     require_once __DIR__ . '/../../tools/support/workspace.php';
@@ -39,7 +41,7 @@ $inventory = SourceModules::selection($root);
 $plan = Distribution::describe($root, 'tinycat.social', $inventory, []);
 file_put_contents($root . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
 mkdir($root . '/storage', 0700, true);
-$pdo = new PDO('sqlite:' . $root . '/storage/test.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$pdo = \tinycat_test_database($root . '/storage/test.database.json');
 Connection::set($pdo);
 Lifecycle::install($plan);
 $before = Deployment::read($root);
@@ -53,7 +55,7 @@ $directory = $root . '/App/Modules/LocalNotes';
 mkdir($directory . '/src', 0700, true);
 mkdir($directory . '/migrations', 0700);
 file_put_contents($directory . '/migrations/1.php', <<<'PHP'
-<?php return static function (PDO $pdo): void { $pdo->exec('CREATE TABLE local_notes (id INTEGER PRIMARY KEY, body TEXT)'); };
+<?php return static function (PDO $pdo): void { $pdo->exec('CREATE TABLE local_notes (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT)'); };
 PHP);
 file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.localnotes', 'namespace' => 'Fixture\\LocalNotes\\', 'providers' => ['routes' => 'Fixture\\LocalNotes\\Module', 'schema' => 'Fixture\\LocalNotes\\Module'], 'resources' => ['migrations' => 'migrations']], JSON_THROW_ON_ERROR));
 file_put_contents($directory . '/src/Module.php', <<<'PHP'

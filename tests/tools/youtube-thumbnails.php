@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require __DIR__ . '/../../tools/maintenance/youtube-thumbnail-cleanup.php';
-if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) { echo "SKIP YouTube cleanup: SQLite unavailable\n"; exit; }
-$pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url TEXT, image_url TEXT, title TEXT)');
+if (!in_array('mysql', PDO::getAvailableDrivers(), true)) { echo "SKIP YouTube cleanup: MySQL unavailable\n"; exit; }
+$pdo = \tinycat_test_database();
+$pdo->exec('CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT, image_url TEXT, title TEXT)');
 $path = '/uploads/links/2026/11/' . str_repeat('a', 40) . '.webp';
 $insert = $pdo->prepare('INSERT INTO social_links VALUES (?, ?, ?, ?)');
 $insert->execute([1, 'https://youtu.be/abc123', $path, 'YouTube title']);

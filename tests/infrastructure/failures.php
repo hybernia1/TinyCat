@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require dirname(__DIR__, 2) . '/App/Core/Runtime/autoload.php';
@@ -12,8 +14,8 @@ use TinyCat\Http\HttpException;
 $directory = \TinyCat\Tools\Workspace::directory('tests/failures-' . bin2hex(random_bytes(6)));
 Application::start(new Configuration(['app' => ['debug' => 'off']]));
 Debug::configure('log', $directory);
-Connection::set(new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]));
-Connection::get()->exec('CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT, setting_type TEXT, autoload INT)');
+Connection::set(\tinycat_test_database());
+Connection::get()->exec('CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_value TEXT, setting_type TEXT, autoload INT)');
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;

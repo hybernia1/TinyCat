@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 $source = dirname(__DIR__, 3);
 $root = TinyCat\Tools\Workspace::directory('tests/tmp') . '/task-deployment-' . bin2hex(random_bytes(6));
@@ -33,10 +35,10 @@ try {
     }
     mkdir($root . '/storage/updates', 0700, true); mkdir($root . '/sessions', 0700);
     file_put_contents($root . '/config.php', '<?php return ' . var_export([
-        'database' => ['driver' => 'sqlite', 'dsn' => 'sqlite:' . $root . '/fixture.sqlite'],
+        'database' => tinycat_test_database_config($root . '/fixture.database.json'),
         'cache' => ['directory' => $root . '/cache'], 'app' => ['debug' => false],
     ], true) . ';');
-    $database = new PDO('sqlite:' . $root . '/fixture.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $database = \tinycat_test_database($root . '/fixture.database.json');
     define('TINYCAT', true);
     $migration = require $source . '/migrations/20261026_003_scheduler_runs.php'; $migration($database);
     $run('prepare');

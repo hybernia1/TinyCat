@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php'; define('TINYCAT', true); $source = dirname(__DIR__, 3); require $source . '/App/Core/Runtime/autoload.php';
 use TinyCat\Support\{Cache, Config};
 use TinyCat\Database\{Connection, Transactions};
@@ -17,10 +19,10 @@ foreach (['filesystem', 'memcached'] as $driver) {
         if (!is_string($probe->getVersion()['127.0.0.1:11211'] ?? null)) { echo "SKIP settings race Memcached: local server unavailable.\n"; continue; }
     }
     $directory = TinyCat\Tools\Workspace::directory('tests/settings-race-' . $driver . '-' . bin2hex(random_bytes(6)));
-    $config = ['database' => ['driver' => 'sqlite'], 'install' => ['complete' => true], 'cache' => ['directory' => $directory . '/cache', 'driver' => $driver, 'memcached' => ['prefix' => 'tinycat-settings-race-' . bin2hex(random_bytes(10)) . ':']]];
+    $config = ['database' => ['driver' => 'mysql'], 'install' => ['complete' => true], 'cache' => ['directory' => $directory . '/cache', 'driver' => $driver, 'memcached' => ['prefix' => 'tinycat-settings-race-' . bin2hex(random_bytes(10)) . ':']]];
     (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true); (new ReflectionProperty(Config::class, 'config'))->setValue(null, $config);
     foreach (['driver' => null, 'memcachedClient' => null, 'memcachedInitialized' => false, 'memcachedConfig' => null] as $name => $value) { (new ReflectionProperty(Cache::class, $name))->setValue(null, $value); }
-    $db = new SettingsCommitPDO('sqlite:' . $directory . '/settings.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]); $db->exec('PRAGMA journal_mode=WAL'); Connection::set($db); TinyCat\Core\Settings\Schema::install($db);
+    $db = \tinycat_test_database_as(SettingsCommitPDO::class, $directory . '/settings.database.json'); Connection::set($db); TinyCat\Core\Settings\Schema::install($db);
     Store::reset(); Store::setSetting('site.public_enabled', true, 'bool');
     $state = $directory . '/state.json'; file_put_contents($state, json_encode(['source' => $source, 'directory' => $directory, 'config' => $config], JSON_THROW_ON_ERROR));
     $worker = proc_open([PHP_BINARY, $source . '/tests/fixtures/cache/settings-worker.php', $state], [0 => ['pipe', 'r'], 1 => ['file', $directory . '/worker.log', 'a'], 2 => ['file', $directory . '/worker.log', 'a']], $pipes);

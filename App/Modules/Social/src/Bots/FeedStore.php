@@ -36,7 +36,7 @@ final class FeedStore implements \TinyCat\Core\Feeds\FeedSourceStore
             // Downloads happen outside the transaction. Recheck identity under the
             // same row lock that serializes edits/deletion before saving a mapping.
             $current = \TinyCat\Database\Connection::one('SELECT bot_user_id, feed_hash, enabled FROM bot_sources WHERE id = ?'
-                . (\TinyCat\Database\Connection::driver() === 'mysql' ? ' FOR UPDATE' : ''), [$sourceId]);
+                . (' FOR UPDATE'), [$sourceId]);
             if ($current === null || (int) $current['bot_user_id'] !== $botUserId || !hash_equals((string) $current['feed_hash'], $feedHash) || !(bool) $current['enabled']) {
                 throw new RuntimeException('Source changed or was disabled during import. Retry using its current settings.');
             }

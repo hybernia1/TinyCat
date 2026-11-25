@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../../tools/support/workspace.php';
 
 use TinyCat\Core\Identity\Authentication;
@@ -22,12 +24,12 @@ $assert(interface_exists(\TinyCat\Core\Identity\ProvidesLifecycle::class) && int
 $directory = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/account-identity-' . bin2hex(random_bytes(8));
 mkdir($directory . '/sessions', 0700, true);
 $server = null;
-$pdo = new PDO('sqlite:' . $directory . '/identity.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$pdo = \tinycat_test_database($directory . '/identity.database.json');
 try {
     Connection::set($pdo);
     $assert(!Readiness::ready(), 'Missing schema is not ready');
-    $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT COLLATE NOCASE, email TEXT COLLATE NOCASE, password TEXT, role TEXT, status TEXT)');
-    $pdo->exec('CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)');
+    $pdo->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), email TEXT, password TEXT, role VARCHAR(40), status VARCHAR(24))');
+    $pdo->exec('CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, token_hash TEXT, expires_at DATETIME, used_at TEXT)');
     $assert(!Readiness::ready(), 'Empty accounts are not ready');
     $password = 'Identity-fixture-42';
     $hash = Authentication::authPassword($password);
@@ -151,10 +153,10 @@ try {
     TinyCat\Core\Identity\Authentication::reset(['id' => 10, 'role' => 'user'], true);
     $assert(Authentication::auth('id') === 10 && !TinyCat\Core\Identity\Authentication::authIs('admin'), 'Legacy reset updates canonical state');
     $assert(TinyCat\Social\Profiles\Roles::receivesNotifications('admin') && !TinyCat\Social\Profiles\Roles::receivesNotifications('bot'), 'Social role capabilities retain their own policy');
-    $assert(array_column($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(PDO::FETCH_ASSOC), 'name') === ['users', 'password_reset_tokens'], 'No social or settings schema was created');
+    $assert(array_column($pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME")->fetchAll(PDO::FETCH_ASSOC), 'name') === ['password_reset_tokens', 'users'], 'No social or settings schema was created');
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
-    Connection::set(new PDO('sqlite::memory:')); unset($insert); $pdo = null;
+    Connection::set(\tinycat_test_database()); unset($insert); $pdo = null;
     $resolved = realpath($directory); $storage = realpath(\TinyCat\Tools\Workspace::directory('tests/tmp'));
     if ($resolved !== false && $storage !== false && str_starts_with($resolved, $storage . DIRECTORY_SEPARATOR . 'account-identity-')) {
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($resolved, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $entry) {

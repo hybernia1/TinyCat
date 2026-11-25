@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 $workspace = getenv('TINYCAT_ACCOUNTS_WORKSPACE');
-if (!is_string($workspace) || !is_file($workspace . '/accounts.sqlite')) { throw new RuntimeException('Missing Accounts fixture.'); }
+if (!is_string($workspace) || !is_file($workspace . '/accounts.database.json')) { throw new RuntimeException('Missing Accounts fixture.'); }
 $path = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if (preg_match('~^/assets/build/[a-z0-9.-]+\.(?:js|css|svg)$~D', $path) && is_file($workspace . $path)) { return false; }
 define('TINYCAT', true);
@@ -12,8 +14,8 @@ register_shutdown_function(static function () use ($workspace): void {
         if (preg_match('/^TinyCat\\\\(?:Users|Status|Bots|Settings|Site|Moderation|Notifications)\\\\/', $class)) { file_put_contents($workspace . '/product-loads.log', $class . "\n", FILE_APPEND); }
     }
 });
-$pdo = new PDO('sqlite:' . $workspace . '/accounts.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec('PRAGMA foreign_keys = ON');
+$pdo = \tinycat_test_database($workspace . '/accounts.database.json');
+
 TinyCat\Database\Connection::set($pdo);
 $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 $userId = match ($authorization) { 'Bearer admin' => 1, 'Bearer member' => 2, default => 0 };

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 [$status] = $request('POST', '/api/users/registrations/email-checks', ['email' => 'free@example.test']);
 $assert($status === 403, 'Public email checks require CSRF protection.');
 [$status, $available, $headers] = $request('POST', '/api/users/registrations/email-checks', ['email' => 'free@example.test'], '', $csrf);
@@ -17,12 +19,12 @@ $assert($status === 403, 'Users cannot exclude someone else from the uniqueness 
 $assert($status === 200 && $admin['data']['available'], 'Administrators can check the profile they are authorized to edit.');
 [$status] = $request('POST', '/api/users/me/email-checks', ['email' => 'free@example.test'], '', $csrf);
 $assert($status === 401, 'Profile email checks require authentication.');
-$emailDb = new PDO('sqlite:' . $databasePath);
+$emailDb = \tinycat_test_database($databasePath);
 // Seed the observed bucket and its successors: a minute boundary between
 // the previous request and this assertion must not turn a full bucket into a new one.
 $emailLimitRows = $emailDb->query("SELECT ip_address, MAX(bucket_start) AS bucket_start FROM ip_action_limits WHERE action_name = 'email-check' GROUP BY ip_address")->fetchAll(PDO::FETCH_ASSOC);
 if ($emailLimitRows === []) { throw new RuntimeException('Email checks did not create a limiter subject.'); }
-$emailLimitFill = $emailDb->prepare("INSERT INTO ip_action_limits (ip_address, action_name, bucket_start, action_count, updated_at) VALUES (?, 'email-check', ?, 60, ?) ON CONFLICT (ip_address, action_name, bucket_start) DO UPDATE SET action_count = 60");
+$emailLimitFill = $emailDb->prepare("INSERT INTO ip_action_limits (ip_address, action_name, bucket_start, action_count, updated_at) VALUES (?, 'email-check', ?, 60, ?) ON DUPLICATE KEY UPDATE action_count = 60");
 foreach ($emailLimitRows as $emailLimitRow) {
     $emailLimitBucket = new DateTimeImmutable($emailLimitRow['bucket_start'], new DateTimeZone('UTC'));
     foreach ([0, 60, 120] as $emailLimitOffset) {

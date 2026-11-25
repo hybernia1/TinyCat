@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
@@ -9,8 +11,8 @@ use TinyCat\Database\Connection;
 use TinyCat\Social\Moderation\Restrictions;
 use TinyCat\Core\Security\RateLimiter;
 
-if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-    echo "SKIP rate limiter: pdo_sqlite unavailable.\n";
+if (!in_array('mysql', PDO::getAvailableDrivers(), true)) {
+    echo "SKIP rate limiter: pdo_mysql unavailable.\n";
     exit(0);
 }
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
@@ -18,7 +20,8 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     'datetime' => ['timezone' => 'UTC'],
     'cache' => ['driver' => 'filesystem'],
 ]);
-$pdo = new class ('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]) extends PDO {
+$testDatabaseConfig = tinycat_test_database_config();
+$pdo = new class ($testDatabaseConfig['dsn'], $testDatabaseConfig['user'], $testDatabaseConfig['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]) extends PDO {
     public int $reputationQueries = 0;
     public function prepare(string $query, array $options = []): PDOStatement|false
     {
@@ -27,8 +30,8 @@ $pdo = new class ('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRM
     }
 };
 Connection::set($pdo);
-$pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start TEXT, action_count INTEGER, updated_at TEXT, PRIMARY KEY(ip_address, action_name, bucket_start))');
-$pdo->exec('CREATE TABLE social_posts (author_id INTEGER, kind TEXT DEFAULT \'post\')');
+$pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INTEGER, updated_at DATETIME, PRIMARY KEY(ip_address, action_name, bucket_start))');
+$pdo->exec('CREATE TABLE social_posts (author_id INT UNSIGNED, kind VARCHAR(40) DEFAULT (\'post\'))');
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;

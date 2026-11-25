@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
@@ -10,7 +12,7 @@ use TinyCat\Database\Connection;
 require_once __DIR__ . '/../../tools/performance/lib/ProfileDatabase.php';
 
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
-$database = new \TinyCat\Tools\Performance\ProfileDatabase('sqlite::memory:', '', '');
+$database = \tinycat_test_database_as(\TinyCat\Tools\Performance\ProfileDatabase::class);
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 Connection::set($database);
@@ -19,12 +21,12 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     $checks++;
     if (!$condition) { throw new RuntimeException($message); }
 };
-$database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, email TEXT, role TEXT, status TEXT, updated_at TEXT)');
-$database->exec("CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT DEFAULT '2026-01-01 00:00:00')");
-$database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, name TEXT, enabled INTEGER, interval_minutes INTEGER, last_imported_at TEXT)');
-$database->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY, source_id INTEGER NOT NULL)');
-$database->exec('CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER, reporter_id INTEGER, status TEXT, reason TEXT, created_at TEXT)');
-$database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, task TEXT, status TEXT, mode TEXT, error TEXT, duration_ms INTEGER, started_at TEXT, actor_id INTEGER, finished_at TEXT, options_json TEXT, summary_json TEXT)');
+$database->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), email TEXT, role VARCHAR(40), status VARCHAR(24), updated_at DATETIME)');
+$database->exec("CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME DEFAULT ('2026-01-01 00:00:00'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))");
+$database->exec('CREATE TABLE bot_sources (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, bot_user_id INT UNSIGNED, name TEXT, enabled INTEGER, interval_minutes INTEGER, last_imported_at TEXT)');
+$database->exec('CREATE TABLE bot_source_posts (content_id INT UNSIGNED PRIMARY KEY, source_id INT UNSIGNED NOT NULL)');
+$database->exec('CREATE TABLE content_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED, reporter_id INT UNSIGNED, status VARCHAR(24), reason TEXT, created_at DATETIME)');
+$database->exec('CREATE TABLE scheduler_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, task TEXT, status VARCHAR(24), mode TEXT, error TEXT, duration_ms INTEGER, started_at DATETIME, actor_id INT UNSIGNED, finished_at DATETIME, options_json TEXT, summary_json TEXT)');
 for ($id = 1; $id <= 15; $id++) {
     $name = chr(80 - $id);
     $database->prepare('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)')->execute([$id, $name, $name . '@example.test', 'user', 'active', '2026-10-27']);
@@ -96,7 +98,7 @@ $withoutBots = new \TinyCat\Core\Modules\Catalog(array_values(array_filter(\Tiny
     $assert($detail !== null && $detail['sources'] === [] && $detail['summary'] === ['count' => 2], 'Inactive task history loads without any bot tables or detail callbacks');
 });
 
-$database->exec('ALTER TABLE users ADD COLUMN created_at TEXT');
+$database->exec('ALTER TABLE users ADD COLUMN created_at DATETIME');
 $_GET = []; $database->queries = [];
 $allUsers = \TinyCat\Core\Identity\Actions::tc_admin_users_api_payload();
 $assert($allUsers['pagination']['total'] === $allUsers['stats']['total'], 'Unfiltered pagination uses the same managed population as statistics');

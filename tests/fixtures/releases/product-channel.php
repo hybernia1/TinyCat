@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 // Isolated worker: no application configuration or network outside the supplied fixture.
 $options = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
 if (isset($options['network'])) {
@@ -10,7 +11,7 @@ define('TINYCAT', true);
 require $options['root'] . '/App/Core/Runtime/autoload.php';
 \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([
     'app' => ['debug' => 'on'], // This isolated worker asserts injected technical failures.
-    'database' => ['dsn' => 'sqlite::memory:'], 'install' => ['locale' => 'en', 'complete' => false],
+    'database' => ['driver' => 'mysql'], 'install' => ['locale' => 'en', 'complete' => false],
     'updates' => ['public_key' => $options['public_key']],
 ]));
 if (isset($options['verify'])) {

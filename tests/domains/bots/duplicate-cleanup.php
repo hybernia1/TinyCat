@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
@@ -15,11 +17,11 @@ $exercise = static function (PDO $db) use ($assert): void {
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     Connection::set($db);
-    $sqlite = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
-    if ($sqlite) { $db->exec('PRAGMA foreign_keys=ON'); }
+
+
     foreach ([
         'CREATE TABLE users (id INT UNSIGNED PRIMARY KEY,username VARCHAR(40),role VARCHAR(20),status VARCHAR(20))',
-        'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id BIGINT UNSIGNED PRIMARY KEY,author_id INT UNSIGNED,body VARCHAR(2000),published_at DATETIME,status VARCHAR(20))',
+        'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id BIGINT UNSIGNED PRIMARY KEY,author_id INT UNSIGNED,body VARCHAR(2000),published_at DATETIME,status VARCHAR(20), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
         'CREATE TABLE social_post_likes (content_id BIGINT UNSIGNED,user_id INT UNSIGNED,PRIMARY KEY(content_id,user_id),FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
         'CREATE TABLE social_comments (id BIGINT UNSIGNED PRIMARY KEY,content_id BIGINT UNSIGNED,parent_id BIGINT UNSIGNED NULL,body VARCHAR(2000),comments_diff TEXT,FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE,FOREIGN KEY(parent_id) REFERENCES social_comments(id) ON DELETE CASCADE)',
         'CREATE TABLE social_comment_likes (comment_id BIGINT UNSIGNED,user_id INT UNSIGNED,FOREIGN KEY(comment_id) REFERENCES social_comments(id) ON DELETE CASCADE)',
@@ -72,7 +74,7 @@ $exercise = static function (PDO $db) use ($assert): void {
     $migration($db); $migration($db);
     $db->exec('ALTER TABLE content RENAME TO social_posts');
     $db->exec('ALTER TABLE content_redirects RENAME TO social_post_redirects');
-    $columns = $sqlite ? array_column($db->query('PRAGMA table_info(social_post_redirects)')->fetchAll(), 'name') : $db->query('SHOW COLUMNS FROM social_post_redirects')->fetchAll(PDO::FETCH_COLUMN);
+    $columns = $db->query('SHOW COLUMNS FROM social_post_redirects')->fetchAll(PDO::FETCH_COLUMN);
     $assert($columns === ['old_id', 'content_id'], 'Redirect storage has exactly the two requested columns.');
     $pairs = DuplicateCleanup::candidates(100);
     $assert(array_map(static fn (array $row): int => (int) $row['id'], $pairs) === [2,3,10,13,16], 'Only exact same-bot public duplicates match; users, other bots, case differences, hidden/future posts and differing metadata remain.');
@@ -81,8 +83,7 @@ $exercise = static function (PDO $db) use ($assert): void {
     $first = DuplicateCleanup::run(1);
     $assert($first['changed'] === 1 && $first['has_more'], 'Cleanup respects its batch limit and reports remaining work.');
     $assert(Repository::redirectTarget(2) === 1 && Repository::redirectTarget(99) === 1, 'New and earlier redirects point directly at the surviving post.');
-    $trigger = $sqlite ? "CREATE TRIGGER fail_duplicate BEFORE DELETE ON social_posts WHEN OLD.id=3 BEGIN SELECT RAISE(ABORT,'rollback'); END"
-        : "CREATE TRIGGER fail_duplicate BEFORE DELETE ON social_posts FOR EACH ROW BEGIN IF OLD.id=3 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='rollback'; END IF; END";
+    $trigger = "CREATE TRIGGER fail_duplicate BEFORE DELETE ON social_posts FOR EACH ROW BEGIN IF OLD.id=3 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='rollback'; END IF; END";
     $db->exec($trigger);
     $failed = DuplicateCleanup::run(1);
     $assert(isset($failed['error']) && $failed['changed'] === 0 && (int) $db->query('SELECT content_id FROM social_comments WHERE id=103')->fetchColumn() === 3, 'A late failure rolls back every relation move for that post.');
@@ -119,14 +120,5 @@ $exercise = static function (PDO $db) use ($assert): void {
     $db->exec('DELETE FROM social_posts WHERE id=1');
     $assert($db->query('SELECT 1 FROM social_post_redirects WHERE old_id=2')->fetchColumn() === false, 'Deleting a keeper removes its aliases.');
 };
-$exercise(new PDO('sqlite::memory:'));
-$config = require __DIR__ . '/../../../config.php';
-$dbConfig = $config['database'];
-if (in_array('mysql', PDO::getAvailableDrivers(), true) && in_array($dbConfig['host'], ['localhost','127.0.0.1'], true)) {
-    $db = new PDO('mysql:host=' . $dbConfig['host'] . ';port=' . ($dbConfig['port'] ?? 3306) . ';charset=utf8mb4', $dbConfig['user'], $dbConfig['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $name = 'tinycat_duplicate_cleanup_' . bin2hex(random_bytes(6));
-    $db->exec('CREATE DATABASE `' . $name . '`');
-    try { $db->exec('USE `' . $name . '`'); $exercise($db); }
-    finally { $db->exec('DROP DATABASE `' . $name . '`'); }
-}
+$exercise(\tinycat_test_database());
 echo "PASS bot duplicate housekeeping ($checks checks)\n";

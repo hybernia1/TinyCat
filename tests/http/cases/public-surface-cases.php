@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Change the real runtime setting in the existing disposable HTTP fixture.
 [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.public_enabled' => false]], 'admin', $csrf);
 $assert($status === 200, 'Administrators can disable the public website through the existing settings API.');
@@ -34,7 +36,7 @@ $assert($status === 200 && $payload['data']['redirect'] === '/account', 'Login r
 $assert($status === 200, 'Disabling the website preserves authorized administration.');
 [$status] = $request('GET', '/api/notifications', null, 'user');
 $assert($status === 200, 'Disabling the website preserves the authenticated core inbox API.');
-$closedDb = new PDO('sqlite:' . $databasePath);
+$closedDb = \tinycat_test_database($databasePath);
 $closedDb->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (980001, 3, 'Closed website draft', '2999-01-01 12:00:00')");
 foreach (['' => 401, 'user' => 403] as $role => $expected) {
     [$status] = $request('PATCH', '/api/bots/accounts/3/posts/980001', ['body' => 'Forbidden'], $role, $csrf);

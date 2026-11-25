@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 $state = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
 define('TINYCAT', true); require $state['source'] . '/App/Core/Runtime/autoload.php';
 (new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
@@ -17,7 +19,8 @@ final class PausedSettingsStatement extends PDOStatement {
         return $rows;
     }
 }
-$pdo = new PDO('sqlite:' . $state['directory'] . '/settings.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_STATEMENT_CLASS => [PausedSettingsStatement::class, [$state['directory']]]]);
+$pdo = \tinycat_test_database($state['directory'] . '/settings.database.json');
+$pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, [PausedSettingsStatement::class, [$state['directory']]]);
 TinyCat\Database\Connection::set($pdo);
 $value = TinyCat\Core\Settings\Store::setting('site.public_enabled');
 file_put_contents($state['directory'] . '/read-result', json_encode($value, JSON_THROW_ON_ERROR));

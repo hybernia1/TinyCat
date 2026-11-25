@@ -22,10 +22,9 @@ final class Statements
         return $name;
     }
 
-    public static function quote(string $name, bool $mysql = true): string
+    public static function quote(string $name): string
     {
-        $quote = $mysql ? '`' : '"';
-        return $quote . self::identifier($name) . $quote;
+        return '`' . self::identifier($name) . '`';
     }
 
     /** @param array<mixed> $params */

@@ -57,9 +57,9 @@ final class Comments
         $limit = max(1, min(50, $limit ?? \TinyCat\Social\Posts\Feed::public_status_page_limit()));
         if ($contentId < 1) { return ['items' => [], 'next_url' => '']; }
         $params = [];
-        $mysql = \TinyCat\Database\Connection::driver() === 'mysql';
-        $index = $mysql ? ' FORCE INDEX (content_comments_content_index)' : '';
-        $join = $mysql ? ' STRAIGHT_JOIN ' : ' INNER JOIN ';
+
+        $index = ' FORCE INDEX (content_comments_content_index)';
+        $join = ' STRAIGHT_JOIN ';
         $parents = $parentId > 0 ? ['reply'] : ['cc.parent_id IS NULL', 'cc.parent_id = 0'];
         $branches = [];
         foreach ($parents as $indexNumber => $parentSql) {

@@ -46,7 +46,7 @@ final class Feed
 
     public static function public_status_id_query(bool $ordered = true): \TinyCat\Database\Query
     {
-        $feedIndex = $ordered && \TinyCat\Database\Connection::driver() === 'mysql'
+        $feedIndex = $ordered
             ? ' FORCE INDEX (content_feed_index)'
             : '';
 
@@ -57,9 +57,7 @@ final class Feed
 
     public static function public_status_author_id_query(): \TinyCat\Database\Query
     {
-        $authorIndex = \TinyCat\Database\Connection::driver() === 'mysql'
-            ? ' FORCE INDEX (content_author_index)'
-            : '';
+        $authorIndex = ' FORCE INDEX (content_author_index)';
 
         return Archive::visible(\TinyCat\Database\Query::select(
             'SELECT c.id, c.published_at FROM social_posts c' . $authorIndex . ' INNER JOIN users u ON u.id = c.author_id'
@@ -150,7 +148,7 @@ final class Feed
         $type = Archive::type($type);
         $limit = max(1, min(100, $limit));
         $media = in_array($type, ['images', 'links', 'video', 'audio'], true);
-        if ($media && \TinyCat\Database\Connection::driver() === 'mysql') {
+        if ($media) {
             $ids = self::recent_ids($limit, $cursorAt, $cursorId, $type, null, $selection);
             if (count($ids) === $limit) { return self::public_status_items_by_ids($ids); }
         }
@@ -261,7 +259,7 @@ final class Feed
 
         $limit = max(1, min(100, $limit));
         $type = Archive::type($type);
-        if (\TinyCat\Database\Connection::driver() === 'mysql' && ($type === '' || $type === 'text')) {
+        if ($type === '' || $type === 'text') {
             $ids = self::recent_ids($limit, $cursorAt, $cursorId, $type, $termId, $selection);
             if (count($ids) === $limit) { return self::public_status_items_by_ids($ids); }
         }

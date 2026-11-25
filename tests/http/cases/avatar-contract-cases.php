@@ -1,12 +1,14 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Exercise PHP multipart parsing, the real avatar writer, JSON resources and
 // delivery of the resulting image. Never reuse a workspace avatar ID.
 $avatarId = random_int(90_000_000, 99_999_999);
 $avatarFile = $root . '/uploads/avatars/' . $avatarId . '.webp';
 $assert(!file_exists($avatarFile), 'The avatar fixture must not overwrite an existing file.');
-$seed = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$seed = \tinycat_test_database($databasePath);
 $insertAvatarUser = $seed->prepare('INSERT INTO users (id, username, role, status, avatar_exists) VALUES (?, ?, ?, ?, 0)');
 $insertAvatarUser->execute([$avatarId, 'Avatar.Fixture.' . $avatarId, 'user', 'active']);
 $fixtureOwnsAvatar = false;
@@ -80,7 +82,7 @@ try {
     $multipartHeaders = $csrf + ['Content-Type' => 'multipart/form-data; boundary=' . $boundary];
     [$status] = $request('POST', '/api/users/' . $avatarId, $multipartBody(['_method' => 'PATCH', 'scope' => 'administration', 'role' => 'user', 'status' => 'active', 'email' => 'invalid-address'], $redPng), 'admin', $multipartHeaders);
     $assert($status === 422 && hash_file('sha256', $avatarFile) === $originalHash, 'Invalid profile fields cannot replace an existing avatar.');
-    $seed->exec('CREATE TRIGGER fail_avatar_update BEFORE UPDATE ON users WHEN NEW.id = ' . $avatarId . " BEGIN SELECT RAISE(ABORT, 'forced avatar persistence failure'); END");
+    $seed->exec('CREATE TRIGGER fail_avatar_update BEFORE UPDATE ON users FOR EACH ROW BEGIN IF NEW.id = ' . $avatarId . " THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced avatar persistence failure'; END IF; END");
     [$status] = $request('POST', '/api/users/' . $avatarId . '/avatar', $multipartBody(['_method' => 'PUT'], $redPng), 'admin', $multipartHeaders);
     $assert($status === 500 && hash_file('sha256', $avatarFile) === $originalHash, 'A database failure restores the original avatar after a direct upload.');
     [$status] = $request('POST', '/api/users/' . $avatarId, $multipartBody(['_method' => 'PATCH', 'scope' => 'administration', 'role' => 'user', 'status' => 'active'], $redPng), 'admin', $multipartHeaders);
@@ -91,7 +93,7 @@ try {
     $seed->exec('DROP TRIGGER fail_avatar_update');
     $seed->exec("UPDATE users SET role = 'bot' WHERE id = " . $avatarId);
     $seed->prepare('INSERT INTO bot_sources (bot_user_id, name, feed_url, feed_hash, post_template, enabled) VALUES (?, ?, ?, ?, ?, 1)')->execute([$avatarId, 'Avatar rollback source', 'http://127.0.0.1/blocked', hash('sha256', 'avatar-' . $avatarId), '{{title}}']);
-    $seed->exec('CREATE TRIGGER fail_bot_avatar_sources BEFORE UPDATE ON bot_sources WHEN NEW.bot_user_id = ' . $avatarId . " BEGIN SELECT RAISE(ABORT, 'forced bot side effect failure'); END");
+    $seed->exec('CREATE TRIGGER fail_bot_avatar_sources BEFORE UPDATE ON bot_sources FOR EACH ROW BEGIN IF NEW.bot_user_id = ' . $avatarId . " THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced bot side effect failure'; END IF; END");
     [$status] = $request('POST', '/api/bots/accounts/' . $avatarId, $multipartBody(['_method' => 'PATCH', 'status' => 'ban'], $redPng), 'admin', $multipartHeaders);
     $assert($status === 500 && hash_file('sha256', $avatarFile) === $originalHash, 'Failure disabling bot sources rolls back the avatar replacement.');
     $assert($seed->query('SELECT status FROM users WHERE id = ' . $avatarId)->fetchColumn() === 'active', 'A bot side effect failure rolls back the account status.');
@@ -108,7 +110,7 @@ try {
     $assert($status === 200 && !is_file($avatarFile), 'Removing the avatar clears its file.');
     [$status, $payload] = $request('GET', '/api/profiles/' . $avatarId);
     $assert($status === 200 && $payload['data']['user']['avatar_url'] === '/avatar/generated/v1/' . $avatarId . '.svg?gender=female' && !$payload['data']['user']['avatar_custom'], 'Removed avatars return the stable generated fallback.');
-    $seed->exec('CREATE TRIGGER fail_new_avatar BEFORE UPDATE ON users WHEN NEW.id = ' . $avatarId . " BEGIN SELECT RAISE(ABORT, 'forced first avatar failure'); END");
+    $seed->exec('CREATE TRIGGER fail_new_avatar BEFORE UPDATE ON users FOR EACH ROW BEGIN IF NEW.id = ' . $avatarId . " THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced first avatar failure'; END IF; END");
     [$status] = $request('POST', '/api/users/' . $avatarId . '/avatar', $multipartBody(['_method' => 'PUT'], $redPng), 'admin', $multipartHeaders);
     clearstatcache(true, $avatarFile);
     $assert($status === 500 && !is_file($avatarFile), 'A failed first upload removes its new file when there is no previous avatar.');

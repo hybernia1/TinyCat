@@ -27,11 +27,11 @@ Pro feedy, odvozená okna a obsahové hledání existuje jedna definice kurzoru 
 ## Podmínky přijetí změny
 
 - Zachovat přesná ID, pořadí, metadata, excerpt, viditelnost a pokračovací URL. Ověřit stejné timestampy, více vazeb, překrytí zdrojů, nové záznamy mezi stránkami, hluboký a neplatný kurzor.
-- Ověřit častý, vzácný i prázdný výsledek; skryté a budoucí záznamy; limity mimo rozsah; plnou i neúplnou stránku. SQLite a skutečná MySQL cesta se ověřují zvlášť.
+- Ověřit častý, vzácný i prázdný výsledek; skryté a budoucí záznamy; limity mimo rozsah; plnou i neúplnou stránku na skutečné MySQL/MariaDB databázi.
 - Před/po uložit plán pro realistické parametry a distribuci dat. Rozlišit počet přečtených kandidátů od počtu výsledků, dohledání detailů, třídění a materializaci.
 - HTTP měřit na stejných datech a nastavení, střídavě baseline/candidate/candidate/baseline, bez souběžné sady testů. Reportovat p50, p95, SQL čas a počet dotazů, všechny odpovědi a jejich normalizované hashe. In-process sonda je diagnostika, nikoli náhrada HTTP výsledku.
 - Zveřejnit cenu fallbacku a zhoršení jiných scénářů. Nepřidávat index, cache ani denormalizaci bez dalšího důkazu a odpovídající invalidace či write testů.
 
 Měření změn provádět podle [návodu k profilování](../performance/profiling.md).
 Regresní scénáře: `tests/performance/mysql-tag-window.php`, `tests/domains/search/search.php`
-(SQLite a `--mysql`), `tests/domains/status/archive-filters.php` a query budgets.
+(MySQL/MariaDB), `tests/domains/status/archive-filters.php` a query budgets.

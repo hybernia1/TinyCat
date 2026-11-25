@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
 $source = dirname(__DIR__, 3);
 $root = TinyCat\Tools\Workspace::directory('tests/avatar-storage-' . bin2hex(random_bytes(6)));
@@ -16,7 +18,7 @@ use TinyCat\Core\Modules\{ModuleSchema, SchemaMigration};
 $checks = 0;
 $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
 $oldSchema = new ModuleSchema(1, ['users', 'password_reset_tokens'], require $root . '/App/Core/Identity/migrations/fresh-v1.php', [new SchemaMigration(1, 'tinycat.accounts.initial', null, '5cb72aa5ac46c2fa23649f3778c6db11f4b84ce54821bfef1c9a4b4ca1358911')], new SchemaMigration(1, 'tinycat.accounts.fresh-v1', $root . '/App/Core/Identity/migrations/fresh-v1.php'));
-$db = new PDO('sqlite:' . $root . '/avatars.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$db = \tinycat_test_database($root . '/avatars.database.json');
 Connection::set($db); ModuleSchemas::install($db, ['tinycat.accounts' => $oldSchema]);
 $db->exec("INSERT INTO users (id, username, avatar_exists) VALUES (1, 'legacy', 1)");
 ModuleSchemas::upgrade($db, ['tinycat.accounts' => Schema::schema()]); ModuleSchemas::upgrade($db, ['tinycat.accounts' => Schema::schema()]);

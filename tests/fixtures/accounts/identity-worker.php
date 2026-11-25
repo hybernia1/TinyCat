@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Readiness;
 use TinyCat\Core\Runtime\Application;
@@ -12,10 +14,10 @@ use TinyCat\Http\Router;
 
 // Isolated test router, never a production login endpoint.
 $directory = getenv('TINYCAT_IDENTITY_DIRECTORY');
-if (!is_string($directory) || !is_file($directory . '/identity.sqlite')) { throw new RuntimeException('Missing identity fixture.'); }
+if (!is_string($directory) || !is_file($directory . '/identity.database.json')) { throw new RuntimeException('Missing identity fixture.'); }
 define('TINYCAT', true);
 require dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
-TinyCat\Database\Connection::set(new PDO('sqlite:' . $directory . '/identity.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]));
+TinyCat\Database\Connection::set(\tinycat_test_database($directory . '/identity.database.json'));
 $modules = TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);
 $api = Application::boot(new Context(
     new Configuration(['app' => ['debug' => false], 'cache' => ['directory' => $directory . '/cache']]),

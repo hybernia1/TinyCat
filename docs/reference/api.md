@@ -763,8 +763,7 @@ query words in the post body or in one attached link's stored URL, title and
 description. MySQL/MariaDB uses existing FULLTEXT indexes with word prefixes;
 short words and punctuation use literal substring conditions. Quotes and angle
 brackets separate words; a query containing only those symbols searches them
-literally (subject to the same minimum query length). SQLite uses
-literal substring conditions for tests. Results are deduplicated and sorted by
+literally (subject to the same minimum query length). Results are deduplicated and sorted by
 publication time, then ID, newest first. No unrelated posts from matching authors
 or tags are added. Comments, bios and remote page bodies are not searched.
 

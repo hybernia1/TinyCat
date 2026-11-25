@@ -4,6 +4,9 @@ New and changed list queries follow the [selection and pagination standard](../c
 Store each run's reports with its commit, dataset and environment below
 `.work/performance/`; historical measurements do not describe current performance.
 
+Current runtime and test fixtures use MySQL/MariaDB only. SQLite figures below
+are retained historical measurements, not a supported test backend.
+
 The [24 November core audit](../audits/core-performance-2026-11-24.md) measures
 the current compiled/source fallback paths, repeated deployment identity checks
 and framework metadata preparation. It separates live Apache samples from
@@ -866,7 +869,7 @@ The following findings remain open.
    were random and released immediately. This permits overlapping cleanup/feed
    runs, and `History::start` can mark another path's live run interrupted.
    Lock identity must follow the shared storage domain while preserving isolation
-   for different databases. SQLite file-lock isolation needs the same review.
+   for different MySQL databases.
 3. **Medium: skipped runs can conceal failed or stale work.**
    [History::lastSuccessfulFor](../../App/Core/Tasks/History.php) includes
    `not_due` as successful work, while [HealthCheck](../../App/Core/Tasks/HealthCheck.php)
@@ -957,8 +960,7 @@ visual regression run was necessary.
 
 All five audit findings and integer-default validation are implemented in existing
 source files. Both token transports use one HTTPS/cross-site/no-store guard.
-MySQL task locks identify the selected database and task; SQLite locks follow
-the actual main database file, with a separate identity for in-memory databases.
+MySQL task locks identify the selected database and task.
 Workers using the same data must be upgraded together: old path-derived locks
 cannot coordinate with the new lock namespace during a mixed-version rollout.
 

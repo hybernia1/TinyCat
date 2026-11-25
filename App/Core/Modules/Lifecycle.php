@@ -22,8 +22,7 @@ final class Lifecycle
         $schemas = Distribution::schemas($plan, $root, $plan['active']);
         $pdo = $schemas !== [] ? Connection::get() : null;
         if ($pdo !== null) {
-            $query = $pdo->query($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
-                ? "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'" : 'SHOW TABLES');
+            $query = $pdo->query('SHOW TABLES');
             if ($query === false || $query->fetch() !== false) { throw new \RuntimeException('Fresh installation requires an empty database.'); }
         }
         self::validateResources($root, $plan, $plan['active']);
@@ -35,7 +34,7 @@ final class Lifecycle
         }, $pdo !== null, static function () use ($root, $pdo): void {
             if (Deployment::read($root) !== null) { throw new \RuntimeException('Deployment changed during installation; retry.'); }
             if ($pdo !== null) {
-                $query = $pdo->query($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'" : 'SHOW TABLES');
+                $query = $pdo->query('SHOW TABLES');
                 if ($query === false || $query->fetch() !== false) { throw new \RuntimeException('Fresh installation requires an empty database.'); }
             }
         });

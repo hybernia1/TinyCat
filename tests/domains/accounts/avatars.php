@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Prove physical independence as well as class independence, without touching local uploads.
 $sourceRoot = dirname(__DIR__, 3);
 if (($argv[1] ?? '') !== '--isolated') {
@@ -42,11 +44,11 @@ TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelec
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $assert(!is_dir($workspace . '/App/Modules/Social'), 'The test assembly has no Users source directory');
-$pdo = new PDO('sqlite:' . $workspace . '/avatar.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$pdo = \tinycat_test_database($workspace . '/avatar.database.json');
 Connection::set($pdo);
-$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, email TEXT, password TEXT, role TEXT, status TEXT, bio TEXT, locale TEXT, theme TEXT, email_notifications INTEGER, avatar_exists INTEGER, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at TEXT)");
+$pdo->exec("CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), email TEXT, password TEXT, role VARCHAR(40), status VARCHAR(24), bio TEXT, locale TEXT, theme VARCHAR(12), email_notifications INTEGER, avatar_exists INTEGER, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at DATETIME)");
 $pdo->exec("INSERT INTO users VALUES (1, 'Member', 'private@example.test', 'private-hash', 'user', 'active', 'Bio', 'en', 'dark', 1, 0, NULL, NULL, '2026-11-11 00:00:00')");
-$pdo->exec('CREATE TABLE ip_action_limits (ip_address TEXT, action_name TEXT, bucket_start TEXT, action_count INTEGER, updated_at TEXT, UNIQUE(ip_address, action_name, bucket_start))');
+$pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INTEGER, updated_at DATETIME, UNIQUE(ip_address, action_name, bucket_start))');
 $user = Connection::find('users', ['id' => 1]);
 $public = Resource::profile($user); $private = Resource::privateProfile($user); $identity = Resource::identity($user);
 $assert(!isset($public['url'], $private['url']) && !str_contains(json_encode($public), '/author/'), 'Account resources do not invent a social author URL');
@@ -120,7 +122,7 @@ try {
     $assert(getimagesize($file)['mime'] === 'image/webp' && (int) Connection::value('SELECT avatar_exists FROM users WHERE id = 1') === 1, 'Upload persists WebP and account metadata');
     $assert((int) Connection::value("SELECT action_count FROM ip_action_limits WHERE action_name = 'upload'") === 1, 'Member upload still consumes the technical account limiter');
     $previousHash = hash_file('sha256', $file);
-    $pdo->exec("CREATE TRIGGER reject_avatar BEFORE UPDATE ON users BEGIN SELECT RAISE(ABORT, 'injected avatar SQL failure'); END");
+    $pdo->exec("CREATE TRIGGER reject_avatar BEFORE UPDATE ON users FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected avatar SQL failure'; END");
     [$status] = $request('/api/_avatars/avatar', 'POST', $body, $uploadHeaders);
     $assert($status === 500 && hash_file('sha256', $file) === $previousHash && (int) Connection::value('SELECT avatar_exists FROM users WHERE id = 1') === 1, 'SQL failure restores the previous avatar and metadata');
     $pdo->exec('DROP TRIGGER reject_avatar');
@@ -132,6 +134,6 @@ try {
     foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Social\\Moderation\\Restrictions', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Runtime\\Errors'] as $class) { $assert(!class_exists($class, false), 'Account resources did not load ' . $class); }
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
-    Connection::set(new PDO('sqlite::memory:')); $pdo = null;
+    Connection::set(\tinycat_test_database()); $pdo = null;
 }
 echo "PASS account resources and real avatar HTTP without Users sources, upload and rollback ({$checks} checks)\n";

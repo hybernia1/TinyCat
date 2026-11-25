@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
 use \TinyCat\Core\Updates\Manager;
@@ -208,9 +210,9 @@ if (is_file($keyFile)) {
     echo "SKIP release signature test: local signing key is unavailable.\n";
 }
 
-if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
+if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
     $test('database backup is required only for pending migrations', static function () use ($expect): void {
-        $database = new PDO('sqlite::memory:');
+        $database = \tinycat_test_database();
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
@@ -233,7 +235,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     });
 
     $test('migration registry stores version and checksum', static function () use ($expect): void {
-        $database = new PDO('sqlite::memory:');
+        $database = \tinycat_test_database();
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
@@ -250,7 +252,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     });
 
     $test('outdated migration registry is rejected by the major baseline', static function () use ($expectFailure): void {
-        $database = new PDO('sqlite::memory:');
+        $database = \tinycat_test_database();
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
@@ -266,7 +268,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     });
 
     $test('malformed migration registry is not mistaken for the current schema', static function () use ($expectFailure): void {
-        $database = new PDO('sqlite::memory:');
+        $database = \tinycat_test_database();
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
@@ -283,7 +285,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     });
 } else {
     $skipped++;
-    echo "SKIP migration registry test: pdo_sqlite is unavailable.\n";
+    echo "SKIP migration registry test: pdo_mysql is unavailable.\n";
 }
 
 echo "\nUpdater tests: {$passed} passed, {$failed} failed, {$skipped} skipped.\n";

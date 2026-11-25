@@ -191,9 +191,7 @@ final class Tags
         }
 
         return \TinyCat\Support\Cache::rememberArray($cacheKey, 3600, static function () use ($limit, $since): array {
-            $feedIndex = \TinyCat\Database\Connection::driver() === 'mysql'
-                ? ' FORCE INDEX (content_sidebar_index)'
-                : '';
+            $feedIndex = ' FORCE INDEX (content_sidebar_index)';
             $rows = \TinyCat\Database\Query::select(
                 'SELECT t.id,
                         t.name,

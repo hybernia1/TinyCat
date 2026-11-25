@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
 require $root . '/App/Core/Runtime/autoload.php';
@@ -14,8 +16,8 @@ $api = TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(l
 TinyCat\Core\Modules\Resources::configure($modules->catalog);
 $modules->register($api);
 TinyCat\Core\Identity\Authentication::reset(null, true);
-$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec('PRAGMA foreign_keys = ON'); Connection::set($pdo);
+$pdo = \tinycat_test_database();
+ Connection::set($pdo);
 TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Social\Posts\Schema::install($pdo); TinyCat\Social\Profiles\Schema::install($pdo); TinyCat\Social\Discussion\Schema::install($pdo);
 $pdo->exec("INSERT INTO users(id, username, role) VALUES (1, 'Reader', 'user'), (2, 'Writer', 'user'), (3, 'Other', 'user')");
 $own = PostCreation::create(1, PostCreation::fromText('Own'), [], publishedAt: '2000-01-01 00:00:00');
@@ -41,7 +43,7 @@ TinyCat\Core\Modules\Registrations::configure(new TinyCat\Core\Modules\Registrie
     'fixture' => new TinyCat\Core\Modules\Contributions(notificationInbox: true),
 ]));
 Connection::insert('notifications', ['user_id' => 1, 'actor_id' => 2, 'type' => 'content_like', 'subject_id' => $post, 'notification_key' => 'content_like:' . $post, 'created_at' => '2000-01-01', 'updated_at' => '2000-01-01']);
-$pdo->exec("CREATE TRIGGER reject_notification_delete BEFORE DELETE ON notifications BEGIN SELECT RAISE(ABORT, 'notification cleanup failure'); END");
+$pdo->exec("CREATE TRIGGER reject_notification_delete BEFORE DELETE ON notifications FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'notification cleanup failure'; END");
 try { TinyCat\Social\Posts\Posts::status_delete_content($post, deleteReports: false); $assert(false, 'Database failure must stop deletion'); }
 catch (PDOException) { $assert(TinyCat\Social\Posts\Repository::find($post) !== null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 1, 'Notification cleanup failure preserves the post and its reactions'); }
 $assert((int) Connection::value('SELECT COUNT(*) FROM notifications') === 1, 'Failed cleanup retains the notification');

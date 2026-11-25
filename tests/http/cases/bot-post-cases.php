@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-$botPostsDb = new PDO('sqlite:' . $databasePath);
+require_once __DIR__ . '/../../support/mysql.php';
+
+$botPostsDb = \tinycat_test_database($databasePath);
 foreach (['/admin/bots/accounts' => 'bot-accounts-filter-modal', '/admin/bots/list' => 'bots-filter-modal'] as $pagePath => $filterId) {
     $filterPage = file_get_contents('http://' . $address . $pagePath, false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
     $pageHeaders = http_get_last_response_headers() ?? [];

@@ -43,25 +43,20 @@ final class Connection
         }
 
         if (isset($database['dsn'])) {
+            if (!is_string($database['dsn']) || !str_starts_with($database['dsn'], 'mysql:')) { throw new RuntimeException('Only MySQL/MariaDB connections are supported.'); }
             self::$pdo = new PDO(
                 (string) $database['dsn'],
                 (string) ($database['user'] ?? ''),
                 (string) ($database['password'] ?? ''),
                 $options
             );
-            if (self::$pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') { self::$pdo->exec('PRAGMA foreign_keys = ON'); }
 
             return self::$pdo;
         }
 
         $driver = (string) ($database['driver'] ?? 'mysql');
 
-        if ($driver === 'sqlite') {
-            $path = (string) ($database['path'] ?? $database['name'] ?? ':memory:');
-            self::$pdo = new PDO('sqlite:' . $path, null, null, $options);
-            self::$pdo->exec('PRAGMA foreign_keys = ON');
-            return self::$pdo;
-        }
+        if ($driver !== 'mysql') { throw new RuntimeException('Only MySQL/MariaDB connections are supported.'); }
 
         $host = (string) ($database['host'] ?? 'localhost');
         $name = (string) ($database['name'] ?? '');
@@ -81,6 +76,7 @@ final class Connection
 
     public static function set(PDO $pdo): void
     {
+        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') { throw new RuntimeException('Only MySQL/MariaDB connections are supported.'); }
         self::$pdo = $pdo;
     }
 
@@ -97,7 +93,7 @@ final class Connection
 
     public static function lockingSelect(string $sql): string
     {
-        return self::driver() === 'sqlite' ? $sql : $sql . ' FOR UPDATE';
+        return $sql . ' FOR UPDATE';
     }
 
     /**
@@ -199,15 +195,11 @@ final class Connection
         $values = $key + $data;
         $columns = self::columns(array_keys($values));
         $updates = [];
-        $driver = self::driver();
-        if (!in_array($driver, ['mysql', 'sqlite'], true)) { throw new RuntimeException('Unsupported upsert driver.'); }
         foreach (array_keys($data) as $column) {
             $name = self::column($column);
-            $updates[] = $name . ' = ' . ($driver === 'sqlite' ? 'excluded.' . $name : 'VALUES(' . $name . ')');
+            $updates[] = $name . ' = VALUES(' . $name . ')';
         }
-        $conflict = $driver === 'sqlite'
-            ? 'ON CONFLICT (' . implode(', ', self::columns(array_keys($key))) . ') DO UPDATE SET '
-            : 'ON DUPLICATE KEY UPDATE ';
+        $conflict = 'ON DUPLICATE KEY UPDATE ';
         // Native MySQL semantics apply: a conflict on any unique index selects the row.
         self::exec('INSERT INTO ' . self::identifier($table) . ' (' . implode(', ', $columns) . ') VALUES ('
             . implode(', ', array_fill(0, count($values), '?')) . ') ' . $conflict . implode(', ', $updates), array_values($values));

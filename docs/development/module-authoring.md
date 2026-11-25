@@ -58,6 +58,14 @@ Modul nemusí používat všechny schopnosti. Veřejná stránka funguje bez Soc
 Nevytvářej druhý HTTP klient, DB vrstvu, scheduler, překladač nebo modalový systém.
 Závislost na jiném funkčním modulu musí být výslovná a skutečně potřebná.
 
+Pro obecný ASCII segment URL použij `TinyCat\Core\Text\Slugger::slug($text)`.
+Jde o čistý převod validního UTF-8 přes `iconv`, normalizaci na malá písmena
+a pomlčky; prázdný výsledek je povolený. Slugger nečte DB, nenastavuje locale,
+nevybírá doménu, ID, URL cestu ani pravidla přesměrování. Stabilní identitu
+a skládání URL vlastní modul. Historické `Support\Text::slug()` zachovává
+původní pravidla existujících konzumentů; jejich uložené identifikátory se
+kvůli novému mechanismu nepřepočítávají.
+
 ## 1. Adresář a manifest
 
 Následující `Notes` je minimální informační modul bez databáze. Je to ukázka,

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Email;
 use TinyCat\Core\Identity\Passwords;
@@ -19,11 +21,11 @@ $context = new TinyCat\Core\Runtime\Context(
 TinyCat\Core\Runtime\Application::boot($context);
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($root, [
 ])->catalog);
-$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$pdo = \tinycat_test_database();
 Connection::set($pdo);
-$pdo->exec('PRAGMA foreign_keys = ON');
-$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE COLLATE NOCASE, email TEXT UNIQUE COLLATE NOCASE, password TEXT, role TEXT, status TEXT, locale TEXT, theme TEXT, bio TEXT)");
-$pdo->exec('CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER REFERENCES users(id) ON DELETE CASCADE, token_hash TEXT UNIQUE, expires_at TEXT, used_at TEXT)');
+
+$pdo->exec("CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) UNIQUE, email VARCHAR(254) UNIQUE, password TEXT, role VARCHAR(40), status VARCHAR(24), locale TEXT, theme VARCHAR(12), bio TEXT)");
+$pdo->exec('CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED REFERENCES users(id) ON DELETE CASCADE, token_hash VARCHAR(254) UNIQUE, expires_at DATETIME, used_at TEXT)');
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 $password = 'Registration-fixture-42';
@@ -86,7 +88,7 @@ $assert(isset(Recovery::confirm($token, $password, $password)['token']), 'Supers
 $assert(isset(Recovery::confirm($replacement, 'short', 'short')['password']), 'Recovery uses the same password policy as registration');
 $assert(isset(Recovery::confirm($replacement, $password, 'different')['password_confirm']), 'Recovery preserves confirmation errors');
 $assert(Connection::value('SELECT used_at FROM password_reset_tokens') === null, 'Validation failure leaves the token available');
-$pdo->exec("CREATE TRIGGER reject_password_write BEFORE UPDATE OF password ON users BEGIN SELECT RAISE(ABORT, 'injected write failure'); END");
+$pdo->exec("CREATE TRIGGER reject_password_write BEFORE UPDATE ON users FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected write failure'; END");
 try { Recovery::confirm($replacement, 'Changed-password-43', 'Changed-password-43'); throw new LogicException('SQL failure was ignored'); }
 catch (PDOException) { $assert(true, 'Password write failure is propagated'); }
 $assert(Connection::value('SELECT used_at FROM password_reset_tokens') === null && password_verify($password, Connection::value('SELECT password FROM users WHERE id = ?', [$userId])), 'Password write failure rolls token consumption back');
@@ -114,7 +116,7 @@ TinyCat\Support\Dates::configure($context->dateOption(...));
 foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Identity\\Login', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Core\\Mail\\Templates', 'TinyCat\\Social\\Site\\Presentation', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api'] as $class) {
     $assert(!class_exists($class, false), 'Standalone onboarding did not load ' . $class);
 }
-$assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'sqlite_sequence' ORDER BY name"), 'name') === ['password_reset_tokens', 'users'], 'Only account and reset-token tables are needed');
+$assert(array_column(Connection::all("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY name"), 'name') === ['password_reset_tokens', 'users'], 'Only account and reset-token tables are needed');
 TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Loader::load($root)->catalog, static function () use ($assert, $userId) : void {
 $assert(Passwords::errors('short', 'short') === Passwords::fieldErrors('short', 'short')['password'], 'Password summaries retain canonical field validation errors');
 TinyCat\Core\Identity\Recovery::replaceToken($userId, hash('sha256', 'compatibility'), TinyCat\Support\Dates::dateDb('+1 hour'));

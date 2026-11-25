@@ -18,7 +18,7 @@ $db->exec('CREATE DATABASE `' . $name . '` CHARACTER SET utf8mb4 COLLATE utf8mb4
 try {
     $db->exec('USE `' . $name . '`');
     $db->exec('CREATE TABLE users (id INT UNSIGNED PRIMARY KEY, role VARCHAR(20))');
-    $db->exec('CREATE TABLE social_posts (id BIGINT UNSIGNED PRIMARY KEY, author_id INT, body TEXT, published_at DATETIME)');
+    $db->exec('CREATE TABLE social_posts (id BIGINT UNSIGNED PRIMARY KEY, author_id INT, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
     $db->exec('CREATE TABLE bot_sources (id BIGINT UNSIGNED PRIMARY KEY, bot_user_id INT, name VARCHAR(120), feed_url VARCHAR(2048), enabled TINYINT)');
     $db->exec('CREATE TABLE social_links (id BIGINT PRIMARY KEY, normalized_url VARCHAR(2048))');
     $db->exec('CREATE TABLE social_post_links (content_id BIGINT, link_id BIGINT)');

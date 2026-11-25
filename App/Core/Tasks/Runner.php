@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace TinyCat\Core\Tasks;
 
 use TinyCat\Database\Connection;
-use TinyCat\Support\Paths;
 use Throwable;
 use RuntimeException;
 
@@ -46,29 +45,12 @@ final class Runner
         $lockName = '';
         $locked = false;
         $runId = 0;
-        $fileLock = null;
         $started = hrtime(true);
         try {
-            $sqlite = Connection::driver() === 'sqlite';
-            $directory = Paths::basePath('storage/locks/tasks');
-            if ($sqlite) {
-                $main = array_find(Connection::all('PRAGMA database_list'), static fn (array $row): bool => $row['name'] === 'main');
-                $file = (string) ($main['file'] ?? '');
-                $identity = $file !== '' ? (realpath($file) ?: $file) : 'memory:' . getmypid() . ':' . spl_object_id(Connection::get());
-                if ($file !== '') { $directory = dirname($identity) . '/.tinycat-task-locks'; }
-            } else {
-                $identity = (string) Connection::value('SELECT DATABASE()');
-                if ($identity === '') { throw new RuntimeException('Scheduled tasks require a selected database.'); }
-            }
-            $lockName = 'tinycat_scheduled_' . substr(hash('sha256', ($sqlite ? 'sqlite:' : 'mysql:') . $identity . ':' . $name), 0, 46);
-            $sqlLock = !$sqlite || Connection::value("SELECT name FROM pragma_function_list WHERE lower(name) = 'get_lock' LIMIT 1") !== null;
-            if ($sqlLock) { $lockResult = Connection::value('SELECT GET_LOCK(?, 0)', [$lockName]); }
-            else {
-                if (!\TinyCat\Support\Storage::ensureDirectory($directory)) { throw new RuntimeException('Cannot prepare task locks.'); }
-                $fileLock = fopen($directory . '/' . hash('sha256', $lockName) . '.lock', 'c+b');
-                if ($fileLock === false) { throw new RuntimeException('Cannot open task lock.'); }
-                $lockResult = flock($fileLock, LOCK_EX | LOCK_NB) ? 1 : 0;
-            }
+            $identity = (string) Connection::value('SELECT DATABASE()');
+            if ($identity === '') { throw new RuntimeException('Scheduled tasks require a selected database.'); }
+            $lockName = 'tinycat_scheduled_' . substr(hash('sha256', 'mysql:' . $identity . ':' . $name), 0, 46);
+            $lockResult = Connection::value('SELECT GET_LOCK(?, 0)', [$lockName]);
             if ($lockResult === null || $lockResult === false) { throw new RuntimeException('Unable to acquire scheduled task lock.'); }
             $locked = (int) $lockResult === 1;
             if (!$locked) { return Tasks::result('already_running'); }
@@ -93,8 +75,7 @@ final class Runner
             }
             return $result;
         } finally {
-            if (is_resource($fileLock)) { if ($locked) { flock($fileLock, LOCK_UN); } fclose($fileLock); }
-            elseif ($locked) {
+            if ($locked) {
                 try {
                     Connection::value('SELECT RELEASE_LOCK(?)', [$lockName]);
                 } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);

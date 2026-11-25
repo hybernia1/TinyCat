@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 // Real multipart branding publication and SQL rollback through the registered API.
 require_once $root . '/App/Core/Runtime/autoload.php';
 if (!extension_loaded('gd') || !function_exists('imagewebp')) { echo "SKIP branding multipart: GD/WebP unavailable.\n"; return; }
-$brandingDb = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$brandingDb = \tinycat_test_database($databasePath);
 $brandingPaths = [];
 $brandingBoundary = 'tinycat-branding-' . bin2hex(random_bytes(7));
 $brandingHeaders = $csrf + ['Content-Type' => 'multipart/form-data; boundary=' . $brandingBoundary];
@@ -19,7 +21,7 @@ try {
     $stem = substr($firstFile, 0, -5); $firstHash = hash_file('sha256', $firstFile);
     $assert(is_file($stem . '-32.png') && is_file($stem . '-maskable-512.png'), 'The committed favicon has its complete prepared variant set');
     $before = glob(dirname($firstFile) . '/*') ?: [];
-    $brandingDb->exec("CREATE TRIGGER fail_branding BEFORE UPDATE ON settings WHEN NEW.setting_key = 'site.favicon_url' BEGIN SELECT RAISE(ABORT, 'injected branding persistence failure'); END");
+    $brandingDb->exec("CREATE TRIGGER fail_branding BEFORE UPDATE ON settings FOR EACH ROW BEGIN IF NEW.setting_key = 'site.favicon_url' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected branding persistence failure'; END IF; END");
     [$status] = $request('POST', '/api/settings', $brandingBody(0, 255), 'admin', $brandingHeaders);
     $assert($status === 500 && hash_file('sha256', $firstFile) === $firstHash && (string) $brandingDb->query("SELECT setting_value FROM settings WHERE setting_key = 'site.favicon_path'")->fetchColumn() === $firstPath, 'SQL rollback cannot replace the previous branding contents or reference');
     $assert(array_diff(glob(dirname($firstFile) . '/*') ?: [], $before) === [], 'Failed branding persistence removes its entire newly prepared set');

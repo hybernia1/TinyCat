@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
@@ -11,17 +13,17 @@ use TinyCat\Support\Config;
 use TinyCat\Support\Xml;
 
 (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['database' => ['driver' => 'sqlite'], 'app' => ['url' => 'https://example.test']]);
+(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['database' => ['driver' => 'mysql'], 'app' => ['url' => 'https://example.test']]);
 require __DIR__ . '/../../../tools/performance/lib/ProfileDatabase.php';
-$db = new \TinyCat\Tools\Performance\ProfileDatabase('sqlite::memory:', '', '');
+$db = \tinycat_test_database_as(\TinyCat\Tools\Performance\ProfileDatabase::class);
 Connection::set($db);
 // No reactions, comments, previews or session tables: exports must not load UI state.
 foreach ([
-    'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, status TEXT)',
-    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT)',
-    'CREATE TABLE social_post_images (content_id INTEGER, path TEXT, bytes INTEGER)',
-    'CREATE TABLE social_terms (id INTEGER PRIMARY KEY, name TEXT)',
-    'CREATE TABLE social_post_tags (content_id INTEGER, term_id INTEGER)',
+    'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), status VARCHAR(24))',
+    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
+    'CREATE TABLE social_post_images (content_id INT UNSIGNED, path TEXT, bytes INTEGER)',
+    'CREATE TABLE social_terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name TEXT)',
+    'CREATE TABLE social_post_tags (content_id INT UNSIGNED, term_id INT UNSIGNED)',
     "INSERT INTO users VALUES (1, 'public', 'active'), (2, 'hidden', 'inactive')",
     "INSERT INTO social_posts (id, author_id, body, published_at) VALUES (1, 1, 'first', '2020-01-01'), (2, 1, 'second', '2020-01-02'), (3, 2, 'hidden', '2020-01-03'), (4, 1, 'future', '2999-01-01')",
     "INSERT INTO social_terms VALUES (1, 'public'), (2, 'orphan'), (3, 'hidden'), (4, 'future')",
@@ -85,7 +87,7 @@ $assert(Sitemap::pageCounts() === $pages && Sitemap::hasSection('tags'), 'Restor
 $db->exec("UPDATE users SET status = 'inactive' WHERE id = 1");
 $assert(Sitemap::pageCounts() === $pages && Sitemap::entries('status', 1000, 0) === [] && Export::posts() === [], 'A cached sitemap directory never preserves content after its author becomes hidden.');
 // Machine metadata must not inherit a user-selected display format for ISO dates.
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['database' => ['driver' => 'sqlite'], 'app' => ['url' => 'https://example.test'], 'datetime' => ['iso' => 'Y', 'timezone' => 'UTC']]);
+(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['database' => ['driver' => 'mysql'], 'app' => ['url' => 'https://example.test'], 'datetime' => ['iso' => 'Y', 'timezone' => 'UTC']]);
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Http\LocaleRouting::prepare('/pl/status/7');
 $schema = \TinyCat\Social\Posts\StructuredData::post([

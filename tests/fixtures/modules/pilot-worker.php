@@ -17,16 +17,13 @@ $mode = PHP_SAPI === 'cli' ? ($argv[1] ?? '') : '';
 $pdo = \TinyCat\Database\Connection::get();
 if ($mode === 'install') {
     \TinyCat\Database\ModuleSchemas::install($pdo, $modules->schemas());
-    $id = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? 'INTEGER PRIMARY KEY AUTO_INCREMENT' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    $pdo->exec('CREATE TABLE IF NOT EXISTS scheduler_runs (id ' . $id . ', task VARCHAR(100), mode VARCHAR(16), actor_id INTEGER NULL, status VARCHAR(24), started_at DATETIME, finished_at DATETIME NULL, duration_ms INTEGER NULL, options_json TEXT, summary_json TEXT NULL, error TEXT NULL)');
+    $id = 'INTEGER PRIMARY KEY AUTO_INCREMENT';
+    $pdo->exec('CREATE TABLE IF NOT EXISTS scheduler_runs (id ' . $id . ', task VARCHAR(100), mode VARCHAR(16), actor_id INT UNSIGNED NULL, status VARCHAR(24), started_at DATETIME, finished_at DATETIME NULL, duration_ms INTEGER NULL, options_json TEXT, summary_json TEXT NULL, error TEXT NULL)');
     echo "installed\n";
     return;
 }
 if ($mode === 'task') {
-    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
-        $pdo->sqliteCreateFunction('GET_LOCK', static fn (): int => 1);
-        $pdo->sqliteCreateFunction('RELEASE_LOCK', static fn (): int => 1);
-    }
+
     $result = \TinyCat\Core\Tasks\Execution::run('pilot.notes.refresh', ['batch' => 2]);
     echo json_encode($result, JSON_THROW_ON_ERROR);
     exit($result['ok'] ? 0 : 1);

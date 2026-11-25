@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
@@ -11,7 +13,7 @@ use TinyCat\Support\Paths;
 use TinyCat\Social\Posts\Links;
 
 (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['driver' => 'filesystem'], 'database' => ['driver' => 'sqlite']]);
+(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['driver' => 'filesystem'], 'database' => ['driver' => 'mysql']]);
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void {
     $checks++;
@@ -42,7 +44,8 @@ $assert(is_file(Cache::file('app.js', 'assets')) && is_file(Cache::file('active.
 $result = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('expired_cache_files', 500);
 $assert($result['done'] && $result['changed'] === 0, 'The scheduler dispatches file cache cleanup.');
 
-$database = new class ('sqlite::memory:') extends PDO {
+$testDatabaseConfig = tinycat_test_database_config();
+$database = new class ($testDatabaseConfig['dsn'], $testDatabaseConfig['user'], $testDatabaseConfig['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]) extends TinyCatTestLockPDO {
     public int $prepared = 0;
     public function prepare(string $query, array $options = []): PDOStatement|false
     {
@@ -53,11 +56,11 @@ $database = new class ('sqlite::memory:') extends PDO {
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 \TinyCat\Database\Connection::set($database);
 $database->exec('CREATE TABLE social_links (image_url TEXT)');
-$database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, role TEXT, status TEXT)');
-$database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, enabled INTEGER, next_run_at TEXT, created_at TEXT, last_checked_at TEXT, last_error TEXT, feed_url TEXT, interval_minutes INTEGER)');
-$database->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY, source_id INTEGER NOT NULL)');
-$database->exec('CREATE TABLE social_posts (id INTEGER PRIMARY KEY, published_at TEXT)');
-$database->exec('CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id INTEGER, scheduler_run_id INTEGER, status TEXT, started_at TEXT, items_seen INTEGER, error TEXT)');
+$database->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), role VARCHAR(40), status VARCHAR(24))');
+$database->exec('CREATE TABLE bot_sources (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, bot_user_id INT UNSIGNED, enabled INTEGER, next_run_at DATETIME, created_at DATETIME, last_checked_at DATETIME, last_error TEXT, feed_url TEXT, interval_minutes INTEGER)');
+$database->exec('CREATE TABLE bot_source_posts (content_id INT UNSIGNED PRIMARY KEY, source_id INT UNSIGNED NOT NULL)');
+$database->exec('CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, published_at DATETIME, INDEX content_feed_index (published_at,id))');
+$database->exec('CREATE TABLE bot_source_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, source_id INT UNSIGNED, scheduler_run_id INT UNSIGNED, status VARCHAR(24), started_at DATETIME, items_seen INTEGER, error TEXT)');
 $database->exec("INSERT INTO users VALUES (1, 'fixture-bot', 'bot', 'active')");
 $database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, interval_minutes) VALUES (1, 1, 1, 'http://127.0.0.1/blocked-feed', 60)");
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['bots.cleanup_last_run' => time()]);
@@ -69,7 +72,7 @@ $assert($result['ok'] && $result['count'] === 0 && $result['status'] === 'not_du
 
 $database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, interval_minutes) VALUES (2, 1, 1, 'http://127.0.0.1/blocked-feed', 60)");
 $database->exec('UPDATE bot_sources SET next_run_at = NULL');
-$database->exec('CREATE TRIGGER lose_feed_claim BEFORE UPDATE ON bot_sources BEGIN SELECT RAISE(IGNORE); END');
+$database->exec('CREATE TRIGGER lose_feed_claim BEFORE UPDATE ON bot_sources FOR EACH ROW SET NEW.next_run_at=OLD.next_run_at, NEW.last_checked_at=OLD.last_checked_at, NEW.last_error=OLD.last_error');
 $backlog = $feedTask(['options' => ['bot_limit' => 1]]);
 $assert($backlog['status'] === 'has_more' && $backlog['has_more'] && $backlog['count'] === 1, 'A limited batch reports remaining eligible sources even when a claim is lost.');
 $database->exec('DROP TRIGGER lose_feed_claim');
@@ -80,8 +83,8 @@ $migration($database);
 $lockResult = 1;
 $releases = 0;
 $ran = 0;
-$database->sqliteCreateFunction('GET_LOCK', static function () use (&$lockResult): ?int { return $lockResult; });
-$database->sqliteCreateFunction('RELEASE_LOCK', static function () use (&$releases): int { $releases++; return 1; });
+$database->advisoryLock = static function () use (&$lockResult): ?int { return $lockResult; };
+$database->advisoryRelease = static function () use (&$releases): int { $releases++; return 1; };
 $runner = static function (array $context) use (&$ran): array { $ran++; return \TinyCat\Core\Tasks\Tasks::result('completed'); };
 $result = \TinyCat\Core\Tasks\Runner::run('cleanup', $runner, ['mode' => 'fixture']);
 $assert($result['ok'] && $ran === 1 && $releases === 1, 'Successful cron tasks run under a lock and release it.');
@@ -197,7 +200,7 @@ $before = (int) $database->query('SELECT COUNT(*) FROM bot_source_runs')->fetchC
 \TinyCat\Core\Tasks\Runner::run('feeds', $feedTask, ['mode' => 'admin', 'options' => ['source_id' => 1]]);
 $assert((int) $database->query('SELECT COUNT(*) FROM bot_source_runs')->fetchColumn() === $before, 'A busy feeds lock prevents a second forced source import.');
 $lockResult = 1;
-$database->exec("CREATE TRIGGER reject_source_log BEFORE INSERT ON bot_source_runs BEGIN SELECT RAISE(ABORT, 'diagnostic write failed'); END");
+$database->exec("CREATE TRIGGER reject_source_log BEFORE INSERT ON bot_source_runs FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'diagnostic write failed'; END");
 $result = \TinyCat\Core\Tasks\Runner::run('feeds', $feedTask, ['mode' => 'admin', 'options' => ['source_id' => 1]]);
 $assert(!$result['ok'], 'Diagnostic storage failures propagate to the common scheduler result.');
 $database->exec('DROP TRIGGER reject_source_log');
@@ -245,7 +248,7 @@ $assert(\TinyCat\Core\Tasks\History::latestFor([]) === [] && \TinyCat\Core\Tasks
 
 $registered = \TinyCat\Core\Modules\Registrations::current();
 $normalizations = 0; $observed = null; $lockName = '';
-$database->sqliteCreateFunction('GET_LOCK', static function (string $name) use (&$lockName): int { $lockName = $name; return 1; });
+$database->advisoryLock = static function (string $name) use (&$lockName): int { $lockName = $name; return 1; };
 $taskId = 'fixture.task_with_long_identifier_12345';
 $fixture = new \TinyCat\Core\Modules\ScheduledTask($taskId, static function (array $context) use (&$observed): array {
     $observed = $context['options']['batch'];
@@ -266,7 +269,7 @@ try {
     $route = '/api/scheduler/tasks/{task:' . \TinyCat\Core\Modules\ScheduledTask::ID_PATTERN . '}/runs';
     $assert($match->invoke(null, $route, '/api/scheduler/tasks/' . $taskId . '/runs')['task'] === $taskId, 'The real router accepts dotted, underscored and numeric task IDs.');
     $beforeRelease = $releases;
-    $database->exec("CREATE TRIGGER reject_history_finish BEFORE UPDATE ON scheduler_runs WHEN NEW.task = '" . $taskId . "' AND NEW.status = 'completed' BEGIN SELECT RAISE(FAIL, 'fixture history failure'); END");
+    $database->exec("CREATE TRIGGER reject_history_finish BEFORE UPDATE ON scheduler_runs FOR EACH ROW BEGIN IF NEW.task = '" . $taskId . "' AND NEW.status = 'completed' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'fixture history failure'; END IF; END");
     $failed = \TinyCat\Core\Tasks\Execution::run($taskId);
     $assert(!$failed['ok'] && $releases === $beforeRelease + 1, 'A final history write failure reports failure and releases the lock.');
     $database->exec('DROP TRIGGER reject_history_finish');

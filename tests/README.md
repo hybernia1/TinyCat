@@ -7,7 +7,7 @@ prohlédnutých kandidátů, zejména při mnoha neaktivních autorech.
 
 `tests/infrastructure/cache/settings-consistency.php` řídí skutečný souběh
 SELECT → pozastavení čtenáře → commit a invalidace zapisovatele → cache fill.
-Používá izolovanou SQLite databázi ve WAL režimu a worker; ověřuje filesystem
+Používá izolovanou MySQL databázi a worker; ověřuje filesystem
 a dostupný skutečný Memcached. Včetně hlavního runneru potřebuje nejvýše tři
 procesy. Nedostupný Memcached musí být uveden jako neprovedená větev.
 
@@ -119,7 +119,7 @@ ověřuje sledování, sociální projekce a transakční úklid bez Notificatio
 `php tests/release/module-lifecycle.php` sestaví podepsané core a volitelné
 manifestové moduly; ověřuje fresh CLI, HTTP zdroje, aktivaci, neaktivní
 upgrady, starého načteného poskytovatele, chybu migrace, přerušení a rollback.
-`php tests/release/database-snapshots.php` ověřuje SQLite/MySQL obnovu dat,
+`php tests/release/database-snapshots.php` ověřuje MySQL/MariaDB obnovu dat,
 binárních hodnot, generovaných sloupců, FK, views a triggerů.
 
 ## Prostředí
@@ -144,7 +144,10 @@ izolované HTTP workers vytvářejí jen konkrétní runnery podle potřeby scé
 Podrobnosti: [lokální prostředí a hranice izolovaných testů](../docs/development/local-environment.md).
 
 - PHP 8.4 a Composer dev závislosti podle kořenového README.
-- SQLite pro řadu izolovaných doménových a HTTP fixtures.
+- Jediný databázový backend je MySQL/MariaDB přes `pdo_mysql`.
+  [Fixture helper](support/mysql.php) vytváří databáze `tinycat_test_*` na místní
+  službě a uklízí pouze databáze, které sám založil. HTTP workers sdílejí
+  privátní JSON descriptor v pracovním adresáři; nepřipojují se k živé DB.
 - MySQL konfigurace a právo vytvořit izolovanou testovací DB pro MySQL a
   instalační regrese. CI používá [config.ci.php](fixtures/config.ci.php).
   Funkční instalační API test čeká na fresh tvorbu tabulek nejvýše 120 s;
@@ -160,7 +163,7 @@ Podrobnosti: [lokální prostředí a hranice izolovaných testů](../docs/devel
 
 `tests/domains/scheduler/deployment.php` exercises deployment admission through
 Runner, Execution, both CLI entries and the registered scheduler/admin/health API
-handlers in child requests. It uses an isolated application copy and SQLite under
+handlers in child requests. It uses an isolated application copy and disposable MySQL databases with descriptors under
 the development workspace. Two task workers prove concurrent different tasks,
 per-task exclusion, deployment/snapshot/rollback exclusion and process-death
 recovery. The runner plus fixture and workers use at most four processes; this
@@ -198,7 +201,8 @@ výchozího buildu před a po změně sestavy.
 `tests/quality/runtime-registries.php` ověřuje čisté definice úloh, údržby,
 navigace a health; jejich vlastníky, vyřazení a minimální technický start.
 Fixture `tests/fixtures/modules/minimal-boot.php` běží v samostatném procesu
-se SQLite v paměti a bez načtení místního configu nebo sociálních domén.
+s dočasnou databází MySQL. Nastavení fixture načte lokální přístup ke službě;
+samotný runtime start nepřibírá lokální config ani sociální domény.
 Historický performance baseline v `tests/performance/` je ruční kontrolou
 archivních dat. Současné query budgets nad živými testovacími dotazy ověřuje
 `tests/performance/hot-read-query-budgets.php` ve výchozím průchodu.
@@ -223,7 +227,7 @@ testovací databáze. Pro změny UI platí také testy uvedené v závazných
 
 `tests/quality/module-pilot.php` ověřuje svislý pilot z
 `tests/fixtures/modules/notes/`: explicitní aktivaci, vlastní schéma a migrace
-na SQLite i MySQL, skutečné HTTP/CSRF a identitu, sdílené vykreslování, assety,
+na MySQL/MariaDB, skutečné HTTP/CSRF a identitu, sdílené vykreslování, assety,
 překlady, běh úlohy a deaktivaci se zachováním dat. Worker a modul jsou fixture,
 ne další produkční aplikace.
 
@@ -263,7 +267,7 @@ Development outputs use ignored `.work/`, separated from application `storage/`.
 See [filesystem storage](../docs/development/storage.md#development-outputs).
 
 `tests/infrastructure/read-indexes.php` verifies the account/inbox version 2→3
-read-index migrations on SQLite and the existing local MySQL service, including
+read-index migrations on the existing local MySQL service, including
 partial DDL, repeated upgrade and data preservation. Published baselines stay
 immutable; current fresh installations use the new baseline. Notification polling
 regressions cover state-only reads, bounded previews, mutation races, focus and
@@ -277,7 +281,7 @@ interruption recovery and exact rollback. It no longer builds pre-6 bridges.
 The same group also runs the existing MySQL product rehearsal from 6.0.4 when
 local MySQL configuration is available. Older published migrations stay immutable.
 
-The unified migration journal has SQLite preservation, conflicting-history and
+The unified migration journal has MySQL preservation, conflicting-history and
 interruption tests in `tests/infrastructure/migrations.php`; the existing MySQL
 registry group runs the same disposable fixture. The signed 6.0.4 rehearsal
 also verifies conversion from the original journals and full rollback.

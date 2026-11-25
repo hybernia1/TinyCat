@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // The shared fixture supplies HTTP helpers and a disposable database.
 $localeAlternatives = null;
 foreach (['cs', 'en', 'de', 'es', 'fr', 'pt', 'ru', 'it', 'nl', 'pl', 'tr', 'uk'] as $locale) {
@@ -76,7 +78,7 @@ file_get_contents('http://' . $address . '/pl?feed=following', false, $redirectC
 $redirectHeaders = http_get_last_response_headers() ?? [];
 $assert(str_contains($redirectHeaders[0], '301') && in_array('Location: /pl/?feed=following', $redirectHeaders, true), 'A bare locale root normalizes once and preserves query parameters.');
 
-$localeDatabase = new PDO('sqlite:' . $databasePath);
+$localeDatabase = \tinycat_test_database($databasePath);
 $assert($localeDatabase->query('SELECT locale FROM users WHERE id = 2')->fetchColumn() === 'en', 'Visiting a localized URL does not rewrite profile preferences.');
 $localeDatabase = null;
 file_get_contents('http://' . $address . '/pl/tag/t%C3%A9st', false, $redirectContext);

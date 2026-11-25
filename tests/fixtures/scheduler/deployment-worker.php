@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Only the owning regression supplies this isolated application root.
 $root = $argv[1];
 $action = $argv[2];
@@ -36,7 +38,7 @@ if ($action === 'scheduled') {
 if ($action === 'console') { exit(TinyCat\Core\Runtime\Console::run(['console', 'task', 'cleanup'])); }
 if ($action === 'finish-console') { exit(TinyCat\Core\Runtime\Console::run(['console', 'finish-deployment', $argv[3] ?? ''])); }
 
-$database = new PDO('sqlite:' . $root . '/fixture.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$database = \tinycat_test_database($root . '/fixture.database.json');
 TinyCat\Database\Connection::set($database);
 $loader = TinyCat\Core\Modules\Loader::fromSelection($root, []);
 TinyCat\Core\Modules\Resources::configure($loader->catalog);

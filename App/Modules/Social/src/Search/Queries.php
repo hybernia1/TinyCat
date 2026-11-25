@@ -173,9 +173,9 @@ final class Queries
         if ($words === []) { $words = [$query]; }
         $fulltext = [];
         $literal = [];
-        $mysql = Connection::driver() === 'mysql';
+
         foreach ($words as $word) {
-            if ($mysql && preg_match('/^[\p{L}\p{N}]{3,}$/u', $word) === 1) {
+            if (preg_match('/^[\p{L}\p{N}]{3,}$/u', $word) === 1) {
                 $fulltext[] = '+' . $word . '*';
             } else {
                 $literal[] = $word;
@@ -203,9 +203,7 @@ final class Queries
         }
         $limit = max(1, min(51, $limit));
         [$body, $bodyParams] = self::textPredicate($query, 'c.body', 'c.body');
-        $linkText = Connection::driver() === 'mysql'
-            ? "CONCAT_WS(' ', l.normalized_url, l.title, l.description)"
-            : "COALESCE(l.normalized_url, '') || ' ' || COALESCE(l.title, '') || ' ' || COALESCE(l.description, '')";
+        $linkText = "CONCAT_WS(' ', l.normalized_url, l.title, l.description)";
         [$link, $linkParams] = self::textPredicate($query, 'l.normalized_url, l.title, l.description', '(' . $linkText . ')');
         [$mediaSql, $mediaParams] = \TinyCat\Social\Posts\Archive::predicate($media);
         if ($mediaSql !== '') {

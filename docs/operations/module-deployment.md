@@ -173,8 +173,8 @@ Jiný produkt, instalační artefakt nebo odstranění zdrojů nainstalovaného
 modulu se odmítá. Aktivace uživatele se zachová; nový povinný modul se přidá.
 
 Updater zálohuje měněné spravované soubory, stav aktivace a při čekajících
-migracích konzistentní snapshot DB. SQLite používá `VACUUM INTO`, MySQL
-transakční snapshot a index hranic SQL příkazů. Migrace se berou z ověřeného
+migracích konzistentní transakční snapshot MySQL/MariaDB
+a index hranic SQL příkazů. Migrace se berou z ověřeného
 podepsaného plánu, nikoli z již načtené staré PHP třídy poskytovatele.
 MySQL snapshot předpokládá transakční tabulky a žádné souběžné ruční DDL;
 externí zapisovače musí během údržby také stát.
@@ -188,14 +188,13 @@ konfiguraci, klíče, uploads ani média nepřepisuje. Po úspěchu vyčistí ca
 a maintenance. Po úspěšném nasazení rollback vrací také DB na čas snapshotu;
 pozdější zápisy proto vyžadují samostatné provozní rozhodnutí a zálohu.
 
-SQLite virtuální tabulky vyžadují offline obnovu souboru; automatická obnova
-je odmítá před změnou živého schématu. Staré zálohy bez formátu 2 obnovuj
+Staré zálohy bez formátu 2 obnovuj
 podle [ručního postupu](updates.md), ne novým CLI. Uchovávej celé záložní
 adresáře včetně metadata a indexu příkazů, nikoli jen SQL soubor.
 
 Ověření: `tests/release/module-lifecycle.php` staví skutečné podepsané sestavy
 a provozuje je v dočasné instalaci; `tests/release/database-snapshots.php`
-ověřuje SQLite a dostupné MySQL v samostatné náhodné databázi.
+ověřuje MySQL/MariaDB v samostatné náhodné databázi.
 
 ## Samostatné moduly a aktualizace
 

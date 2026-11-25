@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Profile;
 use TinyCat\Core\Identity\ValidationException;
@@ -13,10 +15,10 @@ require $root . '/App/Core/Runtime/autoload.php';
 TinyCat\Core\Runtime\Application::boot(new TinyCat\Core\Runtime\Context(locale: static fn (): string => 'en'));
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($root, [
 ])->catalog);
-$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$pdo = \tinycat_test_database();
 Connection::set($pdo);
-$pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT UNIQUE COLLATE NOCASE, password TEXT, role TEXT, status TEXT, bio TEXT, locale TEXT, theme TEXT, email_notifications INTEGER)');
-$pdo->exec('CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)');
+$pdo->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) UNIQUE, email VARCHAR(254) UNIQUE, password TEXT, role VARCHAR(40), status VARCHAR(24), bio TEXT, locale TEXT, theme VARCHAR(12), email_notifications INTEGER)');
+$pdo->exec('CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, token_hash TEXT, expires_at DATETIME, used_at TEXT)');
 $password = 'Profile-fixture-42';
 $hash = Authentication::authPassword($password);
 $insert = $pdo->prepare("INSERT INTO users VALUES (?, ?, ?, ?, ?, 'active', 'Original bio', 'en', 'light', 1)");
@@ -87,19 +89,19 @@ $assert(array_diff_assoc($row(2), $beforePassword) === ['password' => $newHash],
 $invalid(static fn () => Profile::password($beforePassword, $member, ['current_password' => $password, 'password' => 'Stale-fixture-44', 'password_confirm' => 'Stale-fixture-44']), ['current_password' => ['account.messages.current_password_invalid']]);
 $assert($row(2)['password'] === $newHash, 'Stale credentials cannot overwrite a concurrent password change');
 $pdo->exec("INSERT INTO password_reset_tokens (id, user_id, token_hash) VALUES (3, 2, 'rollback-token')");
-$pdo->exec("CREATE TRIGGER reject_token_revoke BEFORE DELETE ON password_reset_tokens BEGIN SELECT RAISE(ABORT, 'injected revocation failure'); END");
+$pdo->exec("CREATE TRIGGER reject_token_revoke BEFORE DELETE ON password_reset_tokens FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected revocation failure'; END");
 try { Profile::password($row(2), $member, ['current_password' => 'New-fixture-43', 'password' => 'Rollback-fixture-44', 'password_confirm' => 'Rollback-fixture-44']); throw new LogicException('Revocation failure was ignored'); }
 catch (PDOException) { $assert($row(2)['password'] === $newHash && Connection::value('SELECT token_hash FROM password_reset_tokens') === 'rollback-token', 'Revocation failure rolls password and reset-token changes back together'); }
 $pdo->exec('DROP TRIGGER reject_token_revoke');
 Profile::update($row(2), $member, ['email' => 'updated@example.test'], ['en', 'cs']);
 $assert((int) Connection::value('SELECT COUNT(*) FROM password_reset_tokens') === 0, 'General profile update also revokes tokens when recovery email changes');
-$pdo->exec("CREATE TRIGGER reject_profile_write BEFORE UPDATE ON users BEGIN SELECT RAISE(ABORT, 'injected profile SQL failure'); END");
+$pdo->exec("CREATE TRIGGER reject_profile_write BEFORE UPDATE ON users FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected profile SQL failure'; END");
 try { Profile::update($row(2), $member, ['bio' => 'Failed SQL write'], ['en', 'cs']); throw new LogicException('SQL failure was ignored'); }
 catch (PDOException) { $assert($row(2)['bio'] === 'Edited by admin', 'SQL failure leaves stored profile unchanged'); }
 $pdo->exec('DROP TRIGGER reject_profile_write');
 foreach (['TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Core\\Notifications\\ServiceProvider', 'TinyCat\\Http\\Request', 'TinyCat\\Http\\Response', 'TinyCat\\Http\\Session'] as $class) {
     $assert(!class_exists($class, false), 'Domain profile writes did not load ' . $class);
 }
-$assert(array_column(Connection::all("SELECT name FROM sqlite_master WHERE type = 'table'"), 'name') === ['users', 'password_reset_tokens'], 'Profile management needs only account storage');
+$assert(array_column(Connection::all("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME"), 'name') === ['password_reset_tokens', 'users'], 'Profile management needs only account storage');
 
 echo "PASS standalone account profile, permissions, field selection and credential races ({$checks} checks)\n";

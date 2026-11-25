@@ -40,9 +40,7 @@ final class RateLimiter
     public static function subject_action_record(string $subject, string $action, int $window = 3600): void
     {
         $bucket = self::bucketStart($window);
-        $conflict = \TinyCat\Database\Connection::driver() === 'sqlite'
-            ? 'ON CONFLICT (ip_address, action_name, bucket_start) DO UPDATE SET action_count = action_count + 1, updated_at = excluded.updated_at'
-            : 'ON DUPLICATE KEY UPDATE action_count = action_count + 1, updated_at = VALUES(updated_at)';
+        $conflict = 'ON DUPLICATE KEY UPDATE action_count = action_count + 1, updated_at = VALUES(updated_at)';
         \TinyCat\Database\Connection::exec(
             'INSERT INTO ip_action_limits (ip_address, action_name, bucket_start, action_count, updated_at)
                 VALUES (?, ?, ?, 1, ?)
@@ -61,11 +59,8 @@ final class RateLimiter
     public static function consume(string $subject, string $action, int $window, int $limit): bool
     {
         $bucket = self::bucketStart($window);
-        $conflict = \TinyCat\Database\Connection::driver() === 'sqlite'
-            ? 'ON CONFLICT (ip_address, action_name, bucket_start) DO UPDATE SET action_count = action_count + 1, updated_at = excluded.updated_at WHERE action_count < ?'
-            : 'ON DUPLICATE KEY UPDATE updated_at = IF(action_count < ?, VALUES(updated_at), updated_at), action_count = IF(action_count < ?, action_count + 1, action_count)';
-        $params = [$subject, $action, $bucket, \TinyCat\Support\Dates::dateDb(), $limit];
-        if (\TinyCat\Database\Connection::driver() !== 'sqlite') { $params[] = $limit; }
+        $conflict = 'ON DUPLICATE KEY UPDATE updated_at = IF(action_count < ?, VALUES(updated_at), updated_at), action_count = IF(action_count < ?, action_count + 1, action_count)';
+        $params = [$subject, $action, $bucket, \TinyCat\Support\Dates::dateDb(), $limit, $limit];
         return \TinyCat\Database\Connection::exec(
             'INSERT INTO ip_action_limits (ip_address, action_name, bucket_start, action_count, updated_at) VALUES (?, ?, ?, 1, ?) ' . $conflict,
             $params

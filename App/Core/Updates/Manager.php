@@ -278,7 +278,7 @@ class Manager extends Package
             $database = $metadata['database'] ?? [];
             if (!empty($metadata['database_backup_required']) && (!is_array($database) || $database === [])) { throw new RuntimeException('Required database snapshot is incomplete.'); }
             foreach ($database as $name => $hash) {
-                if (!in_array($name, ['database.sqlite', 'database.sql', 'database.index.jsonl'], true)) { throw new RuntimeException('Invalid database snapshot path.'); }
+                if (!in_array($name, ['database.sql', 'database.index.jsonl'], true)) { throw new RuntimeException('Invalid database snapshot path.'); }
                 self::verifyFileHash($backup . '/' . $name, (string) $hash);
             }
             if (!empty($metadata['database_backup_required']) && ($metadata['database_identity'] ?? null) !== \TinyCat\Database\Snapshots::identity(\TinyCat\Database\Connection::get())) { throw new RuntimeException('Database configuration no longer points to the snapshot destination.'); }
@@ -920,7 +920,7 @@ class Manager extends Package
             $metadata = self::decodeJson((string) file_get_contents($metadataFile), 'backup');
             $metadata['database_identity'] = \TinyCat\Database\Snapshots::identity(\TinyCat\Database\Connection::get());
             $metadata['database'] = [];
-            foreach (['database.sqlite', 'database.sql', 'database.index.jsonl'] as $name) {
+            foreach (['database.sql', 'database.index.jsonl'] as $name) {
                 if (is_file($backupDirectory . '/' . $name)) { $metadata['database'][$name] = hash_file('sha256', $backupDirectory . '/' . $name); }
             }
             self::writeJsonFile($metadataFile, $metadata);

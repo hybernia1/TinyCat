@@ -19,12 +19,10 @@ final class Migrations
     /** Prepare current storage during an explicit installation or deployment. */
     public static function prepare(PDO $pdo): void
     {
-        if (!in_array($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), ['mysql', 'sqlite'], true)) { throw new RuntimeException('Migration journals require MySQL, MariaDB or SQLite.'); }
-        $sources = $pdo->query($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql'
-            ? "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME IN ('schema_migrations', 'module_migrations')"
-            : "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('schema_migrations', 'module_migrations')");
+        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') { throw new RuntimeException('Migration journals require MySQL/MariaDB.'); }
+        $sources = $pdo->query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME IN ('schema_migrations', 'module_migrations')");
         if ($sources === false || $sources->fetchColumn() !== false) { throw new RuntimeException('A completed TinyCat 6.0.6 migration journal is required.'); }
-        $suffix = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : '';
+        $suffix = ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
         $pdo->exec('CREATE TABLE IF NOT EXISTS migrations (kind VARCHAR(16) NOT NULL DEFAULT \'schema\', stream VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, sequence INTEGER NULL, release_version VARCHAR(190) NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NULL, PRIMARY KEY (kind, stream, migration))' . $suffix);
         Schema::requireColumns($pdo, 'migrations', ['kind', 'stream', 'migration', 'sequence', 'release_version', 'checksum', 'applied_at']);
         self::shape($pdo, 'migrations', ['kind', 'stream', 'migration', 'checksum'], ['kind', 'stream', 'migration']);
@@ -53,12 +51,12 @@ final class Migrations
      * @param list<string> $expectedPrimary */
     private static function shape(PDO $pdo, string $table, array $required, array $expectedPrimary): void
     {
-        $info = \TinyCat\Core\Database\Statements::query($pdo, $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? 'SHOW COLUMNS FROM ' . $table : 'PRAGMA table_info(' . $table . ')')->fetchAll(PDO::FETCH_ASSOC);
+        $info = \TinyCat\Core\Database\Statements::query($pdo, 'SHOW COLUMNS FROM ' . $table)->fetchAll(PDO::FETCH_ASSOC);
         $primary = [];
         foreach ($info as $column) {
-            $name = $column['name'] ?? $column['Field'];
-            if (in_array($name, $required, true) && (isset($column['Null']) ? $column['Null'] !== 'NO' : (int) $column['notnull'] !== 1)) { throw new RuntimeException('Invalid migration journal nullability: ' . $table); }
-            if (($column['Key'] ?? '') === 'PRI' || (int) ($column['pk'] ?? 0) > 0) { $primary[] = $name; }
+            $name = $column['Field'];
+            if (in_array($name, $required, true) && $column['Null'] !== 'NO') { throw new RuntimeException('Invalid migration journal nullability: ' . $table); }
+            if ($column['Key'] === 'PRI') { $primary[] = $name; }
         }
         if ($primary !== $expectedPrimary) { throw new RuntimeException('Invalid migration journal primary key: ' . $table); }
     }

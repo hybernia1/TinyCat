@@ -60,12 +60,9 @@ final class Schema
         $tables = array_values(array_unique($tables));
         foreach ($tables as $table) { \TinyCat\Core\Database\Statements::identifier($table); }
         $existing = [];
-        $sqlite = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
         foreach (array_chunk($tables, 500) as $batch) {
             $placeholders = implode(', ', array_fill(0, count($batch), '?'));
-            $sql = $sqlite
-                ? "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (" . $placeholders . ')'
-                : 'SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN (' . $placeholders . ')';
+            $sql = 'SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN (' . $placeholders . ')';
             $query = \TinyCat\Core\Database\Statements::query($pdo, $sql, $batch);
             foreach ($query->fetchAll(PDO::FETCH_COLUMN) as $name) { $existing[] = (string) $name; }
         }
@@ -136,9 +133,7 @@ final class Schema
     public static function exists(PDO $pdo, string $table): bool
     {
         self::identifier($table);
-        $query = $pdo->prepare($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
-            ? "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?"
-            : 'SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?');
+        $query = $pdo->prepare('SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?');
         $query->execute([$table]); return $query->fetchColumn() !== false;
     }
 
@@ -146,8 +141,8 @@ final class Schema
     public static function columns(PDO $pdo, string $table): array
     {
         $table = self::identifier($table);
-        $query = \TinyCat\Core\Database\Statements::query($pdo, $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? 'PRAGMA table_info(' . $table . ')' : 'SHOW COLUMNS FROM ' . $table);
-        return array_values(array_map(static fn (array $row): string => (string) ($row['name'] ?? $row['Field']), $query->fetchAll(PDO::FETCH_ASSOC)));
+        $query = \TinyCat\Core\Database\Statements::query($pdo, 'SHOW COLUMNS FROM ' . $table);
+        return array_values(array_map(static fn (array $row): string => (string) $row['Field'], $query->fetchAll(PDO::FETCH_ASSOC)));
     }
 
     /** @param list<string> $columns */
@@ -173,9 +168,6 @@ final class Schema
                 if ($valid === false) { throw new \RuntimeException('Historical ID space is exhausted.'); }
                 return $valid;
             }
-        } elseif (self::exists($pdo, 'sqlite_sequence')) {
-            $query = $pdo->prepare('SELECT seq FROM sqlite_sequence WHERE name = ?'); $query->execute([$table]); $last = $query->fetchColumn();
-            if ($last !== false) { if ((int) $last >= PHP_INT_MAX) { throw new \RuntimeException('Historical ID space is exhausted.'); } return max(1, (int) $last + 1); }
         }
         $last = (int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT COALESCE(MAX(id), 0) FROM ' . $table)->fetchColumn();
         if ($last >= PHP_INT_MAX) { throw new \RuntimeException('Historical ID space is exhausted.'); }
@@ -186,10 +178,7 @@ final class Schema
     {
         $table = self::identifier($table);
         if ($next < 1) { throw new \InvalidArgumentException('Invalid historical sequence.'); }
-        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') { $pdo->exec('ALTER TABLE ' . $table . ' AUTO_INCREMENT = ' . $next); return; }
-        $query = $pdo->prepare('SELECT seq FROM sqlite_sequence WHERE name = ?'); $query->execute([$table]); $last = $query->fetchColumn();
-        if ($last === false) { $pdo->prepare('INSERT INTO sqlite_sequence(name, seq) VALUES (?, ?)')->execute([$table, $next - 1]); }
-        elseif ((int) $last < $next - 1) { $pdo->prepare('UPDATE sqlite_sequence SET seq = ? WHERE name = ?')->execute([$next - 1, $table]); }
+        $pdo->exec('ALTER TABLE ' . $table . ' AUTO_INCREMENT = ' . $next);
     }
 
     /** Remove obsolete references from an owner's table without deleting producer data.
@@ -198,11 +187,6 @@ final class Schema
     {
         self::identifier($table); foreach ($columns as $column) { self::identifier($column); }
         if ($columns === []) { return; }
-        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
-            $query = \TinyCat\Core\Database\Statements::query($pdo, 'PRAGMA foreign_key_list(' . $table . ')');
-            foreach ($query->fetchAll(PDO::FETCH_ASSOC) as $key) { if (in_array($key['from'], $columns, true)) { throw new \RuntimeException('A custom SQLite legacy reference requires an explicit table rebuild.'); } }
-            return;
-        }
         $query = $pdo->prepare('SELECT DISTINCT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND REFERENCED_TABLE_NAME IS NOT NULL AND COLUMN_NAME IN (' . implode(', ', array_fill(0, count($columns), '?')) . ')');
         $query->execute([$table, ...$columns]);
         foreach ($query->fetchAll(PDO::FETCH_COLUMN) as $constraint) { $pdo->exec('ALTER TABLE ' . $table . ' DROP FOREIGN KEY ' . self::identifier((string) $constraint)); }
@@ -220,9 +204,7 @@ final class Schema
             } elseif (!self::exists($pdo, $new)) { throw new \RuntimeException('Historical migration source is missing: ' . $old); }
         }
         if ($pending === []) { return; }
-        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
-            $pairs = []; foreach ($pending as $old => $new) { $pairs[] = $old . ' TO ' . $new; }
-            $pdo->exec('RENAME TABLE ' . implode(', ', $pairs));
-        } else { foreach ($pending as $old => $new) { $pdo->exec('ALTER TABLE ' . $old . ' RENAME TO ' . $new); } }
+        $pairs = []; foreach ($pending as $old => $new) { $pairs[] = $old . ' TO ' . $new; }
+        $pdo->exec('RENAME TABLE ' . implode(', ', $pairs));
     }
 }

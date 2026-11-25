@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../../tools/support/workspace.php';
 
 require __DIR__ . '/../../tools/performance/lib/ProfileDatabase.php';
@@ -20,7 +22,7 @@ if (str_replace('\\', '/', $workspace) !== str_replace('\\', '/', dirname(__DIR_
 }
 echo "PASS development workspace rejects traversal and isolates outputs\n";
 
-$database = new \TinyCat\Tools\Performance\ProfileDatabase('sqlite::memory:', '', '');
+$database = \tinycat_test_database_as(\TinyCat\Tools\Performance\ProfileDatabase::class);
 $database->exec('CREATE TABLE sample (value INTEGER)');
 $statement = $database->prepare('INSERT INTO sample VALUES (?)');
 if (count($database->queries) !== 1) { throw new RuntimeException('Preparing a statement must not count as executing it.'); }

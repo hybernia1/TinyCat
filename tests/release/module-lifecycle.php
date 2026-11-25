@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 // Real signed products and fresh PHP workers; the developer's DB/config/storage are never targets.
 $source = dirname(__DIR__, 2);
 require_once $source . '/tests/support/execution.php';
@@ -47,7 +49,7 @@ try {
         $class = 'TinyCat\\Modules\\' . $namespace . '\\Module';
         file_put_contents($root . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => $id, 'namespace' => 'TinyCat\\Modules\\' . $namespace . '\\', 'requires' => $requires,
             'providers' => ['routes' => $class, 'schema' => $class, 'contributions' => $class], 'resources' => ['translations' => 'lang', 'assets' => 'assets/module.json', 'migrations' => 'migrations']], JSON_THROW_ON_ERROR));
-        file_put_contents($root . '/migrations/1.php', '<?php return static function (PDO $pdo): void { $id = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === \'mysql\' ? \'INTEGER PRIMARY KEY AUTO_INCREMENT\' : \'INTEGER PRIMARY KEY AUTOINCREMENT\'; $pdo->exec(\'CREATE TABLE ' . $table . ' (id \' . $id . \', body TEXT NOT NULL, ticks INTEGER NOT NULL DEFAULT 0)\'); };');
+        file_put_contents($root . '/migrations/1.php', '<?php return static function (PDO $pdo): void { $id = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === \'mysql\' ? \'INTEGER PRIMARY KEY AUTO_INCREMENT\' : \'INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY\'; $pdo->exec(\'CREATE TABLE ' . $table . ' (id \' . $id . \', body TEXT NOT NULL, ticks INTEGER NOT NULL DEFAULT 0)\'); };');
         if ($version >= 2) { file_put_contents($root . '/migrations/2.php', '<?php return static function (PDO $pdo): void { $pdo->exec(\'ALTER TABLE ' . $table . ' ADD COLUMN revision INTEGER NOT NULL DEFAULT 2\'); };'); }
         if ($version >= 3) { file_put_contents($root . '/migrations/3.php', '<?php return static function (PDO $pdo): void { $pdo->exec(\'ALTER TABLE ' . $table . ' ADD COLUMN revision_three INTEGER NOT NULL DEFAULT 3\'); };'); }
         if ($version >= 4) { file_put_contents($root . '/migrations/4.php', '<?php return static function (PDO $pdo): void { $pdo->exec(\'CREATE TABLE failed_migration (id INTEGER)\'); throw new RuntimeException(\'Injected migration failure\'); };'); }
@@ -91,7 +93,7 @@ try {
     $root = $workspace . '/installation'; mkdir($root, 0700);
     $zip = new ZipArchive(); $zip->open($workspace . '/v1/install/' . $installManifest['package']); $zip->extractTo($root); $zip->close();
     // Failure-injection cases below assert technical diagnostics explicitly.
-    $config = ['app' => ['debug' => 'on'], 'database' => ['dsn' => 'sqlite:' . $root . '/database.sqlite'], 'updates' => ['public_key' => base64_encode($public)], 'i18n' => ['locale' => 'en']];
+    $config = ['app' => ['debug' => 'on'], 'database' => tinycat_test_database_config($root . '/database.database.json'), 'cache' => ['directory' => $root . '/storage/cache'], 'updates' => ['public_key' => base64_encode($public)], 'i18n' => ['locale' => 'en']];
     file_put_contents($root . '/config.php', '<?php return ' . var_export($config, true) . ';'); $configHash = hash_file('sha256', $root . '/config.php');
     $entry = $root . '/App/Console.php';
     $console = static function (array $args, string $input = '') use ($run, $root, &$entry): array { return $run([PHP_BINARY, $entry, ...$args], $root, $input); };
@@ -108,8 +110,8 @@ try {
         [$exit] = $console(['status']); $assert($exit !== 0, 'Normal status rejects corrupt ' . $metadataFile);
         if ($original === null) { unlink($path); } else { file_put_contents($path, $original); }
     }
-    $pdo = new PDO('sqlite:' . $root . '/database.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-    $assert(count($pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll()) === 8, 'Fresh signed fixture product creates exactly its declared tables: ' . implode(', ', $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchAll(PDO::FETCH_COLUMN)));
+    $pdo = \tinycat_test_database($root . '/database.database.json');
+    $assert(count($pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'")->fetchAll()) === 8, 'Fresh signed fixture product creates exactly its declared tables: ' . implode(', ', $pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN)));
     $assert(password_verify('Module-Regression-42', (string) $pdo->query('SELECT password FROM users')->fetchColumn()), 'CLI uses the shared account password writer');
     $assert($pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'site.public_enabled'")->fetchColumn() === '0', 'Fresh signed products keep public presentation disabled until explicitly enabled');
     $publicSetup = 'define("TINYCAT", true); require ' . var_export($root . '/App/Core/Runtime/autoload.php', true) . '; \\TinyCat\\Core\\Settings\\Store::setSetting("site.public_enabled", true, "bool", "site");';
@@ -152,6 +154,8 @@ try {
     [$exit, $text, $error] = $console(['deactivate', 'fixture.reports', 'fixture.notes']); $assert($exit === 0 && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Deactivation retains data and schema history: ' . $text . $error);
     [$exit] = $console(['task', 'fixture.notes.tick']); $assert($exit !== 0 && (int) $pdo->query('SELECT ticks FROM lifecycle_notes')->fetchColumn() === 1, 'Inactive contributions cannot execute');
     [$status] = $request('/api/fixture/notes'); $assert($status === 404, 'Deactivation removes HTTP routes on the next request');
+    proc_terminate($http); proc_close($http); $http = null;
+    echo "PASS activation, assets and deactivation HTTP checks; HTTP worker stopped\n";
     $state = json_decode((string) file_get_contents($root . '/storage/deployment.json'), true, 512, JSON_THROW_ON_ERROR);
     $assert(!in_array('fixture.notes', $state['active'], true) && in_array('fixture.notes', $state['installed'], true), 'Activation and installation are separate states');
     $pdo->exec("INSERT INTO users(id, username, password, role, status) VALUES (2, 'deletion_fixture', 'fixture', 'user', 'active')");
@@ -210,19 +214,19 @@ try {
     $assert($exit !== 0 && str_contains($error, 'Injected migration failure') && is_file($root . '/storage/maintenance.json'), 'Failed migration keeps maintenance and recovery journal: ' . $text . $error);
     $operation = json_decode((string) file_get_contents($root . '/storage/updates/operation.json'), true, 512, JSON_THROW_ON_ERROR);
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]); $assert($exit === 0, 'Failed migration restores the signed previous files and DB: ' . $text . $error);
-    $assert(!$pdo->query("SELECT name FROM sqlite_master WHERE name = 'failed_migration'")->fetchColumn() && (int) $pdo->query("SELECT version FROM module_installations WHERE module_id = 'fixture.notes'")->fetchColumn() === 3, 'Rollback removes partial DDL and restores schema metadata');
+    $assert(!$pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME= 'failed_migration'")->fetchColumn() && (int) $pdo->query("SELECT version FROM module_installations WHERE module_id = 'fixture.notes'")->fetchColumn() === 3, 'Rollback removes partial DDL and restores schema metadata');
     $assert(file_get_contents($root . '/storage/deployment.json') === $stateBytes && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Rollback restores activation state and retained data byte for byte');
     // An explicit interruption leaves the previous state and a complete recoverable snapshot.
     [$exit] = $run([PHP_BINARY, $fixture . '/interrupt-worker.php', $root], $root); $assert($exit === 23 && is_file($root . '/storage/maintenance.json'), 'Interruption retains maintenance and the operation journal');
     [$exit] = $console(['deactivate', 'fixture.notes']); $assert($exit !== 0, 'Interrupted operations cannot be silently replaced');
     $operation = json_decode((string) file_get_contents($root . '/storage/updates/operation.json'), true, 512, JSON_THROW_ON_ERROR);
-    $snapshot = $root . '/storage/updates/backups/' . $operation['backup'] . '/database.sqlite';
+    $snapshot = $root . '/storage/updates/backups/' . $operation['backup'] . '/database.sql';
     $snapshotBytes = file_get_contents($snapshot); file_put_contents($snapshot, 'corrupt', FILE_APPEND);
     [$exit] = $console(['rollback', $operation['backup']]);
-    $assert($exit !== 0 && $pdo->query("SELECT name FROM sqlite_master WHERE name = 'interrupted_module'")->fetchColumn() === 'interrupted_module', 'Corrupt backup is rejected before changing the live DB');
+    $assert($exit !== 0 && $pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME= 'interrupted_module'")->fetchColumn() === 'interrupted_module', 'Corrupt backup is rejected before changing the live DB');
     file_put_contents($snapshot, $snapshotBytes);
     $configBytes = file_get_contents($root . '/config.php');
-    $otherConfig = $config; $otherConfig['database']['dsn'] = 'sqlite:' . $root . '/other.sqlite';
+    $otherConfig = $config; $otherConfig['database'] = tinycat_test_database_config($root . '/other.database.json');
     file_put_contents($root . '/config.php', '<?php return ' . var_export($otherConfig, true) . ';');
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]);
     $assert($exit !== 0 && str_contains($error, 'snapshot destination'), 'Rollback refuses a changed database destination');
@@ -235,7 +239,7 @@ try {
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]); $assert($exit === 0, 'Interrupted operation restores despite corrupt module metadata: ' . $text . $error);
     file_put_contents($root . '/App/distribution.json', $descriptor);
     if ($registry === null) { unlink($registryPath); } else { file_put_contents($registryPath, $registry); }
-    $assert(!$pdo->query("SELECT name FROM sqlite_master WHERE name = 'interrupted_module'")->fetchColumn() && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Rollback removes introduced tables and preserves original bytes');
+    $assert(!$pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME= 'interrupted_module'")->fetchColumn() && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Rollback removes introduced tables and preserves original bytes');
     $assert(!is_file($root . '/storage/maintenance.json') && hash_file('sha256', $root . '/config.php') === $configHash, 'Recovery clears maintenance and leaves private configuration unchanged');
     echo "PASS signed product distribution, module activation, inactive upgrades, tasks and recovery ({$checks} checks)\n";
 } finally {

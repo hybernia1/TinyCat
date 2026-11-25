@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
@@ -12,14 +14,14 @@ use TinyCat\Database\ModuleSchemas;
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 $assertIndexes = static function (PDO $db) use ($assert): void {
-    $sqlite = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
+
     foreach (['users' => ['users_updated_asc_index' => ['updated_at', 'id'], 'users_updated_desc_index' => ['updated_at', 'id'], 'users_status_asc_index' => ['status', 'id'], 'users_status_desc_index' => ['status', 'id']], 'notifications' => ['notifications_user_created_id_index' => ['user_id', 'created_at', 'id'], 'notifications_user_id_index' => ['user_id', 'id']]] as $table => $expected) {
-        $rows = $db->query($sqlite ? "PRAGMA index_list('$table')" : 'SHOW INDEX FROM ' . $table)->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $db->query('SHOW INDEX FROM ' . $table)->fetchAll(PDO::FETCH_ASSOC);
         foreach ($expected as $name => $columns) {
-            $assert(in_array($name, array_column($rows, $sqlite ? 'name' : 'Key_name'), true), 'Owned read index exists: ' . $name);
-            $parts = $sqlite ? $db->query("PRAGMA index_info('$name')")->fetchAll(PDO::FETCH_ASSOC) : array_values(array_filter($rows, static fn (array $row): bool => $row['Key_name'] === $name));
-            usort($parts, static fn (array $a, array $b): int => (int) $a[$sqlite ? 'seqno' : 'Seq_in_index'] <=> (int) $b[$sqlite ? 'seqno' : 'Seq_in_index']);
-            $assert(array_column($parts, $sqlite ? 'name' : 'Column_name') === $columns, 'Read-index column order: ' . $name);
+            $assert(in_array($name, array_column($rows, 'Key_name'), true), 'Owned read index exists: ' . $name);
+            $parts = array_values(array_filter($rows, static fn (array $row): bool => $row['Key_name'] === $name));
+            usort($parts, static fn (array $a, array $b): int => (int) $a['Seq_in_index'] <=> (int) $b['Seq_in_index']);
+            $assert(array_column($parts, 'Column_name') === $columns, 'Read-index column order: ' . $name);
         }
     }
 };
@@ -54,25 +56,9 @@ $exercise = static function (PDO $db) use ($root, $assert, $assertIndexes): void
         }
     }
 };
-$sqlite = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$exercise($sqlite);
-$fresh = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$fixture = \tinycat_test_database();
+$exercise($fixture);
+$fresh = \tinycat_test_database();
 \TinyCat\Core\Identity\Schema::install($fresh); \TinyCat\Core\Notifications\Schema::install($fresh);
 $assertIndexes($fresh);
-$config = is_file($root . '/config.php') ? require $root . '/config.php' : [];
-if (isset($config['database']) && extension_loaded('pdo_mysql')) {
-    $database = $config['database'];
-    if (!in_array($database['host'] ?? '', ['localhost', '127.0.0.1'], true)) { throw new RuntimeException('Index tests require the existing local MySQL service.'); }
-    $server = new PDO('mysql:host=' . $database['host'] . ';port=' . ($database['port'] ?? 3306) . ';charset=utf8mb4', $database['user'], $database['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $name = 'tinycat_read_indexes_' . bin2hex(random_bytes(6));
-    $server->exec('CREATE DATABASE `' . $name . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-    $freshName = $name . '_fresh';
-    try {
-        $server->exec('USE `' . $name . '`'); $exercise($server);
-        $server->exec('CREATE DATABASE `' . $freshName . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-        $server->exec('USE `' . $freshName . '`');
-        \TinyCat\Core\Identity\Schema::install($server); \TinyCat\Core\Notifications\Schema::install($server); $assertIndexes($server);
-    } finally { $server->exec('DROP DATABASE IF EXISTS `' . $freshName . '`'); $server->exec('DROP DATABASE `' . $name . '`'); }
-    echo "PASS MySQL read-index upgrade, repetition and data preservation\n";
-} else { echo "SKIP MySQL read-index upgrade: local configuration or driver unavailable\n"; }
 echo 'PASS read-index migration and fresh schema (' . $checks . " checks)\n";

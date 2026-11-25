@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
@@ -13,10 +15,10 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     $checks++;
     if (!$condition) { throw new RuntimeException($message); }
 };
-$database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$database = \tinycat_test_database();
 TinyCat\Database\Connection::set($database);
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
-$database->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, status TEXT); INSERT INTO users VALUES (7, 'jana', 'active')");
+$database->exec("CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), status VARCHAR(24)); INSERT INTO users VALUES (7, 'jana', 'active')");
 foreach (['1', '2026', '0001', '١٢٣', '１２３'] as $number) {
     $assert(Tags::status_tag_normalize($number) === '', 'Pure numeric tags are invalid: ' . $number);
     $assert(Tags::status_tags_from_text('Feature Update #' . $number) === [], 'Numeric prose does not become a tag');
@@ -66,7 +68,7 @@ $assert(count($parts['text_segments']) === 1 && count($parts['tag_segments']) > 
 $bodyHtml = TinyCat\Support\Components::render('status/body', ['item' => $parts]);
 $assert(str_contains($bodyHtml, 'class="status-tags" translate="no"') && str_contains($bodyHtml, '<summary class="badge">'), 'Tags opt out of translation and the disclosure uses a badge');
 $assert(TinyCat\Core\Text\Segments::splitTags(TinyCat\Core\Text\Segments::text('#one sentence', 'post'))['tag_segments'] === [], 'Inline tags remain inside prose');
-$database->exec('CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT); CREATE TABLE content_tags (content_id INTEGER, term_id INTEGER)');
+$database->exec('CREATE TABLE terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name TEXT); CREATE TABLE content_tags (content_id INT UNSIGNED, term_id INT UNSIGNED)');
 foreach ([1 => '1', 2 => '1980s', 3 => '2026', 4 => '3d', 5 => 'gothic-1'] as $id => $name) {
     $database->prepare('INSERT INTO terms VALUES (?, ?)')->execute([$id, $name]);
     $database->prepare('INSERT INTO content_tags VALUES (10, ?)')->execute([$id]);

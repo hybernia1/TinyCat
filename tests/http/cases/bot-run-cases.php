@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-$botRunsDb = new PDO('sqlite:' . $databasePath);
+require_once __DIR__ . '/../../support/mysql.php';
+
+$botRunsDb = \tinycat_test_database($databasePath);
 $seedRunSource = $botRunsDb->prepare('INSERT INTO bot_sources (id, bot_user_id, name, feed_url, feed_hash, post_template) VALUES (?, ?, ?, ?, ?, ?)');
 $seedRunSource->execute([95001, 3, 'History source', 'https://example.org/history', 'history-fixture', '{{title}}']);
 $seedRunSource->execute([95002, $editableBotId, 'Other bot source', 'https://example.org/other-history', 'other-history-fixture', '{{title}}']);

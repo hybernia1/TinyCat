@@ -154,7 +154,7 @@ instalaci, migraci nebo úplný end-to-end průchod. [Výsledek smoke](../../.wo
 - MySQL scénáře se připojují ke stávající službě Laragonu a vytvářejí vlastní
   dočasnou databázi. Nestartují další MySQL daemon a nepoužívají živou DB jako
   náhradu fixture. Přihlašovací údaje se nevypisují ani necommitují.
-- Doménové testy mohou použít vlastní SQLite. Runnery a data zůstávají
+- Doménové testy používají vlastní dočasné databáze MySQL. Runnery a data zůstávají
   oddělené od skutečné konfigurace, médií a účtů v `tinycat.test`.
 - Existující API, instalátorové, produktové a recovery testy mohou přes své
   runnery spustit dočasný PHP HTTP worker nebo statický fixture server,

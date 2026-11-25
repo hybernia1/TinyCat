@@ -1,12 +1,14 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php'; define('TINYCAT', true); require dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
 use TinyCat\Database\Connection;
 use TinyCat\Social\Profiles\Repository;
 use TinyCat\Support\Cache;
 (new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(TinyCat\Support\Config::class, 'config'))->setValue(null, ['datetime' => ['timezone' => 'UTC']]);
-$db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]); Connection::set($db);
+$db = \tinycat_test_database(); Connection::set($db);
 TinyCat\Core\Identity\Schema::install($db); TinyCat\Social\Posts\Schema::install($db);
 $db->exec("INSERT INTO users (id, username, role, status, bio) VALUES (1, 'Ranked', 'user', 'active', 'Old personal data')");
 TinyCat\Social\Posts\PostCreation::create(1, TinyCat\Social\Posts\PostCreation::fromText('Public ranking'), []);

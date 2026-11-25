@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // File effects must run in a copied application, never against local uploads.
 if (($argv[1] ?? '') !== '--isolated') {
     $workspace = sys_get_temp_dir() . '/tinycat-accounts-' . bin2hex(random_bytes(10));
@@ -52,10 +54,10 @@ $selection = new TinyCat\Core\Modules\Catalog([$modules->catalog->get('tinycat.a
 $assert(array_keys(TinyCat\Core\Identity\Participants::fromModules($modules, $selection)) === ['tinycat.accounts'], 'Unselected social owners do not contribute');
 $assert(TinyCat\Core\Identity\Participants::fromModules($modules, new TinyCat\Core\Modules\Catalog([])) === [], 'Empty assembly has no account integrations');
 
-$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$pdo = \tinycat_test_database();
 Connection::set($pdo);
-$pdo->exec('PRAGMA foreign_keys = ON');
-$pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT, role TEXT, avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), created_at TEXT DEFAULT '2026-01-01 00:00:00')");
+
+$pdo->exec("CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, status VARCHAR(24), role VARCHAR(40), avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_version VARCHAR(32), created_at DATETIME DEFAULT ('2026-01-01 00:00:00'))");
 $pdo->exec("INSERT INTO users (id, status, role) VALUES (1, 'active', 'user'), (2, 'active', 'bot'), (3, 'active', 'user')");
 Lifecycle::setActive(['id' => 1, 'role' => 'user'], false);
 $assert(Connection::value('SELECT status FROM users WHERE id = 1') === 'ban', 'Accounts works with only its table');
@@ -115,7 +117,7 @@ try {
 }
 $assert(Connection::find('users', ['id' => 99]) === null && $cleanupEvents === ['remaining owner cleaned'], 'A failing owner does not prevent remaining post-commit account cleanup');
 
-$pdo->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, enabled INTEGER)');
+$pdo->exec('CREATE TABLE bot_sources (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, bot_user_id INT UNSIGNED, enabled INTEGER)');
 $pdo->exec('INSERT INTO bot_sources VALUES (1, 2, 1), (2, 3, 1)');
 Lifecycle::setActive(['id' => 2, 'role' => 'bot'], false, ['tinycat.social' => $participants['tinycat.social']]);
 $assert((int) Connection::value('SELECT enabled FROM bot_sources WHERE id = 1') === 0, 'Bots owns source deactivation');
@@ -127,14 +129,14 @@ try { Lifecycle::setActive(['id' => 3], false, ['fixture.failure' => $statusFail
 catch (RuntimeException $exception) { $assert($exception->getMessage() === 'injected activation failure', 'Status participant failure is propagated'); }
 $assert(Connection::value('SELECT status FROM users WHERE id = 3') === 'active', 'Status participant failure rolls account change back');
 
-$pdo->exec("CREATE TABLE social_posts (id INTEGER PRIMARY KEY, author_id INTEGER REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL DEFAULT 'post')");
+$pdo->exec("CREATE TABLE social_posts (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, kind VARCHAR(40) NOT NULL DEFAULT ('post'), FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE)");
 TinyCat\Social\Discussion\Schema::install($pdo);
 TinyCat\Core\Notifications\Schema::install($pdo);
-$pdo->exec('CREATE TABLE social_terms (id INTEGER PRIMARY KEY)');
-$pdo->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY)');
-$pdo->exec('CREATE TABLE social_post_tags (content_id INTEGER REFERENCES social_posts(id) ON DELETE CASCADE, term_id INTEGER)');
-$pdo->exec('CREATE TABLE social_post_links (content_id INTEGER REFERENCES social_posts(id) ON DELETE CASCADE, link_id INTEGER)');
-$pdo->exec('CREATE TABLE social_post_images (content_id INTEGER REFERENCES social_posts(id) ON DELETE CASCADE, path TEXT)');
+$pdo->exec('CREATE TABLE social_terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY)');
+$pdo->exec('CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY)');
+$pdo->exec('CREATE TABLE social_post_tags (content_id BIGINT UNSIGNED, term_id INT UNSIGNED, FOREIGN KEY (content_id) REFERENCES social_posts(id) ON DELETE CASCADE)');
+$pdo->exec('CREATE TABLE social_post_links (content_id BIGINT UNSIGNED, link_id INT UNSIGNED, FOREIGN KEY (content_id) REFERENCES social_posts(id) ON DELETE CASCADE)');
+$pdo->exec('CREATE TABLE social_post_images (content_id BIGINT UNSIGNED, path TEXT, FOREIGN KEY (content_id) REFERENCES social_posts(id) ON DELETE CASCADE)');
 $pdo->exec('INSERT INTO social_posts(id, author_id) VALUES (10, 2), (11, 3)');
 $pdo->exec('INSERT INTO social_terms VALUES (1), (2), (3)');
 $pdo->exec('INSERT INTO social_links VALUES (1), (2), (3)');
@@ -149,7 +151,7 @@ $pdo->exec('UPDATE users SET avatar_exists = 1 WHERE id = 2');
 file_put_contents($imageFile, 'fixture image');
 file_put_contents($avatarFile, 'fixture avatar');
 $pdo->prepare('INSERT INTO social_post_images VALUES (10, ?)')->execute([$imagePath]);
-$pdo->exec("CREATE TRIGGER reject_account_delete BEFORE DELETE ON users WHEN OLD.id = 2 BEGIN SELECT RAISE(ABORT, 'injected SQL failure'); END");
+$pdo->exec("CREATE TRIGGER reject_account_delete BEFORE DELETE ON users FOR EACH ROW BEGIN IF OLD.id = 2 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected SQL failure'; END IF; END");
 try { Lifecycle::delete(2, $participants); throw new LogicException('SQL failure was ignored'); }
 catch (PDOException) { $assert(true, 'Real SQL failure aborts deletion'); }
 $assert(is_file($avatarFile) && is_file($imageFile), 'SQL failure preserves actual avatar and publishing files');
@@ -167,7 +169,7 @@ $manifestSelection['demo.notes'] = 'tests/fixtures/modules/notes/module.json';
 $withManifest = Loader::fromSelection($root, $manifestSelection);
 $manifestParticipants = TinyCat\Core\Identity\Participants::fromModules($withManifest);
 $assert(isset($manifestParticipants['demo.notes']), 'Selected manifest contribution provider exposes the Accounts extension');
-$pdo->exec('CREATE TABLE pilot_notes (id INTEGER PRIMARY KEY, created_by INTEGER)');
+$pdo->exec('CREATE TABLE pilot_notes (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, created_by INTEGER)');
 $pdo->exec('INSERT INTO pilot_notes VALUES (1, 3), (2, 999)');
 Lifecycle::delete(3, ['demo.notes' => $manifestParticipants['demo.notes']]);
 $assert(array_column(Connection::all('SELECT id FROM pilot_notes'), 'id') === [2], 'Manifest module owns its account-related cleanup without a central domain list');

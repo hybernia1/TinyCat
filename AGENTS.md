@@ -7,6 +7,12 @@ a některé také Playwright. Začni [README](README.md),
 [dokumentací](docs/README.md), [přehledem nástrojů](tools/README.md)
 a [testovací sadou](tests/README.md).
 
+Jediný podporovaný databázový backend je MySQL/MariaDB přes `pdo_mysql`.
+SQLite se nepoužívá v runtime ani v testech; databázové fixture mají vlastní
+dočasné databáze na existující službě MySQL. Publikované migrační soubory
+a historické reporty mohou obsahovat staré větve SQLite a zůstávají neměnné;
+nejsou důvodem k obnovování jeho runtime podpory.
+
 ## Core / Modules
 
 `App/Core/` poskytuje mechanismy a kontrakty. `App/Modules/<Name>/` vlastní
@@ -177,8 +183,13 @@ adaptéru prověř také nepřímá `require` z instalačních snapshotů.
 Živá testovací instalace je **https://tinycat.test/** v samostatném adresáři
 `E:/laragon/www/tinycat`, obsluhovaná existujícím Laragonem. Tento repozitář
 obsahuje zdroje, není DocumentRoot webu. Změna zdrojů se na web nepropíše
-automaticky: před živým ověřením synchronizuj odpovídající runtime soubory,
-nikoli místní konfiguraci, storage, uploads, testy nebo dev závislosti.
+automaticky. Během vývoje průběžně synchronizuj odpovídající runtime změny
+z repozitáře přímo do `E:/laragon/www/tinycat`, aby uživatel viděl aktuální
+průběh na `https://tinycat.test/` a mohl jej korigovat. Synchronizuj po každém
+uceleném funkčním kroku, ne až před závěrečným ověřením; jde o trvale schválený
+vývojový postup bez dalšího potvrzování. Přenášej konzistentní související
+soubory a potřebné assety. Změny DB prováděj přes standardní migrace/lifecycle.
+Nepřenášej místní konfiguraci, storage, uploads, testy ani dev závislosti.
 Nikdy nezrcadli celý repozitář přes živou instalaci s mazáním cíle.
 Živé CLI operace spouštěj v externí instalaci, aby pracovaly s jejími cestami.
 Ignorovaný `config.php` v repozitáři je pouze CLI/test odkaz na externí

@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/../../support/mysql.php';
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
@@ -26,8 +28,8 @@ $assert(\TinyCat\Social\Posts\ContentLinks::tagged($url) === $url, 'UTM tagging 
 (new ReflectionProperty(Store::class, 'settings'))->setValue(null, ['app.url' => '', 'content_links.utm.source' => '']);
 $assert(\TinyCat\Social\Posts\ContentLinks::tagged($url) === $url, 'No source domain is invented from request headers.');
 $assert(ContentLinks::url(2, '/status/3') === '/status/3', 'Internal and unsupported destinations do not become external navigation endpoints.');
-$db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$db->exec('CREATE TABLE users (id INTEGER, status TEXT); CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER, author_id INTEGER, body TEXT, published_at TEXT); CREATE TABLE social_comments (id INTEGER, content_id INTEGER, parent_id INTEGER, user_id INTEGER, body TEXT); CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER); CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash TEXT)');
+$db = \tinycat_test_database();
+$db->exec('CREATE TABLE users (id INTEGER, status VARCHAR(24)); CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id BIGINT UNSIGNED PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id)); CREATE TABLE social_comments (id INTEGER, content_id INT UNSIGNED, parent_id INT UNSIGNED, user_id INT UNSIGNED, body TEXT); CREATE TABLE social_post_links (content_id INT UNSIGNED, link_id INT UNSIGNED); CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash CHAR(64))');
 $db->exec("INSERT INTO users VALUES (1, 'active'), (2, 'inactive')");
 $raw = 'https://target.example/path?utm_source=original&x=1#fragment';
 $insert = $db->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');

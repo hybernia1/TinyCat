@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 $sourceRoot = dirname(__DIR__, 3);
 if (($argv[1] ?? '') !== '--isolated') {
     $workspace = sys_get_temp_dir() . '/tinycat-publishing-' . bin2hex(random_bytes(10));
@@ -42,9 +44,9 @@ $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $core = TinyCat\Core\Modules\Loader::fromSelection($workspace, []);
 TinyCat\Core\Modules\Resources::configure($core->catalog);
-$coreDb = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$coreDb = \tinycat_test_database();
 TinyCat\Database\ModuleSchemas::install($coreDb, TinyCat\Core\Modules\Distribution::definitions($core));
-$coreTables = $coreDb->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
+$coreTables = $coreDb->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $assert($coreTables === ['ip_action_limits', 'migrations', 'module_installations', 'notifications', 'password_reset_tokens', 'scheduler_runs', 'settings', 'users'], 'Core creates exactly eight framework tables without a domain module');
 $assert(!$core->catalog->has('tinycat.publishing') && !$core->catalog->has('tinycat.social'), 'Core has no implicit publication capability or domain owner');
 foreach (['Status', 'Users', 'Bots', 'Notifications', 'Moderation', 'Settings', 'Site', 'Search'] as $domain) { $assert(!is_dir($workspace . '/App/Modules/' . $domain), 'No physical product sources: ' . $domain); }
@@ -55,10 +57,10 @@ $assert(array_keys(TinyCat\Core\Identity\Participants::current()) === ['tinycat.
 $assert(TinyCat\Core\Modules\Registrations::current()->owner('maintenance', 'orphan_terms') === 'tinycat.social', 'Existing maintenance ID has the publishing owner');
 $routes = (new ReflectionProperty(TinyCat\Http\Router::class, 'routes'))->getValue();
 $assert(str_contains(json_encode(array_column($routes, 'path')), '/statuses'), 'Services do not silently activate social routes');
-$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec('PRAGMA foreign_keys = ON'); Connection::set($pdo);
+$pdo = \tinycat_test_database();
+ Connection::set($pdo);
 TinyCat\Core\Identity\Schema::install($pdo); TinyCat\Core\Security\Schema::install($pdo); TinyCat\Social\Posts\Schema::install($pdo); TinyCat\Social\Discussion\Schema::install($pdo); TinyCat\Social\Posts\Schema::install($pdo); TinyCat\Social\Discussion\Schema::install($pdo);
-$tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
+$tables = $pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $assert(count($tables) === 13 && in_array('social_posts', $tables, true) && !in_array('content', $tables, true), 'Fresh schema owns shared comments and reactions without following or bot tables');
 $pdo->exec("INSERT INTO users(id, username, role, status) VALUES (1, 'Writer', 'user', 'active'), (2, 'Disabled', 'user', 'ban'), (3, 'Admin', 'admin', 'active')");
 $writer = Connection::find('users', ['id' => 1]); $admin = Connection::find('users', ['id' => 3]);
@@ -79,7 +81,7 @@ $assert((int) $page[0]['id'] === $second && (int) $next[0]['id'] === $id, 'Equal
 $assert(count(Queries::page(tag: 'mixed_case')) === 2 && count(Queries::page(media: 'links')) === 1 && count(Queries::page(media: 'text')) === 1, 'Tag and media selection do not depend on social projections');
 $assert(Archive::cursor('invalid', $id) === ['', []] && Archive::type('unknown') === '', 'Malformed cursors and unknown media filters keep existing semantics');
 $before = (int) Connection::value('SELECT COUNT(*) FROM social_posts');
-$pdo->exec("CREATE TRIGGER reject_link BEFORE INSERT ON social_post_links BEGIN SELECT RAISE(ABORT, 'injected relation failure'); END");
+$pdo->exec("CREATE TRIGGER reject_link BEFORE INSERT ON social_post_links FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected relation failure'; END");
 try { $bad = PostCreation::fromText('Rollback #unique https://rollback.test'); PostCreation::create(1, $bad, $bad->links); $assert(false, 'Creation must fail'); }
 catch (PDOException) { $assert((int) Connection::value('SELECT COUNT(*) FROM social_posts') === $before && !Connection::value("SELECT id FROM social_terms WHERE name = 'unique'"), 'Failure rolls back content and taxonomy together'); }
 $pdo->exec('DROP TRIGGER reject_link');
@@ -87,7 +89,7 @@ $pdo->beginTransaction(); $outer = PostCreation::create(1, PostCreation::fromTex
 $assert(Repository::find($outer) === null, 'Caller rollback removes publication');
 $update = PostCreation::fromText('Updated #replacement'); Repository::update($id, $update, [], null, false, $writer);
 $assert(Repository::find($id)['body'] === $update->body && count(Queries::page(tag: 'replacement')) === 1, 'Updates share the accepted preparation and relation writer');
-$pdo->exec("CREATE TRIGGER reject_update BEFORE UPDATE ON social_posts BEGIN SELECT RAISE(ABORT, 'injected write failure'); END");
+$pdo->exec("CREATE TRIGGER reject_update BEFORE UPDATE ON social_posts FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected write failure'; END");
 try { Repository::update($id, PostCreation::fromText('Rejected #change'), [], null, false, $writer); $assert(false, 'Update must fail'); }
 catch (PDOException) { $assert(Repository::find($id)['body'] === $update->body, 'Failed update preserves original social_posts'); }
 $pdo->exec('DROP TRIGGER reject_update');
@@ -104,7 +106,7 @@ $assert(TinyCat\Support\Localization::t('account.messages.status_tag_too_long', 
 mkdir($workspace . '/uploads/status-images/2000/01', 0700, true); $imagePath = '2000/01/' . str_repeat('a', 32) . '.webp';
 $file = $workspace . '/uploads/status-images/' . $imagePath; file_put_contents($file, 'prepared-image');
 $imageId = PostCreation::create(1, PostCreation::fromText('Image'), [], ['path' => $imagePath, 'width' => 1, 'height' => 1, 'bytes' => 14], '2000-01-01 12:00:00');
-$pdo->exec("CREATE TRIGGER reject_delete BEFORE DELETE ON social_posts BEGIN SELECT RAISE(ABORT, 'injected deletion failure'); END");
+$pdo->exec("CREATE TRIGGER reject_delete BEFORE DELETE ON social_posts FOR EACH ROW BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected deletion failure'; END");
 try { Repository::delete($imageId); $assert(false, 'Deletion must fail'); }
 catch (PDOException) { $assert(Repository::find($imageId) !== null && is_file($file) && Connection::value('SELECT content_id FROM social_post_images WHERE content_id = ' . $imageId), 'Failed deletion preserves relations and the physical image'); }
 $pdo->exec('DROP TRIGGER reject_delete');

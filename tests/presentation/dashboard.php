@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/mysql.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
@@ -12,10 +14,10 @@ use TinyCat\Support\Localization;
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 TinyCat\Core\Identity\Authentication::reset(null, true);
 Localization::locale('cs');
-$db = new PDO('sqlite::memory:');
-$db->exec('CREATE TABLE users (id INTEGER, username TEXT, role TEXT, avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at TEXT)');
-$db->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER, body TEXT, published_at TEXT)');
-$db->exec('CREATE TABLE social_comments (id INTEGER, content_id INTEGER, user_id INTEGER, body TEXT, created_at TEXT)');
+$db = \tinycat_test_database();
+$db->exec('CREATE TABLE users (id INTEGER, username VARCHAR(254), role VARCHAR(40), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), avatar_appearance TEXT, updated_at DATETIME)');
+$db->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id))');
+$db->exec('CREATE TABLE social_comments (id INTEGER, content_id INT UNSIGNED, user_id INT UNSIGNED, body TEXT, created_at DATETIME)');
 $db->exec('CREATE TABLE social_links (id INTEGER)');
 $db->exec('CREATE TABLE social_terms (id INTEGER)');
 $db->exec('INSERT INTO social_links VALUES (1), (2)');

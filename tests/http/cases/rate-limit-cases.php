@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Keep one session across requests to exercise actual cooldown enforcement.
-$resetRateDb = new PDO('sqlite:' . $databasePath);
+$resetRateDb = \tinycat_test_database($databasePath);
 $resetRateDb->exec("DELETE FROM ip_action_limits WHERE ip_address = 'user:2' AND action_name = 'post'");
 $resetRateDb = null;
 $rateHeaders = [...$csrf, 'Cookie' => 'PHPSESSID=rate-limit-' . bin2hex(random_bytes(12))];
@@ -20,7 +22,7 @@ $assert(in_array('Retry-After: ' . $wait, $headers, true), 'The Retry-After head
 [$status] = $request('DELETE', '/api/statuses/' . $ratePostId, [], 'user', $rateHeaders);
 $assert($status === 200, 'Publishing and editing do not block deletion.');
 
-$rateDb = new PDO('sqlite:' . $databasePath);
+$rateDb = \tinycat_test_database($databasePath);
 $rateDb->exec("UPDATE ip_action_limits SET action_count = 9999 WHERE ip_address = 'user:2' AND action_name = 'post'");
 [$status, $limited, $headers] = $request('POST', '/api/statuses', ['body' => 'Hourly account quota regression'], 'user', $csrf);
 $wait = $limited['error']['details']['retry_after'] ?? 0;

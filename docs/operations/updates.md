@@ -814,7 +814,7 @@ perform this conversion. The installation variant keeps the normal format-3
 descriptor and creates the current schema directly.
 
 The old updater's original file backups remain available. Before converting
-domain data, a canonical MySQL/SQLite and activation snapshot is also prepared
+domain data, a canonical MySQL/MariaDB and activation snapshot is also prepared
 for the normal recovery CLI. For rollback from 5.x, original files and data are
 restored; new private files are conservatively retained because that updater
 never recorded whether those paths previously existed. Modern rollback retains
@@ -1471,7 +1471,7 @@ storage/updates/backups/1.0.12-to-1.0.13-20260805-120000/
 ```
 
 `files/` contains the previous versions of files changed by the update. For a
-release with pending database migrations, `database.sql` (or `database.sqlite`) also
+release with pending database migrations, `database.sql` with its `database.index.jsonl` also
 contains the database snapshot. `backup.json` identifies the source and target
 versions and whether a database backup was required. After restoring the
 available snapshot, remove `storage/maintenance.json` or use the guarded

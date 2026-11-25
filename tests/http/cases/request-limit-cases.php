@@ -1,12 +1,14 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../support/mysql.php';
+
 // Saturate deterministic buckets instead of making hundreds of expensive attempts.
-$limitDb = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$limitDb = \tinycat_test_database($databasePath);
 $limitDb->exec("UPDATE settings SET setting_value = '1' WHERE setting_key = 'auth.registration.enabled'");
 $seedLimit = static function (string $subject, string $action, int $window) use ($limitDb): void {
     $insert = $limitDb->prepare('INSERT INTO ip_action_limits (ip_address, action_name, bucket_start, action_count, updated_at)
-        VALUES (?, ?, ?, 9999, ?) ON CONFLICT(ip_address, action_name, bucket_start) DO UPDATE SET action_count = 9999');
+        VALUES (?, ?, ?, 9999, ?) ON DUPLICATE KEY UPDATE action_count = 9999');
     $insert->execute([$subject, $action, gmdate('Y-m-d H:i:s', intdiv(time(), $window) * $window), gmdate('Y-m-d H:i:s')]);
 };
 foreach ([
