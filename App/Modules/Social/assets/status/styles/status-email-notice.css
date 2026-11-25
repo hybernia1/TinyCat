@@ -1,5 +1,5 @@
 .status-email-notice {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .status-email-notice > .icon {
@@ -9,7 +9,7 @@
 
 .status-email-notice-copy {
   flex: 1 1 auto;
-  min-width: 220px;
+  min-width: 13.75rem;
 }
 
 .status-email-notice .btn {

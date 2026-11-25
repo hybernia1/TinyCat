@@ -6,7 +6,7 @@
   }
 
 .status-comment.is-child {
-    margin-left: 0.625rem;
+    margin-left: var(--space-2-5);
   }
 
 }

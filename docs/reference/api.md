@@ -247,7 +247,7 @@ Account status values come from `Core/Identity/Administration::statuses()`
 
 | Method | Path | Access |
 | --- | --- | --- |
-| GET | `/api/users/authentication` | Public form configuration |
+| GET | `/api/users/authentication` | Public form configuration (`mode=login/register/recovery/reset`, safe `next`; reset accepts `token`); login/register return 409 `already_authenticated` for signed-in sessions |
 | POST | `/api/users/sessions` | Public, login |
 | DELETE | `/api/users/sessions/current` | Signed-in user |
 | POST | `/api/users/registrations` | Public, registration policy and CAPTCHA |
@@ -274,14 +274,14 @@ by body IDs. User list filters retain `q`, `role`, `status`, `updated_from`,
 `updated_to`, `page` and `per_page`; pagination includes `total`, `page`, `per_page`,
 `last_page`, `has_prev` and `has_next`. Following uses `cursor_at` and `cursor_id`.
 
-Users without a custom upload receive a simple circular SVG containing the first two
+Users without a custom upload receive a simple square SVG containing the first two
 Unicode characters of their username, uppercased with mbstring. Digits remain characters;
 empty names use `?`. SVG XML is escaped and has no external resources or configurable
 appearance. Canonical account/author/actor projections supply username with avatar data.
-`/avatar/initials/v1/{base64url-username}.svg` is immutable and needs no database lookup.
-A changed username changes this URL. Legacy `/avatar/generated/v1/{id}.svg` addresses
-only resolve current account identity and redirect, cached for five minutes; old appearance
-parameters have no effect. `/avatar/{username}` continues to resolve uploaded images or initials.
+`/avatar/initials/v3/{initials}.svg` uses URL-encoded uppercase initials (for example `AD.svg`), is immutable and needs no database lookup. Identical initials share the same URL.
+Its square background uses the shared UI corner radius when displayed.
+A changed username changes this URL only when its resulting initials change.
+Older generated/initials SVG endpoints are removed. `/avatar/{username}` resolves uploaded images or initials.
 
 `GET /api/users/{id}/avatar` returns the authorized upload/remove resource. PUT uploads
 JPEG/PNG/WebP and DELETE removes a custom image, restoring initials. Authorization, CSRF,

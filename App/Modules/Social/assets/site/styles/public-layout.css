@@ -1,5 +1,5 @@
 .public-layout {
   display: grid;
-  gap: 18px;
+  gap: var(--space-4);
   align-items: start;
 }

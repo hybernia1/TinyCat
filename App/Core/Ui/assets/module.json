@@ -1,5 +1,16 @@
 [
-  {"id": "ui.switcher", "routes": [], "components": ["ui/switcher"], "entries": [], "styles": ["App/Core/Ui/assets/styles/switcher.css"], "translations": []},
+  {
+    "id": "ui.switcher",
+    "routes": [],
+    "components": [
+      "ui/switcher"
+    ],
+    "entries": [],
+    "styles": [
+      "App/Core/Ui/assets/styles/switcher.css"
+    ],
+    "translations": []
+  },
   {
     "routes": [
       "*"
@@ -320,18 +331,6 @@
       "common.cancel",
       "common.close"
     ]
-  },
-  {
-    "routes": [
-      "/privacy",
-      "/access/privacy"
-    ],
-    "entries": [],
-    "components": [],
-    "styles": [
-      "App/Core/Ui/assets/styles/information-pages.css"
-    ],
-    "translations": []
   },
   {
     "routes": [

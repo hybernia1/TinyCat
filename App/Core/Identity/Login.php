@@ -37,6 +37,12 @@ final class Login
             return '';
         }
 
+        $destinationPath = rawurldecode(explode('?', explode('#', $next, 2)[0], 2)[0]);
+        if (preg_match('/[\x00-\x1f\x7f]/', $next . $destinationPath) === 1
+            || str_contains($destinationPath, '\\') || str_starts_with($destinationPath, '//')) {
+            return '';
+        }
+
         $path = \TinyCat\Http\LocaleRouting::split(self::auth_next_path($next))['path'];
         if (!\TinyCat\Core\Ui\PublicWeb::enabled() && ($path === '/' || \TinyCat\Http\Router::isPublicWebPath($path))) { return ''; }
 
@@ -162,7 +168,7 @@ final class Login
 
     public static function auth_modal_mode(string $mode): string
     {
-        return $mode === 'register' ? 'register' : 'login';
+        return in_array($mode, ['login', 'register', 'recovery', 'reset'], true) ? $mode : 'login';
     }
 
     public static function auth_modal_url(string $mode = 'login', string $next = ''): string

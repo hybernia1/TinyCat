@@ -29,6 +29,7 @@ enum Surface: string
     public function assetPath(array $page): string
     {
         $path = (string) ($page['asset_path'] ?? $page['current'] ?? $this->defaultAssetPath());
+        $path = \TinyCat\Http\LocaleRouting::split($path)['path'];
         if (self::forPath($path) === $this) { return $path; }
         if (isset($page['asset_path'])) { throw new \InvalidArgumentException('Asset profile does not belong to the page surface.'); }
         return $this->defaultAssetPath();

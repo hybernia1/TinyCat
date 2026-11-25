@@ -2451,5 +2451,9 @@
   ],
   "8.0.7": [
     "App/Core/Database/Keyset.php"
+  ],
+  "8.0.8": [
+    "App/Core/Notifications/assets/styles/notifications-page.css",
+    "App/Core/Ui/assets/styles/information-pages.css"
   ]
 }

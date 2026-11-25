@@ -61,11 +61,16 @@ $assert($auth['form_url'] === '/api/users/registrations' && $auth['next'] === '/
 $listing = Resource::listing(['items' => [], 'roles' => ['admin' => 'Administrator'], 'statuses' => ['active' => 'Active'], 'filters' => []], ['page' => 1, 'last_page' => 1, 'total' => 0]);
 $assert($listing['roles'] === ['admin'] && $listing['statuses'] === ['active'] && !isset($listing['navigation']['target']), 'Administrative list metadata preserves its JSON shape');
 $assert(Avatar::url(0, false) === '', 'Invalid identities remain empty');
-$assert(str_contains(Avatar::initialsSvg('?9'), '>?9</text>'), 'Initials use real Unicode names');
+$assert(Avatar::url(1, false, username: 'admin') === '/avatar/initials/v3/AD.svg' && Avatar::url(2, false, username: 'adela') === Avatar::url(1, false, username: 'admin'), 'Identical initials share one immutable URL');
+$assert(Avatar::url(1, false, username: 'žaneta') === '/avatar/initials/v3/%C5%BDA.svg', 'Unicode initials are URL encoded');
+$assert(Avatar::initials('ßa') === 'SSA' && str_contains(Avatar::initialsTextSvg('SSA'), '>SSA</text>'), 'Uppercase expansion preserves final initials');
+$assert(str_contains(Avatar::initialsTextSvg(Avatar::initials('?9')), '>?9</text>'), 'Initials use real Unicode names');
+$assert(str_contains(Avatar::initialsTextSvg('ME'), '<rect width="200" height="200"') && !str_contains(Avatar::initialsTextSvg('ME'), '<circle'), 'Current initials fill the square image; UI owns corner rounding');
 $assert(Avatar::url(1, false, username: 'Member') !== Avatar::url(1, false, username: 'Renamed'), 'Renaming changes immutable initials URL');
-$assert(str_contains(Avatar::initialsSvg("\0<&"), '>&lt;&amp;</text>'), 'XML-invalid controls are discarded before safe initials');
-$assert(str_contains(Avatars::user_avatar_url(['id' => 7, 'avatar_exists' => 0]), '/7.svg'), 'Canonical identity rows use the common avatar serializer');
-$assert(str_contains(Avatars::user_avatar_url(['id' => 7, 'avatar_exists' => 0, 'author_id' => 8, 'author_avatar_exists' => 1]), '/7.svg'), 'Foreign projection fields cannot override the canonical identity');
+$assert(str_contains(Avatar::initialsTextSvg(Avatar::initials("\0<&")), '>&lt;&amp;</text>'), 'XML-invalid controls are discarded before safe initials');
+$assert(Avatars::user_avatar_url(['id' => 7, 'username' => 'Member', 'avatar_exists' => 0]) === '/avatar/initials/v3/ME.svg', 'Canonical identity rows use the common avatar serializer');
+$assert(Avatars::user_avatar_url(['id' => 7, 'username' => 'Member', 'avatar_exists' => 0, 'author_id' => 8, 'author_avatar_exists' => 1]) === '/avatar/initials/v3/ME.svg', 'Foreign projection fields cannot override the canonical identity');
+$assert(Avatar::url(7, false) === '/avatar/initials/v3/%3F.svg', 'Missing identity uses the deterministic placeholder without an ID lookup route');
 $assert(Avatars::user_avatar_url(null) === '' && AvatarHttp::resolve('missing') === null && AvatarHttp::resolve('123') === null, 'Missing and invalid lookups have no fallback dependency');
 mkdir($workspace . '/sessions', 0700); mkdir($workspace . '/uploads/avatars', 0700, true);
 $server = null;
@@ -97,16 +102,29 @@ try {
     for ($attempt = 0; $attempt < 50; $attempt++) { [$status, $data] = $request('/api/_avatars'); if ($status === 200) { break; } usleep(100_000); }
     $assert($status === 200 && $data['data']['loaded_product'] === [], 'Isolated avatar HTTP starts without product classes');
     $csrf = $data['data']['csrf'];
+    foreach (['AD', '%C5%BDA', 'SSA', '%3F'] as $text) {
+        [$imageStatus, , , $imageSvg] = $request('/avatar/initials/v3/' . $text . '.svg', authorized: false);
+        $assert($imageStatus === 200 && str_contains($imageSvg, '>' . rawurldecode($text) . '</text>'), 'Final initials survive the HTTP route');
+    }
+    foreach (['ad', 'TOOLONG', '%3Csvg%3E'] as $text) {
+        [$imageStatus] = $request('/avatar/initials/v3/' . $text . '.svg', authorized: false);
+        $assert($imageStatus === 404, 'Invalid final initials are rejected');
+    }
     [$status] = $request('/api/_avatars', authorized: false); $assert($status === 401, 'Account resources still require server authorization');
-    [$status, , $headers, $svg] = $request('/avatar/initials/v1/TWVtYmVy.svg', authorized: false);
+    [$legacyStatus, , , $legacySvg] = $request('/avatar/initials/v1/TWVtYmVy.svg', authorized: false);
+    $assert($legacyStatus === 404, 'Retired v1 initials are no longer registered');
+    [$v2Status] = $request('/avatar/initials/v2/TWVtYmVy.svg', authorized: false);
+    $assert($v2Status === 404, 'The unpublished intermediate v2 route is not retained');
+    [$status, , $headers, $svg] = $request('/avatar/initials/v3/ME.svg', authorized: false);
     $assert($status === 200 && str_starts_with($svg, '<svg') && str_contains($headers['content-type'][0], 'image/svg+xml'), 'Generated avatar is served without Users');
+    $assert(str_contains($svg, '<rect') && !str_contains($svg, '<circle'), 'Current initials use the square SVG representation');
     $assert(!isset($headers['set-cookie']) && str_contains($headers['cache-control'][0], 'immutable'), 'Public generated avatar does not start a session');
-    [$status] = $request('/avatar/initials/v1/TWVtYmVy.svg', extra: ['If-None-Match' => $headers['etag'][0]], authorized: false); $assert($status === 304, 'Generated avatar preserves ETag handling');
-    [$status] = $request('/avatar/initials/v1/TWVtYmVy.svg', extra: ['If-None-Match' => '"other", W/' . $headers['etag'][0]], authorized: false); $assert($status === 304, 'Generated avatars share weak/list validator handling with other documents');
-    [$status] = $request('/avatar/initials/v1/TWVtYmVy.svg', extra: ['If-None-Match' => 'W/' . substr($headers['etag'][0], 0, -1) . '-gzip"'], authorized: false); $assert($status === 304, 'A downstream gzip validator retains the identity of the generated SVG');
+    [$status] = $request('/avatar/initials/v3/ME.svg', extra: ['If-None-Match' => $headers['etag'][0]], authorized: false); $assert($status === 304, 'Generated avatar preserves ETag handling');
+    [$status] = $request('/avatar/initials/v3/ME.svg', extra: ['If-None-Match' => '"other", W/' . $headers['etag'][0]], authorized: false); $assert($status === 304, 'Generated avatars share weak/list validator handling with other documents');
+    [$status] = $request('/avatar/initials/v3/ME.svg', extra: ['If-None-Match' => 'W/' . substr($headers['etag'][0], 0, -1) . '-gzip"'], authorized: false); $assert($status === 304, 'A downstream gzip validator retains the identity of the generated SVG');
     [$status, , $headers] = $request('/avatar/generated/v1/1.svg?fur=invalid', authorized: false);
-    $assert($status === 302 && $headers['location'][0] === '/avatar/initials/v1/TWVtYmVy.svg', 'Legacy appearance URLs resolve actual identity and never render cats');
-    [$status, , $headers] = $request('/avatar/Member', authorized: false); $assert($status === 302 && $headers['location'][0] === '/avatar/initials/v1/TWVtYmVy.svg', 'Username lookup preserves canonical initials URL');
+    $assert($status === 404, 'Retired generated avatar routes are no longer registered');
+    [$status, , $headers] = $request('/avatar/Member', authorized: false); $assert($status === 302 && $headers['location'][0] === '/avatar/initials/v3/ME.svg', 'Username lookup preserves canonical initials URL');
     [$status] = $request('/avatar/missing', authorized: false); $assert($status === 404, 'Missing username uses the technical 404 response');
     $image = imagecreatetruecolor(12, 8); imagefill($image, 0, 0, imagecolorallocate($image, 120, 60, 20)); ob_start(); imagepng($image); $png = (string) ob_get_clean(); imagedestroy($image);
     $boundary = 'tinycat-avatar-' . bin2hex(random_bytes(8));

@@ -105,6 +105,12 @@ Webserver musí používat kořenový `.htaccess` nebo ekvivalentní pravidla:
 `App/`, konfigurace a `storage/` nejsou veřejné soubory; cache assetů se
 zpřístupňuje jen přes úzké pravidlo `/cache/assets/`.
 
+Statické WebP soubory musí vracet `Content-Type: image/webp`. Apache má explicitní
+mapování v kořenovém `.htaccess`. Pokud soubory obsluhuje přímo nginx, načti jeho
+tabulku `mime.types` a ověř mapování `image/webp webp;` v účinném kontextu.
+Nginx `.htaccess` nečte. Chybný MIME typ neopravuj vypnutím `nosniff` ani změnou
+cache parametru v URL; ověř GET i HEAD odpověď konkrétního souboru.
+
 ## Aktivace a provoz
 
 ```powershell

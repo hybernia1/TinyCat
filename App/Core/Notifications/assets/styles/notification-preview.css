@@ -46,17 +46,7 @@
 
 .notification-preview-more {
   display: flex;
-  min-height: 42px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 9px 12px;
-  color: var(--primary);
-  font-weight: 850;
-  text-decoration: none;
-}
-
-.notification-preview-more:hover,
-.notification-preview-more:focus {
-  background: var(--primary-soft);
+  width: 100%;
+  border-radius: 0;
+  border-top: 1px solid var(--border);
 }

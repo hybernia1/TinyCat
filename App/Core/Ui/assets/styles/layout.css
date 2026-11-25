@@ -1,15 +1,15 @@
 .container {
-  width: min(100% - 32px, var(--container));
+  width: min(100% - var(--space-8), var(--container));
   margin-inline: auto;
 }
 
 .container-sm {
-  width: min(100% - 32px, 720px);
+  width: min(100% - var(--space-8), 45rem);
   margin-inline: auto;
 }
 
 .section {
-  padding-block: 24px;
+  padding-block: var(--space-6);
 }
 
 .stack {

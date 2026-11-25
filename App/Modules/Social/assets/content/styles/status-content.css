@@ -15,16 +15,16 @@
 
 .status-link-card {
   display: grid;
-  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-columns: 2.375rem minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  padding: 10px;
+  gap: var(--space-2-5);
+  padding: var(--space-2-5);
   color: var(--text);
   text-decoration: none;
 }
 
 .status-link-card.has-image {
-  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-columns: 5.75rem minmax(0, 1fr);
   align-items: stretch;
   padding: 0;
 }
@@ -37,8 +37,8 @@
 
 .status-link-icon {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 2.375rem;
+  height: 2.375rem;
   place-items: center;
   border-radius: var(--radius-sm);
   background: var(--bg);
@@ -48,8 +48,8 @@
 .status-link-media {
   position: relative;
   display: grid;
-  width: 92px;
-  min-height: 86px;
+  width: 5.75rem;
+  min-height: 5.375rem;
   place-items: center;
   overflow: hidden;
   background: var(--bg);
@@ -88,12 +88,12 @@
 .status-video-copy {
   display: grid;
   min-width: 0;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .status-link-card.has-image .status-link-copy {
   align-content: center;
-  padding: 10px 12px 10px 0;
+  padding: var(--space-2-5) var(--space-3) var(--space-2-5) 0;
 }
 
 .status-link-copy strong,
@@ -132,7 +132,7 @@
   aspect-ratio: 16 / 9;
   grid-template-columns: minmax(0, 1fr);
   align-items: end;
-  gap: 12px;
+  gap: var(--space-3);
   border: 0;
   background: color-mix(in srgb, var(--bg) 78%, var(--primary-soft));
   color: var(--text);
@@ -170,8 +170,8 @@
   top: 50%;
   z-index: 1;
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: 3.625rem;
+  height: 3.625rem;
   place-items: center;
   border-radius: var(--radius-sm);
   background: var(--primary);
@@ -183,7 +183,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  padding: 40px 14px 12px;
+  padding: var(--space-10) var(--space-3-5) var(--space-3);
   background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.78));
   color: white;
 }
@@ -203,19 +203,19 @@
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 700;
 }
 
 .status-link-card.has-image .status-link-provider {
-  padding: 10px 12px 0;
+  padding: var(--space-2-5) var(--space-3) 0;
 }
 
 .status-link-provider .icon {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .status-link-card[data-card-kind="social"] {
@@ -227,7 +227,7 @@
 }
 
 .status-social-link > .status-link-provider {
-  padding: 12px;
+  padding: var(--space-3);
   border-bottom: 1px solid var(--border);
   color: var(--primary-strong);
   text-decoration: none;
@@ -247,8 +247,8 @@
 }
 
 .status-social-link > .status-link-copy {
-  gap: 6px;
-  padding: 12px;
+  gap: var(--space-1-5);
+  padding: var(--space-3);
 }
 
 .status-link-card[data-card-kind="social"] .status-link-copy strong {
@@ -285,10 +285,10 @@
 
 .status-video-provider {
   position: absolute;
-  inset-inline-start: 12px;
-  top: 12px;
+  inset-inline-start: 0.75rem;
+  top: 0.75rem;
   z-index: 1;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   background: rgba(15, 23, 42, 0.8);
   color: white;
@@ -299,8 +299,8 @@
 .status-video-source {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 12px;
+  gap: var(--space-1-5);
+  padding: var(--space-2-5) var(--space-3);
   color: var(--muted);
   font-size: 0.78rem;
   text-decoration: none;
@@ -311,12 +311,12 @@
 }
 
 .status-video-source .icon {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .status-video-card[data-card-kind="reel"] {
-  width: min(100%, 340px);
+  width: min(100%, 21.25rem);
   justify-self: center;
 }
 
@@ -339,17 +339,17 @@
 }
 
 .status-audio-card .status-audio-player {
-  padding: 8px;
+  padding: var(--space-2);
 }
 
 .status-audio-card .status-video-placeholder {
-  min-height: 56px;
+  min-height: 3.5rem;
   aspect-ratio: auto;
 }
 
 .status-audio-card .status-video-play {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .status-audio-card .status-video-frame {
@@ -361,15 +361,16 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .status-reactions {
-  padding-block-start: 7px;
+  padding-block-start: var(--space-2);
 }
 
 .status-manage-top {
   justify-self: end;
+  margin-inline-start: auto;
 }
 
 .status-manage-top form {
@@ -377,8 +378,8 @@
 }
 
 .status-manage-icon {
-  width: 34px;
-  min-height: 32px;
+  width: 2.125rem;
+  min-height: 2rem;
   padding: 0;
   color: var(--muted);
 }
@@ -395,6 +396,6 @@
 }
 
 .status-reaction {
-  min-height: 32px;
-  padding: 5px 9px;
+  min-height: 2rem;
+  padding: var(--space-1-5) var(--space-2-5);
 }

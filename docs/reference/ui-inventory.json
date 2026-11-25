@@ -55,7 +55,7 @@
         "ui/empty-state",
         "ui/list-toolbar",
         "ui/pagination",
-        "ui/sort-heading",
+        "ui/sort-column",
         "users/admin-row"
       ],
       "inputs": [
@@ -65,11 +65,8 @@
         "pagination",
         "roles",
         "sorting.role",
-        "sorting.role.aria",
         "sorting.updated_at",
-        "sorting.updated_at.aria",
         "sorting.username",
-        "sorting.username.aria",
         "statuses",
         "user"
       ]
@@ -98,20 +95,25 @@
       "name": "users/auth-content",
       "source": "App/Core/Identity/assets/components.json",
       "dependencies": [
-        "users/auth-form"
+        "ui/notice",
+        "users/auth-form",
+        "users/recovery-form"
       ],
       "inputs": [
         "captcha",
         "error",
         "form_url",
         "message",
+        "modal",
         "mode",
         "next",
         "options",
-        "register",
+        "recovery_modal_url",
+        "recovery_url",
         "registration_enabled",
         "switch_modal_url",
-        "switch_url"
+        "switch_url",
+        "token"
       ]
     },
     {
@@ -142,43 +144,6 @@
         "user",
         "user.id",
         "user.username"
-      ]
-    },
-    {
-      "name": "users/auth-page",
-      "source": "App/Core/Identity/assets/components.json",
-      "dependencies": [
-        "users/auth-content"
-      ],
-      "inputs": [
-        "captcha",
-        "error",
-        "form_url",
-        "message",
-        "mode",
-        "next",
-        "options",
-        "register",
-        "registration_enabled",
-        "switch_modal_url",
-        "switch_url"
-      ]
-    },
-    {
-      "name": "users/recovery-page",
-      "source": "App/Core/Identity/assets/components.json",
-      "dependencies": [
-        "ui/captcha",
-        "ui/field"
-      ],
-      "inputs": [
-        "captcha",
-        "login_url",
-        "password_max",
-        "password_min",
-        "privacy_url",
-        "reset",
-        "token"
       ]
     },
     {
@@ -347,6 +312,22 @@
       ]
     },
     {
+      "name": "users/recovery-form",
+      "source": "App/Core/Identity/assets/components.json",
+      "dependencies": [
+        "ui/captcha",
+        "ui/field"
+      ],
+      "inputs": [
+        "captcha",
+        "form_url",
+        "mode",
+        "options.password_max_length",
+        "options.password_min_bytes",
+        "token"
+      ]
+    },
+    {
       "name": "installation/steps",
       "source": "App/Core/Installation/assets/components.json",
       "dependencies": [],
@@ -385,7 +366,9 @@
     {
       "name": "installation/tables",
       "source": "App/Core/Installation/assets/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/notice"
+      ],
       "inputs": [
         "table.exists",
         "table.name",
@@ -434,7 +417,8 @@
         "installation/language",
         "installation/recovery",
         "installation/steps",
-        "installation/tables"
+        "installation/tables",
+        "ui/notice"
       ],
       "inputs": [
         "current",
@@ -479,7 +463,7 @@
       "dependencies": [
         "notifications/action",
         "notifications/copy",
-        "ui/avatar-content"
+        "ui/avatar"
       ],
       "inputs": [
         "item",
@@ -496,7 +480,7 @@
       "source": "App/Core/Notifications/assets/components.json",
       "dependencies": [
         "notifications/copy",
-        "ui/avatar-content"
+        "ui/avatar"
       ],
       "inputs": [
         "item",
@@ -631,7 +615,7 @@
         "ui/list-toolbar",
         "ui/modal-trigger",
         "ui/pagination",
-        "ui/sort-heading"
+        "ui/sort-column"
       ],
       "inputs": [
         "_key",
@@ -651,13 +635,9 @@
         "run.task",
         "runs",
         "sorting.duration_ms",
-        "sorting.duration_ms.aria",
         "sorting.started_at",
-        "sorting.started_at.aria",
         "sorting.status",
-        "sorting.status.aria",
         "sorting.task",
-        "sorting.task.aria",
         "state",
         "status_choices",
         "task",
@@ -1529,6 +1509,18 @@
       ]
     },
     {
+      "name": "ui/sort-column",
+      "source": "App/Core/Ui/assets/components.json",
+      "dependencies": [
+        "ui/sort-heading"
+      ],
+      "inputs": [
+        "label",
+        "order",
+        "order.aria"
+      ]
+    },
+    {
       "name": "updates/actions",
       "source": "App/Core/Updates/assets/components.json",
       "dependencies": [
@@ -1877,7 +1869,7 @@
         "ui/list-toolbar",
         "ui/modal-trigger",
         "ui/pagination",
-        "ui/sort-heading"
+        "ui/sort-column"
       ],
       "inputs": [
         "bots",
@@ -1888,13 +1880,9 @@
         "pagination",
         "scoped",
         "sorting.bot",
-        "sorting.bot.aria",
         "sorting.interval",
-        "sorting.interval.aria",
         "sorting.last_import",
-        "sorting.last_import.aria",
         "sorting.name",
-        "sorting.name.aria",
         "source.bot_user_id",
         "source.bot_username",
         "source.enabled",
@@ -1921,7 +1909,7 @@
         "ui/list-toolbar",
         "ui/modal-trigger",
         "ui/pagination",
-        "ui/sort-heading",
+        "ui/sort-column",
         "users/identity-row"
       ],
       "inputs": [
@@ -1937,13 +1925,9 @@
         "navigation",
         "pagination",
         "sorting.post_count",
-        "sorting.post_count.aria",
         "sorting.source_count",
-        "sorting.source_count.aria",
         "sorting.updated_at",
-        "sorting.updated_at.aria",
         "sorting.username",
-        "sorting.username.aria",
         "statuses"
       ]
     },
@@ -1953,7 +1937,7 @@
       "dependencies": [
         "bots/run-status",
         "ui/empty-state",
-        "ui/sort-heading"
+        "ui/sort-column"
       ],
       "inputs": [
         "run.error",
@@ -1963,13 +1947,9 @@
         "run.status",
         "runs",
         "sorting.items_seen",
-        "sorting.items_seen.aria",
         "sorting.source",
-        "sorting.source.aria",
         "sorting.started_at",
-        "sorting.started_at.aria",
-        "sorting.status",
-        "sorting.status.aria"
+        "sorting.status"
       ]
     },
     {
@@ -1990,7 +1970,7 @@
         "ui/empty-state",
         "ui/list-toolbar",
         "ui/pagination",
-        "ui/sort-heading",
+        "ui/sort-column",
         "ui/status-badge"
       ],
       "inputs": [
@@ -2011,11 +1991,8 @@
         "post.source",
         "post.url",
         "sorting.body",
-        "sorting.body.aria",
         "sorting.published_at",
-        "sorting.published_at.aria",
         "sorting.source",
-        "sorting.source.aria",
         "state"
       ]
     },
@@ -2029,7 +2006,7 @@
         "ui/list-toolbar",
         "ui/modal-trigger",
         "ui/pagination",
-        "ui/sort-heading"
+        "ui/sort-column"
       ],
       "inputs": [
         "filters",
@@ -2048,13 +2025,9 @@
         "post.status",
         "post.username",
         "sorting.body",
-        "sorting.body.aria",
         "sorting.bot",
-        "sorting.bot.aria",
         "sorting.published_at",
-        "sorting.published_at.aria",
         "sorting.source",
-        "sorting.source.aria",
         "state"
       ]
     },
@@ -2089,7 +2062,8 @@
       "name": "bots/source-preview",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "ui/help"
+        "ui/help",
+        "ui/notice"
       ],
       "inputs": [
         "_key",
@@ -2198,12 +2172,13 @@
       "name": "moderation/reports",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
+        "moderation/report-reason",
         "moderation/status",
         "ui/empty-state",
         "ui/list-toolbar",
         "ui/modal-trigger",
         "ui/pagination",
-        "ui/sort-heading"
+        "ui/sort-column"
       ],
       "inputs": [
         "filters",
@@ -2219,11 +2194,8 @@
         "report.reported_at",
         "report.status",
         "sorting.content",
-        "sorting.content.aria",
         "sorting.reason",
-        "sorting.reason.aria",
-        "sorting.status",
-        "sorting.status.aria"
+        "sorting.status"
       ]
     },
     {
@@ -2244,6 +2216,7 @@
       "name": "moderation/history",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
+        "moderation/report-reason",
         "moderation/status",
         "ui/empty-state",
         "ui/modal-trigger"
@@ -2261,6 +2234,7 @@
       "name": "moderation/report-preview",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
+        "moderation/report-reason",
         "moderation/status"
       ],
       "inputs": [
@@ -2694,6 +2668,7 @@
       "name": "publishing/link",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
+        "publishing/link-image",
         "publishing/link-summary"
       ],
       "inputs": [
@@ -2723,8 +2698,11 @@
     {
       "name": "publishing/link-summary",
       "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "publishing/link-image"
+      ],
       "inputs": [
+        "link",
         "link.card_icon",
         "link.card_kind",
         "link.description",
@@ -2895,19 +2873,35 @@
       "inputs": [
         "id"
       ]
+    },
+    {
+      "name": "publishing/link-image",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "link.image_url"
+      ]
+    },
+    {
+      "name": "moderation/report-reason",
+      "source": "App/Modules/Social/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "reason"
+      ]
     }
   ],
   "duplicate_component_names": [],
   "identical_component_definitions": [],
   "unresolved_dependencies": [],
   "css_imports": [
+    "App/Core/Identity/assets/styles/authentication.css",
     "App/Core/Identity/assets/styles/avatar-upload.css",
     "App/Core/Identity/assets/styles/user-menu.css",
     "App/Core/Notifications/assets/styles/notification-badge-mobile.css",
     "App/Core/Notifications/assets/styles/notification-items.css",
     "App/Core/Notifications/assets/styles/notification-nav.css",
     "App/Core/Notifications/assets/styles/notification-preview.css",
-    "App/Core/Notifications/assets/styles/notifications-page.css",
     "App/Core/Security/assets/styles/captcha.css",
     "App/Core/Ui/assets/admin/styles/admin-content-mobile.css",
     "App/Core/Ui/assets/admin/styles/admin-lists-desktop.css",
@@ -2946,7 +2940,6 @@
     "App/Core/Ui/assets/styles/global-search.css",
     "App/Core/Ui/assets/styles/grid-desktop.css",
     "App/Core/Ui/assets/styles/identity-rows.css",
-    "App/Core/Ui/assets/styles/information-pages.css",
     "App/Core/Ui/assets/styles/input-icon.css",
     "App/Core/Ui/assets/styles/language.css",
     "App/Core/Ui/assets/styles/layout.css",
@@ -3730,43 +3723,87 @@
     "archive-actions": [
       {
         "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 12,
+        "line": 13,
         "context": [],
         "selector": ".archive-actions"
+      },
+      {
+        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+        "line": 15,
+        "context": [],
+        "selector": ".archive-actions .archive-filter"
+      },
+      {
+        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+        "line": 15,
+        "context": [],
+        "selector": ".archive-actions .archive-filter > summary"
+      },
+      {
+        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+        "line": 18,
+        "context": [],
+        "selector": ".archive-actions .archive-filter > summary"
       }
     ],
     "archive-filter": [
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 15,
+        "line": 16,
         "context": [],
         "selector": ".home-feed-toolbar > .archive-filter"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 20,
+        "line": 22,
         "context": [],
         "selector": ".home-feed-toolbar .archive-filter > summary"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 26,
+        "line": 28,
         "context": [],
         "selector": ".home-feed-toolbar .archive-filter > summary span"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 32,
+        "line": 34,
         "context": [],
         "selector": ".home-feed-toolbar .archive-filter > summary svg"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 41,
+        "line": 43,
         "context": [
           "@media (max-width: 899px)"
         ],
         "selector": ".home-feed-toolbar > .archive-filter"
+      },
+      {
+        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+        "line": 15,
+        "context": [],
+        "selector": ".archive-actions .archive-filter"
+      },
+      {
+        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+        "line": 15,
+        "context": [],
+        "selector": ".archive-actions .archive-filter > summary"
+      },
+      {
+        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+        "line": 18,
+        "context": [],
+        "selector": ".archive-actions .archive-filter > summary"
+      }
+    ],
+    "auth-page": [
+      {
+        "source": "App/Core/Identity/assets/styles/authentication.css",
+        "line": 1,
+        "context": [],
+        "selector": ".auth-page form > .btn"
       }
     ],
     "avatar": [
@@ -3816,7 +3853,7 @@
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 203,
+        "line": 205,
         "context": [],
         "selector": ".following-modal-grid .avatar"
       }
@@ -3988,7 +4025,7 @@
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 35,
+        "line": 36,
         "context": [],
         "selector": ".profile-identity .avatar-xl"
       }
@@ -4053,30 +4090,6 @@
         "line": 46,
         "context": [],
         "selector": ".table-row-inactive .badge"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 32,
-        "context": [],
-        "selector": ".topic-link .badge"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 37,
-        "context": [],
-        "selector": ".topic-link:hover .badge"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 37,
-        "context": [],
-        "selector": ".topic-link:focus .badge"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 37,
-        "context": [],
-        "selector": ".topic-link.is-active .badge"
       }
     ],
     "badge-danger": [
@@ -4297,26 +4310,32 @@
     ],
     "btn": [
       {
+        "source": "App/Core/Identity/assets/styles/authentication.css",
+        "line": 1,
+        "context": [],
+        "selector": ".auth-page form > .btn"
+      },
+      {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 146,
+        "line": 138,
         "context": [],
         "selector": ".btn"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 163,
+        "line": 155,
         "context": [],
         "selector": ".btn:hover"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 167,
+        "line": 159,
         "context": [],
         "selector": ".btn:disabled"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 167,
+        "line": 159,
         "context": [],
         "selector": ".btn[aria-disabled=\"true\"]"
       },
@@ -4420,13 +4439,13 @@
     "btn-danger": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 193,
+        "line": 185,
         "context": [],
         "selector": ".btn-danger"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 198,
+        "line": 190,
         "context": [],
         "selector": ".btn-danger:hover"
       }
@@ -4434,13 +4453,13 @@
     "btn-ghost": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 203,
+        "line": 195,
         "context": [],
         "selector": ".btn-ghost"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 207,
+        "line": 199,
         "context": [],
         "selector": ".btn-ghost:hover"
       }
@@ -4448,7 +4467,7 @@
     "btn-group": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 234,
+        "line": 226,
         "context": [],
         "selector": ".btn-group"
       }
@@ -4456,7 +4475,7 @@
     "btn-icon": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 218,
+        "line": 210,
         "context": [],
         "selector": ".btn-icon"
       },
@@ -4470,13 +4489,13 @@
     "btn-primary": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 173,
+        "line": 165,
         "context": [],
         "selector": ".btn-primary"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 178,
+        "line": 170,
         "context": [],
         "selector": ".btn-primary:hover"
       }
@@ -4484,13 +4503,13 @@
     "btn-secondary": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 183,
+        "line": 175,
         "context": [],
         "selector": ".btn-secondary"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 188,
+        "line": 180,
         "context": [],
         "selector": ".btn-secondary:hover"
       }
@@ -4498,13 +4517,13 @@
     "btn-sm": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 211,
+        "line": 203,
         "context": [],
         "selector": ".btn-sm"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 211,
+        "line": 203,
         "context": [],
         "selector": ".context-menu-action.btn-sm"
       }
@@ -4614,18 +4633,6 @@
       }
     ],
     "card-header": [
-      {
-        "source": "App/Core/Notifications/assets/styles/notifications-page.css",
-        "line": 10,
-        "context": [],
-        "selector": ".notifications-page .card-header"
-      },
-      {
-        "source": "App/Core/Notifications/assets/styles/notifications-page.css",
-        "line": 17,
-        "context": [],
-        "selector": ".notifications-page .card-header > form"
-      },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-shell-desktop.css",
         "line": 63,
@@ -4812,7 +4819,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 211,
+        "line": 203,
         "context": [],
         "selector": ".context-menu-action.btn-sm"
       },
@@ -5230,19 +5237,19 @@
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 189,
+        "line": 191,
         "context": [],
         "selector": ".following-modal-grid"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 195,
+        "line": 197,
         "context": [],
         "selector": ".following-modal-grid .profile-following-link"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 203,
+        "line": 205,
         "context": [],
         "selector": ".following-modal-grid .avatar"
       }
@@ -5476,7 +5483,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 6,
+        "line": 7,
         "context": [],
         "selector": ".home-feed-section .status-feed"
       }
@@ -5504,31 +5511,31 @@
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 15,
+        "line": 16,
         "context": [],
         "selector": ".home-feed-toolbar > .archive-filter"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 20,
+        "line": 22,
         "context": [],
         "selector": ".home-feed-toolbar .archive-filter > summary"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 26,
+        "line": 28,
         "context": [],
         "selector": ".home-feed-toolbar .archive-filter > summary span"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 32,
+        "line": 34,
         "context": [],
         "selector": ".home-feed-toolbar .archive-filter > summary svg"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 37,
+        "line": 39,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -5536,7 +5543,7 @@
       },
       {
         "source": "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
-        "line": 41,
+        "line": 43,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -5656,13 +5663,13 @@
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 103,
+        "line": 105,
         "context": [],
         "selector": ".profile-stat .icon"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 133,
+        "line": 135,
         "context": [],
         "selector": ".profile-member-since .icon"
       }
@@ -5769,14 +5776,6 @@
         "line": 1,
         "context": [],
         "selector": ".image-preview-contain img"
-      }
-    ],
-    "information-page": [
-      {
-        "source": "App/Core/Ui/assets/styles/information-pages.css",
-        "line": 1,
-        "context": [],
-        "selector": ".information-page"
       }
     ],
     "inline-flex": [
@@ -5910,7 +5909,7 @@
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-content.css",
-        "line": 391,
+        "line": 392,
         "context": [],
         "selector": ".status-reaction.is-active"
       },
@@ -5919,18 +5918,6 @@
         "line": 167,
         "context": [],
         "selector": ".status-editor-suggestion.is-active"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 18,
-        "context": [],
-        "selector": ".topic-link.is-active"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 37,
-        "context": [],
-        "selector": ".topic-link.is-active .badge"
       }
     ],
     "is-child": [
@@ -6040,7 +6027,7 @@
     "is-unread": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 14,
+        "line": 15,
         "context": [],
         "selector": ".notification-item.is-unread"
       },
@@ -6172,7 +6159,7 @@
     "link-button": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 223,
+        "line": 215,
         "context": [],
         "selector": ".link-button"
       }
@@ -6219,28 +6206,12 @@
         "selector": ".m-0"
       }
     ],
-    "max-w-auth": [
-      {
-        "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 109,
-        "context": [],
-        "selector": ".max-w-auth"
-      }
-    ],
     "max-w-auth-sm": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
         "line": 105,
         "context": [],
         "selector": ".max-w-auth-sm"
-      }
-    ],
-    "max-w-prose": [
-      {
-        "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 113,
-        "context": [],
-        "selector": ".max-w-prose"
       }
     ],
     "mb-0": [
@@ -6930,7 +6901,7 @@
     "notification-actions": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 18,
+        "line": 19,
         "context": [],
         "selector": ".notification-actions"
       }
@@ -6960,15 +6931,39 @@
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 10,
+        "line": 11,
         "context": [],
         "selector": ".notification-item:first-child"
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 14,
+        "line": 15,
         "context": [],
         "selector": ".notification-item.is-unread"
+      },
+      {
+        "source": "App/Core/Notifications/assets/styles/notification-items.css",
+        "line": 27,
+        "context": [],
+        "selector": ".notification-item > a::after"
+      },
+      {
+        "source": "App/Core/Notifications/assets/styles/notification-items.css",
+        "line": 33,
+        "context": [],
+        "selector": ".notification-item:has(> a:is(:hover, :focus-visible))"
+      },
+      {
+        "source": "App/Core/Notifications/assets/styles/notification-items.css",
+        "line": 37,
+        "context": [],
+        "selector": ".notification-item > a:is(:hover, :focus-visible)"
+      },
+      {
+        "source": "App/Core/Notifications/assets/styles/notification-items.css",
+        "line": 42,
+        "context": [],
+        "selector": ".notification-item > a:focus-visible::after"
       }
     ],
     "notification-nav-link": [
@@ -7023,46 +7018,6 @@
         "line": 47,
         "context": [],
         "selector": ".notification-preview-more"
-      },
-      {
-        "source": "App/Core/Notifications/assets/styles/notification-preview.css",
-        "line": 59,
-        "context": [],
-        "selector": ".notification-preview-more:hover"
-      },
-      {
-        "source": "App/Core/Notifications/assets/styles/notification-preview.css",
-        "line": 59,
-        "context": [],
-        "selector": ".notification-preview-more:focus"
-      }
-    ],
-    "notifications-list": [
-      {
-        "source": "App/Core/Notifications/assets/styles/notifications-page.css",
-        "line": 6,
-        "context": [],
-        "selector": ".notifications-list"
-      }
-    ],
-    "notifications-page": [
-      {
-        "source": "App/Core/Notifications/assets/styles/notifications-page.css",
-        "line": 1,
-        "context": [],
-        "selector": ".notifications-page"
-      },
-      {
-        "source": "App/Core/Notifications/assets/styles/notifications-page.css",
-        "line": 10,
-        "context": [],
-        "selector": ".notifications-page .card-header"
-      },
-      {
-        "source": "App/Core/Notifications/assets/styles/notifications-page.css",
-        "line": 17,
-        "context": [],
-        "selector": ".notifications-page .card-header > form"
       }
     ],
     "pagination": [
@@ -7306,13 +7261,13 @@
     "profile-actions": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 138,
+        "line": 140,
         "context": [],
         "selector": ".profile-actions"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 143,
+        "line": 145,
         "context": [],
         "selector": ".profile-actions > *"
       }
@@ -7356,7 +7311,7 @@
     "profile-details": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 53,
+        "line": 56,
         "context": [],
         "selector": ".profile-details"
       }
@@ -7364,7 +7319,7 @@
     "profile-edit-toggle": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 63,
+        "line": 66,
         "context": [],
         "selector": ".profile-edit-toggle"
       }
@@ -7392,25 +7347,25 @@
     "profile-following-link": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 148,
+        "line": 150,
         "context": [],
         "selector": ".profile-following-link"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 160,
+        "line": 162,
         "context": [],
         "selector": ".profile-following-link:hover"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 160,
+        "line": 162,
         "context": [],
         "selector": ".profile-following-link:focus"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 195,
+        "line": 197,
         "context": [],
         "selector": ".following-modal-grid .profile-following-link"
       }
@@ -7418,31 +7373,31 @@
     "profile-following-main": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 166,
+        "line": 168,
         "context": [],
         "selector": ".profile-following-main"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 173,
+        "line": 175,
         "context": [],
         "selector": ".profile-following-main strong"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 173,
+        "line": 175,
         "context": [],
         "selector": ".profile-following-main small"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 180,
+        "line": 182,
         "context": [],
         "selector": ".profile-following-main strong"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 184,
+        "line": 186,
         "context": [],
         "selector": ".profile-following-main small"
       }
@@ -7456,7 +7411,7 @@
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 35,
+        "line": 36,
         "context": [],
         "selector": ".profile-identity .avatar-xl"
       }
@@ -7464,7 +7419,7 @@
     "profile-identity-main": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 41,
+        "line": 43,
         "context": [],
         "selector": ".profile-identity-main"
       }
@@ -7488,7 +7443,7 @@
     "profile-main": [
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 6,
+        "line": 7,
         "context": [],
         "selector": ".profile-main .status-feed"
       },
@@ -7510,13 +7465,13 @@
     "profile-member-since": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 120,
+        "line": 122,
         "context": [],
         "selector": ".profile-member-since"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 133,
+        "line": 135,
         "context": [],
         "selector": ".profile-member-since .icon"
       }
@@ -7524,7 +7479,7 @@
     "profile-name": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 47,
+        "line": 50,
         "context": [],
         "selector": ".profile-name"
       }
@@ -7548,7 +7503,7 @@
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 58,
+        "line": 61,
         "context": [],
         "selector": ".profile-sidebar-stack"
       }
@@ -7556,31 +7511,31 @@
     "profile-stat": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 79,
+        "line": 82,
         "context": [],
         "selector": ".profile-stat"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 87,
+        "line": 90,
         "context": [],
         "selector": ".profile-stat:nth-child(-n + 3)"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 91,
+        "line": 94,
         "context": [],
         "selector": ".profile-stat:not(:nth-child(3n))"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 95,
+        "line": 98,
         "context": [],
         "selector": ".profile-stat > span"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 103,
+        "line": 105,
         "context": [],
         "selector": ".profile-stat .icon"
       }
@@ -7588,19 +7543,19 @@
     "profile-stat-button": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 108,
+        "line": 110,
         "context": [],
         "selector": ".profile-stat-button"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 114,
+        "line": 116,
         "context": [],
         "selector": ".profile-stat-button:hover"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 114,
+        "line": 116,
         "context": [],
         "selector": ".profile-stat-button:focus-visible"
       }
@@ -7614,7 +7569,7 @@
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 70,
+        "line": 73,
         "context": [],
         "selector": ".profile-stats"
       }
@@ -7682,7 +7637,7 @@
       },
       {
         "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 8,
+        "line": 9,
         "context": [],
         "selector": ".public-list-header .text-2xl"
       }
@@ -7809,14 +7764,6 @@
         "selector": ".public-workspace-nav .btn"
       }
     ],
-    "publishing-text": [
-      {
-        "source": "App/Modules/Social/assets/content/styles/status-text.css",
-        "line": 104,
-        "context": [],
-        "selector": ".publishing-text"
-      }
-    ],
     "result-item": [
       {
         "source": "App/Core/Ui/assets/styles/result-list.css",
@@ -7936,7 +7883,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/reset.css",
-        "line": 94,
+        "line": 96,
         "context": [],
         "selector": ".skip-link:focus"
       }
@@ -8140,7 +8087,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-header.css",
-        "line": 14,
+        "line": 15,
         "context": [],
         "selector": ".status-author a"
       },
@@ -8206,7 +8153,7 @@
     "status-comment-author": [
       {
         "source": "App/Modules/Social/assets/content/styles/discussion-content.css",
-        "line": 52,
+        "line": 54,
         "context": [],
         "selector": ".status-comment-author"
       }
@@ -8322,7 +8269,7 @@
     "status-comment-heading": [
       {
         "source": "App/Modules/Social/assets/content/styles/discussion-content.css",
-        "line": 59,
+        "line": 63,
         "context": [],
         "selector": ".status-comment-heading"
       },
@@ -8336,7 +8283,7 @@
     "status-comment-heading-time": [
       {
         "source": "App/Modules/Social/assets/content/styles/discussion-content.css",
-        "line": 66,
+        "line": 71,
         "context": [],
         "selector": ".status-comment-heading-time"
       }
@@ -8862,13 +8809,13 @@
     "status-feed": [
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 6,
+        "line": 7,
         "context": [],
         "selector": ".home-feed-section .status-feed"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/home-feed.css",
-        "line": 6,
+        "line": 7,
         "context": [],
         "selector": ".profile-main .status-feed"
       },
@@ -9408,19 +9355,19 @@
     "status-manage-icon": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-content.css",
-        "line": 379,
+        "line": 380,
         "context": [],
         "selector": ".status-manage-icon"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-content.css",
-        "line": 386,
+        "line": 387,
         "context": [],
         "selector": ".status-manage-icon:hover"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-content.css",
-        "line": 386,
+        "line": 387,
         "context": [],
         "selector": ".status-manage-icon:focus"
       }
@@ -9442,7 +9389,7 @@
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-content.css",
-        "line": 375,
+        "line": 376,
         "context": [],
         "selector": ".status-manage-top form"
       }
@@ -9496,13 +9443,13 @@
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-content.css",
-        "line": 391,
+        "line": 392,
         "context": [],
         "selector": ".status-reaction.is-active"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-content.css",
-        "line": 397,
+        "line": 398,
         "context": [],
         "selector": ".status-reaction"
       }
@@ -10322,7 +10269,7 @@
     "text-2xl": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 129,
+        "line": 121,
         "context": [],
         "selector": ".text-2xl"
       },
@@ -10336,7 +10283,7 @@
       },
       {
         "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 8,
+        "line": 9,
         "context": [],
         "selector": ".public-list-header .text-2xl"
       }
@@ -10344,7 +10291,7 @@
     "text-base": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 117,
+        "line": 109,
         "context": [],
         "selector": ".text-base"
       }
@@ -10352,7 +10299,7 @@
     "text-danger": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 142,
+        "line": 134,
         "context": [],
         "selector": ".text-danger"
       },
@@ -10366,7 +10313,7 @@
     "text-lg": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 121,
+        "line": 113,
         "context": [],
         "selector": ".text-lg"
       }
@@ -10374,7 +10321,7 @@
     "text-muted": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 134,
+        "line": 126,
         "context": [],
         "selector": ".text-muted"
       }
@@ -10382,7 +10329,7 @@
     "text-primary": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 138,
+        "line": 130,
         "context": [],
         "selector": ".text-primary"
       }
@@ -10390,7 +10337,7 @@
     "text-xl": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 125,
+        "line": 117,
         "context": [],
         "selector": ".text-xl"
       }
@@ -10561,56 +10508,6 @@
         "selector": ".tooltip[hidden]"
       }
     ],
-    "topic-link": [
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 6,
-        "context": [],
-        "selector": ".topic-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 18,
-        "context": [],
-        "selector": ".topic-link:hover"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 18,
-        "context": [],
-        "selector": ".topic-link:focus"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 18,
-        "context": [],
-        "selector": ".topic-link.is-active"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 32,
-        "context": [],
-        "selector": ".topic-link .badge"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 37,
-        "context": [],
-        "selector": ".topic-link:hover .badge"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 37,
-        "context": [],
-        "selector": ".topic-link:focus .badge"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 37,
-        "context": [],
-        "selector": ".topic-link.is-active .badge"
-      }
-    ],
     "topic-list": [
       {
         "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
@@ -10622,7 +10519,7 @@
     "topic-name": [
       {
         "source": "App/Modules/Social/assets/site/styles/sidebar-lists.css",
-        "line": 25,
+        "line": 6,
         "context": [],
         "selector": ".topic-name"
       }
@@ -10877,7 +10774,7 @@
           "declarations": [
             [
               "padding",
-              "0.75rem 0.875rem"
+              "var(--space-3) var(--space-3-5)"
             ]
           ]
         },
@@ -10907,7 +10804,7 @@
           "declarations": [
             [
               "padding",
-              "0.75rem 0.875rem"
+              "var(--space-3) var(--space-3-5)"
             ]
           ]
         },
@@ -11480,6 +11377,54 @@
               "calc(100% * var(--ui-scale) * var(--ui-density-scale))"
             ],
             [
+              "--space-0-5",
+              "0.125rem"
+            ],
+            [
+              "--space-1",
+              "0.25rem"
+            ],
+            [
+              "--space-1-5",
+              "0.375rem"
+            ],
+            [
+              "--space-2",
+              "0.5rem"
+            ],
+            [
+              "--space-2-5",
+              "0.625rem"
+            ],
+            [
+              "--space-3",
+              "0.75rem"
+            ],
+            [
+              "--space-3-5",
+              "0.875rem"
+            ],
+            [
+              "--space-4",
+              "1rem"
+            ],
+            [
+              "--space-5",
+              "1.25rem"
+            ],
+            [
+              "--space-6",
+              "1.5rem"
+            ],
+            [
+              "--space-8",
+              "2rem"
+            ],
+            [
+              "--space-10",
+              "2.5rem"
+            ],
+            [
               "--control-height",
               "2.5rem"
             ],
@@ -11785,7 +11730,7 @@
           "selector": ":root",
           "context": [],
           "source": "App/Core/Ui/assets/styles/tokens.css",
-          "line": 105,
+          "line": 117,
           "declarations": [
             [
               "--status-icon-info",
@@ -11831,7 +11776,7 @@
             ],
             [
               "padding",
-              "0.4375rem 0.5625rem"
+              "var(--space-2) var(--space-2-5)"
             ]
           ]
         },
@@ -11865,11 +11810,11 @@
           "declarations": [
             [
               "border-radius",
-              "3px"
+              "var(--radius-sm)"
             ],
             [
               "padding",
-              "1px 0.125rem"
+              "0.0625rem var(--space-0-5)"
             ],
             [
               "text-decoration-thickness",
@@ -11919,11 +11864,11 @@
           "declarations": [
             [
               "border-radius",
-              "3px"
+              "var(--radius-sm)"
             ],
             [
               "padding",
-              "1px 0.125rem"
+              "0.0625rem var(--space-0-5)"
             ],
             [
               "text-decoration-thickness",
@@ -11993,7 +11938,7 @@
             ],
             [
               "grid-template-columns",
-              "38px minmax(0, 1fr)"
+              "2.375rem minmax(0, 1fr)"
             ],
             [
               "align-items",
@@ -12001,11 +11946,11 @@
             ],
             [
               "gap",
-              "10px"
+              "var(--space-2-5)"
             ],
             [
               "padding",
-              "10px"
+              "var(--space-2-5)"
             ],
             [
               "color",
@@ -12039,7 +11984,7 @@
             ],
             [
               "gap",
-              "2px"
+              "var(--space-0-5)"
             ]
           ]
         },
@@ -12063,7 +12008,7 @@
             ],
             [
               "padding",
-              "40px 14px 12px"
+              "var(--space-10) var(--space-3-5) var(--space-3)"
             ],
             [
               "background",
@@ -12151,7 +12096,7 @@
             ],
             [
               "gap",
-              "4px"
+              "var(--space-1)"
             ]
           ]
         },
@@ -12163,7 +12108,41 @@
           "declarations": [
             [
               "padding-block-start",
-              "7px"
+              "var(--space-2)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "selector": ".archive-actions .archive-filter > summary",
+      "context": [],
+      "rules": [
+        {
+          "selector": ".archive-actions .archive-filter > summary",
+          "context": [],
+          "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+          "line": 15,
+          "declarations": [
+            [
+              "max-width",
+              "100%"
+            ]
+          ]
+        },
+        {
+          "selector": ".archive-actions .archive-filter > summary",
+          "context": [],
+          "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+          "line": 18,
+          "declarations": [
+            [
+              "white-space",
+              "normal"
+            ],
+            [
+              "overflow-wrap",
+              "anywhere"
             ]
           ]
         }
@@ -12177,7 +12156,7 @@
           "selector": ".profile-following-main strong",
           "context": [],
           "source": "App/Modules/Social/assets/users/styles/profile.css",
-          "line": 173,
+          "line": 175,
           "declarations": [
             [
               "overflow",
@@ -12197,7 +12176,7 @@
           "selector": ".profile-following-main strong",
           "context": [],
           "source": "App/Modules/Social/assets/users/styles/profile.css",
-          "line": 180,
+          "line": 182,
           "declarations": [
             [
               "font-size",
@@ -12215,7 +12194,7 @@
           "selector": ".profile-following-main small",
           "context": [],
           "source": "App/Modules/Social/assets/users/styles/profile.css",
-          "line": 173,
+          "line": 175,
           "declarations": [
             [
               "overflow",
@@ -12235,7 +12214,7 @@
           "selector": ".profile-following-main small",
           "context": [],
           "source": "App/Modules/Social/assets/users/styles/profile.css",
-          "line": 184,
+          "line": 186,
           "declarations": [
             [
               "color",
@@ -12708,6 +12687,16 @@
     }
   ],
   "stylesheet_ownership": {
+    "App/Core/Identity/assets/styles/authentication.css": [
+      {
+        "manifest": "App/Core/Identity/assets/module.json",
+        "routes": [
+          "/login",
+          "/register",
+          "/recovery"
+        ]
+      }
+    ],
     "App/Core/Identity/assets/styles/avatar-upload.css": [
       {
         "manifest": "App/Core/Identity/assets/module.json",
@@ -12759,16 +12748,6 @@
       }
     ],
     "App/Core/Notifications/assets/styles/notification-preview.css": [
-      {
-        "manifest": "App/Core/Notifications/assets/module.json",
-        "routes": [
-          "public",
-          "/notifications",
-          "/access/notifications"
-        ]
-      }
-    ],
-    "App/Core/Notifications/assets/styles/notifications-page.css": [
       {
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
@@ -13085,15 +13064,6 @@
         "routes": [
           "public",
           "admin"
-        ]
-      }
-    ],
-    "App/Core/Ui/assets/styles/information-pages.css": [
-      {
-        "manifest": "App/Core/Ui/assets/module.json",
-        "routes": [
-          "/privacy",
-          "/access/privacy"
         ]
       }
     ],

@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.0.8 - 2026-11-26
+
+- Share authentication page and modal definitions across login, registration and password recovery; simplify the forms while retaining validation, consent and draft protection.
+- Reject ambiguous external login destinations and prevent signed-in sessions from loading login or registration modals.
+- Consolidate shared sorting, link-image and moderation fragments. Use core controls and spacing tokens, improve UI scaling and restore Social assets on localized routes.
+- Simplify notifications, privacy and error layouts; highlight entire notification rows while keeping delete actions independent. Standardize sidebar and hashtag hover states.
+- Generate square initials avatars with cache-sharing v3 URLs. Remove old generated/initials SVG routes; retain custom uploads and their atomic file references.
+- Declare the WebP MIME type explicitly, retire obsolete Apache rewrite/cache rules and remove unused translations and styles. No new database migration or configuration change is required.
+
 ## 8.0.7 - 2026-11-25
 
 - Reduce repeated Core and Social reads and consolidate internal helpers without changing database schemas or configuration.

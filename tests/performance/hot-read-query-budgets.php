@@ -279,7 +279,7 @@ function exerciseSearch(): void
 function exerciseStatusImages(array $items): void
 {
     foreach ($items as $item) {
-        if (!str_starts_with(\TinyCat\Social\Profiles\Profiles::avatarUrl((array) $item), '/avatar/initials/v1/')) { throw new RuntimeException('Feed projection lost canonical username initials.'); }
+        if (!str_starts_with(\TinyCat\Social\Profiles\Profiles::avatarUrl((array) $item), '/avatar/initials/v3/')) { throw new RuntimeException('Feed projection lost canonical username initials.'); }
         \TinyCat\Social\Posts\Images::status_image_url((array) $item);
         \TinyCat\Social\Posts\Images::status_image_jsonld((array) $item);
     }

@@ -984,45 +984,21 @@
                     "tag": "tr",
                     "children": [
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.name.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.source_label"}, "order": {"get": "sorting.name"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.source_label"}, "order": {"get": "sorting.name"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.bot.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.bot"}, "order": {"get": "sorting.bot"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.bot"}, "order": {"get": "sorting.bot"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.interval.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.schedule"}, "order": {"get": "sorting.interval"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.schedule"}, "order": {"get": "sorting.interval"}}
                       },
                       {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "bots.published_queued"}]},
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.last_import.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.last_import"}, "order": {"get": "sorting.last_import"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.last_import"}, "order": {"get": "sorting.last_import"}}
                       },
                       {
                         "tag": "th",
@@ -1340,47 +1316,20 @@
                     "tag": "tr",
                     "children": [
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.username.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.account"}, "order": {"get": "sorting.username"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.account"}, "order": {"get": "sorting.username"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.source_count.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {
-                              "label": {"t": "bots.detail_stat_sources"},
-                              "order": {"get": "sorting.source_count"}
-                            }
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.detail_stat_sources"}, "order": {"get": "sorting.source_count"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.post_count.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.detail_stat_posts"}, "order": {"get": "sorting.post_count"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.detail_stat_posts"}, "order": {"get": "sorting.post_count"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.updated_at.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "common.updated"}, "order": {"get": "sorting.updated_at"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "common.updated"}, "order": {"get": "sorting.updated_at"}}
                       },
                       {
                         "tag": "th",
@@ -1507,44 +1456,20 @@
                   "tag": "tr",
                   "children": [
                     {
-                      "tag": "th",
-                      "attrs": {"scope": "col", "aria-sort": {"get": "sorting.source.aria"}},
-                      "children": [
-                        {
-                          "component": "ui/sort-heading",
-                          "data": {"label": {"t": "bots.detail_source"}, "order": {"get": "sorting.source"}}
-                        }
-                      ]
+                      "component": "ui/sort-column",
+                      "data": {"label": {"t": "bots.detail_source"}, "order": {"get": "sorting.source"}}
                     },
                     {
-                      "tag": "th",
-                      "attrs": {"scope": "col", "aria-sort": {"get": "sorting.status.aria"}},
-                      "children": [
-                        {
-                          "component": "ui/sort-heading",
-                          "data": {"label": {"t": "bots.detail_status"}, "order": {"get": "sorting.status"}}
-                        }
-                      ]
+                      "component": "ui/sort-column",
+                      "data": {"label": {"t": "bots.detail_status"}, "order": {"get": "sorting.status"}}
                     },
                     {
-                      "tag": "th",
-                      "attrs": {"scope": "col", "aria-sort": {"get": "sorting.started_at.aria"}},
-                      "children": [
-                        {
-                          "component": "ui/sort-heading",
-                          "data": {"label": {"t": "bots.detail_started"}, "order": {"get": "sorting.started_at"}}
-                        }
-                      ]
+                      "component": "ui/sort-column",
+                      "data": {"label": {"t": "bots.detail_started"}, "order": {"get": "sorting.started_at"}}
                     },
                     {
-                      "tag": "th",
-                      "attrs": {"scope": "col", "aria-sort": {"get": "sorting.items_seen.aria"}},
-                      "children": [
-                        {
-                          "component": "ui/sort-heading",
-                          "data": {"label": {"t": "bots.detail_items_seen"}, "order": {"get": "sorting.items_seen"}}
-                        }
-                      ]
+                      "component": "ui/sort-column",
+                      "data": {"label": {"t": "bots.detail_items_seen"}, "order": {"get": "sorting.items_seen"}}
                     },
                     {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "common.note"}]}
                   ]
@@ -1694,37 +1619,16 @@
                     "tag": "tr",
                     "children": [
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.body.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.detail_post"}, "order": {"get": "sorting.body"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.detail_post"}, "order": {"get": "sorting.body"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.source.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.source_label"}, "order": {"get": "sorting.source"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.source_label"}, "order": {"get": "sorting.source"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.published_at.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {
-                              "label": {"t": "bots.detail_publication"},
-                              "order": {"get": "sorting.published_at"}
-                            }
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.detail_publication"}, "order": {"get": "sorting.published_at"}}
                       },
                       {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "common.status"}]},
                       {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "common.actions"}]}
@@ -1915,44 +1819,20 @@
                     "tag": "tr",
                     "children": [
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.bot.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.bot"}, "order": {"get": "sorting.bot"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.bot"}, "order": {"get": "sorting.bot"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.source.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.source_label"}, "order": {"get": "sorting.source"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.source_label"}, "order": {"get": "sorting.source"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.body.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.detail_posts"}, "order": {"get": "sorting.body"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.detail_posts"}, "order": {"get": "sorting.body"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.published_at.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "bots.post_scheduled"}, "order": {"get": "sorting.published_at"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "bots.post_scheduled"}, "order": {"get": "sorting.published_at"}}
                       },
                       {
                         "tag": "th",
@@ -2248,10 +2128,9 @@
                 "children": [{"t": "bots.preview_image_pending"}]
               },
               {
-                "tag": "p",
-                "attrs": {"class": "alert alert-warning"},
-                "when": {"get": "item.rejection"},
-                "children": [{"t": "bots.preview_skipped"}]
+                "component": "ui/notice",
+                "data": {"tone": "warning", "label": {"t": "bots.preview_skipped"}},
+                "when": {"get": "item.rejection"}
               }
             ]
           }
@@ -2587,34 +2466,16 @@
                     "tag": "tr",
                     "children": [
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.content.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "moderation.reported_content"}, "order": {"get": "sorting.content"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "moderation.reported_content"}, "order": {"get": "sorting.content"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.reason.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "moderation.report_reason"}, "order": {"get": "sorting.reason"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "moderation.report_reason"}, "order": {"get": "sorting.reason"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.status.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "common.status"}, "order": {"get": "sorting.status"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "common.status"}, "order": {"get": "sorting.status"}}
                       },
                       {
                         "tag": "th",
@@ -2709,17 +2570,7 @@
                           {
                             "tag": "td",
                             "children": [
-                              {
-                                "lookup": {"get": "report.reason"},
-                                "cases": {
-                                  "spam": {"t": "moderation.report_reasons.spam"},
-                                  "illegal": {"t": "moderation.report_reasons.illegal"},
-                                  "malware": {"t": "moderation.report_reasons.malware"},
-                                  "abuse": {"t": "moderation.report_reasons.abuse"},
-                                  "other": {"t": "moderation.report_reasons.other"}
-                                },
-                                "default": {"t": "moderation.report_reasons.other"}
-                              }
+                              {"use": "moderation/report-reason", "data": {"reason": {"get": "report.reason"}}}
                             ]
                           },
                           {
@@ -2913,17 +2764,7 @@
                           {
                             "tag": "td",
                             "children": [
-                              {
-                                "lookup": {"get": "report.reason"},
-                                "cases": {
-                                  "spam": {"t": "moderation.report_reasons.spam"},
-                                  "illegal": {"t": "moderation.report_reasons.illegal"},
-                                  "malware": {"t": "moderation.report_reasons.malware"},
-                                  "abuse": {"t": "moderation.report_reasons.abuse"},
-                                  "other": {"t": "moderation.report_reasons.other"}
-                                },
-                                "default": {"t": "moderation.report_reasons.other"}
-                              }
+                              {"use": "moderation/report-reason", "data": {"reason": {"get": "report.reason"}}}
                             ]
                           },
                           {
@@ -2989,19 +2830,7 @@
       {
         "tag": "dd",
         "attrs": {"class": "m-0 is-resource-text"},
-        "children": [
-          {
-            "lookup": {"get": "report.reason"},
-            "cases": {
-              "spam": {"t": "moderation.report_reasons.spam"},
-              "illegal": {"t": "moderation.report_reasons.illegal"},
-              "malware": {"t": "moderation.report_reasons.malware"},
-              "abuse": {"t": "moderation.report_reasons.abuse"},
-              "other": {"t": "moderation.report_reasons.other"}
-            },
-            "default": {"t": "moderation.report_reasons.other"}
-          }
-        ]
+        "children": [{"use": "moderation/report-reason", "data": {"reason": {"get": "report.reason"}}}]
       },
       {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "common.status"}]},
       {
@@ -3096,12 +2925,8 @@
                       {
                         "tag": "a",
                         "attrs": {
-                          "class": {
-                            "concat": [
-                              "topic-link",
-                              {"if": [{"eq": [{"get": "active_tag"}, {"get": "tag.name"}]}, " is-active", ""]}
-                            ]
-                          },
+                          "class": "context-menu-action justify-between",
+                          "data-topic-link": "",
                           "href": {"get": "tag.url"},
                           "aria-current": {"if": [{"eq": [{"get": "active_tag"}, {"get": "tag.name"}]}, "page", null]}
                         },
@@ -4664,28 +4489,7 @@
             "data-provider": {"get": "link.provider"}
           },
           "children": [
-            {
-              "tag": "span",
-              "attrs": {"class": "status-link-media", "data-status-link-media": ""},
-              "when": {"get": "link.image_url"},
-              "children": [
-                {
-                  "tag": "img",
-                  "attrs": {
-                    "class": "status-link-image",
-                    "src": {"get": "link.image_url"},
-                    "alt": "",
-                    "loading": "lazy",
-                    "data-status-link-image": ""
-                  }
-                },
-                {
-                  "tag": "span",
-                  "attrs": {"class": "status-link-icon status-link-fallback-icon", "data-status-link-fallback": ""},
-                  "children": [{"icon": "image"}]
-                }
-              ]
-            },
+            {"component": "publishing/link-image", "data": {"link": {"get": "link"}}},
             {
               "tag": "span",
               "attrs": {"class": "status-link-icon"},
@@ -4714,28 +4518,7 @@
         "when": {"get": "link.provider_name"},
         "children": [{"icon": {"or": [{"get": "link.card_icon"}, "external-link"]}}, {"get": "link.provider_name"}]
       },
-      {
-        "tag": "span",
-        "attrs": {"class": "status-link-media", "data-status-link-media": ""},
-        "when": {"get": "link.image_url"},
-        "children": [
-          {
-            "tag": "img",
-            "attrs": {
-              "class": "status-link-image",
-              "src": {"get": "link.image_url"},
-              "alt": "",
-              "loading": "lazy",
-              "data-status-link-image": ""
-            }
-          },
-          {
-            "tag": "span",
-            "attrs": {"class": "status-link-icon status-link-fallback-icon", "data-status-link-fallback": ""},
-            "children": [{"icon": "image"}]
-          }
-        ]
-      },
+      {"component": "publishing/link-image", "data": {"link": {"get": "link"}}},
       {
         "tag": "span",
         "attrs": {"class": "status-link-icon"},
@@ -5313,5 +5096,38 @@
   "publishing/comment-replies": {
     "tag": "div",
     "attrs": {"class": "status-comment-replies", "data-comment-replies": "true", "data-comment-id": {"get": "id"}}
+  },
+  "publishing/link-image": {
+    "tag": "span",
+    "attrs": {"class": "status-link-media", "data-status-link-media": ""},
+    "when": {"get": "link.image_url"},
+    "children": [
+      {
+        "tag": "img",
+        "attrs": {
+          "class": "status-link-image",
+          "src": {"get": "link.image_url"},
+          "alt": "",
+          "loading": "lazy",
+          "data-status-link-image": ""
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {"class": "status-link-icon status-link-fallback-icon", "data-status-link-fallback": ""},
+        "children": [{"icon": "image"}]
+      }
+    ]
+  },
+  "moderation/report-reason": {
+    "lookup": {"get": "reason"},
+    "cases": {
+      "spam": {"t": "moderation.report_reasons.spam"},
+      "illegal": {"t": "moderation.report_reasons.illegal"},
+      "malware": {"t": "moderation.report_reasons.malware"},
+      "abuse": {"t": "moderation.report_reasons.abuse"},
+      "other": {"t": "moderation.report_reasons.other"}
+    },
+    "default": {"t": "moderation.report_reasons.other"}
   }
 }

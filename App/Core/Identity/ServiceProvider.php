@@ -47,11 +47,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Co
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
-        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/avatar/generated/v1/{user_id:[1-9][0-9]*[.]svg}', static function (string $user_id): void {
-            AvatarHttp::byId((int) $user_id);
-        });
-
-        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/avatar/initials/v1/{identity:[A-Za-z0-9_-]+[.]svg}', static function (string $identity): void { AvatarHttp::initials(substr($identity, 0, -4)); });
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/avatar/initials/v3/{initials:.+[.]svg}', static function (string $initials): void { AvatarHttp::initialsText(substr($initials, 0, -4)); });
 
         \TinyCat\Http\Router::route('GET', '/avatar/{username:' . \TinyCat\Core\Identity\Usernames::pattern() . '}', static function (string $username): void {
             \TinyCat\Core\Identity\AvatarHttp::respond($username, static function (): void { \TinyCat\Core\Runtime\Errors::respond(404); });

@@ -16,7 +16,7 @@ try {
     $canvas = imagecreatetruecolor(8, 8);
     ob_start(); imagepng($canvas); $png = (string) ob_get_clean(); imagedestroy($canvas);
     [$status, $generatedUser] = $request('GET', '/api/profiles/' . $avatarId);
-    $generatedUrl = '/avatar/initials/v1/' . rtrim(strtr(base64_encode('Avatar.Fixture.' . $avatarId), '+/', '-_'), '=') . '.svg';
+    $generatedUrl = '/avatar/initials/v3/AV.svg';
     $assert($status === 200 && $generatedUser['data']['user']['avatar_url'] === $generatedUrl && !$generatedUser['data']['user']['avatar_custom'], 'A new user receives a generated avatar before uploading.');
     [$modalStatus, $avatarModal] = $request('GET', '/api/users/' . $avatarId . '/avatar', null, 'admin');
     $assert($modalStatus === 200 && !isset($avatarModal['data']['appearance_options'], $avatarModal['data']['user']['avatar_appearance']), 'Upload resources have no appearance configuration');

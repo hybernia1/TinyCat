@@ -44,10 +44,10 @@ nemá být průchozí obálkou, která pouze volá další render. Vstupy před�
 explicitně; nepřidávej `get_defined_vars()`. Nový operátor rendereru přidávej
 až pro doloženou potřebu více konzumentů; složité výpočty patří do přípravy dat.
 
-Účtové stránky volají přímo komponenty `users/auth-page`, `users/recovery-page`,
-`users/logout-page` a `users/account-home` z katalogu Identity. Přihlášení
-a registrace skládají existující `users/auth-content` a `users/auth-form`,
-takže stránka i dialog zachovávají tentýž formulář. `Resource::authenticationForm()`
+Účtové stránky volají přímo komponenty `users/auth-content`, `users/logout-page`
+a `users/account-home` z katalogu Identity. Přihlášení, registrace a obnova účtu
+sdílejí `users/auth-content`, který skládá `users/auth-form` nebo
+`users/recovery-form`; stránka i dialog zachovávají tentýž formulář. `Resource::authenticationForm()`
 připravuje kanonické vstupy; mezi handlerem a komponentou není PHP partial
 ani průchozí `Views::authContent()` / `Views::authForm()`. Obnova hesla používá
 společná pole a `ui/captcha`, bez skládání důvěryhodných HTML řetězců.

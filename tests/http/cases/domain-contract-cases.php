@@ -30,11 +30,28 @@ $pure($payload);
 $assert($status === 200 && $authentication['data']['mode'] === 'login' && $authentication['data']['switch_modal_url'] === '/api/users/authentication?mode=register&next=%2Fsocial', 'Login exposes the canonical registration resource and preserves its safe destination.');
 [$status, $authentication] = $request('GET', $authentication['data']['switch_modal_url']);
 $assert($status === 200 && $authentication['data']['mode'] === 'register' && $authentication['data']['registration_enabled'] && $authentication['data']['next'] === '/social' && $authentication['data']['switch_modal_url'] === '/api/users/authentication?mode=login&next=%2Fsocial', 'Registration is authorized by the server and exposes the reverse resource switch.');
+[$status, $recovery] = $request('GET', '/api/users/authentication?mode=recovery&next=%2Fsocial');
+$assert($status === 200 && $recovery['data']['mode'] === 'recovery' && $recovery['data']['form_url'] === '/api/users/password-resets' && $recovery['data']['next'] === '/social', 'Recovery shares the authentication resource and preserves the safe destination.');
+[$status, $reset] = $request('GET', '/api/users/authentication?mode=reset&token=example-reset-token');
+$assert($status === 200 && $reset['data']['mode'] === 'reset' && $reset['data']['form_url'] === '/api/users/password-resets/confirm' && $reset['data']['token'] === 'example-reset-token', 'Reset renders its token without consuming or validating it before submission.');
+[$status, $login] = $request('GET', '/api/users/authentication?mode=login&token=example-reset-token&next=https%3A%2F%2Fexample.test');
+$assert($status === 200 && $login['data']['token'] === '' && !str_starts_with($login['data']['next'], 'https:'), 'Login never echoes reset tokens or accepts an external destination.');
+foreach (['google.com', 'https://google.com', '//google.com', '/\\google.com', '/%5cgoogle.com', '/%2fgoogle.com', "/\t/google.com"] as $unsafeNext) {
+    [$status, $unsafeAuthentication] = $request('GET', '/api/users/authentication?mode=login&next=' . rawurlencode($unsafeNext));
+    $assert($status === 200 && $unsafeAuthentication['data']['next'] === '', 'Authentication rejects unsafe redirect input: ' . json_encode($unsafeNext));
+}
+foreach (['login', 'register'] as $authenticatedMode) {
+    [$status, $authenticatedForm] = $request('GET', '/api/users/authentication?mode=' . $authenticatedMode, null, 'user');
+    $assert($status === 409 && $authenticatedForm['code'] === 'already_authenticated' && !isset($authenticatedForm['data']['form_url']), 'Authenticated sessions cannot load guest authentication forms: ' . $authenticatedMode);
+}
+[$status, $authenticatedRecovery] = $request('GET', '/api/users/authentication?mode=recovery', null, 'user');
+$assert($status === 200 && $authenticatedRecovery['data']['mode'] === 'recovery', 'Recovery remains available independently of guest login forms.');
 [$status, $payload] = $request('POST', '/api/users/sessions', ['username' => 'member', 'password' => 'bad'], '', $csrf);
 $assert($status === 422 && isset($payload['error']['details']['errors']['username']) && !isset($payload['errors']), 'Login errors have one canonical field-error location.');
 $pure($payload);
-[$status, $payload] = $request('POST', '/api/users/sessions', ['username' => 'member@example.test', 'password' => 'Example-password-42'], '', $csrf);
+[$status, $payload] = $request('POST', '/api/users/sessions', ['username' => 'member@example.test', 'password' => 'Example-password-42', 'next' => '/\\google.com'], '', $csrf);
 $assert($status === 200 && $payload['data']['user']['id'] === 2 && !isset($payload['data']['user']['password']), 'Email login preserves session authentication without exposing password hashes.');
+$assert(str_starts_with($payload['data']['redirect'], '/') && !str_starts_with($payload['data']['redirect'], '//') && !str_contains($payload['data']['redirect'], '\\'), 'Successful login rejects an external browser-normalized redirect and returns a local landing.');
 [$status, $payload] = $request('POST', '/api/users/registrations', ['username' => 'Žaneta.Test', 'password' => 'Example-password-43', 'password_confirm' => 'Example-password-43', 'platform_terms' => '1'], '', $csrf);
 $assert($status === 201 && $payload['data']['user']['username'] === 'Žaneta.Test' && $payload['data']['approved'], 'Registration accepts Unicode and mixed case and returns the created account.');
 $pure($payload);
@@ -121,11 +138,11 @@ $assert($status === 200, 'The created root comment remains independently removab
 [$status, $payload] = $request('POST', '/api/statuses/10/comments', ['comment' => 'JSON reply <b>literal</b>', 'parent_id' => 10], 'user', $csrf);
 $assert($status === 201 && $payload['data']['comment']['parent_id'] === 10 && !isset($payload['data']['comment']['html']), 'AJAX replies return a complete comment resource instead of rendered markup.');
 $commentId = $payload['data']['comment']['id'];
-$assert(str_starts_with($payload['data']['comment']['author']['avatar_url'], '/avatar/initials/v1/' . rtrim(strtr(base64_encode('member'), '+/', '-_'), '=')), 'New replies carry the avatar of their author rather than an empty fallback.');
+$assert(str_starts_with($payload['data']['comment']['author']['avatar_url'], '/avatar/initials/v3/ME.svg'), 'New replies carry the avatar of their author rather than an empty fallback.');
 [$commentsStatus, $commentTree] = $request('GET', '/api/statuses/10/comments?parent_id=10');
 $replyWithAvatar = null;
 foreach ($commentTree['data']['items'] as $reply) { if ($reply['id'] === $commentId) { $replyWithAvatar = $reply; } }
-$assert($commentsStatus === 200 && $replyWithAvatar !== null && str_starts_with($replyWithAvatar['author']['avatar_url'], '/avatar/initials/v1/' . rtrim(strtr(base64_encode('member'), '+/', '-_'), '=')), 'Reloading nested replies preserves the correct author avatar.');
+$assert($commentsStatus === 200 && $replyWithAvatar !== null && str_starts_with($replyWithAvatar['author']['avatar_url'], '/avatar/initials/v3/ME.svg'), 'Reloading nested replies preserves the correct author avatar.');
 [$commentsStatus, $rootPage] = $request('GET', '/api/statuses/10/comments?limit=1');
 $assert($commentsStatus === 200 && count($rootPage['data']['items']) === 1 && $rootPage['data']['items'][0]['has_replies'] && $rootPage['data']['items'][0]['replies'] === [] && $rootPage['meta']['pagination']['next_url'] !== '', 'Root page is bounded and advertises lazy replies and continuation.');
 [$commentsStatus, $replyPage] = $request('GET', '/api/statuses/10/comments?parent_id=10&limit=1');

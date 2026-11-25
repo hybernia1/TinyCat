@@ -2,6 +2,6 @@
 .profile-sidebar-stack,
   .public-sidebar {
     position: sticky;
-    top: var(--sidebar-sticky-top, 76px);
+    top: var(--sidebar-sticky-top, 4.75rem);
   }
 }

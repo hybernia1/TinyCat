@@ -2,26 +2,26 @@
 
 .status-compose-row {
   display: grid;
-  grid-template-columns: 2.375rem minmax(0, 1fr);
-  gap: 0.625rem;
+  grid-template-columns: var(--control-height-compact) minmax(0, 1fr);
+  gap: var(--space-2-5);
 }
 
 .status-compose-main {
   display: grid;
-  gap: 0.4375rem;
+  gap: var(--space-2);
 }
 
 .status-compose-main .btn {
   justify-self: end;
-  min-height: 2.375rem;
-  padding: 0.5rem 0.75rem;
+  min-height: var(--control-height-compact);
+  padding: var(--space-2) var(--space-3);
 }
 
 .status-compose-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.625rem;
+  gap: var(--space-2-5);
 }
 
 .status-compose-counter {
@@ -41,13 +41,13 @@
 .status-compose-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   justify-content: flex-end;
 }
 
 .status-compose-actions > .btn-icon {
-  width: 2.375rem;
-  min-height: 2.375rem;
+  width: var(--control-height-compact);
+  min-height: var(--control-height-compact);
   padding-inline: 0;
 }
 
@@ -56,8 +56,8 @@
 }
 
 .status-compose-actions .status-image-preview {
-  width: 2.375rem;
-  height: 2.375rem;
+  width: var(--control-height-compact);
+  height: var(--control-height-compact);
 }
 
 .status-compose-main .status-image-picker {
@@ -69,8 +69,8 @@
   object-fit: cover;
 }
 
-.status-modal-form { display: grid; gap: 1rem; min-width: 0; }
+.status-modal-form { display: grid; gap: var(--space-4); min-width: 0; }
 
-.status-modal-form > .label { margin-bottom: -8px; }
+.status-modal-form > .label { margin-bottom: calc(-1 * var(--space-2)); }
 
 .status-modal-form .status-editor-input { min-height: 8.125rem; background: var(--surface-soft); }

@@ -218,7 +218,7 @@ try {
     [$status] = $request('/api/users/2', 'DELETE', [], 'admin'); $assert($status === 200, 'Selected account lifecycle supports deletion without social tables');
     $assert((int) TinyCat\Database\Connection::value('SELECT COUNT(*) FROM password_reset_tokens WHERE user_id = 2') === 0, 'Recovery records follow account deletion');
     [$status] = $request('/api/profiles/2/following', actor: 'member'); $assert($status === 404, 'Social endpoints are absent');
-    [$status, , $svg] = $request('/avatar/initials/v1/TWVtYmVy.svg'); $assert($status === 200 && str_starts_with($svg, '<svg'), 'Avatar route is owned by Accounts');
+    [$status, , $svg] = $request('/avatar/initials/v3/ME.svg'); $assert($status === 200 && str_starts_with($svg, '<svg'), 'Avatar route is owned by Accounts');
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     TinyCat\Database\Connection::set(\tinycat_test_database()); $pdo = null;

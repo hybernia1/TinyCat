@@ -10,6 +10,6 @@
 
 .status-editor-input {
     min-height: 4.5rem;
-    padding: 0.5625rem 0.625rem;
+    padding: var(--space-2-5) var(--space-2-5);
   }
 }

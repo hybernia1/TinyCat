@@ -245,10 +245,12 @@
         "children": [
           {"tag": "p", "attrs": {"class": "text-muted mb-0"}, "children": [{"t": "install.tables_intro"}]},
           {
-            "tag": "div",
-            "attrs": {"class": "alert alert-danger"},
-            "when": {"get": "table_error"},
-            "children": [{"t": "install.messages.db_failed", "values": {"message": {"get": "table_error"}}}]
+            "component": "ui/notice",
+            "data": {
+              "tone": "danger",
+              "label": {"t": "install.messages.db_failed", "values": {"message": {"get": "table_error"}}}
+            },
+            "when": {"get": "table_error"}
           },
           {
             "tag": "div",
@@ -591,17 +593,11 @@
               "data": {"operation": {"get": "operation"}},
               "when": {"eq": [{"get": "current"}, "recovery"]}
             },
+            {"component": "ui/notice", "data": {"tone": "danger", "label": {"get": "error"}}, "when": {"get": "error"}},
             {
-              "tag": "div",
-              "attrs": {"class": "alert alert-danger"},
-              "when": {"get": "error"},
-              "children": [{"get": "error"}]
-            },
-            {
-              "tag": "div",
-              "attrs": {"class": "alert alert-success"},
-              "when": {"get": "success"},
-              "children": [{"get": "success"}]
+              "component": "ui/notice",
+              "data": {"tone": "success", "label": {"get": "success"}},
+              "when": {"get": "success"}
             },
             {
               "component": "installation/language",

@@ -156,11 +156,11 @@ $linkSource = (string) file_get_contents(__DIR__ . '/../../../App/Core/Http/Clie
 $assert(str_contains($linkSource, 'CURLOPT_FOLLOWLOCATION => false'), 'cURL redirects are not handled manually.');
 $assert(str_contains($linkSource, "'follow_location' => 0"), 'Stream redirects are not handled manually.');
 
-$svg = \TinyCat\Core\Identity\Avatar::initialsSvg('?9lu?ou?k?');
+$svg = \TinyCat\Core\Identity\Avatar::initialsTextSvg(\TinyCat\Core\Identity\Avatar::initials('?9lu?ou?k?'));
 $assert(str_contains($svg, '>?9</text>'), 'Unicode initials uppercase the first two characters and preserve digits.');
-$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsSvg('<&unsafe'), '>&lt;&amp;</text>'), 'Untrusted initials are XML escaped.');
-$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsSvg(''), '>?</text>'), 'Empty identities have a deterministic placeholder.');
-$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsSvg('?'), '>?</text>'), 'Single Unicode characters remain intact.');
+$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsTextSvg(\TinyCat\Core\Identity\Avatar::initials('<&unsafe')), '>&lt;&amp;</text>'), 'Untrusted initials are XML escaped.');
+$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsTextSvg(\TinyCat\Core\Identity\Avatar::initials('')), '>?</text>'), 'Empty identities have a deterministic placeholder.');
+$assert(str_contains(\TinyCat\Core\Identity\Avatar::initialsTextSvg(\TinyCat\Core\Identity\Avatar::initials('?')), '>?</text>'), 'Single Unicode characters remain intact.');
 $svgDocument = new DOMDocument();
 $assert($svgDocument->loadXML($svg) && $svgDocument->documentElement?->localName === 'svg', 'Initial avatars are standalone valid SVG.');
 

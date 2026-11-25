@@ -159,7 +159,10 @@ final class Api
     private static function authentication(Request $request): array
     {
         $mode = Login::auth_modal_mode((string) $request->input('mode', 'login'));
-        return Resource::authenticationForm($mode, Login::auth_request_next_url());
+        if (in_array($mode, ['login', 'register'], true) && Authentication::authCheck()) {
+            Response::error(\TinyCat\Support\Localization::t('auth.already_authenticated'), 409, 'already_authenticated');
+        }
+        return Resource::authenticationForm($mode, Login::auth_request_next_url(), trim((string) $request->input('token', '')));
     }
 
     /**

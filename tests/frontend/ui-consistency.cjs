@@ -13,7 +13,9 @@ const adminDefinitions = JSON.parse(execFileSync(php, [path.join(root, 'tests/pr
 const notificationAssemblies = Object.fromEntries(['core'].map(name => [name, JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--notifications-' + name], {encoding:'utf8', maxBuffer:8e6}))]));
 const source = 'window.TinyCat = {adminDefinitions:'+JSON.stringify(adminDefinitions)+'};' + assets.map(asset => asset.source).join('\n') + '\nTinyCat.components.register(' + JSON.stringify(templates).replace(/</g, '\\u003c') + ');TinyCat.i18n.register(\"en\",' + JSON.stringify(labels).replace(/</g, '\\u003c') + ');window.installationFixture=' + JSON.stringify(installation).replace(/</g, '\\u003c') + ';';
 const css = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--styles'], { encoding: 'utf8', maxBuffer: 8e6 }));
-const fixture = 'window.notificationAssemblySources=' + JSON.stringify(notificationAssemblies).replace(/</g, '\\u003c') + ';window.notificationTemplates=' + JSON.stringify(templates).replace(/</g, '\\u003c') + ';window.notificationLabels=' + JSON.stringify(labels).replace(/</g, '\\u003c') + ';' + fs.readFileSync(path.join(__dirname, 'fixtures/ui-consistency-fixture.js'), 'utf8');
+const componentFixtures = JSON.parse(fs.readFileSync(path.join(root, 'tests/fixtures/components.json'), 'utf8'));
+const socialScaleFixtures = ['status/card', 'status/comment'].map(name => componentFixtures.find(item => item.component === name));
+const fixture = 'window.socialScaleFixtures=' + JSON.stringify(socialScaleFixtures).replace(/</g, '\\u003c') + ';window.notificationAssemblySources=' + JSON.stringify(notificationAssemblies).replace(/</g, '\\u003c') + ';window.notificationTemplates=' + JSON.stringify(templates).replace(/</g, '\\u003c') + ';window.notificationLabels=' + JSON.stringify(labels).replace(/</g, '\\u003c') + ';' + fs.readFileSync(path.join(__dirname, 'fixtures/ui-consistency-fixture.js'), 'utf8');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'tinycat-ui-consistency-'));
 (async function () {
 let server;

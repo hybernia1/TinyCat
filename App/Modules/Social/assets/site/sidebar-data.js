@@ -19,9 +19,8 @@ import "./views.js";
     return loading;
   }
   TinyCat.site.activateSidebar = function (sidebar, tag) {
-    sidebar.querySelectorAll(".topic-link").forEach(function (link) {
+    sidebar.querySelectorAll("[data-topic-link]").forEach(function (link) {
       var active = decodeURIComponent(TinyCat.urls.split(new URL(link.href, window.location.href).pathname).path) === "/tag/" + tag;
-      link.classList.toggle("is-active", active);
       if (active) { link.setAttribute("aria-current", "page"); } else { link.removeAttribute("aria-current"); }
     });
   };

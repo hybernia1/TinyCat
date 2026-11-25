@@ -18,24 +18,26 @@ final class Resource
     }
 
     /** @return array<string, mixed> */
-    public static function authenticationForm(string $mode, string $next): array
+    public static function authenticationForm(string $mode, string $next, string $token = ''): array
     {
         $mode = Login::auth_modal_mode($mode);
         $next = Login::auth_safe_next_url($next);
-        $other = $mode === 'register' ? 'login' : 'register';
+        $other = $mode === 'login' ? 'register' : 'login';
         return self::authentication($mode, $next, Login::auth_url_with_next('/' . $other, $next), Login::auth_modal_url($other, $next),
             (bool) \TinyCat\Core\Runtime\Startup::option('auth.registration.enabled', false),
-            \TinyCat\Core\Security\Captcha::configuration($mode, $mode === 'register' || \TinyCat\Core\Security\Captcha::loginRequired()));
+            \TinyCat\Core\Security\Captcha::configuration($mode === 'reset' ? 'recovery' : $mode, $mode !== 'login' || \TinyCat\Core\Security\Captcha::loginRequired()), $token);
     }
 
     /** @param array<mixed> $captcha
      * @return array<string, mixed> */
-    public static function authentication(string $mode, string $next, string $switchUrl, string $switchModalUrl, bool $registrationEnabled, array $captcha): array
+    public static function authentication(string $mode, string $next, string $switchUrl, string $switchModalUrl, bool $registrationEnabled, array $captcha, string $token = ''): array
     {
-        $mode = $mode === 'register' ? 'register' : 'login';
+        $mode = Login::auth_modal_mode($mode);
         return ['mode' => $mode, 'register' => $mode === 'register', 'next' => $next,
-            'form_url' => $mode === 'register' ? '/api/users/registrations' : '/api/users/sessions',
+            'form_url' => match ($mode) { 'register' => '/api/users/registrations', 'recovery' => '/api/users/password-resets', 'reset' => '/api/users/password-resets/confirm', default => '/api/users/sessions' },
             'switch_url' => $switchUrl, 'switch_modal_url' => $switchModalUrl,
+            'recovery_url' => Login::auth_url_with_next('/recovery', $next), 'recovery_modal_url' => Login::auth_modal_url('recovery', $next),
+            'token' => $mode === 'reset' ? $token : '',
             'registration_enabled' => $registrationEnabled, 'captcha' => $captcha, 'options' => self::options()];
     }
 

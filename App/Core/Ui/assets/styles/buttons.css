@@ -3,49 +3,49 @@
 }
 
 .stack > * + * {
-  margin-block-start: var(--stack-gap, 1rem);
+  margin-block-start: var(--stack-gap, var(--space-4));
 }
 
 .stack-gap-4 {
-  --stack-gap: 0.25rem;
+  --stack-gap: var(--space-1);
 }
 
 .stack-gap-8 {
-  --stack-gap: 0.5rem;
+  --stack-gap: var(--space-2);
 }
 
 .stack-gap-12 {
-  --stack-gap: 0.75rem;
+  --stack-gap: var(--space-3);
 }
 
 .stack-gap-14 {
-  --stack-gap: 0.875rem;
+  --stack-gap: var(--space-3-5);
 }
 
 .stack-gap-16 {
-  --stack-gap: 1rem;
+  --stack-gap: var(--space-4);
 }
 
 .stack-gap-24 {
-  --stack-gap: 1.5rem;
+  --stack-gap: var(--space-6);
 }
 
 .cluster {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--cluster-gap, 0.625rem);
+  gap: var(--cluster-gap, var(--space-2-5));
 }
 
 .split {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .grid {
   display: grid;
-  gap: var(--grid-gap, 1rem);
+  gap: var(--grid-gap, var(--space-4));
 }
 
 .grid-span-full {
@@ -83,11 +83,11 @@
 }
 
 .gap-1 {
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .gap-2 {
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .m-0 {
@@ -104,14 +104,6 @@
 
 .max-w-auth-sm {
   max-width: 32.5rem;
-}
-
-.max-w-auth {
-  max-width: 35rem;
-}
-
-.max-w-prose {
-  max-width: 57.5rem;
 }
 
 .text-base {

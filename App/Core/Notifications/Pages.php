@@ -24,6 +24,7 @@ final class Pages
 
         Layout::render([
             'title' => Localization::t('notifications.title'),
+            'public' => true,
             'current' => '/notifications',
             'notificationState' => $state,
             'notificationItems' => array_slice($batch['items'], 0, Inbox::PREVIEW_LIMIT),

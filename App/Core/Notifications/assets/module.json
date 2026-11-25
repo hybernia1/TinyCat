@@ -16,8 +16,7 @@
       "App/Core/Notifications/assets/styles/notification-nav.css",
       "App/Core/Notifications/assets/styles/notification-preview.css",
       "App/Core/Notifications/assets/styles/notification-items.css",
-      "App/Core/Notifications/assets/styles/notification-badge-mobile.css",
-      "App/Core/Notifications/assets/styles/notifications-page.css"
+      "App/Core/Notifications/assets/styles/notification-badge-mobile.css"
     ],
     "translations": [
       "notifications.new_count.one",

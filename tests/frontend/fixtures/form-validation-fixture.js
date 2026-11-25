@@ -13,7 +13,8 @@
       check(address.pathname === '/api/users/authentication', 'Authentication switches only read their authorized resource');
       reads.push(mode);
       const other = mode === 'login' ? 'register' : 'login';
-      return {data:{mode,next:'/social',registration_enabled:true,options:{},captcha:{enabled:false},switch_url:'/'+other,switch_modal_url:'/api/users/authentication?mode='+other+'&next=%2Fsocial'}};
+      const form_url = mode === 'register' ? '/api/users/registrations' : mode === 'recovery' ? '/api/users/password-resets' : mode === 'reset' ? '/api/users/password-resets/confirm' : '/api/users/sessions';
+      return {data:{mode,next:'/social',form_url,token:address.searchParams.get('token')||'',registration_enabled:true,options:{password_min_bytes:8,password_max_length:64},captcha:{enabled:false},switch_url:'/'+other,switch_modal_url:'/api/users/authentication?mode='+other+'&next=%2Fsocial',recovery_url:'/recovery?next=%2Fsocial',recovery_modal_url:'/api/users/authentication?mode=recovery&next=%2Fsocial'}};
     };
     T.lifecycle.start(); opener.focus(); opener.click();
     await wait(() => !!T.dialog.current(), 'Login is created on demand');
@@ -29,8 +30,18 @@
     modal = T.dialog.current();
     check(!modal.querySelector('[data-modal-resource-refresh]') && await T.dialog.refresh(modal)===null, 'Registration explicitly omits resource refresh');
     check(!!modal.querySelector('[name="email"]') && location.hash.includes('mode=register') && modal.contains(document.activeElement), 'Registration fields, focus and history follow the selected resource');
+    const optionalEmail = modal.querySelector('[name="email"]');
+    check(!optionalEmail.closest('details') && !optionalEmail.required, 'Registration email is directly visible and optional');
+    T.forms.focusInvalid(T.forms.applyErrors(optionalEmail.form, {email:'Email unavailable'}));
+    check(document.activeElement === optionalEmail, 'A server validation error focuses the optional email');
     modal.querySelector('[data-modal-open="auth-modal"]').click();
     await wait(() => reads.join(',')==='login,register,login' && T.dialog.current()!==modal, 'Registration switches back through the same loader');
+    modal = T.dialog.current();
+    modal.querySelector('[data-modal-url*="mode=recovery"]').click();
+    await wait(() => reads.includes('recovery') && T.dialog.current() !== modal, 'Password recovery uses the same authorized resource loader');
+    modal = T.dialog.current();
+    check(modal.querySelector('form').getAttribute('action') === '/api/users/password-resets' && modal.querySelector('[name="email"]') && !modal.querySelector('[name="username"]'), 'Recovery has one focused email form and no login fields');
+    check(!modal.querySelector('h1') && !modal.querySelector('.card') && modal.querySelector('.modal-footer [type="submit"]'), 'Recovery shares the minimal dialog title and primary footer action');
     T.forms.confirmWith(confirm);
     T.dialog.close(T.dialog.current(),{history:false});
     check(document.activeElement===opener, 'Closing returns focus to the original opener');

@@ -9,8 +9,6 @@ use TinyCat\Core\Identity\Integration;
 use TinyCat\Http\Session;
 use TinyCat\Http\Web;
 
-use TinyCat\Core\Security\Captcha;
-
 use TinyCat\Support\AdminViews;
 use TinyCat\Support\Markup;
 use TinyCat\Support\Localization;
@@ -60,51 +58,9 @@ final class Pages
         ], $content);
     }
 
-    public static function login(): void
-    {
-        $next = Login::auth_request_next_url();
+    public static function login(): void { self::authentication('login'); }
 
-        if (Authentication::authCheck()) {
-            Web::redirect(Login::auth_redirect_after_login(Authentication::auth(), $next));
-        }
-
-        $error = Session::flash('error');
-        $message = Session::flash('success');
-
-        \TinyCat\Core\Ui\Page::render([
-            'title' => Localization::t('auth.login_title'),
-            'current' => '/login',
-            'surface' => 'access',
-            'nav' => [],
-            'meta' => [
-                'description' => Localization::t('auth.login_intro'),
-                'url' => '/login',
-                'image' => \TinyCat\Core\Ui\Site::site_meta_image_url(),
-                'robots' => 'noindex,follow',
-            ],
-        ], Components::render('users/auth-page', Resource::authenticationForm('login', $next) + ['error' => (string) $error, 'message' => (string) $message]));
-    }
-
-    public static function register(): void
-    {
-        $next = Login::auth_request_next_url();
-
-        if (Authentication::authCheck()) {
-            Web::redirect(Login::auth_redirect_after_login(Authentication::auth(), $next));
-        }
-
-        \TinyCat\Core\Ui\Page::render([
-            'title' => Localization::t('auth.register_title'),
-            'current' => '/register',
-            'surface' => 'access',
-            'meta' => [
-                'description' => Localization::t('auth.register_intro'),
-                'url' => '/register',
-                'image' => \TinyCat\Core\Ui\Site::site_meta_image_url(),
-                'robots' => 'noindex,follow',
-            ],
-        ], Components::render('users/auth-page', Resource::authenticationForm('register', $next)));
-    }
+    public static function register(): void { self::authentication('register'); }
 
     public static function logout(): void
     {
@@ -122,24 +78,24 @@ final class Pages
         ], Components::render('users/logout-page'));
     }
 
-    public static function recovery(): void
-    {
-        $recoveryToken = trim((string) Web::get('token', ''));
+    public static function recovery(): void { self::authentication('recovery'); }
 
+    private static function authentication(string $mode): void
+    {
+        $next = Login::auth_request_next_url();
+        if (in_array($mode, ['login', 'register'], true) && Authentication::authCheck()) {
+            Web::redirect(Login::auth_redirect_after_login(Authentication::auth(), $next));
+        }
+        $token = $mode === 'recovery' ? trim((string) Web::get('token', '')) : '';
+        if ($token !== '') { $mode = 'reset'; }
+        $path = in_array($mode, ['recovery', 'reset'], true) ? '/recovery' : '/' . $mode;
+        $title = Localization::t(in_array($mode, ['recovery', 'reset'], true) ? 'auth.recovery_title' : 'auth.' . $mode . '_title');
+        $description = Localization::t(match ($mode) { 'reset' => 'auth.recovery_reset_intro', 'recovery' => 'auth.recovery_intro', 'register' => 'auth.register_intro', default => 'auth.login_intro' });
+        $data = Resource::authenticationForm($mode, $next, $token);
+        if ($mode === 'login') { $data += ['error' => (string) Session::flash('error'), 'message' => (string) Session::flash('success')]; }
         \TinyCat\Core\Ui\Page::render([
-            'title' => Localization::t('auth.recovery_title'),
-            'current' => '/recovery',
-            'surface' => 'access',
-            'nav' => [],
-            'meta' => [
-                'description' => Localization::t($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro'),
-                'url' => '/recovery',
-                'image' => \TinyCat\Core\Ui\Site::site_meta_image_url(),
-                'robots' => 'noindex,nofollow',
-            ],
-        ], Components::render('users/recovery-page', [
-            'reset' => $recoveryToken !== '', 'token' => $recoveryToken, 'password_min' => Passwords::minLength(), 'password_max' => Passwords::maxLength(),
-            'captcha' => Captcha::configuration('recovery'), 'login_url' => \TinyCat\Support\LocalUrls::resolve('/login'), 'privacy_url' => \TinyCat\Http\LocaleRouting::url('/privacy', \TinyCat\Support\Localization::locale()),
-        ]));
+            'title' => $title, 'current' => $path, 'surface' => 'access', 'nav' => [],
+            'meta' => ['description' => $description, 'url' => $path, 'image' => \TinyCat\Core\Ui\Site::site_meta_image_url(), 'robots' => 'noindex,nofollow'],
+        ], Components::render('users/auth-content', $data));
     }
 }

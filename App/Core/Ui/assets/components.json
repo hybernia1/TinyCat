@@ -1300,7 +1300,7 @@
   },
   "ui/privacy-page": {
     "tag": "section",
-    "attrs": {"class": "stack information-page"},
+    "attrs": {"class": "stack min-w-0"},
     "children": [
       {
         "tag": "h1",
@@ -2104,5 +2104,10 @@
         "children": [{"t": "admin.widgets.more"}, {"icon": "arrow-right"}]
       }
     ]
+  },
+  "ui/sort-column": {
+    "tag": "th",
+    "attrs": {"scope": "col", "aria-sort": {"get": "order.aria"}},
+    "children": [{"component": "ui/sort-heading", "data": {"label": {"get": "label"}, "order": {"get": "order"}}}]
   }
 }

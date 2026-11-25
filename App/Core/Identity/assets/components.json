@@ -262,34 +262,16 @@
                     "tag": "tr",
                     "children": [
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.username.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "users.table_user"}, "order": {"get": "sorting.username"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "users.table_user"}, "order": {"get": "sorting.username"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.role.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "common.role"}, "order": {"get": "sorting.role"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "common.role"}, "order": {"get": "sorting.role"}}
                       },
                       {
-                        "tag": "th",
-                        "attrs": {"scope": "col", "aria-sort": {"get": "sorting.updated_at.aria"}},
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {"label": {"t": "common.updated"}, "order": {"get": "sorting.updated_at"}}
-                          }
-                        ]
+                        "component": "ui/sort-column",
+                        "data": {"label": {"t": "common.updated"}, "order": {"get": "sorting.updated_at"}}
                       },
                       {
                         "tag": "th",
@@ -347,7 +329,7 @@
       {
         "component": "ui/field",
         "data": {
-          "label": {"t": "auth.login_identifier"},
+          "label": {"if": [{"get": "register"}, {"t": "common.username"}, {"t": "auth.login_identifier"}]},
           "attributes": {
             "class": "input",
             "name": "username",
@@ -359,24 +341,8 @@
             "pattern": {"if": [{"get": "register"}, {"get": "options.username_pattern"}, null]},
             "data-min-length": {"if": [{"get": "register"}, {"get": "options.username_min_length"}, null]},
             "data-max-length": {"if": [{"get": "register"}, {"get": "options.username_max_length"}, null]}
-          },
-          "help": {"if": [{"get": "register"}, {"t": "account.username_hint"}, null]}
-        }
-      },
-      {
-        "component": "ui/field",
-        "data": {
-          "label": {"t": "common.email"},
-          "attributes": {
-            "class": "input",
-            "name": "email",
-            "type": "email",
-            "data-max-bytes": {"get": "options.email_max_bytes"},
-            "autocomplete": "email",
-            "data-email-check-url": "/api/users/registrations/email-checks"
           }
-        },
-        "when": {"get": "register"}
+        }
       },
       {
         "component": "ui/field",
@@ -405,7 +371,8 @@
             "value": "",
             "required": true,
             "autocomplete": "new-password",
-            "data-min-bytes": {"get": "options.password_min_bytes"}
+            "data-min-bytes": {"get": "options.password_min_bytes"},
+            "data-max-bytes": {"get": "options.password_max_length"}
           }
         },
         "when": {"get": "register"}
@@ -419,16 +386,29 @@
           {
             "tag": "span",
             "children": [
-              {"t": "auth.platform_terms_agree"},
-              " ",
               {
                 "tag": "a",
                 "attrs": {"href": "/privacy", "target": "_blank", "rel": "privacy-policy"},
-                "children": [{"t": "privacy.title"}]
+                "children": [{"t": "auth.platform_terms_agree"}]
               }
             ]
           }
         ]
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {"t": "auth.optional_email"},
+          "attributes": {
+            "class": "input",
+            "name": "email",
+            "type": "email",
+            "data-max-bytes": {"get": "options.email_max_bytes"},
+            "autocomplete": "email",
+            "data-email-check-url": "/api/users/registrations/email-checks"
+          }
+        },
+        "when": {"get": "register"}
       },
       {
         "tag": "label",
@@ -443,87 +423,101 @@
       {
         "tag": "button",
         "attrs": {"class": "btn btn-primary", "type": "submit"},
-        "children": [
-          {"icon": {"if": [{"get": "register"}, "user-plus", "login"]}},
-          {"if": [{"get": "register"}, {"t": "common.register"}, {"t": "common.login"}]}
-        ]
+        "children": [{"if": [{"get": "register"}, {"t": "common.register"}, {"t": "common.login"}]}]
       }
     ]
   },
   "users/auth-content": {
-    "tag": "div",
-    "attrs": {"class": "stack"},
+    "tag": "section",
+    "attrs": {
+      "class": {
+        "if": [{"get": "modal"}, "stack stack-gap-16", "auth-page container-sm max-w-auth-sm stack stack-gap-24"]
+      },
+      "data-auth-mode": {"or": [{"get": "mode"}, "login"]}
+    },
     "children": [
       {
-        "tag": "p",
-        "attrs": {"class": "text-muted mb-0"},
-        "when": {"not": {"get": "register"}},
-        "children": [{"t": "auth.login_intro"}]
-      },
-      {"tag": "div", "attrs": {"class": "alert alert-danger"}, "when": {"get": "error"}, "children": [{"get": "error"}]},
-      {
-        "tag": "div",
-        "attrs": {"class": "alert alert-success"},
-        "when": {"get": "message"},
-        "children": [{"get": "message"}]
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "alert alert-info"},
-        "when": {"and": [{"get": "register"}, {"not": {"get": "registration_enabled"}}]},
-        "children": [{"t": "auth.registration_disabled"}]
-      },
-      {
-        "component": "users/auth-form",
-        "data": {
-          "mode": {"get": "mode"},
-          "register": {"get": "register"},
-          "next": {"get": "next"},
-          "form_url": {"get": "form_url"},
-          "captcha": {"get": "captcha"},
-          "options": {"get": "options"}
-        },
-        "when": {"not": {"and": [{"get": "register"}, {"not": {"get": "registration_enabled"}}]}}
-      },
-      {
-        "tag": "div",
-        "attrs": {"class": "cluster gap-2"},
-        "when": {"not": {"get": "register"}},
+        "tag": "h1",
+        "attrs": {"class": "text-xl m-0", "data-auth-heading": ""},
         "children": [
           {
-            "tag": "a",
-            "attrs": {"class": "btn btn-ghost btn-sm", "href": "/recovery"},
-            "children": [{"icon": "key"}, {"t": "auth.recovery_link"}]
-          },
-          {
-            "tag": "a",
-            "attrs": {"class": "btn btn-ghost btn-sm", "href": "/privacy", "rel": "privacy-policy"},
-            "children": [{"icon": "shield"}, {"t": "privacy.title"}]
+            "lookup": {"get": "mode"},
+            "cases": {
+              "register": {"t": "auth.register_title"},
+              "recovery": {"t": "auth.recovery_title"},
+              "reset": {"t": "auth.recovery_title"}
+            },
+            "default": {"t": "auth.login_title"}
           }
         ]
       },
       {
+        "tag": "p",
+        "attrs": {"class": "text-muted m-0"},
+        "when": {"or": [{"eq": [{"get": "mode"}, "recovery"]}, {"eq": [{"get": "mode"}, "reset"]}]},
+        "children": [
+          {"if": [{"eq": [{"get": "mode"}, "reset"]}, {"t": "auth.recovery_reset_intro"}, {"t": "auth.recovery_intro"}]}
+        ]
+      },
+      {"component": "ui/notice", "data": {"tone": "danger", "label": {"get": "error"}}, "when": {"get": "error"}},
+      {"component": "ui/notice", "data": {"tone": "success", "label": {"get": "message"}}, "when": {"get": "message"}},
+      {
+        "component": "ui/notice",
+        "data": {"tone": "info", "label": {"t": "auth.registration_disabled"}},
+        "when": {"and": [{"eq": [{"get": "mode"}, "register"]}, {"not": {"get": "registration_enabled"}}]}
+      },
+      {
+        "component": "users/auth-form",
+        "data": {
+          "register": {"eq": [{"get": "mode"}, "register"]},
+          "next": {"get": "next"},
+          "form_url": {"get": "form_url"},
+          "options": {"get": "options"},
+          "captcha": {"get": "captcha"}
+        },
+        "when": {
+          "and": [
+            {"not": {"or": [{"eq": [{"get": "mode"}, "recovery"]}, {"eq": [{"get": "mode"}, "reset"]}]}},
+            {"not": {"and": [{"eq": [{"get": "mode"}, "register"]}, {"not": {"get": "registration_enabled"}}]}}
+          ]
+        }
+      },
+      {
+        "component": "users/recovery-form",
+        "data": {
+          "mode": {"get": "mode"},
+          "form_url": {"get": "form_url"},
+          "token": {"get": "token"},
+          "options": {"get": "options"},
+          "captcha": {"get": "captcha"}
+        },
+        "when": {"or": [{"eq": [{"get": "mode"}, "recovery"]}, {"eq": [{"get": "mode"}, "reset"]}]}
+      },
+      {
         "tag": "div",
-        "attrs": {"class": "cluster gap-2"},
-        "when": {"or": [{"get": "registration_enabled"}, {"get": "register"}]},
+        "attrs": {"class": "cluster gap-2 text-sm"},
         "children": [
           {
-            "tag": "span",
-            "attrs": {"class": "text-muted"},
-            "children": [{"if": [{"get": "register"}, {"t": "auth.has_account"}, {"t": "auth.no_account"}]}]
+            "tag": "a",
+            "attrs": {
+              "href": {"get": "switch_url"},
+              "data-modal-open": {"if": [{"get": "modal"}, "auth-modal", null]},
+              "data-modal-url": {"if": [{"get": "modal"}, {"get": "switch_modal_url"}, null]}
+            },
+            "when": {"or": [{"not": {"eq": [{"get": "mode"}, "login"]}}, {"get": "registration_enabled"}]},
+            "children": [
+              {"if": [{"eq": [{"get": "mode"}, "login"]}, {"t": "auth.register_link"}, {"t": "common.login"}]}
+            ]
           },
           {
             "tag": "a",
             "attrs": {
-              "class": "btn btn-secondary btn-sm",
-              "href": {"get": "switch_url"},
-              "data-modal-open": "auth-modal",
-              "data-modal-url": {"get": "switch_modal_url"}
+              "href": {"get": "recovery_url"},
+              "data-modal-open": {"if": [{"get": "modal"}, "auth-modal", null]},
+              "data-modal-url": {"if": [{"get": "modal"}, {"get": "recovery_modal_url"}, null]}
             },
-            "children": [
-              {"icon": {"if": [{"get": "register"}, "login", "user-plus"]}},
-              {"if": [{"get": "register"}, {"t": "common.login"}, {"t": "auth.register_link"}]}
-            ]
+            "when": {"eq": [{"get": "mode"}, "login"]},
+            "children": [{"t": "auth.recovery_link"}]
           }
         ]
       }
@@ -610,183 +604,6 @@
       "aria-label": {"t": "account.avatar_edit"}
     },
     "children": [{"component": "ui/avatar-content", "data": {"user": {"get": "user"}, "alt": {"get": "user.username"}}}]
-  },
-  "users/auth-page": {
-    "tag": "section",
-    "attrs": {"class": {"if": [{"get": "register"}, "max-w-auth mx-auto", "max-w-auth-sm mx-auto"]}},
-    "children": [
-      {
-        "tag": "article",
-        "attrs": {"class": "card"},
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {"class": "card-header"},
-            "children": [
-              {
-                "tag": "h1",
-                "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                "children": [
-                  {"icon": {"if": [{"get": "register"}, "user-plus", "login"]}},
-                  " ",
-                  {"if": [{"get": "register"}, {"t": "auth.register_title"}, {"t": "auth.login_title"}]}
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "card-body"},
-            "children": [
-              {
-                "component": "users/auth-content",
-                "data": {
-                  "mode": {"get": "mode"},
-                  "register": {"get": "register"},
-                  "next": {"get": "next"},
-                  "form_url": {"get": "form_url"},
-                  "switch_url": {"get": "switch_url"},
-                  "switch_modal_url": {"get": "switch_modal_url"},
-                  "registration_enabled": {"get": "registration_enabled"},
-                  "captcha": {"get": "captcha"},
-                  "options": {"get": "options"},
-                  "error": {"get": "error"},
-                  "message": {"get": "message"}
-                }
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "users/recovery-page": {
-    "tag": "section",
-    "attrs": {"class": "max-w-auth mx-auto"},
-    "children": [
-      {
-        "tag": "article",
-        "attrs": {"class": "card"},
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {"class": "card-header"},
-            "children": [
-              {
-                "tag": "h1",
-                "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                "children": [{"icon": "key"}, " ", {"t": "auth.recovery_title"}]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {"class": "card-body stack"},
-            "children": [
-              {
-                "tag": "p",
-                "attrs": {"class": "text-muted mb-0"},
-                "children": [
-                  {"if": [{"get": "reset"}, {"t": "auth.recovery_reset_intro"}, {"t": "auth.recovery_intro"}]}
-                ]
-              },
-              {
-                "tag": "form",
-                "attrs": {
-                  "method": "post",
-                  "action": {
-                    "if": [{"get": "reset"}, "/api/users/password-resets/confirm", "/api/users/password-resets"]
-                  },
-                  "class": "stack",
-                  "data-ajax-form": ""
-                },
-                "children": [
-                  {"csrf": true},
-                  {
-                    "tag": "input",
-                    "attrs": {"type": "hidden", "name": "action", "value": "reset"},
-                    "when": {"get": "reset"}
-                  },
-                  {
-                    "tag": "input",
-                    "attrs": {"type": "hidden", "name": "token", "value": {"get": "token"}},
-                    "when": {"get": "reset"}
-                  },
-                  {
-                    "component": "ui/field",
-                    "data": {
-                      "label": {"t": "common.new_password"},
-                      "attributes": {
-                        "class": "input",
-                        "type": "password",
-                        "autocomplete": "new-password",
-                        "data-min-bytes": {"get": "password_min"},
-                        "data-max-bytes": {"get": "password_max"},
-                        "required": true,
-                        "name": "password"
-                      }
-                    },
-                    "when": {"get": "reset"}
-                  },
-                  {
-                    "component": "ui/field",
-                    "data": {
-                      "label": {"t": "common.email"},
-                      "attributes": {
-                        "class": "input",
-                        "type": "email",
-                        "name": "email",
-                        "autocomplete": "email",
-                        "required": true
-                      }
-                    },
-                    "when": {"not": {"get": "reset"}}
-                  },
-                  {
-                    "component": "ui/field",
-                    "data": {
-                      "label": {"t": "common.password_confirm"},
-                      "attributes": {
-                        "class": "input",
-                        "type": "password",
-                        "autocomplete": "new-password",
-                        "data-min-bytes": {"get": "password_min"},
-                        "data-max-bytes": {"get": "password_max"},
-                        "required": true,
-                        "name": "password_confirm"
-                      }
-                    },
-                    "when": {"get": "reset"}
-                  },
-                  {"component": "ui/captcha", "data": {"config": {"get": "captcha"}}},
-                  {
-                    "tag": "button",
-                    "attrs": {"type": "submit", "class": "btn btn-primary"},
-                    "children": [{"icon": "save"}, " ", {"tag": "span", "children": [{"t": "auth.recovery_submit"}]}]
-                  }
-                ]
-              },
-              {
-                "tag": "div",
-                "attrs": {"class": "cluster gap-2"},
-                "children": [
-                  {
-                    "tag": "a",
-                    "attrs": {"href": {"get": "login_url"}, "class": "btn btn-secondary btn-sm"},
-                    "children": [{"icon": "login"}, " ", {"tag": "span", "children": [{"t": "common.login"}]}]
-                  },
-                  {
-                    "tag": "a",
-                    "attrs": {"href": {"get": "privacy_url"}, "class": "btn btn-ghost btn-sm", "rel": "privacy-policy"},
-                    "children": [{"icon": "shield"}, " ", {"tag": "span", "children": [{"t": "privacy.title"}]}]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
   },
   "users/logout-page": {
     "tag": "article",
@@ -1397,6 +1214,81 @@
               }
             ]
           }
+        ]
+      }
+    ]
+  },
+  "users/recovery-form": {
+    "tag": "form",
+    "attrs": {
+      "method": "post",
+      "action": {"get": "form_url"},
+      "class": "stack",
+      "data-ajax-form": "",
+      "data-confirm-unsaved": "true",
+      "data-confirm-unsaved-title": {"t": "common.unsaved_title"},
+      "data-confirm-unsaved-message": {"t": "common.unsaved_message"},
+      "data-confirm-unsaved-ok": {"t": "common.leave"},
+      "data-confirm-unsaved-cancel": {"t": "common.stay"}
+    },
+    "children": [
+      {"csrf": true},
+      {
+        "tag": "input",
+        "attrs": {"type": "hidden", "name": "action", "value": "reset"},
+        "when": {"eq": [{"get": "mode"}, "reset"]}
+      },
+      {
+        "tag": "input",
+        "attrs": {"type": "hidden", "name": "token", "value": {"get": "token"}},
+        "when": {"eq": [{"get": "mode"}, "reset"]}
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {"t": "common.new_password"},
+          "attributes": {
+            "class": "input",
+            "type": "password",
+            "autocomplete": "new-password",
+            "data-min-bytes": {"get": "options.password_min_bytes"},
+            "data-max-bytes": {"get": "options.password_max_length"},
+            "required": true,
+            "name": "password"
+          }
+        },
+        "when": {"eq": [{"get": "mode"}, "reset"]}
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {"t": "common.email"},
+          "attributes": {"class": "input", "type": "email", "name": "email", "autocomplete": "email", "required": true}
+        },
+        "when": {"not": {"eq": [{"get": "mode"}, "reset"]}}
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {"t": "common.password_confirm"},
+          "attributes": {
+            "class": "input",
+            "type": "password",
+            "autocomplete": "new-password",
+            "data-min-bytes": {"get": "options.password_min_bytes"},
+            "data-max-bytes": {"get": "options.password_max_length"},
+            "required": true,
+            "name": "password_confirm"
+          }
+        },
+        "when": {"eq": [{"get": "mode"}, "reset"]}
+      },
+      {"component": "ui/captcha", "data": {"config": {"get": "captcha"}}},
+      {
+        "tag": "button",
+        "attrs": {"type": "submit", "class": "btn btn-primary"},
+        "children": [
+          {"if": [{"eq": [{"get": "mode"}, "reset"]}, {"t": "auth.recovery_submit"}, {"t": "auth.recovery_link"}]}
         ]
       }
     ]

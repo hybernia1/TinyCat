@@ -5,6 +5,16 @@
   function key(node, value) { return node.dispatchEvent(new KeyboardEvent('keydown', { key: value, bubbles: true, cancelable: true })); }
   function empty(preview) { const node = document.createElement('div'); node.append(T.notifications.items([], preview)); return node; }
   try {
+    for (const scale of ['1','2']) {
+      document.documentElement.style.setProperty('--ui-scale', scale);
+      const skip = document.createElement('a'); skip.className = 'skip-link'; skip.href = '#main'; skip.textContent = 'Skip to the main content and navigation'; document.body.append(skip);
+      check(skip.getBoundingClientRect().bottom <= 0, 'Skip link stays outside the viewport until focused at scale '+scale);
+      skip.focus({preventScroll:true});
+      const bounds = skip.getBoundingClientRect();
+      check(bounds.top >= 0 && bounds.left >= 0 && bounds.right <= innerWidth + 1 && document.activeElement === skip, 'Keyboard focus reveals the full skip link within the viewport at scale '+scale);
+      skip.remove();
+    }
+    document.documentElement.style.removeProperty('--ui-scale');
     for (const [tone, symbol] of [['info','info'],['success','check-circle'],['warning','alert'],['danger','x-circle']]) {
       for (const scale of ['1','1.5']) {
         document.documentElement.style.setProperty('--ui-scale', scale);
@@ -218,6 +228,30 @@
       }
       dialog.remove();
     }
+    const inboxHost = document.createElement('div'); inboxHost.className = 'container';
+    const inbox = T.components.render('notifications/page', {items:[{id:101,message:'Long notification text '.repeat(8),actor:{},icon:'bell',url:'/fixture-notification',unread:true}],has_unread:true,next_url:''});
+    inboxHost.append(inbox); document.body.append(inboxHost);
+    const inboxRow = inbox.querySelector('.notification-item'), inboxLink = inboxRow.querySelector('a'), deleteForm = inboxRow.querySelector('form[data-api-method="DELETE"]'), deleteButton = deleteForm.querySelector('button');
+    inboxLink.scrollIntoView({block:'center'});
+    const rowBox = inboxRow.getBoundingClientRect(), deleteBox = deleteButton.getBoundingClientRect();
+    const paddingTarget = document.elementFromPoint(rowBox.left + 2, rowBox.top + rowBox.height / 2);
+    check(paddingTarget === inboxLink || inboxLink.contains(paddingTarget), 'The notification link covers row padding as well as its text');
+    check(deleteButton.contains(document.elementFromPoint(deleteBox.left + deleteBox.width / 2, deleteBox.top + deleteBox.height / 2)), 'Delete remains above the row link and receives pointer input independently');
+    inboxLink.focus({preventScroll:true});
+    const colourSample = document.createElement('span'); colourSample.style.backgroundColor = 'var(--surface-soft)'; document.body.append(colourSample);
+    check(getComputedStyle(inboxRow).backgroundColor === getComputedStyle(colourSample).backgroundColor && getComputedStyle(inboxLink,'::after').outlineStyle === 'solid', 'Keyboard focus highlights and outlines the whole notification row');
+    let opened = 0, deleted = 0;
+    inboxLink.addEventListener('click', event => { event.preventDefault(); event.stopImmediatePropagation(); opened++; });
+    deleteForm.addEventListener('submit', event => { event.preventDefault(); event.stopImmediatePropagation(); deleted++; });
+    deleteButton.click();
+    check(deleted === 1 && opened === 0, 'Deleting a notification never activates its destination link');
+    check(inbox.querySelectorAll('h1').length === 1 && !inbox.querySelector('article.card') && inbox.getBoundingClientRect().width >= inboxHost.clientWidth - 1, 'Inbox keeps one heading, no outer card and uses its full core container');
+    for (const scale of ['1.5','2']) {
+      document.documentElement.style.setProperty('--ui-scale', scale);
+      check(inboxRow.scrollWidth <= inboxRow.clientWidth + 1 && inbox.scrollWidth <= inbox.clientWidth + 1, 'Notification text and independent actions stay inside the page at scale '+scale);
+    }
+    document.documentElement.style.removeProperty('--ui-scale');
+    colourSample.remove(); inboxHost.remove(); window.scrollTo(0,0);
     for (const [assembly, assets] of Object.entries(window.notificationAssemblySources)) {
       check(!assets.some(asset => asset.path.startsWith('App/Modules/Social/')), 'Notification assembly excludes Social: ' + assembly);
       const frame = document.createElement('iframe'); frame.src = '/notification-frame';
@@ -248,10 +282,45 @@
       check(list.querySelectorAll('[data-notification-id]').length === 42, 'Late notification response cannot update a disposed inbox: '+assembly);
       frame.remove();
     }
+    for (const density of ['regular','compact']) {
+      let normal = null;
+      for (const scale of [1,1.5,2]) {
+        document.documentElement.dataset.uiDensity = density;
+        document.documentElement.style.setProperty('--ui-scale', scale);
+        const host = document.createElement('main'); host.className = 'container';
+        const profile = T.components.render('site/public-page', {kind:'author', author:{id:17,username:'Long account name for scaling',avatar_url:''}, bio:'A long profile description '.repeat(8),items:[],feed:'all',archive_options:[]});
+        host.append(profile); document.body.append(host);
+        const main = profile.querySelector('.profile-main');
+        for (const fixture of window.socialScaleFixtures) { main.append(T.components.render(fixture.component, fixture.data)); }
+        main.append(T.components.render('publishing/link-summary', {link:{url:'https://example.test',title:'Long link title '.repeat(8),description:'Long description '.repeat(8)}}));
+        const avatar = profile.querySelector('.profile-identity .avatar'), body = profile.querySelector('.profile-card-body');
+        const size = {avatar:avatar.getBoundingClientRect().width,padding:parseFloat(getComputedStyle(body).paddingTop),gap:parseFloat(getComputedStyle(body).rowGap)};
+        if (!normal) { normal = size; }
+        check(['padding','gap'].every(key => Math.abs(size[key] - normal[key] * scale) < 1) && size.avatar <= normal.avatar * scale + 1 && (scale === 1 || size.avatar > normal.avatar), 'Social avatar grows within available space while card inset and spacing scale together: '+density+'/'+scale);
+        for (const selector of ['.profile-card','.status-card','.status-comment','.status-link-card']) {
+          const surface = profile.querySelector(selector);
+          check(surface && surface.scrollWidth <= surface.clientWidth + 1, 'Social content contains long text without horizontal overflow: '+selector+'/'+density+'/'+scale);
+        }
+        check(host.scrollWidth <= host.clientWidth + 1, 'Scaled profile columns remain within the page: '+density+'/'+scale+' '+JSON.stringify([...host.querySelectorAll('*')].filter(node => node.getBoundingClientRect().right > host.getBoundingClientRect().right + 1).slice(0,8).map(node => node.className.baseVal || node.className)));
+        host.remove();
+      }
+    }
+    delete document.documentElement.dataset.uiDensity;
+    document.documentElement.style.removeProperty('--ui-scale');
     const home = T.components.render('site/public-page', {kind:'home',items:[],feed:'all',all_feed_url:'/',following_feed_url:'/?feed=following',archive_options:[]});
     document.body.append(home);
     const homeToolbar = home.querySelector('.home-feed-toolbar'), homeEmpty = home.querySelector('.home-feed-section > .empty-state');
     check(homeEmpty.getBoundingClientRect().top > homeToolbar.getBoundingClientRect().bottom, 'Nested home feed stacks keep space between the toolbar and empty content');
+    for (const density of ['regular','compact']) {
+      document.documentElement.dataset.uiDensity = density;
+      document.documentElement.style.setProperty('--ui-scale', '2');
+      check(home.scrollWidth <= home.clientWidth + 1 && homeToolbar.scrollWidth <= homeToolbar.clientWidth + 1, 'Feed switcher and filters wrap within the page at double text size: '+density);
+      for (const control of homeToolbar.querySelectorAll('a, summary')) {
+        check(control.getBoundingClientRect().right <= home.getBoundingClientRect().right + 1, 'Feed navigation remains reachable at double text size: '+density);
+      }
+    }
+    delete document.documentElement.dataset.uiDensity;
+    document.documentElement.style.removeProperty('--ui-scale');
     home.remove();
     const socialFeed = document.createElement('div'); socialFeed.className = 'container profile-main';
     const feed = document.createElement('div'); feed.className = 'status-feed'; socialFeed.append(feed); document.body.append(socialFeed);
@@ -263,6 +332,7 @@
     const information = T.components.render('ui/privacy-page', {siteName:'TinyCat',siteCaptchaEnabled:false,siteGoogleAnalyticsConfigured:false,sections:privacySection});
     informationHost.append(information); document.body.append(informationHost);
     check(information.getBoundingClientRect().width <= informationHost.getBoundingClientRect().width + 1, 'Privacy content and action limits remain within the page container');
+    check(Math.abs(information.getBoundingClientRect().width - informationHost.getBoundingClientRect().width) < 1, 'Privacy uses the complete standard container without its own width cap');
     const limits = information.querySelector('.table-wrap');
     if (limits.scrollWidth > limits.clientWidth) {
       limits.scrollLeft = 40;

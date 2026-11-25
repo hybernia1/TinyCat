@@ -1,5 +1,5 @@
 @media (max-width: 899px) {
 .status-feed {
-    gap: 12px;
+    gap: var(--space-3);
   }
 }

@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-182 definic komponent, 391 CSS tříd, 124 CSS importů, 101 JS souborů, 28 UI služeb, 0 PHP partialů.
+184 definic komponent, 385 CSS tříd, 123 CSS importů, 101 JS souborů, 28 UI služeb, 0 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -12,13 +12,11 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | --- | --- | --- |
 | `users/admin-fields` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/field, ui/select, users/avatar-control |
 | `users/admin-row` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/activation-action, ui/api-action, ui/modal-trigger, users/identity-row |
-| `users/list` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/empty-state, ui/list-toolbar, ui/pagination, ui/sort-heading, users/admin-row |
+| `users/list` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/empty-state, ui/list-toolbar, ui/pagination, ui/sort-column, users/admin-row |
 | `users/auth-form` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/captcha, ui/field |
-| `users/auth-content` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | users/auth-form |
+| `users/auth-content` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/notice, users/auth-form, users/recovery-form |
 | `users/filter-form` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/field, ui/select |
 | `users/avatar-control` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/avatar-content |
-| `users/auth-page` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | users/auth-content |
-| `users/recovery-page` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/captcha, ui/field |
 | `users/logout-page` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | — |
 | `users/account-home` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/modal-trigger |
 | `users/account-form` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/field, ui/select |
@@ -33,18 +31,19 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `users/admin-form` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | users/admin-fields |
 | `users/menu` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/switcher |
 | `users/identity-row` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/account-status, ui/avatar |
+| `users/recovery-form` | [App/Core/Identity/assets/components.json](../../App/Core/Identity/assets/components.json) | ui/captcha, ui/field |
 | `installation/steps` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
 | `installation/language` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
 | `installation/database` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | ui/field |
-| `installation/tables` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
+| `installation/tables` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | ui/notice |
 | `installation/admin` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | ui/field |
 | `installation/done` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
 | `installation/recovery` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | — |
-| `installation/page` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | installation/admin, installation/database, installation/done, installation/language, installation/recovery, installation/steps, installation/tables |
+| `installation/page` | [App/Core/Installation/assets/components.json](../../App/Core/Installation/assets/components.json) | installation/admin, installation/database, installation/done, installation/language, installation/recovery, installation/steps, installation/tables, ui/notice |
 | `notifications/copy` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | — |
 | `notifications/action` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | — |
-| `notifications/item` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/action, notifications/copy, ui/avatar-content |
-| `notifications/preview-item` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/copy, ui/avatar-content |
+| `notifications/item` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/action, notifications/copy, ui/avatar |
+| `notifications/preview-item` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/copy, ui/avatar |
 | `notifications/items` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/item, notifications/preview-item, ui/empty-state |
 | `notifications/page` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/items, ui/load-more |
 | `notifications/menu` | [App/Core/Notifications/assets/components.json](../../App/Core/Notifications/assets/components.json) | notifications/items |
@@ -52,7 +51,7 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `settings/field` | [App/Core/Settings/assets/components.json](../../App/Core/Settings/assets/components.json) | settings/field, ui/help, ui/input |
 | `settings/editor-form` | [App/Core/Settings/assets/components.json](../../App/Core/Settings/assets/components.json) | settings/sections |
 | `scheduler/status` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | ui/status-badge |
-| `scheduler/list` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/icon, scheduler/name, scheduler/status, scheduler/task-row, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
+| `scheduler/list` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/icon, scheduler/name, scheduler/status, scheduler/task-row, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-column |
 | `scheduler/filter-form` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | ui/select |
 | `scheduler/run-detail` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | scheduler/name, scheduler/option, scheduler/status, ui/detail-table, ui/status-badge |
 | `scheduler/name` | [App/Core/Tasks/assets/components.json](../../App/Core/Tasks/assets/components.json) | — |
@@ -112,6 +111,7 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `ui/cache-service` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/detail-table, ui/notice, ui/status-badge |
 | `ui/detail-table` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/status-badge |
 | `ui/dashboard-metrics` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/empty-state |
+| `ui/sort-column` | [App/Core/Ui/assets/components.json](../../App/Core/Ui/assets/components.json) | ui/sort-heading |
 | `updates/actions` | [App/Core/Updates/assets/components.json](../../App/Core/Updates/assets/components.json) | ui/modal-trigger |
 | `updates/page` | [App/Core/Updates/assets/components.json](../../App/Core/Updates/assets/components.json) | ui/empty-state, ui/notice |
 | `users/following-profile` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/avatar |
@@ -132,24 +132,24 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `status/permalink` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `status/body` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/segments |
 | `bots/source-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field |
-| `bots/sources` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/account-status, ui/action-label, ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
-| `bots/accounts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading, users/identity-row |
-| `bots/runs` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/run-status, ui/empty-state, ui/sort-heading |
+| `bots/sources` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/account-status, ui/action-label, ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-column |
+| `bots/accounts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-column, users/identity-row |
+| `bots/runs` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/run-status, ui/empty-state, ui/sort-column |
 | `bots/run-status` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/status-badge |
-| `bots/posts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/post-source, ui/empty-state, ui/list-toolbar, ui/pagination, ui/sort-heading, ui/status-badge |
-| `bots/queue` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/post-source, ui/account-status, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
+| `bots/posts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/post-source, ui/empty-state, ui/list-toolbar, ui/pagination, ui/sort-column, ui/status-badge |
+| `bots/queue` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/post-source, ui/account-status, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-column |
 | `bots/queue-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
 | `bots/post-source` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
-| `bots/source-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/help |
+| `bots/source-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/help, ui/notice |
 | `bots/post-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
 | `bots/account-fields` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/field |
 | `bots/runs-list` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/runs, ui/list-toolbar, ui/pagination |
 | `bots/run-filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
 | `bots/scheduler-run-detail` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | bots/run-status |
-| `moderation/reports` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/status, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
+| `moderation/reports` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/report-reason, moderation/status, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-column |
 | `moderation/filter-form` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/select |
-| `moderation/history` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/status, ui/empty-state, ui/modal-trigger |
-| `moderation/report-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/status |
+| `moderation/history` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/report-reason, moderation/status, ui/empty-state, ui/modal-trigger |
+| `moderation/report-preview` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | moderation/report-reason, moderation/status |
 | `moderation/status` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/status-badge |
 | `site/sidebar` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | ui/avatar, ui/empty-state |
 | `site/public-page` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | site/archive-actions, site/archive-filter, status/card, status/composer-body, status/feed-more, status/thread, ui/avatar-content, ui/switcher, users/avatar-control |
@@ -181,8 +181,8 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `site/privacy-section` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `search/posts` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | status/card |
 | `publishing/segments` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/segments |
-| `publishing/link` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/link-summary |
-| `publishing/link-summary` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `publishing/link` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/link-image, publishing/link-summary |
+| `publishing/link-summary` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/link-image |
 | `publishing/editor` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `publishing/image-field` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `publishing/attached-image` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
@@ -192,6 +192,8 @@ Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je l
 | `publishing/discussion` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | publishing/comment, publishing/comment-form, publishing/like |
 | `publishing/comment-history` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 | `publishing/comment-replies` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `publishing/link-image` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
+| `moderation/report-reason` | [App/Modules/Social/assets/components.json](../../App/Modules/Social/assets/components.json) | — |
 
 ## UI služby a metody zapsané jako `name: function`
 
@@ -363,13 +365,13 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 
 | Soubor | Manifest | Trasy |
 | --- | --- | --- |
+| [App/Core/Identity/assets/styles/authentication.css](../../App/Core/Identity/assets/styles/authentication.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | /login, /register, /recovery |
 | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | public, admin, /account |
 | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | public, admin, /account |
 | [App/Core/Notifications/assets/styles/notification-badge-mobile.css](../../App/Core/Notifications/assets/styles/notification-badge-mobile.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
 | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
 | [App/Core/Notifications/assets/styles/notification-nav.css](../../App/Core/Notifications/assets/styles/notification-nav.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
 | [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
-| [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css) | [App/Core/Notifications/assets/module.json](../../App/Core/Notifications/assets/module.json) | public, /notifications, /access/notifications |
 | [App/Core/Security/assets/styles/captcha.css](../../App/Core/Security/assets/styles/captcha.css) | [App/Core/Security/assets/module.json](../../App/Core/Security/assets/module.json) | public |
 | [App/Core/Ui/assets/admin/styles/admin-content-mobile.css](../../App/Core/Ui/assets/admin/styles/admin-content-mobile.css) | [App/Core/Ui/assets/admin/module.json](../../App/Core/Ui/assets/admin/module.json) | admin |
 | [App/Core/Ui/assets/admin/styles/admin-lists-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-lists-desktop.css) | [App/Core/Ui/assets/admin/module.json](../../App/Core/Ui/assets/admin/module.json) | admin |
@@ -408,7 +410,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Core/Ui/assets/styles/global-search.css](../../App/Core/Ui/assets/styles/global-search.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
 | [App/Core/Ui/assets/styles/grid-desktop.css](../../App/Core/Ui/assets/styles/grid-desktop.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
 | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, admin |
-| [App/Core/Ui/assets/styles/information-pages.css](../../App/Core/Ui/assets/styles/information-pages.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | /privacy, /access/privacy |
 | [App/Core/Ui/assets/styles/input-icon.css](../../App/Core/Ui/assets/styles/input-icon.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
 | [App/Core/Ui/assets/styles/language.css](../../App/Core/Ui/assets/styles/language.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | public, /search/all |
 | [App/Core/Ui/assets/styles/layout.css](../../App/Core/Ui/assets/styles/layout.css) | [App/Core/Ui/assets/module.json](../../App/Core/Ui/assets/module.json) | * |
@@ -540,7 +541,8 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `alert-success` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) |
 | `alert-warning` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) |
 | `archive-actions` | [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) |
-| `archive-filter` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css) |
+| `archive-filter` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css), [App/Modules/Social/assets/site/styles/public-list-header.css](../../App/Modules/Social/assets/site/styles/public-list-header.css) |
+| `auth-page` | [App/Core/Identity/assets/styles/authentication.css](../../App/Core/Identity/assets/styles/authentication.css) |
 | `avatar` | [App/Core/Ui/assets/styles/avatar.css](../../App/Core/Ui/assets/styles/avatar.css), [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css), [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `avatar-editor` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-controls` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
@@ -553,14 +555,14 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `avatar-upload-empty-note` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-upload-preview` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-xl` | [App/Core/Ui/assets/styles/avatar-sizes.css](../../App/Core/Ui/assets/styles/avatar-sizes.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
-| `badge` | [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css), [App/Core/Ui/assets/styles/dashboard.css](../../App/Core/Ui/assets/styles/dashboard.css), [App/Core/Ui/assets/styles/filter-chips.css](../../App/Core/Ui/assets/styles/filter-chips.css), [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css), [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css), [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
+| `badge` | [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css), [App/Core/Ui/assets/styles/dashboard.css](../../App/Core/Ui/assets/styles/dashboard.css), [App/Core/Ui/assets/styles/filter-chips.css](../../App/Core/Ui/assets/styles/filter-chips.css), [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css), [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css) |
 | `badge-danger` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) |
 | `badge-info` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) |
 | `badge-success` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) |
 | `badge-warning` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css), [App/Core/Ui/assets/styles/badges.css](../../App/Core/Ui/assets/styles/badges.css) |
 | `block` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `brand-logo` | [App/Core/Ui/assets/styles/brand-logo.css](../../App/Core/Ui/assets/styles/brand-logo.css) |
-| `btn` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Core/Ui/assets/styles/cookie-consent-mobile.css](../../App/Core/Ui/assets/styles/cookie-consent-mobile.css), [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css), [App/Core/Ui/assets/styles/modal-confirm-buttons.css](../../App/Core/Ui/assets/styles/modal-confirm-buttons.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css), [App/Core/Ui/assets/styles/popovers.css](../../App/Core/Ui/assets/styles/popovers.css), [App/Core/Ui/assets/styles/public-workspace.css](../../App/Core/Ui/assets/styles/public-workspace.css), [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css), [App/Modules/Social/assets/site/styles/public-list-header-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-mobile.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) |
+| `btn` | [App/Core/Identity/assets/styles/authentication.css](../../App/Core/Identity/assets/styles/authentication.css), [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Core/Ui/assets/styles/cookie-consent-mobile.css](../../App/Core/Ui/assets/styles/cookie-consent-mobile.css), [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css), [App/Core/Ui/assets/styles/modal-confirm-buttons.css](../../App/Core/Ui/assets/styles/modal-confirm-buttons.css), [App/Core/Ui/assets/styles/modal-workspace-desktop.css](../../App/Core/Ui/assets/styles/modal-workspace-desktop.css), [App/Core/Ui/assets/styles/popovers.css](../../App/Core/Ui/assets/styles/popovers.css), [App/Core/Ui/assets/styles/public-workspace.css](../../App/Core/Ui/assets/styles/public-workspace.css), [App/Core/Ui/assets/styles/reset.css](../../App/Core/Ui/assets/styles/reset.css), [App/Modules/Social/assets/site/styles/public-list-header-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-mobile.css), [App/Modules/Social/assets/status/styles/status-content-mobile.css](../../App/Modules/Social/assets/status/styles/status-content-mobile.css), [App/Modules/Social/assets/status/styles/status-editing.css](../../App/Modules/Social/assets/status/styles/status-editing.css), [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) |
 | `btn-danger` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `btn-ghost` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `btn-group` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
@@ -573,7 +575,7 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `card` | [App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css](../../App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Core/Ui/assets/styles/containers-mobile.css](../../App/Core/Ui/assets/styles/containers-mobile.css), [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css) |
 | `card-body` | [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Core/Ui/assets/styles/tables.css](../../App/Core/Ui/assets/styles/tables.css) |
 | `card-footer` | [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css) |
-| `card-header` | [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css), [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css) |
+| `card-header` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/cards.css](../../App/Core/Ui/assets/styles/cards.css), [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css) |
 | `check-card` | [App/Core/Ui/assets/styles/check-card.css](../../App/Core/Ui/assets/styles/check-card.css) |
 | `check-line` | [App/Core/Ui/assets/styles/check-line.css](../../App/Core/Ui/assets/styles/check-line.css) |
 | `cluster` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
@@ -634,11 +636,10 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `identity-row-compact` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
 | `identity-row-inset` | [App/Core/Ui/assets/styles/identity-rows.css](../../App/Core/Ui/assets/styles/identity-rows.css) |
 | `image-preview-contain` | [App/Core/Ui/assets/styles/content-images-contain.css](../../App/Core/Ui/assets/styles/content-images-contain.css) |
-| `information-page` | [App/Core/Ui/assets/styles/information-pages.css](../../App/Core/Ui/assets/styles/information-pages.css) |
 | `inline-flex` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `input` | [App/Core/Ui/assets/styles/fields.css](../../App/Core/Ui/assets/styles/fields.css), [App/Core/Ui/assets/styles/input-icon.css](../../App/Core/Ui/assets/styles/input-icon.css) |
 | `input-icon` | [App/Core/Ui/assets/admin/styles/admin-lists.css](../../App/Core/Ui/assets/admin/styles/admin-lists.css), [App/Core/Ui/assets/styles/input-icon.css](../../App/Core/Ui/assets/styles/input-icon.css) |
-| `is-active` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css), [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css), [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css), [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css), [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
+| `is-active` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css), [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/discussion-editing.css](../../App/Modules/Social/assets/content/styles/discussion-editing.css), [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css), [App/Modules/Social/assets/content/styles/status-editing.css](../../App/Modules/Social/assets/content/styles/status-editing.css) |
 | `is-child` | [App/Modules/Social/assets/content/styles/discussion-content.css](../../App/Modules/Social/assets/content/styles/discussion-content.css), [App/Modules/Social/assets/content/styles/discussion-mobile.css](../../App/Modules/Social/assets/content/styles/discussion-mobile.css) |
 | `is-danger` | [App/Core/Ui/assets/styles/context-menu-actions.css](../../App/Core/Ui/assets/styles/context-menu-actions.css) |
 | `is-image-missing` | [App/Modules/Social/assets/content/styles/status-content.css](../../App/Modules/Social/assets/content/styles/status-content.css) |
@@ -663,9 +664,7 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `load-more` | [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css) |
 | `load-more-state` | [App/Core/Ui/assets/styles/load-more.css](../../App/Core/Ui/assets/styles/load-more.css) |
 | `m-0` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
-| `max-w-auth` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `max-w-auth-sm` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
-| `max-w-prose` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `mb-0` | [App/Core/Ui/assets/styles/buttons.css](../../App/Core/Ui/assets/styles/buttons.css) |
 | `md:grid-2` | [App/Core/Ui/assets/styles/grid-desktop.css](../../App/Core/Ui/assets/styles/grid-desktop.css) |
 | `md:grid-3` | [App/Core/Ui/assets/styles/grid-desktop.css](../../App/Core/Ui/assets/styles/grid-desktop.css) |
@@ -700,8 +699,6 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `notification-preview-item` | [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
 | `notification-preview-list` | [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
 | `notification-preview-more` | [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
-| `notifications-list` | [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css) |
-| `notifications-page` | [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css) |
 | `pagination` | [App/Core/Ui/assets/admin/styles/admin-shell-desktop.css](../../App/Core/Ui/assets/admin/styles/admin-shell-desktop.css), [App/Core/Ui/assets/styles/modal-layout.css](../../App/Core/Ui/assets/styles/modal-layout.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
 | `pagination-ellipsis` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
 | `pagination-link` | [App/Core/Ui/assets/styles/pagination-desktop.css](../../App/Core/Ui/assets/styles/pagination-desktop.css), [App/Core/Ui/assets/styles/pagination.css](../../App/Core/Ui/assets/styles/pagination.css) |
@@ -739,7 +736,6 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `public-sidebar-footer` | [App/Modules/Social/assets/site/styles/public-sidebar-footer.css](../../App/Modules/Social/assets/site/styles/public-sidebar-footer.css) |
 | `public-workspace` | [App/Core/Ui/assets/styles/public-workspace.css](../../App/Core/Ui/assets/styles/public-workspace.css) |
 | `public-workspace-nav` | [App/Core/Ui/assets/styles/public-workspace.css](../../App/Core/Ui/assets/styles/public-workspace.css) |
-| `publishing-text` | [App/Modules/Social/assets/content/styles/status-text.css](../../App/Modules/Social/assets/content/styles/status-text.css) |
 | `result-item` | [App/Core/Ui/assets/styles/result-list.css](../../App/Core/Ui/assets/styles/result-list.css) |
 | `result-list` | [App/Core/Ui/assets/styles/result-list.css](../../App/Core/Ui/assets/styles/result-list.css) |
 | `section` | [App/Core/Ui/assets/styles/cards-mobile.css](../../App/Core/Ui/assets/styles/cards-mobile.css), [App/Core/Ui/assets/styles/containers-mobile.css](../../App/Core/Ui/assets/styles/containers-mobile.css), [App/Core/Ui/assets/styles/layout.css](../../App/Core/Ui/assets/styles/layout.css), [App/Core/Ui/assets/styles/section-desktop.css](../../App/Core/Ui/assets/styles/section-desktop.css), [App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css](../../App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css) |
@@ -890,7 +886,6 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `toast-success` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) |
 | `toast-warning` | [App/Core/Ui/assets/styles/alerts.css](../../App/Core/Ui/assets/styles/alerts.css) |
 | `tooltip` | [App/Core/Ui/assets/styles/tooltip.css](../../App/Core/Ui/assets/styles/tooltip.css) |
-| `topic-link` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
 | `topic-list` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
 | `topic-name` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css) |
 | `user-menu` | [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css) |

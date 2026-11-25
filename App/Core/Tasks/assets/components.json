@@ -132,47 +132,20 @@
                                 "tag": "tr",
                                 "children": [
                                   {
-                                    "tag": "th",
-                                    "attrs": {"scope": "col", "aria-sort": {"get": "sorting.task.aria"}},
-                                    "children": [
-                                      {
-                                        "component": "ui/sort-heading",
-                                        "data": {"label": {"t": "cron.task"}, "order": {"get": "sorting.task"}}
-                                      }
-                                    ]
+                                    "component": "ui/sort-column",
+                                    "data": {"label": {"t": "cron.task"}, "order": {"get": "sorting.task"}}
                                   },
                                   {
-                                    "tag": "th",
-                                    "attrs": {"scope": "col", "aria-sort": {"get": "sorting.started_at.aria"}},
-                                    "children": [
-                                      {
-                                        "component": "ui/sort-heading",
-                                        "data": {"label": {"t": "cron.started"}, "order": {"get": "sorting.started_at"}}
-                                      }
-                                    ]
+                                    "component": "ui/sort-column",
+                                    "data": {"label": {"t": "cron.started"}, "order": {"get": "sorting.started_at"}}
                                   },
                                   {
-                                    "tag": "th",
-                                    "attrs": {"scope": "col", "aria-sort": {"get": "sorting.status.aria"}},
-                                    "children": [
-                                      {
-                                        "component": "ui/sort-heading",
-                                        "data": {"label": {"t": "cron.status"}, "order": {"get": "sorting.status"}}
-                                      }
-                                    ]
+                                    "component": "ui/sort-column",
+                                    "data": {"label": {"t": "cron.status"}, "order": {"get": "sorting.status"}}
                                   },
                                   {
-                                    "tag": "th",
-                                    "attrs": {"scope": "col", "aria-sort": {"get": "sorting.duration_ms.aria"}},
-                                    "children": [
-                                      {
-                                        "component": "ui/sort-heading",
-                                        "data": {
-                                          "label": {"t": "cron.duration"},
-                                          "order": {"get": "sorting.duration_ms"}
-                                        }
-                                      }
-                                    ]
+                                    "component": "ui/sort-column",
+                                    "data": {"label": {"t": "cron.duration"}, "order": {"get": "sorting.duration_ms"}}
                                   },
                                   {"tag": "th", "attrs": {"scope": "col"}, "children": [{"t": "cron.result"}]},
                                   {

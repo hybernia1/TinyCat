@@ -1,19 +1,22 @@
 DirectoryIndex index.php
 
+<IfModule mod_mime.c>
+    AddType image/webp .webp
+</IfModule>
+
 <FilesMatch "^(config\.php|.*\.sql)$">
     Require all denied
 </FilesMatch>
 
 RedirectMatch 404 ^/\.git(?:/|$)
 RedirectMatch 404 ^/\.work(?:/|$)
-RedirectMatch 404 ^/(App|Extensions|lang|migrations|tests|tools)(/|$)
+RedirectMatch 404 ^/(App|Public|Extensions|lang|migrations|tests|tools)(/|$)
 RedirectMatch 404 "^/storage(?:$|/(?!cache/assets/[A-Za-z0-9._-]+\.(?:css|js|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)$).*)"
 
 <IfModule mod_setenvif.c>
     SetEnvIfNoCase Authorization "^(.+)$" HTTP_AUTHORIZATION=$1
     SetEnvIfNoCase Request_URI "\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot)$" tinycat_static_asset
     SetEnvIfNoCase Request_URI "^/assets/.*\.[a-f0-9]{24}\.(css|js|svg)$" tinycat_versioned_asset
-    SetEnvIfExpr "%{REQUEST_URI} =~ m#^/assets/[^?]+$# && %{QUERY_STRING} =~ m#^v=[a-f0-9]{24}$#" tinycat_versioned_asset
     SetEnvIfNoCase Request_URI "^/(?:cache/assets|storage/cache/assets)/[A-Za-z0-9._-]+\.(css|js|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)$" tinycat_versioned_asset
     SetEnvIfNoCase Request_URI "^/uploads/.*\.(svg|png|jpe?g|gif|webp|avif)$" tinycat_upload_asset
 </IfModule>
@@ -53,7 +56,6 @@ RedirectMatch 404 "^/storage(?:$|/(?!cache/assets/[A-Za-z0-9._-]+\.(?:css|js|svg
     RewriteEngine On
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
     RewriteRule ^cache/assets/([A-Za-z0-9._-]+\.(?:css|js|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf))$ storage/cache/assets/$1 [L]
-    RewriteRule ^Public(/.*)?$ index.php [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^ index.php [L]

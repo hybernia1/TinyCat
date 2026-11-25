@@ -1,9 +1,10 @@
 .notification-item {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: var(--space-2-5);
   align-items: center;
-  padding: 12px;
+  padding: var(--space-3);
   border-top: 1px solid var(--border);
 }
 
@@ -16,7 +17,29 @@
 }
 
 .notification-actions {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
+}
+
+.notification-item > a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.notification-item:has(> a:is(:hover, :focus-visible)) {
+  background: var(--surface-soft);
+}
+
+.notification-item > a:is(:hover, :focus-visible) {
+  background: transparent;
+  outline: 0;
+}
+
+.notification-item > a:focus-visible::after {
+  outline: var(--control-focus-width) solid var(--primary);
+  outline-offset: calc(-1 * var(--control-focus-width));
 }

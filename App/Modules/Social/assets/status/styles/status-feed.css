@@ -1,7 +1,7 @@
 .status-feed {
   display: grid;
-  gap: 8px;
-  max-width: 760px;
+  gap: var(--space-2);
+  max-width: 47.5rem;
 }
 
 .status-feed-spacer {
@@ -9,7 +9,7 @@
   pointer-events: none;
 }
 
-.status-feed-more { max-width: 760px; }
+.status-feed-more { max-width: 47.5rem; }
 
 .status-card {
   border-radius: var(--radius-sm);
@@ -18,5 +18,5 @@
 
 .status-card-body {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }

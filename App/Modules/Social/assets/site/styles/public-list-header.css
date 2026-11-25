@@ -1,12 +1,18 @@
 .public-list-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .public-list-header .text-2xl {
   font-size: clamp(1.25rem, 2vw, 1.5rem);
   line-height: 1.2;
 }
-.archive-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.archive-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); flex: 0 1 auto; min-width: 0; max-width: 100%; }
+
+.archive-actions .archive-filter,
+.archive-actions .archive-filter > summary { max-width: 100%; }
+
+.archive-actions .archive-filter > summary { white-space: normal; overflow-wrap: anywhere; }

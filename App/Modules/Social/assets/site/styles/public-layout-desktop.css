@@ -1,7 +1,7 @@
 @media (min-width: 900px) {
 .public-layout {
-    grid-template-columns: minmax(0, 820px) minmax(230px, 300px);
-    gap: 24px;
+    grid-template-columns: minmax(0, 51.25rem) minmax(14.375rem, 18.75rem);
+    gap: var(--space-6);
     justify-content: center;
   }
 }

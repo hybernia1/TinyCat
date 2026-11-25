@@ -65,18 +65,12 @@
         },
         "children": [
           {
-            "tag": "span",
-            "attrs": {"class": "avatar"},
-            "children": [
-              {
-                "component": "ui/avatar-content",
-                "data": {
-                  "user": {"get": "item.actor"},
-                  "alt": {"get": "item.actor.username"},
-                  "fallback_icon": {"or": [{"get": "item.icon"}, "bell"]}
-                }
-              }
-            ]
+            "component": "ui/avatar",
+            "data": {
+              "user": {"get": "item.actor"},
+              "alt": {"get": "item.actor.username"},
+              "fallback_icon": {"or": [{"get": "item.icon"}, "bell"]}
+            }
           },
           {"component": "notifications/copy", "data": {"item": {"get": "item"}}}
         ]
@@ -112,18 +106,12 @@
     },
     "children": [
       {
-        "tag": "span",
-        "attrs": {"class": "avatar"},
-        "children": [
-          {
-            "component": "ui/avatar-content",
-            "data": {
-              "user": {"get": "item.actor"},
-              "alt": {"get": "item.actor.username"},
-              "fallback_icon": {"or": [{"get": "item.icon"}, "bell"]}
-            }
-          }
-        ]
+        "component": "ui/avatar",
+        "data": {
+          "user": {"get": "item.actor"},
+          "alt": {"get": "item.actor.username"},
+          "fallback_icon": {"or": [{"get": "item.icon"}, "bell"]}
+        }
       },
       {"component": "notifications/copy", "data": {"item": {"get": "item"}, "preview": true}}
     ]
@@ -149,55 +137,47 @@
     "children": [
       {
         "tag": "section",
-        "attrs": {"class": "notifications-page stack stack-gap-14"},
+        "attrs": {"class": "stack stack-gap-14"},
         "children": [
           {
-            "tag": "article",
-            "attrs": {"class": "card"},
+            "tag": "div",
+            "attrs": {"class": "card-header cluster justify-between"},
             "children": [
               {
-                "tag": "div",
-                "attrs": {"class": "card-header split"},
+                "tag": "h1",
+                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "children": [{"icon": "bell"}, " ", {"t": "notifications.title"}]
+              },
+              {
+                "tag": "form",
+                "attrs": {
+                  "method": "post",
+                  "action": "/api/notifications",
+                  "data-api-method": "PATCH",
+                  "data-ajax-form": "",
+                  "data-ajax-target": "#notifications-view",
+                  "hidden": {"not": {"get": "has_unread"}}
+                },
                 "children": [
+                  {"csrf": true},
+                  {"tag": "input", "attrs": {"type": "hidden", "name": "read", "value": "1"}},
                   {
-                    "tag": "h1",
-                    "attrs": {"class": "text-lg m-0 cluster gap-2"},
-                    "children": [{"icon": "bell"}, " ", {"t": "notifications.title"}]
-                  },
-                  {
-                    "tag": "form",
-                    "attrs": {
-                      "method": "post",
-                      "action": "/api/notifications",
-                      "data-api-method": "PATCH",
-                      "data-ajax-form": "",
-                      "data-ajax-target": "#notifications-view",
-                      "hidden": {"not": {"get": "has_unread"}}
-                    },
+                    "tag": "button",
+                    "attrs": {"class": "btn btn-secondary btn-sm", "type": "submit"},
                     "children": [
-                      {"csrf": true},
-                      {"tag": "input", "attrs": {"type": "hidden", "name": "read", "value": "1"}},
-                      {
-                        "tag": "button",
-                        "attrs": {"class": "btn btn-secondary btn-sm", "type": "submit"},
-                        "children": [
-                          {"icon": "check"},
-                          " ",
-                          {"tag": "span", "children": [{"t": "notifications.mark_all_read"}]}
-                        ]
-                      }
+                      {"icon": "check"},
+                      " ",
+                      {"tag": "span", "children": [{"t": "notifications.mark_all_read"}]}
                     ]
                   }
                 ]
-              },
-              {
-                "tag": "div",
-                "attrs": {"class": "notifications-list", "id": "notifications-list"},
-                "children": [
-                  {"component": "notifications/items", "data": {"items": {"get": "items"}, "preview": false}}
-                ]
               }
             ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"id": "notifications-list"},
+            "children": [{"component": "notifications/items", "data": {"items": {"get": "items"}, "preview": false}}]
           },
           {
             "component": "ui/load-more",
@@ -291,7 +271,7 @@
           },
           {
             "tag": "a",
-            "attrs": {"class": "notification-preview-more", "href": "/notifications"},
+            "attrs": {"class": "btn btn-ghost notification-preview-more", "href": "/notifications"},
             "children": [{"icon": "bell"}, " ", {"tag": "span", "children": [{"t": "notifications.more"}]}]
           }
         ]

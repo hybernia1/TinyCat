@@ -901,7 +901,6 @@
     "component": "users/auth-content",
     "data": {
       "mode": "login",
-      "register": false,
       "next": "/",
       "form_url": "/login?next=%2F",
       "switch_url": "/register",
@@ -929,7 +928,6 @@
     "component": "users/auth-content",
     "data": {
       "mode": "register",
-      "register": true,
       "next": "/",
       "form_url": "/login?next=%2F",
       "switch_url": "/register",
@@ -1288,10 +1286,9 @@
     }
   },
   {
-    "component": "users/auth-page",
+    "component": "users/auth-content",
     "data": {
       "mode": "login",
-      "register": false,
       "next": "/",
       "form_url": "/login?next=%2F",
       "switch_url": "/register",
@@ -1316,10 +1313,9 @@
     }
   },
   {
-    "component": "users/auth-page",
+    "component": "users/auth-content",
     "data": {
       "mode": "register",
-      "register": true,
       "next": "/",
       "form_url": "/login?next=%2F",
       "switch_url": "/register",
@@ -1347,10 +1343,9 @@
     }
   },
   {
-    "component": "users/auth-page",
+    "component": "users/auth-content",
     "data": {
       "mode": "register",
-      "register": true,
       "next": "/",
       "form_url": "/login?next=%2F",
       "switch_url": "/register",
@@ -1378,11 +1373,9 @@
     }
   },
   {
-    "component": "users/recovery-page",
+    "component": "users/auth-content",
     "data": {
-      "reset": false,
       "token": "\"><unsafe>&",
-      "password_max": 1024,
       "captcha": {
         "enabled": true,
         "provider": "turnstile",
@@ -1390,16 +1383,19 @@
         "context": "recovery",
         "refresh": true
       },
-      "login_url": "/pl/login",
-      "privacy_url": "/pl/privacy"
+      "mode": "recovery",
+      "form_url": "/api/users/password-resets",
+      "options": {
+        "password_min_bytes": 8,
+        "password_max_length": 1024
+      },
+      "switch_url": "/pl/login"
     }
   },
   {
-    "component": "users/recovery-page",
+    "component": "users/auth-content",
     "data": {
-      "reset": true,
       "token": "\"><unsafe>&",
-      "password_max": 1024,
       "captcha": {
         "enabled": true,
         "provider": "turnstile",
@@ -1407,8 +1403,13 @@
         "context": "recovery",
         "refresh": true
       },
-      "login_url": "/pl/login",
-      "privacy_url": "/pl/privacy"
+      "mode": "reset",
+      "form_url": "/api/users/password-resets/confirm",
+      "options": {
+        "password_min_bytes": 8,
+        "password_max_length": 1024
+      },
+      "switch_url": "/pl/login"
     }
   },
   {
@@ -1758,6 +1759,184 @@
       "enabled": "0",
       "disabled": true,
       "label": "Disable"
+    }
+  },
+  {
+    "component": "publishing/link-summary",
+    "data": {
+      "link": {
+        "url": "https://example.test/?q=a&b=c",
+        "title": "Title <unsafe>",
+        "image_url": "https://example.test/image.webp"
+      }
+    }
+  },
+  {
+    "component": "publishing/link-summary",
+    "data": {
+      "link": {
+        "url": "https://example.test",
+        "title": "No image"
+      }
+    }
+  },
+  {
+    "component": "moderation/report-reason",
+    "data": {
+      "reason": "spam"
+    }
+  },
+  {
+    "component": "moderation/report-reason",
+    "data": {
+      "reason": "illegal"
+    }
+  },
+  {
+    "component": "moderation/report-reason",
+    "data": {
+      "reason": "malware"
+    }
+  },
+  {
+    "component": "moderation/report-reason",
+    "data": {
+      "reason": "abuse"
+    }
+  },
+  {
+    "component": "moderation/report-reason",
+    "data": {
+      "reason": "other"
+    }
+  },
+  {
+    "component": "moderation/report-reason",
+    "data": {
+      "reason": "unknown"
+    }
+  },
+  {
+    "component": "moderation/report-reason",
+    "data": {
+      "reason": null
+    }
+  },
+  {
+    "component": "ui/sort-column",
+    "data": {
+      "label": "Name <unsafe>",
+      "order": null
+    }
+  },
+  {
+    "component": "ui/sort-column",
+    "data": {
+      "label": "Name <unsafe>",
+      "order": {
+        "aria": "none",
+        "url": "/api/users?sort=username&direction=asc",
+        "target": "#users-list",
+        "history": "/admin/users?sort=username&direction=asc"
+      }
+    }
+  },
+  {
+    "component": "ui/sort-column",
+    "data": {
+      "label": "Name <unsafe>",
+      "order": {
+        "aria": "ascending",
+        "ascending": true,
+        "url": "/api/users?sort=username&direction=desc",
+        "target": "#users-list",
+        "history": "/admin/users?sort=username&direction=desc"
+      }
+    }
+  },
+  {
+    "component": "ui/sort-column",
+    "data": {
+      "label": "Name <unsafe>",
+      "order": {
+        "aria": "descending",
+        "descending": true,
+        "url": "/api/users?sort=username&direction=asc",
+        "target": "#users-list",
+        "history": "/admin/users?sort=username&direction=asc"
+      }
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "preview": true,
+      "items": [
+        {
+          "id": 42,
+          "actor": null,
+          "message": "Notice",
+          "icon": "bell",
+          "url": "/notifications",
+          "unread": false
+        }
+      ]
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "preview": true,
+      "items": [
+        {
+          "id": 42,
+          "actor": {
+            "id": 17,
+            "username": "Actor <unsafe>",
+            "avatar_url": "/uploads/avatars/actor.webp"
+          },
+          "message": "Notice",
+          "icon": "bell",
+          "url": "/notifications",
+          "unread": false
+        }
+      ]
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "preview": false,
+      "items": [
+        {
+          "id": 42,
+          "actor": null,
+          "message": "Notice",
+          "icon": "bell",
+          "url": "/notifications",
+          "unread": false
+        }
+      ]
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "preview": false,
+      "items": [
+        {
+          "id": 42,
+          "actor": {
+            "id": 17,
+            "username": "Actor <unsafe>",
+            "avatar_url": "/uploads/avatars/actor.webp"
+          },
+          "message": "Notice",
+          "icon": "bell",
+          "url": "/notifications",
+          "unread": false
+        }
+      ]
     }
   }
 ]

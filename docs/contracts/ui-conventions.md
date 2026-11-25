@@ -44,6 +44,16 @@ Prázdný výsledek, nápověda a selhání požadavku jsou odlišné stavy:
 aktualizace používají strukturovanou variantu. Tóny `critical` a `ok`
 jsou ekvivalenty `danger` a `success`.
 
+Zobrazení uloženého avataru používá `ui/avatar`; klikací ovladače mohou použít
+`ui/avatar-content` uvnitř vlastního tlačítka. Tvar určuje společný token
+`--avatar-radius`, včetně profilu a náhledu uploadu; lokální kruhové varianty
+se nepřidávají. Editor uploadu vlastní rozpracovaný obrázek, oba vstupy do
+úpravy avataru používají tentýž resource editor.
+
+Řaditelná záhlaví tabulek používají `ui/sort-column` s `label` a `order`.
+Komponenta vlastní buňku `th`, `scope`, `aria-sort` a skládá `ui/sort-heading`;
+vlastník dodává pořadí a URL.
+
 Řádky s avatarem používají `.identity-row` a `.identity-copy` ze společného
 `identity-rows.css`. Varianta `identity-row-compact` má avatar 36 px,
 běžná 44 px; `identity-copy-truncate` slouží pro jednořádkové náhledy.
@@ -161,7 +171,16 @@ Neslučovat je pouze kvůli shodě názvu selektoru. Přesuny musí projít test
 Při pouhém přesunu se baseline nemění. Při záměrné změně vzhledu se upraví
 až po kontrole změněných pravidel a ověření jejich vykreslení v prohlížeči.
 
-Barvy a obecné rozměry definovat pomocí `tokens.css`. Rám modalu řídí
+Barvy a obecné rozměry definovat pomocí `tokens.css`.
+Mezery sdílejí stupnici `--space-*` v `rem`; číselná část odpovídá násobku
+čtvrtiny `rem` (například `--space-2` je `0.5rem`, `--space-3-5` je `0.875rem`).
+Používají ji core utility, karty i modulové layouty. Ovladače používají existující
+`--control-height*` a `--control-padding-*` podle svého účelu. Specifické šířky,
+výšky a odsazení obsahu zapisovat v `rem` nebo `em`, aby sledovaly `--ui-scale`,
+hustotu i uživatelskou velikost textu. Pevné pixely ponechat pro jemné okraje,
+dekorace a záměrné viewport breakpointy, nikoli pro běžné mezery nebo velikosti UI.
+
+Rám modalu řídí
 společná komponenta a její pojmenované varianty; modul vlastní jeho obsah.
 Samostatný embed dokument si zachovává svou stávající vizuální variantu
 a samostatný stylesheet. Tento refaktor nemění jeho vzhled ani jej nenutí

@@ -7,6 +7,30 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.8
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No new
+migration or configuration change is required. Existing data, custom avatar
+uploads, avatar file references, module activation and migration history are preserved.
+
+Authentication pages and modals share one presentation for login, registration,
+recovery and reset. Signed-in sessions cannot load login/register modal resources.
+Redirect destinations reject external or browser-ambiguous paths. Required consent,
+CAPTCHA, field validation and unsaved-draft guards remain active.
+
+Public layouts use shared spacing and controls; localized Social routes select
+their complete assets. Notifications use flat, full-row links with independent
+delete actions. Deploy runtime and generated assets together through the signed updater.
+
+Generated initials now use square `/avatar/initials/v3/{initials}.svg` URLs shared
+by identical uppercase initials. Older generated/initials endpoints are removed;
+custom integrations must use canonical avatar URLs returned by account resources.
+Apache explicitly maps WebP to `image/webp`. Direct nginx static delivery must
+retain the equivalent MIME and cache policies independently of `.htaccess`.
+
+Core and Social remain independent signed products with separate update and
+fresh-install packages. Supported signed update and exact rollback remain required.
+
 ## Upgrading to 8.0.7
 
 Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No new

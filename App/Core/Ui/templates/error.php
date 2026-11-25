@@ -8,20 +8,16 @@ declare(strict_types=1);
 /** @var string $searchUrl */
 /** @var string $searchLabel */
 ?>
-<section class="max-w-auth mx-auto" aria-labelledby="error-title">
-    <article class="card">
-        <div class="card-body stack stack-gap-16">
-            <p class="text-2xl text-primary m-0" aria-hidden="true"><?= $status ?></p>
-            <div class="stack stack-gap-8">
-                <h1 class="text-2xl m-0" id="error-title"><?= \TinyCat\Support\Html::icon('alert') ?> <?= \TinyCat\Support\Html::e($title) ?></h1>
-                <p class="text-muted m-0"><?= \TinyCat\Support\Html::e($intro) ?></p>
-            </div>
-            <div class="btn-group">
-                <a class="btn btn-primary" href="<?= \TinyCat\Support\Html::e($homeUrl) ?>"><?= \TinyCat\Support\Html::icon('home') ?> <span><?= \TinyCat\Support\Html::e($homeLabel) ?></span></a>
-                <?php if ($searchUrl !== ''): ?>
-                <a class="btn btn-secondary" href="<?= \TinyCat\Support\Html::e($searchUrl) ?>"><?= \TinyCat\Support\Html::icon('search') ?> <span><?= \TinyCat\Support\Html::e($searchLabel) ?></span></a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </article>
+<section class="stack stack-gap-16" aria-labelledby="error-title">
+    <p class="text-2xl text-primary m-0" aria-hidden="true"><?= $status ?></p>
+    <div class="stack stack-gap-8">
+        <h1 class="text-2xl m-0" id="error-title"><?= \TinyCat\Support\Html::icon('alert') ?> <?= \TinyCat\Support\Html::e($title) ?></h1>
+        <p class="text-muted m-0"><?= \TinyCat\Support\Html::e($intro) ?></p>
+    </div>
+    <div class="btn-group">
+        <a class="btn btn-primary" href="<?= \TinyCat\Support\Html::e($homeUrl) ?>"><?= \TinyCat\Support\Html::icon('home') ?> <span><?= \TinyCat\Support\Html::e($homeLabel) ?></span></a>
+        <?php if ($searchUrl !== ''): ?>
+        <a class="btn btn-secondary" href="<?= \TinyCat\Support\Html::e($searchUrl) ?>"><?= \TinyCat\Support\Html::icon('search') ?> <span><?= \TinyCat\Support\Html::e($searchLabel) ?></span></a>
+        <?php endif; ?>
+    </div>
 </section>

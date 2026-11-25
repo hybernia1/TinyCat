@@ -17,7 +17,7 @@
 .tag-link:focus-visible,
 .status-tags-overflow > summary:hover,
 .status-tags-overflow > summary:focus-visible {
-  background: var(--primary-soft);
+  background: var(--surface-strong);
   color: var(--primary-strong);
 }
 
@@ -43,7 +43,7 @@
 }
 
 .status-tags {
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -67,13 +67,13 @@
 }
 
 .status-translation {
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 
 .status-translation-link {
   appearance: none;
   border: 0;
-  gap: 0.3rem;
+  gap: var(--space-1);
   text-decoration: none;
   cursor: pointer;
 }
@@ -89,16 +89,14 @@
 }
 
 .status-translation [role="status"] {
-  margin-inline-start: 0.5rem;
+  margin-inline-start: var(--space-2);
   font-size: 0.85em;
 }
 
 .status-translation-output {
-  margin-top: 0.5rem;
-  padding-inline-start: 0.75rem;
+  margin-top: var(--space-2);
+  padding-inline-start: var(--space-3);
   border-inline-start: 3px solid var(--border);
   font-size: 0.9em;
   white-space: pre-wrap;
 }
-
-.publishing-text { white-space: pre-wrap; line-height: 1.8; overflow-wrap: anywhere; }

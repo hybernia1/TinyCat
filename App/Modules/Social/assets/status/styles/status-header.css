@@ -1,17 +1,20 @@
 .status-header {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: start;
-  gap: 9px;
+  gap: var(--space-2-5);
 }
 
 .status-author {
   display: grid;
-  gap: 2px;
+  flex: 1 1 8rem;
+  gap: var(--space-0-5);
   min-width: 0;
 }
 
 .status-author a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   color: var(--text);
   font-size: 1rem;
   font-weight: 800;

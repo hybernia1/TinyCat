@@ -15,25 +15,25 @@
 
 .status-comments {
   display: grid;
-  gap: 10px;
+  gap: var(--space-2-5);
   border-top: 1px solid var(--border);
-  padding-top: 10px;
+  padding-top: var(--space-2-5);
 }
 
 .status-comment-list {
   display: grid;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .status-comment {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 2.125rem minmax(0, 1fr);
+  gap: var(--space-2);
   align-items: start;
 }
 
 .status-comment.is-child {
-  margin-left: 20px;
+  margin-left: var(--space-5);
 }
 
 .status-comment-main {
@@ -42,14 +42,18 @@
 
 .status-comment-bubble {
   display: inline-grid;
-  max-width: min(100%, 680px);
-  gap: 3px;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: min(100%, 42.5rem);
+  gap: var(--space-1);
   border-radius: var(--radius-sm);
   background: var(--surface-soft);
-  padding: 8px 11px;
+  padding: var(--space-2) var(--space-3);
 }
 
 .status-comment-author {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--text);
   font-size: 0.875rem;
   font-weight: 800;
@@ -58,13 +62,14 @@
 
 .status-comment-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-0-5);
   width: 100%;
 }
 
 .status-comment-heading-time {
   color: var(--muted);
   font-size: 0.8125rem;
-  white-space: nowrap;
+  white-space: normal;
 }

@@ -111,6 +111,12 @@ validation, successful-save state and canonical values apply only to that form.
 Other section drafts remain unchanged. Sections remain available without an extra
 resource request on every tab switch.
 
+Authentication pages and the authentication modal share `users/auth-content`.
+The public authentication resource supplies `login`, `register`, `recovery` and
+`reset` modes; the existing page URLs remain stable. Page links navigate normally,
+while modal links use the common resource loader and draft guard. A reset token
+is consumed only by the existing confirmation endpoint on submission.
+
 The common resource loader adds Refresh to editor footers by default. Owners may
 pass `refresh: false` through the shared dialog factory for forms such as login
 and registration where reloading the resource is not useful. The loader then

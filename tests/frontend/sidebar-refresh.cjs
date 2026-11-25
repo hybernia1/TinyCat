@@ -17,6 +17,20 @@ const vm = require("node:vm");
   const window = { TinyCat: T, matchMedia: () => ({ matches: true, addEventListener() {} }), setInterval: () => 1 };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/assets/site/sidebar-data.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, Date, URL });
   const settle = async () => { for (let i = 0; i < 12; i++) { await Promise.resolve(); } };
+  window.location = { href: "https://tinycat.test/" };
+  T.urls = { split: pathname => ({ path: pathname.replace(/^\/cs(?=\/)/, "") }) };
+  const topicLinks = ["/tag/first", "/cs/tag/second"].map(href => ({
+    href, attributes: {},
+    setAttribute(name, value) { this.attributes[name] = value; },
+    removeAttribute(name) { delete this.attributes[name]; }
+  }));
+  const topics = { querySelectorAll(selector) { assert.equal(selector, "[data-topic-link]"); return topicLinks; } };
+  T.site.activateSidebar(topics, "second");
+  assert.equal(topicLinks[0].attributes["aria-current"], undefined);
+  assert.equal(topicLinks[1].attributes["aria-current"], "page", "Localized topics use the shared core active state");
+  T.site.activateSidebar(topics, "first");
+  assert.equal(topicLinks[0].attributes["aria-current"], "page");
+  assert.equal(topicLinks[1].attributes["aria-current"], undefined, "Changing context clears the previous core active state");
   const assertReady = () => {
     assert.equal(classes.has("is-loading"), false, "Completed sidebar refresh must restore pointer events");
     assert.equal(sidebar.dataset.sidebarLoading, undefined, "Refresh must release its busy guard");

@@ -143,16 +143,20 @@ if (class_exists(DOMDocument::class)) {
 }
 
 // Account pages compose the same form definitions as resource-loaded dialogs.
-$loginPage = \TinyCat\Support\Components::render('users/auth-page', \TinyCat\Core\Identity\Resource::authenticationForm('login', '/search') + ['error' => '<Failed>']);
+foreach (['google.com', 'https://google.com', '//google.com', '/\\google.com', '/%5cgoogle.com', '/%2fgoogle.com', "/\t/google.com", '/%0d%0aLocation:https://google.com'] as $unsafeNext) {
+    $assert(\TinyCat\Core\Identity\Login::auth_safe_next_url($unsafeNext) === '', 'Login rejects ambiguous or external redirect destinations: ' . json_encode($unsafeNext));
+}
+$assert(\TinyCat\Core\Identity\Login::auth_safe_next_url('/account?search=hello%20world&url=https%3A%2F%2Fexample.test') === '/account?search=hello%20world&url=https%3A%2F%2Fexample.test', 'Safe local redirects preserve encoded query data.');
+$loginPage = \TinyCat\Support\Components::render('users/auth-content', \TinyCat\Core\Identity\Resource::authenticationForm('login', '/search') + ['error' => '<Failed>']);
 $assert(str_contains($loginPage, 'action="/api/users/sessions"') && str_contains($loginPage, '&lt;Failed&gt;'), 'The direct login page preserves canonical endpoints, accessible form and escaped errors.');
 $disabledRegistration = \TinyCat\Core\Identity\Resource::authenticationForm('register', '');
 $disabledRegistration['registration_enabled'] = false;
-$disabledRegistration = \TinyCat\Support\Components::render('users/auth-page', $disabledRegistration);
+$disabledRegistration = \TinyCat\Support\Components::render('users/auth-content', $disabledRegistration);
 $assert(!str_contains($disabledRegistration, '<form') && str_contains($disabledRegistration, 'alert-info'), 'Disabled registration renders its notice without a form.');
-$recoveryData = ['reset' => false, 'token' => '', 'password_max' => \TinyCat\Core\Identity\Passwords::maxLength(), 'password_min' => \TinyCat\Core\Identity\Passwords::minLength(), 'captcha' => ['enabled' => false], 'login_url' => '/pl/login', 'privacy_url' => '/pl/privacy'];
-$recoveryPage = \TinyCat\Support\Components::render('users/recovery-page', $recoveryData);
+$recoveryData = ['mode' => 'recovery', 'form_url' => '/api/users/password-resets', 'token' => '', 'options' => ['password_max_length' => \TinyCat\Core\Identity\Passwords::maxLength(), 'password_min_bytes' => \TinyCat\Core\Identity\Passwords::minLength()], 'captcha' => ['enabled' => false], 'switch_url' => '/pl/login'];
+$recoveryPage = \TinyCat\Support\Components::render('users/auth-content', $recoveryData);
 $assert(str_contains($recoveryPage, 'action="/api/users/password-resets"') && str_contains($recoveryPage, 'type="email"') && !str_contains($recoveryPage, 'name="password"'), 'Recovery requests use the email form.');
-$resetPage = \TinyCat\Support\Components::render('users/recovery-page', array_replace($recoveryData, ['reset' => true, 'token' => '"><unsafe>']));
+$resetPage = \TinyCat\Support\Components::render('users/auth-content', array_replace($recoveryData, ['mode' => 'reset', 'form_url' => '/api/users/password-resets/confirm', 'token' => '"><unsafe>']));
 $assert(str_contains($resetPage, 'action="/api/users/password-resets/confirm"') && str_contains($resetPage, '&quot;&gt;&lt;unsafe&gt;') && substr_count($resetPage, 'autocomplete="new-password"') === 2, 'Password resets preserve the escaped token and both constrained password fields.');
 $assert(substr_count($resetPage, 'data-max-bytes="' . \TinyCat\Core\Identity\Passwords::maxLength() . '"') === 2 && substr_count($resetPage, 'data-min-bytes="' . \TinyCat\Core\Identity\Passwords::minLength() . '"') === 2 && str_contains($resetPage, 'href="/pl/login"'), 'Recovery shares byte-based password constraints and localized navigation.');
 $logoutPage = \TinyCat\Support\Components::render('users/logout-page');
@@ -310,6 +314,14 @@ try {
 $assert(\TinyCat\Core\Ui\Surface::Administration->assetPath(['current' => '/crm']) === '/admin', 'An explicit admin surface selects admin assets on a nonstandard path.');
 $assert(\TinyCat\Core\Ui\Surface::Access->assetPath(['current' => '/private-entry']) === '/login', 'An explicit access surface selects access assets on a nonstandard path.');
 $assert(\TinyCat\Core\Ui\Surface::Administration->assetPath(['asset_path' => '/admin/bots']) === '/admin/bots', 'An owner can select a matching surface asset profile.');
+foreach (['cs', 'en', 'pl'] as $locale) {
+    foreach (['/author/1', '/status/10', '/tag/tinycat', '/social', '/search/all'] as $path) {
+        $assetPath = \TinyCat\Core\Ui\Surface::PublicWeb->assetPath(['current' => '/' . $locale . $path]);
+        $assert($assetPath === $path, 'Localized public pages select the canonical owner asset profile: ' . $locale . $path);
+        $assert(\TinyCat\Support\ClientAssets::sourceStyles($assetPath) === \TinyCat\Support\ClientAssets::sourceStyles($path), 'Localized pages preserve the full owner stylesheet selection: ' . $locale . $path);
+    }
+}
+$assert(\TinyCat\Core\Ui\Surface::Access->assetPath(['current' => '/cs/login']) === '/login', 'Localized access pages retain their access asset profile.');
 try {
     \TinyCat\Core\Ui\Surface::Administration->assetPath(['asset_path' => '/social']);
     $assert(false, 'Cross-surface explicit asset profiles must be rejected.');
