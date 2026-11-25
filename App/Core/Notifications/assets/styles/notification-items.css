@@ -1,3 +1,7 @@
+.notification-heading {
+  overflow-wrap: anywhere;
+}
+
 .notification-item {
   position: relative;
   display: flex;

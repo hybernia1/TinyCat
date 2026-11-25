@@ -5725,7 +5725,7 @@
     "identity-row": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 11,
+        "line": 15,
         "context": [],
         "selector": ".notification-item > .identity-row"
       },
@@ -6033,7 +6033,7 @@
     "is-unread": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 19,
+        "line": 23,
         "context": [],
         "selector": ".notification-item.is-unread"
       },
@@ -6907,7 +6907,7 @@
     "notification-actions": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 23,
+        "line": 27,
         "context": [],
         "selector": ".notification-actions"
       }
@@ -6928,52 +6928,60 @@
         "selector": ".notification-badge"
       }
     ],
-    "notification-item": [
+    "notification-heading": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
         "line": 1,
+        "context": [],
+        "selector": ".notification-heading"
+      }
+    ],
+    "notification-item": [
+      {
+        "source": "App/Core/Notifications/assets/styles/notification-items.css",
+        "line": 5,
         "context": [],
         "selector": ".notification-item"
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 11,
+        "line": 15,
         "context": [],
         "selector": ".notification-item > .identity-row"
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 15,
+        "line": 19,
         "context": [],
         "selector": ".notification-item:first-child"
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 19,
+        "line": 23,
         "context": [],
         "selector": ".notification-item.is-unread"
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 32,
+        "line": 36,
         "context": [],
         "selector": ".notification-item > a::after"
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 38,
+        "line": 42,
         "context": [],
         "selector": ".notification-item:has(> a:is(:hover, :focus-visible))"
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 42,
+        "line": 46,
         "context": [],
         "selector": ".notification-item > a:is(:hover, :focus-visible)"
       },
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
-        "line": 47,
+        "line": 51,
         "context": [],
         "selector": ".notification-item > a:focus-visible::after"
       }

@@ -145,7 +145,7 @@
             "children": [
               {
                 "tag": "h1",
-                "attrs": {"class": "text-lg m-0 cluster gap-2"},
+                "attrs": {"class": "notification-heading text-lg m-0 cluster gap-2 min-w-0"},
                 "children": [{"icon": "bell"}, " ", {"t": "notifications.title"}]
               },
               {

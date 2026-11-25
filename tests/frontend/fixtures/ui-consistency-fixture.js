@@ -230,6 +230,8 @@
     }
     const inboxHost = document.createElement('div'); inboxHost.className = 'container';
     const inbox = T.components.render('notifications/page', {items:[{id:101,message:'Long notification text '.repeat(8),actor:{},icon:'bell',url:'/fixture-notification',unread:true}],has_unread:true,next_url:''});
+    // Exercise wider font metrics consistently across native browser environments.
+    inbox.style.fontFamily = 'monospace';
     inboxHost.append(inbox); document.body.append(inboxHost);
     const inboxRow = inbox.querySelector('.notification-item'), inboxLink = inboxRow.querySelector('a'), deleteForm = inboxRow.querySelector('form[data-api-method="DELETE"]'), deleteButton = deleteForm.querySelector('button');
     inboxLink.scrollIntoView({block:'center'});

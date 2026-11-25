@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-184 definic komponent, 385 CSS tříd, 123 CSS importů, 101 JS souborů, 28 UI služeb, 0 PHP partialů.
+184 definic komponent, 386 CSS tříd, 123 CSS importů, 101 JS souborů, 28 UI služeb, 0 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -692,6 +692,7 @@ Všechny třídy ze stylů deklarovaných manifesty vlastníků. Počet souborů
 | `navbar-inner` | [App/Core/Ui/assets/styles/navbar-mobile.css](../../App/Core/Ui/assets/styles/navbar-mobile.css), [App/Core/Ui/assets/styles/navbar.css](../../App/Core/Ui/assets/styles/navbar.css) |
 | `notification-actions` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css) |
 | `notification-badge` | [App/Core/Notifications/assets/styles/notification-badge-mobile.css](../../App/Core/Notifications/assets/styles/notification-badge-mobile.css), [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
+| `notification-heading` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css) |
 | `notification-item` | [App/Core/Notifications/assets/styles/notification-items.css](../../App/Core/Notifications/assets/styles/notification-items.css) |
 | `notification-nav-link` | [App/Core/Notifications/assets/styles/notification-nav.css](../../App/Core/Notifications/assets/styles/notification-nav.css), [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
 | `notification-panel` | [App/Core/Notifications/assets/styles/notification-preview.css](../../App/Core/Notifications/assets/styles/notification-preview.css) |
