@@ -28,6 +28,8 @@ if ($mode === '--health-action') {
     exit;
 }
 if ($mode === '--installation') {
+    // Own the session across rendering; nested CSRF scopes must leave it open.
+    \TinyCat\Http\Session::start();
     \TinyCat\Support\Localization::locale('cs');
     $steps = \TinyCat\Core\Installation\Pages::prepare('tables', [], []);
     $language = \TinyCat\Core\Installation\Pages::prepare('language', \TinyCat\Core\Installation\Installer::languages(), ['locale' => 'cs']);

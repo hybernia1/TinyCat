@@ -35,14 +35,15 @@ final class PreparedAssets
     }
 
     /** Prepare a complete selection outside HTTP rendering and publish metadata last. */
-    public static function prepare(): void
+    public static function prepare(?string $version = null): void
     {
-        $key = DeploymentIdentity::key();
+        // An updater can still have the previous Version class loaded in PHP.
+        $key = DeploymentIdentity::key($version);
         $compiled = AssetCompiler::compile(emit: static function (string $prefix, string $source, string $type): string {
             return Minifier::cachedAssetUrl('prepared-' . $prefix, 'prepared-' . $prefix, $source, $type, false)
                 ?? throw new \RuntimeException('Cannot publish prepared asset.');
         });
-        if ($key !== DeploymentIdentity::key()) { throw new \RuntimeException('Asset selection changed during preparation.'); }
+        if ($key !== DeploymentIdentity::key($version)) { throw new \RuntimeException('Asset selection changed during preparation.'); }
         $snapshot = ['format' => 1, 'identity' => $key, 'manifest' => $compiled['manifest'] + ['_prepared' => true], 'packages' => $compiled['server']['packages'], 'components' => $compiled['components'], 'catalogs' => $compiled['catalogs']];
         // This is private data, never executable cache PHP or a replacement signed inventory.
         Cache::synchronized('runtime-assets', static function () use ($key, $snapshot): void {

@@ -44,7 +44,7 @@ final class Deployment
         if (!\TinyCat\Support\Storage::write($root . '/storage/deployment.json', json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n")) { throw new \RuntimeException('Unable to publish deployment state.'); }
         if (realpath($root) === realpath(\TinyCat\Support\Paths::basePath())) {
             $modules = Loader::fromSelection($root, Loader::availableSelection($root, Distribution::selection($plan, $active)));
-            Resources::withCatalog($modules->catalog, \TinyCat\Support\PreparedAssets::prepare(...), $root);
+            Resources::withCatalog($modules->catalog, static fn () => \TinyCat\Support\PreparedAssets::prepare($version), $root);
         }
     }
 

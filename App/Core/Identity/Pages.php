@@ -92,7 +92,14 @@ final class Pages
         $title = Localization::t(in_array($mode, ['recovery', 'reset'], true) ? 'auth.recovery_title' : 'auth.' . $mode . '_title');
         $description = Localization::t(match ($mode) { 'reset' => 'auth.recovery_reset_intro', 'recovery' => 'auth.recovery_intro', 'register' => 'auth.register_intro', default => 'auth.login_intro' });
         $data = Resource::authenticationForm($mode, $next, $token);
-        if ($mode === 'login') { $data += ['error' => (string) Session::flash('error'), 'message' => (string) Session::flash('success')]; }
+        if ($mode === 'login') {
+            $data += Session::scoped(static function (): array {
+                // The form renderer will need the token; prepare it with its flash reads.
+                \TinyCat\Core\Security\Csrf::token();
+                $messages = Session::pullFlashes(['error', 'success']);
+                return ['error' => (string) $messages['error'], 'message' => (string) $messages['success']];
+            });
+        }
         \TinyCat\Core\Ui\Page::render([
             'title' => $title, 'current' => $path, 'surface' => 'access', 'nav' => [],
             'meta' => ['description' => $description, 'url' => $path, 'image' => \TinyCat\Core\Ui\Site::site_meta_image_url(), 'robots' => 'noindex,nofollow'],

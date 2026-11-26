@@ -35,9 +35,9 @@ final class DeploymentIdentity
         return !is_file(Paths::basePath('storage/deployment.json'));
     }
 
-    public static function key(): string
+    public static function key(?string $version = null): string
     {
-        return hash('sha256', json_encode([Version::CURRENT, \TinyCat\Core\Modules\Resources::fingerprint(), self::current()['packages']], JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode([$version ?? Version::CURRENT, \TinyCat\Core\Modules\Resources::fingerprint(), self::current()['packages']], JSON_THROW_ON_ERROR));
     }
 
     /** @return array{revision: int, packages: string|false|null} */

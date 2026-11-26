@@ -59,10 +59,14 @@ if ($packagePhase === 'after-core-update') {
     [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=2.0.0', '--minimum-core=' . $versions[0], '--output=' . $workspace . '/module-v2'], $candidate); $assert($exit === 0, 'Build module upgrade: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/module-update-worker.php', $root, $moduleV2], $root);
     $assert($exit === 0 && (json_decode($text, true)['cached_version'] ?? null) === 1 && (int) $pdo->query('SELECT revision FROM lifecycle_addon')->fetchColumn() === 2, 'Module upgrade uses immutable migration files despite a cached old provider: ' . $text . $error);
+    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
+    $assert($exit === 0, 'A fresh process reads the prepared generation after the active module ZIP changes the package digest: ' . $text . $error);
     $operation = json_decode(file_get_contents($root . '/storage/updates/operation.json'), true);
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]);
     $assert($exit === 0 && file_get_contents($root . '/App/module-packages.json') === $registryBytes && hash_file('sha256', $root . '/App/Modules/Addon/src/Module.php') === $addonHash, 'Shared rollback restores exact module files and catalog bytes: ' . $text . $error);
     $assert((int) $pdo->query("SELECT version FROM module_installations WHERE module_id='fixture.addon'")->fetchColumn() === 1 && $pdo->query('SELECT body FROM lifecycle_addon')->fetchColumn() === 'Retained addon data', 'Module rollback restores DB schema, history and retained data');
+    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
+    $assert($exit === 0, 'A fresh process reads the retained prepared generation after module rollback restores the package digest: ' . $text . $error);
     require $fixture . '/archive-cases.php';
     $makeModule('addon', 4, ['tinycat.accounts']);
     [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=4.0.0', '--minimum-core=' . $versions[0], '--output=' . $workspace . '/module-v4'], $candidate); $assert($exit === 0, 'Build a module with a reproducible failing migration: ' . $text . $error);

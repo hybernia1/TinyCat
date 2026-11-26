@@ -4,6 +4,16 @@ namespace TinyCat\Core\Ui;
 
 final class DocumentData
 {
+    /** Read document session data together, releasing the lock before assets, SQL or rendering.
+     * @return array{csrfToken: string, messages: array<string, mixed>} */
+    public static function sessionData(?string $csrfToken = null): array
+    {
+        return \TinyCat\Http\Session::scoped(static fn (): array => [
+            'csrfToken' => $csrfToken ?? \TinyCat\Core\Security\Csrf::token(),
+            'messages' => \TinyCat\Http\Session::pullFlashes(['success', 'error', 'warning', 'info']),
+        ]);
+    }
+
     /** @param array<mixed> $data */
     public static function publicHeader(array $data): string
     {
@@ -40,7 +50,8 @@ final class DocumentData
         $title = (string) ($title ?? $appName);
         $current = \TinyCat\Http\Request::normalizePath((string) ($current ?? \TinyCat\Http\Request::current()->path()));
         $bodyClass = (string) ($bodyClass ?? '');
-        $csrfToken = (string) ($csrfToken ?? \TinyCat\Core\Security\Csrf::token());
+        $sessionData = self::sessionData(isset($csrfToken) ? (string) $csrfToken : null);
+        $csrfToken = $sessionData['csrfToken'];
         $dateFormat = (string) \TinyCat\Core\Settings\Store::config('datetime.datetime', 'Y-m-d H:i:s');
         $dateRelative = (bool) \TinyCat\Core\Settings\Store::config('datetime.relative', false);
         $assetPath = Surface::PublicWeb->assetPath($data + ['current' => $current]);
@@ -53,7 +64,7 @@ final class DocumentData
         $meta = is_array($meta ?? null) ? $meta : [];
         $flashToasts = [];
 
-        $messages = \TinyCat\Http\Session::pullFlashes(['success', 'error', 'warning', 'info']);
+        $messages = $sessionData['messages'];
         foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', 'info' => 'info'] as $flashKey => $flashType) {
             $flashMessage = $messages[$flashKey];
 

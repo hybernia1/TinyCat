@@ -1048,6 +1048,11 @@ class Manager extends Package
             // Immutable URLs can still be referenced by pages opened before an update.
             $relative = str_replace('\\', '/', substr($path, strlen($cache) + 1));
             if ($relative === 'assets' || str_starts_with($relative, 'assets/')) { continue; }
+            // Deployment::write publishes selection-bound inventories before finalization.
+            // Keep their retention-managed generations alongside the immutable assets.
+            if ($relative === 'prepared-assets' || str_starts_with($relative, 'prepared-assets/')) { continue; }
+            // Never unlink an inode on which another asset reader/publisher may be waiting.
+            if ($relative === 'coordination/' . hash('sha256', 'runtime-assets') . '.lock') { continue; }
 
             if ($entry->isLink()) {
                 continue;
