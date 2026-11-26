@@ -837,6 +837,7 @@
       ],
       "inputs": [
         "_key",
+        "all",
         "attributes",
         "choice",
         "choices",
@@ -1518,6 +1519,27 @@
       ]
     },
     {
+      "name": "ui/button",
+      "source": "App/Core/Ui/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "attributes",
+        "icon",
+        "label"
+      ]
+    },
+    {
+      "name": "ui/filter-attributes",
+      "source": "App/Core/Ui/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "attributes",
+        "history",
+        "target",
+        "url"
+      ]
+    },
+    {
       "name": "updates/actions",
       "source": "App/Core/Updates/assets/components.json",
       "dependencies": [
@@ -1636,12 +1658,13 @@
       "name": "status/manage",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "status/menu",
-        "status/permalink"
+        "status/menu"
       ],
       "inputs": [
         "item",
-        "item.url"
+        "item.capabilities.delete",
+        "item.capabilities.edit",
+        "item.capabilities.report"
       ]
     },
     {
@@ -1827,12 +1850,11 @@
       "name": "bots/source-fields",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "ui/field"
+        "ui/field",
+        "ui/select"
       ],
       "inputs": [
-        "bot.id",
-        "bot.username",
-        "bots",
+        "bot_names",
         "constraints.bot_user_id.required",
         "constraints.feed_url.max_bytes",
         "constraints.feed_url.required",
@@ -1869,7 +1891,7 @@
         "ui/sort-column"
       ],
       "inputs": [
-        "bots",
+        "bot_names",
         "filters",
         "items",
         "list_target",
@@ -2032,6 +2054,7 @@
       "name": "bots/queue-filter-form",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
+        "ui/filter-attributes",
         "ui/select"
       ],
       "inputs": [
@@ -2059,7 +2082,6 @@
       "name": "bots/source-preview",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
-        "ui/help",
         "ui/notice"
       ],
       "inputs": [
@@ -2081,6 +2103,7 @@
       "name": "bots/post-filter-form",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
+        "ui/filter-attributes",
         "ui/select"
       ],
       "inputs": [
@@ -2129,6 +2152,7 @@
       "name": "bots/run-filter-form",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
+        "ui/filter-attributes",
         "ui/select"
       ],
       "inputs": [
@@ -2284,9 +2308,11 @@
         "site/archive-filter",
         "status/card",
         "status/composer-body",
+        "status/feed-empty",
         "status/feed-more",
         "status/thread",
         "ui/avatar-content",
+        "ui/notice",
         "ui/switcher",
         "users/avatar-control"
       ],
@@ -2407,6 +2433,7 @@
       "name": "bots/account-filter-form",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
+        "ui/filter-attributes",
         "ui/select"
       ],
       "inputs": [
@@ -2419,11 +2446,12 @@
     {
       "name": "bots/source-filter-form",
       "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/filter-attributes",
+        "ui/select"
+      ],
       "inputs": [
-        "bot.id",
-        "bot.username",
-        "bots",
+        "bot_names",
         "filters.bot",
         "filters.q",
         "pagination.per_page"
@@ -2447,8 +2475,7 @@
         "body",
         "enctype",
         "form_class",
-        "id",
-        "url"
+        "id"
       ]
     },
     {
@@ -2521,9 +2548,15 @@
     {
       "name": "status/feed-empty",
       "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "ui/empty-state",
+        "ui/notice"
+      ],
       "inputs": [
+        "archive_type",
+        "clear_filter_url",
         "feed",
+        "kind",
         "login_required"
       ]
     },
@@ -2571,12 +2604,6 @@
       ]
     },
     {
-      "name": "bots/workspace-retry",
-      "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [],
-      "inputs": []
-    },
-    {
       "name": "users/following-profiles",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [
@@ -2609,12 +2636,6 @@
     },
     {
       "name": "bots/source-preview-state",
-      "source": "App/Modules/Social/assets/components.json",
-      "dependencies": [],
-      "inputs": []
-    },
-    {
-      "name": "bots/source-preview-confirm",
       "source": "App/Modules/Social/assets/components.json",
       "dependencies": [],
       "inputs": []
@@ -3001,8 +3022,6 @@
     "App/Modules/Social/assets/status/styles/status-content-mobile.css",
     "App/Modules/Social/assets/status/styles/status-detail.css",
     "App/Modules/Social/assets/status/styles/status-editing.css",
-    "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
-    "App/Modules/Social/assets/status/styles/status-email-notice.css",
     "App/Modules/Social/assets/status/styles/status-feed-mobile.css",
     "App/Modules/Social/assets/status/styles/status-feed.css",
     "App/Modules/Social/assets/status/styles/status-header.css",
@@ -3841,12 +3860,6 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".status-composer .status-compose-row .avatar"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 205,
-        "context": [],
-        "selector": ".following-modal-grid .avatar"
       }
     ],
     "avatar-editor": [
@@ -4411,20 +4424,6 @@
         "line": 14,
         "context": [],
         "selector": ".status-compose-main .btn"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
-        "line": 7,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".status-email-notice .btn"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 15,
-        "context": [],
-        "selector": ".status-email-notice .btn"
       }
     ],
     "btn-danger": [
@@ -5228,21 +5227,9 @@
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 191,
+        "line": 150,
         "context": [],
         "selector": ".following-modal-grid"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 197,
-        "context": [],
-        "selector": ".following-modal-grid .profile-following-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 205,
-        "context": [],
-        "selector": ".following-modal-grid .avatar"
       }
     ],
     "gap-1": [
@@ -5633,12 +5620,6 @@
         "line": 35,
         "context": [],
         "selector": ".status-image-picker .icon"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 5,
-        "context": [],
-        "selector": ".status-email-notice > .icon"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
@@ -7343,64 +7324,6 @@
         "selector": ".profile-editable-text:focus"
       }
     ],
-    "profile-following-link": [
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 150,
-        "context": [],
-        "selector": ".profile-following-link"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 162,
-        "context": [],
-        "selector": ".profile-following-link:hover"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 162,
-        "context": [],
-        "selector": ".profile-following-link:focus"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 197,
-        "context": [],
-        "selector": ".following-modal-grid .profile-following-link"
-      }
-    ],
-    "profile-following-main": [
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 168,
-        "context": [],
-        "selector": ".profile-following-main"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 175,
-        "context": [],
-        "selector": ".profile-following-main strong"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 175,
-        "context": [],
-        "selector": ".profile-following-main small"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 182,
-        "context": [],
-        "selector": ".profile-following-main strong"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 186,
-        "context": [],
-        "selector": ".profile-following-main small"
-      }
-    ],
     "profile-identity": [
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
@@ -8751,50 +8674,6 @@
         "line": 147,
         "context": [],
         "selector": ".status-editor-suggestions[hidden]"
-      }
-    ],
-    "status-email-notice": [
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
-        "line": 7,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".status-email-notice .btn"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 1,
-        "context": [],
-        "selector": ".status-email-notice"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 5,
-        "context": [],
-        "selector": ".status-email-notice > .icon"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 15,
-        "context": [],
-        "selector": ".status-email-notice .btn"
-      }
-    ],
-    "status-email-notice-copy": [
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
-        "line": 2,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".status-email-notice-copy"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-email-notice.css",
-        "line": 10,
-        "context": [],
-        "selector": ".status-email-notice-copy"
       }
     ],
     "status-embed-preview": [
@@ -12098,86 +11977,6 @@
           ]
         }
       ]
-    },
-    {
-      "selector": ".profile-following-main strong",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".profile-following-main strong",
-          "context": [],
-          "source": "App/Modules/Social/assets/users/styles/profile.css",
-          "line": 175,
-          "declarations": [
-            [
-              "overflow",
-              "hidden"
-            ],
-            [
-              "text-overflow",
-              "ellipsis"
-            ],
-            [
-              "white-space",
-              "nowrap"
-            ]
-          ]
-        },
-        {
-          "selector": ".profile-following-main strong",
-          "context": [],
-          "source": "App/Modules/Social/assets/users/styles/profile.css",
-          "line": 182,
-          "declarations": [
-            [
-              "font-size",
-              "0.78rem"
-            ]
-          ]
-        }
-      ]
-    },
-    {
-      "selector": ".profile-following-main small",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".profile-following-main small",
-          "context": [],
-          "source": "App/Modules/Social/assets/users/styles/profile.css",
-          "line": 175,
-          "declarations": [
-            [
-              "overflow",
-              "hidden"
-            ],
-            [
-              "text-overflow",
-              "ellipsis"
-            ],
-            [
-              "white-space",
-              "nowrap"
-            ]
-          ]
-        },
-        {
-          "selector": ".profile-following-main small",
-          "context": [],
-          "source": "App/Modules/Social/assets/users/styles/profile.css",
-          "line": 186,
-          "declarations": [
-            [
-              "color",
-              "var(--muted)"
-            ],
-            [
-              "font-size",
-              "0.68rem"
-            ]
-          ]
-        }
-      ]
     }
   ],
   "ui_services": [
@@ -13684,32 +13483,6 @@
         ]
       }
     ],
-    "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css": [
-      {
-        "manifest": "App/Modules/Social/assets/module.json",
-        "routes": [
-          "/",
-          "/social",
-          "/status",
-          "/author",
-          "/tag",
-          "/search/all"
-        ]
-      }
-    ],
-    "App/Modules/Social/assets/status/styles/status-email-notice.css": [
-      {
-        "manifest": "App/Modules/Social/assets/module.json",
-        "routes": [
-          "/",
-          "/social",
-          "/status",
-          "/author",
-          "/tag",
-          "/search/all"
-        ]
-      }
-    ],
     "App/Modules/Social/assets/status/styles/status-feed-mobile.css": [
       {
         "manifest": "App/Modules/Social/assets/module.json",
@@ -15123,7 +14896,8 @@
         "App/Core/Ui/assets/runtime/component-renderer.js",
         "App/Core/Ui/assets/runtime/dom.js",
         "App/Core/Ui/assets/component-builders.js",
-        "App/Modules/Social/assets/status/controller.js"
+        "App/Modules/Social/assets/status/controller.js",
+        "App/Modules/Social/assets/status/form-actions.js"
       ],
       "entries": [
         {

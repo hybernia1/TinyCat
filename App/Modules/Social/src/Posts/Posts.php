@@ -121,7 +121,7 @@ final class Posts
     {
         return \TinyCat\Social\Posts\Repository::delete($contentId, static function () use ($contentId, $deleteReports, $deleteNotifications): void {
             if ($deleteNotifications) { NotificationHistory::removeForContent($contentId); }
-            if ($deleteReports) { \TinyCat\Database\Connection::delete('content_reports', ['content_id' => $contentId]); }
+            if ($deleteReports) { \TinyCat\Database\Connection::delete('social_reports', ['content_id' => $contentId]); }
         }, $deleteImageFile);
     }
 

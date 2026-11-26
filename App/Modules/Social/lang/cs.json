@@ -215,7 +215,6 @@
     "preview_confirm": "Potvrdit a uložit zdroj",
     "preview_invalid": "Zdroj se nepodařilo načíst nebo nemá podporovaný obsah.",
     "preview_changed": "Formulář se změnil. Načti náhled znovu.",
-    "preview_help": "Ukázka podle aktuální šablony. Příspěvky ani historie se nyní neukládají.",
     "preview_image_pending": "Obrázek se ověří podle pravidel uploadu při importu.",
     "preview_skipped": "Tato položka by byla při importu přeskočena.",
     "preview_discovery": "Nalezené odběry na webu"

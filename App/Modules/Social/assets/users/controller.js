@@ -9,7 +9,6 @@ import "../../../../Core/Ui/assets/component-builders.js";
     return T.components.render("users/following-dialog", { items: data.items, next_url: pagination.next_url || "" });
   }
   T.socialUsers = {};
-  T.socialUsers.profiles = function (items) { return T.components.render("users/following-profiles", { items: items || [] }); };
   T.socialUsers.follow = function (form, data) {
       form.elements.namedItem("action").value = data.following ? "unfollow" : "follow";
       var button = form.querySelector("button");

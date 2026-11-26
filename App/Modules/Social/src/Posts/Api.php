@@ -100,7 +100,7 @@ final class Api
     {
         $id = (int) $params['id'];
         if (Feed::public_status_item($id) === null) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
-        $page = Comments::page($id, max(0, (int) $request->input('parent_id', 0)), trim((string) $request->input('cursor_at', '')), max(0, (int) $request->input('cursor_id', 0)), 'post', (int) $request->input('limit', Feed::public_status_page_limit()));
+        $page = Comments::page($id, max(0, (int) $request->input('parent_id', 0)), trim((string) $request->input('cursor_at', '')), max(0, (int) $request->input('cursor_id', 0)), (int) $request->input('limit', Feed::public_status_page_limit()));
         $user = Authentication::auth();
         return new Result(['items' => Resource::comments($page['items'], $user), 'viewer' => $user === null ? null : \TinyCat\Social\Profiles\Profiles::resource($user)], null, ['pagination' => ['next_url' => $page['next_url'], 'done' => $page['next_url'] === '']]);
     }
@@ -114,7 +114,7 @@ final class Api
         $editing = Request::current()->input('panel') === 'edit';
         if ($editing) { $user = \TinyCat\Core\Identity\Access::requireAuth(); }
         $item = $editing
-            ? \TinyCat\Database\Connection::one(Feed::public_status_select_sql() . ' WHERE c.kind = \'post\' AND c.id = ?', [$id])
+            ? \TinyCat\Database\Connection::one(Feed::public_status_select_sql() . ' WHERE c.id = ?', [$id])
             : Feed::public_status_item($id);
         if (!$editing && $item === null && ($canonicalId = Repository::redirectTarget($id)) !== null) {
             $id = $canonicalId; $item = Feed::public_status_item($id);

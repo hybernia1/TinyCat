@@ -129,7 +129,7 @@ try { Lifecycle::setActive(['id' => 3], false, ['fixture.failure' => $statusFail
 catch (RuntimeException $exception) { $assert($exception->getMessage() === 'injected activation failure', 'Status participant failure is propagated'); }
 $assert(Connection::value('SELECT status FROM users WHERE id = 3') === 'active', 'Status participant failure rolls account change back');
 
-$pdo->exec("CREATE TABLE social_posts (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, kind VARCHAR(40) NOT NULL DEFAULT ('post'), FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE)");
+$pdo->exec("CREATE TABLE social_posts (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE)");
 TinyCat\Social\Discussion\Schema::install($pdo);
 TinyCat\Core\Notifications\Schema::install($pdo);
 $pdo->exec('CREATE TABLE social_terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY)');

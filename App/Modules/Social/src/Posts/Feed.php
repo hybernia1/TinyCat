@@ -91,7 +91,7 @@ final class Feed
         $window = max(256, $limit * ($termId === null ? 32 : 16));
         $query = (new \TinyCat\Database\Query(
             'SELECT c.id, c.published_at FROM (SELECT c.id, c.author_id, c.published_at FROM social_posts c FORCE INDEX (content_feed_index)'
-            . ' WHERE c.published_at <= ? AND c.status = \'published\' AND c.kind = \'post\'' . $enough . ($cursor === '' ? '' : ' AND ' . $cursor)
+            . ' WHERE c.published_at <= ? AND c.status = \'published\'' . $enough . ($cursor === '' ? '' : ' AND ' . $cursor)
             . ' ORDER BY c.published_at DESC, c.id DESC LIMIT ' . $window . ') c'
             . ($termId === null ? '' : ' STRAIGHT_JOIN social_post_tags ct ON ct.content_id = c.id')
             . ' STRAIGHT_JOIN users u ON u.id = c.author_id',

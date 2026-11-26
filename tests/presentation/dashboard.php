@@ -16,7 +16,7 @@ TinyCat\Core\Identity\Authentication::reset(null, true);
 Localization::locale('cs');
 $db = \tinycat_test_database();
 $db->exec('CREATE TABLE users (id INTEGER, username VARCHAR(254), role VARCHAR(40), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), updated_at DATETIME)');
-$db->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id))');
+$db->exec('CREATE TABLE social_posts (id INTEGER, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id))');
 $db->exec('CREATE TABLE social_comments (id INTEGER, content_id INT UNSIGNED, user_id INT UNSIGNED, body TEXT, created_at DATETIME)');
 $db->exec('CREATE TABLE social_links (id INTEGER)');
 $db->exec('CREATE TABLE social_terms (id INTEGER)');

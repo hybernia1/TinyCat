@@ -28,7 +28,7 @@ import "./dialogs.js";
       return T.components.render("ui/select", { label: T.ui.text(label), value: value == null ? "" : String(value), choices: choices, attributes: controlAttributes({ "class": "select", name: name }, attributes) });
     },
     hidden: function (name, value) { return e("input", { type: "hidden", name: name, value: value }); },
-    button: function (key, attributes) { return e("button", Object.assign({ type: "button", "class": "btn btn-secondary" }, attributes || {}), T.ui.text(key)); },
+    button: function (key, attributes) { return T.components.render("ui/button", { attributes: Object.assign({ type: "button", "class": "btn btn-secondary" }, attributes || {}), label: T.ui.text(key) }); },
     form: function (url, method, view) {
       var attributes = { action: url, method: "post", "data-ajax-form": "", "data-api-method": method, "data-confirm-unsaved": "true" };
       var form = e("form", attributes);

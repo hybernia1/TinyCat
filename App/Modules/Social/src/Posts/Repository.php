@@ -15,20 +15,20 @@ final class Repository
     /** @return array<mixed>|null */
     public static function find(int $id): ?array
     {
-        return $id > 0 ? Connection::one("SELECT c.*, u.status AS author_status FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.id = ? AND c.kind = 'post'", [$id]) : null;
+        return $id > 0 ? Connection::one("SELECT c.*, u.status AS author_status FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.id = ?", [$id]) : null;
     }
 
     /** @param array<mixed>|null $item
      * @param array<mixed>|null $actor */
     public static function canManage(?array $item, ?array $actor): bool
     {
-        return $item !== null && ($item['kind'] ?? 'post') === 'post' && $actor !== null && (int) ($actor['id'] ?? 0) > 0 && (\TinyCat\Core\Identity\Roles::isAdmin($actor) || (int) ($item['author_id'] ?? 0) === (int) ($actor['id'] ?? 0));
+        return $item !== null && $actor !== null && (int) ($actor['id'] ?? 0) > 0 && (\TinyCat\Core\Identity\Roles::isAdmin($actor) || (int) ($item['author_id'] ?? 0) === (int) ($actor['id'] ?? 0));
     }
 
     /** @param array<string, mixed>|null $item */
     public static function visible(?array $item): bool
     {
-        return $item !== null && ($item['kind'] ?? 'post') === 'post' && ($item['author_status'] ?? 'active') === 'active' && ($item['status'] ?? 'published') === 'published' && (string) ($item['published_at'] ?? '') <= \TinyCat\Support\Dates::dateDb();
+        return $item !== null && ($item['author_status'] ?? 'active') === 'active' && ($item['status'] ?? 'published') === 'published' && (string) ($item['published_at'] ?? '') <= \TinyCat\Support\Dates::dateDb();
     }
 
     /** Prepared links and image files must exist before entering the transaction.

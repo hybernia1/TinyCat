@@ -52,7 +52,7 @@ const styles = read('tests/presentation/fixtures/asset-graph-fixture.php','--sty
           const embed=anchors.find(link=>link.href.endsWith('/embed-code'));
           assert.ok(comment.label.includes('#'+item.id) && embed.label.includes('#'+item.id)); checks++;
           const permalink=anchors.filter(link=>link.href===item.url && !link.time);
-          assert.ok(permalink.length>=2 && permalink.every(link=>link.label===permalink[0].label)); checks++;
+          assert.ok(permalink.length>=1 && permalink.every(link=>link.label===permalink[0].label)); checks++;
         }
         await page.close();
       }

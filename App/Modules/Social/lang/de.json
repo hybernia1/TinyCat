@@ -215,7 +215,6 @@
     "preview_confirm": "Quelle bestätigen und speichern",
     "preview_invalid": "Quelle nicht erreichbar oder Inhalt nicht unterstützt.",
     "preview_changed": "Das Formular wurde geändert. Lade die Vorschau erneut.",
-    "preview_help": "Vorschau mit aktueller Vorlage. Beiträge und Importverlauf werden noch nicht gespeichert.",
     "preview_image_pending": "Das Bild wird beim Import nach den Upload-Regeln geprüft.",
     "preview_skipped": "Dieser Eintrag würde beim Import übersprungen.",
     "preview_discovery": "Gefundene Feeds auf der Website"

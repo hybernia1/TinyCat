@@ -196,7 +196,7 @@ final class Tags
                     INNER JOIN social_post_tags ct ON ct.content_id = c.id
                     INNER JOIN social_terms t ON t.id = ct.term_id'
             )
-                ->where('c.kind = ?', 'post')
+
                 ->where('c.published_at >= ?', $since)
                 ->where('c.published_at <= ? AND c.status = \'published\'', \TinyCat\Support\Dates::dateDb())
                 ->where('u.status = ?', 'active')

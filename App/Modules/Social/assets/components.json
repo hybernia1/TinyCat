@@ -1,12 +1,16 @@
 {
   "users/following-profile": {
     "tag": "a",
-    "attrs": {"class": "profile-following-link", "href": {"get": "user.url"}, "aria-label": {"get": "user.username"}},
+    "attrs": {
+      "class": "identity-row identity-row-compact",
+      "href": {"get": "user.url"},
+      "aria-label": {"get": "user.username"}
+    },
     "children": [
-      {"component": "ui/avatar", "data": {"user": {"get": "user"}, "small": true}},
+      {"component": "ui/avatar", "data": {"user": {"get": "user"}, "small": true, "alt": ""}},
       {
         "tag": "span",
-        "attrs": {"class": "profile-following-main"},
+        "attrs": {"class": "identity-copy identity-copy-truncate"},
         "children": [{"tag": "strong", "children": [{"get": "user.username"}]}]
       }
     ]
@@ -188,19 +192,14 @@
   "status/manage": {
     "tag": "div",
     "attrs": {"class": "status-manage status-manage-top"},
-    "children": [
-      {
-        "tag": "a",
-        "attrs": {
-          "class": "btn btn-ghost btn-icon btn-sm status-manage-icon",
-          "href": {"get": "item.url"},
-          "title": {"use": "status/permalink", "data": {"item": {"get": "item"}}},
-          "aria-label": {"use": "status/permalink", "data": {"item": {"get": "item"}}}
-        },
-        "children": [{"icon": "link"}]
-      },
-      {"component": "status/menu", "data": {"item": {"get": "item"}}}
-    ]
+    "when": {
+      "or": [
+        {"get": "item.capabilities.edit"},
+        {"get": "item.capabilities.delete"},
+        {"get": "item.capabilities.report"}
+      ]
+    },
+    "children": [{"component": "status/menu", "data": {"item": {"get": "item"}}}]
   },
   "status/like": {
     "component": "publishing/like",
@@ -674,41 +673,17 @@
             "attrs": {"class": "grid sm:grid-2"},
             "children": [
               {
-                "tag": "label",
-                "attrs": {"class": "field"},
-                "children": [
-                  {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "bots.bot"}]},
-                  {
-                    "tag": "select",
-                    "attrs": {
-                      "class": "select",
-                      "name": "bot_user_id",
-                      "required": {"get": "constraints.bot_user_id.required"}
-                    },
-                    "children": [
-                      {
-                        "each": {"get": "bots"},
-                        "as": "bot",
-                        "children": [
-                          {
-                            "tag": "option",
-                            "attrs": {
-                              "value": {"get": "bot.id"},
-                              "selected": {
-                                "if": [
-                                  {"eq": [{"string": {"get": "bot.id"}}, {"string": {"get": "source.bot_user_id"}}]},
-                                  true,
-                                  null
-                                ]
-                              }
-                            },
-                            "children": [{"get": "bot.username"}]
-                          }
-                        ]
-                      }
-                    ]
+                "component": "ui/select",
+                "data": {
+                  "label": {"t": "bots.bot"},
+                  "choices": {"get": "bot_names"},
+                  "value": {"get": "source.bot_user_id"},
+                  "attributes": {
+                    "class": "select",
+                    "name": "bot_user_id",
+                    "required": {"get": "constraints.bot_user_id.required"}
                   }
-                ]
+                }
               },
               {
                 "component": "ui/field",
@@ -916,7 +891,7 @@
       "class": "stack stack-gap-14 table-layout",
       "data-admin-list": {"if": [{"get": "scoped"}, null, "social.bot-sources"]},
       "data-admin-state": {
-        "json": {"filters": {"get": "filters"}, "pagination": {"get": "pagination"}, "bots": {"get": "bots"}}
+        "json": {"filters": {"get": "filters"}, "pagination": {"get": "pagination"}, "bot_names": {"get": "bot_names"}}
       }
     },
     "children": [
@@ -2017,13 +1992,12 @@
   "bots/queue-filter-form": {
     "tag": "form",
     "attrs": {
-      "class": "stack",
-      "method": "get",
-      "action": {"admin_ref": "social.bot-queue", "field": "endpoint"},
-      "data-api-method": "GET",
-      "data-ajax-form": "",
-      "data-ajax-target": {"admin_ref": "social.bot-queue", "field": "target"},
-      "data-history": {"admin_ref": "social.bot-queue", "field": "path"}
+      "use": "ui/filter-attributes",
+      "data": {
+        "url": {"admin_ref": "social.bot-queue", "field": "endpoint"},
+        "target": {"admin_ref": "social.bot-queue", "field": "target"},
+        "history": {"admin_ref": "social.bot-queue", "field": "path"}
+      }
     },
     "children": [
       {"tag": "input", "attrs": {"type": "hidden", "name": "q", "value": {"get": "filters.q"}}},
@@ -2083,7 +2057,6 @@
     "tag": "div",
     "attrs": {"class": "stack"},
     "children": [
-      {"component": "ui/help", "data": {"text": {"t": "bots.preview_help"}}},
       {
         "tag": "strong",
         "children": [
@@ -2117,7 +2090,8 @@
                   "src": {"get": "item.image_url"},
                   "alt": {"get": "item.title"},
                   "loading": "lazy",
-                  "width": "320"
+                  "width": "320",
+                  "referrerpolicy": "no-referrer"
                 },
                 "when": {"get": "item.image_url"}
               },
@@ -2168,13 +2142,12 @@
   "bots/post-filter-form": {
     "tag": "form",
     "attrs": {
-      "class": "stack",
-      "method": "get",
-      "action": {"get": "api_url"},
-      "data-api-method": "GET",
-      "data-ajax-form": "",
-      "data-ajax-target": {"or": [{"get": "list_target"}, "#bot-detail-posts-list"]},
-      "data-history": {"get": "history_url"}
+      "use": "ui/filter-attributes",
+      "data": {
+        "url": {"get": "api_url"},
+        "target": {"or": [{"get": "list_target"}, "#bot-detail-posts-list"]},
+        "history": {"get": "history_url"}
+      }
     },
     "children": [
       {
@@ -2251,13 +2224,12 @@
   "bots/run-filter-form": {
     "tag": "form",
     "attrs": {
-      "class": "stack",
-      "method": "get",
-      "action": {"get": "api_url"},
-      "data-api-method": "GET",
-      "data-ajax-form": "",
-      "data-ajax-target": {"or": [{"get": "list_target"}, "#bot-detail-posts-list"]},
-      "data-history": {"get": "history_url"}
+      "use": "ui/filter-attributes",
+      "data": {
+        "url": {"get": "api_url"},
+        "target": {"or": [{"get": "list_target"}, "#bot-detail-posts-list"]},
+        "history": {"get": "history_url"}
+      }
     },
     "children": [
       {
@@ -3370,30 +3342,20 @@
                 "children": [
                   {
                     "tag": "div",
-                    "attrs": {"class": "card-body"},
+                    "attrs": {"class": "card-body stack stack-gap-16"},
                     "children": [
                       {
-                        "tag": "div",
-                        "attrs": {"class": "alert alert-info status-email-notice cluster"},
+                        "tag": "a",
+                        "attrs": {
+                          "href": "/account",
+                          "data-modal-open": {"get": "viewer_profile_id"},
+                          "data-modal-url": {"get": "viewer_profile_url"}
+                        },
                         "when": {"get": "email_missing"},
                         "children": [
                           {
-                            "tag": "span",
-                            "attrs": {"class": "status-email-notice-copy"},
-                            "children": [{"t": "account.email_missing_notice"}]
-                          },
-                          {
-                            "tag": "button",
-                            "attrs": {
-                              "type": "button",
-                              "class": "btn btn-secondary btn-sm",
-                              "data-modal-open": {"get": "viewer_profile_id"},
-                              "data-modal-url": {"get": "viewer_profile_url"}
-                            },
-                            "children": [
-                              {"icon": "edit"},
-                              {"tag": "span", "children": [{"t": "account.profile_settings"}]}
-                            ]
+                            "component": "ui/notice",
+                            "data": {"tone": "info", "label": {"t": "account.email_missing_notice"}}
                           }
                         ]
                       },
@@ -3526,44 +3488,14 @@
                     ]
                   },
                   {
-                    "tag": "div",
-                    "attrs": {"class": "empty-state", "data-status-empty": "", "role": "status"},
-                    "when": {"and": [{"not": {"get": "items"}}, {"not": {"get": "login_required"}}]},
-                    "children": [
-                      {"icon": "file", "class": "icon empty-state-icon"},
-                      {
-                        "tag": "p",
-                        "attrs": {"class": "empty-state-label"},
-                        "children": [
-                          {
-                            "if": [
-                              {"get": "archive_type"},
-                              {"t": "public.feed_empty_filtered"},
-                              {
-                                "lookup": {"get": "kind"},
-                                "cases": {
-                                  "tag": {"t": "public.tag_feed_empty"},
-                                  "author": {"t": "public.author_feed_empty"}
-                                },
-                                "default": {
-                                  "if": [
-                                    {"eq": [{"get": "feed"}, "following"]},
-                                    {"t": "public.feed_empty_following"},
-                                    {"t": "public.feed_empty"}
-                                  ]
-                                }
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "a",
-                        "attrs": {"href": {"get": "clear_filter_url"}, "class": "btn btn-secondary btn-sm"},
-                        "when": {"get": "archive_type"},
-                        "children": [{"t": "public.filter_all"}]
-                      }
-                    ]
+                    "component": "status/feed-empty",
+                    "data": {
+                      "feed": {"get": "feed"},
+                      "kind": {"get": "kind"},
+                      "archive_type": {"get": "archive_type"},
+                      "clear_filter_url": {"get": "clear_filter_url"}
+                    },
+                    "when": {"and": [{"not": {"get": "items"}}, {"not": {"get": "login_required"}}]}
                   },
                   {
                     "tag": "div",
@@ -3725,13 +3657,12 @@
   "bots/account-filter-form": {
     "tag": "form",
     "attrs": {
-      "class": "stack",
-      "method": "get",
-      "action": {"admin_ref": "social.bot-creation", "field": "endpoint"},
-      "data-api-method": "GET",
-      "data-ajax-form": "",
-      "data-ajax-target": {"admin_ref": "social.bot-creation", "field": "target"},
-      "data-history": {"admin_ref": "social.bot-creation", "field": "path"}
+      "use": "ui/filter-attributes",
+      "data": {
+        "url": {"admin_ref": "social.bot-creation", "field": "endpoint"},
+        "target": {"admin_ref": "social.bot-creation", "field": "target"},
+        "history": {"admin_ref": "social.bot-creation", "field": "path"}
+      }
     },
     "children": [
       {"tag": "input", "attrs": {"type": "hidden", "name": "q", "value": {"get": "filters.q"}}},
@@ -3759,43 +3690,26 @@
   "bots/source-filter-form": {
     "tag": "form",
     "attrs": {
-      "class": "stack",
-      "method": "get",
-      "action": {"admin_ref": "social.bot-sources", "field": "endpoint"},
-      "data-api-method": "GET",
-      "data-ajax-form": "",
-      "data-ajax-target": {"admin_ref": "social.bot-sources", "field": "target"},
-      "data-history": {"admin_ref": "social.bot-sources", "field": "path"}
+      "use": "ui/filter-attributes",
+      "data": {
+        "url": {"admin_ref": "social.bot-sources", "field": "endpoint"},
+        "target": {"admin_ref": "social.bot-sources", "field": "target"},
+        "history": {"admin_ref": "social.bot-sources", "field": "path"}
+      }
     },
     "children": [
       {"tag": "input", "attrs": {"type": "hidden", "name": "q", "value": {"get": "filters.q"}}},
       {"tag": "input", "attrs": {"type": "hidden", "name": "per_page", "value": {"get": "pagination.per_page"}}},
       {"tag": "input", "attrs": {"type": "hidden", "name": "page", "value": "1"}},
       {
-        "tag": "label",
-        "attrs": {"class": "field"},
-        "children": [
-          {"tag": "span", "attrs": {"class": "label"}, "children": [{"t": "bots.bot"}]},
-          {
-            "tag": "select",
-            "attrs": {"class": "select", "name": "bot"},
-            "children": [
-              {"tag": "option", "attrs": {"value": ""}, "children": [{"t": "common.all"}]},
-              {
-                "each": {"get": "bots"},
-                "as": "bot",
-                "children": {
-                  "tag": "option",
-                  "attrs": {
-                    "value": {"get": "bot.id"},
-                    "selected": {"eq": [{"string": {"get": "bot.id"}}, {"get": "filters.bot"}]}
-                  },
-                  "children": [{"get": "bot.username"}]
-                }
-              }
-            ]
-          }
-        ]
+        "component": "ui/select",
+        "data": {
+          "label": {"t": "bots.bot"},
+          "choices": {"get": "bot_names"},
+          "value": {"get": "filters.bot"},
+          "attributes": {"class": "select", "name": "bot"},
+          "all": true
+        }
       }
     ]
   },
@@ -3806,17 +3720,10 @@
   "status/dialog-form": {
     "tag": "form",
     "attrs": {
-      "action": {"get": "url"},
-      "method": "post",
       "data-status-form": "",
       "data-status-id": {"get": "id"},
       "class": {"get": "form_class"},
-      "enctype": {"get": "enctype"},
-      "data-confirm-unsaved": "true",
-      "data-confirm-unsaved-title": {"t": "common.unsaved_title"},
-      "data-confirm-unsaved-message": {"t": "common.unsaved_message"},
-      "data-confirm-unsaved-ok": {"t": "common.leave"},
-      "data-confirm-unsaved-cancel": {"t": "common.stay"}
+      "enctype": {"get": "enctype"}
     },
     "children": [
       {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": {"get": "action"}}},
@@ -3916,20 +3823,42 @@
   },
   "status/feed-empty": {
     "tag": "div",
-    "attrs": {"class": "alert alert-info", "data-status-empty": ""},
+    "attrs": {"data-status-empty": ""},
     "children": [
       {
-        "if": [
-          {"get": "login_required"},
-          {"t": "auth.login_required"},
-          {
+        "component": "ui/empty-state",
+        "data": {
+          "icon": "file",
+          "label": {
             "if": [
-              {"eq": [{"get": "feed"}, "following"]},
-              {"t": "public.feed_empty_following"},
-              {"t": "public.feed_empty"}
+              {"get": "archive_type"},
+              {"t": "public.feed_empty_filtered"},
+              {
+                "lookup": {"get": "kind"},
+                "cases": {"tag": {"t": "public.tag_feed_empty"}, "author": {"t": "public.author_feed_empty"}},
+                "default": {
+                  "if": [
+                    {"eq": [{"get": "feed"}, "following"]},
+                    {"t": "public.feed_empty_following"},
+                    {"t": "public.feed_empty"}
+                  ]
+                }
+              }
             ]
           }
-        ]
+        },
+        "when": {"not": {"get": "login_required"}}
+      },
+      {
+        "component": "ui/notice",
+        "data": {"tone": "info", "label": {"t": "auth.login_required"}},
+        "when": {"get": "login_required"}
+      },
+      {
+        "tag": "a",
+        "attrs": {"href": {"get": "clear_filter_url"}, "class": "btn btn-secondary btn-sm"},
+        "when": {"get": "archive_type"},
+        "children": [{"t": "public.filter_all"}]
       }
     ]
   },
@@ -3984,11 +3913,6 @@
       {"tag": "button", "attrs": {"type": "submit", "class": "btn btn-primary"}, "children": [{"t": "common.save"}]}
     ]
   },
-  "bots/workspace-retry": {
-    "tag": "button",
-    "attrs": {"type": "button", "class": "btn btn-secondary"},
-    "children": [{"t": "common.refresh"}]
-  },
   "users/following-profiles": {
     "each": {"get": "items"},
     "as": "user",
@@ -4028,11 +3952,6 @@
     "tag": "div",
     "attrs": {"class": "stack", "aria-live": "polite"},
     "children": [{"t": "bots.preview_loading"}]
-  },
-  "bots/source-preview-confirm": {
-    "tag": "button",
-    "attrs": {"type": "button", "class": "btn btn-primary"},
-    "children": [{"t": "bots.preview_confirm"}]
   },
   "site/privacy-section": [
     {

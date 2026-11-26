@@ -94,7 +94,7 @@ $database->rollBack();
 
 foreach ([
     'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, theme VARCHAR(12), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), updated_at DATETIME, role VARCHAR(40) NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status VARCHAR(24) NOT NULL, created_at DATETIME, muted_until TEXT)',
-    "CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT NOT NULL DEFAULT (''), author_id INT UNSIGNED NOT NULL, published_at DATETIME NOT NULL DEFAULT ('2026-01-01 00:00:00'), status VARCHAR(24) NOT NULL DEFAULT ('published'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))",
+    "CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT NOT NULL DEFAULT (''), author_id INT UNSIGNED NOT NULL, published_at DATETIME NOT NULL DEFAULT ('2026-01-01 00:00:00'), status VARCHAR(24) NOT NULL DEFAULT ('published'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))",
     'CREATE TABLE social_post_likes (content_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL)',
     'CREATE TABLE social_comments (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, parent_id INT UNSIGNED, user_id INT UNSIGNED NOT NULL, body TEXT, created_at DATETIME, INDEX content_comments_content_index (content_id,parent_id,created_at))',
     'CREATE TABLE social_comment_likes (comment_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL)',
@@ -103,7 +103,7 @@ foreach ([
     'CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash VARCHAR(254) NOT NULL UNIQUE, provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)',
     'CREATE TABLE social_post_links (content_id INT UNSIGNED NOT NULL, link_id INT UNSIGNED NOT NULL, created_at DATETIME, UNIQUE (content_id, link_id))',
     'CREATE TABLE social_post_images (content_id INT UNSIGNED PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
-    'CREATE TABLE content_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, reporter_id INT UNSIGNED, status VARCHAR(24))',
+    'CREATE TABLE social_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, reporter_id INT UNSIGNED, status VARCHAR(24))',
     'CREATE TABLE notifications (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL, actor_id INT UNSIGNED, subject_id INT UNSIGNED, payload_json TEXT, type TEXT NOT NULL, notification_key VARCHAR(190) NOT NULL, read_at TEXT, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE (user_id, notification_key))',
     'CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL, token_hash VARCHAR(254) NOT NULL UNIQUE, expires_at DATETIME NOT NULL, used_at TEXT)',
     'CREATE TABLE user_followers (user_id INT UNSIGNED NOT NULL, follower_id INT UNSIGNED NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE (user_id, follower_id))',
@@ -602,7 +602,7 @@ $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id IN (10
 
 $database->exec("INSERT INTO social_post_likes (content_id, user_id) VALUES (100, 2)");
 $database->exec("INSERT INTO social_post_images (content_id, path) VALUES (100, 'status.webp')");
-$database->exec("INSERT INTO content_reports (id, content_id, reporter_id, status) VALUES (1, 100, 2, 'open')");
+$database->exec("INSERT INTO social_reports (id, content_id, reporter_id, status) VALUES (1, 100, 2, 'open')");
 $database->exec('CREATE TRIGGER fail_content_delete BEFORE DELETE ON social_posts FOR EACH ROW BEGIN IF OLD.id = 100 THEN SIGNAL SQLSTATE \'45000\' SET MESSAGE_TEXT = \'forced social_posts failure\'; END IF; END');
 $contentFailed = false;
 try {
@@ -611,7 +611,7 @@ try {
     $contentFailed = true;
 }
 $assert($contentFailed, 'A status aggregate failure is propagated.');
-foreach (['social_posts', 'social_post_likes', 'social_comments', 'social_comment_likes', 'social_post_tags', 'social_post_links', 'social_post_images', 'content_reports'] as $table) {
+foreach (['social_posts', 'social_post_likes', 'social_comments', 'social_comment_likes', 'social_post_tags', 'social_post_links', 'social_post_images', 'social_reports'] as $table) {
     $column = in_array($table, ['social_comment_likes'], true) ? 'comment_id' : (in_array($table, ['social_posts'], true) ? 'id' : 'content_id');
     $expected = $table === 'social_comments' || $table === 'social_comment_likes' ? 1 : ($table === 'social_post_links' ? 2 : ($table === 'social_post_tags' ? 12 : 1));
     $assert((int) $value("SELECT COUNT(*) FROM {$table} WHERE {$column} " . ($table === 'social_comment_likes' ? '= 20' : '= 100')) === $expected, "Failed status deletion restores {$table}.");
@@ -620,7 +620,7 @@ $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id IN (10
 $database->exec('DROP TRIGGER fail_content_delete');
 $imagePath = \TinyCat\Social\Posts\Posts::status_delete_content(100, true, true, false);
 $assert($imagePath === 'status.webp', 'Status deletion returns the external file cleanup path.');
-foreach (['social_posts', 'social_post_likes', 'social_comments', 'social_comment_likes', 'social_post_tags', 'social_post_links', 'social_post_images', 'content_reports', 'notifications'] as $table) {
+foreach (['social_posts', 'social_post_likes', 'social_comments', 'social_comment_likes', 'social_post_tags', 'social_post_links', 'social_post_images', 'social_reports', 'notifications'] as $table) {
     $column = $table === 'notifications' ? 'subject_id' : ($table === 'social_comment_likes' ? 'comment_id' : ($table === 'social_posts' ? 'id' : 'content_id'));
     $where = $table === 'social_comment_likes' ? '= 20' : '= 100';
     $assert((int) $value("SELECT COUNT(*) FROM {$table} WHERE {$column} {$where}") === 0, "Successful status deletion removes {$table}.");
@@ -713,18 +713,18 @@ $assert($firstVariantId > 0 && $firstVariantId === $secondVariantId, 'Writing eq
 $database->exec('ALTER TABLE users ADD COLUMN muted_by INTEGER');
 $database->exec('ALTER TABLE users ADD COLUMN muted_reason TEXT');
 foreach (['reviewed_at TEXT', 'reviewed_by INTEGER', 'action_note TEXT', 'reason TEXT', 'note TEXT', 'created_at DATETIME'] as $column) {
-    $database->exec('ALTER TABLE content_reports ADD COLUMN ' . $column);
+    $database->exec('ALTER TABLE social_reports ADD COLUMN ' . $column);
 }
 \TinyCat\Core\Identity\Authentication::reset(null, true);
 $database->exec("INSERT INTO social_posts (id, author_id, body) VALUES (9500, 1, 'Preserved evidence')");
 $database->exec("INSERT INTO social_post_images (content_id, path) VALUES (9500, '2026/01/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp')");
-$database->exec("INSERT INTO content_reports (id, content_id, reporter_id, status, reason, note, created_at) VALUES (9500, 9500, 2, 'open', 'spam', 'First reason', '2026-01-01'), (9501, 9500, 2, 'open', 'abuse', 'Second reason', '2026-01-02')");
+$database->exec("INSERT INTO social_reports (id, content_id, reporter_id, status, reason, note, created_at) VALUES (9500, 9500, 2, 'open', 'spam', 'First reason', '2026-01-01'), (9501, 9500, 2, 'open', 'abuse', 'Second reason', '2026-01-02')");
 $database->exec("INSERT INTO social_comments (id, content_id, user_id, body, created_at) VALUES (9500, 9500, 2, 'Preserved discussion', '2026-01-01')");
 $result = \TinyCat\Social\Moderation\Reports::tc_admin_moderation_review_report(9500, 'remove');
 $assert($result['status'] === 'resolved', 'Review resolves a group of reports.');
 $assert($value('SELECT body FROM social_posts WHERE id = 9500') === 'Preserved evidence', 'Review preserves the original post.');
 $assert($value('SELECT path FROM social_post_images WHERE content_id = 9500') === '2026/01/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp', 'Review preserves image evidence.');
-$assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2, 'Review keeps and resolves every open report.');
+$assert((int) $value("SELECT COUNT(*) FROM social_reports WHERE content_id = 9500 AND status = 'resolved'") === 2, 'Review keeps and resolves every open report.');
 $assert(!\TinyCat\Social\Posts\Repository::visible(\TinyCat\Social\Posts\Repository::find(9500)), 'Review hides the preserved post publicly.');
 $assert(count(\TinyCat\Social\Moderation\Reports::detail(9500)['reports']) === 2, 'The administrator detail retains the complete report history after review.');
 $preview = \TinyCat\Social\Moderation\Reports::detail(9500)['preview'];
@@ -743,24 +743,24 @@ $assert(\TinyCat\Core\Notifications\Inbox::open(9500, 2) === '/notifications', '
 $assert((int) $value('SELECT subject_id FROM notifications WHERE id = 9500') === 9500, 'Hiding preserves the notification record and its original relationship.');
 
 $database->exec("INSERT INTO social_posts (id, author_id, body) VALUES (9502, 1, 'Kept evidence')");
-$database->exec("INSERT INTO content_reports (id, content_id, reporter_id, status) VALUES (9502, 9502, 2, 'open')");
+$database->exec("INSERT INTO social_reports (id, content_id, reporter_id, status) VALUES (9502, 9502, 2, 'open')");
 \TinyCat\Social\Moderation\Reports::tc_admin_moderation_review_report(9502, 'dismiss');
 $kept = \TinyCat\Social\Posts\Repository::find(9502);
 $assert(\TinyCat\Social\Posts\Repository::visible($kept) && \TinyCat\Social\Posts\Repository::canManage($kept, $owner), 'Dismissal leaves the original post visible and editable.');
-$assert($value('SELECT status FROM content_reports WHERE id = 9502') === 'dismissed', 'Dismissal remains in the report history.');
+$assert($value('SELECT status FROM social_reports WHERE id = 9502') === 'dismissed', 'Dismissal remains in the report history.');
 
 $_POST = ['reason' => 'spam', 'note' => 'A new report after dismissal'];
 \TinyCat\Http\Request::reset();
 \TinyCat\Social\Posts\Actions::status_json_report(9502, $other);
-$reopenedId = (int) $value("SELECT id FROM content_reports WHERE content_id = 9502 AND status = 'open'");
+$reopenedId = (int) $value("SELECT id FROM social_reports WHERE content_id = 9502 AND status = 'open'");
 $assert($reopenedId !== 9502 && $reopenedId > 0, 'The same reporter may submit a new report after dismissal.');
 $assert($value('SELECT status FROM social_posts WHERE id = 9502') === 'published', 'Reporting never hides a post.');
 \TinyCat\Social\Posts\Actions::status_json_report(9502, $other);
-$assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9502 AND reporter_id = 2 AND status = 'open'") === 1, 'Repeated submissions update one open report instead of duplicating it.');
-$assert($value('SELECT status FROM content_reports WHERE id = 9502') === 'dismissed', 'Re-reporting does not overwrite the earlier moderation decision.');
+$assert((int) $value("SELECT COUNT(*) FROM social_reports WHERE content_id = 9502 AND reporter_id = 2 AND status = 'open'") === 1, 'Repeated submissions update one open report instead of duplicating it.');
+$assert($value('SELECT status FROM social_reports WHERE id = 9502') === 'dismissed', 'Re-reporting does not overwrite the earlier moderation decision.');
 \TinyCat\Social\Moderation\Reports::tc_admin_moderation_review_report($reopenedId, 'dismiss');
 \TinyCat\Social\Posts\Actions::status_json_report(9502, $other);
-$assert((int) $value('SELECT COUNT(*) FROM content_reports WHERE content_id = 9502') === 3, 'A later reporting cycle retains every closed report.');
+$assert((int) $value('SELECT COUNT(*) FROM social_reports WHERE content_id = 9502') === 3, 'A later reporting cycle retains every closed report.');
 
 $database->exec('UPDATE users SET muted_until = NULL WHERE id = 1');
 $_POST = ['body' => 'Edited while hidden', 'status' => 'published'];
@@ -770,12 +770,12 @@ $assert($hiddenEdit['item']['body'] === 'Edited while hidden' && $hiddenEdit['it
 $assert(!\TinyCat\Social\Posts\Repository::visible(\TinyCat\Social\Posts\Repository::find(9500)), 'Editing does not undo the administrator visibility decision.');
 \TinyCat\Social\Moderation\Reports::publish(9500);
 $assert(\TinyCat\Social\Posts\Repository::visible(\TinyCat\Social\Posts\Repository::find(9500)), 'Explicit administrative publication makes hidden content visible again.');
-$assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2, 'Publication does not reopen or discard resolved reports.');
+$assert((int) $value("SELECT COUNT(*) FROM social_reports WHERE content_id = 9500 AND status = 'resolved'") === 2, 'Publication does not reopen or discard resolved reports.');
 $_POST = ['reason' => 'abuse', 'note' => 'New evidence after administrative publication'];
 \TinyCat\Http\Request::reset();
 \TinyCat\Social\Posts\Actions::status_json_report(9500, $other);
 $assert($value('SELECT status FROM social_posts WHERE id = 9500') === 'published', 'A previously hidden and restored post is not hidden automatically by a new report.');
-$assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2 && (int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'open'") === 1, 'Re-reporting restored content appends an open report beside the earlier resolved history.');
+$assert((int) $value("SELECT COUNT(*) FROM social_reports WHERE content_id = 9500 AND status = 'resolved'") === 2 && (int) $value("SELECT COUNT(*) FROM social_reports WHERE content_id = 9500 AND status = 'open'") === 1, 'Re-reporting restored content appends an open report beside the earlier resolved history.');
 
 // URL protection survives lost GUID history and works across feed identities.
 $url = 'https://dedup.example/article';

@@ -19,7 +19,7 @@ try {
     TinyCat\Database\Connection::set($database);
     $database->exec('CREATE TABLE users (id INT UNSIGNED PRIMARY KEY, username VARCHAR(40), role VARCHAR(20), status VARCHAR(20))');
     $database->exec('CREATE TABLE bot_sources (id BIGINT UNSIGNED PRIMARY KEY, bot_user_id INT UNSIGNED, name VARCHAR(80), last_imported_at DATETIME, feed_hash CHAR(64), enabled TINYINT NOT NULL DEFAULT 1)');
-    $database->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
+    $database->exec('CREATE TABLE social_posts (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
     $database->exec('CREATE TABLE bot_feed_history (bot_user_id INT, feed_hash CHAR(64), item_hash CHAR(64), created_at DATETIME, PRIMARY KEY(bot_user_id, feed_hash, item_hash))');
     $database->exec('CREATE TABLE social_post_tags (content_id BIGINT, term_id BIGINT)');
     $database->exec('CREATE TABLE social_post_links (content_id BIGINT, link_id BIGINT)');

@@ -275,6 +275,15 @@ try {
                 $assert($migration['file'] === 'App/Core/Identity/migrations/initials-avatar.php' && $migration['version'] === 4 && hash_equals($migration['checksum'], \TinyCat\Database\ModuleSchemas::checksum($root . '/' . $migration['file'])), 'The initials migration remains executable and authenticated after the archived prefix');
                 continue;
             }
+            $socialCleanup = [
+                'tinycat.publishing.posts-only' => [5, 'App/Modules/Social/migrations/publishing/005_posts_only.php'],
+                'tinycat.moderation.social-reports' => [2, 'App/Modules/Social/migrations/moderation/002_social_reports.php'],
+            ];
+            if (isset($socialCleanup[$migration['id']])) {
+                [$sequence, $file] = $socialCleanup[$migration['id']];
+                $assert($migration['file'] === $file && $migration['version'] === $sequence && hash_equals($migration['checksum'], \TinyCat\Database\ModuleSchemas::checksum($root . '/' . $file)), 'Social cleanup remains executable and authenticated after its historical prefix: ' . $migration['id']);
+                continue;
+            }
             $assert($migration['file'] === null && preg_match('/^[a-f0-9]{64}$/D', $migration['checksum']) === 1, 'Built-in history keeps its immutable ID, sequence and checksum without executable PHP: ' . $migration['id']);
         }
     }

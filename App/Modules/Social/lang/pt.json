@@ -215,7 +215,6 @@
     "preview_confirm": "Confirmar e guardar fonte",
     "preview_invalid": "Não foi possível carregar a fonte ou o conteúdo não é suportado.",
     "preview_changed": "O formulário mudou. Carregue uma nova pré-visualização.",
-    "preview_help": "Exemplo com o modelo atual. Não são guardadas publicações nem histórico.",
     "preview_image_pending": "A imagem será verificada segundo as regras de envio durante a importação.",
     "preview_skipped": "Este item seria ignorado durante a importação.",
     "preview_discovery": "Feeds encontrados no site"

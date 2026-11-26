@@ -78,7 +78,7 @@ import "../../../../Core/Ui/assets/tabs.js";
       T.lifecycle.hydrate(root);
     }).catch(function (error) {
       if (!state.disposed && error.name !== "AbortError" && state.dialog.isConnected && generation === root.dataset.apiGeneration && url === (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) {
-        var retry = T.components.render("bots/workspace-retry", {});
+        var retry = T.components.render("ui/button", { label: U.text("common.refresh"), attributes: { type: "button", "class": "btn btn-secondary" } });
         retry.addEventListener("click", function () { load(state, name, true); });
         T.content.replaceChildren(root, retry); delete state.pagers[name];
         if (state.active === name) { footer(state); }

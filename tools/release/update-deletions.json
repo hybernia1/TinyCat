@@ -2471,5 +2471,9 @@
     "App/Core/Support/Module.php",
     "App/Core/Support/DeploymentIdentity.php",
     "App/Core/Support/BuildCleanup.php"
+  ],
+  "8.0.13": [
+    "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
+    "App/Modules/Social/assets/status/styles/status-email-notice.css"
   ]
 }

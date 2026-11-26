@@ -7,12 +7,16 @@ import "../../../../Core/Ui/assets/runtime/component-renderer.js";
 import "../../../../Core/Ui/assets/runtime/dom.js";
 import "../../../../Core/Ui/assets/component-builders.js";
 import "./controller.js";
+import "./form-actions.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
   function base(id) { return "/api/statuses/" + Number(id); }
   function form(url, action, id, body, className, enctype) {
-    return T.components.render("status/dialog-form", { url: url, action: action, id: id, body: body, form_class: className || null, enctype: enctype || null });
+    var view = T.components.render("status/dialog-form", { action: action, id: id, body: body, form_class: className || null, enctype: enctype || null });
+    var prepared = U.form(url, T.status.method(view, action), view);
+    T.status.controllers.actions.prepareForms(prepared);
+    return prepared;
   }
   Object.assign(T.status, {
     edit: function (data, id, actionUrl) {

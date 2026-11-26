@@ -97,7 +97,6 @@ final readonly class PostCreation
 
         return Transactions::run(static function () use ($authorId, $draft, $preparedLinks, $image, $publishedAt): int {
             $contentId = (int) Connection::insert('social_posts', [
-                'kind' => 'post',
                 'body' => $draft->body,
                 'author_id' => $authorId,
                 'published_at' => $publishedAt ?? \TinyCat\Support\Dates::dateDb(),

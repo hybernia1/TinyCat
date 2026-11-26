@@ -45,7 +45,7 @@ import "../../../../Core/Ui/assets/form-requests.js";
         });
       });
       if (resource.items.length) {
-        var confirm = T.components.render("bots/source-preview-confirm", {});
+        var confirm = T.components.render("ui/button", { label: U.text("bots.preview_confirm"), attributes: { type: "button", "class": "btn btn-primary" } });
         confirm.addEventListener("click", function () {
           T.dialog.close(dialog);
           if (signature(form) !== approvedSignature || !T.forms.validate(form)) { return; }

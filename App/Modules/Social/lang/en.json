@@ -215,7 +215,6 @@
     "preview_confirm": "Confirm and save source",
     "preview_invalid": "The source could not be loaded or has no supported content.",
     "preview_changed": "The form changed. Load a new preview.",
-    "preview_help": "Sample using the current template. No posts or import history are saved now.",
     "preview_image_pending": "The image will be checked against upload rules during import.",
     "preview_skipped": "This item would be skipped during import.",
     "preview_discovery": "Feeds found on the website"

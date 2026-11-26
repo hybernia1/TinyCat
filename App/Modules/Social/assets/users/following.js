@@ -38,7 +38,7 @@ import "../../../../Core/Ui/assets/toasts.js";
       if (!request.current() || !grid.isConnected || !button.isConnected) return;
       payload = data.data;
       payload = Object.assign({}, payload, TinyCat.ui.pagination(data));
-      if (payload.items.length) grid.appendChild(TinyCat.socialUsers.profiles(payload.items));
+      if (payload.items.length) grid.appendChild(TinyCat.components.render("users/following-profiles", { items: payload.items }));
 
       if (payload && payload.next_url && payload.done !== true) {
         button.dataset.followingUrl = String(payload.next_url);

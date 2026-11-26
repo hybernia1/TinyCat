@@ -39,11 +39,11 @@ final class NotificationPresentation
         }
         $visiblePosts = []; $visibleComments = []; $visibleActors = [];
         if ($posts !== []) {
-            $sql = "SELECT p.id,p.body FROM social_posts p INNER JOIN users u ON u.id=p.author_id WHERE p.status='published' AND p.kind='post' AND p.published_at<=? AND u.status='active' AND p.id IN (" . implode(',', array_fill(0, count($posts), '?')) . ')';
+            $sql = "SELECT p.id,p.body FROM social_posts p INNER JOIN users u ON u.id=p.author_id WHERE p.status='published' AND p.published_at<=? AND u.status='active' AND p.id IN (" . implode(',', array_fill(0, count($posts), '?')) . ')';
             foreach (Connection::all($sql, [Dates::dateDb(), ...array_values($posts)]) as $row) { $visiblePosts[(int) $row['id']] = $row; }
         }
         if ($comments !== []) {
-            $sql = "SELECT c.id,c.content_id,c.body FROM social_comments c INNER JOIN social_posts p ON p.id=c.content_id INNER JOIN users u ON u.id=p.author_id INNER JOIN users a ON a.id=c.user_id WHERE p.status='published' AND p.kind='post' AND p.published_at<=? AND u.status='active' AND a.status='active' AND c.id IN (" . implode(',', array_fill(0, count($comments), '?')) . ')';
+            $sql = "SELECT c.id,c.content_id,c.body FROM social_comments c INNER JOIN social_posts p ON p.id=c.content_id INNER JOIN users u ON u.id=p.author_id INNER JOIN users a ON a.id=c.user_id WHERE p.status='published' AND p.published_at<=? AND u.status='active' AND a.status='active' AND c.id IN (" . implode(',', array_fill(0, count($comments), '?')) . ')';
             foreach (Connection::all($sql, [Dates::dateDb(), ...array_values($comments)]) as $row) { $visibleComments[(int) $row['id']] = $row; }
         }
         if ($actors !== []) {

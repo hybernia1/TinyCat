@@ -17,7 +17,7 @@ $db = tinycat_test_mysql_connect($archiveConfig);
 \TinyCat\Core\Identity\Authentication::reset(null, true);
 foreach ([
     'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), role VARCHAR(40), status VARCHAR(24), avatar_exists INTEGER, avatar_version VARCHAR(32), updated_at DATETIME)',
-    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_sidebar_index (published_at,author_id,id))',
+    'CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_sidebar_index (published_at,author_id,id))',
     'CREATE TABLE social_post_images (content_id INT UNSIGNED, path TEXT, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE social_post_links (content_id INT UNSIGNED, link_id INT UNSIGNED)',
     'CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT, url_hash CHAR(64), provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)',
@@ -63,11 +63,11 @@ for ($id = 1000; $id < 1120; $id++) {
     $reply = $id + 1000;
     $db->exec("INSERT INTO social_comments (id, content_id, parent_id, user_id, body, created_at) VALUES ($reply, 2, 1000, 1, 'reply', '2020-01-01 00:00:00')");
 }
-$roots = \TinyCat\Social\Discussion\Comments::page(2, 0, '', 0, 'post', 20);
+$roots = \TinyCat\Social\Discussion\Comments::page(2, 0, '', 0, 20);
 $assert(count($roots['items']) === 20 && $roots['items'][0]['has_replies'] && $roots['items'][0]['replies'] === [], 'Root page returns at most the limit without materializing replies.');
-$rootsNext = \TinyCat\Social\Discussion\Comments::page(2, 0, '2020-01-01 00:00:00', 1019, 'post', 50);
+$rootsNext = \TinyCat\Social\Discussion\Comments::page(2, 0, '2020-01-01 00:00:00', 1019, 50);
 $assert(count($rootsNext['items']) === 50 && (int) $rootsNext['items'][0]['id'] === 1020, 'Equal-time root cursor returns the next bounded page.');
-$replies = \TinyCat\Social\Discussion\Comments::page(2, 1000, '', 0, 'post', 50);
+$replies = \TinyCat\Social\Discussion\Comments::page(2, 1000, '', 0, 50);
 $assert(count($replies['items']) === 50 && (int) $replies['items'][0]['id'] === 2000 && $replies['next_url'] !== '', 'Replies are bounded to their parent and retain continuation.');
 $assert(\TinyCat\Social\Discussion\Comments::status_comment_count(2) === 240, 'Visible count covers every root and reply, independently of loaded pages.');
 $db->exec('DELETE FROM social_comments WHERE content_id = 2');
@@ -177,7 +177,7 @@ try {
     $insert = $db->prepare("INSERT INTO social_comments (id, content_id, parent_id, user_id, body, created_at) VALUES (?, 2, NULL, 1, 'root', '2020-01-01 00:00:00')");
     for ($id = 3000; $id < 4000; $id++) { $insert->execute([$id]); }
     \TinyCat\Database\Connection::set($instrumented);
-    $bounded = \TinyCat\Social\Discussion\Comments::page(2, 0, '', 0, 'post', 20);
+    $bounded = \TinyCat\Social\Discussion\Comments::page(2, 0, '', 0, 20);
     if (count($bounded['items']) !== 20 || $instrumented->queries !== 1 || $instrumented->reads !== 20) { throw new RuntimeException('Discussion page exceeded its one-query, 20-returned-row budget.'); }
     echo "PASS discussion page: 1000 roots, one query, 20 rows returned\n";
     $version = (string) $db->getAttribute(PDO::ATTR_SERVER_VERSION);
@@ -190,7 +190,7 @@ try {
     $insertReply = $db->prepare("INSERT INTO social_comments (id, content_id, parent_id, user_id, body, created_at) VALUES (?, 2, 3000, 1, 'reply', '2020-01-01 00:00:00')");
     for ($id = 4000; $id < 5000; $id++) { $insertReply->execute([$id]); }
     $instrumented->queries = 0; $instrumented->reads = 0;
-    $replyPage = \TinyCat\Social\Discussion\Comments::page(2, 3000, '', 0, 'post', 20);
+    $replyPage = \TinyCat\Social\Discussion\Comments::page(2, 3000, '', 0, 20);
     if (count($replyPage['items']) !== 20 || $instrumented->queries !== 1 || $instrumented->reads !== 20) { throw new RuntimeException('Reply page exceeded its one-query, 20-returned-row budget.'); }
     $plan = $db->prepare($prefix . $instrumented->lastSql); $plan->execute($instrumented->lastParams);
     file_put_contents(\TinyCat\Tools\Workspace::directory('tests') . '/stage4-reply-query-plan.txt', (string) $plan->fetchColumn());
@@ -198,7 +198,7 @@ try {
     $plan = $db->prepare($prefix . $countSql); $plan->execute([2]);
     file_put_contents(\TinyCat\Tools\Workspace::directory('tests') . '/stage4-comment-count-query-plan.txt', (string) $plan->fetchColumn());
     $db->exec("UPDATE users SET status = 'inactive' WHERE id = 1");
-    $hidden = \TinyCat\Social\Discussion\Comments::page(2, 3000, '', 0, 'post', 20);
+    $hidden = \TinyCat\Social\Discussion\Comments::page(2, 3000, '', 0, 20);
     if ($hidden['items'] !== []) { throw new RuntimeException('Inactive root exposed replies.'); }
     $plan = $db->prepare($prefix . $instrumented->lastSql); $plan->execute($instrumented->lastParams);
     file_put_contents(\TinyCat\Tools\Workspace::directory('tests') . '/stage4-hidden-root-query-plan.txt', (string) $plan->fetchColumn());

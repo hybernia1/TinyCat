@@ -30,7 +30,7 @@ $pdo = new class ($testDatabaseConfig['dsn'], $testDatabaseConfig['user'], $test
 };
 Connection::set($pdo);
 $pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INTEGER, updated_at DATETIME, PRIMARY KEY(ip_address, action_name, bucket_start))');
-$pdo->exec('CREATE TABLE social_posts (author_id INT UNSIGNED, kind VARCHAR(40) DEFAULT (\'post\'))');
+$pdo->exec('CREATE TABLE social_posts (author_id INT UNSIGNED)');
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;
@@ -112,10 +112,9 @@ $assert(Restrictions::moderation_action_count($bot, 'post') === 0, 'Bot imports 
 Restrictions::moderation_record_action($bot, 'comment');
 $assert(Restrictions::moderation_action_count($bot, 'comment') === 1, 'Other bot actions still consume quotas.');
 \TinyCat\Core\Identity\Authentication::reset(null, true);
-$pdo->exec("INSERT INTO social_posts(kind, author_id) VALUES ('post', 1), ('post', 1), ('post', 1)");
-for ($article = 0; $article < 20; $article++) { $pdo->exec("INSERT INTO social_posts(kind, author_id) VALUES ('article', 1)"); }
+$pdo->exec("INSERT INTO social_posts(author_id) VALUES (1), (1), (1)");
 $assert(Restrictions::moderation_user_post_count(1) === 3, 'Only status publications count towards Social reputation');
-$assert(Restrictions::moderation_user_reputation(['id' => 1, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s', time() - 8 * 86400)]) === 'normal', 'Articles cannot promote Social reputation to trusted');
+$assert(Restrictions::moderation_user_reputation(['id' => 1, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s', time() - 8 * 86400)]) === 'normal', 'A small Social history does not grant trusted reputation');
 
 $reputationActor = ['id' => 101, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s')];
 $beforeQueries = $pdo->reputationQueries;

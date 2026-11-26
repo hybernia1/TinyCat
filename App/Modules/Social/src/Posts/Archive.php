@@ -28,8 +28,8 @@ final class Archive
             : ['', []];
     }
 
-    public static function visible(\TinyCat\Database\Query $query, string $kind = 'post'): \TinyCat\Database\Query
+    public static function visible(\TinyCat\Database\Query $query): \TinyCat\Database\Query
     {
-        return $query->where('c.kind = ?', $kind)->where('c.published_at <= ? AND c.status = \'published\'', \TinyCat\Support\Dates::dateDb());
+        return $query->where('c.published_at <= ? AND c.status = \'published\'', \TinyCat\Support\Dates::dateDb());
     }
 }

@@ -215,7 +215,6 @@
     "preview_confirm": "Confirmer et enregistrer la source",
     "preview_invalid": "Source inaccessible ou contenu non pris en charge.",
     "preview_changed": "Le formulaire a changé. Rechargez l’aperçu.",
-    "preview_help": "Exemple avec le modèle actuel. Aucun article ni historique n’est enregistré.",
     "preview_image_pending": "L’image sera vérifiée selon les règles de téléversement à l’importation.",
     "preview_skipped": "Cet élément serait ignoré à l’importation.",
     "preview_discovery": "Flux trouvés sur le site"

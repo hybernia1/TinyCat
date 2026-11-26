@@ -1010,7 +1010,7 @@
       {
         "tag": "button",
         "attrs": {"type": "submit", "class": "btn avatar-editor-remove"},
-        "children": [{"icon": "trash"}, {"tag": "span", "children": [{"t": "account.remove_avatar"}]}]
+        "children": [{"icon": "trash"}, {"tag": "span", "children": [{"t": "common.delete"}]}]
       }
     ]
   },
@@ -1028,7 +1028,6 @@
   "users/avatar-actions": {
     "component": "ui/editor-actions",
     "data": {
-      "cancel_label": {"t": "common.cancel"},
       "primary": {"get": "save_action"},
       "destructive": {"get": "remove_form"},
       "class": "cluster gap-2 modal-editor-actions avatar-editor-actions"

@@ -215,7 +215,6 @@
     "preview_confirm": "Onayla ve kaynağı kaydet",
     "preview_invalid": "Kaynak yüklenemedi veya içerik desteklenmiyor.",
     "preview_changed": "Form değişti. Önizlemeyi yeniden yükleyin.",
-    "preview_help": "Geçerli şablonla örnek. Gönderiler ve içe aktarma geçmişi henüz kaydedilmez.",
     "preview_image_pending": "Görsel, içe aktarılırken yükleme kurallarına göre denetlenecek.",
     "preview_skipped": "Bu öğe içe aktarılırken atlanır.",
     "preview_discovery": "Sitede bulunan akışlar"

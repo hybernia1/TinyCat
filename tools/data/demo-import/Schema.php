@@ -21,7 +21,7 @@ final readonly class Schema
         'social_comment_likes',
         'user_followers',
         'notifications',
-        'content_reports',
+        'social_reports',
         'settings',
     ];
 
@@ -35,7 +35,7 @@ final readonly class Schema
         'password_reset_tokens',
         'notifications',
         'social_comment_likes',
-        'content_reports',
+        'social_reports',
         'social_comments',
         'social_post_likes',
         'social_post_tags',

@@ -65,7 +65,7 @@ for (const mode of [false, true, "min"]) {
   profile.T.modules.result(followForm, response, null);
   check(handled, "The actual public module chain delivers follow results to Social");
 }
-check(publicPage.T.accounts !== publicPage.T.socialUsers && typeof publicPage.T.accounts.follow === "undefined" && typeof publicPage.T.socialUsers.profiles === "function", "Social relationships never mutate the core account service");
+check(publicPage.T.accounts !== publicPage.T.socialUsers && typeof publicPage.T.accounts.follow === "undefined" && typeof publicPage.T.socialUsers.follow === "function", "Social relationships never mutate the core account service");
 check(typeof publicPage.T.accounts.list === "undefined" && !publicPage.T.accounts.avatarUpload && publicPage.T.deferredAssets.script, "Public account controls defer avatar editing without the administrative list adapter");
 for (const mode of [false, true, "min"]) {
   for (const route of ["/login", "/account", "/access/notifications"]) {

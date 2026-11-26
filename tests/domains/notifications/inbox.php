@@ -56,8 +56,8 @@ $read = $db->query('SELECT read_at FROM notifications WHERE id=' . $notice['id']
 $duplicate = Delivery::record(1, 'fixture.order', 'order:10', refresh: false, subjectId: 10);
 $assert(!$duplicate['created'] && $db->query('SELECT read_at FROM notifications WHERE id=' . $notice['id'])->fetchColumn() === $read, 'Idempotent delivery preserves the read state');
 
-$db->exec('CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,body TEXT,author_id INT UNSIGNED,status VARCHAR(24),kind VARCHAR(40),published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
-$db->exec("INSERT INTO social_posts VALUES (10,'Visible post',2,'published','post','2020-01-01'),(11,'Hidden post',2,'hidden','post','2020-01-01')");
+$db->exec('CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,body TEXT,author_id INT UNSIGNED,status VARCHAR(24),published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
+$db->exec("INSERT INTO social_posts VALUES (10,'Visible post',2,'published','2020-01-01'),(11,'Hidden post',2,'hidden','2020-01-01')");
 $db->exec('CREATE TABLE social_comments (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,content_id INT UNSIGNED,user_id INT UNSIGNED,body TEXT)');
 $db->exec("INSERT INTO social_comments VALUES (20,10,2,'Visible comment'),(21,11,2,'Hidden comment')");
 $rows = $db->query("SELECT n.*, 'actor' AS actor_name FROM notifications n WHERE id IN (1,2) ORDER BY id")->fetchAll();
@@ -70,8 +70,8 @@ $assert(Resource::item($hydrated[0])['message'] !== '', 'The type supplies resol
 $assert((int) $db->query("SELECT COUNT(*) FROM notifications WHERE type IN ('content_like','comment_like')")->fetchColumn() === 0, 'Deleting a Social post removes its post and comment subjects');
 $assert((int) $db->query("SELECT COUNT(*) FROM notifications WHERE type='fixture.order'")->fetchColumn() === 1, 'Identical IDs in another domain are not deleted');
 $db->exec('ALTER TABLE social_comments ADD COLUMN parent_id INT UNSIGNED NULL');
-$db->exec("INSERT INTO social_posts VALUES (12,'Other owner',1,'published','post','2020-01-01'),(13,'Other kind',2,'published','fixture','2020-01-01'),(20,'Overlapping post ID',1,'published','post','2020-01-01')");
-$db->exec("INSERT INTO social_comments(id,content_id,user_id,body,parent_id) VALUES (10,12,1,'Overlapping comment ID',NULL),(30,12,2,'Own comment',NULL),(31,12,1,'Reply to own comment',30),(32,12,1,'Unrelated comment',NULL),(33,13,2,'Other kind comment',NULL)");
+$db->exec("INSERT INTO social_posts VALUES (12,'Other owner',1,'published','2020-01-01'),(20,'Overlapping post ID',1,'published','2020-01-01')");
+$db->exec("INSERT INTO social_comments(id,content_id,user_id,body,parent_id) VALUES (10,12,1,'Overlapping comment ID',NULL),(30,12,2,'Own comment',NULL),(31,12,1,'Reply to own comment',30),(32,12,1,'Unrelated comment',NULL)");
 $cases = [
     ['post-like', 'content_like', 10, true], ['post-mention', 'content_mention', 11, true],
     ['report-resolved', 'report_resolved', 10, true], ['report-dismissed', 'report_dismissed', 11, true],
@@ -80,8 +80,7 @@ $cases = [
     ['other-domain', 'fixture.order', 10, false], ['other-post', 'content_like', 12, false],
     ['overlapping-comment', 'comment_like', 10, false], ['overlapping-post', 'content_like', 20, false],
     ['tree-post-overlap', 'content_like', 30, false],
-    ['unrelated-comment', 'comment_mention', 32, false], ['other-kind-post', 'content_like', 13, false],
-    ['other-kind-comment', 'comment_like', 33, false],
+    ['unrelated-comment', 'comment_mention', 32, false],
 ];
 foreach ($cases as [$label, $type, $subject]) {
     Connection::insert('notifications', ['user_id' => 1, 'actor_id' => 2, 'type' => $type, 'subject_id' => $subject,
@@ -95,8 +94,6 @@ try {
             && Connection::find('notifications', ['notification_key' => 'cleanup:reply-to-own-comment']) === null, 'Thread cleanup removes parent and direct reply notifications');
         $assert(Connection::find('notifications', ['notification_key' => 'cleanup:tree-post-overlap']) !== null
             && Connection::find('notifications', ['notification_key' => 'cleanup:unrelated-comment']) !== null, 'Thread cleanup preserves overlapping post IDs and unrelated comments');
-        \TinyCat\Social\Posts\NotificationHistory::removeForCommentTree(33);
-        $assert(Connection::find('notifications', ['notification_key' => 'cleanup:other-kind-comment']) !== null, 'Thread cleanup does not adopt another publication kind');
         throw new DomainException('rollback thread cleanup');
     });
 } catch (DomainException) {}

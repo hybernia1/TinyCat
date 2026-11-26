@@ -368,7 +368,7 @@ check(sharedPagination.querySelector(".pagination-prev").getAttribute("aria-disa
 check(sharedPagination.querySelector(".pagination-next").getAttribute("data-ajax-target") === "#users-list", "Pagination next links retain the standard AJAX target.");
 const unsafe = '<img src=x onerror="window.pwned=true">';
 const user = { id: 2, username: unsafe, url: "/author/2", avatar_url: "", email: "test@example.test", bio: unsafe, locale: "en", theme: "system" };
-let node = T.socialUsers.profiles([user]);
+let node = T.components.render("users/following-profiles", { items: [user] });
 check(node.textContent.endsWith(unsafe), "Following profiles preserve literal names without inserting markup.");
 check(node.querySelectorAll("img").length === 0, "Malicious names cannot create images or event handlers.");
 node = T.status.segments([{ type: "text", text: unsafe }, { type: "mention", text: "@2", url: "/author/2" }]);
@@ -380,7 +380,7 @@ check(node.dataset.statusId === "10" && node.querySelector(".status-body").textC
 check(node.id === "status-10" && !T.status.card(post, false).id, "Feed cards keep permalink anchors while modal cards avoid duplicate IDs.");
 check(node.querySelectorAll("details").length === 0, "Status menus follow server capabilities.");
 check(node.querySelector('[data-status-count="likes"]').textContent === "2", "Resource counts are rendered in the existing status controls.");
-check(node.querySelector(".public-content-meta") !== null && node.querySelector(".status-manage").querySelector("a").getAttribute("href") === post.url, "API cards retain the server card's small timestamp and permalink control.");
+check(node.querySelector(".public-content-meta").getAttribute("href") === post.url && node.querySelector(".status-manage > a") === null, "API cards link their timestamp without a duplicate permalink control.");
 check(T.ui.avatar(user).querySelector("use").getAttribute("href").endsWith("#user"), "Missing avatars use the same SVG user icon as server-rendered cards.");
 const modalPost = Object.assign({}, post, { capabilities: { edit: true, delete: true, report: false, interact: true }, image: { url: "/uploads/statuses/fixture.webp", alt: "Fixture" } });
 const detailData = { constraints: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--social-constraints"], {encoding:"utf8"})), item: modalPost, viewer: user, comments: [], options: { images_enabled: true } };
@@ -563,16 +563,16 @@ check(sourceRoot.textContent.includes(unsafe) && sourceRoot.querySelectorAll("im
 const sourceActions = sourceRoot.querySelectorAll("form");
 check(sourceActions.some(form => form.getAttribute("action") === "/api/bots/sources/7" && form.dataset.apiMethod === "PATCH" && form.querySelector('[name="enabled"]').getAttribute("value") === "0"), "Source pause requests an explicit disabled state at the resource URL.");
 check(sourceActions.some(form => form.getAttribute("action") === "/api/bots/sources/7/runs" && form.dataset.apiMethod === "POST"), "Manual feed imports create a run resource.");
-node = T.bots.modal(new URL('https://tinycat.test/api/bots/sources/7/management'), { data: { item: { id: 7, bot_user_id: 2, name: unsafe, post_template: unsafe }, bots: [user] } }, 'source-template-fixture').querySelector('form');
+node = T.bots.modal(new URL('https://tinycat.test/api/bots/sources/7/management'), { data: { item: { id: 7, bot_user_id: 2, name: unsafe, post_template: unsafe }, bots: [user], bot_names: { [user.id]: user.username } } }, 'source-template-fixture').querySelector('form');
 check(node.dataset.apiMethod === "PATCH" && node.querySelector('[name="post_template"]').value === unsafe, "Source editing uses a local form and preserves the template as text.");
-const sourceEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/7/management"), { data: { item: { id: 7, bot_user_id: 2, name: "Fresh source", feed_url: "https://example.test/feed", post_template: "{{title}}", enabled: true }, bots: [user] } }, "source-editor-test");
+const sourceEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/7/management"), { data: { item: { id: 7, bot_user_id: 2, name: "Fresh source", feed_url: "https://example.test/feed", post_template: "{{title}}", enabled: true }, bots: [user], bot_names: { [user.id]: user.username } } }, "source-editor-test");
 check(T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/2/management"), { data: { item: user } }, "bot-editor-test") === null, "The duplicate bot editor is retired.");
 for (const editor of [createDialog, sourceEditor, botAccountDialog]) {
   check(editor.dataset.modalKind === "editor" && editor.dataset.modalSize === "workspace", "User and bot editors share the responsive administration frame.");
   check(editor.querySelector('.modal-tabs').parent === editor.querySelector('.modal-panel') && !editor.querySelector('.modal-header').querySelector('.tabs') && !editor.querySelector('.modal-body').querySelector('.tabs') && editor.querySelector('[data-tabs]') === editor.querySelector('.modal-panel'), 'Tabbed editors keep navigation in a separate row between header and body and their fields in the body.');
   check(editor.querySelector('.modal-panel').children.map(child => child.className).join('|') === 'modal-header|modal-tabs|modal-body|modal-footer', 'Header, navigation, scrolling body and footer occupy four independent rows.');
 }
-const sourceCreateEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/management"), { data: { item: { enabled: true, post_template: '{{title}}', bot_user_id: 2 }, bots: [user] } }, "source-create-test");
+const sourceCreateEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/management"), { data: { item: { enabled: true, post_template: '{{title}}', bot_user_id: 2 }, bots: [user], bot_names: { [user.id]: user.username } } }, "source-create-test");
 const reportEditor = T.status.modal(new URL('https://tinycat.test/api/moderation/report-options?id=10'), { data: { reasons: ['spam'] } }, 'report-contract-fixture');
 const authEditor = T.accounts.modal(new URL('https://tinycat.test/api/users/authentication'), { data: { mode: 'login', registration_enabled: true, captcha: { enabled: false }, options: {}, old: {} } }, 'auth-contract-fixture');
 for (const dialog of [commentEditDialog, editDialog, profileDialog, avatarDialog, createDialog, sourceEditor, sourceCreateEditor, botAccountDialog, reportEditor, authEditor]) {

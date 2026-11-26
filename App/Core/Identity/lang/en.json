@@ -105,7 +105,6 @@
     "avatar_upload_label": "Choose image",
     "avatar_upload_empty": "No avatar uploaded yet.",
     "save_avatar": "Save avatar",
-    "remove_avatar": "Remove avatar",
     "remove_avatar_title": "Remove avatar",
     "remove_avatar_confirm": "Remove the current avatar?",
     "username_hint": "Use 2–32 letters (including accents), numbers, dots, hyphens, or underscores. Start with a letter or number; do not end with a dot or hyphen. The name cannot contain only numbers.",

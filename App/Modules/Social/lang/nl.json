@@ -215,7 +215,6 @@
     "preview_confirm": "Bevestigen en bron opslaan",
     "preview_invalid": "De bron kon niet worden geladen of heeft niet-ondersteunde inhoud.",
     "preview_changed": "Het formulier is gewijzigd. Laad een nieuw voorbeeld.",
-    "preview_help": "Voorbeeld met de huidige sjabloon. Berichten en importgeschiedenis worden nog niet opgeslagen.",
     "preview_image_pending": "De afbeelding wordt tijdens de import aan de uploadregels getoetst.",
     "preview_skipped": "Dit item zou bij de import worden overgeslagen.",
     "preview_discovery": "Feeds gevonden op de website"

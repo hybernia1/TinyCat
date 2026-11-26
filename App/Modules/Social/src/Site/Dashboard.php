@@ -10,11 +10,11 @@ final class Dashboard
     public static function statistics(): array
     {
         $now = \TinyCat\Support\Dates::dateDb();
-        $rows = \TinyCat\Database\Connection::one("SELECT COUNT(CASE WHEN status = 'published' AND published_at <= ? THEN 1 END) AS published, COUNT(CASE WHEN status = 'published' AND published_at > ? THEN 1 END) AS scheduled FROM social_posts WHERE kind = 'post'", [$now, $now]);
+        $rows = \TinyCat\Database\Connection::one("SELECT COUNT(CASE WHEN status = 'published' AND published_at <= ? THEN 1 END) AS published, COUNT(CASE WHEN status = 'published' AND published_at > ? THEN 1 END) AS scheduled FROM social_posts", [$now, $now]);
         $items = [];
         foreach (['published', 'scheduled'] as $key) { $items[] = ['key' => $key, 'value' => (int) ($rows[$key] ?? 0)]; }
         foreach (['social_comments', 'social_post_likes'] as $table) {
-            $items[] = ['key' => $table === 'social_comments' ? 'comments' : 'likes', 'value' => (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM " . $table . " i INNER JOIN social_posts p ON p.id = i.content_id WHERE p.kind = 'post'")];
+            $items[] = ['key' => $table === 'social_comments' ? 'comments' : 'likes', 'value' => (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM " . $table . " i INNER JOIN social_posts p ON p.id = i.content_id")];
         }
         return ['items' => $items];
     }
@@ -41,7 +41,6 @@ final class Dashboard
                  FROM social_comments cc
                  INNER JOIN users u ON u.id = cc.user_id
                  INNER JOIN social_posts c ON c.id = cc.content_id
-                 WHERE c.kind = \'post\'
                  ORDER BY cc.created_at DESC, cc.id DESC
                  LIMIT ' . max(1, min(30, $limit))
             );

@@ -317,7 +317,7 @@
     document.documentElement.style.removeProperty('--ui-scale');
     const home = T.components.render('site/public-page', {kind:'home',items:[],feed:'all',all_feed_url:'/',following_feed_url:'/?feed=following',archive_options:[]});
     document.body.append(home);
-    const homeToolbar = home.querySelector('.home-feed-toolbar'), homeEmpty = home.querySelector('.home-feed-section > .empty-state');
+    const homeToolbar = home.querySelector('.home-feed-toolbar'), homeEmpty = home.querySelector('.home-feed-section > [data-status-empty]');
     check(homeEmpty.getBoundingClientRect().top > homeToolbar.getBoundingClientRect().bottom, 'Nested home feed stacks keep space between the toolbar and empty content');
     for (const density of ['regular','compact']) {
       document.documentElement.dataset.uiDensity = density;

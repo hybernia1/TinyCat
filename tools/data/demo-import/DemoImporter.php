@@ -671,7 +671,7 @@ final class DemoImporter
                 $reviewed === null ? null : 'Reviewed benchmark report.',
             ];
         }
-        $inserted = $this->writer->insert('content_reports', [
+        $inserted = $this->writer->insert('social_reports', [
             'content_id', 'reporter_id', 'reason', 'note', 'status', 'created_at', 'reviewed_at', 'reviewed_by', 'action_note',
         ], $rows, true);
         $last = (int) end($posts)['id'];
@@ -882,7 +882,7 @@ final class DemoImporter
         foreach ([
             'users' => 'users', 'content' => 'social_posts', 'terms' => 'social_terms', 'content_tags' => 'social_post_tags', 'links' => 'social_links', 'content_links' => 'social_post_links', 'content_likes' => 'social_post_likes',
             'content_comments' => 'social_comments', 'comment_likes' => 'social_comment_likes', 'user_followers' => 'user_followers', 'notifications' => 'notifications',
-            'content_reports' => 'content_reports',
+            'social_reports' => 'social_reports',
         ] as $key => $table) {
             $counts[$key] = $this->tableCount($table);
         }

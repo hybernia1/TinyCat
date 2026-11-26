@@ -71,7 +71,7 @@ final class Actions
         }
 
         $rows = \TinyCat\Database\Connection::all(
-            'SELECT id, body FROM social_posts WHERE kind = \'post\' AND author_id = ? AND published_at >= ? ORDER BY id DESC LIMIT 30',
+            'SELECT id, body FROM social_posts WHERE author_id = ? AND published_at >= ? ORDER BY id DESC LIMIT 30',
             [$userId, \TinyCat\Support\Dates::dateDb('-1 day')]
         );
 
@@ -202,20 +202,20 @@ final class Actions
             // Use the same parent lock as review/publication so a late report cannot
             // reopen a post while a moderator is hiding it.
             $content = \TinyCat\Database\Connection::one(
-                'SELECT * FROM social_posts WHERE kind = \'post\' AND id = ? FOR UPDATE', [$contentId]
+                'SELECT * FROM social_posts WHERE id = ? FOR UPDATE', [$contentId]
             );
             if (!\TinyCat\Social\Posts\Repository::visible($content)) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
             }
             \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'report');
             $existing = \TinyCat\Database\Connection::one(
-                'SELECT id FROM content_reports WHERE content_id = ? AND reporter_id = ? AND status = ? ORDER BY id DESC LIMIT 1',
+                'SELECT id FROM social_reports WHERE content_id = ? AND reporter_id = ? AND status = ? ORDER BY id DESC LIMIT 1',
                 [$contentId, $userId, 'open']
             );
             if ($existing !== null) {
-                \TinyCat\Database\Connection::update('content_reports', ['reason' => $reason, 'note' => $note], ['id' => (int) $existing['id']]);
+                \TinyCat\Database\Connection::update('social_reports', ['reason' => $reason, 'note' => $note], ['id' => (int) $existing['id']]);
             } else {
-                \TinyCat\Database\Connection::insert('content_reports', [
+                \TinyCat\Database\Connection::insert('social_reports', [
                     'content_id' => $contentId, 'reporter_id' => $userId,
                     'reason' => $reason, 'note' => $note, 'status' => 'open', 'created_at' => $now,
                 ]);
@@ -273,7 +273,7 @@ final class Actions
         try {
             \TinyCat\Database\Transactions::run(static function () use ($contentId, $user, $draft, $preparedLinks, $newImage, $removeImage, $body, &$oldPath): void {
                 $current = \TinyCat\Database\Connection::one('SELECT * FROM social_posts WHERE id = ? FOR UPDATE', [$contentId]);
-                // Repository rechecks existence, kind, ownership and the current image under this lock.
+                // Repository rechecks existence, ownership and the current image under this lock.
                 $oldPath = Repository::update($contentId, $draft, $preparedLinks, $newImage, $removeImage, $user);
                 if (!\TinyCat\Core\Identity\Roles::isAdmin($user)) { self::status_json_require_not_muted($user); }
                 $author = \TinyCat\Database\Connection::find('users', ['id' => (int) ($current['author_id'] ?? 0)]);

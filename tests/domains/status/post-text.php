@@ -72,7 +72,7 @@ $assert($metadata['description'] === 'Preview …');
 
 if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
     $pdo = \tinycat_test_database();
-    $pdo->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, published_at DATETIME, body TEXT, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
+    $pdo->exec('CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, published_at DATETIME, body TEXT, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
     $insert = $pdo->prepare('INSERT INTO social_posts (id, author_id, published_at, body) VALUES (?, ?, ?, ?)');
     $insert->execute([1, 1, '2026-11-01', 'Human  post […]']);
     $insert->execute([2, 2, '2026-12-01', 'Bot  post […]']);

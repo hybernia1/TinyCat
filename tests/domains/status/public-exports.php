@@ -19,7 +19,7 @@ Connection::set($db);
 // No reactions, comments, previews or session tables: exports must not load UI state.
 foreach ([
     'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), status VARCHAR(24))',
-    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
+    'CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
     'CREATE TABLE social_post_images (content_id INT UNSIGNED, path TEXT, bytes INTEGER)',
     'CREATE TABLE social_terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name TEXT)',
     'CREATE TABLE social_post_tags (content_id INT UNSIGNED, term_id INT UNSIGNED)',

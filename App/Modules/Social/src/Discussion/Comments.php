@@ -11,10 +11,10 @@ final class Comments
             . " AND ({$alias}.parent_id IS NULL OR {$alias}.parent_id = 0 OR EXISTS (SELECT 1 FROM social_comments root INNER JOIN users ru ON ru.id = root.user_id WHERE root.id = {$alias}.parent_id AND root.content_id = {$alias}.content_id AND (root.parent_id IS NULL OR root.parent_id = 0) AND ru.status = 'active'))";
     }
 
-    public static function status_comments_query(string $kind = 'post'): \TinyCat\Database\Query
+    public static function status_comments_query(): \TinyCat\Database\Query
     {
         return \TinyCat\Database\Query::select(self::status_comments_sql())
-            ->where('c.kind = ?', $kind)->where(self::visiblePredicate());
+            ->where(self::visiblePredicate());
     }
 
     private static function status_comments_sql(): string
@@ -46,13 +46,13 @@ final class Comments
     /**
      * @return array<mixed>
      */
-    public static function status_comments(int $contentId, string $kind = 'post'): array
+    public static function status_comments(int $contentId): array
     {
-        return self::page($contentId, 0, '', 0, $kind)['items'];
+        return self::page($contentId)['items'];
     }
 
     /** @return array{items: array<mixed>, next_url: string} */
-    public static function page(int $contentId, int $parentId = 0, string $cursorAt = '', int $cursorId = 0, string $kind = 'post', ?int $limit = null): array
+    public static function page(int $contentId, int $parentId = 0, string $cursorAt = '', int $cursorId = 0, ?int $limit = null): array
     {
         $limit = max(1, min(50, $limit ?? \TinyCat\Social\Posts\Feed::public_status_page_limit()));
         if ($contentId < 1) { return ['items' => [], 'next_url' => '']; }
@@ -78,7 +78,7 @@ final class Comments
         }
         $selected = 'SELECT id FROM (' . implode(' UNION ALL ', $branches) . ') comment_candidates ORDER BY created_at ASC, id ASC LIMIT ' . $limit;
         $query = new \TinyCat\Database\Query(self::status_comments_sql() . ' INNER JOIN (' . $selected . ') selected_comments ON selected_comments.id = cc.id', $params);
-        $rows = $query->where('c.kind = ?', $kind)->where('cc.content_id = ?', $contentId)->where(self::visiblePredicate())->order('cc.created_at ASC, cc.id ASC')->all();
+        $rows = $query->where('cc.content_id = ?', $contentId)->where(self::visiblePredicate())->order('cc.created_at ASC, cc.id ASC')->all();
         $last = $rows === [] ? null : end($rows);
         $next = count($rows) === $limit && is_array($last)
             ? '/api/statuses/' . $contentId . '/comments?' . http_build_query(['parent_id' => $parentId, 'cursor_at' => $last['created_at'], 'cursor_id' => $last['id'], 'limit' => $limit]) : '';
@@ -233,13 +233,13 @@ final class Comments
     /**
      * @return array<mixed>|null
      */
-    public static function status_comment_item_find(int $commentId, string $kind = 'post'): ?array
+    public static function status_comment_item_find(int $commentId): ?array
     {
         if ($commentId < 1) {
             return null;
         }
 
-        $comment = \TinyCat\Social\Discussion\Comments::status_comments_query($kind)
+        $comment = \TinyCat\Social\Discussion\Comments::status_comments_query()
             ->where('cc.id = ?', $commentId)
             ->limit(1)
             ->one();

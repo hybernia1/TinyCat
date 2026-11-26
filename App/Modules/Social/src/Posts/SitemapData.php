@@ -26,7 +26,7 @@ final class SitemapData
                     FROM social_posts c
                     INNER JOIN users u ON u.id = c.author_id
                     WHERE u.status = ?
-                        AND c.published_at <= ? AND c.status = \'published\' AND c.kind = \'post\'',
+                        AND c.published_at <= ? AND c.status = \'published\'',
                 ['active', \TinyCat\Support\Dates::dateDb()]
             ),
             default => throw new InvalidArgumentException('Sitemap section is not registered: ' . $section),
@@ -38,7 +38,7 @@ final class SitemapData
         // Avoid indexing orphan tags and tags used only by hidden or future posts.
         return "EXISTS (SELECT 1 FROM social_post_tags ct INNER JOIN social_posts c ON c.id = ct.content_id
             INNER JOIN users u ON u.id = c.author_id WHERE ct.term_id = t.id AND u.status = 'active'
-            AND c.published_at <= ? AND c.status = 'published' AND c.kind = 'post')";
+            AND c.published_at <= ? AND c.status = 'published')";
     }
 
     /** @return list<array{url: string, last_modified: ?string, image_url?: string}> */
@@ -60,7 +60,7 @@ final class SitemapData
             'status' => \TinyCat\Database\Connection::all(
                 'SELECT selected.id, ci.path AS image_path FROM (
                     SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id
-                    WHERE u.status = ? AND c.published_at <= ? AND c.status = \'published\' AND c.kind = \'post\'
+                    WHERE u.status = ? AND c.published_at <= ? AND c.status = \'published\'
                     ORDER BY c.id ASC LIMIT ' . $limit . ' OFFSET ' . $offset . '
                 ) selected LEFT JOIN social_post_images ci ON ci.content_id = selected.id ORDER BY selected.id ASC',
                 ['active', \TinyCat\Support\Dates::dateDb()]

@@ -147,62 +147,8 @@
   justify-content: center;
 }
 
-.profile-following-link {
-  display: grid;
-  min-width: 0;
-  justify-items: center;
-  gap: var(--space-1);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-1);
-  color: var(--text);
-  text-align: center;
-  text-decoration: none;
-}
-
-.profile-following-link:hover,
-.profile-following-link:focus {
-  background: var(--primary-soft);
-  color: var(--primary-strong);
-}
-
-.profile-following-main {
-  display: grid;
-  min-width: 0;
-  max-width: 100%;
-  gap: var(--space-0-5);
-}
-
-.profile-following-main strong,
-.profile-following-main small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profile-following-main strong {
-  font-size: 0.78rem;
-}
-
-.profile-following-main small {
-  color: var(--muted);
-  font-size: 0.68rem;
-}
-
 .following-modal-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-1);
-}
-
-.following-modal-grid .profile-following-link {
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-  justify-items: stretch;
-  align-items: center;
-  padding: var(--space-2);
-  text-align: left;
-}
-
-.following-modal-grid .avatar {
-  width: 2.5rem;
-  height: 2.5rem;
 }

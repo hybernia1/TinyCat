@@ -30,10 +30,10 @@ $last = AdminViews::paginationMeta(51, 999, 25);
 $assert($last['page'] === 3 && $last['from'] === 51 && $last['to'] === 51 && !$last['has_next'], 'Out-of-range pages retain the last nonempty page.');
 $_GET = [];
 $database->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), email TEXT, role VARCHAR(40), status VARCHAR(24), updated_at DATETIME)');
-$database->exec("CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME DEFAULT ('2026-01-01 00:00:00'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))");
+$database->exec("CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME DEFAULT ('2026-01-01 00:00:00'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))");
 $database->exec('CREATE TABLE bot_sources (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, bot_user_id INT UNSIGNED, name TEXT, enabled INTEGER, interval_minutes INTEGER, last_imported_at TEXT)');
 $database->exec('CREATE TABLE bot_source_posts (content_id INT UNSIGNED PRIMARY KEY, source_id INT UNSIGNED NOT NULL)');
-$database->exec('CREATE TABLE content_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED, reporter_id INT UNSIGNED, status VARCHAR(24), reason TEXT, created_at DATETIME)');
+$database->exec('CREATE TABLE social_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED, reporter_id INT UNSIGNED, status VARCHAR(24), reason TEXT, created_at DATETIME)');
 $database->exec('CREATE TABLE scheduler_runs (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, task TEXT, status VARCHAR(24), mode TEXT, error TEXT, duration_ms INTEGER, started_at DATETIME, actor_id INT UNSIGNED, finished_at DATETIME, options_json TEXT, summary_json TEXT)');
 for ($id = 1; $id <= 15; $id++) {
     $name = chr(80 - $id);
@@ -43,7 +43,7 @@ for ($id = 1; $id <= 15; $id++) {
 $database->exec("INSERT INTO users VALUES (101, 'Zulu', '', 'bot', 'active', '2026-10-27'), (102, 'Alpha', '', 'bot', 'ban', '2026-10-26')");
 $database->exec("INSERT INTO bot_sources VALUES (1, 101, 'Zulu', 1, 30, NULL), (2, 102, 'Alpha', 0, 60, '2026-10-27')");
 $database->exec("INSERT INTO social_posts (id, author_id, body) VALUES (1, 101, 'Zulu'), (2, 102, 'Alpha')");
-$database->exec("INSERT INTO content_reports VALUES (1, 1, 1, 'open', 'spam', '2026-10-26'), (2, 2, 1, 'resolved', 'other', '2026-10-27')");
+$database->exec("INSERT INTO social_reports VALUES (1, 1, 1, 'open', 'spam', '2026-10-26'), (2, 2, 1, 'resolved', 'other', '2026-10-27')");
 
 foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $list) {
     $config = match ($list) { 'users' => \TinyCat\Core\Identity\ReadModel::sorting(), 'runs' => \TinyCat\Core\Tasks\Repository::sorting(), 'reports' => \TinyCat\Social\Moderation\Reports::sorting(), 'accounts' => \TinyCat\Social\Bots\Sorting::accounts(), 'sources' => \TinyCat\Social\Bots\Sorting::sources(), default => \TinyCat\Social\Bots\Sorting::LISTS[$list] };

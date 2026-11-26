@@ -14,7 +14,7 @@ final class Restrictions
             return 0;
         }
 
-        return (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_posts WHERE kind = \'post\' AND author_id = ?', [$userId]);
+        return (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_posts WHERE author_id = ?', [$userId]);
     }
 
     /**

@@ -8,7 +8,7 @@ use TinyCat\Http\Response;
 use TinyCat\Http\Session;
 use TinyCat\Support\Localization;
 
-/** Administrator-only inspection without posts, GUID claims or schedule changes. */
+/** Administrator-only inspection without posts, GUID claims, media files or schedule changes. */
 final class SourcePreview
 {
     /** @return array<string, mixed> */
@@ -37,9 +37,13 @@ final class SourcePreview
                 $attachment = str_contains($template, '{{image}}') && \TinyCat\Social\Posts\Images::status_images_enabled() && $item['image_urls'] !== [];
                 $rejection = $entry->rejection['code'] ?? (($entry->body === '' && !$attachment) ? 'status_required' : null);
                 $image = '';
-                if ($attachment && $rejection === null && \TinyCat\Social\Posts\Policy::blockedHost($item['image_url']) === '') {
-                    try { $image = \TinyCat\Social\Posts\Links::status_link_image_cache($item['image_url']); }
-                    catch (\RuntimeException|\LengthException) { $image = ''; }
+                if ($attachment && $rejection === null) {
+                    foreach ($item['image_urls'] as $candidate) {
+                        if (\TinyCat\Http\Client::isSafeUrl($candidate) && \TinyCat\Social\Posts\Policy::blockedHost($candidate) === '') {
+                            $image = $candidate;
+                            break;
+                        }
+                    }
                 }
                 $items[] = ['title' => $item['title'], 'body' => $entry->body, 'url' => $item['url'], 'image_url' => $image,
                     'has_image' => $attachment, 'rejection' => $rejection];

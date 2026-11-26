@@ -29,7 +29,7 @@ final class Reports
             \TinyCat\Http\Response::validation(['decision' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
         }
 
-        $contentId = (int) \TinyCat\Database\Connection::value('SELECT content_id FROM content_reports WHERE id = ?', [$reportId]);
+        $contentId = (int) \TinyCat\Database\Connection::value('SELECT content_id FROM social_reports WHERE id = ?', [$reportId]);
         try {
             $result = \TinyCat\Database\Transactions::run(static function () use ($reportId, $decision, $contentId): array {
                 // Serialize reviews for the same post even when moderators choose different reports.
@@ -37,7 +37,7 @@ final class Reports
                     'SELECT * FROM social_posts WHERE id = ? FOR UPDATE', [$contentId]
                 );
                 $report = \TinyCat\Database\Connection::one(
-                    'SELECT * FROM content_reports WHERE id = ? AND status = ? LIMIT 1 FOR UPDATE',
+                    'SELECT * FROM social_reports WHERE id = ? AND status = ? LIMIT 1 FOR UPDATE',
                     [$reportId, 'open']
                 );
 
@@ -66,7 +66,7 @@ final class Reports
                 );
 
                 \TinyCat\Database\Connection::exec(
-                    'UPDATE content_reports
+                    'UPDATE social_reports
                     SET status = ?, reviewed_at = ?, reviewed_by = ?, action_note = ?
                     WHERE content_id = ? AND status = ?',
                     [$status, \TinyCat\Support\Dates::dateDb(), (int) ($actor['id'] ?? 0), $note, $contentId, 'open']
@@ -114,7 +114,7 @@ final class Reports
     /** @return array<string, mixed> */
     public static function detail(int $reportId): array
     {
-        $report = \TinyCat\Database\Connection::one('SELECT * FROM content_reports WHERE id = ?', [$reportId]);
+        $report = \TinyCat\Database\Connection::one('SELECT * FROM social_reports WHERE id = ?', [$reportId]);
         if ($report === null) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.report_not_found'), 404, 'report_not_found');
         }
@@ -123,7 +123,7 @@ final class Reports
             \TinyCat\Social\Posts\Feed::public_status_select_sql() . ' WHERE c.id = ?', [$contentId]
         );
         $items = \TinyCat\Database\Connection::all(
-            'SELECT cr.*, ru.username AS reporter_name, au.username AS reviewer_name FROM content_reports cr LEFT JOIN users ru ON ru.id = cr.reporter_id LEFT JOIN users au ON au.id = cr.reviewed_by WHERE cr.content_id = ? ORDER BY cr.created_at DESC, cr.id DESC', [$contentId]
+            'SELECT cr.*, ru.username AS reporter_name, au.username AS reviewer_name FROM social_reports cr LEFT JOIN users ru ON ru.id = cr.reporter_id LEFT JOIN users au ON au.id = cr.reviewed_by WHERE cr.content_id = ? ORDER BY cr.created_at DESC, cr.id DESC', [$contentId]
         );
         return Resource::detail($reportId, $content, $items);
     }
@@ -158,10 +158,10 @@ final class Reports
                     MAX(CASE WHEN status = ? THEN id ELSE 0 END) AS open_report_id,
                     MAX(id) AS latest_report_id,
                     MAX(created_at) AS latest_reported_at
-                FROM content_reports
+                FROM social_reports
                 GROUP BY content_id
             ) rc
-            INNER JOIN content_reports cr ON cr.id = CASE WHEN rc.open_report_id > 0 THEN rc.open_report_id ELSE rc.latest_report_id END
+            INNER JOIN social_reports cr ON cr.id = CASE WHEN rc.open_report_id > 0 THEN rc.open_report_id ELSE rc.latest_report_id END
             LEFT JOIN social_posts c ON c.id = cr.content_id
             LEFT JOIN users au ON au.id = c.author_id
             LEFT JOIN users ru ON ru.id = cr.reporter_id',
@@ -174,7 +174,7 @@ final class Reports
         }
         if ($filters['status'] === 'open') { $query->where('rc.open_count > 0'); }
         elseif ($filters['status'] !== '') { $query->where('rc.open_count = 0 AND cr.status = ?', $filters['status']); }
-        if ($filters['reason'] !== '') { $query->where('EXISTS (SELECT 1 FROM content_reports matching WHERE matching.content_id = cr.content_id AND matching.reason = ?)', $filters['reason']); }
+        if ($filters['reason'] !== '') { $query->where('EXISTS (SELECT 1 FROM social_reports matching WHERE matching.content_id = cr.content_id AND matching.reason = ?)', $filters['reason']); }
         return $query;
     }
 

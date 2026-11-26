@@ -31,7 +31,7 @@ final class Embed
     private static function find(int $id): ?array
     {
         return Connection::one(Feed::public_status_select_sql() . '
-            WHERE c.id = ? AND u.status = ? AND c.published_at <= ? AND c.kind = \'post\' AND c.status = \'published\' LIMIT 1', [$id, 'active', Dates::dateDb()]);
+            WHERE c.id = ? AND u.status = ? AND c.published_at <= ? AND c.status = \'published\' LIMIT 1', [$id, 'active', Dates::dateDb()]);
     }
 
     private static function dimension(string $name, int $default): ?int

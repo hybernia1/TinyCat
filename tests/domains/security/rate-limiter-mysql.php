@@ -46,7 +46,7 @@ try {
     $pdo->exec('DROP TEMPORARY TABLE ip_action_limits');
     $pdo->exec('USE ' . $name);
     $pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start DATETIME, action_count INT, updated_at DATETIME, PRIMARY KEY(ip_address, action_name, bucket_start)) ENGINE=InnoDB');
-    $pdo->exec('CREATE TABLE social_posts (author_id INT, kind VARCHAR(20)) ENGINE=InnoDB');
+    $pdo->exec('CREATE TABLE social_posts (author_id INT) ENGINE=InnoDB');
     $pdo->exec('CREATE TABLE accepted_actions (id INT) ENGINE=InnoDB');
     $actor = ['id' => 1, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s')];
     for ($i = 0; $i < 4; $i++) { \TinyCat\Social\Moderation\Restrictions::moderation_record_action($actor, 'post'); }

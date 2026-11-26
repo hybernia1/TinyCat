@@ -65,4 +65,39 @@ $exercise = static function (PDO $database) use ($migrate, $assert): void {
 
 $exercise(tinycat_test_database());
 
+// Upgrade the last published Social schemas without losing posts or report history.
+$database = tinycat_test_database();
+$database->exec('CREATE TABLE users (id INT UNSIGNED PRIMARY KEY)');
+$database->exec('INSERT INTO users VALUES (1), (2)');
+foreach (['publishing/fresh-v4.php', 'moderation/fresh-v1.php'] as $file) {
+    $install = require $root . '/App/Modules/Social/migrations/' . $file;
+    $install($database);
+}
+$database->exec("INSERT INTO social_posts (id, body, author_id, published_at) VALUES (7, 'Preserved post', 1, '2026-01-01')");
+$database->exec("INSERT INTO content_reports (id, content_id, reporter_id, reason, note, status, reviewed_by, action_note) VALUES (9, 7, 2, 'spam', 'Evidence', 'resolved', 1, 'Decision')");
+$reports = $database->query('SELECT * FROM content_reports')->fetchAll(PDO::FETCH_ASSOC);
+$postsOnly = require $root . '/App/Modules/Social/migrations/publishing/005_posts_only.php';
+$renameReports = require $root . '/App/Modules/Social/migrations/moderation/002_social_reports.php';
+$database->exec("INSERT INTO social_posts (id, kind, body, author_id, published_at) VALUES (8, 'unexpected', 'Reject migration', 1, '2026-01-01')");
+$rejected = false;
+try { $postsOnly($database); } catch (RuntimeException) { $rejected = true; }
+$assert($rejected && in_array('kind', $database->query('SHOW COLUMNS FROM social_posts')->fetchAll(PDO::FETCH_COLUMN), true), 'Unexpected kinds reject migration before removing the discriminator.');
+$database->exec('DELETE FROM social_posts WHERE id = 8');
+foreach ([1, 2] as $pass) { $postsOnly($database); $renameReports($database); }
+$assert(!in_array('kind', $database->query('SHOW COLUMNS FROM social_posts')->fetchAll(PDO::FETCH_COLUMN), true), 'The post discriminator is removed and migration can resume.');
+$assert($database->query('SELECT * FROM social_reports')->fetchAll(PDO::FETCH_ASSOC) === $reports, 'Renaming reports preserves IDs, evidence, decisions and timestamps.');
+$assert($database->query('SELECT body FROM social_posts WHERE id = 7')->fetchColumn() === 'Preserved post', 'Post bodies and IDs survive.');
+$database->exec('DELETE FROM users WHERE id = 2');
+$assert($database->query('SELECT reporter_id FROM social_reports WHERE id = 9')->fetchColumn() === null, 'Renamed report foreign keys still clear removed reporters.');
+$database->exec('DELETE FROM social_posts WHERE id = 7');
+$assert((int) $database->query('SELECT COUNT(*) FROM social_reports')->fetchColumn() === 0, 'Renamed reports retain their post cascade.');
+$fresh = tinycat_test_database();
+$fresh->exec('CREATE TABLE users (id INT UNSIGNED PRIMARY KEY)');
+foreach (['publishing/fresh-v5.php', 'moderation/fresh-v2.php'] as $file) {
+    $install = require $root . '/App/Modules/Social/migrations/' . $file;
+    $install($fresh);
+}
+$assert($fresh->query('SHOW COLUMNS FROM social_posts')->fetchAll(PDO::FETCH_ASSOC) === $database->query('SHOW COLUMNS FROM social_posts')->fetchAll(PDO::FETCH_ASSOC), 'Fresh and upgraded post columns match.');
+$assert($fresh->query('SHOW COLUMNS FROM social_reports')->fetchAll(PDO::FETCH_ASSOC) === $database->query('SHOW COLUMNS FROM social_reports')->fetchAll(PDO::FETCH_ASSOC), 'Fresh and upgraded report columns match.');
+
 echo "PASS independent post status migration ({$checks} checks)\n";

@@ -50,7 +50,7 @@ import "./controller.js";
       if (/\/avatar$/.test(path)) {
         var avatarContent = avatar(data), avatarActions = avatarContent.querySelector(".avatar-editor-actions");
         avatarActions.remove();
-        var avatarDialog = U.dialog(id, "account.avatar_edit", avatarContent, false, avatarActions, { kind: "editor", size: "compact" });
+        var avatarDialog = U.dialog(id, "account.avatar_edit", avatarContent, false, avatarActions, { kind: "editor", size: "compact", refresh: false });
         return avatarDialog;
       }
       if (/\/management$/.test(path)) {

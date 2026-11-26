@@ -20,7 +20,7 @@ $database = \tinycat_test_database($databasePath);
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 foreach ([
     'CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254) UNIQUE NOT NULL, email TEXT, password TEXT, role VARCHAR(40) NOT NULL, status VARCHAR(24) NOT NULL, locale TEXT, theme VARCHAR(12) DEFAULT ("system"), avatar_exists INTEGER DEFAULT 0, avatar_version VARCHAR(32), bio TEXT DEFAULT (""), email_notifications INTEGER DEFAULT 0, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)',
-    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, status VARCHAR(24) NOT NULL DEFAULT (\'published\'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
+    'CREATE TABLE social_posts (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, status VARCHAR(24) NOT NULL DEFAULT (\'published\'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
     'CREATE TABLE social_post_likes (content_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL, UNIQUE(content_id, user_id))',
     'CREATE TABLE social_comments (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, parent_id INT UNSIGNED, user_id INT UNSIGNED NOT NULL, body TEXT, created_at DATETIME, comments_diff TEXT, INDEX content_comments_content_index (content_id,parent_id,created_at))',
     'CREATE TABLE social_comment_likes (comment_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL, UNIQUE(comment_id, user_id))',
@@ -29,7 +29,7 @@ foreach ([
     'CREATE TABLE social_links (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash VARCHAR(254) NOT NULL UNIQUE, provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)',
     'CREATE TABLE social_post_links (content_id INT UNSIGNED NOT NULL, link_id INT UNSIGNED NOT NULL, created_at DATETIME, UNIQUE(content_id, link_id))',
     'CREATE TABLE social_post_images (content_id INT UNSIGNED PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
-    'CREATE TABLE content_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, reporter_id INT UNSIGNED, reason TEXT, note TEXT, status VARCHAR(24), created_at DATETIME, updated_at DATETIME, reviewed_at TEXT, reviewed_by INTEGER, action_note TEXT)',
+    'CREATE TABLE social_reports (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, content_id INT UNSIGNED NOT NULL, reporter_id INT UNSIGNED, reason TEXT, note TEXT, status VARCHAR(24), created_at DATETIME, updated_at DATETIME, reviewed_at TEXT, reviewed_by INTEGER, action_note TEXT)',
     'CREATE TABLE notifications (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL, actor_id INT UNSIGNED, subject_id INT UNSIGNED, payload_json TEXT, type TEXT NOT NULL, notification_key VARCHAR(190) NOT NULL, read_at TEXT, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE(user_id, notification_key))',
     'CREATE TABLE user_followers (user_id INT UNSIGNED NOT NULL, follower_id INT UNSIGNED NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, follower_id))',
     'CREATE TABLE password_reset_tokens (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED, token_hash TEXT, expires_at DATETIME, used_at TEXT)',
@@ -334,8 +334,8 @@ try {
     $assert($status === 422 && isset($invalidInterval['error']['details']['errors']['publication_interval_minutes']), 'Invalid publication intervals return field validation errors.');
 
     $sourceDatabase = \tinycat_test_database($databasePath);
-    $previewDocument = json_encode(['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Preview feed', 'items' => [['id' => 'preview-only', 'title' => 'Preview post', 'content_text' => 'Preview text', 'url' => '/entry']]]);
-    $previewInput = ['document' => $previewDocument, 'feed_url' => 'https://93.184.216.34/feed', 'post_template' => '{{title}}'];
+    $previewDocument = json_encode(['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Preview feed', 'items' => [['id' => 'preview-only', 'title' => 'Preview post', 'content_text' => 'Preview text', 'url' => '/entry', 'image' => 'https://93.184.216.34/preview-image.png']]]);
+    $previewInput = ['document' => $previewDocument, 'feed_url' => 'https://93.184.216.34/feed', 'post_template' => '{{title}} {{image}}'];
     [$status] = $request('POST', '/api/bots/sources/previews', $previewInput, 'user', $csrf);
     $assert($status === 403, 'Source previews require administrator privileges.');
     [$status] = $request('POST', '/api/bots/sources/previews', $previewInput, 'admin');
@@ -344,6 +344,7 @@ try {
     [$status, $previewResource] = $request('POST', '/api/bots/sources/previews', $previewInput, 'admin', $csrf);
     $assert($status === 201 && $previewResource['data']['format'] === 'json_feed_1_1' && $previewResource['data']['items'][0]['body'] === 'Preview post', 'Preview uses the selected template and returns plain JSON resources.');
     $assert($previewResource['data']['items'][0]['url'] === 'https://93.184.216.34/entry', 'Provided feed documents use the same base URL resolution as downloaded feeds.');
+    $assert($previewResource['data']['items'][0]['image_url'] === 'https://93.184.216.34/preview-image.png', 'Image previews return the remote source rather than downloading a persistent link image.');
     $assert($sourceDatabase->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $beforePreview && (int) $sourceDatabase->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'preview-only') . "'")->fetchColumn() === 0, 'Preview never creates posts or claims import history.');
     [$status, $privatePreview] = $request('POST', '/api/bots/sources/previews', ['feed_url' => 'http://127.0.0.1/private'], 'admin', $csrf);
     $assert($status === 422 && isset($privatePreview['error']['details']['errors']['feed_url']), 'Unsafe preview URLs use the standard validation envelope.');

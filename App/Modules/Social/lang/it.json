@@ -215,7 +215,6 @@
     "preview_confirm": "Conferma e salva fonte",
     "preview_invalid": "Impossibile caricare la fonte o contenuto non supportato.",
     "preview_changed": "Il modulo è cambiato. Ricarica l’anteprima.",
-    "preview_help": "Esempio con il modello attuale. Nessun post o storico viene salvato.",
     "preview_image_pending": "L’immagine sarà verificata secondo le regole di caricamento durante l’importazione.",
     "preview_skipped": "Questo elemento verrebbe ignorato durante l’importazione.",
     "preview_discovery": "Feed trovati sul sito"

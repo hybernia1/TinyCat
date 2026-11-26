@@ -85,6 +85,7 @@ final class Administration
                 'username' => (string) ($user['username'] ?? ''),
                 'status' => (string) ($user['status'] ?? ''),
             ], self::bots()),
+            'bot_names' => array_column(self::bots(), 'username', 'id'),
             'filter_bot_user_id' => $filterBotId,
             'sorting' => $viewData['sorting'], 'filters' => $viewData['filters'],
             'pagination' => $viewData['pagination'], 'navigation' => $viewData['navigation'],
@@ -124,7 +125,7 @@ final class Administration
                 'SELECT u.*,
                     (SELECT COUNT(*) FROM bot_sources bs WHERE bs.bot_user_id = u.id) AS source_count,
                     (SELECT COUNT(*) FROM bot_sources bs WHERE bs.bot_user_id = u.id AND bs.enabled = 1) AS active_source_count,
-                    (SELECT COUNT(*) FROM social_posts c WHERE c.kind = \'post\' AND c.author_id = u.id) AS post_count,
+                    (SELECT COUNT(*) FROM social_posts c WHERE c.author_id = u.id) AS post_count,
                     (SELECT COUNT(*) FROM bot_source_runs br INNER JOIN bot_sources bs ON bs.id = br.source_id WHERE bs.bot_user_id = u.id) AS run_count
                 FROM users u
                 WHERE u.id = ? AND u.role = ?
@@ -140,7 +141,7 @@ final class Administration
     {
         $query = new \TinyCat\Database\Query('SELECT c.id, c.body, c.published_at, bs.id AS source_id, bs.name AS source_name
             FROM social_posts c LEFT JOIN bot_source_posts bsp ON bsp.content_id = c.id LEFT JOIN bot_sources bs ON bs.id = bsp.source_id');
-        $query->where('c.kind = ?', 'post')->where('c.author_id = ?', $botId);
+        $query->where('c.author_id = ?', $botId);
         $sources = self::sourceChoices($botId);
         $source = self::sourceFilter(\TinyCat\Http\Web::get('source', ''));
         if (!array_key_exists($source, $sources)) { $source = ''; }
@@ -167,7 +168,7 @@ final class Administration
                 'action_url' => '/api/bots/accounts/' . $botId . '/posts/' . $id, 'published_iso' => \TinyCat\Support\Dates::dateIso((string) $post['published_at'])];
         }, $items);
         $sorting = \TinyCat\Core\Ui\Admin\Views::sortHeadings(\TinyCat\Social\Bots\Sorting::LISTS['bot_posts'], $params, $apiUrl, $pageUrl);
-        $totalCount = $q === '' && $source === '' && $publication === '' ? (int) $pagination['total'] : (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_posts WHERE kind = \'post\' AND author_id = ?', [$botId]);
+        $totalCount = $q === '' && $source === '' && $publication === '' ? (int) $pagination['total'] : (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_posts WHERE author_id = ?', [$botId]);
         $navigation = \TinyCat\Core\Ui\Admin\Views::admin_pagination_view_data($pagination, $apiUrl, '#bot-detail-posts-list', $params, historyPath: $pageUrl);
         foreach ($sorting as &$heading) { $heading['target'] = '#bot-detail-posts-list'; $heading['history'] = false; }
         unset($heading);
@@ -184,7 +185,7 @@ final class Administration
     /** Validate ownership without evaluating public presentation or account statistics. */
     public static function requirePost(int $botId, int $postId): void
     {
-        $owned = \TinyCat\Database\Connection::one("SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.kind = 'post' AND c.id = ? AND c.author_id = ? AND u.role = 'bot'", [$postId, $botId]);
+        $owned = \TinyCat\Database\Connection::one("SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.id = ? AND c.author_id = ? AND u.role = 'bot'", [$postId, $botId]);
         if ($owned === null) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
     }
 
@@ -404,7 +405,7 @@ final class Administration
         $filters ??= self::accountFilters();
         $query = new \TinyCat\Database\Query('SELECT u.*,
             (SELECT COUNT(*) FROM bot_sources bs WHERE bs.bot_user_id = u.id) AS source_count,
-            (SELECT COUNT(*) FROM social_posts c WHERE c.kind = \'post\' AND c.author_id = u.id) AS post_count FROM users u');
+            (SELECT COUNT(*) FROM social_posts c WHERE c.author_id = u.id) AS post_count FROM users u');
         $query->where('u.role = ?', 'bot');
         if ($filters['q'] !== '') {
             $query->where("u.username LIKE ? ESCAPE '!'", '%' . \TinyCat\Database\Connection::escapeLike($filters['q']) . '%');
@@ -581,6 +582,7 @@ final class Administration
             'source' => self::prepareSourceInput($source),
             'constraints' => self::sourceConstraints(),
             'bots' => self::bots(),
+            'bot_names' => array_column(self::bots(), 'username', 'id'),
         ];
     }
 

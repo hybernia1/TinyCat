@@ -26,7 +26,7 @@ final class FeedStore
      * @param array<string, mixed>|null $link */
     public function duplicate(array $source, ?array $link): bool
     {
-        return $link !== null && \TinyCat\Database\Connection::value("SELECT 1 FROM social_links l INNER JOIN social_post_links cl ON cl.link_id = l.id INNER JOIN social_posts c ON c.id = cl.content_id WHERE l.url_hash = ? AND c.author_id = ? AND c.kind = 'post' LIMIT 1", [$link['url_hash'], (int) $source['bot_user_id']]) !== null;
+        return $link !== null && \TinyCat\Database\Connection::value("SELECT 1 FROM social_links l INNER JOIN social_post_links cl ON cl.link_id = l.id INNER JOIN social_posts c ON c.id = cl.content_id WHERE l.url_hash = ? AND c.author_id = ? LIMIT 1", [$link['url_hash'], (int) $source['bot_user_id']]) !== null;
     }
     /** Revalidate source identity and record the GUID, publication and mapping atomically.
      * The callback receives the source-owned publication time. Network work precedes this call.

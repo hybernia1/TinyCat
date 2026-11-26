@@ -41,7 +41,7 @@ final class Interactions
             'capabilities' => ['comment' => $target->comments && $target->interact, 'react' => $target->reactions && $target->interact],
             'likes_count' => $target->reactions ? Reactions::status_like_count($id) : 0,
             'liked' => $target->reactions && $actor !== null && Reactions::status_user_liked($id, (int) $actor['id']),
-            'items' => $target->comments ? Resource::comments(Comments::status_comments($id, $kind), $actor, $target) : []];
+            'items' => $target->comments ? Resource::comments(Comments::status_comments($id), $actor, $target) : []];
     }
 
     /**
@@ -52,7 +52,7 @@ final class Interactions
     {
         return Transactions::run(static function () use ($kind, $id, $actor, $action, $commentId, $body, $parentId, $desired): array {
             // Every operation locks in the same order, including parent checks and reaction toggles.
-            $publication = Connection::one('SELECT id FROM social_posts WHERE id = ? AND kind = ? FOR UPDATE', [$id, $kind]);
+            $publication = Connection::one('SELECT id FROM social_posts WHERE id = ? FOR UPDATE', [$id]);
             if ($publication === null) { self::fail('status_not_found', 404); }
             $target = self::target($kind, $id, $actor);
             $userId = (int) ($actor['id'] ?? 0);
@@ -66,7 +66,7 @@ final class Interactions
             }
             $data = ['comment_id' => $commentId, 'body' => $body, 'before' => $comment ?? []];
             if ($reaction) {
-                if ($action === 'comment_like' && ($comment === null || Comments::status_comment_item_find($commentId, $kind) === null)) { self::fail('comment_not_found', 404); }
+                if ($action === 'comment_like' && ($comment === null || Comments::status_comment_item_find($commentId) === null)) { self::fail('comment_not_found', 404); }
                 $table = $action === 'react' ? 'social_post_likes' : 'social_comment_likes';
                 $key = $action === 'react' ? 'content_id' : 'comment_id';
                 $subject = $action === 'react' ? $id : $commentId;
@@ -87,7 +87,7 @@ final class Interactions
                 $body = self::body($body);
                 if ($parentId > 0) {
                     $parent = Connection::one('SELECT * FROM social_comments WHERE id = ? AND content_id = ? FOR UPDATE', [$parentId, $id]);
-                    if ($parent === null || Comments::status_comment_item_find($parentId, $kind) === null) { self::fail('comment_not_found', 404); }
+                    if ($parent === null || Comments::status_comment_item_find($parentId) === null) { self::fail('comment_not_found', 404); }
                     $parentId = (int) ($parent['parent_id'] ?? 0) ?: $parentId;
                 }
                 $data['body'] = $body;
@@ -138,10 +138,9 @@ final class Interactions
         $comment = Comments::status_comment_find($id);
         if ($comment === null) { return; }
         $publication = \TinyCat\Social\Posts\Repository::find((int) $comment['content_id']);
-        $kind = (string) ($publication['kind'] ?? '');
-        if ($kind !== 'post') { return; }
+        if ($publication === null) { return; }
         // Cleanup does not grant access; an inactive owner never resolves public targets.
-        InteractionPolicy::event('comment_removed', new InteractionTarget('tinycat.social', $kind, (int) $comment['content_id'], '', false, false, false), [], ['comment_id' => $id]);
+        InteractionPolicy::event('comment_removed', new InteractionTarget('tinycat.social', 'post', (int) $comment['content_id'], '', false, false, false), [], ['comment_id' => $id]);
     }
 
     private static function fail(string $code, int $status): never

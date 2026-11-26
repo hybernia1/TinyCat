@@ -21,10 +21,10 @@ import "./workspace.js";
     return "/api/bots/sources" + (suffix || "") + (Number(bot) > 0 ? "?bot=" + encodeURIComponent(bot) : "");
   }
   function submit(form, key) { form.appendChild(U.button(key || "common.save", { type: "submit", "class": "btn btn-primary btn-sm" })); return form; }
-  function sourceForm(source, bots, constraints) {
+  function sourceForm(source, botNames, constraints) {
     var form = U.form(sourceUrl(source.id ? "/" + source.id : ""), source.id ? "PATCH" : "POST");
     form.dataset.ajaxTarget = document.querySelector("[data-bot-workspace-id]") ? "#bot-detail-sources-list" : "#bots-list"; form.dataset.modalCloseOnSuccess = "true";
-    form.appendChild(T.components.render("bots/source-fields", { source: source, bots: bots, constraints: constraints }));
+    form.appendChild(T.components.render("bots/source-fields", { source: source, bot_names: botNames, constraints: constraints }));
     return submit(form);
   }
   function sources(root, data) {
@@ -67,7 +67,7 @@ import "./workspace.js";
         return dialog;
       }
       if (/^\/api\/bots\/sources\/(?:[0-9]+\/)?management$/.test(url.pathname)) {
-        return U.sectionedDialog(id, response.data.item.id ? "bots.edit_source" : "bots.new_source", sourceForm(response.data.item, response.data.bots, response.data.constraints));
+        return U.sectionedDialog(id, response.data.item.id ? "bots.edit_source" : "bots.new_source", sourceForm(response.data.item, response.data.bot_names, response.data.constraints));
       }
       return null;
     },

@@ -215,7 +215,6 @@
     "preview_confirm": "Confirmar y guardar fuente",
     "preview_invalid": "No se pudo cargar la fuente o el contenido no es compatible.",
     "preview_changed": "El formulario cambió. Vuelve a cargar la vista previa.",
-    "preview_help": "Muestra con la plantilla actual. No se guardan publicaciones ni historial.",
     "preview_image_pending": "La imagen se validará según las reglas de carga al importar.",
     "preview_skipped": "Este elemento se omitiría al importar.",
     "preview_discovery": "Fuentes encontradas en el sitio"

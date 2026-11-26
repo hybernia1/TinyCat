@@ -32,7 +32,7 @@ final class Queue
         $query = new Query('SELECT c.id, c.body, c.published_at, u.id AS bot_id, u.username, u.status, bs.id AS source_id, bs.name AS source_name
             FROM social_posts c INNER JOIN users u ON u.id = c.author_id
             LEFT JOIN bot_source_posts bsp ON bsp.content_id = c.id LEFT JOIN bot_sources bs ON bs.id = bsp.source_id');
-        $query->where('c.kind = ?', 'post')->where('u.role = ?', 'bot')->where('c.published_at > ?', Dates::dateDb());
+        $query->where('u.role = ?', 'bot')->where('c.published_at > ?', Dates::dateDb());
         if ($filters['q'] !== '') { $query->where("c.body LIKE ? ESCAPE '!'", '%' . Connection::escapeLike($filters['q']) . '%'); }
         if ($bot > 0) { $query->where('u.id = ?', $bot); }
         if ($filters['status'] !== '') { $query->where('u.status = ?', $filters['status']); }
@@ -66,7 +66,7 @@ final class Queue
     public static function publish(int $id): Result
     {
         $error = Transactions::run(static function () use ($id): ?string {
-            $row = Connection::one('SELECT c.published_at, u.status FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.kind = \'post\' AND c.id = ? AND u.role = ?' . (' FOR UPDATE'), [$id, 'bot']);
+            $row = Connection::one('SELECT c.published_at, u.status FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.id = ? AND u.role = ?' . (' FOR UPDATE'), [$id, 'bot']);
             if ($row === null) { return 'missing'; }
             if ($row['status'] !== 'active') { return 'inactive'; }
             $now = Dates::dateDb();

@@ -13,17 +13,18 @@ final class Schema
 
     public static function schema(): \TinyCat\Core\Modules\ModuleSchema
     {
-        return new \TinyCat\Core\Modules\ModuleSchema(4, self::tables(), self::install(...), [
+        return new \TinyCat\Core\Modules\ModuleSchema(5, self::tables(), self::install(...), [
             new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.publishing.initial', null, '49b77a46cc768f5e5d9cae3db8bb7bd249c1eaeeda824abf7d92d03a28d0f43c'),
             new \TinyCat\Core\Modules\SchemaMigration(2, 'tinycat.publishing.kinds', null, 'dae1d419a620d0979bcf560e2351895a839c86fbfcba7c1602e7e56af2966c0d'),
             new \TinyCat\Core\Modules\SchemaMigration(3, 'tinycat.publishing.interaction-ownership', null, 'f8fb56260fda59a2a551ec708474635700c23a1936d9a91efa29fd7f12343e3a'),
             new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.publishing.owned-storage', null, '4d758c21e734f197136a0d02b41db6de93dd97239fdfd2c45b5b19be9a18c4ae'),
-        ], new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.publishing.fresh-v4', dirname(__DIR__, 2) . '/migrations/publishing/fresh-v4.php'), repairOnInstall: true, gateRoutes: false);
+            new \TinyCat\Core\Modules\SchemaMigration(5, 'tinycat.publishing.posts-only', dirname(__DIR__, 2) . '/migrations/publishing/005_posts_only.php'),
+        ], new \TinyCat\Core\Modules\SchemaMigration(5, 'tinycat.publishing.fresh-v5', dirname(__DIR__, 2) . '/migrations/publishing/fresh-v5.php'), repairOnInstall: true, gateRoutes: false);
     }
 
     public static function install(PDO $database): void
     {
-        $install = require dirname(__DIR__, 2) . '/migrations/publishing/fresh-v4.php';
+        $install = require dirname(__DIR__, 2) . '/migrations/publishing/fresh-v5.php';
         $install($database);
         if ($database->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') { self::ensureTagIndex($database); }
     }

@@ -19,7 +19,7 @@ Social přidává šestnáct tabulek:
 social_posts, social_post_redirects, social_post_images,
 social_terms, social_post_tags, social_links, social_post_links,
 social_comments, social_post_likes, social_comment_likes,
-user_followers, content_reports,
+user_followers, social_reports,
 bot_sources, bot_feed_history, bot_source_runs, bot_source_posts
 ```
 

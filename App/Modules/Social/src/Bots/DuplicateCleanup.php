@@ -39,7 +39,7 @@ final class DuplicateCleanup
         $now = Dates::dateDb();
         $rows = Connection::all("SELECT p.id,p.author_id,CRC32(p.body) AS body_crc
             FROM social_posts p INNER JOIN users u ON u.id=p.author_id
-            WHERE p.id>? AND p.kind='post' AND u.role='bot' AND u.status='active'
+            WHERE p.id>? AND u.role='bot' AND u.status='active'
                 AND p.status='published' AND p.published_at<=? AND TRIM(p.body)<>''
             ORDER BY p.id LIMIT " . ($window + 1), [$after, $now]);
         $selected = array_slice($rows, 0, $window);
@@ -50,10 +50,10 @@ final class DuplicateCleanup
             // These IDs are already bounded; hydrate them before probing author visibility.
             foreach (Connection::all("SELECT c.id,
             (SELECT k.id FROM social_posts k WHERE k.id<c.id AND k.author_id=c.author_id
-                AND k.kind='post' AND k.status='published' AND k.published_at<=? AND BINARY k.body = BINARY c.body
+                AND k.status='published' AND k.published_at<=? AND BINARY k.body = BINARY c.body
                 AND " . self::sameRelations('c', 'k') . " ORDER BY k.id LIMIT 1) AS keeper_id
             FROM social_posts c STRAIGHT_JOIN users u ON u.id=c.author_id
-            WHERE c.id IN (" . $marks . ") AND c.kind='post' AND u.role='bot' AND u.status='active'
+            WHERE c.id IN (" . $marks . ") AND u.role='bot' AND u.status='active'
                 AND c.status='published' AND c.published_at<=? AND TRIM(c.body)<>''
             ORDER BY c.id", [$now, ...$possible, $now]) as $row) {
                 if ($row['keeper_id'] !== null) { $keepers[(int) $row['id']] = (int) $row['keeper_id']; }
@@ -91,7 +91,7 @@ final class DuplicateCleanup
         $first = [];
         if ($tuples !== []) {
             foreach (Connection::all("SELECT k.author_id,CRC32(k.body) AS body_crc,MIN(k.id) AS first_id
-                FROM social_posts k WHERE k.id<=? AND k.kind='post' AND k.status='published' AND k.published_at<=?
+                FROM social_posts k WHERE k.id<=? AND k.status='published' AND k.published_at<=?
                     AND (k.author_id,CRC32(k.body)) IN (" . implode(',', $tuples) . ')
                 GROUP BY k.author_id,CRC32(k.body) HAVING COUNT(*)>1', $parameters) as $row) {
                 $first[$row['author_id'] . ':' . $row['body_crc']] = (int) $row['first_id'];
@@ -122,7 +122,7 @@ final class DuplicateCleanup
             if ((int) $keeper['id'] !== $keeperId || (int) $old['id'] !== $oldId || $keeperId >= $oldId
                 || (int) $keeper['author_id'] !== (int) $old['author_id'] || $keeper['body'] !== $old['body'] || (string) $old['body'] === '') { return false; }
             foreach ($rows as $row) {
-                if ($row['kind'] !== 'post' || $row['author_role'] !== 'bot' || $row['author_status'] !== 'active' || $row['status'] !== 'published' || $row['published_at'] > Dates::dateDb()) { return false; }
+                if ($row['author_role'] !== 'bot' || $row['author_status'] !== 'active' || $row['status'] !== 'published' || $row['published_at'] > Dates::dateDb()) { return false; }
             }
             if (Connection::value('SELECT 1 FROM social_posts n INNER JOIN social_posts k ON k.id=? WHERE n.id=? AND ' . self::sameRelations('n', 'k'), [$keeperId, $oldId]) === null) { return false; }
             foreach (Connection::all('SELECT user_id FROM social_post_likes WHERE content_id=?', [$oldId]) as $like) {
@@ -131,7 +131,7 @@ final class DuplicateCleanup
                 }
             }
             Connection::update('social_comments', ['content_id' => $keeperId], ['content_id' => $oldId]);
-            Connection::update('content_reports', ['content_id' => $keeperId], ['content_id' => $oldId]);
+            Connection::update('social_reports', ['content_id' => $keeperId], ['content_id' => $oldId]);
             \TinyCat\Social\Posts\NotificationHistory::mergeContent($oldId, $keeperId);
             // Flatten earlier aliases before deleting their previous target.
             Connection::update('social_post_redirects', ['content_id' => $keeperId], ['content_id' => $oldId]);

@@ -31,31 +31,31 @@ final class AuthorStatistics
                         (
                             SELECT COUNT(*)
                             FROM social_posts
-                            WHERE kind = \'post\' AND author_id = ?
+                            WHERE author_id = ?
                                 AND published_at <= ? AND status = \'published\'
                         ) AS posts,
                         (
                             SELECT COUNT(*)
                             FROM social_post_likes cl INNER JOIN social_posts c ON c.id = cl.content_id
-                            WHERE c.kind = \'post\' AND cl.user_id = ?
+                            WHERE cl.user_id = ?
                         ) + (
                             SELECT COUNT(*)
                             FROM social_comment_likes cl INNER JOIN social_comments cc ON cc.id = cl.comment_id INNER JOIN social_posts c ON c.id = cc.content_id
-                            WHERE c.kind = \'post\' AND cl.user_id = ?
+                            WHERE cl.user_id = ?
                         ) AS likes_given,
                         (
                             SELECT COUNT(*)
                             FROM social_posts c ' . $receivedLikesJoin . ' social_post_likes cl ON cl.content_id = c.id
-                            WHERE c.kind = \'post\' AND c.author_id = ?
+                            WHERE c.author_id = ?
                         ) + (
                             SELECT COUNT(*)
                             FROM social_comments cc ' . $receivedLikesJoin . ' social_comment_likes cl ON cl.comment_id = cc.id INNER JOIN social_posts c ON c.id = cc.content_id
-                            WHERE c.kind = \'post\' AND cc.user_id = ?
+                            WHERE cc.user_id = ?
                         ) AS likes_received,
                         (
                             SELECT COUNT(*)
                             FROM social_comments cc INNER JOIN social_posts c ON c.id = cc.content_id
-                            WHERE c.kind = \'post\' AND cc.user_id = ?
+                            WHERE cc.user_id = ?
                         ) AS comments',
                 [$authorId, \TinyCat\Support\Dates::dateDb(), $authorId, $authorId, $authorId, $authorId, $authorId]
             ) ?? [];

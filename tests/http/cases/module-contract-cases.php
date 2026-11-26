@@ -148,7 +148,7 @@ $assert($seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn
 [$status] = $request('PATCH', '/api/moderation/reports/999999', ['decision' => 'dismiss'], 'admin', $csrf);
 $assert($status === 409, 'Reviewing a missing or already closed report returns a conflict.');
 $seed->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (9000, 2, 'Review fixture', '2026-01-01 12:00:00')");
-$seed->exec("INSERT INTO content_reports (id, content_id, reporter_id, reason, status, created_at) VALUES (9000, 9000, 1, 'other', 'open', '2026-01-01 12:01:00')");
+$seed->exec("INSERT INTO social_reports (id, content_id, reporter_id, reason, status, created_at) VALUES (9000, 9000, 1, 'other', 'open', '2026-01-01 12:01:00')");
 [$status, $reportList] = $request('GET', '/api/moderation/reports?q=Review%20fixture&status=open&reason=other&per_page=10', null, 'admin');
 $assert($status === 200 && count($reportList['data']['items']) === 1 && $reportList['data']['items'][0]['id'] === 9000, 'Report search, status and reason filters compose on the grouped list.');
 $assert($reportList['meta']['pagination']['per_page'] === 10 && $reportList['meta']['pagination']['total'] === 1, 'Reports expose shared pagination metadata.');
@@ -170,15 +170,15 @@ $assert($status === 200 && $closedReports['data']['items'] === [], 'Open reports
 [$status, $wrongReason] = $request('GET', '/api/moderation/reports?q=Review%20fixture&reason=spam', null, 'admin');
 $assert($status === 200 && $wrongReason['data']['items'] === [], 'Report reason filtering excludes other reasons.');
 [$status, $payload] = $request('PATCH', '/api/moderation/reports/9000', ['decision' => 'dismiss', 'report_id' => 1], 'admin', $csrf);
-$assert($status === 200 && $seed->query('SELECT status FROM content_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Reviewing a report targets its path ID and updates the report.');
+$assert($status === 200 && $seed->query('SELECT status FROM social_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Reviewing a report targets its path ID and updates the report.');
 $pure($payload);
 $assert(!str_contains(json_encode($payload), 'status_badge_class'), 'Moderation resources do not contain DOM styling instructions.');
 [$status, $again] = $request('POST', '/api/moderation/reports', ['id' => 9000, 'reason' => 'spam', 'note' => 'New evidence after dismissal'], 'admin', $csrf);
 $assert($status === 201 && $again['code'] === 'report_created', 'Closed reports do not permanently prevent reporting the same post again.');
-$newReportId = (int) $seed->query("SELECT id FROM content_reports WHERE content_id = 9000 AND status = 'open'")->fetchColumn();
+$newReportId = (int) $seed->query("SELECT id FROM social_reports WHERE content_id = 9000 AND status = 'open'")->fetchColumn();
 $assert($newReportId !== 9000 && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'published', 'A new report retains the earlier decision and does not hide the post.');
 [$status] = $request('POST', '/api/moderation/reports', ['id' => 9000, 'reason' => 'abuse', 'note' => 'Updated open report'], 'admin', $csrf);
-$assert($status === 201 && (int) $seed->query("SELECT COUNT(*) FROM content_reports WHERE content_id = 9000 AND reporter_id = 1 AND status = 'open'")->fetchColumn() === 1, 'One reporter has at most one open report for a post.');
+$assert($status === 201 && (int) $seed->query("SELECT COUNT(*) FROM social_reports WHERE content_id = 9000 AND reporter_id = 1 AND status = 'open'")->fetchColumn() === 1, 'One reporter has at most one open report for a post.');
 [$status] = $request('PATCH', '/api/moderation/reports/' . $newReportId, ['decision' => 'remove'], 'admin', $csrf);
 $assert($status === 200 && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'hidden', 'Only an explicit moderation hide decision hides the post.');
 [$status] = $request('GET', '/api/statuses/9000', null, 'user');
@@ -196,7 +196,7 @@ $assert($status === 403, 'The author cannot use the administrator publication en
 $assert($status === 403, 'Administrative publication requires CSRF protection.');
 [$status, $published] = $request('POST', '/api/moderation/posts/9000/publication', [], 'admin', $csrf);
 $assert($status === 200 && $published['code'] === 'content_published' && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'published', 'Explicit administrative publication restores visibility.');
-$assert($seed->query('SELECT status FROM content_reports WHERE id = ' . $newReportId)->fetchColumn() === 'resolved' && $seed->query('SELECT status FROM content_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Publishing preserves earlier report outcomes.');
+$assert($seed->query('SELECT status FROM social_reports WHERE id = ' . $newReportId)->fetchColumn() === 'resolved' && $seed->query('SELECT status FROM social_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Publishing preserves earlier report outcomes.');
 [$status, $payload] = $request('GET', '/api/site/sidebar');
 $assert($status === 200 && isset($payload['data']['tags'], $payload['data']['authors'], $payload['data']['privacy_url']) && !array_key_exists('footer', $payload['data']), 'The sidebar exposes resources and the privacy link without retired custom footer data.');
 $pure($payload);

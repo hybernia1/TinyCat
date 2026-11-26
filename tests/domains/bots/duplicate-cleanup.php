@@ -21,11 +21,11 @@ $exercise = static function (TinyCatTestLockPDO $db) use ($assert): void {
 
     foreach ([
         'CREATE TABLE users (id INT UNSIGNED PRIMARY KEY,username VARCHAR(40),role VARCHAR(20),status VARCHAR(20))',
-        'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id BIGINT UNSIGNED PRIMARY KEY,author_id INT UNSIGNED,body VARCHAR(2000),published_at DATETIME,status VARCHAR(20), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
+        'CREATE TABLE social_posts (id BIGINT UNSIGNED PRIMARY KEY,author_id INT UNSIGNED,body VARCHAR(2000),published_at DATETIME,status VARCHAR(20), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))',
         'CREATE TABLE social_post_likes (content_id BIGINT UNSIGNED,user_id INT UNSIGNED,PRIMARY KEY(content_id,user_id),FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
         'CREATE TABLE social_comments (id BIGINT UNSIGNED PRIMARY KEY,content_id BIGINT UNSIGNED,parent_id BIGINT UNSIGNED NULL,body VARCHAR(2000),comments_diff TEXT,FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE,FOREIGN KEY(parent_id) REFERENCES social_comments(id) ON DELETE CASCADE)',
         'CREATE TABLE social_comment_likes (comment_id BIGINT UNSIGNED,user_id INT UNSIGNED,FOREIGN KEY(comment_id) REFERENCES social_comments(id) ON DELETE CASCADE)',
-        'CREATE TABLE content_reports (id BIGINT UNSIGNED PRIMARY KEY,content_id BIGINT UNSIGNED,note TEXT,FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
+        'CREATE TABLE social_reports (id BIGINT UNSIGNED PRIMARY KEY,content_id BIGINT UNSIGNED,note TEXT,FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
         'CREATE TABLE social_terms (id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(80))',
         'CREATE TABLE social_links (id BIGINT UNSIGNED PRIMARY KEY,normalized_url VARCHAR(2048),image_url VARCHAR(2048))',
         'CREATE TABLE social_post_tags (content_id BIGINT UNSIGNED,term_id BIGINT UNSIGNED,PRIMARY KEY(content_id,term_id),FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
@@ -51,7 +51,7 @@ $exercise = static function (TinyCatTestLockPDO $db) use ($assert): void {
     $db->exec('INSERT INTO social_post_likes VALUES (1,3),(2,3),(2,4),(3,5)');
     $db->exec("INSERT INTO social_comments VALUES (101,2,NULL,'Parent','history'),(102,2,101,'Reply','reply history'),(103,3,NULL,'Other','history')");
     $db->exec('INSERT INTO social_comment_likes VALUES (102,3)');
-    $db->exec("INSERT INTO content_reports VALUES (1,2,'keep report'),(2,3,'keep another report')");
+    $db->exec("INSERT INTO social_reports VALUES (1,2,'keep report'),(2,3,'keep another report')");
     $notify = $db->prepare('INSERT INTO notifications VALUES (?,?,?,?,?,?,?,?,?,?)');
     foreach ([
         [1,3,4,2,null,'content_like','content_like:99:4',null,'2000-01-01','2000-01-02'],
@@ -97,7 +97,7 @@ $exercise = static function (TinyCatTestLockPDO $db) use ($assert): void {
         && (int) $db->query('SELECT parent_id FROM social_comments WHERE id=102')->fetchColumn() === 101
         && $db->query('SELECT comments_diff FROM social_comments WHERE id=102')->fetchColumn() === 'reply history'
         && (int) $db->query('SELECT COUNT(*) FROM social_comment_likes')->fetchColumn() === 1, 'Comment IDs, replies, history and likes survive.');
-    $assert((int) $db->query('SELECT COUNT(*) FROM content_reports WHERE content_id=1')->fetchColumn() === 2, 'All report history survives.');
+    $assert((int) $db->query('SELECT COUNT(*) FROM social_reports WHERE content_id=1')->fetchColumn() === 2, 'All report history survives.');
     $assert((int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === 6
         && $db->query('SELECT read_at FROM notifications WHERE id=2')->fetchColumn() === null, 'Notification collisions collapse while preserving unread state.');
     foreach ([3 => 'comment_mention:1:102:5',4 => 'comment_like:103:4',5 => 'content_mention:1:0:4',6 => 'report_resolved:2',7 => 'content_comment:1:103'] as $id => $key) {
@@ -109,7 +109,7 @@ $exercise = static function (TinyCatTestLockPDO $db) use ($assert): void {
     $assert($db->query('SELECT path FROM social_post_images WHERE content_id=11')->fetchColumn() === '2026/11/shared.webp', 'The shared attachment stays attached to the keeper.');
     $again = \TinyCat\Core\Tasks\Cleanup\Task::runTask('duplicate_bot_posts', 500);
     $assert($again['changed'] === 0 && $again['done'], 'The existing cleanup task dispatches this idempotent subtask.');
-    $seed = $db->prepare("INSERT INTO social_posts (id,author_id,body,published_at,status,kind) VALUES (?,1,?,'2000-01-01','published','post')");
+    $seed = $db->prepare("INSERT INTO social_posts (id,author_id,body,published_at,status) VALUES (?,1,?,'2000-01-01','published')");
     for ($id = 1000; $id < 1650; $id++) { $seed->execute([$id, 'unique-' . $id]); }
     $seed->execute([2000, 'unique-1000']);
     $window = DuplicateCleanup::run(1);

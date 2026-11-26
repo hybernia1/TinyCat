@@ -65,7 +65,7 @@ final class NotificationHistory
             return;
         }
 
-        $query = \TinyCat\Database\Query::select('SELECT DISTINCT reporter_id FROM content_reports')
+        $query = \TinyCat\Database\Query::select('SELECT DISTINCT reporter_id FROM social_reports')
             ->where('content_id = ?', $contentId);
 
         if ($reportStatus !== '') {
@@ -109,7 +109,7 @@ final class NotificationHistory
     {
         if ($commentId < 1 || !\TinyCat\Core\Notifications\Delivery::available()) { return; }
         self::removeSubjects('social_comments cc INNER JOIN social_posts c ON c.id = cc.content_id', 'cc.id',
-            "c.kind = 'post' AND (cc.id = ? OR cc.parent_id = ?)", [$commentId, $commentId],
+            "(cc.id = ? OR cc.parent_id = ?)", [$commentId, $commentId],
             ['content_comment', 'comment_like', 'comment_mention']);
     }
 
@@ -118,10 +118,10 @@ final class NotificationHistory
     {
         $id = (int) $user['id'];
         if ($id < 1 || !\TinyCat\Core\Notifications\Delivery::available()) { return new \TinyCat\Core\Identity\Deletion(); }
-        self::removeSubjects('social_posts c', 'c.id', "c.kind = 'post' AND c.author_id = ?", [$id],
+        self::removeSubjects('social_posts c', 'c.id', "c.author_id = ?", [$id],
             ['content_like', 'content_mention', 'report_resolved', 'report_dismissed']);
         self::removeSubjects('social_comments cc INNER JOIN social_posts c ON c.id = cc.content_id LEFT JOIN social_comments parent ON parent.id = cc.parent_id', 'cc.id',
-            "c.kind = 'post' AND (c.author_id = ? OR cc.user_id = ? OR parent.user_id = ?)", [$id, $id, $id],
+            "(c.author_id = ? OR cc.user_id = ? OR parent.user_id = ?)", [$id, $id, $id],
             ['content_comment', 'comment_like', 'comment_mention']);
         return new \TinyCat\Core\Identity\Deletion();
     }

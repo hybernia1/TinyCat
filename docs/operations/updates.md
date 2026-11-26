@@ -7,6 +7,34 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.13
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB.
+Social's publication stream advances from 4 to 5 and removes `social_posts.kind`
+only after verifying that every existing row is a post. Unexpected kinds stop
+migration before the column is removed. The moderation stream advances from 1
+to 2 and renames `content_reports` to `social_reports`, retaining report IDs,
+notes, decisions, timestamps and foreign keys. Both migrations are resumable;
+new installations use standalone current baselines. Published migrations and
+historical checksums remain unchanged. No configuration change is required.
+
+Social uses core select, button, notice and identity styles. Empty feeds share
+one definition on initial render and AJAX refresh. The missing-email notice
+opens the account's email editor directly; the separate post permalink icon is
+removed because the timestamp already links to the post. The avatar dialog
+omits refresh/cancel buttons and uses the common delete label. Removed Social
+email-notice CSS files are included in the update deletion plan.
+
+Feed previews display safe remote image URLs without writing media files to
+uploads; real imports still download their attachments. Preview help text and
+its translations are removed. WordPress artwork discovery may still use its
+technical metadata cache; preview does not publish posts, tags, links or GUID
+history and does not change source scheduling.
+
+Publish matching signed Core and Social update/install packages. The standard
+updater backs up pending schema changes and exact rollback restores the original
+schema and data. Retain rescue-launcher preparation for updates from 6.0.10.
+
 ## Upgrading to 8.0.12
 
 Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No database

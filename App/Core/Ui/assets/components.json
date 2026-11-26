@@ -84,6 +84,12 @@
         "attrs": {"get": "attributes"},
         "children": [
           {
+            "tag": "option",
+            "attrs": {"value": "", "selected": {"if": [{"eq": [{"string": {"get": "value"}}, ""]}, true, null]}},
+            "when": {"get": "all"},
+            "children": [{"t": "common.all"}]
+          },
+          {
             "each": {"get": "choices"},
             "as": "choice",
             "children": [
@@ -833,6 +839,7 @@
       {
         "tag": "button",
         "attrs": {"type": "button", "class": "btn btn-secondary", "data-modal-close": ""},
+        "when": {"get": "cancel_label"},
         "children": [{"get": "cancel_label"}]
       },
       {"slot": {"get": "primary"}, "when": {"get": "primary"}}
@@ -2110,5 +2117,24 @@
     "tag": "th",
     "attrs": {"scope": "col", "aria-sort": {"get": "order.aria"}},
     "children": [{"component": "ui/sort-heading", "data": {"label": {"get": "label"}, "order": {"get": "order"}}}]
+  },
+  "ui/button": {
+    "tag": "button",
+    "attrs": {"get": "attributes"},
+    "children": [{"icon": {"get": "icon"}, "when": {"get": "icon"}}, {"get": "label"}]
+  },
+  "ui/filter-attributes": {
+    "or": [
+      {"get": "attributes"},
+      {
+        "class": "stack",
+        "method": "get",
+        "action": {"get": "url"},
+        "data-api-method": "GET",
+        "data-ajax-form": "",
+        "data-ajax-target": {"get": "target"},
+        "data-history": {"get": "history"}
+      }
+    ]
   }
 }

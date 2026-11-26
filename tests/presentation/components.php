@@ -122,7 +122,7 @@ $assert(\TinyCat\Core\Ui\Components::render('ui/help', ['text' => '']) === '', '
 $accountFilters = \TinyCat\Core\Ui\Components::render('bots/account-filter-form', ['filters' => ['q' => 'Bot <unsafe>', 'status' => 'ban'], 'pagination' => ['per_page' => 25], 'statuses' => ['active', 'waiting', 'ban']]);
 $assert(str_contains($accountFilters, 'action="/api/bots/accounts') && str_contains($accountFilters, 'name="status"') && str_contains($accountFilters, 'value="ban" selected'), 'Account filters share their canonical owner component and selected status.');
 $assert(str_contains($accountFilters, 'Bot &lt;unsafe&gt;') && str_contains($accountFilters, 'data-ajax-target="#bot-accounts-list"') && !str_contains($accountFilters, 'role="dialog"') && !str_contains($accountFilters, 'type="submit"'), 'Account filters preserve escaped search state and automatic submission.');
-$sourceFilters = \TinyCat\Core\Ui\Components::render('bots/source-filter-form', ['bots' => [['id' => 3, 'username' => 'Bot <unsafe>']], 'filters' => ['bot' => '3', 'q' => 'Feed'], 'pagination' => ['per_page' => 25]]);
+$sourceFilters = \TinyCat\Core\Ui\Components::render('bots/source-filter-form', ['bot_names' => [3 => 'Bot <unsafe>'], 'filters' => ['bot' => '3', 'q' => 'Feed'], 'pagination' => ['per_page' => 25]]);
 $assert(str_contains($sourceFilters, 'action="/api/bots/sources"') && str_contains($sourceFilters, 'value="3" selected'), 'Source filters share their canonical owner component and selected bot.');
 $assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source filters preserve their scoped controls and automatic submission.');
 
@@ -167,9 +167,9 @@ try {
 }
 $assert(!str_contains((string) file_get_contents(__DIR__ . '/../../App/Core/Ui/Admin/templates/shell.php'), '$settingsEditor'), 'Admin pages do not embed a settings editor.');
 $source = ['id' => 7, 'bot_user_id' => 3, 'username' => 'Bot', 'name' => 'Source', 'enabled' => true, 'feed_url' => 'https://example.test/feed'];
-$sourceModel = ['source' => \TinyCat\Social\Bots\Administration::prepareSourceInput($source), 'constraints' => \TinyCat\Social\Bots\Administration::sourceConstraints(), 'bots' => []];
+$sourceModel = ['source' => \TinyCat\Social\Bots\Administration::prepareSourceInput($source), 'constraints' => \TinyCat\Social\Bots\Administration::sourceConstraints(), 'bot_names' => []];
 $sourceFields = \TinyCat\Core\Ui\Components::render('bots/source-fields', $sourceModel);
-$typedFields = \TinyCat\Core\Ui\Components::render('bots/source-fields', array_diff_key($sourceModel, ['bots' => true]));
+$typedFields = \TinyCat\Core\Ui\Components::render('bots/source-fields', array_diff_key($sourceModel, ['bot_names' => true]));
 $assert(!str_contains($typedFields, 'source_type') && str_contains($typedFields, '{{image}}'), 'Unified source forms retain the optional image marker without a type selector.');
 $previewMarkup = \TinyCat\Core\Ui\Components::render('bots/source-preview', ['format' => 'json_feed_1_1', 'title' => '<script>bad</script>', 'items' => [['title' => 'Sample', 'body' => '<img onerror=bad>', 'image_url' => '', 'has_image' => false, 'rejection' => null]], 'sources' => []]);
 $assert(str_contains($previewMarkup, '&lt;script&gt;') && str_contains($previewMarkup, '&lt;img onerror=bad&gt;') && !str_contains($previewMarkup, '<script>'), 'Preview renders untrusted feed content as plain text, never executable markup.');

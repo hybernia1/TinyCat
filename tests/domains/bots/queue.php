@@ -12,7 +12,7 @@ use TinyCat\Core\Ui\Components;
 $db = \tinycat_test_database();
 Connection::set($db);
 $db->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), role VARCHAR(40), status VARCHAR(24))');
-$db->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
+$db->exec('CREATE TABLE social_posts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME, INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))');
 $db->exec('CREATE TABLE bot_sources (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, bot_user_id INT UNSIGNED, name TEXT)');
 $db->exec('CREATE TABLE bot_source_posts (content_id INT UNSIGNED PRIMARY KEY, source_id INT UNSIGNED NOT NULL)');
 $db->exec("INSERT INTO users VALUES (1,'Zulu','bot','active'), (2,'Alpha','bot','ban'), (3,'Human','user','active')");

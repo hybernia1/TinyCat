@@ -147,7 +147,8 @@
       "ui/select",
       "ui/editor-actions",
       "ui/editor-refresh",
-      "ui/account-title"
+      "ui/account-title",
+      "ui/button"
     ],
     "translations": [
       "common.leave",

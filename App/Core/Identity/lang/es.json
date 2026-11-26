@@ -105,7 +105,6 @@
     "avatar_upload_label": "Elige imagen",
     "avatar_upload_empty": "Aún no se ha subido ningún avatar.",
     "save_avatar": "guardar avatar",
-    "remove_avatar": "Eliminar avatar",
     "remove_avatar_title": "Eliminar avatar",
     "remove_avatar_confirm": "¿Eliminar el avatar actual?",
     "username_hint": "Utilice entre 2 y 32 letras (incluidos acentos), números, puntos, guiones o guiones bajos. Comience con una letra o un número; no termine con un punto o guión. El nombre no puede contener solo números.",

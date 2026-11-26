@@ -52,7 +52,6 @@
       "App/Modules/Social/assets/status/comment-pagination.js"
     ],
     "styles": [
-      "App/Modules/Social/assets/status/styles/status-email-notice.css",
       "App/Modules/Social/assets/status/styles/status-feed.css",
       "App/Modules/Social/assets/status/styles/status-header.css",
       "App/Modules/Social/assets/status/styles/status-text.css",
@@ -62,7 +61,6 @@
       "App/Modules/Social/assets/status/styles/status-editing.css",
       "App/Modules/Social/assets/status/styles/status-avatars.css",
       "App/Modules/Social/assets/status/styles/status-detail.css",
-      "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
       "App/Modules/Social/assets/status/styles/status-content-mobile.css",
       "App/Modules/Social/assets/status/styles/status-feed-mobile.css",
       "App/Modules/Social/assets/status/styles/embed-preview.css",
@@ -328,9 +326,8 @@
       "bots/workspace",
       "bots/workspace-lists",
       "bots/workspace-form",
-      "bots/workspace-retry",
       "bots/source-preview-state",
-      "bots/source-preview-confirm"
+      "ui/button"
     ],
     "entries": [
       "App/Modules/Social/assets/bots/index.js"

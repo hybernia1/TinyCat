@@ -70,7 +70,7 @@ final class Repository
                     FROM social_posts c' . $feedIndex . '
                     INNER JOIN users u ON u.id = c.author_id'
             )
-                ->where('c.kind = ?', 'post')
+
                 ->where('c.published_at >= ?', \TinyCat\Support\Dates::dateDb('-' . $days . ' days'))
                 ->where('c.published_at <= ? AND c.status = \'published\'', \TinyCat\Support\Dates::dateDb())
                 ->where('u.status = ?', 'active')

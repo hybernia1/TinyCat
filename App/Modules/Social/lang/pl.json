@@ -215,7 +215,6 @@
     "preview_confirm": "Potwierdź i zapisz źródło",
     "preview_invalid": "Nie udało się wczytać źródła lub treść nie jest obsługiwana.",
     "preview_changed": "Formularz się zmienił. Wczytaj podgląd ponownie.",
-    "preview_help": "Przykład z bieżącym szablonem. Wpisy i historia importu nie są zapisywane.",
     "preview_image_pending": "Obraz zostanie sprawdzony według zasad przesyłania przy imporcie.",
     "preview_skipped": "Ten element zostałby pominięty przy imporcie.",
     "preview_discovery": "Kanały znalezione w witrynie"

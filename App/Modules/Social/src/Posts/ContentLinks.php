@@ -29,7 +29,7 @@ final class ContentLinks
     /** @return array{url: string, original_url: string}|null */
     public static function resolve(int $contentId, string $hash, int $commentId = 0): ?array
     {
-        $item = \TinyCat\Database\Connection::one('SELECT c.body FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.kind = \'post\' AND c.id = ? AND c.published_at <= ? AND c.status = \'published\' AND u.status = ?', [$contentId, \TinyCat\Support\Dates::dateDb(), 'active']);
+        $item = \TinyCat\Database\Connection::one('SELECT c.body FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE c.id = ? AND c.published_at <= ? AND c.status = \'published\' AND u.status = ?', [$contentId, \TinyCat\Support\Dates::dateDb(), 'active']);
         if ($item === null) {
             $canonicalId = Repository::redirectTarget($contentId);
             return $canonicalId === null ? null : self::resolve($canonicalId, $hash, $commentId);

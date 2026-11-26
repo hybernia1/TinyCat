@@ -23,7 +23,7 @@ $filters = [];
 foreach (['bots/queue-filter-form', 'bots/post-filter-form', 'bots/run-filter-form', 'moderation/filter-form', 'scheduler/filter-form'] as $name) {
     $filters[$name] = \TinyCat\Core\Ui\Components::render($name, ['filters' => [], 'pagination' => ['per_page' => 25]]);
 }
-$filters['bots/source-filter'] = \TinyCat\Core\Ui\Components::render('bots/source-filter-form', ['bots' => []]);
+$filters['bots/source-filter'] = \TinyCat\Core\Ui\Components::render('bots/source-filter-form', ['bot_names' => []]);
 $filters['bots/account-filter'] = \TinyCat\Core\Ui\Components::render('bots/account-filter-form', ['statuses' => ['active']]);
 $notifications = \TinyCat\Core\Notifications\Views::menu(['state' => [], 'notifications' => []]);
 $public = \TinyCat\Core\Ui\DocumentData::publicHeader([

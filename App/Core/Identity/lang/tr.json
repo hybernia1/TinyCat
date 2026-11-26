@@ -105,7 +105,6 @@
     "avatar_upload_label": "Görsel seç",
     "avatar_upload_empty": "Henüz avatar yüklenmedi.",
     "save_avatar": "Avatarı kaydet",
-    "remove_avatar": "Avatarı kaldır",
     "remove_avatar_title": "Avatarı kaldır",
     "remove_avatar_confirm": "Mevcut avatar kaldırılsın mı?",
     "username_hint": "2-32 harf (vurgu dahil), rakam, nokta, tire veya alt çizgi kullanın. Bir harf veya rakamla başlayın; nokta veya kısa çizgi ile bitmeyin. Ad yalnızca rakamlardan oluşamaz.",
