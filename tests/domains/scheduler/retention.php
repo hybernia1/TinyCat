@@ -245,6 +245,7 @@ $assert(\TinyCat\Core\Tasks\Tasks::context('cleanup', ['mode' => 'http'])['optio
 $assert(\TinyCat\Core\Tasks\Tasks::context('cleanup', ['mode' => 'admin', 'options' => ['cleanup_batch' => 500]])['options']['cleanup_batch'] === 500, 'Explicit manual options take precedence.');
 $detail = \TinyCat\Core\Tasks\Cleanup\Task::detail(['summary' => ['tasks' => [['task' => 'retired_build_files', 'changed' => 2, 'has_more' => true, 'duration_ms' => 4, 'batch_size' => 5000], ['task' => 'old_owner', 'error' => '<unsafe>', 'changed' => 0]]]]);
 $assert(count($detail['details']) === 2 && $detail['details'][0]['status']['code'] === 'warning' && $detail['details'][1]['status']['code'] === 'critical', 'Cleanup details retain per-part pending and failure information using shared status tones, including historical owners.');
+$assert(!array_key_exists('details', \TinyCat\Core\Tasks\Cleanup\Task::detail(['summary' => []])), 'Historical runs without maintenance data do not gain unrelated detail sections.');
 
 // Runtime outputs renew publication time and retain dependencies of recent roots.
 $runtimeUrl = \TinyCat\Support\Minifier::cachedAssetUrl('fixture', 'fixture', 'const value = 1;', 'js', false);

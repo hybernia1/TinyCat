@@ -31,6 +31,7 @@ final class Task
      * @return array<string, mixed> */
     public static function detail(array $run): array
     {
+        if (empty($run['summary']['tasks']) || !is_array($run['summary']['tasks'])) { return $run; }
         $run['details'] = [];
         foreach ($run['summary']['tasks'] ?? [] as $result) {
             if (!is_array($result)) { continue; }
