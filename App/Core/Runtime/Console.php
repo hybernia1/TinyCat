@@ -21,12 +21,22 @@ final class Console
             \TinyCat\Support\Config::load();
             if (!in_array($command, ['help', 'rescue', 'rollback', 'finish-deployment'], true) && \TinyCat\Core\Updates\Manager::installationPending()) { throw new \RuntimeException('Installation recovery is required.'); }
             if ($command === 'help') {
-                echo "php App/Console.php status|install|upgrade|rescue|activate ID...|deactivate ID...|task ID [name=integer ...]|module-install ZIP|update MANIFEST SIGNATURE ZIP|rollback BACKUP_ID|finish-deployment BACKUP_ID\n";
+                echo "php App/Console.php status|install|upgrade|assets|rescue|activate ID...|deactivate ID...|task ID [name=integer ...]|module-install ZIP|update MANIFEST SIGNATURE ZIP|rollback BACKUP_ID|finish-deployment BACKUP_ID\n";
                 echo "Install reads the selected setup providers' JSON input from stdin. Configure config.php first.\n";
                 echo "Installation recovery: rollback BACKUP_ID --installation-stdin reads a database JSON object from private stdin.\n";
                 return 0;
             }
-            if ($command === 'rescue') {
+            if ($command === 'assets') {
+                if (count($arguments) !== 2) { throw new \InvalidArgumentException('Asset preparation takes no arguments.'); }
+                $result = \TinyCat\Core\Updates\Manager::runTask(static function (): array {
+                    return \TinyCat\Support\Cache::synchronized('prepared-assets', static function (): array {
+                        Application::start();
+                        \TinyCat\Support\PreparedAssets::prepare();
+                        return ['assets' => 'prepared'];
+                    });
+                });
+            }
+            elseif ($command === 'rescue') {
                 $file = $root . '/storage/updates/console.php';
                 $bootstrap = "<?php\ndeclare(strict_types=1);\nif (PHP_SAPI !== 'cli') { http_response_code(403); exit; }\ndefine('TINYCAT', true);\nrequire " . var_export($root . '/App/Core/Runtime/autoload.php', true) . ";\nexit(\\TinyCat\\Core\\Runtime\\Console::run(\$argv));\n";
                 if (!\TinyCat\Support\Storage::write($file, $bootstrap)) { throw new \RuntimeException('Cannot prepare the private rescue launcher.'); }

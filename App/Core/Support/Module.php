@@ -12,6 +12,7 @@ final class Module implements \TinyCat\Core\Modules\ProvidesContributions
             new \TinyCat\Core\Modules\MaintenanceTask('expired_cache_files', static fn (int $batch): array => Cache::cleanupExpired($batch), 80),
             new \TinyCat\Core\Modules\MaintenanceTask('retired_build_files', BuildCleanup::run(...), 85),
             new \TinyCat\Core\Modules\MaintenanceTask('retired_runtime_assets', RuntimeAssetCleanup::run(...), 86),
+            new \TinyCat\Core\Modules\MaintenanceTask('expired_prepared_assets', PreparedAssets::cleanup(...), 87),
             new \TinyCat\Core\Modules\MaintenanceTask('abandoned_module_packages', \TinyCat\Core\Modules\ModulePackage::cleanupAbandoned(...), 87),
             new \TinyCat\Core\Modules\MaintenanceTask('old_debug_logs', \TinyCat\Core\Runtime\Debug::cleanupLogs(...), 88),
         ]);

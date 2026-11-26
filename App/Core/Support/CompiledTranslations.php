@@ -10,49 +10,17 @@ final class CompiledTranslations
     private static ?array $manifest = null;
     /** @var array<string, array<mixed>> */
     private static array $catalogs = [];
-    /** @var array{revision: int, packages: string|false|null}|null */
-    private static ?array $deployment = null;
-    private static bool $snapshot = false;
-
-    /** Read-only HTTP requests share one deployment identity; builds and writes stay fresh.
-     * @template T
-     * @param callable(): T $read
-     * @return T */
-    public static function withDeploymentSnapshot(callable $read): mixed
-    {
-        $previous = self::$deployment; $snapshot = self::$snapshot;
-        self::$deployment = null; self::$snapshot = true;
-        try { return $read(); }
-        finally { self::$deployment = $previous; self::$snapshot = $snapshot; }
-    }
-
     /** @return array<mixed> */
     private static function manifest(): array
     {
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return []; }
+        if (class_exists(Config::class, false) && (bool) Config::get('assets.source', false)) { return []; }
         $file = Paths::basePath('App/Core/Support/compiled/translations.php');
         self::$manifest ??= is_file($file) ? require $file : [];
         $manifest = self::$manifest ?? [];
-        return self::matchesSelection($manifest) ? $manifest : [];
-    }
-
-    /** Shared deployment identity check; readers reject scoped builds before loading.
-     * @internal
-     * @param array<mixed> $manifest */
-    public static function matchesSelection(array $manifest): bool
-    {
-        $selectionRevision = class_exists(\TinyCat\Core\Modules\Resources::class) ? \TinyCat\Core\Modules\Resources::revision() : 0;
-        $deployment = self::$snapshot ? self::$deployment : null;
-        if ($deployment === null || $deployment['revision'] !== $selectionRevision) {
-            $packages = Paths::basePath('App/module-packages.json');
-            $deployment = ['revision' => $selectionRevision, 'packages' => is_file($packages) ? hash_file('sha256', $packages) : null];
-            if (self::$snapshot) { self::$deployment = $deployment; }
-        }
-        if ($deployment['packages'] === false || ($manifest['server_components_packages'] ?? null) !== $deployment['packages']) { return false; }
-        if (isset($manifest['selection']) && class_exists(\TinyCat\Core\Modules\Resources::class)) {
-            return $manifest['selection'] === \TinyCat\Core\Modules\Resources::fingerprint();
-        }
-        return !is_file(Paths::basePath('storage/deployment.json'));
+        if ($manifest !== [] && DeploymentIdentity::matchesSelection($manifest)) { return $manifest; }
+        $prepared = PreparedAssets::read();
+        return $prepared === [] ? [] : ['_prepared' => true, 'packages' => $prepared['packages']];
     }
 
     /** @return array<string, string>|null */
@@ -67,6 +35,7 @@ final class CompiledTranslations
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return null; }
         $manifest = self::manifest();
         if ($manifest === []) { return null; }
+        if ($manifest['_prepared'] ?? false) { return PreparedAssets::read()['catalogs'][$locale] ?? null; }
         if (isset(self::$catalogs[$locale])) { return self::$catalogs[$locale]; }
         $name = $manifest['catalogs'][$locale] ?? null;
         if (!is_string($name)) { return null; }

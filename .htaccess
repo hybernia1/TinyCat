@@ -16,7 +16,7 @@ RedirectMatch 404 "^/storage(?:$|/(?!cache/assets/[A-Za-z0-9._-]+\.(?:css|js|svg
 <IfModule mod_setenvif.c>
     SetEnvIfNoCase Authorization "^(.+)$" HTTP_AUTHORIZATION=$1
     SetEnvIfNoCase Request_URI "\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot)$" tinycat_static_asset
-    SetEnvIfNoCase Request_URI "^/assets/.*\.[a-f0-9]{24}\.(css|js|svg)$" tinycat_versioned_asset
+    SetEnvIfNoCase Request_URI "^/assets/build/[A-Za-z0-9_-]+\.[a-f0-9]{24}\.(css|js|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)$" tinycat_versioned_asset
     SetEnvIfNoCase Request_URI "^/(?:cache/assets|storage/cache/assets)/[A-Za-z0-9._-]+\.(css|js|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)$" tinycat_versioned_asset
     SetEnvIfNoCase Request_URI "^/uploads/.*\.(svg|png|jpe?g|gif|webp|avif)$" tinycat_upload_asset
 </IfModule>
