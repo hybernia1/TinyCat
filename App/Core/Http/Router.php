@@ -18,6 +18,8 @@ final class Router
     private static array $routes = [];
     /** @var array<string, true> */
     private static array $routeKeys = [];
+    /** @var array<string, string> */
+    private static array $regexes = [];
     /** @var (\Closure(): bool)|null */
     private static ?\Closure $publicWeb = null;
 
@@ -155,9 +157,10 @@ final class Router
         }
 
         $allowed = [];
+        $publicWeb = null;
 
         foreach (self::$routes as $route) {
-            if ($route['publicWeb'] && !self::publicWebEnabled()) { continue; }
+            if ($route['publicWeb'] && !($publicWeb ??= self::publicWebEnabled())) { continue; }
             $params = self::routeMatch((string) $route['path'], $path);
 
             if ($params === null) {
@@ -247,6 +250,11 @@ final class Router
     }
 
     private static function routeRegex(string $path): string
+    {
+        return self::$regexes[$path] ??= self::compileRouteRegex($path);
+    }
+
+    private static function compileRouteRegex(string $path): string
     {
         if ($path === '/') {
             return '#^/$#u';

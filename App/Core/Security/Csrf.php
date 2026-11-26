@@ -14,16 +14,19 @@ if (!defined('TINYCAT')) {
 
 final class Csrf
 {
+    private static ?string $token = null;
+    private static string $session = '';
 
     public static function token(): string
     {
-        Session::start();
-
-        if (empty($_SESSION['_csrf'])) {
-            $_SESSION['_csrf'] = bin2hex(random_bytes(32));
-        }
-
-        return (string) $_SESSION['_csrf'];
+        if (self::$token !== null && self::$session === session_id() && ($_SESSION['_csrf'] ?? null) === self::$token) { return self::$token; }
+        return Session::scoped(static function (): string {
+            if (empty($_SESSION['_csrf'])) { $_SESSION['_csrf'] = bin2hex(random_bytes(32)); }
+            $session = session_id();
+            if ($session === false || $session === '') { throw new \RuntimeException('Cannot resolve the CSRF session.'); }
+            self::$session = $session;
+            return self::$token = (string) $_SESSION['_csrf'];
+        });
     }
 
     public static function field(): string

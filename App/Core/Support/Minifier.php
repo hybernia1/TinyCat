@@ -26,6 +26,18 @@ final class Minifier
     {
     }
 
+    /** @internal Generation fence for retention scans performed outside the publication lock. */
+    public static function publicationRevision(): string|false|null
+    {
+        $file = Cache::file('revision', 'asset-publications');
+        return is_file($file) ? file_get_contents($file) : null;
+    }
+
+    private static function markPublication(): void
+    {
+        if (!Cache::writeFile('revision', bin2hex(random_bytes(16)), 'asset-publications')) { throw new \RuntimeException('Cannot coordinate asset publication.'); }
+    }
+
     public static function cachedAssetUrl(
         string $identity,
         string $prefix,
@@ -52,12 +64,14 @@ final class Minifier
         return Cache::synchronized('runtime-assets', static function () use ($target, $minify, $type, $source, $fileName): ?string {
             clearstatcache(true, $target);
             if (!is_file($target)) {
+                self::markPublication();
                 $content = $minify
                     ? ($type === 'css' ? self::minifyCss($source) : self::minifyJavaScript($source))
                     : $source;
                 if (!\TinyCat\Support\Cache::writeFile($fileName, $content, self::CACHE_NAMESPACE)) { return null; }
-            } elseif (filemtime($target) < time() - 3600 && !touch($target)) {
-                throw new \RuntimeException('Unable to renew runtime asset retention.');
+            } elseif (filemtime($target) < time() - 3600) {
+                self::markPublication();
+                if (!touch($target)) { throw new \RuntimeException('Unable to renew runtime asset retention.'); }
             }
 
             return self::CACHE_URL . '/' . rawurlencode($fileName);

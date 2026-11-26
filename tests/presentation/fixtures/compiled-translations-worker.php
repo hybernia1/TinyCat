@@ -8,16 +8,16 @@ $result = ['packages' => \TinyCat\Support\Languages::language_packages()];
 $result['components'] = \TinyCat\Support\CompiledAssets::components();
 $packages = $argv[1] . '/App/module-packages.json';
 try {
-    $result['snapshot_identity'] = \TinyCat\Support\CompiledTranslations::withDeploymentSnapshot(static function () use ($packages): bool {
+    $result['snapshot_identity'] = \TinyCat\Support\DeploymentIdentity::withDeploymentSnapshot(static function () use ($packages): bool {
         $before = \TinyCat\Support\CompiledAssets::components();
         file_put_contents($packages, '{}');
-        $nested = \TinyCat\Support\CompiledTranslations::withDeploymentSnapshot(static fn (): bool => \TinyCat\Support\CompiledAssets::components() === null);
+        $nested = \TinyCat\Support\DeploymentIdentity::withDeploymentSnapshot(static fn (): bool => \TinyCat\Support\CompiledAssets::components() === null);
         return $before !== null && $nested && \TinyCat\Support\CompiledAssets::components() === $before;
     });
     $result['snapshot_restored'] = \TinyCat\Support\CompiledAssets::components() === null;
 } finally { if (is_file($packages)) { unlink($packages); } }
 try {
-    \TinyCat\Support\CompiledTranslations::withDeploymentSnapshot(static function () use ($packages): void {
+    \TinyCat\Support\DeploymentIdentity::withDeploymentSnapshot(static function () use ($packages): void {
         \TinyCat\Support\CompiledAssets::components();
         file_put_contents($packages, '{}');
         throw new RuntimeException('fixture');

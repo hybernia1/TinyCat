@@ -13,10 +13,11 @@ final class CompiledAssets
     private static function manifest(): array
     {
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return []; }
+        if (class_exists(Config::class, false) && (bool) Config::get('assets.source', false)) { return []; }
         $file = Paths::basePath('assets/build/manifest.json');
         self::$manifest ??= is_file($file) ? json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) : [];
         $manifest = self::$manifest ?? [];
-        return CompiledTranslations::matchesSelection($manifest) ? $manifest : [];
+        return $manifest !== [] && DeploymentIdentity::matchesSelection($manifest) ? $manifest : (PreparedAssets::read()['manifest'] ?? []);
     }
 
     public static function asset(string $path, bool $minify): ?string
@@ -28,6 +29,7 @@ final class CompiledAssets
     public static function components(): ?array
     {
         $manifest = self::manifest();
+        if ($manifest['_prepared'] ?? false) { return PreparedAssets::read()['components'] ?? null; }
         $name = $manifest['server_components'] ?? null;
         if ($name === null) { return null; }
         if (!is_string($name) || preg_match('/^components\.[a-f0-9]{24}\.php$/D', $name) !== 1) { throw new \RuntimeException('Invalid compiled component path.'); }

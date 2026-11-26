@@ -20,6 +20,10 @@ final class Providers
     private static ?\WeakMap $validated = null;
     /** @var \WeakMap<Definition, array<string, true>>|null */
     private static ?\WeakMap $ownership = null;
+    /** @var \WeakMap<Definition, array<string, ModuleSchema>>|null */
+    private static ?\WeakMap $streams = null;
+    /** @var \WeakMap<Catalog, array<string, ModuleSchema>>|null */
+    private static ?\WeakMap $schemas = null;
     private static int $revision = -1;
 
     /** Successful checks are reusable only during one startup and selection revision.
@@ -29,18 +33,20 @@ final class Providers
     public static function duringStartup(Catalog $catalog, callable $action): mixed
     {
         if (self::$startupCatalog === $catalog) { return $action(); }
-        $previous = [self::$startupCatalog, self::$validated, self::$ownership, self::$revision];
+        $previous = [self::$startupCatalog, self::$validated, self::$ownership, self::$streams, self::$schemas, self::$revision];
         self::$startupCatalog = $catalog;
         self::$validated = new \WeakMap(); self::$ownership = new \WeakMap();
+        self::$streams = new \WeakMap(); self::$schemas = new \WeakMap();
         self::$revision = Resources::revision();
         try { return $action(); }
-        finally { [self::$startupCatalog, self::$validated, self::$ownership, self::$revision] = $previous; }
+        finally { [self::$startupCatalog, self::$validated, self::$ownership, self::$streams, self::$schemas, self::$revision] = $previous; }
     }
 
     private static function refreshValidation(): void
     {
         if (self::$startupCatalog !== null && self::$revision !== Resources::revision()) {
             self::$validated = new \WeakMap(); self::$ownership = new \WeakMap();
+            self::$streams = new \WeakMap(); self::$schemas = new \WeakMap();
             self::$revision = Resources::revision();
         }
     }
@@ -71,7 +77,9 @@ final class Providers
     /** @return array<string, ModuleSchema> */
     public static function schemas(Catalog $catalog): array
     {
-        return ModuleAutoload::withCatalog($catalog, static function () use ($catalog): array {
+        self::refreshValidation();
+        if (self::$schemas !== null && isset(self::$schemas[$catalog])) { return self::$schemas[$catalog]; }
+        $schemas = ModuleAutoload::withCatalog($catalog, static function () use ($catalog): array {
             $schemas = []; $ids = [];
             if ($catalog->has('tinycat.support') && isset($catalog->get('tinycat.support')->resources['migrations'])) { $schemas['tinycat.support'] = \TinyCat\Core\Tasks\Schema::schema($catalog->get('tinycat.support')->root); }
             foreach ($catalog->definitions() as $definition) {
@@ -95,6 +103,8 @@ final class Providers
             }
             return $schemas;
         });
+        if (self::$schemas !== null) { self::$schemas[$catalog] = $schemas; }
+        return $schemas;
     }
 
     public static function routes(Catalog $catalog, Api $api): void
@@ -194,6 +204,9 @@ final class Providers
     private static function streams(Definition $definition): array
     {
         $provider = self::provider($definition, 'schema', ProvidesSchemas::class);
-        return $provider::schemas();
+        if (self::$streams !== null && isset(self::$streams[$definition])) { return self::$streams[$definition]; }
+        $streams = $provider::schemas();
+        if (self::$streams !== null) { self::$streams[$definition] = $streams; }
+        return $streams;
     }
 }

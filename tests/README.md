@@ -53,7 +53,7 @@ config.php` a `php tests/release/installation-api.php`. Nepřepisuj tím provozn
 ani osobní konfiguraci. Lokální Windows průchod nedokládá POSIX garance.
 
 Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitních
-101 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
+104 skupin přes [hlavní runner](run.php), včetně 40 frontendových scénářů.
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 

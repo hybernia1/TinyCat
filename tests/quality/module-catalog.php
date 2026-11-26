@@ -193,7 +193,7 @@ try {
         $namespace = 'TinyCat\\Fixture' . $owner;
         mkdir($directory . '/migrations');
         file_put_contents($directory . '/migrations/initial.php', '<?php return static function (\PDO $pdo): void { throw new \RuntimeException("Offline registration must not run DDL"); };');
-        $source = '<?php namespace ' . $namespace . '; final class Module implements \\TinyCat\\Core\\Modules\\Module, \\TinyCat\\Core\\Modules\\ProvidesSchemas { public static function schemas(): array { return ["fixture.' . strtolower($owner) . '" => new \\TinyCat\\Core\\Modules\\ModuleSchema(1, [' . var_export($table, true) . '], static function (\\PDO $pdo): void { throw new \\RuntimeException("Offline DDL"); }, [new \\TinyCat\\Core\\Modules\\SchemaMigration(1, "fixture.' . strtolower($owner) . '.initial", dirname(__DIR__) . "/migrations/initial.php")])]; } public static function register(\\TinyCat\\Http\\Api $api): void { \\TinyCat\\ModuleFixture\\Calls::$registered[] = ' . var_export(strtolower($owner), true) . '; } }';
+        $source = '<?php namespace ' . $namespace . '; final class Module implements \\TinyCat\\Core\\Modules\\Module, \\TinyCat\\Core\\Modules\\ProvidesSchemas { public static function schemas(): array { \\TinyCat\\ModuleFixture\\Calls::$schemas["' . strtolower($owner) . '"] = (\\TinyCat\\ModuleFixture\\Calls::$schemas["' . strtolower($owner) . '"] ?? 0) + 1; return ["fixture.' . strtolower($owner) . '" => new \\TinyCat\\Core\\Modules\\ModuleSchema(1, [' . var_export($table, true) . '], static function (\\PDO $pdo): void { throw new \\RuntimeException("Offline DDL"); }, [new \\TinyCat\\Core\\Modules\\SchemaMigration(1, "fixture.' . strtolower($owner) . '.initial", dirname(__DIR__) . "/migrations/initial.php")])]; } public static function register(\\TinyCat\\Http\\Api $api): void { \\TinyCat\\ModuleFixture\\Calls::$registered[] = ' . var_export(strtolower($owner), true) . '; } }';
         file_put_contents($directory . '/src/Module.php', $source);
         file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.' . $id, 'namespace' => $namespace . '\\', 'providers' => ['routes' => $namespace . '\\Module', 'schema' => $namespace . '\\Module'], 'resources' => ['migrations' => 'migrations']], JSON_THROW_ON_ERROR));
     }
@@ -201,7 +201,20 @@ try {
         'fixture.beta' => TinyCat\FixtureBeta\Module::class,
         'fixture.alpha' => TinyCat\FixtureAlpha\Module::class,
     ]);
-    $tables = $adapter->register(new TinyCat\Http\Api());
+    Calls::$schemas = [];
+    $tables = TinyCat\Core\Modules\Providers::duringStartup($adapter->catalog, static function () use ($adapter, $assert): array {
+        $tables = $adapter->register(new TinyCat\Http\Api());
+        $schemas = $adapter->schemas();
+        $assert($adapter->schemas() === $schemas && Calls::$schemas === ['alpha' => 1, 'beta' => 1], 'Registration, route gates and ownership share one startup schema snapshot');
+        TinyCat\Core\Modules\Providers::duringStartup(new Catalog($adapter->catalog->definitions()), static fn (): array => $adapter->schemas());
+        $assert(Calls::$schemas === ['alpha' => 2, 'beta' => 2] && $adapter->schemas() === $schemas, 'A nested startup uses fresh schemas and restores the parent snapshot');
+        TinyCat\Core\Modules\Resources::configure($adapter->catalog);
+        $assert($adapter->schemas() !== $schemas && Calls::$schemas === ['alpha' => 3, 'beta' => 3], 'Selection revisions invalidate startup schemas');
+        return $tables;
+    });
+    TinyCat\Core\Modules\Resources::configure($legacy->catalog);
+    $adapter->schemas();
+    $assert(Calls::$schemas === ['alpha' => 4, 'beta' => 4], 'Schema snapshots never escape startup');
     $assert(Calls::$registered === ['alpha', 'beta'], 'Module routes follow dependency order');
     $assert($tables === ['fixture_alpha', 'fixture_beta', 'migrations', 'module_installations'], 'Module table inventory follows dependency order');
     foreach ([TinyCat\FixtureDuplicate\Module::class, TinyCat\FixtureInvalid\Module::class] as $invalid) {

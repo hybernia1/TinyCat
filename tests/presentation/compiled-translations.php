@@ -20,7 +20,7 @@ $write = static function (string $relative, string $source) use ($directory, &$c
     $created[] = $path;
 };
 try {
-    foreach (['Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
+    foreach (['Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/DeploymentIdentity.php', 'Core/Support/PreparedAssets.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
         $write('App/' . $relative, (string) file_get_contents($root . '/App/' . $relative));
     }
     foreach ($files as $relative => $source) {

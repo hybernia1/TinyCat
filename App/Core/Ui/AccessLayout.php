@@ -21,13 +21,15 @@ final class AccessLayout
         $user = Authentication::auth();
         $theme = Profile::theme((string) ($user['theme'] ?? 'system'));
         $flashToasts = [];
+        $sessionData = DocumentData::sessionData();
+        $messages = $sessionData['messages'];
         foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', 'info' => 'info'] as $key => $type) {
-            $message = \TinyCat\Http\Session::flash($key);
+            $message = $messages[$key];
             if (is_string($message) && $message !== '') { $flashToasts[] = ['message' => $message, 'type' => $type]; }
         }
         $shell = View::render('access-shell', compact('title', 'appName', 'privacyUrl', 'homeUrl', 'logoUrl', 'content'), __DIR__ . '/templates');
         echo Document::frame([
-            'title' => $title, 'csrfToken' => \TinyCat\Core\Security\Csrf::token(), 'robots' => 'noindex,nofollow',
+            'title' => $title, 'csrfToken' => $sessionData['csrfToken'], 'robots' => 'noindex,nofollow',
             'htmlAttributes' => ['lang' => Localization::locale(), 'data-theme' => $theme !== 'system' ? $theme : null,
                 'data-interface-prefix' => \TinyCat\Http\LocaleRouting::active() ?? '',
                 'data-interface-routes' => json_encode(\TinyCat\Http\LocaleRouting::patterns(), JSON_THROW_ON_ERROR),

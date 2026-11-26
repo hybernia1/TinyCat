@@ -21,7 +21,8 @@ final readonly class Loader
             if (!is_array($selection)) { throw new \InvalidArgumentException('Module selection must be a map.'); }
             return $selection;
         });
-        return self::fromSelection($root, self::availableSelection($root, $selected));
+        $inventory = SourceModules::inventory($root);
+        return self::resolveSelection($root, self::filterAvailable($selected, $inventory), $inventory['definitions']);
     }
 
     /** Suspend unavailable modules and their dependents without changing saved activation.
@@ -29,7 +30,14 @@ final readonly class Loader
      * @return array<string, string> */
     public static function availableSelection(string $root, array $selection): array
     {
-        $inventory = SourceModules::inventory($root);
+        return self::filterAvailable($selection, SourceModules::inventory($root));
+    }
+
+    /** @param array<string, string> $selection
+     * @param array{selection: array<string, string>, definitions: array<string, Definition>, errors: array<string, string>} $inventory
+     * @return array<string, string> */
+    private static function filterAvailable(array $selection, array $inventory): array
+    {
         $selection = array_intersect_assoc($selection, $inventory['selection']);
         do {
             $previous = $selection;
@@ -43,9 +51,19 @@ final readonly class Loader
     /** @param array<array-key, mixed> $selection */
     public static function fromSelection(string $root, array $selection): self
     {
+        return self::resolveSelection($root, $selection, []);
+    }
+
+    /** Reuse only definitions validated by this load operation's inventory.
+     * Explicit selections outside discovery always read fresh manifests.
+     * @param array<array-key, mixed> $selection
+     * @param array<string, Definition> $available */
+    private static function resolveSelection(string $root, array $selection, array $available): self
+    {
         $definitions = \TinyCat\Core\Runtime\Framework::definitions($root);
         foreach ($selection as $id => $binding) {
             if (!is_string($id) || !is_string($binding)) { throw new \InvalidArgumentException('Invalid module binding.'); }
+            if (isset($available[$id])) { $definitions[] = $available[$id]; continue; }
             if (!str_ends_with($binding, '.json')) {
                 if (preg_match('/^TinyCat\\\\([A-Za-z][A-Za-z0-9]*)\\\\Module$/D', $binding, $match) !== 1) { throw new \InvalidArgumentException('Select a module manifest.'); }
                 $binding = 'App/Modules/' . $match[1] . '/module.json';

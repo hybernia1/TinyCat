@@ -89,8 +89,16 @@ fokus, validaci a ostatní UI chování. HTTP formuláře sdílejí životní cy
 `TinyCat.forms.request`, včetně blokace duplicit, obnovení ovládacích prvků a abortu.
 
 Release builder předem sestaví assety do podepsaného `assets/build/manifest.json`.
-`CompiledAssets` tento soubor načte jednou za request. `ClientAssets` skládá
-definice a prochází zdrojové texty pouze ve vývojovém fallbacku bez manifestu.
+`CompiledAssets` tento soubor načte jednou za request. Pokud inventář neodpovídá
+aktivním modulům a registru balíčků, čte lokálně připravenou generaci z privátní
+cache `prepared-assets`. Generaci připravuje publikace aktivačního stavu;
+pro existující instalaci nebo obnovu odstraněné cache slouží
+`php App/Console.php assets`, spuštěné v adresáři příslušné instalace.
+Používá stejný kompilátor jako release, bez Composeru a vývojových nástrojů.
+Metadata se publikují až po všech souborech a nepřepisují podepsaný inventář.
+Chybějící, expirovaná nebo neplatná generace zachovává zdrojový fallback.
+Při vývoji lze v lokální konfiguraci nastavit `'assets' => ['source' => true]`;
+tím se oba druhy hotových inventářů obejdou a změny zdrojů se projeví přímo.
 
 Společné služby fungují bez implementací v `tinycat.js`: `ui/dialogs` vlastní
 stack dialogů, fokus, viewport, potvrzení a načítání JSON resources. Resolver

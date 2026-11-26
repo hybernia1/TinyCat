@@ -7,4 +7,6 @@ final class Calls
 {
     /** @var list<string> */
     public static array $registered = [];
+    /** @var array<string, int> */
+    public static array $schemas = [];
 }

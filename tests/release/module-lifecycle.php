@@ -136,6 +136,8 @@ try {
     for ($attempt = 0; $attempt < 100; $attempt++) { $probe = @stream_socket_client('tcp://' . $address, $socketError, $socketMessage, 0.1); if (is_resource($probe)) { fclose($probe); break; } usleep(50000); }
     [$status] = $request('/api/fixture/notes'); $assert($status === 404, 'Inactive module exposes no HTTP API');
     [$exit, $text, $error] = $console(['activate', 'fixture.reports']); $assert($exit === 0, 'Module activation installs immutable migrations: ' . $text . $error);
+    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
+    $assert($exit === 0, 'A new process reads the prepared generation after lifecycle finalization despite mismatched signed inventory: ' . $text . $error);
     $body = "Unicode 🐈; quotes ' and \" and\nnewlines";
     $insert = $pdo->prepare('INSERT INTO lifecycle_notes(body) VALUES (?)'); $insert->execute([$body]);
     [$status, $json] = $request('/api/fixture/notes'); $assert($status === 200 && str_contains($json, 'Unicode'), 'Activation registers the real authorized product API');
@@ -193,6 +195,8 @@ try {
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/update-worker.php', $root, $workspace . '/v3/update/fixture.lifecycle-update.json', $workspace . '/v3/update/fixture.lifecycle-update.sig', $workspace . '/v3/update/' . $manifest['package']], $root);
     $assert($exit === 0 && (json_decode($text, true)['cached_provider_version'] ?? null) === 2, 'Update uses signed migrations while the old PHP provider is cached: ' . $text . $error);
     $assert((int) $pdo->query('SELECT revision_three FROM lifecycle_notes')->fetchColumn() === 3, 'Cached old provider cannot suppress the next migration');
+    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
+    $assert($exit === 0, 'Fresh updated runtime reads the generation published with the target version while old classes were loaded: ' . $text . $error);
     // A valid signature does not authorize a different product or a fresh-install artifact.
     $foreign = $manifest; $foreign['distribution']['product'] = 'fixture.other';
     $foreignPath = $workspace . '/foreign.json'; $signed = json_encode($foreign, JSON_THROW_ON_ERROR); file_put_contents($foreignPath, $signed); file_put_contents($workspace . '/foreign.sig', base64_encode(sodium_crypto_sign_detached($signed, $secret)));
@@ -216,6 +220,8 @@ try {
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]); $assert($exit === 0, 'Failed migration restores the signed previous files and DB: ' . $text . $error);
     $assert(!$pdo->query("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME= 'failed_migration'")->fetchColumn() && (int) $pdo->query("SELECT version FROM module_installations WHERE module_id = 'fixture.notes'")->fetchColumn() === 3, 'Rollback removes partial DDL and restores schema metadata');
     $assert(file_get_contents($root . '/storage/deployment.json') === $stateBytes && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Rollback restores activation state and retained data byte for byte');
+    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
+    $assert($exit === 0, 'Fresh rollback runtime can reuse its retained selection-bound generation: ' . $text . $error);
     // An explicit interruption leaves the previous state and a complete recoverable snapshot.
     [$exit] = $run([PHP_BINARY, $fixture . '/interrupt-worker.php', $root], $root); $assert($exit === 23 && is_file($root . '/storage/maintenance.json'), 'Interruption retains maintenance and the operation journal');
     [$exit] = $console(['deactivate', 'fixture.notes']); $assert($exit !== 0, 'Interrupted operations cannot be silently replaced');

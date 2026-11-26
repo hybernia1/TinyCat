@@ -75,7 +75,7 @@ $assert(session_status() === PHP_SESSION_NONE, 'Registry collection did not open
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->tasks) === ['feeds', 'cleanup', 'site-health'], 'Existing task IDs and order remain stable');
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->health) === ['http', 'database', 'cache', 'storage', 'uploads', 'disk', 'runtime', 'scheduler', 'updates'], 'Existing probe IDs and order remain stable');
 $maintenanceIds = array_map(static fn ($entry): string => $entry->id, $registries->entries->maintenance);
-$assert(array_values(array_diff($maintenanceIds, ['orphan_branding_files', 'retired_build_files', 'retired_runtime_assets', 'abandoned_module_packages', 'old_debug_logs'])) === [
+$assert(array_values(array_diff($maintenanceIds, ['orphan_branding_files', 'retired_build_files', 'retired_runtime_assets', 'expired_prepared_assets', 'abandoned_module_packages', 'old_debug_logs'])) === [
     'orphan_terms', 'orphan_links', 'orphan_status_image_files', 'orphan_link_image_files', 'orphan_avatar_files', 'temporary_files', 'update_files', 'expired_cache_files',
     'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications', 'old_scheduler_runs', 'bot_history', 'duplicate_bot_posts',
 ], 'Existing maintenance IDs and order remain stable');

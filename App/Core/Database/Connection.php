@@ -20,6 +20,9 @@ final class Connection
 {
     private static ?PDO $pdo = null;
 
+    /** Inspect the current transaction without opening a connection for a cache hit. */
+    public static function inTransaction(): bool { return self::$pdo?->inTransaction() ?? false; }
+
     public static function get(): PDO
     {
         if (self::$pdo instanceof PDO) {

@@ -10,6 +10,18 @@ if (!defined('TINYCAT')) {
 
 final class Session
 {
+    /** Persist this operation's writes and release only a session it opened.
+     * Existing callers may own a larger write scope (login or installation).
+     * @template T
+     * @param callable(): T $operation
+     * @return T */
+    public static function scoped(callable $operation): mixed
+    {
+        $active = session_status() === PHP_SESSION_ACTIVE;
+        self::start();
+        try { return $operation(); }
+        finally { if (!$active) { session_write_close(); } }
+    }
     /**
      * Run slow I/O without holding the caller's session lock. Reopening reads
      * concurrent updates rather than writing an old session snapshot back.
@@ -45,16 +57,24 @@ final class Session
 
     public static function flash(string $key, mixed $value = null): mixed
     {
-        self::start();
+        $write = func_num_args() === 2;
+        return self::scoped(static function () use ($key, $value, $write): mixed {
+            if ($write) { $_SESSION['_flash'][$key] = $value; return null; }
+            $message = $_SESSION['_flash'][$key] ?? null;
+            unset($_SESSION['_flash'][$key]);
+            return $message;
+        });
+    }
 
-        if (func_num_args() === 2) {
-            $_SESSION['_flash'][$key] = $value;
-            return null;
-        }
-
-        $value = $_SESSION['_flash'][$key] ?? null;
-        unset($_SESSION['_flash'][$key]);
-
-        return $value;
+    /** Consume the document's flash messages in one short write scope.
+     * @param list<string> $keys
+     * @return array<string, mixed> */
+    public static function pullFlashes(array $keys): array
+    {
+        return self::scoped(static function () use ($keys): array {
+            $messages = [];
+            foreach ($keys as $key) { $messages[$key] = $_SESSION['_flash'][$key] ?? null; unset($_SESSION['_flash'][$key]); }
+            return $messages;
+        });
     }
 }

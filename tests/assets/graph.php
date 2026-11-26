@@ -37,6 +37,13 @@ try {
     $css = AssetGraph::stylesheet([$relative . '/theme.css']);
     if (!str_contains($css, '/cache/assets/asset-image.') || str_contains($css, './image.svg')) { throw new RuntimeException('Runtime CSS asset URLs were not rebased.'); }
     $checks++;
+    $publication = \TinyCat\Support\Minifier::publicationRevision();
+    $cssAgain = AssetGraph::stylesheet([$relative . '/theme.css']);
+    if ($cssAgain !== $css || \TinyCat\Support\Minifier::publicationRevision() !== $publication) { throw new RuntimeException('An unchanged warm asset should not invalidate retention scans.'); }
+    $checks++;
+    \TinyCat\Support\Minifier::cachedAssetUrl('publication-probe', 'publication-probe', 'window.publicationProbe = true;', 'js', false);
+    if (\TinyCat\Support\Minifier::publicationRevision() === $publication) { throw new RuntimeException('New publication must invalidate a concurrent retention scan.'); }
+    $checks++;
     $compiled = AssetGraph::stylesheet([$relative . '/theme.css'], static fn (string $path): string => '/assets/build/image.fixture.svg');
     if (!str_contains($compiled, '/assets/build/image.fixture.svg')) { throw new RuntimeException('Build CSS does not use the same asset resolver.'); }
     $checks++;
@@ -58,15 +65,15 @@ try {
         $translationsProperty->setValue(null, array_replace($identity, ['server_components_packages' => 'outdated-package', 'packages' => ['en' => 'English']]));
         if (\TinyCat\Support\CompiledTranslations::packages() !== null || \TinyCat\Support\CompiledTranslations::application('en') !== null || \TinyCat\Support\CompiledTranslations::emails('en') !== null) { throw new RuntimeException('Old package translations accepted.'); }
         $checks++;
-        if (!\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Current deployment identity rejected.'); }
+        if (!\TinyCat\Support\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Current deployment identity rejected.'); }
         $checks++;
-        \TinyCat\Support\CompiledTranslations::withDeploymentSnapshot(static function () use ($identity, $original, $owner): void {
-            if (!\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Snapshot rejected the selected deployment.'); }
+        \TinyCat\Support\DeploymentIdentity::withDeploymentSnapshot(static function () use ($identity, $original, $owner): void {
+            if (!\TinyCat\Support\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Snapshot rejected the selected deployment.'); }
             \TinyCat\Core\Modules\Resources::configure($original);
             try {
-                if (\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Snapshot accepted a previous selection.'); }
+                if (\TinyCat\Support\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Snapshot accepted a previous selection.'); }
             } finally { \TinyCat\Core\Modules\Resources::configure(new \TinyCat\Core\Modules\Catalog([...$original->definitions(), $owner])); }
-            if (!\TinyCat\Support\CompiledTranslations::matchesSelection($identity)) { throw new RuntimeException('Restored selection remained invalid.'); }
+            if (!\TinyCat\Support\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Restored selection remained invalid.'); }
         });
         $checks++;
     } finally {
