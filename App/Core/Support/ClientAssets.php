@@ -25,12 +25,15 @@ final class ClientAssets
         $revision = \TinyCat\Core\Modules\Resources::revision();
         if (self::$selection === $revision) { return; }
         self::$features = [];
+        self::$manifests = [];
         if (self::$buildDefinitions !== null) { self::$buildDefinitions = []; }
         if (self::$buildKeys !== null) { self::$buildKeys = []; }
         self::$selection = $revision;
     }
     /** @var array<string, list<array<mixed>>> */
     private static array $features = [];
+    /** @var array<string, list<array<mixed>>> */
+    private static array $manifests = [];
     /** @var array<string, array<string, mixed>>|null */
     private static ?array $buildDefinitions = null;
     /** @var array<string, array<string, bool>>|null */
@@ -43,10 +46,18 @@ final class ClientAssets
      */
     public static function withBuildCache(callable $build): mixed
     {
-        $features = self::$features; $definitions = self::$buildDefinitions; $keys = self::$buildKeys; $selection = self::$selection;
-        self::$features = []; self::$buildDefinitions = []; self::$buildKeys = [];
+        $features = self::$features; $manifests = self::$manifests; $definitions = self::$buildDefinitions; $keys = self::$buildKeys; $selection = self::$selection;
+        self::$features = []; self::$manifests = []; self::$buildDefinitions = []; self::$buildKeys = [];
         try { return Components::withFreshTemplates($build); }
-        finally { self::$features = $features; self::$buildDefinitions = $definitions; self::$buildKeys = $keys; self::$selection = $selection; }
+        finally { self::$features = $features; self::$manifests = $manifests; self::$buildDefinitions = $definitions; self::$buildKeys = $keys; self::$selection = $selection; }
+    }
+
+    /** One source snapshot per selection; explicit builds always read fresh manifests.
+     * @return list<array<mixed>> */
+    private static function manifest(string $file): array
+    {
+        self::synchronize();
+        return self::$manifests[$file] ??= json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
     }
     /**
      * @return list<array<mixed>>
@@ -58,7 +69,7 @@ final class ClientAssets
         if (isset(self::$features[$cacheKey])) { return self::$features[$cacheKey]; }
         $selected = []; $definitions = [];
         foreach (self::manifests() as $file) {
-            foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
+            foreach (self::manifest($file) as $feature) {
                 if (isset($feature['id'])) {
                     $id = $feature['id'];
                     if (!is_string($id) || preg_match('/^[a-z][a-z0-9_.-]*$/D', $id) !== 1 || isset($definitions[$id])) { throw new RuntimeException('Invalid or duplicate client feature: ' . $file); }
@@ -161,7 +172,7 @@ final class ClientAssets
     public static function administration(?string $path = null): array
     {
         self::synchronize();
-        $features = $path !== null ? self::features($path) : (self::$features['@administration'] ??= array_values(array_merge(...array_map(static fn (string $file): array => json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR), self::manifests()))));
+        $features = $path !== null ? self::features($path) : (self::$features['@administration'] ??= array_merge(...array_map(self::manifest(...), self::manifests())));
         $result = [];
         foreach ($features as $feature) {
             foreach ($feature['admin'] ?? [] as $id => $definition) {
@@ -191,7 +202,7 @@ final class ClientAssets
     {
         $paths = ['/', '/admin', '/install', ...\TinyCat\Core\Ui\Surface::ACCESS_PATHS];
         foreach (self::manifests() as $file) {
-            foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
+            foreach (self::manifest($file) as $feature) {
                 foreach ($feature['routes'] ?? [] as $route) { if (str_starts_with($route, '/')) { $paths[] = $route; } }
             }
         }
@@ -260,7 +271,7 @@ final class ClientAssets
     {
         $sources = [];
         foreach (self::manifests() as $file) {
-            foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
+            foreach (self::manifest($file) as $feature) {
                 foreach ($feature['standalone'] ?? [] as $source) {
                     AssetGraph::read($source);
                     if (!in_array(pathinfo($source, PATHINFO_EXTENSION), Minifier::ASSET_TYPES, true)) { throw new RuntimeException('Invalid standalone asset: ' . $source); }
