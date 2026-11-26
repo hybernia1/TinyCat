@@ -58,8 +58,10 @@ final class Store
         if (!self::settingsTableReady()) { return []; }
         // A transaction may see uncommitted values or an older repeatable-read snapshot.
         // Neither belongs in shared cache or in the request cache after rollback.
-        if (Connection::get()->inTransaction()) { return self::loadAutoloadSettings(); }
+        if (Connection::inTransaction()) { return self::loadAutoloadSettings(); }
         try {
+            $cached = Cache::synchronized(self::SETTINGS_CACHE_KEY, self::cachedAutoloadSettings(...), shared: true);
+            if ($cached !== null) { return self::$settings = $cached; }
             return self::$settings = Cache::synchronized(self::SETTINGS_CACHE_KEY, static function (): array {
                 $cached = self::cachedAutoloadSettings();
                 if ($cached !== null) { return $cached; }

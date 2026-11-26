@@ -53,8 +53,9 @@ final class DocumentData
         $meta = is_array($meta ?? null) ? $meta : [];
         $flashToasts = [];
 
+        $messages = \TinyCat\Http\Session::pullFlashes(['success', 'error', 'warning', 'info']);
         foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', 'info' => 'info'] as $flashKey => $flashType) {
-            $flashMessage = \TinyCat\Http\Session::flash($flashKey);
+            $flashMessage = $messages[$flashKey];
 
             if ($flashMessage !== null && $flashMessage !== '') {
                 $flashToasts[] = [

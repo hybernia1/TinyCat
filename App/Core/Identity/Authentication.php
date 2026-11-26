@@ -36,8 +36,11 @@ final class Authentication
             return self::$authUser === null ? $default : Values::get(self::$authUser, $key, $default);
         }
 
-        Session::start();
+        return Session::scoped(static fn (): mixed => self::resolveAuth($key, $default));
+    }
 
+    private static function resolveAuth(?string $key, mixed $default): mixed
+    {
         $id = $_SESSION['auth_user_id'] ?? null;
 
         if ($id === null || $id === '') {

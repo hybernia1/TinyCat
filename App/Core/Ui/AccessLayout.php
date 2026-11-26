@@ -21,8 +21,9 @@ final class AccessLayout
         $user = Authentication::auth();
         $theme = Profile::theme((string) ($user['theme'] ?? 'system'));
         $flashToasts = [];
+        $messages = \TinyCat\Http\Session::pullFlashes(['success', 'error', 'warning', 'info']);
         foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', 'info' => 'info'] as $key => $type) {
-            $message = \TinyCat\Http\Session::flash($key);
+            $message = $messages[$key];
             if (is_string($message) && $message !== '') { $flashToasts[] = ['message' => $message, 'type' => $type]; }
         }
         $shell = View::render('access-shell', compact('title', 'appName', 'privacyUrl', 'homeUrl', 'logoUrl', 'content'), __DIR__ . '/templates');

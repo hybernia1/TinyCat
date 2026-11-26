@@ -95,14 +95,14 @@ final class Cache
      * @template T
      * @param callable(): T $operation
      * @return T */
-    public static function synchronized(string $key, callable $operation): mixed
+    public static function synchronized(string $key, callable $operation, bool $shared = false): mixed
     {
         $directory = self::directory('coordination');
         if (!Storage::ensureDirectory($directory)) { throw new \RuntimeException('Cannot create cache coordination directory.'); }
         $lock = @fopen($directory . DIRECTORY_SEPARATOR . hash('sha256', $key) . '.lock', 'c');
         if ($lock === false) { throw new \RuntimeException('Cannot open cache coordination lock.'); }
         try {
-            if (!flock($lock, LOCK_EX)) { throw new \RuntimeException('Cannot acquire cache coordination lock.'); }
+            if (!flock($lock, $shared ? LOCK_SH : LOCK_EX)) { throw new \RuntimeException('Cannot acquire cache coordination lock.'); }
             return $operation();
         } finally { flock($lock, LOCK_UN); fclose($lock); }
     }
