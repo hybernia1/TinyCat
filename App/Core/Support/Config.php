@@ -12,20 +12,17 @@ if (!defined('TINYCAT')) {
 
 final class Config
 {
-    private static bool $booted = false;
-    /** @var array<mixed> */
-    private static array $config = [];
+    private static \TinyCat\Core\Runtime\Configuration $config;
 
     public static function configure(\TinyCat\Core\Runtime\Configuration $configuration): void
     {
-        self::$config = $configuration->values();
-        self::$booted = true;
-        \TinyCat\Core\Runtime\Debug::configure(self::$config['app']['debug'] ?? 'off');
+        self::$config = $configuration;
+        \TinyCat\Core\Runtime\Debug::configure(self::$config->values()['app']['debug'] ?? 'off');
     }
 
     public static function load(): void
     {
-        if (self::$booted) {
+        if (isset(self::$config)) {
             return;
         }
 
@@ -46,9 +43,8 @@ final class Config
             }
         }
 
-        self::$config = $loaded;
-        self::$booted = true;
-        \TinyCat\Core\Runtime\Debug::configure(self::$config['app']['debug'] ?? 'off');
+        self::$config = new \TinyCat\Core\Runtime\Configuration($loaded);
+        \TinyCat\Core\Runtime\Debug::configure(self::$config->values()['app']['debug'] ?? 'off');
     }
 
     public static function get(?string $key = null, mixed $default = null): mixed
@@ -59,6 +55,6 @@ final class Config
     public static function snapshot(): \TinyCat\Core\Runtime\Configuration
     {
         self::load();
-        return new \TinyCat\Core\Runtime\Configuration(self::$config);
+        return self::$config;
     }
 }

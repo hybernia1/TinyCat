@@ -58,7 +58,7 @@ Modul nemusí používat všechny schopnosti. Veřejná stránka funguje bez Soc
 Nevytvářej druhý HTTP klient, DB vrstvu, scheduler, překladač nebo modalový systém.
 Závislost na jiném funkčním modulu musí být výslovná a skutečně potřebná.
 
-Pro ASCII segment URL použij `TinyCat\Support\Text::slug($text)`.
+Pro ASCII segment URL použij `TinyCat\Core\Text\Text::slug($text)`.
 Převod používá ICU, případně iconv, a podporuje vlastní oddělovač.
 Stabilní identitu, skládání URL a pravidla přesměrování vlastní modul.
 Uložené identifikátory se při změnách konzumentů nepřepočítávají.
@@ -169,7 +169,7 @@ namespace TinyCat\Notes;
 
 use TinyCat\Core\Identity\Access;
 use TinyCat\Core\Ui\Page;
-use TinyCat\Support\{Components, Localization};
+use TinyCat\Core\Ui\Components;
 
 final class Pages
 {
@@ -326,7 +326,7 @@ Selekci a pravidla
 vlastní modul, společné chování poskytuje core:
 
 - PHP a AJAX vykreslují stejnou komponentu seznamu.
-- Rám tvoří `AdminViews::listCard`, `ui/list-toolbar`, tabulka a `ui/pagination`.
+- Rám tvoří `Core\Ui\Admin\Views::listCard`, `ui/list-toolbar`, tabulka a `ui/pagination`.
 - Hledání, filtry, řazení a stránkování sdílejí URL stav a `TinyCat.lists`.
 - Nový záznam i editace načtou autorizovaný JSON resource až při otevření.
 - Klientský `modal(url, response, id)` sestaví formulář přes `TinyCat.ui`

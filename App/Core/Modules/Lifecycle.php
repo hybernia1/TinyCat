@@ -6,6 +6,7 @@ use PDO;
 use TinyCat\Database\Connection;
 use TinyCat\Database\ModuleSchemas;
 use TinyCat\Support\Paths;
+use TinyCat\Support\Storage;
 use TinyCat\Core\Updates\Manager;
 
 /** Explicit deployment operations. No caller invokes these during catalog discovery or HTTP boot. */
@@ -88,7 +89,7 @@ final class Lifecycle
         $stage = null; $changes = null;
         try {
             if ($packages !== $originalPackages) {
-                $stage = Paths::basePath('storage/modules/staging/activation-' . bin2hex(random_bytes(12)));
+                $stage = Storage::path('modules/staging/activation-' . bin2hex(random_bytes(12)));
                 if (!mkdir($stage . '/App', 0700, true)) { throw new \RuntimeException('Cannot stage module registration.'); }
                 $record = json_encode(['format' => 1, 'packages' => $packages], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
                 if (strlen($record) > 4194304 || file_put_contents($stage . '/' . PackageRegistry::FILE, $record) === false) { throw new \RuntimeException('Cannot stage module registration.'); }

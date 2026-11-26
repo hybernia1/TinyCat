@@ -4,7 +4,7 @@ declare(strict_types=1);
 return static function (): array {
     if (!defined('TINYCAT')) { define('TINYCAT', true); }
     require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
-    return \TinyCat\Support\AssetGraph::withSnapshot(static fn (): array => \TinyCat\Support\ClientAssets::withBuildCache(static function (): array {
+    return \TinyCat\Support\TranslationSources::withSnapshot(static fn (): array => \TinyCat\Support\AssetGraph::withSnapshot(static fn (): array => \TinyCat\Support\ClientAssets::withBuildCache(static function (): array {
         $validateModals = require __DIR__ . '/../quality/modal-contracts.php';
         $validateModals();
         $validateUi = require __DIR__ . '/../quality/ui-contracts.php';
@@ -14,5 +14,5 @@ return static function (): array {
         $validateClients = require __DIR__ . '/../quality/client-translations.php';
         $validateClients($catalogs);
         return \TinyCat\Support\AssetCompiler::compile($catalogs)['files'];
-    }));
+    })));
 };

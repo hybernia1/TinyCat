@@ -21,6 +21,8 @@ $assert($imageItems[0]['image_urls'] === ['https://93.184.216.34/first.png', 'ht
 $assert($jsonItems[1]['author'] === 'Item author' && $jsonItems[1]['categories'] === ['photo'], 'JSON Feed authors and categories override feed defaults and deduplicate tags.');
 $literalJson = \TinyCat\Core\Feeds\FeedParser::parse(json_encode(['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Plain text', 'items' => [['id' => 'literal', 'content_text' => '<example>Read more</example> https://93.184.216.34/reference']]], JSON_THROW_ON_ERROR))[0];
 $assert($literalJson['description'] === '<example>Read more</example> https://93.184.216.34/reference' && $literalJson['description_html'] === '', 'JSON Feed plain text is not interpreted as HTML or cleaned as a Social annotation.');
+$literalImage = \TinyCat\Core\Feeds\FeedParser::parse(json_encode(['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Literal URL', 'items' => [['id' => 'literal-url', 'content_text' => 'Image', 'image' => 'https://93.184.216.34/image.jpg?x=&amp;literal']]], JSON_THROW_ON_ERROR))[0];
+$assert($literalImage['image_url'] === 'https://93.184.216.34/image.jpg?x=&amp;literal', 'JSON image URL data does not undergo HTML entity decoding.');
 $jsonFeed['version'] = 'https://jsonfeed.org/version/1';
 $jsonFeed['items'][1]['author'] = ['name' => 'Legacy author'];
 $legacyJson = \TinyCat\Core\Feeds\FeedParser::parse(json_encode($jsonFeed));

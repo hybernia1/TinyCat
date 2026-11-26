@@ -114,15 +114,14 @@ final class FeedPublication
             '~<a\b([^>]*)>(.*?)</a\s*>~is',
             static function (array $match): string {
                 $label = (string) $match[2];
-                $plainLabel = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                $plainLabel = \TinyCat\Core\Text\Text::htmlText($label);
                 if (\TinyCat\Social\Bots\FeedPublication::isReadMore($plainLabel)) { return ' '; }
                 $videoUrl = self::feedHtmlVideoUrl((string) $match[1], 'href');
                 if ($videoUrl === '') {
                     return $label;
                 }
 
-                $labelText = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-                foreach (\TinyCat\Social\Posts\LinkParser::extract($labelText) as $labelLink) {
+                foreach (\TinyCat\Social\Posts\LinkParser::extract($plainLabel) as $labelLink) {
                     if ((string) ($labelLink['normalized_url'] ?? '') === $videoUrl) {
                         return $label;
                     }
@@ -137,8 +136,7 @@ final class FeedPublication
             static fn (array $match): string => self::feedHtmlVideoUrl((string) $match[1], 'src'),
             $value
         ) ?? $value;
-        $value = preg_replace('~<(?:br\b[^>]*|/(?:p|div|li|h[1-6]|blockquote)\s*)>~iu', ' ', $value) ?? $value;
-        $value = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        $value = \TinyCat\Core\Text\Text::htmlText($value);
         $value = preg_replace_callback(
             \TinyCat\Social\Posts\LinkParser::pattern(),
             static function (array $match): string {

@@ -5,7 +5,8 @@ namespace TinyCat\Support;
 
 final class Languages
 {
-    private static int $packagesRevision = -1;
+    private static string $packagesKey = '';
+    private static ?\TinyCat\Core\Runtime\Configuration $configuration = null;
     /** @var array<string, string> */
     private static array $sourcePackages = [];
 
@@ -55,117 +56,20 @@ final class Languages
     }
 
     /**
-     * @return array<mixed>
-     */
-    public static function language_names(): array
-    {
-        $defaults = [
-            'af' => 'Afrikaans',
-            'ar' => 'العربية',
-            'bg' => 'Български',
-            'ca' => 'Català',
-            'cs' => 'Česky',
-            'da' => 'Dansk',
-            'de' => 'Deutsch',
-            'el' => 'Ελληνικά',
-            'en' => 'English',
-            'es' => 'Español',
-            'et' => 'Eesti',
-            'fi' => 'Suomi',
-            'fr' => 'Français',
-            'he' => 'עברית',
-            'hi' => 'हिन्दी',
-            'hr' => 'Hrvatski',
-            'hu' => 'Magyar',
-            'it' => 'Italiano',
-            'ja' => '日本語',
-            'ko' => '한국어',
-            'lt' => 'Lietuvių',
-            'lv' => 'Latviešu',
-            'nl' => 'Nederlands',
-            'no' => 'Norsk',
-            'pl' => 'Polski',
-            'pt' => 'Português',
-            'pt-br' => 'Português (Brasil)',
-            'ro' => 'Română',
-            'ru' => 'Русский',
-            'sk' => 'Slovensky',
-            'sl' => 'Slovenščina',
-            'sr' => 'Српски',
-            'sv' => 'Svenska',
-            'tr' => 'Türkçe',
-            'uk' => 'Українська',
-            'vi' => 'Tiếng Việt',
-            'zh' => '中文',
-        ];
-        return $defaults;
-    }
-
-    public static function language_name(string $code, ?string $default = null): string
-    {
-        $code = \TinyCat\Support\Languages::language_code($code);
-
-        if ($code === '') {
-            return (string) ($default ?? '');
-        }
-
-        $names = \TinyCat\Support\Languages::language_names();
-
-        if (isset($names[$code])) {
-            return (string) $names[$code];
-        }
-
-        return self::language_packages()[$code] ?? (string) ($default ?? strtoupper($code));
-    }
-
-    /**
-     * @param array<mixed> $codes
-     * @return array<mixed>
-     */
-    public static function languages(?array $codes = null, bool $includeFiles = true): array
-    {
-        $items = $codes === null ? \TinyCat\Support\Languages::language_names() : [];
-
-        if ($codes !== null) {
-            foreach ($codes as $key => $value) {
-                $code = is_int($key) ? \TinyCat\Support\Languages::language_code((string) $value) : \TinyCat\Support\Languages::language_code((string) $key);
-
-                if ($code !== '') {
-                    $items[$code] = is_int($key) ? \TinyCat\Support\Languages::language_name($code) : (string) $value;
-                }
-            }
-        }
-
-        if ($includeFiles) {
-            foreach (\TinyCat\Support\Languages::language_packages() as $code => $label) {
-                $items[$code] = $label;
-            }
-        }
-
-        foreach ([\TinyCat\Support\Localization::locale()] as $code) {
-            $code = \TinyCat\Support\Languages::language_code((string) $code);
-
-            if ($code !== '' && !isset($items[$code])) {
-                $items[$code] = \TinyCat\Support\Languages::language_name($code);
-            }
-        }
-
-        ksort($items);
-
-        return $items;
-    }
-
-    /**
      * @return array<string, string>
      */
     public static function language_packages(): array
     {
-        $compiled = CompiledTranslations::packages();
-        if ($compiled !== null) { return $compiled; }
-        $revision = \TinyCat\Core\Modules\Resources::revision();
-        if (self::$packagesRevision !== $revision) {
-            self::$sourcePackages = TranslationSources::packages();
-            self::$packagesRevision = $revision;
+        // Signed, source-free runtime fixtures and inherited updater readers need no source loader.
+        if (!class_exists(\TinyCat\Core\Modules\Resources::class) || !class_exists(Config::class)) {
+            return CompiledTranslations::packages() ?? TranslationSources::packages();
+        }
+        $configuration = Config::snapshot();
+        $key = \TinyCat\Core\Modules\Resources::revision() . ':' . ((bool) $configuration->get('assets.source', false) ? 'source' : \TinyCat\Core\Modules\DeploymentIdentity::key());
+        if (self::$packagesKey !== $key || self::$configuration !== $configuration) {
+            self::$sourcePackages = CompiledTranslations::packages() ?? TranslationSources::packages();
+            self::$packagesKey = $key;
+            self::$configuration = $configuration;
         }
         return self::$sourcePackages;
     }

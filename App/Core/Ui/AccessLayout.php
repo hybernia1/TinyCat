@@ -4,7 +4,11 @@ namespace TinyCat\Core\Ui;
 
 use TinyCat\Core\Identity\{Authentication, Profile};
 use TinyCat\Core\Runtime\Startup;
-use TinyCat\Support\{Assets, ClientAssets, Localization, Markup, View};
+use TinyCat\Support\Assets;
+use TinyCat\Support\ClientAssets;
+use TinyCat\Support\Localization;
+use TinyCat\Core\Ui\Markup;
+use TinyCat\Core\Ui\View;
 
 /** Login, recovery and account pages prepare no public navigation or inbox. */
 final class AccessLayout

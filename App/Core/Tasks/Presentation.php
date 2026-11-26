@@ -12,7 +12,7 @@ final class Presentation
         foreach (\TinyCat\Core\Modules\Registrations::current()->entries->tasks as $task) {
             $admin = $task->definition()['admin'];
             $icon = (string) $admin['icon'];
-            \TinyCat\Support\Html::assertIconName($icon);
+            \TinyCat\Core\Ui\Html::assertIconName($icon);
             $title = $task->admin['title'] ?? '';
             $schedule = $task->admin['cadence'] ?? $task->admin['schedule'] ?? '';
             $entries[$task->id] = ['icon' => $icon, 'title' => $title === '' ? $task->id : ['t' => $title], 'schedule' => $schedule === '' ? '' : ['t' => $schedule]];

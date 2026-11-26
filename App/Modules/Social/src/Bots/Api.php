@@ -27,7 +27,7 @@ final class Api
             $data = $r->validated(['enabled' => 'required|boolean']);
             $active = filter_var($data['enabled'], FILTER_VALIDATE_BOOLEAN);
             \TinyCat\Core\Identity\Administration::setActive(\TinyCat\Core\Identity\Api::actor(), $account, $active, \TinyCat\Core\Identity\Participants::current());
-            return Result::from(Administration::accountsPayload((int) $p['id']) + \TinyCat\Support\AdminViews::activationNotice($active, '@' . $account['username']));
+            return Result::from(Administration::accountsPayload((int) $p['id']) + Result::activationNotice($active, '@' . $account['username']));
         }, 'admin');
         $api->get('/bots/accounts/{id:[0-9]+}/posts', static function (Request $request, array $params): array {
             $id = (int) $params['id'];
@@ -74,7 +74,7 @@ final class Api
                 if (!in_array($enabled, [true,false,0,1,'0','1'], true)) { Response::validation(['enabled' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]); }
                 $source = \TinyCat\Social\Bots\Administration::sourceForAction($id, max(0, (int) $r->input('bot_id', 0)));
                 if ((bool) $source['enabled'] !== in_array($enabled, [true,1,'1'], true)) { \TinyCat\Social\Bots\Administration::toggleSource($source); }
-                return Result::from(\TinyCat\Social\Bots\Administration::payload($id) + \TinyCat\Support\AdminViews::activationNotice(in_array($enabled, [true, 1, '1'], true), (string) $source['name']));
+                return Result::from(\TinyCat\Social\Bots\Administration::payload($id) + Result::activationNotice(in_array($enabled, [true, 1, '1'], true), (string) $source['name']));
             }
             return Result::from(Actions::adminBotSourceUpdate($id));
         }, 'admin');

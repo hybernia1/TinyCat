@@ -80,8 +80,8 @@ $assert(array_values(array_diff($maintenanceIds, ['orphan_branding_files', 'reti
     'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications', 'old_scheduler_runs', 'bot_history', 'duplicate_bot_posts',
 ], 'Existing maintenance IDs and order remain stable');
 $assert(in_array('orphan_branding_files', $maintenanceIds, true) && $registries->owner('maintenance', 'orphan_branding_files') === 'tinycat.settings', 'Branding adds one owner-declared orphan task');
-$assert(in_array('retired_build_files', $maintenanceIds, true) && $registries->owner('maintenance', 'retired_build_files') === 'tinycat.support', 'Core contributes lazy release build retirement without a module domain dependency');
-foreach (['retired_runtime_assets', 'abandoned_module_packages', 'old_debug_logs'] as $id) { $assert(in_array($id, $maintenanceIds, true) && $registries->owner('maintenance', $id) === 'tinycat.support', 'Technical maintenance is registered lazily: ' . $id); }
+$assert(in_array('retired_build_files', $maintenanceIds, true) && $registries->owner('maintenance', 'retired_build_files') === 'tinycat.updates', 'Core contributes lazy release build retirement without a module domain dependency');
+foreach (['retired_runtime_assets' => 'tinycat.ui', 'abandoned_module_packages' => 'tinycat.updates', 'old_debug_logs' => 'tinycat.scheduler'] as $id => $owner) { $assert(in_array($id, $maintenanceIds, true) && $registries->owner('maintenance', $id) === $owner, 'Technical maintenance is registered lazily: ' . $id); }
 $assert($registries->task('cleanup')->options === ['cleanup_batch' => 500] && $registries->task('cleanup')->adminOptions === ['cleanup_batch' => 5000], 'Cleanup owns distinct scheduled and manual defaults');
 $assert($registries->initialMaintenance() === 'update_files', 'The existing initial cleanup cursor is preserved by its owner');
 $assert($registries->owner('task', 'feeds') === 'tinycat.social' && $registries->owner('maintenance', 'old_password_reset_tokens') === 'tinycat.accounts', 'Tasks and retention have explicit owners');
@@ -266,3 +266,15 @@ $output = []; $exitCode = 0;
 exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../fixtures/modules/minimal-boot.php') . ' --social 2>&1', $output, $exitCode);
 $assert($exitCode === 0, 'Social registration stays lazy: ' . implode("\n", $output));
 echo implode("\n", $output) . "\n";
+
+$configuration = new Configuration(['literal.key' => null, 'nested' => ['value' => 7], 'app' => ['debug' => 'off']]);
+\TinyCat\Support\Config::configure($configuration);
+$assert(\TinyCat\Support\Config::snapshot() === $configuration, 'Configuration reads retain the supplied immutable snapshot.');
+$assert(\TinyCat\Support\Config::get('nested.value') === 7 && \TinyCat\Support\Config::get('literal.key', 'fallback') === null, 'Configuration keeps dotted lookup and explicit null semantics.');
+$values = \TinyCat\Support\Config::get(); $values['nested']['value'] = 9;
+$assert(\TinyCat\Support\Config::get('nested.value') === 7, 'Returned values cannot mutate the configuration snapshot.');
+\TinyCat\Support\Config::configure(new Configuration(['nested' => ['value' => 11]]));
+\TinyCat\Support\Config::load();
+$assert(\TinyCat\Support\Config::get('nested.value') === 11 && $configuration->get('nested.value') === 7, 'Reconfiguration replaces the current snapshot and load preserves it without changing old snapshots.');
+
+echo "PASS immutable configuration reuse, replacement and value isolation\n";

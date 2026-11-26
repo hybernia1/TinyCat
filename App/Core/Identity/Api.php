@@ -61,7 +61,7 @@ final class Api
                 if ($exception->getMessage() !== 'super_admin_protected') { throw $exception; }
                 Response::error(\TinyCat\Support\Localization::t('users.messages.super_admin_protected'), 409, 'super_admin_protected');
             }
-            return Result::from(['item' => Resource::legacyUser(ReadModel::tc_admin_user_by_id((int) $p['id']) ?? [])] + \TinyCat\Support\AdminViews::activationNotice($active, '@' . $user['username']));
+            return Result::from(['item' => Resource::legacyUser(ReadModel::tc_admin_user_by_id((int) $p['id']) ?? [])] + Result::activationNotice($active, '@' . $user['username']));
         }, 'admin');
         $api->get('/users/{id:[0-9]+}/management', static fn (Request $r, array $p): array => self::editable(self::target((int) $p['id'])), 'user');
         $api->patch('/users/{id:[0-9]+}', static function (Request $r, array $p): Result {

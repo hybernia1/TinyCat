@@ -94,7 +94,7 @@ final readonly class Loader
     public function registries(?Catalog $selection = null): Registries
     {
         $catalog = $selection ?? $this->catalog;
-        return new Registries(($catalog->has('tinycat.support') ? ['tinycat.support' => \TinyCat\Support\Module::contributions()] : []) + ($catalog->has('tinycat.ui') ? ['tinycat.ui' => \TinyCat\Core\Ui\Platform::contributions()] : []) + Providers::contributions($catalog));
+        return new Registries(($catalog->has('tinycat.ui') ? ['tinycat.ui' => \TinyCat\Core\Ui\Platform::contributions()] : []) + Providers::contributions($catalog));
     }
 
     /** @return array<string, ModuleSchema> */

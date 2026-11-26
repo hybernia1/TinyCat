@@ -18,6 +18,7 @@ final class ProfileServerPool
         $env['TINYCAT_PROFILE_CONFIG'] = $config;
         $env['TINYCAT_PROFILE_ROOT'] = $root;
         $env['TINYCAT_PROFILE_OUTPUT'] = $log;
+        $env['TINYCAT_RUNTIME_ASSET_DIRECTORY'] = $log . '.runtime-assets';
         $env['TINYCAT_PROFILE_USER'] = (string) $actor;
         $sessions = $log . '.sessions';
         if (!is_dir($sessions) && !mkdir($sessions, 0700, true) && !is_dir($sessions)) { throw new RuntimeException('Cannot create isolated profile sessions.'); }

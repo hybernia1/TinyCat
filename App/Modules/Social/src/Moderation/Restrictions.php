@@ -130,7 +130,7 @@ final class Restrictions
         $data = [
             'muted_until' => $untilValue,
             'muted_by' => ((int) ($actor['id'] ?? 0)) > 0 ? (int) ($actor['id'] ?? 0) : null,
-            'muted_reason' => \TinyCat\Support\Text::plain_text_limit($reason, 80),
+            'muted_reason' => \TinyCat\Core\Text\Text::plain_text_limit($reason, 80),
         ];
 
         \TinyCat\Database\Connection::update('users', $data, ['id' => $userId]);

@@ -77,13 +77,13 @@ class Links extends \TinyCat\Core\Links\Urls
         return [
             'normalized_url' => $normalizedUrl,
             'url_hash' => $hash,
-            'provider' => \TinyCat\Support\Text::plain_text_limit($taxonomy['provider'], 40),
+            'provider' => \TinyCat\Core\Text\Text::plain_text_limit($taxonomy['provider'], 40),
             'link_type' => $taxonomy['link_type'],
-            'title' => \TinyCat\Support\Text::plain_text_limit((string) ($link['title'] ?? ''), 255),
-            'description' => \TinyCat\Support\Text::plain_text_limit(FeedPublication::cleanImportBoilerplate((string) ($link['description'] ?? '')), 500),
-            'image_url' => Providers::youtubeThumbnails($normalizedUrl) !== [] ? '' : \TinyCat\Support\Text::plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
-            'video_id' => \TinyCat\Support\Text::plain_text_limit((string) ($link['video_id'] ?? ''), 80),
-            'audio_url' => \TinyCat\Support\Text::plain_text_limit((string) ($link['audio_url'] ?? ''), 2048),
+            'title' => \TinyCat\Core\Text\Text::plain_text_limit((string) ($link['title'] ?? ''), 255),
+            'description' => \TinyCat\Core\Text\Text::plain_text_limit(FeedPublication::cleanImportBoilerplate((string) ($link['description'] ?? '')), 500),
+            'image_url' => Providers::youtubeThumbnails($normalizedUrl) !== [] ? '' : \TinyCat\Core\Text\Text::plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
+            'video_id' => \TinyCat\Core\Text\Text::plain_text_limit((string) ($link['video_id'] ?? ''), 80),
+            'audio_url' => \TinyCat\Core\Text\Text::plain_text_limit((string) ($link['audio_url'] ?? ''), 2048),
             'updated_at' => (string) ($link['_metadata_updated_at'] ?? \TinyCat\Support\Dates::dateDb()),
         ];
     }
@@ -93,7 +93,7 @@ class Links extends \TinyCat\Core\Links\Urls
      */
     public static function status_link_find_by_hash(string $hash): ?array
     {
-        $hash = \TinyCat\Support\Text::plain_text_limit($hash, 64);
+        $hash = \TinyCat\Core\Text\Text::plain_text_limit($hash, 64);
 
         if ($hash === '') {
             return null;
@@ -304,7 +304,7 @@ class Links extends \TinyCat\Core\Links\Urls
             foreach ($links as $link) {
                 $link = (array) $link;
                 $hash = (string) ($link['url_hash'] ?? '');
-                if (\TinyCat\Support\Text::plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048) === '' || $hash === '') { continue; }
+                if (\TinyCat\Core\Text\Text::plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048) === '' || $hash === '') { continue; }
                 $cacheImage = $source !== null && $source['url_hash'] !== '' && hash_equals($source['url_hash'], $hash);
                 $prepared[] = self::status_link_prepare_metadata($link, $metadataCache[$hash] ?? null, true, $cacheImage ? $source : null);
             }
@@ -352,7 +352,7 @@ class Links extends \TinyCat\Core\Links\Urls
             return [];
         }
 
-        return \TinyCat\Support\Text::positive_int_ids(array_column(
+        return \TinyCat\Support\Values::positive_int_ids(array_column(
             \TinyCat\Database\Connection::all('SELECT link_id FROM social_post_links WHERE content_id = ?', [$contentId]),
             'link_id'
         ));
@@ -363,7 +363,7 @@ class Links extends \TinyCat\Core\Links\Urls
      */
     public static function status_cleanup_unused_link_ids(array $linkIds): void
     {
-        $linkIds = \TinyCat\Support\Text::positive_int_ids($linkIds);
+        $linkIds = \TinyCat\Support\Values::positive_int_ids($linkIds);
 
         if ($linkIds === []) {
             return;
@@ -397,7 +397,7 @@ class Links extends \TinyCat\Core\Links\Urls
     {
         static $cache = [];
 
-        $ids = \TinyCat\Support\Text::positive_int_ids($contentIds);
+        $ids = \TinyCat\Support\Values::positive_int_ids($contentIds);
 
         if ($ids === []) {
             return [];

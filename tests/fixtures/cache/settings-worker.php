@@ -4,8 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../support/mysql.php';
 $state = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
 define('TINYCAT', true); require $state['source'] . '/App/Core/Runtime/autoload.php';
-(new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(TinyCat\Support\Config::class, 'config'))->setValue(null, $state['config']);
+TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($state['config']));
 final class PausedSettingsStatement extends PDOStatement {
     protected function __construct(private string $directory) {}
     public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array {

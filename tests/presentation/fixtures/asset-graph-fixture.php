@@ -6,8 +6,8 @@ $mode = $argv[1] ?? '--all';
 if ($mode === '--search-workspace') {
     $navigation = [];
     foreach (\TinyCat\Core\Discovery\Search::sources() as $source) { $navigation[] = ['label' => ($source->label)(), 'icon' => $source->icon, 'url' => '/search/all?q=fixture&collection=' . $source->id, 'active' => $navigation === []]; }
-    $content = \TinyCat\Support\Components::render('ui/search-page', ['result' => ['collections' => [['name' => 'Fixture', 'items' => [['title' => str_repeat('Long title ', 20), 'excerpt' => str_repeat('Result text ', 30), 'url' => '/fixture']]]]]]);
-    echo json_encode(['content' => \TinyCat\Support\Components::render('ui/public-workspace', ['title' => 'Search', 'navigation' => $navigation, 'content' => new \TinyCat\Support\Markup($content)]), 'styles' => \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles('/search/all'))], JSON_THROW_ON_ERROR);
+    $content = \TinyCat\Core\Ui\Components::render('ui/search-page', ['result' => ['collections' => [['name' => 'Fixture', 'items' => [['title' => str_repeat('Long title ', 20), 'excerpt' => str_repeat('Result text ', 30), 'url' => '/fixture']]]]]]);
+    echo json_encode(['content' => \TinyCat\Core\Ui\Components::render('ui/public-workspace', ['title' => 'Search', 'navigation' => $navigation, 'content' => new \TinyCat\Core\Ui\Markup($content)]), 'styles' => \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles('/search/all'))], JSON_THROW_ON_ERROR);
     exit;
 }
 if ($mode === '--notifications-core') {
@@ -20,11 +20,11 @@ if ($mode === '--notifications-core') {
 }
 
 if ($mode === '--scheduler-help') {
-    echo json_encode(\TinyCat\Support\Components::render('scheduler/administration', ['token' => 'fixture', 'execution_url' => '/api/scheduler/executions', 'tasks' => [['id' => 'cleanup', 'query_url' => '/api/scheduler/triggers/fixture', 'http_command' => 'fixture-http', 'cli_command' => 'fixture-cli']]]), JSON_THROW_ON_ERROR);
+    echo json_encode(\TinyCat\Core\Ui\Components::render('scheduler/administration', ['token' => 'fixture', 'execution_url' => '/api/scheduler/executions', 'tasks' => [['id' => 'cleanup', 'query_url' => '/api/scheduler/triggers/fixture', 'http_command' => 'fixture-http', 'cli_command' => 'fixture-cli']]]), JSON_THROW_ON_ERROR);
     exit;
 }
 if ($mode === '--health-action') {
-    echo json_encode(\TinyCat\Support\Components::render('ui/api-action', ['url' => '/api/scheduler/tasks/site-health/runs', 'method' => 'POST', 'label' => 'Run check']), JSON_THROW_ON_ERROR);
+    echo json_encode(\TinyCat\Core\Ui\Components::render('ui/api-action', ['url' => '/api/scheduler/tasks/site-health/runs', 'method' => 'POST', 'label' => 'Run check']), JSON_THROW_ON_ERROR);
     exit;
 }
 if ($mode === '--installation') {
@@ -34,9 +34,9 @@ if ($mode === '--installation') {
     $steps = \TinyCat\Core\Installation\Pages::prepare('tables', [], []);
     $language = \TinyCat\Core\Installation\Pages::prepare('language', \TinyCat\Core\Installation\Installer::languages(), ['locale' => 'cs']);
     $database = \TinyCat\Core\Installation\Pages::prepare('db', [], ['database' => ['host' => 'localhost', 'name' => 'fixture', 'user' => 'fixture', 'charset' => 'utf8mb4']]);
-    $html = \TinyCat\Support\Components::render('installation/steps', $steps)
-        . \TinyCat\Support\Components::render('installation/language', $language)
-        . \TinyCat\Support\Components::render('installation/database', $database);
+    $html = \TinyCat\Core\Ui\Components::render('installation/steps', $steps)
+        . \TinyCat\Core\Ui\Components::render('installation/language', $language)
+        . \TinyCat\Core\Ui\Components::render('installation/database', $database);
     session_destroy();
     echo json_encode($html, JSON_THROW_ON_ERROR);
     exit;

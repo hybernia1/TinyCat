@@ -29,7 +29,7 @@ final class History
             'status' => (string) $result['status'],
             'finished_at' => Dates::dateDb(), 'duration_ms' => max(0, $duration),
             'summary_json' => json_encode($result['summary'], JSON_THROW_ON_ERROR),
-            'error' => $error !== '' ? \TinyCat\Support\Text::plain_text_limit($error, 1000) : null,
+            'error' => $error !== '' ? \TinyCat\Core\Text\Text::plain_text_limit($error, 1000) : null,
         ], ['id' => $id]);
     }
     /** @return array<mixed>|null */

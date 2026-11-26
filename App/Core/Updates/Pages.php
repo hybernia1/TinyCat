@@ -6,7 +6,7 @@ use TinyCat\Http\Request;
 use TinyCat\Http\Session;
 use TinyCat\Core\Ui\Page as Layout;
 use TinyCat\Support\Localization;
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 use TinyCat\Core\Identity\Access;
 
 
@@ -37,6 +37,6 @@ final class Pages
             'title' => Localization::t('updates.title'),
             'current' => '/admin/updates',
             'actions' => $actions,
-        ], \TinyCat\Support\AdminViews::listCard(Localization::t('updates.release_title'), 'download', 'updates-overview', '', new \TinyCat\Support\Markup(Components::render('updates/page', $model)), primary: true));
+        ], \TinyCat\Core\Ui\Admin\Views::listCard(Localization::t('updates.release_title'), 'download', 'updates-overview', '', new \TinyCat\Core\Ui\Markup(Components::render('updates/page', $model)), primary: true));
     }
 }

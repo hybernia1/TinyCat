@@ -61,14 +61,14 @@ final class Errors
                 $surface = \TinyCat\Core\Ui\Surface::forPath($errorPath) ?? \TinyCat\Core\Ui\Surface::Access;
                 if ($surface === \TinyCat\Core\Ui\Surface::Administration && !\TinyCat\Core\Identity\Roles::isAdmin(\TinyCat\Core\Identity\Authentication::auth())) { $surface = \TinyCat\Core\Ui\Surface::Access; }
                 if ($surface === \TinyCat\Core\Ui\Surface::PublicWeb && !\TinyCat\Core\Ui\PublicWeb::enabled()) { $surface = \TinyCat\Core\Ui\Surface::Access; }
-                $data['searchUrl'] = $surface === \TinyCat\Core\Ui\Surface::PublicWeb && \TinyCat\Core\Discovery\Search::sources() !== [] ? \TinyCat\Support\LocalUrls::absolute(\TinyCat\Http\LocaleRouting::url('/search/all')) : '';
-                \TinyCat\Core\Ui\Page::render(['title' => $title, 'current' => $errorPath, 'public' => true, 'asset_path' => $surface->defaultAssetPath(), 'surface' => $surface->value, 'meta' => ['robots' => 'noindex,follow']], \TinyCat\Support\View::render('error', $data, dirname(__DIR__) . '/Ui/templates'));
+                $data['searchUrl'] = $surface === \TinyCat\Core\Ui\Surface::PublicWeb && \TinyCat\Core\Discovery\Search::sources() !== [] ? \TinyCat\Http\LocalUrls::absolute(\TinyCat\Http\LocaleRouting::url('/search/all')) : '';
+                \TinyCat\Core\Ui\Page::render(['title' => $title, 'current' => $errorPath, 'public' => true, 'asset_path' => $surface->defaultAssetPath(), 'surface' => $surface->value, 'meta' => ['robots' => 'noindex,follow']], \TinyCat\Core\Ui\View::render('error', $data, dirname(__DIR__) . '/Ui/templates'));
                 $body = (string) ob_get_clean(); \TinyCat\Http\Document::error($body, $status, 'text/html'); return;
             }
             catch (Throwable $exception) { while (ob_get_level() > $level) { ob_end_clean(); } Failure::report($exception); }
         }
         // This template needs no database, external assets or layout service.
-        \TinyCat\Http\Document::error(\TinyCat\Support\View::render('errorFallback', $data, dirname(__DIR__) . '/Ui/templates'), $status, 'text/html');
+        \TinyCat\Http\Document::error(\TinyCat\Core\Ui\View::render('errorFallback', $data, dirname(__DIR__) . '/Ui/templates'), $status, 'text/html');
     }
 
     /** Best-effort metadata only; the emergency document must not depend on DB reads.

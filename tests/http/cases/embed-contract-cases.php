@@ -64,7 +64,26 @@ $assert($otherStatus === 200 && $otherHtml === $html, 'Embed output is independe
 [$errorStatus, $errorBody, $errorHeaders] = $exportRequest('/status/910001/embed', 'GET', ['X-Test-Embed-Failure' => '1']);
 $assert($errorStatus === 500 && !isset($errorHeaders['set-cookie']) && !str_contains($errorBody, '<html') && !str_contains($errorBody, 'SELECT'), 'Embed failures stay session-free and do not fall back to the interactive application shell.');
 [$status, $sharing] = $request('GET', '/api/statuses/910001/embed');
-$assert($status === 200 && $sharing['data']['frame_url'] === 'http://localhost/status/910001/embed' && str_contains($sharing['data']['snippet'], '<iframe'), 'The standard modal receives its preview URL and copyable snippet through a public JSON resource.');
+$assert($status === 200 && $sharing['data']['frame_url'] === '/status/910001/embed' && str_contains($sharing['data']['snippet'], 'http://localhost/status/910001/embed'), 'The modal receives a browser-local preview route while its copyable snippet retains the configured canonical URL.');
+$previousEmbedBase = $embedDb->query("SELECT * FROM settings WHERE setting_key = 'app.url'")->fetch(PDO::FETCH_ASSOC);
+try {
+    foreach (['http://localhost', 'https://localhost', 'https://www.example.test:8443/site'] as $canonicalBase) {
+        $embedDb->prepare("INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES ('app.url', ?, 'string', 'app') ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)")->execute([$canonicalBase]);
+        [$status, $sharing] = $request('GET', '/api/statuses/910001/embed');
+        $assert($status === 200 && $sharing['data']['frame_url'] === '/status/910001/embed' && str_contains($sharing['data']['snippet'], $canonicalBase . '/status/910001/embed'), 'Changing canonical scheme, host, port or path never moves the browser preview to another origin or route.');
+        [$status] = $exportRequest('/oembed?url=' . rawurlencode($canonicalBase . '/status/910001'));
+        $assert($status === 200, 'oEmbed continues to resolve the configured canonical origin and path prefix.');
+        foreach (['https://foreign.test/status/910001', $canonicalBase . '-other/status/910001'] as $foreign) {
+            [$status] = $exportRequest('/oembed?url=' . rawurlencode($foreign));
+            $assert($status === 404, 'oEmbed does not confuse the browser origin or a similar prefix with the configured canonical URL.');
+        }
+    }
+} finally {
+    $embedDb->exec("DELETE FROM settings WHERE setting_key = 'app.url'");
+    if (is_array($previousEmbedBase)) {
+        $embedDb->prepare('INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)')->execute(array_map(static fn (string $key): mixed => $previousEmbedBase[$key], ['setting_key', 'setting_value', 'setting_type', 'setting_group']));
+    }
+}
 $assert(str_contains($html, '/avatar/initials/v3/'), 'Authors without an upload use their generated avatar in embeds.');
 $embedDb->exec("UPDATE users SET avatar_exists=1, updated_at='2020-01-01 12:00:00' WHERE id=910001");
 [$status, $avatarHtml] = $exportRequest('/status/910001/embed');

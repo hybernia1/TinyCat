@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace TinyCat\Support;
+namespace TinyCat\Core\Text;
 
 final class Text
 {
@@ -47,25 +47,6 @@ final class Text
         return function_exists('mb_substr') ? mb_substr($value, 0, $limit) : substr($value, 0, $limit);
     }
 
-    /**
-     * @param array<mixed> $values
-     * @return list<int>
-     */
-    public static function positive_int_ids(array $values): array
-    {
-        $ids = [];
-
-        foreach ($values as $value) {
-            $id = (int) $value;
-
-            if ($id > 0) {
-                $ids[$id] = $id;
-            }
-        }
-
-        return array_values($ids);
-    }
-
     public static function plain_text_limit(string $value, int $limit): string
     {
         $value = str_replace(["\r\n", "\r"], "\n", $value);
@@ -73,7 +54,7 @@ final class Text
         // malformed HTML tag and removes the rest of the value. User-entered
         // content is plain text, so strip only recognizable tags and preserve
         // comparison operators and emoticons such as `<3`.
-        $value = trim(\TinyCat\Support\Text::strip_html_tags_preserving_text($value));
+        $value = trim(\TinyCat\Core\Text\Text::strip_html_tags_preserving_text($value));
 
         if ($limit < 1) {
             return '';
@@ -92,10 +73,24 @@ final class Text
     {
         return (string) preg_replace('/<!--[\\s\\S]*?-->|<\/?[a-z][^>]*>/i', '', $value);
     }
+    /** HTML to unescaped, single-line prose; no editorial policy.
+     * Encoded markup is interpreted only when the input contract permits it.
+     * With encodedMarkup=false, entity-escaped literal tags remain prose.
+     */
+    public static function htmlText(string $value, int $limit = PHP_INT_MAX, bool $encodedMarkup = true): string
+    {
+        if ($encodedMarkup) { $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5 | ENT_SUBSTITUTE, 'UTF-8'); }
+        // Separate blocks before removing markup; keep literal comparisons and <3.
+        $value = preg_replace('~</?(?:p|div|li|ul|ol|h[1-6]|blockquote|section|article|tr|td|th|table)\b[^>]*>|<br\b[^>]*>~iu', ' ', $value) ?? $value;
+        $value = self::strip_html_tags_preserving_text($value);
+        if (!$encodedMarkup) { $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5 | ENT_SUBSTITUTE, 'UTF-8'); }
+        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+        return rtrim(self::limitString($value, $limit));
+    }
+
     public static function excerpt(string $text, int $limit = 180): string
     {
-        $text = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+        $text = self::htmlText($text);
 
         if ($text === '') {
             return '';

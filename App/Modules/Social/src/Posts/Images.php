@@ -36,7 +36,7 @@ final class Images
     {
         $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? ''));
         $author = $author !== '' ? $author : \TinyCat\Core\Ui\Site::site_name();
-        $body = \TinyCat\Support\Text::excerpt(\TinyCat\Social\Posts\Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120);
+        $body = \TinyCat\Core\Text\Text::excerpt(\TinyCat\Social\Posts\Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120);
 
         return $body !== ''
             ? \TinyCat\Support\Localization::t('public.status_image_alt', ['author' => $author, 'text' => $body])
@@ -57,8 +57,8 @@ final class Images
 
         return array_filter([
             '@type' => 'ImageObject',
-            'contentUrl' => \TinyCat\Support\LocalUrls::absolute($url),
-            'url' => \TinyCat\Support\LocalUrls::absolute($url),
+            'contentUrl' => \TinyCat\Http\LocalUrls::absolute($url),
+            'url' => \TinyCat\Http\LocalUrls::absolute($url),
             'width' => max(0, (int) ($item['image_width'] ?? $item['width'] ?? 0)) ?: null,
             'height' => max(0, (int) ($item['image_height'] ?? $item['height'] ?? 0)) ?: null,
             'encodingFormat' => 'image/webp',

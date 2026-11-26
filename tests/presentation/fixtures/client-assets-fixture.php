@@ -28,11 +28,11 @@ if (($argv[3] ?? '') === '--compiled' || ($argv[3] ?? '') === '--compiled-min') 
     (new ReflectionProperty(\TinyCat\Support\CompiledAssets::class, 'manifest'))->setValue(null, json_decode($compiledFiles['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR));
 }
 // Prepared bundles are virtual files; expected catalogs are derived from sources.
-\TinyCat\Support\Components::withFreshTemplates(static function () use ($path, $locale, $compiledFiles): void {
+\TinyCat\Core\Ui\Components::withFreshTemplates(static function () use ($path, $locale, $compiledFiles): void {
     $assets = [];
     foreach (\TinyCat\Support\ClientAssets::scripts($path) as $url) {
         $file = str_starts_with($url, '/cache/assets/')
-            ? \TinyCat\Support\Cache::file(basename($url), 'assets')
+            ? \TinyCat\Support\Assets::file(basename($url), 'assets')
             : \TinyCat\Support\Paths::basePath((string) parse_url($url, PHP_URL_PATH));
         $compiled = $compiledFiles[ltrim((string) parse_url($url, PHP_URL_PATH), '/')] ?? null;
         $assets[] = ['url' => $url, 'source' => $compiled ?? (string) file_get_contents($file)];
@@ -41,7 +41,7 @@ if (($argv[3] ?? '') === '--compiled' || ($argv[3] ?? '') === '--compiled-min') 
     $deferred = $compiledClient['deferred'] ?? \TinyCat\Support\ClientAssets::deferred($path, $locale);
     $deferredAssets = [];
     foreach (array_filter([$deferred['script'] ?? null, $deferred['style'] ?? null]) as $url) {
-        $deferredAssets[$url] = $compiledFiles[ltrim($url, '/')] ?? (string) file_get_contents(\TinyCat\Support\Cache::file(basename($url), 'assets'));
+        $deferredAssets[$url] = $compiledFiles[ltrim($url, '/')] ?? (string) file_get_contents(\TinyCat\Support\Assets::file(basename($url), 'assets'));
     }
     echo json_encode(['locale' => $locale, 'assets' => $assets, 'deferred_assets' => $deferredAssets,
         'styles' => \TinyCat\Support\ClientAssets::styles($path),

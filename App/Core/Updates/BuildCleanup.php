@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
-namespace TinyCat\Support;
+namespace TinyCat\Core\Updates;
+
+use TinyCat\Support\{FileSweep, Paths};
 
 /** Retire generated release files only after their deployment and rollback references expire. */
 final class BuildCleanup

@@ -32,7 +32,7 @@ $assert(Tags::normalizeTag(str_repeat('a', Tags::MAX_BYTES)) === str_repeat('a',
 $assert(Tags::normalizeTag(str_repeat('a', Tags::MAX_BYTES + 1)) === '', 'A tag beyond the storage byte limit is rejected');
 $assert(Tags::extractTags('#Cafe #cafe #other #CAFE') === ['cafe', 'other'], 'Normalized tags are deduplicated in first occurrence order');
 $assert(Tags::normalizeTagText('#' . str_repeat('a', Tags::MAX_BYTES + 1)) === '#' . str_repeat('a', Tags::MAX_BYTES + 1), 'Rejected overlong tags remain literal prose');
-$assert(TinyCat\Support\Text::slug('Mixed words', '_') === 'mixed_words', 'The canonical slug implementation preserves custom separators');
+$assert(TinyCat\Core\Text\Text::slug('Mixed words', '_') === 'mixed_words', 'The canonical slug implementation preserves custom separators');
 $sample = 'Feature Update #1 https://indian-tv.cz/clanek/gothic-remake #novinky #gothic-remake';
 $assert(Tags::extractTags($sample) === ['novinky', 'gothic-remake'], 'RSS update number is prose while trailing named tags are retained');
 $assert(Tags::normalizeTagText($sample) === $sample, 'RSS body is preserved');
@@ -65,11 +65,11 @@ $sentence = TinyCat\Social\Posts\InlinePresentation::text('#one is #two and #thr
 $assert(TinyCat\Social\Posts\InlinePresentation::compactTags($sentence) === $sentence, 'Tags inside prose are never hidden');
 $short = TinyCat\Social\Posts\InlinePresentation::text('#one #two #three #four');
 $assert(TinyCat\Social\Posts\InlinePresentation::compactTags($short) === $short, 'Short tag runs stay visible');
-$html = TinyCat\Support\Components::render('publishing/segments', ['segments' => $compact]);
+$html = TinyCat\Core\Ui\Components::render('publishing/segments', ['segments' => $compact]);
 $assert(str_contains($html, '<details class="status-tags-overflow">') && str_contains($html, '# +3') && str_contains($html, '/tag/six'), 'Shared rendering exposes all overflow links through native disclosure');
 $parts = TinyCat\Social\Posts\InlinePresentation::splitTags($compact);
 $assert(count($parts['text_segments']) === 1 && count($parts['tag_segments']) > 0, 'Trailing tags are separated from the translatable text');
-$bodyHtml = TinyCat\Support\Components::render('status/body', ['item' => $parts]);
+$bodyHtml = TinyCat\Core\Ui\Components::render('status/body', ['item' => $parts]);
 $assert(str_contains($bodyHtml, 'class="status-tags" translate="no"') && str_contains($bodyHtml, '<summary class="badge">'), 'Tags opt out of translation and the disclosure uses a badge');
 $assert(TinyCat\Social\Posts\InlinePresentation::splitTags(TinyCat\Social\Posts\InlinePresentation::text('#one sentence'))['tag_segments'] === [], 'Inline tags remain inside prose');
 $database->exec('CREATE TABLE terms (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name TEXT); CREATE TABLE content_tags (content_id INT UNSIGNED, term_id INT UNSIGNED)');

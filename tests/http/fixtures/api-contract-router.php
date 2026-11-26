@@ -20,7 +20,7 @@ require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 
 
 if (preg_match('~^/cache/assets/([A-Za-z0-9._-]+[.]svg)$~D', $assetPath, $asset)) {
-    $file = \TinyCat\Support\Cache::file($asset[1], 'assets');
+    $file = \TinyCat\Support\Assets::file($asset[1], 'assets');
     if (is_file($file)) { header('Content-Type: image/svg+xml'); readfile($file); return; }
 }
 
@@ -30,8 +30,7 @@ $database->advisoryLock = static fn (): int => (int) ($_SERVER['HTTP_X_TEST_SCHE
 $database->advisoryRelease = static fn (): int => 1;
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, [
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([
     'app' => ['debug' => false, 'url' => 'http://localhost'],
     'health' => ['http' => ['enabled' => false]],
     'i18n' => ['locale' => 'en'],
@@ -40,7 +39,7 @@ $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     'performance' => ['cache' => ['enabled' => false]],
     'auth' => ['registration' => ['enabled' => true, 'auto_approve' => true]],
     'datetime' => ['timezone' => 'UTC'],
-]);
+]));
 // Isolate this server from the workspace's persistent autoload-settings cache.
 $settings = [];
 foreach ($database->query('SELECT setting_key, setting_value, setting_type FROM settings')->fetchAll() as $setting) {
@@ -50,7 +49,7 @@ foreach ($database->query('SELECT setting_key, setting_value, setting_type FROM 
 if (($_SERVER['HTTP_X_TEST_CAPTCHA'] ?? '') === '1') {
     $configuration = \TinyCat\Support\Config::get();
     $configuration['security']['captcha'] = ['enabled' => true, 'provider' => 'turnstile', 'site_key' => 'test_public_key', 'secret_key' => 'test_private_key'];
-    (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
+    \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($configuration));
 }
 
 // Session isolation is fixture policy, not a production module API.

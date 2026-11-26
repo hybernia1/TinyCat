@@ -1,7 +1,8 @@
 <?php
 declare(strict_types=1);
 
-namespace TinyCat\Support;
+namespace TinyCat\Core\Ui;
+
 
 use Throwable;
 use RuntimeException;

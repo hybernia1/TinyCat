@@ -4,7 +4,10 @@ namespace TinyCat\Core\Ui;
 
 use TinyCat\Core\Modules\Administration;
 use TinyCat\Http\{Api, Request, Response, Router};
-use TinyCat\Support\{AdminViews, Components, Localization, Markup};
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
+use TinyCat\Core\Ui\Components;
+use TinyCat\Support\Localization;
+use TinyCat\Core\Ui\Markup;
 
 /** Always available to administrators, independently of optional feature adapters. */
 final class ModulesPage

@@ -38,13 +38,13 @@ $widgets = [
     ['id' => 'fixture.comments', 'type' => 'list', 'title' => Localization::t('admin.recent_comments'), 'icon' => 'message-circle', 'data' => $comments],
     ['id' => 'fixture.status', 'type' => 'status', 'title' => 'Status', 'icon' => 'shield', 'data' => ['text' => 'Healthy', 'tone' => 'success', 'url' => '/admin/cron?task=site-health#modal=scheduler/runs/40']],
 ];
-$html = TinyCat\Support\Components::render('ui/dashboard', ['widgets' => $widgets]);
+$html = TinyCat\Core\Ui\Components::render('ui/dashboard', ['widgets' => $widgets]);
 if (in_array($argv[1] ?? '', ['--fixture', '--cache-fixture'], true)) {
     if ($argv[1] === '--cache-fixture') {
-        $html = TinyCat\Support\Components::render('ui/cache-page', TinyCat\Core\Ui\Admin\CachePage::model());
+        $html = TinyCat\Core\Ui\Components::render('ui/cache-page', TinyCat\Core\Ui\Admin\CachePage::model());
     }
     $css = TinyCat\Support\AssetGraph::stylesheet(TinyCat\Support\ClientAssets::sourceStyles('/admin'));
-    $layout = TinyCat\Support\View::render('shell', ['content' => $html, 'actions' => '', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => Localization::t('common.dashboard'), 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'titleIcon' => 'dashboard'], $root . '/App/Core/Ui/Admin/templates');
+    $layout = TinyCat\Core\Ui\View::render('shell', ['content' => $html, 'actions' => '', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => Localization::t('common.dashboard'), 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'titleIcon' => 'dashboard'], $root . '/App/Core/Ui/Admin/templates');
     echo '<!doctype html><html lang="cs" data-ui-density="compact"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $layout . '</body></html>';
     exit;
 }
@@ -87,6 +87,6 @@ $runtimeModel = TinyCat\Core\Ui\Admin\Diagnostics::model($runtime);
 $check(count($runtimeModel['services'][0]['rows']) === 7 && count($runtimeModel['services'][1]['rows']) === 8, 'Both enabled cache services preserve all metrics as label/value rows.');
 $runtimeHtml = TinyCat\Core\Ui\Admin\Diagnostics::render($runtime);
 $check(str_contains($runtimeHtml, 'scope="row"') && str_contains($runtimeHtml, 'badge-success') && str_contains($runtimeHtml, 'badge-info') && str_contains($runtimeHtml, 'action="/api/site/cache-resets"') && str_contains($runtimeHtml, 'name="_csrf"'), 'Normalized cache tables preserve success/info badges and the authorized CSRF reset form.');
-$empty = TinyCat\Support\Components::render('ui/dashboard', ['widgets' => []]);
+$empty = TinyCat\Core\Ui\Components::render('ui/dashboard', ['widgets' => []]);
 $check(str_contains($empty, 'empty-state') && !str_contains($empty, 'data-dashboard-widget'), 'An empty registry uses the shared empty state.');
 echo "PASS typed owner dashboard, bounded queries, safe rendering and failure isolation ({$checks} checks)\n";

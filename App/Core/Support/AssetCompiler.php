@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCat\Support;
 
+use TinyCat\Core\Ui\Components;
+
 /** One compiler for signed releases and locally prepared module selections. */
 final class AssetCompiler
 {
@@ -11,15 +13,16 @@ final class AssetCompiler
      * @return array{files: array<string, string>, manifest: array<mixed>, server: array<mixed>, components: array<string, mixed>, catalogs: array<string, array<mixed>>} */
     public static function compile(?array $catalogs = null, ?callable $emit = null): array
     {
-        return AssetGraph::withSnapshot(static fn (): array => ClientAssets::withBuildCache(static function () use ($catalogs, $emit): array {
+        $compile = static function () use ($catalogs, $emit): array {
+            $languages = TranslationSources::packages();
             if ($catalogs === null) {
                 $catalogs = [];
-                foreach (array_keys(TranslationSources::packages()) as $locale) { $catalogs[$locale] = ['app' => TranslationSources::catalog($locale)]; }
+                foreach (array_keys($languages) as $locale) { $catalogs[$locale] = ['app' => TranslationSources::catalog($locale)]; }
             }
             $files = []; $runtimeCatalogs = [];
             $packages = Paths::basePath('App/module-packages.json');
             $packageRevision = is_file($packages) ? hash_file('sha256', $packages) : null;
-            $server = ['server_components_packages' => $packageRevision, 'selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'packages' => TranslationSources::packages(), 'catalogs' => []];
+            $server = ['server_components_packages' => $packageRevision, 'selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'packages' => $languages, 'catalogs' => []];
             foreach ($catalogs as $locale => $catalog) {
                 // Preserve template order as well as content; all sources were validated above.
                 $emails = TranslationSources::channel('emails', $locale);
@@ -88,6 +91,9 @@ final class AssetCompiler
             $files['assets/build/manifest.json'] = ClientAssets::encode($manifest);
             ksort($files);
             return ['files' => $files, 'manifest' => $manifest, 'server' => $server, 'components' => $templates, 'catalogs' => $runtimeCatalogs];
-        }));
+        };
+        $clients = static fn (): array => ClientAssets::withBuildCache($compile);
+        $assets = static fn (): array => AssetGraph::withSnapshot($clients);
+        return TranslationSources::withSnapshot($assets, reuse: $catalogs !== null);
     }
 }

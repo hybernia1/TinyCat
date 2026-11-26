@@ -95,10 +95,10 @@ final class Resource
         $filters = (array) ($data['filters'] ?? []);
         $params = $filters + ['per_page' => (int) ($pagination['per_page'] ?? 25)];
         $definition = \TinyCat\Core\Ui\Admin\Definitions::get('core.users');
-        $navigation = \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $params, 'page', 2, $definition['path']);
+        $navigation = \TinyCat\Core\Ui\Admin\Views::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $params, 'page', 2, $definition['path']);
         unset($navigation['target']);
         return array_replace($data, [
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Core\Identity\ReadModel::sorting(), $params),
+            'sorting' => \TinyCat\Core\Ui\Admin\Views::sortHeadings(\TinyCat\Core\Identity\ReadModel::sorting(), $params),
             'items' => $items, 'pagination' => $pagination,
             'options' => self::options(),
             'roles' => array_keys($roles),

@@ -15,6 +15,25 @@ $assert = static function (bool $condition) use (&$checks): void {
     $checks++;
     if (!$condition) { throw new RuntimeException('Post text check failed: ' . $checks); }
 };
+// HTML sources and manually entered prose have distinct contracts.
+foreach ([
+    '<3 glad to hear that' => '<3 glad to hear that',
+    '&lt;b&gt;hello&lt;/b&gt;' => 'hello',
+    '<p>one</p><p>two</p>' => 'one two',
+    "<div><p>\u{017D}lu\u{0165}ou\u{010D}k\u{00FD}&nbsp;\u{732B}</p><br>\u{1F469}\u{200D}\u{1F4BB}</div>" => "\u{017D}lu\u{0165}ou\u{010D}k\u{00FD} \u{732B} \u{1F469}\u{200D}\u{1F4BB}",
+    '<b>outer <i>inner</i></b>' => 'outer inner',
+    '&amp;lt;b&amp;gt;literal&amp;lt;/b&amp;gt;' => '&lt;b&gt;literal&lt;/b&gt;',
+] as $html => $plain) {
+    $assert(\TinyCat\Core\Text\Text::htmlText($html) === $plain);
+    $assert(\TinyCat\Core\Feeds\FeedParser::text($html, 1000) === $plain);
+}
+$assert(\TinyCat\Core\Text\Text::plain_text_limit('&lt;b&gt;hello&lt;/b&gt; <3', 100) === '&lt;b&gt;hello&lt;/b&gt; <3');
+$assert(\TinyCat\Core\Text\Text::htmlText("<p>\u{732B}\u{017E}lu\u{0165}</p>", 2) === "\u{732B}\u{017E}");
+$assert(\TinyCat\Core\Text\Text::htmlText('text', 0) === '');
+$assert(\TinyCat\Core\Text\Text::excerpt('<p>one</p><p>two</p>') === 'one two');
+$url = "https://example.com/a\u{200B}b?x=[...]&q=%C5%BE#fragment:-)";
+$assert(\TinyCat\Social\Posts\PostCreation::normalize('Text [...] ' . $url . ' :)') === "Text \u{2026} " . $url . ' :)');
+$assert(\TinyCat\Social\Posts\InlinePresentation::render_status_emoticons('Hi :) ' . $url) === "Hi \u{1F642} " . $url);
 $cases = [
     "  Title\r\n \r\n\r\nText\t  with\u{00A0} spaces  \n\n\nhttps://example.com/  #fiction  #text " => "Title\n\nText with spaces\n\nhttps://example.com/ #fiction #text",
     "Story This […]\n\nRead more → https://example.com/?x=[...] #fiction" => "Story This …\n\nhttps://example.com/?x=[...] #fiction",
@@ -38,6 +57,7 @@ foreach ($cases as $before => $after) {
 $assert(TinyCat\Social\Posts\PostCreation::normalize('An excerpt. Continue reading') === 'An excerpt. Continue reading');
 $assert(TinyCat\Social\Posts\PostCreation::normalize('The post Story appeared first on Site.') === 'The post Story appeared first on Site.');
 TinyCat\Social\Module::initialize();
+$assert(TinyCat\Social\Posts\PostCreation::fromText('&lt;b&gt;literal&lt;/b&gt; <3')->body === '&lt;b&gt;literal&lt;/b&gt; <3');
 $assert(TinyCat\Social\Posts\PostCreation::fromText(FeedPublication::cleanImportBoilerplate(str_repeat("The post X appeared first on Site.\n", 100) . 'Preserved tail'))->body === 'Preserved tail');
 $assert(TinyCat\Social\Posts\PostCreation::fromText('An excerpt. Continue reading')->body === 'An excerpt. Continue reading');
 $assert(FeedPublication::isReadMore('READ MORE »'));

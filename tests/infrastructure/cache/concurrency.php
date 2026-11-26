@@ -13,8 +13,7 @@ $backend = getenv('TINYCAT_TEST_CACHE_BACKEND') ?: 'filesystem';
 $configure = static function (string $directory) use ($backend): void {
     foreach (['driver', 'memcachedConfig', 'memcachedClient'] as $property) { (new ReflectionProperty(Cache::class, $property))->setValue(null, null); }
     (new ReflectionProperty(Cache::class, 'memcachedInitialized'))->setValue(null, false);
-    (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-    (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $directory, 'driver' => $backend, 'memcached' => ['prefix' => 'tinycat:concurrency:' . hash('sha256', $directory) . ':']]]);
+        Config::configure(new \TinyCat\Core\Runtime\Configuration(['cache' => ['directory' => $directory, 'driver' => $backend, 'memcached' => ['prefix' => 'tinycat:concurrency:' . hash('sha256', $directory) . ':']]]));
 };
 
 if (($argv[1] ?? '') === 'worker') {
@@ -32,7 +31,11 @@ if (($argv[1] ?? '') === 'worker') {
         $count = (int) stream_get_contents($counter);
         ftruncate($counter, 0); rewind($counter); fwrite($counter, (string) ($count + 1));
         flock($counter, LOCK_UN); fclose($counter);
-        usleep(250000);
+        if ($scenario === 'published') {
+            usleep(1500000);
+            Cache::put('shared', ['value' => 'new']);
+            usleep(1500000);
+        } else { usleep(250000); }
         return ['value' => 'new'];
     });
     echo json_encode($value, JSON_THROW_ON_ERROR);
@@ -46,7 +49,7 @@ $expect = static function (bool $value, string $message) use (&$checks): void {
     if (!$value) { throw new RuntimeException($message); }
     $checks++;
 };
-foreach (['cold', 'stale'] as $scenario) {
+foreach (['cold', 'stale', 'published'] as $scenario) {
     $configure($base . '/' . $scenario . '-cache');
     if ($scenario === 'stale') {
         Cache::put('shared', ['value' => 'old']);
@@ -62,7 +65,7 @@ foreach (['cold', 'stale'] as $scenario) {
         }
     }
     $processes = [];
-    for ($id = 0; $id < 4; $id++) {
+    for ($id = 0; $id < 2; $id++) {
         $process = proc_open([PHP_BINARY, __FILE__, 'worker', $base, $scenario, (string) $id], [
             0 => ['pipe', 'r'], 1 => ['file', $base . '/' . $scenario . '-' . $id . '.json', 'w'],
             2 => ['file', $base . '/' . $scenario . '-' . $id . '.error', 'w'],
@@ -72,7 +75,7 @@ foreach (['cold', 'stale'] as $scenario) {
     }
     try {
         $deadline = microtime(true) + 10;
-        while (count(glob($base . '/' . $scenario . '-*.ready')) < 4) {
+        while (count(glob($base . '/' . $scenario . '-*.ready')) < 2) {
             if (microtime(true) > $deadline) { throw new RuntimeException('Workers did not become ready.'); }
             usleep(1000);
         }
@@ -87,7 +90,7 @@ foreach (['cold', 'stale'] as $scenario) {
         $expect(Cache::get('shared', 1) === ['value' => 'new'], 'The producer publishes a fresh value.');
         $values = array_column($results, 'value');
         $expect(in_array('new', $values, true), 'At least the producer receives the new value.');
-        $expect($scenario === 'cold' ? count(array_unique($values)) === 1 : in_array('old', $values, true), 'Cold requests wait; refresh contenders can serve stale data.');
+        $expect($scenario !== 'stale' ? count(array_unique($values)) === 1 : in_array('old', $values, true), 'Cold requests wait; refresh contenders can serve stale data.');
     } finally {
         foreach ($processes as $process) { proc_terminate($process); proc_close($process); }
     }

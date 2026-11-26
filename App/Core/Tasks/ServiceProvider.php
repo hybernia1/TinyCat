@@ -22,14 +22,17 @@ final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Co
             ],
             tasks: [CleanupTask::scheduledTask(), Inspection::scheduledTask()],
             temporaryDirectories: [
+                new \TinyCat\Core\Modules\TemporaryDirectory('cache', static fn (): string => \TinyCat\Support\Cache::directory(), 70),
                 new \TinyCat\Core\Modules\TemporaryDirectory('health-uploads', static fn (): string => \TinyCat\Support\Paths::basePath('uploads/.health-probes'), 50),
-                new \TinyCat\Core\Modules\TemporaryDirectory('health-storage', static fn (): string => \TinyCat\Support\Paths::basePath('storage/health-probes'), 60),
+                new \TinyCat\Core\Modules\TemporaryDirectory('health-storage', static fn (): string => \TinyCat\Support\Storage::path('health-probes'), 60),
             ],
             widgets: [new \TinyCat\Core\Modules\DashboardWidget('core.health', Inspection::widget(...), 10, type: 'status', title: static fn (): string => \TinyCat\Support\Localization::t('health.title'), icon: 'shield')],
             notificationTypes: Alerts::types(),
             navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.scheduler.admin', static fn (): array => self::adminNavigation(), 50)],
             health: $probes,
             maintenance: [
+                new \TinyCat\Core\Modules\MaintenanceTask('expired_cache_files', static fn (int $batch): array => \TinyCat\Support\Cache::cleanupExpired($batch), 80),
+                new \TinyCat\Core\Modules\MaintenanceTask('old_debug_logs', \TinyCat\Core\Runtime\Debug::cleanupLogs(...), 88),
                 new \TinyCat\Core\Modules\MaintenanceTask('temporary_files', static fn (int $batch): array => Files::temporary($batch), 60),
                 \TinyCat\Database\Retention::task('old_scheduler_runs', 'scheduler_runs', 'started_at < ?', static fn (): array => [\TinyCat\Support\Dates::dateDb('-30 days')], 120),
             ],

@@ -65,15 +65,15 @@ try {
         $translationsProperty->setValue(null, array_replace($identity, ['server_components_packages' => 'outdated-package', 'packages' => ['en' => 'English']]));
         if (\TinyCat\Support\CompiledTranslations::packages() !== null || \TinyCat\Support\CompiledTranslations::application('en') !== null || \TinyCat\Support\CompiledTranslations::emails('en') !== null) { throw new RuntimeException('Old package translations accepted.'); }
         $checks++;
-        if (!\TinyCat\Support\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Current deployment identity rejected.'); }
+        if (!\TinyCat\Core\Modules\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Current deployment identity rejected.'); }
         $checks++;
-        \TinyCat\Support\DeploymentIdentity::withDeploymentSnapshot(static function () use ($identity, $original, $owner): void {
-            if (!\TinyCat\Support\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Snapshot rejected the selected deployment.'); }
+        \TinyCat\Core\Modules\DeploymentIdentity::withDeploymentSnapshot(static function () use ($identity, $original, $owner): void {
+            if (!\TinyCat\Core\Modules\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Snapshot rejected the selected deployment.'); }
             \TinyCat\Core\Modules\Resources::configure($original);
             try {
-                if (\TinyCat\Support\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Snapshot accepted a previous selection.'); }
+                if (\TinyCat\Core\Modules\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Snapshot accepted a previous selection.'); }
             } finally { \TinyCat\Core\Modules\Resources::configure(new \TinyCat\Core\Modules\Catalog([...$original->definitions(), $owner])); }
-            if (!\TinyCat\Support\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Restored selection remained invalid.'); }
+            if (!\TinyCat\Core\Modules\DeploymentIdentity::matchesSelection($identity)) { throw new RuntimeException('Restored selection remained invalid.'); }
         });
         $checks++;
     } finally {

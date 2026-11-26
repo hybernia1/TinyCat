@@ -6,8 +6,7 @@ require_once __DIR__ . '/../../support/cache-isolation.php'; define('TINYCAT', t
 use TinyCat\Database\Connection;
 use TinyCat\Social\Profiles\Repository;
 use TinyCat\Support\Cache;
-(new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(TinyCat\Support\Config::class, 'config'))->setValue(null, ['datetime' => ['timezone' => 'UTC']]);
+TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration(['datetime' => ['timezone' => 'UTC']]));
 $db = \tinycat_test_database(); Connection::set($db);
 TinyCat\Core\Identity\Schema::install($db); TinyCat\Social\Posts\Schema::install($db);
 $db->exec("INSERT INTO users (id, username, role, status, bio) VALUES (1, 'Ranked', 'user', 'active', 'Old personal data')");

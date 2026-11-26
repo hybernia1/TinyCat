@@ -29,6 +29,16 @@ const serverUrls = JSON.parse(require("node:child_process").execFileSync(process
 cases.forEach(([input, expected], index) => { assert.equal(urls.local(input), expected); assert.equal(serverUrls[index], expected, "PHP and JS URL policies agree: " + input); checks += 2; });
 assert.equal(urls.local("/pl/status/10?compact=1", "en"), "/en/status/10?compact=1"); checks++;
 assert.equal(urls.split("/pl/status/10").path, "/status/10"); checks++;
+// Document route metadata is parsed once; the active prefix remains lifecycle state.
+const originalRoutes = dataset.interfaceRoutes;
+dataset.interfaceRoutes = "broken after initialization";
+assert.equal(urls.local("/privacy"), "/pl/privacy"); checks++;
+dataset.interfaceRoutes = originalRoutes;
+const regionalDocument = { documentElement: { dataset: { ...dataset, interfaceLocales: "en,eng,pt-br", interfacePrefix: "pt-br" } } };
+const regionalWindow = { TinyCat: {} };
+vm.runInNewContext(source("urls"), { window: regionalWindow, document: regionalDocument });
+assert.equal(regionalWindow.TinyCat.urls.local("/eng/privacy?x=1#policy", "pt-br"), "/pt-br/privacy?x=1#policy"); checks++;
+assert.equal(regionalWindow.TinyCat.urls.split("/pt-br/privacy").locale, "pt-br"); checks++;
 async function run() {
   await window.TinyCat.api.request("/api/site/sidebar");
   assert.equal(lastHeaders.get("X-TinyCat-Locale"), "pl"); checks++;

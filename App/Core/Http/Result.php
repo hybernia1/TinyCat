@@ -29,4 +29,12 @@ final class Result
         public readonly array $params = []
     ) {
     }
+    /** @return array{message: string, code: string, params: array{entity: string}} */
+    public static function activationNotice(bool $active, string $entity): array
+    {
+        $state = $active ? 'activated' : 'deactivated';
+        $params = ['entity' => $entity];
+        return ['message' => \TinyCat\Support\Localization::t('common.' . $state, $params), 'code' => 'record_' . $state, 'params' => $params];
+    }
+
 }

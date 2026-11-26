@@ -47,10 +47,7 @@ $completed = false;
 register_shutdown_function(static function () use (&$completed): void {
     if (!$completed) { fwrite(STDERR, "Write-path assertions did not reach completion.\n"); exit(1); }
 });
-$booted = new ReflectionProperty(\TinyCat\Support\Config::class, 'booted');
-$booted->setValue(null, true);
-$config = new ReflectionProperty(\TinyCat\Support\Config::class, 'config');
-$config->setValue(null, [
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([
     'app' => ['url' => 'http://localhost'],
     'database' => ['driver' => 'mysql'],
     'install' => ['complete' => true, 'locale' => 'en'],
@@ -58,7 +55,7 @@ $config->setValue(null, [
     'datetime' => ['timezone' => 'UTC'],
     'cache' => ['driver' => 'filesystem'],
     'moderation' => ['blocked_urls' => 'blocked.example'],
-]);
+]));
 \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 // Reactions and discussion writes enforce the real account action budget.
 \TinyCat\Core\Security\Schema::install($database);
@@ -306,7 +303,9 @@ try {
     $assert((int) $value('SELECT COUNT(*) FROM social_posts') === $beforePosts, 'History storage failures cannot leave an untracked post.');
 }
 $database->exec('DROP TRIGGER fail_bot_history');
-$botPost = $persistFeed(1, 1, $feedHash, $itemHash, \TinyCat\Social\Posts\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links);
+$htmlDraft = (new \TinyCat\Social\Bots\FeedPublication())->prepare(['post_template' => '{{description}}'], ['description_html' => '<p>Bot post</p><p>@actor #ROLLBACK</p>']);
+$botPost = $persistFeed(1, 1, $feedHash, $itemHash, $htmlDraft, $links);
+$assert($value('SELECT body FROM social_posts WHERE id = ' . $botPost) === 'Bot post @2 #rollback', 'The real bot writer persists final prose, never raw or decoded HTML tags.');
 $assert($botPost > 0 && (int) $value('SELECT COUNT(*) FROM bot_feed_history') === 1, 'A retry atomically commits the bot post and history.');
 $assert((int) $value('SELECT COUNT(*) FROM social_post_links WHERE content_id = ' . $botPost) === 2, 'A successful bot import commits all prepared links.');
 try {
@@ -353,9 +352,9 @@ try {
 } catch (InvalidArgumentException) {
     $assert(true, 'The shared writer refuses content rejected during preparation.');
 }
-$relaxed = $config->getValue();
+$relaxed = \TinyCat\Support\Config::snapshot()->values();
 $relaxed['moderation']['blocked_urls'] = '';
-$config->setValue(null, $relaxed);
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($relaxed));
 // Fresh fixture metadata prevents a remote preview fetch when the URL is admitted.
 $admittedLink = \TinyCat\Social\Posts\LinkParser::fromRaw($items[0]['title']);
 $insertLink->execute([$admittedLink['normalized_url'], $admittedLink['url_hash'], 'web', 'link', 'Cached article', '', '', '', $now, $now]);

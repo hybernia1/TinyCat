@@ -70,4 +70,23 @@ final class Values
 
         return true;
     }
+    /**
+     * @param array<mixed> $values
+     * @return list<int>
+     */
+    public static function positive_int_ids(array $values): array
+    {
+        $ids = [];
+
+        foreach ($values as $value) {
+            $id = (int) $value;
+
+            if ($id > 0) {
+                $ids[$id] = $id;
+            }
+        }
+
+        return array_values($ids);
+    }
+
 }

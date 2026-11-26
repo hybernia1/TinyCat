@@ -12,7 +12,6 @@ final class Platform
     public static function initialize(): void
     {
         Router::configurePublicWeb(PublicWeb::enabled(...));
-        \TinyCat\Support\LocalUrls::configure(static fn (string $url, ?string $locale = null): string => LocaleRouting::url($url, $locale));
         Startup::$exception = static function (\Throwable $error): void { Errors::exception($error); };
         Startup::provideHttp('tinycat.core', new HttpPolicy(
             prepare: static function (string $path): ?string {
@@ -45,7 +44,12 @@ final class Platform
 
     public static function contributions(): Contributions
     {
-        return new Contributions(sitemaps: [new \TinyCat\Core\Modules\SitemapSection('pages', static fn (): int => count(Information::pages()), static fn (int $limit, int $offset): array => array_slice(Information::pages(), $offset, $limit), 10)], crawlerHints: [new \TinyCat\Core\Modules\CrawlerHint('tinycat.core.llms', static fn (): string => 'AI and LLM context: ' . \TinyCat\Support\LocalUrls::absolute('/llms.txt'))], componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('dashboard.statistics', Admin\Statistics::fieldLookup(...))], localizedRoutes: [
+        return new Contributions(
+            temporaryDirectories: [new \TinyCat\Core\Modules\TemporaryDirectory('runtime-assets', static fn (): string => \TinyCat\Support\Assets::directory(''), 75)],
+            maintenance: [
+                new \TinyCat\Core\Modules\MaintenanceTask('retired_runtime_assets', \TinyCat\Support\Assets::cleanup(...), 86),
+                new \TinyCat\Core\Modules\MaintenanceTask('expired_prepared_assets', \TinyCat\Support\PreparedAssets::cleanup(...), 87),
+            ], sitemaps: [new \TinyCat\Core\Modules\SitemapSection('pages', static fn (): int => count(Information::pages()), static fn (int $limit, int $offset): array => array_slice(Information::pages(), $offset, $limit), 10)], crawlerHints: [new \TinyCat\Core\Modules\CrawlerHint('tinycat.core.llms', static fn (): string => 'AI and LLM context: ' . \TinyCat\Http\LocalUrls::absolute('/llms.txt'))], componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('dashboard.statistics', Admin\Statistics::fieldLookup(...))], localizedRoutes: [
             new LocalizedRoute('core.home', '^/$'),
             new LocalizedRoute('core.identity', '^/(?:login|register|logout)$', ['next']),
             new LocalizedRoute('core.recovery', '^/recovery$', ['token', 'next']),
@@ -53,7 +57,7 @@ final class Platform
             new LocalizedRoute('core.notifications', '^/notifications$'),
             new LocalizedRoute('core.privacy', '^/privacy$', translatedDocument: true),
             new LocalizedRoute('core.search', '^/search/all$', ['q', 'collection']),
-        ], widgets: [new DashboardWidget('core.statistics', Admin\Statistics::widget(...), -10, type: 'metrics', title: static fn (): string => \TinyCat\Support\Localization::t('admin.widgets.stats'), icon: 'chart', visible: static fn (): bool => Admin\Statistics::groups() !== [])], navigation: [new NavigationItem('tinycat.core.dashboard', static fn (): array => ['href' => '/admin', 'icon' => 'dashboard', 'label' => \TinyCat\Support\Localization::t('common.dashboard')], 0),
+        ], widgets: [new DashboardWidget('core.statistics', Admin\Statistics::widget(...), -10, type: 'metrics', title: static fn (): string => \TinyCat\Support\Localization::t('admin.widgets.stats'), icon: 'chart', visible: static fn (): bool => Admin\Statistics::groups() !== [])], navigation: [new NavigationItem('tinycat.core.modules', static fn (): array => ['href' => '/admin/modules', 'icon' => 'settings', 'label' => \TinyCat\Support\Localization::t('modules.title')], 65), new NavigationItem('tinycat.core.dashboard', static fn (): array => ['href' => '/admin', 'icon' => 'dashboard', 'label' => \TinyCat\Support\Localization::t('common.dashboard')], 0),
             new NavigationItem('tinycat.core.cache', static fn (): array => ['href' => '/admin/cache', 'icon' => 'database', 'label' => \TinyCat\Support\Localization::t('admin.cache.title')], 65)]);
     }
 
@@ -65,6 +69,6 @@ final class Platform
             return Admin\Statistics::resource((string) $request->input('stats'));
         }, 'admin');
         Router::route('GET', '/admin/cache', Admin\CachePage::respond(...));
-        $api->post('/site/cache-resets', static fn (): array => ['reset' => \TinyCat\Support\Cache::resetOpcache(), 'redirect' => '/admin/cache'], 'admin', 200);
+        $api->post('/site/cache-resets', static fn (): array => ['reset' => \TinyCat\Core\Runtime\Debug::resetOpcache(), 'redirect' => '/admin/cache'], 'admin', 200);
     }
 }

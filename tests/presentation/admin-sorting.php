@@ -7,7 +7,7 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
-use TinyCat\Support\AdminSorting;
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
 use TinyCat\Database\Connection;
 require_once __DIR__ . '/../../tools/performance/lib/ProfileDatabase.php';
 
@@ -21,6 +21,14 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     $checks++;
     if (!$condition) { throw new RuntimeException($message); }
 };
+$_GET = ['page' => 999];
+$emptyPage = AdminViews::paginationMeta(0, 4, 0);
+$assert($emptyPage['page'] === 1 && $emptyPage['from'] === 0 && $emptyPage['to'] === 0 && $emptyPage['per_page'] === 1, 'Empty pagination clamps explicit inputs and never reads HTTP page state.');
+$page = AdminViews::paginationMeta(51, 2, 25);
+$assert($page['page'] === 2 && $page['offset'] === 25 && $page['from'] === 26 && $page['to'] === 50 && $page['has_next'], 'Explicit pagination retains the selected range independently of HTTP input.');
+$last = AdminViews::paginationMeta(51, 999, 25);
+$assert($last['page'] === 3 && $last['from'] === 51 && $last['to'] === 51 && !$last['has_next'], 'Out-of-range pages retain the last nonempty page.');
+$_GET = [];
 $database->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(254), email TEXT, role VARCHAR(40), status VARCHAR(24), updated_at DATETIME)');
 $database->exec("CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME DEFAULT ('2026-01-01 00:00:00'), INDEX content_feed_index (published_at,id), INDEX content_sidebar_index (published_at,author_id,id), INDEX content_author_index (author_id,published_at,id))");
 $database->exec('CREATE TABLE bot_sources (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, bot_user_id INT UNSIGNED, name TEXT, enabled INTEGER, interval_minutes INTEGER, last_imported_at TEXT)');
@@ -40,20 +48,20 @@ $database->exec("INSERT INTO content_reports VALUES (1, 1, 1, 'open', 'spam', '2
 foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $list) {
     $config = match ($list) { 'users' => \TinyCat\Core\Identity\ReadModel::sorting(), 'runs' => \TinyCat\Core\Tasks\Repository::sorting(), 'reports' => \TinyCat\Social\Moderation\Reports::sorting(), 'accounts' => \TinyCat\Social\Bots\Sorting::accounts(), 'sources' => \TinyCat\Social\Bots\Sorting::sources(), default => \TinyCat\Social\Bots\Sorting::LISTS[$list] };
     $_GET = [];
-    $default = AdminSorting::order($config);
+    $default = AdminViews::sortOrder($config);
     $_GET = ['sort' => 'id; DROP TABLE users', 'direction' => 'desc; --'];
-    $assert(AdminSorting::order($config) === $default, 'Invalid sorting uses the default: ' . $list);
+    $assert(AdminViews::sortOrder($config) === $default, 'Invalid sorting uses the default: ' . $list);
     $_GET = ['sort' => ['username'], 'direction' => ['desc']];
-    $assert(AdminSorting::order($config) === $default, 'Array inputs are rejected: ' . $list);
+    $assert(AdminViews::sortOrder($config) === $default, 'Array inputs are rejected: ' . $list);
     $_GET = [];
-    foreach (AdminSorting::headings($config) as $key => $heading) {
+    foreach (AdminViews::sortHeadings($config) as $key => $heading) {
         foreach (['asc', 'desc'] as $direction) {
             $_GET = ['sort' => $key, 'direction' => $direction];
             // Exercise every allowlisted SQL expression against its real query.
             match ($list) {
                 'users' => \TinyCat\Core\Identity\Actions::tc_admin_users_page(),
                 'accounts' => (new ReflectionMethod(\TinyCat\Social\Bots\Administration::class, 'accountsPage'))->invoke(null),
-                'sources' => \TinyCat\Social\Bots\Importer::sources(null, AdminSorting::order(\TinyCat\Social\Bots\Sorting::sources())),
+                'sources' => \TinyCat\Social\Bots\Importer::sources(null, AdminViews::sortOrder(\TinyCat\Social\Bots\Sorting::sources())),
                 'bot_posts' => \TinyCat\Social\Bots\Administration::postsPayload(101),
                 'runs' => \TinyCat\Core\Tasks\Repository::listing([], 1, 10),
                 'reports' => \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload()['items'],
@@ -80,11 +88,11 @@ $_GET = [];
 $reports = \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
 $assert($reports[0]['status'] === 'open', 'Reports retain open-first default');
 $_GET = ['sort' => 'username', 'direction' => 'asc'];
-$heading = AdminSorting::headings(\TinyCat\Core\Identity\ReadModel::sorting(), ['q' => 'A&B', 'role' => 'user', 'per_page' => 50, 'page' => 3])['username'];
+$heading = AdminViews::sortHeadings(\TinyCat\Core\Identity\ReadModel::sorting(), ['q' => 'A&B', 'role' => 'user', 'per_page' => 50, 'page' => 3])['username'];
 parse_str((string) parse_url($heading['url'], PHP_URL_QUERY), $query);
 $assert($query['q'] === 'A&B' && $query['role'] === 'user' && $query['per_page'] === '50' && $query['page'] === '1' && $query['direction'] === 'desc', 'Sorting retains filters and resets page');
 $assert($heading['aria'] === 'ascending' && $heading['ascending'] === true, 'Active direction is accessible');
-$html = \TinyCat\Support\Components::render('ui/sort-heading', ['label' => '<Name>', 'order' => $heading]);
+$html = \TinyCat\Core\Ui\Components::render('ui/sort-heading', ['label' => '<Name>', 'order' => $heading]);
 $assert(str_contains($html, '&lt;Name&gt;') && str_contains($html, 'data-ajax-target="#users-list"') && str_contains($html, 'data-history='), 'Shared heading escapes labels and provides AJAX/history state');
 $database->exec("INSERT INTO users VALUES (16, 'A', '', 'user', 'active', '2026-10-27'), (17, 'A', '', 'user', 'active', '2026-10-27')");
 $_GET = ['sort' => 'username', 'direction' => 'asc'];

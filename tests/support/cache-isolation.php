@@ -28,3 +28,6 @@ if (getenv('TINYCAT_CACHE_DIRECTORY') === false || getenv('TINYCAT_CACHE_DIRECTO
         rmdir($testCache);
     });
 }
+
+// Public assets need their own explicit override after separation from private cache.
+putenv('TINYCAT_RUNTIME_ASSET_DIRECTORY=' . getenv('TINYCAT_CACHE_DIRECTORY'));

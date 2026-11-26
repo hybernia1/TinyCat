@@ -6,7 +6,7 @@ use TinyCat\Core\Notifications\Inbox;
 use TinyCat\Http\Request;
 use TinyCat\Core\Ui\Page as Layout;
 use TinyCat\Support\Localization;
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 use TinyCat\Core\Identity\Access;
 
 /** HTTP page actions and prepared presentation composition. */

@@ -12,12 +12,12 @@ final class Oembed
     public static function discoveryUrl(string $url, string $format = 'json'): string
     {
         if (!in_array($format, ['json', 'xml'], true)) { throw new \InvalidArgumentException('Unsupported oEmbed format.'); }
-        return \TinyCat\Support\LocalUrls::absolute('/oembed') . '?' . http_build_query(['url' => $url, 'format' => $format]);
+        return \TinyCat\Http\LocalUrls::absolute('/oembed') . '?' . http_build_query(['url' => $url, 'format' => $format]);
     }
 
     public static function localPath(string $url): ?string
     {
-        $base = parse_url(\TinyCat\Support\LocalUrls::absolute('/')); $parts = parse_url($url);
+        $base = parse_url(\TinyCat\Http\LocalUrls::absolute('/')); $parts = parse_url($url);
         if (!is_array($base) || !is_array($parts) || isset($parts['user']) || isset($parts['pass'])
             || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
             || strtolower($parts['host'] ?? '') !== strtolower($base['host'] ?? '') || $parts['scheme'] !== ($base['scheme'] ?? '')
@@ -37,7 +37,7 @@ final class Oembed
         $path = self::localPath($url); $data = null;
         if ($path !== null) { foreach (Registrations::current()->entries->embeds as $source) { $data = ($source->resolve)($path, $width, $height); if ($data !== null) { break; } } }
         if ($data === null) { Document::jsonError(404, 'Content not found.'); return; }
-        $data += ['type' => 'rich', 'provider_name' => Site::site_name(), 'provider_url' => \TinyCat\Support\LocalUrls::absolute('/'), 'width' => $width, 'height' => $height, 'cache_age' => 0];
+        $data += ['type' => 'rich', 'provider_name' => Site::site_name(), 'provider_url' => \TinyCat\Http\LocalUrls::absolute('/'), 'width' => $width, 'height' => $height, 'cache_age' => 0];
         \TinyCat\Core\Ui\Oembed::respond($data, $format);
     }
 

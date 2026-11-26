@@ -31,8 +31,7 @@ use TinyCat\Support\Config;
 use TinyCat\Core\Settings\Store;
 use TinyCat\Database\Connection;
 
-(new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $root . '/storage/cache', 'driver' => 'filesystem'], 'health' => ['http' => ['enabled' => false]]]);
+Config::configure(new \TinyCat\Core\Runtime\Configuration(['cache' => ['directory' => $root . '/storage/cache', 'driver' => 'filesystem'], 'health' => ['http' => ['enabled' => false]]]));
 $db = \tinycat_test_database_as(TinyCatTestLockPDO::class);
 Connection::set($db);
 foreach ([
@@ -55,7 +54,7 @@ $assert(Inspection::inspect(['warning' => static fn (): string => 'warning'])['s
 $assert(Inspection::inspect([])['status'] === 'unknown', 'An empty diagnostic is never reported healthy.');
 $assert(Inspection::snapshot()['stale'], 'Before the first run, health is unknown and stale.');
 $findingsDetail = \TinyCat\Core\Tasks\Health\Inspection::detail(['summary' => ['health' => ['checks' => [['id' => 'scheduler', 'status' => 'warning', 'duration_ms' => 1, 'metrics' => ['custom-owner-task' => 'missing', 'site-health' => 'ok']]]]]]);
-$findings = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $findingsDetail]);
+$findings = \TinyCat\Core\Ui\Components::render('scheduler/run-detail', ['item' => $findingsDetail]);
 $assert(str_contains($findings, 'custom-owner-task') && str_contains($findings, \TinyCat\Support\Localization::t('health.title')), 'Scheduler findings show arbitrary owner tasks and use registered labels instead of a fixed task list.');
 $db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('cleanup', 'completed', UTC_TIMESTAMP())");
 $schedulerCheck = \TinyCat\Core\Tasks\Health\Checks::definitions()['scheduler'];
@@ -89,7 +88,7 @@ $assert(\TinyCat\Core\Notifications\Inbox::targetUrl(['type' => 'site_health_att
 $assert(\TinyCat\Core\Tasks\Health\Inspection::widget()['url'] === '/admin/cron?task=site-health#modal=scheduler/runs/' . $runId, 'The dashboard opens its latest health run through the same modal deep link.');
 $detail = \TinyCat\Core\Tasks\Administration::runDetail($runId);
 $assert($detail !== null && count($detail['details']) === count($task['summary']['health']['checks']) && $detail['summary']['health'] === $task['summary']['health'], 'Health detail uses the registered owner callback and the persisted report.');
-$html = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $detail]);
+$html = \TinyCat\Core\Ui\Components::render('scheduler/run-detail', ['item' => $detail]);
 $assert(str_contains($html, \TinyCat\Support\Localization::t('health.checks.http')) && str_contains($html, \TinyCat\Support\Localization::t('health.checks.scheduler')), 'The common run modal renders diagnostic checks from owner data.');
 $plainDetail = \TinyCat\Core\Tasks\Administration::runDetail((int) $db->query("SELECT MAX(id) FROM scheduler_runs WHERE task = 'cleanup'")->fetchColumn());
 $assert(!array_key_exists('details', $plainDetail), 'Other tasks do not receive health-specific detail data.');
@@ -110,6 +109,22 @@ file_put_contents($root . '/uploads/.health-probes', 'blocked fixture directory'
 $manual = Execution::run('site-health', [], 'admin', 1);
 $assert($manual['ok'] && $manual['tasks']['site-health']['summary']['health']['status'] === 'critical', 'An unhealthy site is recorded as a completed diagnostic, with its own critical result.');
 $assert((int) $db->query("SELECT COUNT(*) FROM notifications WHERE type = 'site_health_attention'")->fetchColumn() === 2, 'A manual follow-up notifies administrators of problems.');
+// Existing semantic notices localize at read time, regardless of their delivery locale.
+$notices = Connection::all('SELECT * FROM notifications WHERE user_id = 1 ORDER BY id');
+$assert(count($notices) === 2 && $notices[0]['payload_json'] === null && $notices[1]['payload_json'] === null, 'Health stores semantic types and run keys, never a translated sentence.');
+$previousLocale = \TinyCat\Support\Localization::locale();
+foreach (['pl' => ['Kontrola stanu witryny zakończona: wszystko jest w porządku.', 'Kontrola stanu witryny zakończona: coś wymaga uwagi.'], 'de' => ['Die Zustandsprüfung der Website ist abgeschlossen: Alles ist in Ordnung.', 'Die Zustandsprüfung der Website ist abgeschlossen: Etwas erfordert Aufmerksamkeit.']] as $locale => $expected) {
+    \TinyCat\Support\Localization::locale($locale);
+    $queries = 0;
+    $db->beforePrepare = static function () use (&$queries): void { $queries++; };
+    try { $items = array_map(\TinyCat\Core\Notifications\Resource::item(...), \TinyCat\Core\Notifications\Types::hydrate($notices)); }
+    finally { $db->beforePrepare = null; }
+    $assert($queries === 0 && array_column($items, 'message') === $expected, 'Owner hydration localizes both existing health types without additional queries: ' . $locale);
+    $menu = \TinyCat\Core\Notifications\Views::menu(['notifications' => $notices]);
+    $page = \TinyCat\Core\Ui\Components::render('notifications/page', ['items' => $items, 'has_unread' => false, 'next_url' => '']);
+    foreach ($expected as $message) { $assert(str_contains($menu, $message) && str_contains($page, $message), 'Popover and page use the same localized system text: ' . $locale); }
+}
+\TinyCat\Support\Localization::locale($previousLocale);
 unlink($root . '/uploads/.health-probes');
 $db->exec("UPDATE scheduler_runs SET summary_json = replace(summary_json, '" . date('Y-m-d') . "', '2000-01-01') WHERE task = 'site-health'");
 $assert(Inspection::snapshot()['stale'] && Inspection::snapshot()['status'] === 'unknown', 'An old green result cannot conceal a missing scheduled inspection.');

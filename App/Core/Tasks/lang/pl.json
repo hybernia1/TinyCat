@@ -72,8 +72,8 @@
     "schedule": "Schedule once a day. Every completed inspection notifies active administrators.",
     "schedule_short": "Once a day",
     "empty": "No inspection has run yet.",
-    "notification_ok": "Site health inspection completed: everything is OK.",
-    "notification_attention": "Site health inspection completed: something needs attention.",
+    "notification_ok": "Kontrola stanu witryny zakończona: wszystko jest w porządku.",
+    "notification_attention": "Kontrola stanu witryny zakończona: coś wymaga uwagi.",
     "status": {
       "ok": "OK",
       "warning": "Needs attention",

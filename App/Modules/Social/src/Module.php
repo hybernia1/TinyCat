@@ -152,7 +152,7 @@ final class Module implements
             crawlerHints: [
                 new Core\CrawlerHint(
                     'tinycat.site.sample',
-                    static fn (): string => 'Recent public-post sample for LLMs: ' . \TinyCat\Support\LocalUrls::absolute('/llms-full.txt'),
+                    static fn (): string => 'Recent public-post sample for LLMs: ' . \TinyCat\Http\LocalUrls::absolute('/llms-full.txt'),
                 ),
             ],
             localizedRoutes: Site\PublicPages::localizedRoutes(),

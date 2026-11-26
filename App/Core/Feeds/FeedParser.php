@@ -101,7 +101,7 @@ final class FeedParser
             if (++$seen > self::MAX_ITEMS) { break; }
             $entry = $atom ? $node->children(self::ATOM) : ($rdf ? $node->children('http://purl.org/rss/1.0/') : $node);
             $base = self::base($baseUrl, $node);
-            $audio = \TinyCat\Core\Links\Audio::enclosure($node, $base);
+            $audio = self::audioEnclosure($node, $base);
             $link = '';
             if ($atom) {
                 foreach ($entry->link as $linkNode) {
@@ -201,6 +201,7 @@ final class FeedParser
             $images = [];
             $embeddedImages = class_exists(SimpleXMLElement::class) ? self::htmlImages([$html], $base, []) : [];
             foreach (array_merge($urls, $embeddedImages) as $url) {
+                // JSON URL strings are already data; do not decode HTML entities.
                 $url = Client::absoluteUrl($base, $url);
                 if ($url !== '' && strlen($url) <= 2048 && count($images) < self::MAX_ATTACHMENTS && Client::isSafeUrl($url) && !in_array($url, $images, true)) { $images[] = $url; }
             }
@@ -269,10 +270,6 @@ final class FeedParser
     private static function images(SimpleXMLElement $node, string $base, array $html): array
     {
         $candidates = [];
-        $add = static function (string $url, string $imageBase) use (&$candidates): void {
-            $url = Client::absoluteUrl($imageBase, html_entity_decode(trim($url), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-            if ($url !== '' && strlen($url) <= 2048 && count($candidates) < self::MAX_ATTACHMENTS && !in_array($url, $candidates, true) && Client::isSafeUrl($url)) { $candidates[] = $url; }
-        };
         $media = $node->children(self::MEDIA);
         $containers = [[$media, $base]];
         foreach ($media->group as $group) { $containers[] = [$group->children(self::MEDIA), self::base($base, $group)]; }
@@ -282,23 +279,23 @@ final class FeedParser
                     $type = strtolower((string) $image->attributes()['type']);
                     $medium = strtolower((string) $image->attributes()['medium']);
                     if (($type !== '' && !str_starts_with($type, 'image/')) || ($medium !== '' && $medium !== 'image')) { continue; }
-                    $add((string) $image->attributes()['url'], self::base($containerBase, $image));
+                    self::addImage($candidates, (string) $image->attributes()['url'], self::base($containerBase, $image));
                 }
             }
         }
         foreach ($node->children(self::SEZNAM)->image as $image) {
-            $add((string) $image->children(self::SEZNAM)->url, self::base($base, $image));
+            self::addImage($candidates, (string) $image->children(self::SEZNAM)->url, self::base($base, $image));
         }
         foreach ($node->children(self::ITUNES)->image as $image) {
-            $add((string) $image->attributes()['href'], self::base($base, $image));
+            self::addImage($candidates, (string) $image->attributes()['href'], self::base($base, $image));
         }
         foreach ($node->enclosure as $image) {
             $type = strtolower((string) $image->attributes()['type']);
-            if ($type === '' || str_starts_with($type, 'image/')) { $add((string) $image->attributes()['url'], self::base($base, $image)); }
+            if ($type === '' || str_starts_with($type, 'image/')) { self::addImage($candidates, (string) $image->attributes()['url'], self::base($base, $image)); }
         }
         foreach ($node->children(self::ATOM)->link as $image) {
             if ((string) $image->attributes()['rel'] === 'enclosure' && str_starts_with(strtolower((string) $image->attributes()['type']), 'image/')) {
-                $add((string) $image->attributes()['href'], self::base($base, $image));
+                self::addImage($candidates, (string) $image->attributes()['href'], self::base($base, $image));
             }
         }
         return self::htmlImages($html, $base, $candidates);
@@ -309,18 +306,14 @@ final class FeedParser
      * @return list<string> */
     private static function htmlImages(array $html, string $base, array $candidates): array
     {
-        $add = static function (string $url, string $imageBase) use (&$candidates): void {
-            $url = Client::absoluteUrl($imageBase, html_entity_decode(trim($url), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-            if ($url !== '' && strlen($url) <= 2048 && count($candidates) < self::MAX_ATTACHMENTS && !in_array($url, $candidates, true) && Client::isSafeUrl($url)) { $candidates[] = $url; }
-        };
-        foreach ($html as $source) {
-            if ($source === '' || !class_exists(\Dom\HTMLDocument::class)) { continue; }
+        foreach (array_unique($html) as $source) {
+            if (trim($source) === '' || !class_exists(\Dom\HTMLDocument::class)) { continue; }
             $previous = libxml_use_internal_errors(true);
             try {
                 $dom = \Dom\HTMLDocument::createFromString($source, LIBXML_NOERROR | LIBXML_COMPACT);
                 foreach ($dom->getElementsByTagName('img') as $image) {
-                    $add($image->getAttribute('src') ?? '', $base);
-                    $add($image->getAttribute('data-src') ?? '', $base);
+                    self::addImage($candidates, $image->getAttribute('src') ?? '', $base);
+                    self::addImage($candidates, $image->getAttribute('data-src') ?? '', $base);
                 }
             } catch (\ValueError) { continue; }
             finally { libxml_clear_errors(); libxml_use_internal_errors($previous); }
@@ -329,9 +322,31 @@ final class FeedParser
     }
     public static function text(string $value, int $limit): string
     {
-        $value = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
-        return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
+        return \TinyCat\Core\Text\Text::htmlText($value, $limit);
     }
 
+    /** @param list<string> $candidates */
+    private static function addImage(array &$candidates, string $url, string $base): void
+    {
+        $url = Client::absoluteUrl($base, html_entity_decode(trim($url), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($url !== '' && strlen($url) <= 2048 && count($candidates) < self::MAX_ATTACHMENTS && !in_array($url, $candidates, true) && Client::isSafeUrl($url)) { $candidates[] = $url; }
+    }
+
+    public static function audioEnclosure(\SimpleXMLElement $node, string $base): string
+    {
+        foreach ($node->enclosure as $entry) {
+            if (str_starts_with(strtolower((string) $entry['type']), 'audio/')) {
+                $url = \TinyCat\Core\Links\Audio::remote(Client::absoluteUrl(self::base($base, $entry), (string) $entry['url']));
+                if ($url !== '') { return $url; }
+            }
+        }
+        foreach ($node->children('http://www.w3.org/2005/Atom')->link as $entry) {
+            $attributes = $entry->attributes();
+            if ((string) $attributes['rel'] === 'enclosure' && str_starts_with(strtolower((string) $attributes['type']), 'audio/')) {
+                $url = \TinyCat\Core\Links\Audio::remote(Client::absoluteUrl(self::base($base, $entry), (string) $attributes['href']));
+                if ($url !== '') { return $url; }
+            }
+        }
+        return '';
+    }
 }

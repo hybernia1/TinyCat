@@ -4,7 +4,9 @@ namespace TinyCat\Core\Tasks;
 
 use TinyCat\Core\Identity\Access;
 use TinyCat\Core\Ui\Page as Layout;
-use TinyCat\Support\{Components, Localization, Markup};
+use TinyCat\Core\Ui\Components;
+use TinyCat\Support\Localization;
+use TinyCat\Core\Ui\Markup;
 
 /** One administrative page for execution, history and connection details. */
 final class Pages

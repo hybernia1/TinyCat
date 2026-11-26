@@ -11,8 +11,7 @@ require_once __DIR__ . '/../../tools/performance/lib/ProfileDatabase.php';
 $config = require (string) $options['config'];
 $settings = $config['database'];
 if (preg_match('/^tinycat_perf_[a-z0-9_]+$/D', $settings['name']) !== 1) { throw new RuntimeException('Isolated performance database required.'); }
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $config);
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($config));
 $db = new \TinyCat\Tools\Performance\ProfileDatabase('mysql:host=' . $settings['host'] . ';dbname=' . $settings['name'] . ';charset=utf8mb4', $settings['user'], $settings['password']);
 \TinyCat\Database\Connection::set($db);
 \TinyCat\Core\Identity\Authentication::reset(null, true);

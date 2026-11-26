@@ -16,7 +16,7 @@ final class Navigation
         foreach ($items as $item) {
             $href = (string) ($item['href'] ?? (isset($item['modal']) ? '#' . $item['modal'] : '#'));
             if ($admin && empty($item['modal'])) { $href = \TinyCat\Http\Request::current()->path($href); }
-            if (!$admin) { $href = $url !== null ? $url($href) : \TinyCat\Support\LocalUrls::resolve($href); }
+            if (!$admin) { $href = $url !== null ? $url($href) : \TinyCat\Http\LocalUrls::resolve($href); }
             $local = str_starts_with($href, '/') && !str_starts_with($href, '//');
             $active = $local && (($path !== null ? $path($href) : $href) === ($path !== null ? $path($current) : $current) || ($admin && empty($item['exact']) && $href !== '/admin' && str_starts_with($current, $href . '/')));
             $children = self::prepare((array) ($item['children'] ?? []), $current, $admin, $url, $path);

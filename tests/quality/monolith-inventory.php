@@ -35,7 +35,7 @@ if (!defined('TINYCAT')) {
 require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $assert(
-    \TinyCat\Support\Text::positive_int_ids([3, '2', 3, 0, -1, 'invalid', 2]) === [3, 2],
+    \TinyCat\Support\Values::positive_int_ids([3, '2', 3, 0, -1, 'invalid', 2]) === [3, 2],
     'Positive-ID normalization keeps ordered unique positive values.'
 );
 $assert(!\TinyCat\Core\Identity\Roles::isAdmin(null), 'A missing user is not an administrator.');
@@ -49,7 +49,7 @@ $commentRows = \TinyCat\Social\Discussion\ThreadTree::flatten([
 $commentIds = array_column($commentRows, 'id');
 sort($commentIds, SORT_NUMERIC);
 $assert($commentIds === [1, 2, 3], 'Comment-tree traversal visits every nested comment once.');
-$assert(\TinyCat\Support\AdminViews::admin_per_page_options() === [10, 25, 50, 100], 'Admin pagination exposes its configured choices.');
+$assert(\TinyCat\Core\Ui\Admin\Views::PER_PAGE_OPTIONS === [10, 25, 50, 100], 'Admin pagination exposes its configured choices.');
 
 if ($failures !== []) {
     foreach ($failures as $failure) {

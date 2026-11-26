@@ -27,7 +27,7 @@ final class Resource
             'actor' => ['id' => (int) ($item['actor_id'] ?? 0), 'username' => (string) ($item['actor_name'] ?? ''), 'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url(['id' => $item['actor_id'] ?? 0, 'username' => $item['actor_name'] ?? null, 'avatar_exists' => $item['actor_avatar_exists'] ?? 0, 'updated_at' => $item['actor_updated_at'] ?? null, 'avatar_version' => $item['actor_avatar_version'] ?? null])],
             'url' => \TinyCat\Core\Notifications\Types::target($item),
             'unread' => trim((string) ($item['read_at'] ?? '')) === '',
-            'excerpt' => $known ? \TinyCat\Support\Text::excerpt((string) ($item['subject_text'] ?? ''), $excerptLimit) : '',
+            'excerpt' => $known ? \TinyCat\Core\Text\Text::excerpt((string) ($item['subject_text'] ?? ''), $excerptLimit) : '',
             'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
         ];
     }

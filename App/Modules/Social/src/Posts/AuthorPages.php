@@ -74,23 +74,23 @@ final class AuthorPages
         $followCounts = Following::author_follow_counts($authorId);
         $activityStats = AuthorStatistics::author_activity_stats($authorId);
         $publicPostCount = (int) ($activityStats['posts'] ?? 0);
-        $authorEntityId = \TinyCat\Support\LocalUrls::absolute($current) . '#author';
+        $authorEntityId = \TinyCat\Http\LocalUrls::absolute($current) . '#author';
         $authorStructuredData = [
             '@context' => 'https://schema.org',
             '@type' => 'ProfilePage',
-            '@id' => \TinyCat\Support\LocalUrls::absolute($pageUrl),
-            'url' => \TinyCat\Support\LocalUrls::absolute($pageUrl),
+            '@id' => \TinyCat\Http\LocalUrls::absolute($pageUrl),
+            'url' => \TinyCat\Http\LocalUrls::absolute($pageUrl),
             'dateCreated' => $memberSince !== '' ? Dates::dateTime($memberSince, DATE_ATOM) : null,
             'dateModified' => (string) ($author['updated_at'] ?? '') !== '' ? Dates::dateTime((string) $author['updated_at'], DATE_ATOM) : null,
             'mainEntity' => [
                 '@type' => Roles::profileSchemaType((string) ($author['role'] ?? '')),
                 '@id' => $authorEntityId,
-                'url' => \TinyCat\Support\LocalUrls::absolute($current),
+                'url' => \TinyCat\Http\LocalUrls::absolute($current),
                 'name' => $authorName,
                 'alternateName' => (string) ($author['username'] ?? ''),
                 'identifier' => (string) $authorId,
                 'description' => $bio !== '' ? $bio : null,
-                'image' => $avatarUrl !== '' ? \TinyCat\Support\LocalUrls::absolute($avatarUrl) : null,
+                'image' => $avatarUrl !== '' ? \TinyCat\Http\LocalUrls::absolute($avatarUrl) : null,
             ],
             'hasPart' => array_map(\TinyCat\Social\Posts\StructuredData::post(...), array_values($statusItems)),
         ];

@@ -198,7 +198,7 @@ final class Images
             throw new RuntimeException('Could not create image directory.');
         }
 
-        $base = \TinyCat\Support\Text::slug($name);
+        $base = \TinyCat\Core\Text\Text::slug($name);
         $base = $base !== '' ? $base : $variant;
         do {
             $token = bin2hex(random_bytes(16));

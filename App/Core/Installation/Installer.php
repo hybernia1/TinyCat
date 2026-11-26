@@ -200,7 +200,7 @@ final class Installer
             self::windowsConfiguration('publish', \TinyCat\Support\Paths::basePath('config.php'), $content);
             return;
         }
-        $directory = \TinyCat\Support\Paths::basePath('storage/updates');
+        $directory = \TinyCat\Support\Storage::path('updates');
         $temporary = tempnam($directory, '.install-config-');
         if ($temporary === false) { throw new RuntimeException('Cannot prepare installation configuration.'); }
         try {

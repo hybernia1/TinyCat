@@ -57,7 +57,7 @@ final class Rss
     /** Render only escaped prose and HTTP links; RSS consumers do not run our UI. */
     public static function html(string $text): string
     {
-        $escape = \TinyCat\Support\Html::e(...);
+        $escape = \TinyCat\Core\Ui\Html::e(...);
         preg_match_all(LinkParser::pattern(), $text, $matches, PREG_OFFSET_CAPTURE);
         $html = '';
         $offset = 0;

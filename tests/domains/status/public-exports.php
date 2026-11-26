@@ -12,8 +12,7 @@ use TinyCat\Social\Posts\Export;
 use TinyCat\Support\Config;
 use TinyCat\Support\Xml;
 
-(new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['database' => ['driver' => 'mysql'], 'app' => ['url' => 'https://example.test']]);
+Config::configure(new \TinyCat\Core\Runtime\Configuration(['database' => ['driver' => 'mysql'], 'app' => ['url' => 'https://example.test']]));
 require __DIR__ . '/../../../tools/performance/lib/ProfileDatabase.php';
 $db = \tinycat_test_database_as(\TinyCat\Tools\Performance\ProfileDatabase::class);
 Connection::set($db);
@@ -87,7 +86,7 @@ $assert(Sitemap::pageCounts() === $pages && Sitemap::hasSection('tags'), 'Restor
 $db->exec("UPDATE users SET status = 'inactive' WHERE id = 1");
 $assert(Sitemap::pageCounts() === $pages && Sitemap::entries('status', 1000, 0) === [] && Export::posts() === [], 'A cached sitemap directory never preserves content after its author becomes hidden.');
 // Machine metadata must not inherit a user-selected display format for ISO dates.
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['database' => ['driver' => 'mysql'], 'app' => ['url' => 'https://example.test'], 'datetime' => ['iso' => 'Y', 'timezone' => 'UTC']]);
+Config::configure(new \TinyCat\Core\Runtime\Configuration(['database' => ['driver' => 'mysql'], 'app' => ['url' => 'https://example.test'], 'datetime' => ['iso' => 'Y', 'timezone' => 'UTC']]));
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Http\LocaleRouting::prepare('/pl/status/7');
 $schema = \TinyCat\Social\Posts\StructuredData::post([

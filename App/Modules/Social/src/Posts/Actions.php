@@ -196,7 +196,7 @@ final class Actions
         $reasons = array_keys(\TinyCat\Social\Posts\Posts::status_report_reasons());
         $reason = (string) \TinyCat\Http\Request::current()->input('reason', 'other');
         $reason = in_array($reason, $reasons, true) ? $reason : 'other';
-        $note = \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('note', ''), \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH);
+        $note = \TinyCat\Core\Text\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('note', ''), \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH);
         $now = \TinyCat\Support\Dates::dateDb();
         \TinyCat\Database\Transactions::run(static function () use ($contentId, $userId, $user, $reason, $note, $now): void {
             // Use the same parent lock as review/publication so a late report cannot

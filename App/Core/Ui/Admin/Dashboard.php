@@ -3,7 +3,9 @@ declare(strict_types=1);
 namespace TinyCat\Core\Ui\Admin;
 
 use TinyCat\Core\Modules\Registrations;
-use TinyCat\Support\{Components, Localization, Markup};
+use TinyCat\Core\Ui\Components;
+use TinyCat\Support\Localization;
+use TinyCat\Core\Ui\Markup;
 
 /** The host owns layout and widget types; owners supply authorized data. */
 final class Dashboard

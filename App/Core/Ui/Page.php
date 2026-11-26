@@ -13,7 +13,7 @@ final class Page
         if ($surface === Surface::Administration) { Admin\Layout::render($page, $content); return; }
         if ($surface === Surface::Access) { AccessLayout::render($page, $content); return; }
         if (isset($page['navigation'])) {
-            $content = \TinyCat\Support\Components::render('ui/public-workspace', ['title' => $page['title'] ?? '', 'navigation' => $page['navigation'], 'content' => new \TinyCat\Support\Markup($content)]);
+            $content = \TinyCat\Core\Ui\Components::render('ui/public-workspace', ['title' => $page['title'] ?? '', 'navigation' => $page['navigation'], 'content' => new \TinyCat\Core\Ui\Markup($content)]);
         }
         $selected = (string) \TinyCat\Core\Runtime\Startup::option('site.theme', '');
         $local = Theme::load($selected);

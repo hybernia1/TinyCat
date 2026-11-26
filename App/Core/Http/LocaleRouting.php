@@ -33,7 +33,7 @@ final class LocaleRouting
     /** @return array{locale: ?string, path: string} */
     public static function split(string $path): array
     {
-        if (preg_match('~^/([a-z]{2})(/.*)?$~D', $path, $match) && isset(Languages::language_packages()[$match[1]])) {
+        if (preg_match('~^/([a-z]{2,3}(?:-[a-z0-9]+)*)(/.*)?$~D', $path, $match) && isset(Languages::language_packages()[$match[1]])) {
             $rest = rtrim($match[2] ?? '/', '/') ?: '/';
             if (self::supports($rest)) { return ['locale' => $match[1], 'path' => $rest]; }
         }
@@ -78,7 +78,7 @@ final class LocaleRouting
     public static function canonical(string $url): string
     {
         if (!str_starts_with($url, '/') || str_starts_with($url, '//')) {
-            $base = rtrim(\TinyCat\Support\LocalUrls::absolute('/'), '/');
+            $base = rtrim(\TinyCat\Http\LocalUrls::absolute('/'), '/');
             return str_starts_with($url, $base . '/') ? $base . self::canonical(substr($url, strlen($base))) : $url;
         }
         $path = (string) (parse_url($url, PHP_URL_PATH) ?: '/');
@@ -108,9 +108,9 @@ final class LocaleRouting
         if (!self::definition($path)?->translatedDocument) { return []; }
         $result = [];
         foreach (array_keys(Languages::language_packages()) as $locale) {
-            $result[] = ['language' => $locale, 'url' => \TinyCat\Support\LocalUrls::absolute(self::url($path, $locale))];
+            $result[] = ['language' => $locale, 'url' => \TinyCat\Http\LocalUrls::absolute(self::url($path, $locale))];
         }
-        $result[] = ['language' => 'x-default', 'url' => \TinyCat\Support\LocalUrls::absolute($path)];
+        $result[] = ['language' => 'x-default', 'url' => \TinyCat\Http\LocalUrls::absolute($path)];
         return $result;
     }
 

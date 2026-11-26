@@ -1,18 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace TinyCat\Support;
+namespace TinyCat\Core\Ui\Admin;
 
-final class AdminViews
+use TinyCat\Core\Ui\{Components, Markup};
+use TinyCat\Support\Localization;
+
+final class Views
 {
-    /** @return array{message: string, code: string, params: array{entity: string}} */
-    public static function activationNotice(bool $active, string $entity): array
-    {
-        $state = $active ? 'activated' : 'deactivated';
-        $params = ['entity' => $entity];
-        return ['message' => Localization::t('common.' . $state, $params), 'code' => 'record_' . $state, 'params' => $params];
-    }
-
     public static function listCard(string $title, string $icon, string $targetId, string $filterModal, Markup $content, bool $primary = false): string
     {
         return Components::render('ui/admin-list', [
@@ -41,29 +36,12 @@ final class AdminViews
         return function_exists('mb_substr') ? mb_substr($value, 0, $limit) : substr($value, 0, $limit);
     }
 
-    /**
-     * @return array<mixed>
-     */
-    public static function admin_per_page_options(): array
-    {
-        $configured = [10, 25, 50, 100];
-        $options = [];
-
-        foreach ($configured as $option) {
-            $value = max(1, min(200, (int) $option));
-            $options[$value] = $value;
-        }
-
-        ksort($options);
-
-        return array_values($options);
-    }
+    public const array PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
     public static function admin_per_page(?int $value = null): int
     {
-        $options = \TinyCat\Support\AdminViews::admin_per_page_options();
+        $options = self::PER_PAGE_OPTIONS;
         $default = 25;
-        $default = in_array($default, $options, true) ? $default : ($options[0] ?? 25);
         $value ??= (int) \TinyCat\Http\Web::get('per_page', $default);
         $value = max(1, min(200, $value));
 
@@ -99,7 +77,7 @@ final class AdminViews
      */
     public static function admin_list_url(string $path, array $params = []): string
     {
-        $query = \TinyCat\Support\AdminViews::admin_list_query($params);
+        $query = self::admin_list_query($params);
 
         return $path . ($query !== [] ? '?' . http_build_query($query) : '');
     }
@@ -134,7 +112,7 @@ final class AdminViews
             $query = $params;
             $query[$pageName] = $targetPage;
 
-            return \TinyCat\Support\AdminViews::admin_list_url($ajax ? $path : $historyPath, $query);
+            return self::admin_list_url($ajax ? $path : $historyPath, $query);
         };
         $pages = [];
         $previous = null;
@@ -168,5 +146,70 @@ final class AdminViews
             ] : null,
             'pages' => $pages,
         ];
+    }
+    /**
+     * @return array<mixed>
+     */
+    public static function paginationMeta(int $total, int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = min(200, max(1, $perPage));
+        $total = max(0, $total);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $lastPage);
+        $offset = ($page - 1) * $perPage;
+
+        return [
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'offset' => $offset,
+            'last_page' => $lastPage,
+            'from' => $total === 0 ? 0 : $offset + 1,
+            'to' => $total === 0 ? 0 : min($total, $offset + $perPage),
+            'has_prev' => $page > 1,
+            'has_next' => $page < $lastPage,
+            'prev_page' => $page > 1 ? $page - 1 : null,
+            'next_page' => $page < $lastPage ? $page + 1 : null,
+        ];
+    }
+
+    /** @param array{string, string, string, array<string, string>, string, string} $config
+     * @param array<string, mixed>|null $input
+     * @return array{sort: string, direction: string}
+     */
+    public static function sortState(array $config, ?array $input = null): array
+    {
+        $sort = $input['sort'] ?? \TinyCat\Http\Web::get('sort', '');
+        $direction = $input['direction'] ?? \TinyCat\Http\Web::get('direction', 'asc');
+        return ['sort' => is_string($sort) && isset($config[3][$sort]) ? $sort : '',
+            'direction' => $direction === 'desc' ? 'desc' : 'asc'];
+    }
+
+    /** @param array{string, string, string, array<string, string>, string, string} $config
+     * @param array<string, mixed>|null $input */
+    public static function sortOrder(array $config, ?array $input = null): string
+    {
+        $state = self::sortState($config, $input);
+        return $state['sort'] === '' ? $config[4] : $config[3][$state['sort']] . ' ' . strtoupper($state['direction']) . ', ' . $config[5] . ' DESC';
+    }
+
+    /** @param array{string, string, string, array<string, string>, string, string} $config
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    public static function sortHeadings(array $config, array $params = [], string $apiPath = '', string $historyPath = ''): array
+    {
+        $state = self::sortState($config, $params);
+        $headings = [];
+        foreach ($config[3] as $key => $_expression) {
+            $active = $state['sort'] === $key;
+            $next = array_replace($params, ['sort' => $key, 'direction' => $active && $state['direction'] === 'asc' ? 'desc' : 'asc', 'page' => 1]);
+            $headings[$key] = ['url' => self::admin_list_url($apiPath !== '' ? $apiPath : $config[0], $next),
+                'history' => self::admin_list_url($historyPath !== '' ? $historyPath : $config[1], $next), 'target' => $config[2],
+                'aria' => $active ? ($state['direction'] === 'asc' ? 'ascending' : 'descending') : 'none',
+                'ascending' => $active && $state['direction'] === 'asc', 'descending' => $active && $state['direction'] === 'desc'];
+        }
+        return $headings;
     }
 }

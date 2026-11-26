@@ -53,9 +53,9 @@ if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
 }
 
 foreach ([
-    \TinyCat\Support\Components::render('users/auth-form', \TinyCat\Core\Identity\Resource::authenticationForm('register', '')),
+    \TinyCat\Core\Ui\Components::render('users/auth-form', \TinyCat\Core\Identity\Resource::authenticationForm('register', '')),
     \TinyCat\Core\Identity\Views::adminFormFields(['create' => true]),
 ] as $form) {
-    $assert(str_contains($form, 'pattern="' . \TinyCat\Support\Html::e(\TinyCat\Core\Identity\Usernames::pattern()) . '"'), 'Rendered username forms must use the shared validation pattern.');
+    $assert(str_contains($form, 'pattern="' . \TinyCat\Core\Ui\Html::e(\TinyCat\Core\Identity\Usernames::pattern()) . '"'), 'Rendered username forms must use the shared validation pattern.');
 }
 echo "PASS relaxed usernames ({$checks} checks)\n";

@@ -259,7 +259,7 @@ final class Store
         $group = strtolower(trim($group));
         $group = preg_replace('/[^a-z0-9_-]+/', '_', $group) ?? 'general';
 
-        return \TinyCat\Support\Text::limitString($group !== '' ? $group : 'general', 60);
+        return \TinyCat\Core\Text\Text::limitString($group !== '' ? $group : 'general', 60);
     }
 
     private static function normalizeSettingType(string $type): string

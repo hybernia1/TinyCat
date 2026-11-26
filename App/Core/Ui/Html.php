@@ -1,7 +1,8 @@
 <?php
 declare(strict_types=1);
 
-namespace TinyCat\Support;
+namespace TinyCat\Core\Ui;
+
 
 use InvalidArgumentException;
 
@@ -79,6 +80,6 @@ final class Html
      */
     public static function et(string $key, array $replace = [], ?string $locale = null): string
     {
-        return \TinyCat\Support\Html::e(\TinyCat\Support\Localization::t($key, $replace, $locale));
+        return \TinyCat\Core\Ui\Html::e(\TinyCat\Support\Localization::t($key, $replace, $locale));
     }
 }

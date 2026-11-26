@@ -7,7 +7,7 @@ define('TINYCAT', true);
 require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 use TinyCat\Social\Bots\Queue;
 use TinyCat\Database\Connection;
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $db = \tinycat_test_database();
 Connection::set($db);

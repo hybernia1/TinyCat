@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace TinyCat\Support;
+namespace TinyCat\Core\Modules;
+
+use TinyCat\Support\{Paths, Storage, Version};
 
 /** Shared identity for prepared assets, components and translations. */
 final class DeploymentIdentity
@@ -29,10 +31,10 @@ final class DeploymentIdentity
     {
         $deployment = self::current();
         if ($deployment['packages'] === false || ($manifest['server_components_packages'] ?? null) !== $deployment['packages']) { return false; }
-        if (isset($manifest['selection']) && class_exists(\TinyCat\Core\Modules\Resources::class)) {
-            return $manifest['selection'] === \TinyCat\Core\Modules\Resources::fingerprint();
+        if (class_exists(\TinyCat\Core\Modules\Resources::class)) {
+            return ($manifest['selection'] ?? null) === \TinyCat\Core\Modules\Resources::fingerprint();
         }
-        return !is_file(Paths::basePath('storage/deployment.json'));
+        return !is_file(Storage::path('deployment.json'));
     }
 
     public static function key(?string $version = null): string

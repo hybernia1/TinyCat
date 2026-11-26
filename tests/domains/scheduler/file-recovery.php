@@ -14,8 +14,7 @@ use TinyCat\Core\Modules\{Loader, Distribution, Deployment, Resources, Registrat
 use TinyCat\Core\Tasks\Cleanup\Task as Cleanup;
 use TinyCat\Core\Ui\Branding;
 use TinyCat\Database\Connection;
-(new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(TinyCat\Support\Config::class, 'config'))->setValue(null, ['datetime' => ['timezone' => 'UTC']]);
+TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration(['datetime' => ['timezone' => 'UTC']]));
 $checks = 0; $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
 $db = \tinycat_test_database(); Connection::set($db);
 TinyCat\Core\Identity\Schema::install($db); TinyCat\Core\Settings\Schema::install($db);

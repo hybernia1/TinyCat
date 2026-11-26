@@ -5,7 +5,7 @@ namespace TinyCat\Core\Identity;
 use TinyCat\Core\Identity\ReadModel;
 use TinyCat\Core\Identity\Integration;
 
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 
 /** Presentation helpers that adapt domain data to shared component inputs. */
 final class Views
@@ -41,7 +41,7 @@ final class Views
             'displayName' => (string) ($data['displayName'] ?? trim((string) ($user['username'] ?? ''))),
             'editModalId' => (string) ($data['editModalId'] ?? self::accountEditorId($id)),
             'editModalUrl' => (string) ($data['editModalUrl'] ?? self::accountEditorUrl($id, $needsEmail ? 'email' : '')),
-            'avatar' => new \TinyCat\Support\Markup(self::avatar(['user' => $user])),
+            'avatar' => new \TinyCat\Core\Ui\Markup(self::avatar(['user' => $user])),
         ]);
     }
 

@@ -12605,18 +12605,20 @@
       ]
     },
     {
-      "source": "App/Core/Support/AdminViews.php",
+      "source": "App/Core/Ui/Admin/Views.php",
       "methods": [
-        "activationNotice",
         "listCard",
         "modalAction",
         "admin_filter_text",
-        "admin_per_page_options",
         "admin_per_page",
         "admin_page",
         "admin_list_query",
         "admin_list_url",
-        "admin_pagination_view_data"
+        "admin_pagination_view_data",
+        "paginationMeta",
+        "sortState",
+        "sortOrder",
+        "sortHeadings"
       ]
     },
     {

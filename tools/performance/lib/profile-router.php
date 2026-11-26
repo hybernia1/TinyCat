@@ -40,8 +40,7 @@ if ($config['cache']['driver'] === 'memcached') {
     }
     $config['cache']['memcached']['servers'] = [['host' => '127.0.0.1', 'port' => 11211]];
 }
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $config);
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($config));
 $db = $config['database'];
 $database = new \TinyCat\Tools\Performance\ProfileDatabase(
     sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $db['host'], $db['port'] ?? 3306, $db['name']),

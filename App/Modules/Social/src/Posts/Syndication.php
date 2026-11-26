@@ -76,7 +76,7 @@ final class Syndication
         if ($rssType !== 'search' && $media !== '') { $rssLink .= '?media=' . $media; }
 
         $siteName = \TinyCat\Core\Ui\Site::site_name();
-        $selfUrl = \TinyCat\Support\LocalUrls::absolute($rssSelfLink);
+        $selfUrl = \TinyCat\Http\LocalUrls::absolute($rssSelfLink);
         $locale = \TinyCat\Support\Localization::defaultLocale();
         $items = [];
         // Load all preview candidates once; exporting a feed must not fetch remote metadata.
@@ -84,26 +84,26 @@ final class Syndication
         foreach ($rssItems as $item) {
             $body = trim((string) ($item['body'] ?? ''));
             $itemTitle = ViewData::status_meta_title($item, 100);
-            $itemUrl = \TinyCat\Support\LocalUrls::absolute(\TinyCat\Social\Posts\Posts::status_url((int) ($item['id'] ?? 0)));
+            $itemUrl = \TinyCat\Http\LocalUrls::absolute(\TinyCat\Social\Posts\Posts::status_url((int) ($item['id'] ?? 0)));
             $publishedAt = (string) ($item['published_at'] ?? '');
             $publishedDate = $publishedAt !== '' ? \TinyCat\Support\Dates::dateTime($publishedAt, DATE_RSS) : '';
             $attachedImage = \TinyCat\Social\Posts\Images::status_image_url($item);
             $imageUrl = $attachedImage !== '' ? $attachedImage : ViewData::status_meta_link_image($item);
-            $imageUrl = $imageUrl !== '' ? \TinyCat\Support\LocalUrls::absolute($imageUrl) : '';
+            $imageUrl = $imageUrl !== '' ? \TinyCat\Http\LocalUrls::absolute($imageUrl) : '';
             $imageType = $attachedImage !== '' ? 'image/webp' : '';
             $imageAlt = $attachedImage !== '' ? \TinyCat\Social\Posts\Images::status_image_alt_text($item) : $itemTitle;
             $imageBytes = max(0, (int) ($item['image_bytes'] ?? 0));
             $rssBody = \TinyCat\Core\Ui\Rss::html($body);
             if ($imageUrl !== '') {
-                $rssBody .= \TinyCat\Support\Components::render('status/rss-image', ['url' => \TinyCat\Support\LocalUrls::absolute($imageUrl), 'alt' => $imageAlt]);
+                $rssBody .= \TinyCat\Core\Ui\Components::render('status/rss-image', ['url' => \TinyCat\Http\LocalUrls::absolute($imageUrl), 'alt' => $imageAlt]);
             }
-            $categories = array_map(static fn (string $tag): array => ['name' => $tag, 'url' => \TinyCat\Support\LocalUrls::absolute(Tags::tag_url($tag))], Tags::extractTags($body));
+            $categories = array_map(static fn (string $tag): array => ['name' => $tag, 'url' => \TinyCat\Http\LocalUrls::absolute(Tags::tag_url($tag))], Tags::extractTags($body));
             $creator = (string) ($item['author_name'] ?? '');
-            $creatorUrl = \TinyCat\Support\LocalUrls::absolute(\TinyCat\Http\LocaleRouting::canonical(\TinyCat\Social\Profiles\Profiles::author_url((int) $item['author_id'])));
+            $creatorUrl = \TinyCat\Http\LocalUrls::absolute(\TinyCat\Http\LocaleRouting::canonical(\TinyCat\Social\Profiles\Profiles::author_url((int) $item['author_id'])));
 
             $enclosure = $attachedImage !== '' ? ['url' => $imageUrl, 'length' => $imageBytes, 'type' => $imageType] : null;
             $items[] = ['title' => $itemTitle, 'url' => $itemUrl, 'published_date' => $publishedDate, 'image_url' => $imageUrl, 'image_type' => $imageType, 'html' => $rssBody, 'categories' => $categories, 'creator' => $creator, 'creator_url' => $creatorUrl, 'enclosure' => $enclosure];
         }
-        \TinyCat\Core\Ui\Rss::respond($rssTitle . ' | ' . $siteName, $rssDescription, \TinyCat\Support\LocalUrls::absolute($rssLink), $selfUrl, $items, $rssImage !== '' ? \TinyCat\Support\LocalUrls::absolute($rssImage) : '', $locale);
+        \TinyCat\Core\Ui\Rss::respond($rssTitle . ' | ' . $siteName, $rssDescription, \TinyCat\Http\LocalUrls::absolute($rssLink), $selfUrl, $items, $rssImage !== '' ? \TinyCat\Http\LocalUrls::absolute($rssImage) : '', $locale);
     }
 }

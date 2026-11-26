@@ -42,7 +42,7 @@ require_once __DIR__ . '/../../../tools/support/workspace.php';
 $directory = \TinyCat\Tools\Workspace::directory('tests/language-packages-' . bin2hex(random_bytes(6)));
 $copied = [];
 try {
-    foreach (['Core/Runtime/autoload.php', 'Core/Runtime/Configuration.php', 'Core/Runtime/Debug.php', 'Core/Support/Config.php', 'Core/Support/Cache.php', 'Core/Support/Storage.php', 'Core/Support/Version.php', 'Core/Support/Paths.php', 'Core/Support/Languages.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/PreparedAssets.php', 'Core/Support/DeploymentIdentity.php', 'Core/Support/TranslationSources.php', 'Core/Modules/Resources.php', 'Core/Modules/Catalog.php'] as $relative) {
+    foreach (['Core/Runtime/autoload.php', 'Core/Runtime/Configuration.php', 'Core/Runtime/Debug.php', 'Core/Support/Config.php', 'Core/Support/Cache.php', 'Core/Support/Storage.php', 'Core/Support/Version.php', 'Core/Support/Paths.php', 'Core/Support/Languages.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/PreparedAssets.php', 'Core/Support/Assets.php', 'Core/Modules/DeploymentIdentity.php', 'Core/Support/TranslationSources.php', 'Core/Modules/Resources.php', 'Core/Modules/Catalog.php'] as $relative) {
         $target = $directory . '/App/' . $relative;
         if (!is_dir(dirname($target))) { mkdir(dirname($target), 0700, true); }
         if (!copy(dirname(__DIR__, 3) . '/App/' . $relative, $target)) { throw new RuntimeException('Cannot prepare language snapshot fixture.'); }

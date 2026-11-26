@@ -18,7 +18,7 @@ final class Sanitizer
         }
 
         if (!class_exists(DOMDocument::class)) {
-            return \TinyCat\Support\Html::e(\TinyCat\Support\Text::strip_html_tags_preserving_text($value));
+            return \TinyCat\Core\Ui\Html::e(\TinyCat\Core\Text\Text::strip_html_tags_preserving_text($value));
         }
 
         $document = new DOMDocument('1.0', 'UTF-8');
@@ -36,7 +36,7 @@ final class Sanitizer
 
         $root = $loaded ? $document->getElementById('tinycat-html-root') : null;
         if (!$root instanceof DOMElement) {
-            return \TinyCat\Support\Html::e(\TinyCat\Support\Text::strip_html_tags_preserving_text($value));
+            return \TinyCat\Core\Ui\Html::e(\TinyCat\Core\Text\Text::strip_html_tags_preserving_text($value));
         }
 
         $html = '';
@@ -50,7 +50,7 @@ final class Sanitizer
     public static function sanitize_html_node(DOMNode $node): string
     {
         if ($node instanceof DOMText) {
-            return \TinyCat\Support\Html::e((string) $node->nodeValue);
+            return \TinyCat\Core\Ui\Html::e((string) $node->nodeValue);
         }
 
         if (!$node instanceof DOMElement) {
@@ -78,9 +78,9 @@ final class Sanitizer
             }
 
             $title = trim((string) $node->getAttribute('title'));
-            $attributes = ' href="' . \TinyCat\Support\Html::e($href) . '"';
+            $attributes = ' href="' . \TinyCat\Core\Ui\Html::e($href) . '"';
             if ($title !== '') {
-                $attributes .= ' title="' . \TinyCat\Support\Html::e($title) . '"';
+                $attributes .= ' title="' . \TinyCat\Core\Ui\Html::e($title) . '"';
             }
             if (strtolower(trim((string) $node->getAttribute('target'))) === '_blank') {
                 $attributes .= ' target="_blank" rel="noopener noreferrer"';

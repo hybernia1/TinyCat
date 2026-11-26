@@ -227,3 +227,15 @@ and browser locale before locale routing; the Identity service provider owns the
 readiness probe. Neither runs SQL during metadata registration. Administration owns primary
 admin protection, with a single explicit primary-ID snapshot per listing and fresh locking
 reads during account writes. No process-static primary-ID cache is retained.
+
+Shared view rendering, declarative PHP/browser components, HTML escaping and the
+explicit trusted `Markup` value belong to `Core/Ui`. Ordinary strings remain
+escaped; only server-composed `Markup` can enter trusted component slots, and
+API resources reject this presentation value. Lexical text mechanisms live in
+`Core/Text/Text`; ordered positive ID normalization is `Support/Values`.
+Settings owns its date/time/timezone option catalogs in `Settings/Sections`;
+`Support/Dates` retains conversions and its independent option resolver.
+`Modules/DeploymentIdentity` owns module/package selection identity;
+`Updates/BuildCleanup` retires generated release files using updater admission
+and rollback inventories. OPCache diagnostics and resets live in `Runtime/Debug`,
+while data cache diagnostics retain their private Memcached client.

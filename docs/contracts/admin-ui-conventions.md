@@ -59,7 +59,7 @@ screens scroll the table within its wrapper without widening the document.
 
 ## List structure
 
-- Use `AdminViews::listCard()` for server-composed list sections.
+- Use `Core\Ui\Admin\Views::listCard()` for server-composed list sections.
 - For a single main list, pass `primary: true`: the admin bar owns the
   visible page title, and the card omits its repeated header. The shared
   toolbar groups search, filters, and page size in one row on desktop.
@@ -612,3 +612,10 @@ the common content inset. Panel padding is owned by this layout, without negativ
 margins or page-specific overrides. Table rows have no separators or zebra fill;
 hover and focus-within retain the shared highlight. Task summaries and run history
 use the same identity rows and status badges.
+
+Shared server list state lives in `Core/Ui/Admin/Views`: explicit
+`paginationMeta(total, page, perPage)`, `sortState`, `sortOrder`,
+`sortHeadings`, navigation URLs and the pagination presentation model.
+Each feature supplies its own SQL allowlist, default order and stable final key.
+HTTP page/page-size reads stay at the list entry; pagination metadata never reads
+`$_GET`. The page-size choices are the constant `PER_PAGE_OPTIONS`.

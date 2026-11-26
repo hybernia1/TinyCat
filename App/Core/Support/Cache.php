@@ -15,8 +15,8 @@ if (!defined('TINYCAT')) {
 /**
  * Shared cache facade for computed data and generated files.
  *
- * JSON entries use the configured persistent cache. Generated files remain
- * below storage/cache because web servers need to serve them directly.
+ * JSON entries and private computed files use the configured cache directory.
+ * Public immutable outputs are owned by Assets.
  */
 final class Cache
 {
@@ -74,10 +74,9 @@ final class Cache
                         $acquired = flock($lock, LOCK_EX | LOCK_NB);
                     } while (!$acquired && hrtime(true) < $deadline);
                 }
-                if ($acquired) {
-                    $cached = self::get($key, $ttl);
-                    if (is_array($cached)) { return $cached; }
-                }
+                // A producer may have published while still holding the lock at our deadline.
+                $cached = self::get($key, $ttl);
+                if (is_array($cached)) { return $cached; }
             }
             $value = $compute();
             self::put($key, $value, $ttl);
@@ -95,9 +94,9 @@ final class Cache
      * @template T
      * @param callable(): T $operation
      * @return T */
-    public static function synchronized(string $key, callable $operation, bool $shared = false): mixed
+    public static function synchronized(string $key, callable $operation, bool $shared = false, ?string $directory = null): mixed
     {
-        $directory = self::directory('coordination');
+        $directory ??= self::directory('coordination');
         if (!Storage::ensureDirectory($directory)) { throw new \RuntimeException('Cannot create cache coordination directory.'); }
         $lock = @fopen($directory . DIRECTORY_SEPARATOR . hash('sha256', $key) . '.lock', 'c');
         if ($lock === false) { throw new \RuntimeException('Cannot open cache coordination lock.'); }
@@ -278,13 +277,6 @@ final class Cache
      *         extension: bool,
      *         available: bool,
      *         stats: array{servers: int, version: string, uptime: int, items: int, bytes: int, limit_bytes: int, hits: int, misses: int, evictions: int}
-     *     },
-     *     opcache: array{
-     *         loaded: bool,
-     *         enabled: bool,
-     *         resettable: bool,
-     *         configuration: array{memory_bytes: int, max_scripts: int, validate_timestamps: bool, revalidate_freq: int, file_cache: bool},
-     *         stats: array{cached_scripts: int, hits: int, misses: int, used_memory: int, free_memory: int, wasted_memory: int, cache_full: bool, restart_pending: bool}
      *     }
      * }
      */
@@ -304,94 +296,7 @@ final class Cache
                 'available' => $memcachedAvailable,
                 'stats' => self::memcachedDiagnostics($memcachedConfigured && $memcachedExtension),
             ],
-            'opcache' => self::opcacheDiagnostics(),
         ];
-    }
-
-    /**
-     * @return array{
-     *     loaded: bool,
-     *     enabled: bool,
-     *     resettable: bool,
-     *     configuration: array{memory_bytes: int, max_scripts: int, validate_timestamps: bool, revalidate_freq: int, file_cache: bool},
-     *     stats: array{cached_scripts: int, hits: int, misses: int, used_memory: int, free_memory: int, wasted_memory: int, cache_full: bool, restart_pending: bool}
-     * }
-     */
-    private static function opcacheDiagnostics(): array
-    {
-        $loaded = extension_loaded('Zend OPcache') || extension_loaded('opcache');
-        $configuration = [
-            'memory_bytes' => 0,
-            'max_scripts' => 0,
-            'validate_timestamps' => false,
-            'revalidate_freq' => 0,
-            'file_cache' => false,
-        ];
-        $stats = [
-            'cached_scripts' => 0,
-            'hits' => 0,
-            'misses' => 0,
-            'used_memory' => 0,
-            'free_memory' => 0,
-            'wasted_memory' => 0,
-            'cache_full' => false,
-            'restart_pending' => false,
-        ];
-        if (!$loaded || !function_exists('opcache_get_status')) {
-            return [
-                'loaded' => $loaded,
-                'enabled' => false,
-                'resettable' => false,
-                'configuration' => $configuration,
-                'stats' => $stats,
-            ];
-        }
-
-        $directives = [];
-
-        if (function_exists('opcache_get_configuration')) {
-            $rawConfiguration = @opcache_get_configuration();
-
-            if (is_array($rawConfiguration)) {
-                $directives = $rawConfiguration['directives'];
-            }
-        }
-        $configuration = [
-            'memory_bytes' => max(0, (int) ($directives['opcache.memory_consumption'] ?? 0)),
-            'max_scripts' => max(0, (int) ($directives['opcache.max_accelerated_files'] ?? 0)),
-            'validate_timestamps' => !empty($directives['opcache.validate_timestamps']),
-            'revalidate_freq' => max(0, (int) ($directives['opcache.revalidate_freq'] ?? 0)),
-            'file_cache' => trim((string) ($directives['opcache.file_cache'] ?? '')) !== '',
-        ];
-        $status = @opcache_get_status(false);
-        $memory = is_array($status) && is_array($status['memory_usage'] ?? null) ? $status['memory_usage'] : [];
-        $statistics = is_array($status) && is_array($status['opcache_statistics'] ?? null) ? $status['opcache_statistics'] : [];
-        $stats = [
-            'cached_scripts' => max(0, (int) ($statistics['num_cached_scripts'] ?? 0)),
-            'hits' => max(0, (int) ($statistics['hits'] ?? 0)),
-            'misses' => max(0, (int) ($statistics['misses'] ?? 0)),
-            'used_memory' => max(0, (int) ($memory['used_memory'] ?? 0)),
-            'free_memory' => max(0, (int) ($memory['free_memory'] ?? 0)),
-            'wasted_memory' => max(0, (int) ($memory['wasted_memory'] ?? 0)),
-            'cache_full' => !empty($status['cache_full']),
-            'restart_pending' => !empty($status['restart_pending']),
-        ];
-        return [
-            'loaded' => true,
-            'enabled' => is_array($status) && !empty($status['opcache_enabled']),
-            'resettable' => function_exists('opcache_reset'),
-            'configuration' => $configuration,
-            'stats' => $stats,
-        ];
-    }
-
-    public static function resetOpcache(): bool
-    {
-        if (!function_exists('opcache_reset')) {
-            return false;
-        }
-
-        return @opcache_reset();
     }
 
     /**

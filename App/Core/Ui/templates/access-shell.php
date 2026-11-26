@@ -5,7 +5,7 @@ declare(strict_types=1);
 /** @var string $logoUrl */
 /** @var string $privacyUrl */
 /** @var string $content */
-use TinyCat\Support\Html;
+use TinyCat\Core\Ui\Html;
 ?>
 <header class="container section">
     <a class="cluster gap-2" href="<?= Html::e($homeUrl) ?>">

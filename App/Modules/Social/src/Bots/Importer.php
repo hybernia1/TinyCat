@@ -230,7 +230,7 @@ final class Importer
         if ($runId < 1) { return; }
         \TinyCat\Database\Connection::update('bot_source_runs', [
             'status' => $status, 'items_seen' => max(0, $itemsSeen),
-            'error' => $error !== '' ? \TinyCat\Core\Feeds\FeedParser::text($error, 500) : null,
+            'error' => $error !== '' ? \TinyCat\Core\Text\Text::htmlText($error, 500) : null,
         ], ['id' => $runId]);
     }
 
@@ -350,7 +350,7 @@ final class Importer
     {
         if ($error !== null) { \TinyCat\Core\Runtime\Failure::report($error); }
         $status = $error !== null ? 'error' : ($ids !== [] ? 'posted' : 'current');
-        $message = $error !== null ? FeedParser::text(\TinyCat\Core\Runtime\Failure::message($error, 'Feed import failed.'), 500) : '';
+        $message = $error !== null ? \TinyCat\Core\Text\Text::htmlText(\TinyCat\Core\Runtime\Failure::message($error, 'Feed import failed.'), 500) : '';
         $this->store->finish($source, $runId, $status, $seen, $message);
         return ['source_id' => (int) $source['id'], 'status' => $status, 'content_id' => $ids[0] ?? 0, 'content_ids' => $ids, 'imported_count' => count($ids), 'skipped_items' => $skipped] + ($error !== null ? ['error' => $message] : []);
     }

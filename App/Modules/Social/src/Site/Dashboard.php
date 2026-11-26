@@ -29,7 +29,7 @@ final class Dashboard
     public static function commentsWidget(): array
     {
         $rows = self::recentComments(5);
-        return ['items' => array_map(static fn (array $row): array => ['user' => ['id' => (int) $row['user_id'], 'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($row)], 'label' => '@' . $row['username'], 'detail' => \TinyCat\Support\Text::plain_text_limit((string) $row['body'], 180), 'url' => $row['content_url'], 'time' => \TinyCat\Support\Dates::displayDateTime((string) $row['created_at'])], $rows)];
+        return ['items' => array_map(static fn (array $row): array => ['user' => ['id' => (int) $row['user_id'], 'avatar_url' => \TinyCat\Social\Profiles\Profiles::avatarUrl($row)], 'label' => '@' . $row['username'], 'detail' => \TinyCat\Core\Text\Text::plain_text_limit((string) $row['body'], 180), 'url' => $row['content_url'], 'time' => \TinyCat\Support\Dates::displayDateTime((string) $row['created_at'])], $rows)];
     }
 
     /** @return list<array<string, mixed>> */

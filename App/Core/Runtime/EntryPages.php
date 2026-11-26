@@ -35,11 +35,11 @@ final class EntryPages
         Router::route(['GET', 'HEAD'], '/', static function (): void {
             if (!\TinyCat\Core\Ui\PublicWeb::enabled()) {
                 $user = \TinyCat\Core\Identity\Authentication::auth();
-                \TinyCat\Http\Web::redirect($user === null ? \TinyCat\Support\LocalUrls::resolve('/login') : \TinyCat\Core\Identity\Login::auth_landing_url($user));
+                \TinyCat\Http\Web::redirect($user === null ? \TinyCat\Http\LocalUrls::resolve('/login') : \TinyCat\Core\Identity\Login::auth_landing_url($user));
             }
             $page = self::homepage();
             if ($page !== null) { ($page->render)(); return; }
-            \TinyCat\Core\Ui\Page::render(['title' => \TinyCat\Core\Ui\Site::site_name(), 'surface' => 'public', 'public' => true], \TinyCat\Support\Components::render('ui/notice', ['label' => \TinyCat\Support\Localization::t('public.no_homepage')]));
+            \TinyCat\Core\Ui\Page::render(['title' => \TinyCat\Core\Ui\Site::site_name(), 'surface' => 'public', 'public' => true], \TinyCat\Core\Ui\Components::render('ui/notice', ['label' => \TinyCat\Support\Localization::t('public.no_homepage')]));
         });
         Router::route('GET', '/admin', static function (): void {
             \TinyCat\Core\Identity\Access::require_admin();

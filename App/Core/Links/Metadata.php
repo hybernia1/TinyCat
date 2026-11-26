@@ -186,6 +186,12 @@ class Metadata
         $dom = static::document($html);
         if ($dom === null) { return []; }
 
+        return static::parseDocument($dom, $baseUrl, $attemptedEndpoint);
+    }
+
+    /** @return array<mixed> */
+    protected static function parseDocument(\Dom\HTMLDocument $dom, string $baseUrl, string $attemptedEndpoint = ''): array
+    {
         $meta = [];
         $candidates = [
             'title' => '',
@@ -302,20 +308,7 @@ class Metadata
 
     protected static function cleanText(string $text, int $limit): string
     {
-        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
-
-        if ($text === '') {
-            return '';
-        }
-
-        if ((function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text)) <= $limit) {
-            return $text;
-        }
-
-        return function_exists('mb_substr')
-            ? rtrim((string) mb_substr($text, 0, $limit, 'UTF-8'))
-            : rtrim(substr($text, 0, $limit));
+        return \TinyCat\Core\Text\Text::htmlText($text, $limit, encodedMarkup: false);
     }
 
     protected static function useAuthorDescription(string $url): bool { return false; }

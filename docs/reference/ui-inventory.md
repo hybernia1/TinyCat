@@ -342,7 +342,7 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 
 - [App/Core/Identity/Views.php](../../App/Core/Identity/Views.php): `accountEditorId`, `accountEditorUrl`, `statusLabels`, `userMenu`, `adminFormFields`, `avatar`
 - [App/Core/Notifications/Views.php](../../App/Core/Notifications/Views.php): `menu`, `items`
-- [App/Core/Support/AdminViews.php](../../App/Core/Support/AdminViews.php): `activationNotice`, `listCard`, `modalAction`, `admin_filter_text`, `admin_per_page_options`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_pagination_view_data`
+- [App/Core/Ui/Admin/Views.php](../../App/Core/Ui/Admin/Views.php): `listCard`, `modalAction`, `admin_filter_text`, `admin_per_page`, `admin_page`, `admin_list_query`, `admin_list_url`, `admin_pagination_view_data`, `paginationMeta`, `sortState`, `sortOrder`, `sortHeadings`
 - [App/Core/Updates/Views.php](../../App/Core/Updates/Views.php): `model`
 
 ## Všechny PHP šablony

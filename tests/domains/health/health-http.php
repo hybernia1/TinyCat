@@ -12,8 +12,7 @@ use TinyCat\Http\SiteProbe;
 
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
-(new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-$configure = static function (array $config): void { (new ReflectionProperty(Config::class, 'config'))->setValue(null, $config); };
+$configure = static function (array $config): void { Config::configure(new \TinyCat\Core\Runtime\Configuration($config)); };
 $configure([]);
 $limits = HttpCheck::limits();
 $sample = ['complete' => true, 'http_status' => 200, 'ttfb_ms' => 800.0, 'total_ms' => 1000.0, 'error' => ''];

@@ -61,13 +61,13 @@ try {
     $staleImage = $importItems->import($imageSource, [['guid' => 'image-stale-source', 'image_urls' => [$imageUrl]]], 1);
     $assert($staleImage['status'] === 'error' && (glob($root . '/uploads/status-images/' . date('Y/m') . '/*.webp') ?: []) === $paths, 'A source changed during image download leaves no orphan attachment.');
     $database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Social\Bots\Importer::feedSourceHash($imageSource['feed_url'])]);
-    $disabledConfig = $config->getValue();
+    $disabledConfig = \TinyCat\Support\Config::snapshot()->values();
     $disabledConfig['content_images']['enabled'] = false;
-    $config->setValue(null, $disabledConfig);
+    \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($disabledConfig));
     $beforeRequests = count($GLOBALS['sourceImageRequests']);
     $disabledImage = $importItems->import($imageSource, [['guid' => 'image-disabled', 'image_urls' => [$imageUrl]]], 1);
     $assert($disabledImage['skipped_items'][0]['code'] === 'status_required' && count($GLOBALS['sourceImageRequests']) === $beforeRequests, 'Disabled image uploads prevent attachment downloads and empty posts.');
-    unset($disabledConfig['content_images']); $config->setValue(null, $disabledConfig);
+    unset($disabledConfig['content_images']); \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($disabledConfig));
 } finally {
     foreach (array_diff(glob($root . '/uploads/status-images/' . date('Y/m') . '/*.webp') ?: [], $pathsBefore) as $imageFile) { unlink($imageFile); }
     unset($GLOBALS['sourceImageFixtures'], $GLOBALS['sourceImageStreams'], $GLOBALS['sourceImageRequests'], $GLOBALS['sourceImageHeaders']);

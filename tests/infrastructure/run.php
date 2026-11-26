@@ -56,7 +56,7 @@ foreach ([
     ['Příliš žluťoučký kůň', '-', 'prilis-zlutoucky-kun'],
     ['Žluťoučký', '_', 'zlutoucky'],
 ] as [$input, $separator, $expected]) {
-    $assert(\TinyCat\Support\Text::slug($input, $separator) === $expected, 'Slug normalization preserves canonical tags, separators and Unicode transliteration.');
+    $assert(\TinyCat\Core\Text\Text::slug($input, $separator) === $expected, 'Slug normalization preserves canonical tags, separators and Unicode transliteration.');
 }
 $request = new Request(
     serverData: ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/api/items/7?view=html', 'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
@@ -323,18 +323,18 @@ if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
     $configuration = \TinyCat\Support\Config::get();
     $mismatched = $configuration;
     $mismatched['database']['driver'] = 'unsupported';
-    (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $mismatched);
+    \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($mismatched));
     try {
         $assert(Connection::driver() === 'mysql', 'The injected MySQL connection remains authoritative over unused configuration.');
         $assert(\TinyCat\Database\Schema::app_existing_tables(['records', 'missing']) === ['records'], 'Schema inspection uses the actual connection driver.');
     } finally {
-        (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
+        \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($configuration));
     }
     $connectionState = new ReflectionProperty(Connection::class, 'pdo');
     try {
         foreach ([['driver' => 'unsupported'], ['dsn' => 'unsupported:fixture']] as $unsupported) {
             $connectionState->setValue(null, null);
-            (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, ['database' => $unsupported]);
+            \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration(['database' => $unsupported]));
             $throws(Connection::get(...), RuntimeException::class);
         }
         $unsupported = new class extends PDO {
@@ -344,7 +344,7 @@ if (in_array('mysql', PDO::getAvailableDrivers(), true)) {
         $throws(static fn () => Connection::set($unsupported), RuntimeException::class);
     } finally {
         $connectionState->setValue(null, $database);
-        (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
+        \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($configuration));
     }
     Connection::exec('CREATE TABLE query_items (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, category TEXT)');
     Connection::exec("INSERT INTO query_items VALUES (1, 'a'), (2, 'a'), (3, 'a'), (4, 'b'), (5, 'b'), (6, 'c')");

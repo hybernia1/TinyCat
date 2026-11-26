@@ -27,13 +27,13 @@ final class NotificationEvents
             return;
         }
 
-        $type = \TinyCat\Support\Text::plain_text_limit($type, 40);
+        $type = \TinyCat\Core\Text\Text::plain_text_limit($type, 40);
 
         if ($type === '') {
             return;
         }
 
-        $key = \TinyCat\Support\Text::plain_text_limit(
+        $key = \TinyCat\Core\Text\Text::plain_text_limit(
             $key !== '' ? $key : $type . ':' . $contentId . ':' . $commentId . ':' . $actorId,
             190
         );
@@ -223,8 +223,8 @@ final class NotificationEvents
         $actor = \TinyCat\Core\Mail\Templates::email_user($actorId);
         \TinyCat\Core\Mail\Templates::email_template_send($template, $userId, [
             'actor' => (string) ($actor['username'] ?? \TinyCat\Support\Localization::t('notifications.someone')),
-            'actor_url' => \TinyCat\Support\LocalUrls::absolute('/author/' . $actorId),
-            'content_url' => \TinyCat\Support\LocalUrls::absolute('/status/' . $contentId),
+            'actor_url' => \TinyCat\Http\LocalUrls::absolute('/author/' . $actorId),
+            'content_url' => \TinyCat\Http\LocalUrls::absolute('/status/' . $contentId),
         ]);
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace TinyCat\Social\Bots;
 
 use TinyCat\Core\Ui\Page as Layout;
-use TinyCat\Support\AdminViews;
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
 use TinyCat\Support\Localization;
 use TinyCat\Core\Identity\Access;
 
@@ -44,7 +44,7 @@ final class Pages
             Layout::render([
                 'title' => Localization::t('bots.detail_not_found'),
                 'current' => '/admin/bots/accounts',
-            ], \TinyCat\Support\Components::render('ui/notice', ['tone' => 'info', 'label' => Localization::t('bots.detail_not_found')]));
+            ], \TinyCat\Core\Ui\Components::render('ui/notice', ['tone' => 'info', 'label' => Localization::t('bots.detail_not_found')]));
             return;
         }
 

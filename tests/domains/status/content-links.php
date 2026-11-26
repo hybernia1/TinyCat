@@ -10,8 +10,7 @@ use TinyCat\Core\Settings\Store;
 use TinyCat\Social\Posts\ContentLinks;
 use TinyCat\Social\Posts\LinkParser;
 
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, []);
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([]));
 
 $checks = 0;
 $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };

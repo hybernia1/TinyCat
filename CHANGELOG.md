@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.0.12 - 2026-11-26
+
+- Consolidate administration helpers and move UI, text, deployment and update utilities to their owning core areas. Reuse immutable configuration snapshots and remove redundant helper files.
+- Keep public runtime assets independent of the configured computed-cache directory; consolidate publication and retention without changing public asset URLs.
+- Load prepared translations through a small index and separate language/channel payloads. Share source validation within build operations, remove the unused language registry and retain all twelve locales.
+- Translate health notification messages in the ten additional locales and cache document locale-routing metadata in JavaScript.
+- Use browser-local embed preview URLs while retaining canonical sharing URLs and strict preview origin, route and object checks.
+- Share HTML-to-text operations, parse link metadata HTML once, reuse URL-preserving text traversal and deduplicate feed image inspection. Bot publication policies and final plain-text storage remain with Social.
+- No database migration or configuration change. Controlled measurements confirm fewer loaded files but do not establish an overall response-time improvement.
+
 ## 8.0.8 - 2026-11-26
 
 - Share authentication page and modal definitions across login, registration and password recovery; simplify the forms while retaining validation, consent and draft protection.

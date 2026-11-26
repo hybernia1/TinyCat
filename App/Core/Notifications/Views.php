@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Core\Notifications;
 
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 
 final class Views
 {

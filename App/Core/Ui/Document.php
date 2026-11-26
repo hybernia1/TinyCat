@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Ui;
 
-use TinyCat\Support\View;
+use TinyCat\Core\Ui\View;
 
 /** Shared document structure; each surface supplies explicit data and its shell. */
 final class Document
@@ -37,19 +37,19 @@ final class Document
                 'data-fallback-avatar' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/fallback/avatar.svg'),
                 'data-fallback-image' => \TinyCat\Support\Assets::asset('App/Core/Ui/assets/fallback/image.svg'),
             ],
-            'metadata' => new \TinyCat\Support\Markup(View::render('head', $prepared, __DIR__ . '/templates')),
+            'metadata' => new \TinyCat\Core\Ui\Markup(View::render('head', $prepared, __DIR__ . '/templates')),
             'styles' => $prepared['styleUrls'], 'scripts' => $prepared['scriptUrls'], 'flashToasts' => $prepared['flashToasts'],
             'analyticsMeasurementId' => $prepared['analyticsConfigured'] && $prepared['analyticsConsent'] === 'granted' ? $prepared['googleMeasurementId'] : '',
-        ], new \TinyCat\Support\Markup($shell));
+        ], new \TinyCat\Core\Ui\Markup($shell));
         if ((bool) \TinyCat\Core\Runtime\Startup::option('performance.minify_html', false)) { $html = \TinyCat\Support\Minifier::minifyHtml($html); }
         echo $html;
     }
 
     /** Render prepared data only: no settings, authentication, session or database access.
      * @param array<string, mixed> $data */
-    public static function frame(array $data, \TinyCat\Support\Markup $content): string
+    public static function frame(array $data, \TinyCat\Core\Ui\Markup $content): string
     {
-        $data += ['title' => '', 'csrfToken' => '', 'htmlAttributes' => [], 'bodyAttributes' => [], 'metadata' => new \TinyCat\Support\Markup(''),
+        $data += ['title' => '', 'csrfToken' => '', 'htmlAttributes' => [], 'bodyAttributes' => [], 'metadata' => new \TinyCat\Core\Ui\Markup(''),
             'styles' => [], 'scripts' => [], 'flashToasts' => [], 'analyticsMeasurementId' => '', 'skipLink' => true, 'colorScheme' => true, 'robots' => ''];
         foreach (['htmlAttributes', 'bodyAttributes'] as $group) {
             foreach (array_keys($data[$group]) as $name) {

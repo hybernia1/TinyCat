@@ -167,7 +167,7 @@ final class Administration
                 'datetime_format' => 'datetime',
             };
 
-            if (!\TinyCat\Support\Dates::datetime_format_preset_exists($presetType, $format)) {
+            if (!\TinyCat\Core\Settings\Sections::datetime_format_preset_exists($presetType, $format)) {
                 throw new InvalidArgumentException(\TinyCat\Support\Localization::t('settings.messages.invalid_datetime_format'));
             }
 

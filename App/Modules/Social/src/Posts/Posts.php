@@ -9,7 +9,7 @@ final class Posts
 
     public static function status_url(int $id): string
     {
-        return \TinyCat\Support\LocalUrls::resolve($id > 0 ? '/status/' . $id : '/');
+        return \TinyCat\Http\LocalUrls::resolve($id > 0 ? '/status/' . $id : '/');
     }
 
     /**

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCat\Support;
 
+use TinyCat\Core\Modules\DeploymentIdentity;
+
 /** Signed release inventory; development checkouts can use the source fallback. */
 final class CompiledAssets
 {
@@ -17,7 +19,9 @@ final class CompiledAssets
         $file = Paths::basePath('assets/build/manifest.json');
         self::$manifest ??= is_file($file) ? json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) : [];
         $manifest = self::$manifest ?? [];
-        return $manifest !== [] && DeploymentIdentity::matchesSelection($manifest) ? $manifest : (PreparedAssets::read()['manifest'] ?? []);
+        if ($manifest !== [] && DeploymentIdentity::matchesSelection($manifest)) { return $manifest; }
+        $prepared = PreparedAssets::read('manifest');
+        return isset($prepared['identity']) ? ($prepared['manifest'] ?? []) : $prepared;
     }
 
     public static function asset(string $path, bool $minify): ?string
@@ -29,7 +33,10 @@ final class CompiledAssets
     public static function components(): ?array
     {
         $manifest = self::manifest();
-        if ($manifest['_prepared'] ?? false) { return PreparedAssets::read()['components'] ?? null; }
+        if ($manifest['_prepared'] ?? false) {
+            $prepared = PreparedAssets::read('components');
+            return isset($prepared['identity']) ? ($prepared['components'] ?? null) : ($prepared ?: null);
+        }
         $name = $manifest['server_components'] ?? null;
         if ($name === null) { return null; }
         if (!is_string($name) || preg_match('/^components\.[a-f0-9]{24}\.php$/D', $name) !== 1) { throw new \RuntimeException('Invalid compiled component path.'); }

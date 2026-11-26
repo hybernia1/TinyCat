@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace TinyCat\Core\Modules;
 
 use TinyCat\Support\Paths;
+use TinyCat\Support\Storage;
 use TinyCat\Database\{Connection, ModuleSchemas};
 
 /** Administrator-supplied module archives use the updater's bounded extraction and lifecycle. */
@@ -56,7 +57,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
     private static function prepareUnlocked(string $archive): array
     {
         if (!is_file($archive) || filesize($archive) > self::MAX_BYTES) { throw new \RuntimeException('Module ZIP exceeds the upload limit.'); }
-        $copy = Paths::basePath('storage/modules/uploads/' . bin2hex(random_bytes(16)) . '.zip');
+        $copy = Storage::path('modules/uploads/' . bin2hex(random_bytes(16)) . '.zip');
         self::ensureDirectory(dirname($copy));
         if (!copy($archive, $copy)) { throw new \RuntimeException('Cannot stage module upload.'); }
         try { return self::prepareArchive($copy); }
@@ -77,7 +78,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
         }
         if (!is_string($raw) || strlen($raw) > 1048576) { throw new \RuntimeException('Module package descriptor is missing or too large.'); }
         $package = self::validate(self::decodeJson($raw, 'module package', 64));
-        $stage = Paths::basePath('storage/modules/staging/' . bin2hex(random_bytes(16)));
+        $stage = Storage::path('modules/staging/' . bin2hex(random_bytes(16)));
         try {
             self::extractVerifiedPackage($archive, $stage, $package['files'] + ['package.json' => hash('sha256', $raw)], self::path(...), 5000, 104857600, 'module');
             $definition = Definition::fromManifest($stage . '/module.json');
@@ -181,7 +182,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
                 return \TinyCat\Core\Updates\Manager::runTask(static function () use ($batch, &$entered): array {
                     $entered = true;
                     $cutoff = time() - 172800;
-                    $root = Paths::basePath('storage/modules');
+                    $root = Storage::path('modules');
                     return \TinyCat\Support\FileSweep::run($root, $batch, static function (array $files) use ($root, $cutoff): array {
                         $changed = 0;
                         foreach ($files as $file) {
@@ -224,7 +225,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
      * @return ($wait is true ? T : T|array{changed: int, has_more: bool}) */
     private static function workspace(callable $operation, bool $wait = true): array
     {
-        $directory = Paths::basePath('storage/modules');
+        $directory = Storage::path('modules');
         self::ensureDirectory($directory);
         if (is_link($directory) || is_link($directory . '/workspace.lock')) { throw new \RuntimeException('Unsafe module workspace lock.'); }
         $lock = fopen($directory . '/workspace.lock', 'c+');
@@ -240,7 +241,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
 
     private static function cleanup(string $stage): void
     {
-        $base = realpath(Paths::basePath('storage/modules/staging')); $resolved = realpath($stage);
+        $base = realpath(Storage::path('modules/staging')); $resolved = realpath($stage);
         if ($base === false || $resolved === false || !ModuleAutoload::inside($resolved, $base) || dirname($resolved) !== $base) { return; }
         foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($resolved, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $file) {
             if ($file->isDir() && !$file->isLink()) { rmdir($file->getPathname()); } else { unlink($file->getPathname()); }

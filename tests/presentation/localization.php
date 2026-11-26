@@ -44,7 +44,8 @@ $compiled = new ReflectionProperty(\TinyCat\Support\CompiledTranslations::class,
 $originalManifest = $manifest->getValue();
 $originalCatalogs = $compiled->getValue();
 try {
-    $manifest->setValue(null, ['packages' => ['en' => 'English', 'cs' => 'Česky'], 'catalogs' => []]);
+    $registry = \TinyCat\Support\Paths::basePath('App/module-packages.json');
+    $manifest->setValue(null, ['selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'server_components_packages' => is_file($registry) ? hash_file('sha256', $registry) : null, 'packages' => ['en' => 'English', 'cs' => 'Česky'], 'catalogs' => []]);
     $compiled->setValue(null, [
         'en' => ['emails' => ['signature' => 'Signed', 'templates' => ['welcome' => ['subject' => 'English', 'body' => 'Hello {username}'], 'reset' => ['subject' => 'Reset']]]],
         'cs' => ['emails' => ['templates' => ['welcome' => ['subject' => '']]]],

@@ -37,6 +37,19 @@ zůstává: obecné URL nahradí samostatný odkaz článku, podporovaná videa 
 Core parser zachovává původní HTML a text bez těchto redakčních pravidel.
 Toto pravidlo sociálního importu se nepoužívá na ručně napsaná těla příspěvků.
 
+Obecný převod HTML vlastní `Core/Text/Text::htmlText()`: zachovává hranice
+bloků jako mezery, sjednocuje whitespace a omezuje délku v Unicode znacích.
+Výchozí vstup může obsahovat i entitymi zakódované značky. Metadata používají
+`encodedMarkup: false`: odstraní skutečné značky před dekódováním entit,
+aby escapovaný doslovný text providerů zůstal textem. Dekódování není rekurzivní.
+Výsledek není bezpečné HTML; escapování stále provádí výstupní destinace.
+`plain_text_limit()` ručního textu entity nedekóduje a zachovává `<3` i porovnání.
+`excerpt()` používá převod HTML, ale zachovává vlastní dosavadní příponu zkrácení.
+
+`Core/Text/InlineText::map()` odděluje doslovné URL od upravované prózy.
+Social jej používá pro normalizaci textu a emotikony; query, fragment ani
+interpunkce uvnitř rozpoznaného URL se tímto průchodem nepřepisují.
+
 ## Limity ručního zadání a importu
 
 Social deklaruje limit těla v `PostCreation::rules()`. Ruční vytvoření a editace

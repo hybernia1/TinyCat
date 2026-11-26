@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Tasks;
 
-use TinyCat\Support\AdminViews;
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
 
 final class Resource
 {
@@ -30,7 +30,7 @@ final class Resource
         $navigation = AdminViews::admin_pagination_view_data($pagination, $listDefinition['endpoint'], $listDefinition['target'], $params, 'page', 2, $listDefinition['path']);
         unset($navigation['target']);
         return [
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Core\Tasks\Repository::sorting(), $params),
+            'sorting' => \TinyCat\Core\Ui\Admin\Views::sortHeadings(\TinyCat\Core\Tasks\Repository::sorting(), $params),
             'items' => $items, 'runs' => array_map(self::run(...), $records['runs']),
             'filters' => $filters, 'pagination' => $pagination,
             'refresh_url' => AdminViews::admin_list_url($listDefinition['endpoint'], $params + ['page' => $page]),

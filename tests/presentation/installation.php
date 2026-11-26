@@ -8,7 +8,7 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Core\Installation\Pages;
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 
 \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration(['install' => ['complete' => false, 'locale' => 'en']]));
 \TinyCat\Support\Localization::locale('en');
@@ -22,20 +22,20 @@ $document = \TinyCat\Core\Ui\Document::frame([
     'styles' => ['/fixture.css'], 'scripts' => ['/fixture.js'], 'csrfToken' => 'fixture-token',
     'flashToasts' => [['message' => '</template><script>unsafe</script>', 'type' => 'danger']],
     'skipLink' => false, 'colorScheme' => false,
-], new \TinyCat\Support\Markup('<main>Setup</main>'));
+], new \TinyCat\Core\Ui\Markup('<main>Setup</main>'));
 $assert(substr_count($document, '<!doctype html>') === 1 && substr_count($document, '<html') === 1 && substr_count($document, '<head>') === 1 && substr_count($document, '<body') === 1, 'The shared frame owns one complete document before database setup.');
 $assert(str_contains($document, '<title>&lt;Setup&gt;</title>') && str_contains($document, '&quot;&gt;&lt;unsafe&gt;'), 'Document text and attributes are escaped.');
 $assert(!str_contains($document, '</template><script>unsafe') && str_contains($document, 'data-tinycat-flashes'), 'Flash serialization cannot escape its template.');
 $flashItems = [['message' => 'Žluťoučký </template> & "quoted" / path', 'type' => 'info'], ['message' => 'Second message', 'type' => 'success']];
-$flashDocument = \TinyCat\Core\Ui\Document::frame(['flashToasts' => $flashItems, 'skipLink' => false], new \TinyCat\Support\Markup(''));
+$flashDocument = \TinyCat\Core\Ui\Document::frame(['flashToasts' => $flashItems, 'skipLink' => false], new \TinyCat\Core\Ui\Markup(''));
 preg_match('~<template data-tinycat-flashes>(.*?)</template>~s', $flashDocument, $flashMatch);
 $assert(substr_count($flashDocument, 'data-tinycat-flashes') === 1 && json_decode($flashMatch[1] ?? '', true, 512, JSON_THROW_ON_ERROR) === $flashItems, 'Flash messages preserve Unicode, unsafe text, types and order in one JSON template.');
-$emptyDocument = \TinyCat\Core\Ui\Document::frame(['flashToasts' => [], 'skipLink' => false], new \TinyCat\Support\Markup(''));
+$emptyDocument = \TinyCat\Core\Ui\Document::frame(['flashToasts' => [], 'skipLink' => false], new \TinyCat\Core\Ui\Markup(''));
 $assert(!str_contains($emptyDocument, 'data-tinycat-flashes'), 'An empty flash list does not emit a template.');
 $assert(substr_count($document, 'src="/fixture.js"') === 1 && substr_count($document, 'href="/fixture.css"') === 1, 'Assets are emitted once by the frame.');
 $assert(!str_contains($document, 'skip-link') && !str_contains($document, 'color-scheme') && !str_contains($document, 'googletagmanager'), 'Installation can omit public document policies.');
 try {
-    \TinyCat\Core\Ui\Document::frame(['bodyAttributes' => ['onload' => 'unsafe']], new \TinyCat\Support\Markup(''));
+    \TinyCat\Core\Ui\Document::frame(['bodyAttributes' => ['onload' => 'unsafe']], new \TinyCat\Core\Ui\Markup(''));
     throw new RuntimeException('Executable document attributes must be rejected.');
 } catch (InvalidArgumentException) {
     // Only explicit language, class and data attributes are accepted.

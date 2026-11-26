@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace TinyCat\Social\Site;
 
 use TinyCat\Support\Localization;
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 
 /** HTTP authorization, actions and prepared page composition. */
 final class Pages

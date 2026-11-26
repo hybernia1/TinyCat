@@ -8,12 +8,12 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Support\Cache;
+use TinyCat\Support\Assets;
 use TinyCat\Support\Config;
 use TinyCat\Support\Paths;
 use TinyCat\Social\Posts\LinkImages;
 
-(new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['driver' => 'filesystem'], 'database' => ['driver' => 'mysql']]);
+Config::configure(new \TinyCat\Core\Runtime\Configuration(['cache' => ['driver' => 'filesystem'], 'database' => ['driver' => 'mysql']]));
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void {
     $checks++;
@@ -27,7 +27,7 @@ touch(Cache::file(hash('sha256', 'stale') . '.json'), time() - 301);
 Cache::writeFile(hash('sha256', 'legacy') . '.json', '{"legacy":true}');
 Cache::writeFile(hash('sha256', 'legacy-old') . '.json', '{"legacy":true}');
 touch(Cache::file(hash('sha256', 'legacy-old') . '.json'), time() - 604801);
-Cache::writeFile('app.js', 'generated', 'assets');
+Assets::writeFile('app.js', 'generated', 'assets');
 Cache::writeFile('active.lock', 'lock', 'locks');
 $removed = 0;
 for ($attempt = 0; $attempt < 20; $attempt++) {
@@ -40,7 +40,7 @@ $assert($removed === 2 && !$result['has_more'], 'Resumable cache cleanup complet
 $assert(!is_file(Cache::file(hash('sha256', 'expired') . '.json')) && !is_file(Cache::file(hash('sha256', 'legacy-old') . '.json')), 'Expired entries and old legacy cache files are removed.');
 $assert(Cache::read('fresh') === ['new' => true] && Cache::read('stale') === ['previous' => true], 'Fresh data and the stale refresh window survive cleanup.');
 $assert(Cache::read('legacy') === ['legacy' => true], 'Legacy raw JSON remains readable during rollout.');
-$assert(is_file(Cache::file('app.js', 'assets')) && is_file(Cache::file('active.lock', 'locks')), 'Cache cleanup preserves generated assets and active lock files.');
+$assert(is_file(Assets::file('app.js', 'assets')) && is_file(Cache::file('active.lock', 'locks')), 'Cache cleanup preserves generated assets and active lock files.');
 $result = \TinyCat\Core\Tasks\Cleanup\Task::runTask('expired_cache_files', 500);
 $assert($result['done'] && $result['changed'] === 0, 'The scheduler dispatches file cache cleanup.');
 
@@ -109,12 +109,12 @@ $queriesBefore = $database->prepared;
 $model = \TinyCat\Core\Tasks\Administration::payload();
 $assert($database->prepared - $queriesBefore === 3, 'Task listing uses count, page and one bulk latest-history query.');
 $assert(count($model['items']) === 3 && $model['pagination']['total'] === 4, 'The normalized list includes registered tasks and durable run history.');
-$html = \TinyCat\Support\Components::render('scheduler/list', $model);
+$html = \TinyCat\Core\Ui\Components::render('scheduler/list', $model);
 $assert(str_contains($html, 'data-ajax-target="#scheduler-list"') && str_contains($html, '/api/scheduler/tasks/cleanup/runs'), 'The shared server component exposes run actions and the standard AJAX target.');
 $extended = $model;
 $extended['items'][] = ['name' => 'article_feeds', 'options' => ['source_limit' => 20], 'latest' => null, 'run_url' => '/api/scheduler/tasks/article_feeds/runs'];
 $extended['runs'][0]['task'] = 'future.task';
-$extendedHtml = \TinyCat\Support\Components::render('scheduler/list', $extended);
+$extendedHtml = \TinyCat\Core\Ui\Components::render('scheduler/list', $extended);
 $assert(str_contains($extendedHtml, 'article_feeds') && str_contains($extendedHtml, 'future.task'), 'Task cards and historical runs render identifiers for additional module tasks without requiring a core icon or label mapping.');
 $_GET = ['task' => 'cleanup', 'status' => 'failed'];
 \TinyCat\Http\Request::reset();
@@ -193,7 +193,7 @@ $assert(!$result['ok'] && (int) $run['scheduler_run_id'] === $parentId && $run['
 $assert($database->query("SELECT status FROM bot_source_runs WHERE started_at = '2026-01-01 00:00:00'")->fetchColumn() === 'interrupted', 'A new feeds lock owner marks abandoned source imports interrupted.');
 $detail = \TinyCat\Core\Tasks\Administration::runDetail($parentId);
 $assert(count($detail['sources']) === 1 && $detail['sources'][0]['source_name'] === 'Fixture feed', 'Scheduler details expose only the sources belonging to that execution.');
-$html = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $detail]);
+$html = \TinyCat\Core\Ui\Components::render('scheduler/run-detail', ['item' => $detail]);
 $assert(str_contains($html, 'Fixture feed') && str_contains($html, 'Feed import failed.') && !str_contains($html, 'Feed could not be downloaded.'), 'The common run modal renders safe source diagnostics without raw exception details when debug is off.');
 $lockResult = 0;
 $before = (int) $database->query('SELECT COUNT(*) FROM bot_source_runs')->fetchColumn();
@@ -305,7 +305,7 @@ try {
     $presentation = \TinyCat\Core\Tasks\Presentation::tasks();
     $assert(array_keys($presentation) === ['fixture.import'] && $presentation['fixture.import']['icon'] === 'rss' && $presentation['fixture.import']['title'] === ['t' => 'cron.task'], 'Presentation follows an arbitrary registered task instead of a fixed task list.');
     $assert(\TinyCat\Core\Tasks\Presentation::options()['fixture.import:batch']['label'] === ['t' => 'cron.options.bot_limit'], 'Parameter labels are scoped to the task that registered them.');
-    $customHtml = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => ['batch' => 7], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
+    $customHtml = \TinyCat\Core\Ui\Components::withFreshTemplates(static fn (): string => \TinyCat\Core\Ui\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => ['batch' => 7], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
     $assert(str_contains($customHtml, '#rss') && str_contains($customHtml, \TinyCat\Support\Localization::t('cron.task')), 'Initial HTML uses the registered icon and translated title.');
     $clientDefinitions = \TinyCat\Support\ClientAssets::withBuildCache(static fn (): array => \TinyCat\Support\ClientAssets::definitions('/admin/cron'));
     $encoded = json_encode($clientDefinitions, JSON_THROW_ON_ERROR);
@@ -313,7 +313,7 @@ try {
     $assert($callbackCalls === 0 && $database->prepared === $presentationQueries, 'Building task presentation performs no SQL and invokes no runner, normalizer or detail callback.');
     \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture.owner' => new \TinyCat\Core\Modules\Contributions(componentLookups: $lookups)]));
     $assert(\TinyCat\Core\Tasks\Presentation::tasks() === [], 'Removing a task registration removes its presentation metadata.');
-    $historical = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => [], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
+    $historical = \TinyCat\Core\Ui\Components::withFreshTemplates(static fn (): string => \TinyCat\Core\Ui\Components::render('scheduler/task-row', ['task' => ['name' => 'fixture.import', 'options' => [], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
     $assert(str_contains($historical, '#clock') && str_contains($historical, 'fixture.import'), 'Unknown historical tasks retain a safe generic icon and literal identifier.');
 } finally { \TinyCat\Core\Modules\Registrations::configure($originalRegistrations); }
 

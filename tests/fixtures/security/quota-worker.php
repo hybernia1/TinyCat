@@ -10,8 +10,7 @@ $name = $argv[1] ?? '';
 if (preg_match('/^tinycat_quota_[a-f0-9]{12}$/D', $name) !== 1) { throw new RuntimeException('Invalid isolated database'); }
 $pdo = new PDO('mysql:host=' . $db['host'] . ';port=' . ($db['port'] ?? 3306) . ';dbname=' . $name, $db['user'], $db['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 \TinyCat\Database\Connection::set($pdo);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, ['datetime' => ['timezone' => 'UTC']]);
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration(['datetime' => ['timezone' => 'UTC']]));
 try {
     \TinyCat\Database\Transactions::run(static function () use ($pdo): void {
         $count = \TinyCat\Core\Security\RateLimiter::subject_action_count('user:1', 'post');

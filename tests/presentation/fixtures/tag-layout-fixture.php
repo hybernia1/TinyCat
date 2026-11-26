@@ -11,6 +11,6 @@ $items = [];
 foreach (["English headline\n\nEnglish paragraph.\n\n" . $tags, $tags, 'English #inline-tag paragraph.', 'English prose without tags.'] as $body) {
     $segments = TinyCat\Social\Posts\InlinePresentation::compactTags(TinyCat\Social\Posts\InlinePresentation::text($body));
     $item = ['segments' => $segments, ...TinyCat\Social\Posts\InlinePresentation::splitTags($segments)];
-    $items[] = ['item' => $item, 'html' => TinyCat\Support\Components::render('status/body', ['item' => $item])];
+    $items[] = ['item' => $item, 'html' => TinyCat\Core\Ui\Components::render('status/body', ['item' => $item])];
 }
 echo json_encode($items, JSON_THROW_ON_ERROR);

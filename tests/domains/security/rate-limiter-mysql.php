@@ -22,8 +22,7 @@ $pdo = new PDO('mysql:host=' . $db['host'] . ';port=' . ($db['port'] ?? 3306) . 
 // Connection-local shadow table: never change application counters or schema.
 $pdo->exec('CREATE TEMPORARY TABLE ip_action_limits (ip_address VARCHAR(45) NOT NULL, action_name VARCHAR(40) NOT NULL, bucket_start DATETIME NOT NULL, action_count INT NOT NULL, updated_at DATETIME NOT NULL, PRIMARY KEY(ip_address, action_name, bucket_start))');
 \TinyCat\Database\Connection::set($pdo);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, ['datetime' => ['timezone' => 'UTC'], 'cache' => ['driver' => 'filesystem']]);
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration(['datetime' => ['timezone' => 'UTC'], 'cache' => ['driver' => 'filesystem']]));
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;

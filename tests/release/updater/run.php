@@ -46,6 +46,29 @@ $expectFailure = static function (callable $callback): void {
     throw new RuntimeException('Expected operation was accepted.');
 };
 
+$test('cache finalization preserves public generations, revision and lock across private roots', static function () use ($expect): void {
+    $configuration = \TinyCat\Support\Config::snapshot();
+    $root = \TinyCat\Support\Assets::directory('');
+    $name = 'update-probe.' . str_repeat('a', 20) . '.js';
+    try {
+        foreach ([$root, $root . '/private-compute'] as $private) {
+            $values = $configuration->values(); $values['cache']['directory'] = $private;
+            \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($values));
+            \TinyCat\Support\Assets::writeFile($name, 'immutable');
+            \TinyCat\Support\Assets::writeFile('revision', 'generation-fence', 'asset-publications');
+            \TinyCat\Support\Assets::writeFile(str_repeat('b', 64) . '.json', '{}', 'prepared-assets');
+            \TinyCat\Support\Assets::synchronized(static fn (): bool => true);
+            \TinyCat\Support\Cache::writeFile('computed.json', '{}');
+            (new ReflectionMethod(Manager::class, 'clearRuntimeCache'))->invoke(null);
+            $expect(is_file(\TinyCat\Support\Assets::file($name)), 'Open-page asset survived finalization.');
+            $expect(\TinyCat\Support\Minifier::publicationRevision() === 'generation-fence', 'Publication fence survived finalization.');
+            $expect(is_file(\TinyCat\Support\Assets::file(str_repeat('b', 64) . '.json', 'prepared-assets')), 'Prepared generation survived finalization.');
+            $expect(is_file(\TinyCat\Support\Assets::directory('coordination') . '/' . hash('sha256', 'runtime-assets') . '.lock'), 'Coordination inode survived finalization.');
+            $expect(!is_file(\TinyCat\Support\Cache::file('computed.json')), 'Private computed cache was cleared.');
+        }
+    } finally { \TinyCat\Support\Config::configure($configuration); }
+});
+
 $test('shared package manager validates remote package inputs', static function () use ($invoke, $expect, $expectFailure): void {
     $expect($invoke('httpsUrl', ' https://github.com/hybernia1/TinyCat ') === 'https://github.com/hybernia1/TinyCat');
     $expect($invoke('httpsUrl', 'https://user@example.test/package.zip') === '');

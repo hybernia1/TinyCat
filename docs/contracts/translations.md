@@ -44,8 +44,8 @@ once to a trailing slash, retaining query parameters. Unknown languages and pref
 administration, API, asset and RSS routes return 404. These services retain their
 existing global URLs.
 
-`LocaleRouting` owns the public route policy. Shared renderers and redirects use an
-injected `LocalUrls` resolver; templates receive prepared URLs. AJAX sends
+`LocaleRouting` owns the public route policy. Shared renderers and redirects use
+`Core/Http/LocalUrls` directly through `LocaleRouting`; templates receive prepared URLs. AJAX sends
 `X-TinyCat-Locale` for a prefixed interface, and the public-page API also accepts an
 explicit prefixed `path`. Cross-language navigation reloads the document/catalog;
 same-language public navigation retains its existing partial rendering. Anonymous
@@ -71,12 +71,16 @@ https://developers.google.com/search/docs/specialty/international/managing-multi
 
 ## Ownership and delivery
 
-Each domain owns `App/<Module>/lang/<locale>.json`. Files keep full nested
-namespaces, so historic identifiers remain stable: Status owns `account.status_*`
-even though Users owns other `account.*` messages. Multiple modules can contribute
+Core features own `App/Core/<Feature>/lang/<locale>.json`; functional modules own
+`App/Modules/<Name>/lang/<locale>.json`. Files keep full nested namespaces, so
+historic identifiers remain stable even when their owner changes. Multiple modules can contribute
 to a namespace; duplicate ownership of an individual key is rejected. Support owns
-common labels, relative dates and shared action messages. Mail owns its nested
-email templates in `App/Modules/Mail/lang/<locale>.json`; these never enter client catalogs.
+common labels, relative dates and shared action messages. Server-only email catalogs
+use each owner's `resources.emails`: `App/Core/Mail/emails/<locale>.json` owns
+the signature, `App/Core/Identity/emails/<locale>.json` owns account templates,
+and `App/Modules/Social/emails/<locale>.json` owns social notification templates.
+Their nested structure and order remain intact; they never enter client catalogs.
+Mail's separate `lang/` catalogs contain its settings UI messages.
 Settings owns installation messages. `App/Core/Support/lang/<locale>.json` declares the native
 language name once in `"_meta": {"name": "Čeština"}` alongside its messages.
 The filename supplies the locale code; key order is irrelevant. Only Support
@@ -123,6 +127,25 @@ memoizes parsed and flattened catalogs within a request. Generated server catalo
 are ignored by Git and excluded from source collection during package builds,
 just like generated client assets, so an older generated file cannot contaminate a
 new artifact. The updater deletes the four retired monolithic JSON files.
+
+Locally prepared selections use private, non-executable JSON in `prepared-assets`.
+Format 2 publishes immutable SHA-256-named parts for the asset manifest, components,
+and each locale's application and email channel, followed by a small identity/index
+file. Package discovery reads only this index. Application lookup reads only the
+selected application part; email parts remain lazy. Format 1 remains readable with
+its original whole-snapshot cost until explicit CLI/deployment preparation replaces it.
+HTTP never upgrades or compiles a generation. The no-argument `PreparedAssets::read()`
+API still returns a complete snapshot for already-loaded previous readers. Previous
+already-loaded writers may publish format 1; fresh readers accept both. A previous
+reader that does not understand format 2 falls back to the matching signed inventory
+or selected sources; it must not be used to validate new-format delivery.
+
+Publication, reads/renewal and private cleanup share the runtime asset lock.
+Unexpired indexes pin all private parts and their public asset references, including
+parts older than the 30-day retention window. Unreferenced parts expire after 30 days.
+Source validation and compilation share an operation-local document/inventory snapshot;
+a new operation reads sources afresh, with roots and selection revisions kept distinct.
+Runtime catalog caches never supply build input.
 
 Non-count translation identifiers remain stable. Count families now have explicit
 plural variants. The public client catalog

@@ -819,7 +819,7 @@ JSON and XML discovery links in the document head, including after client naviga
 - `GET /status/{id}/embed` is a standalone read-only HTML card suitable for an iframe.
 - `GET /status/{id}/embed-code` shows the card and a selectable copy/paste HTML snippet.
   The **Embed post** action on each post opens the standard application modal with a live preview and selectable code. The page remains a fallback when JavaScript is unavailable.
-- `GET /api/statuses/{id}/embed` supplies the modal with a public `frame_url` and `snippet` in the normal JSON envelope.
+- `GET /api/statuses/{id}/embed` supplies the modal with a public root-relative `frame_url` and `snippet` in the normal JSON envelope. The preview uses the browser origin; the copyable snippet retains the configured canonical application URL.
 
 Only URLs on the configured installation origin are accepted, including supported
 localized post URLs. The provider never fetches the supplied URL. Unknown URLs,

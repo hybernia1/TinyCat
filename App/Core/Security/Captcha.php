@@ -51,7 +51,7 @@ final class Captcha
             return '';
         }
 
-        return \TinyCat\Support\Components::render('ui/captcha', ['config' => self::configuration($context)]);
+        return \TinyCat\Core\Ui\Components::render('ui/captcha', ['config' => self::configuration($context)]);
     }
 
     /** @return array{enabled: bool, provider: string, site_key: string, context: string, refresh: bool} */

@@ -211,7 +211,7 @@ class Manager extends Package
 
     private static function completeOperation(string $backup, string $version, bool &$committed): void
     {
-        self::clearRuntimeCache(); \TinyCat\Support\Cache::resetOpcache();
+        self::clearRuntimeCache(); \TinyCat\Core\Runtime\Debug::resetOpcache();
         self::writeJsonFile($backup . '/completed.json', ['version' => $version, 'completed_at' => date(DATE_ATOM)]);
         $operation = self::decodeJson((string) file_get_contents(self::updateRoot() . '/operation.json'), 'deployment operation');
         if (($operation['backup'] ?? null) !== basename($backup)) { throw new RuntimeException('Deployment operation changed before commit.'); }
@@ -291,11 +291,11 @@ class Manager extends Package
                 if (!is_string($content) || !\TinyCat\Support\Storage::write($target, $content, 0644)) { throw new RuntimeException('Cannot restore managed file: ' . $path); }
             }
             foreach ($metadata['new_files'] as $path) { $target = self::pathBelow(\TinyCat\Support\Paths::basePath(), (string) $path); if (is_file($target) && !unlink($target)) { throw new RuntimeException('Cannot remove a newly introduced managed file.'); } }
-            $stateFile = \TinyCat\Support\Paths::basePath('storage/deployment.json');
+            $stateFile = \TinyCat\Support\Storage::path('deployment.json');
             if ($metadata['deployment'] === null) { if (is_file($stateFile) && !unlink($stateFile)) { throw new RuntimeException('Cannot restore absent activation state.'); } }
             elseif (!is_array($metadata['deployment']) || !\TinyCat\Support\Storage::write($stateFile, is_string($metadata['deployment_source'] ?? null) ? $metadata['deployment_source'] : json_encode($metadata['deployment'], JSON_THROW_ON_ERROR) . "\n")) { throw new RuntimeException('Cannot restore activation state.'); }
             if ($installing) { \TinyCat\Core\Installation\Installer::restoreConfiguration($backup); }
-            self::clearRuntimeCache(); \TinyCat\Support\Cache::resetOpcache();
+            self::clearRuntimeCache(); \TinyCat\Core\Runtime\Debug::resetOpcache();
             self::writeOperationPhase($operation, 'rolled_back');
             self::disableMaintenance();
             return ['restored' => true, 'version' => $metadata['from_version'], 'backup' => $id] + ($installing ? ['step' => $operation['step']] : []);
@@ -904,7 +904,7 @@ class Manager extends Package
             'files' => $backedUp,
             'new_files' => $newFiles,
             'deployment' => \TinyCat\Core\Modules\Deployment::read(\TinyCat\Support\Paths::basePath()),
-            'deployment_source' => is_file(\TinyCat\Support\Paths::basePath('storage/deployment.json')) ? file_get_contents(\TinyCat\Support\Paths::basePath('storage/deployment.json')) : null,
+            'deployment_source' => is_file(\TinyCat\Support\Storage::path('deployment.json')) ? file_get_contents(\TinyCat\Support\Storage::path('deployment.json')) : null,
             'database_backup_required' => $databaseBackupRequired,
         ];
         self::writeJsonFile($backup . DIRECTORY_SEPARATOR . 'backup.json', $metadata);
@@ -1051,6 +1051,7 @@ class Manager extends Package
             // Deployment::write publishes selection-bound inventories before finalization.
             // Keep their retention-managed generations alongside the immutable assets.
             if ($relative === 'prepared-assets' || str_starts_with($relative, 'prepared-assets/')) { continue; }
+            if ($relative === 'asset-publications' || str_starts_with($relative, 'asset-publications/')) { continue; }
             // Never unlink an inode on which another asset reader/publisher may be waiting.
             if ($relative === 'coordination/' . hash('sha256', 'runtime-assets') . '.lock') { continue; }
 

@@ -58,11 +58,9 @@ final class LinkMetadata extends \TinyCat\Core\Links\Metadata
         });
     }
 
-    protected static function parseHtml(string $html, string $baseUrl, string $attemptedEndpoint = ''): array
+    protected static function parseDocument(\Dom\HTMLDocument $dom, string $baseUrl, string $attemptedEndpoint = ''): array
     {
-        $meta = parent::parseHtml($html, $baseUrl, $attemptedEndpoint);
-        $dom = self::document($html);
-        if ($dom === null) { return $meta; }
+        $meta = parent::parseDocument($dom, $baseUrl, $attemptedEndpoint);
         $endpoint = Providers::discover($dom, $baseUrl);
         if (Providers::wordpressUrl($baseUrl) !== '') {
             $meta['provider'] = 'wordpress';

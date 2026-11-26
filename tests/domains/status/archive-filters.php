@@ -112,7 +112,7 @@ $assert(Feed::status_feed_context_items('home', 20, ['feed' => 'following', 'med
 $assert(array_column(Feed::public_status_items_for_user_cursor(1, 20, '', 0, 'video'), 'id') === [6, 3], 'Following filters exclude unrelated authors.');
 $config = \TinyCat\Support\Config::get();
 $config['public']['status_limit'] = 2;
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $config);
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($config));
 $home = \TinyCat\Social\Posts\ViewData::public_home_feed_data('following', ['id' => 2], null, 'video');
 $assert($home['current_feed_url'] === '/?feed=following&media=video', 'Initial home URL retains feed and filter.');
 $assert(str_contains($home['feed_more']['next_url'], 'media=video'), 'Initial pagination retains the filter.');
@@ -120,11 +120,11 @@ $page = ['title' => 'Tinycat', 'current' => '/', 'meta' => ['url' => '/']];
 $resource = \TinyCat\Social\Site\PublicPages::resource('home', ['page' => $page, 'context' => ['feed' => 'following', 'archiveType' => 'video', 'publicHomeFeedData' => $home]]);
 $assert($resource['all_feed_url'] === '/?media=video' && $resource['following_feed_url'] === '/?feed=following&media=video', 'Switching feeds retains the filter.');
 $assert($resource['archive_options'][0]['url'] === '/?feed=following' && $resource['archive_options'][1]['url'] === '/?feed=following&media=images', 'Filter options retain the selected feed.');
-$html = \TinyCat\Support\Components::render('site/public-page', $resource);
+$html = \TinyCat\Core\Ui\Components::render('site/public-page', $resource);
 $assert(str_contains($html, 'home-feed-toolbar') && str_contains($html, 'archive-filter'), 'Shared home renderer includes the toolbar and archive filter.');
 $assert(str_contains($html, 'href="/?feed=following&amp;media=images"'), 'Rendered filter links preserve query parameters.');
 $resource['items'] = [];
-$html = \TinyCat\Support\Components::render('site/public-page', $resource);
+$html = \TinyCat\Core\Ui\Components::render('site/public-page', $resource);
 $assert(str_contains($html, \TinyCat\Support\Localization::t('public.feed_empty_filtered')) && str_contains($html, 'href="/?feed=following" class="btn btn-secondary btn-sm"'), 'Empty filtered feeds explain the result and allow clearing the filter.');
 foreach (['author' => '/author/1', 'tag' => '/tag/tinycat'] as $kind => $base) {
     foreach ([false, true] as $compact) {

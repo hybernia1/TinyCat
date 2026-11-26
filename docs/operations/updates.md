@@ -7,6 +7,37 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.12
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No database
+migration or configuration change is required. Publish matching signed Core and
+Social update/install packages; existing configuration, accounts, uploads and
+module activation are preserved.
+
+Shared presentation helpers now live in `Core/Ui`, administration list helpers
+in `Core/Ui/Admin/Views`, text primitives in `Core/Text`, deployment identity in
+`Core/Modules` and build retention in `Core/Updates`. Removed internal forwarding
+and helper files are retired by the signed update manifest. Custom integrations
+must use the current owners rather than the removed `TinyCat\Support` classes.
+
+Public runtime assets retain `/cache/assets/` URLs and their fixed publication
+root independently of `cache.directory`. Prepared generations use a small index
+with separate locale, email, component and manifest payloads. Existing format-1
+generations remain readable; new generations are prepared by the normal CLI and
+deployment lifecycle, outside HTTP rendering. Old loaded readers use their
+existing signed/source fallback for the new format. Publication, retention and
+cleanup preserve referenced payloads.
+
+Health notification messages now follow the selected interface language in all
+twelve shipped locales. Embed previews use browser-local paths even when
+`app.url` has a different scheme; shared snippets and oEmbed URLs keep the
+configured canonical address. Strict preview origin and object checks remain.
+
+Text conversion and link parsing share technical mechanisms while Social/Bots
+retains import editing rules. Raw feed HTML remains temporary parsing input;
+publication stores the final plain text and structured links/media. No historical
+content rewrite or reimport is performed.
+
 ## Upgrading to 8.0.11
 
 Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No database

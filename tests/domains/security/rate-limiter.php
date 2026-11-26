@@ -15,11 +15,10 @@ if (!in_array('mysql', PDO::getAvailableDrivers(), true)) {
     echo "SKIP rate limiter: pdo_mysql unavailable.\n";
     exit(0);
 }
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, [
+\TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([
     'datetime' => ['timezone' => 'UTC'],
     'cache' => ['driver' => 'filesystem'],
-]);
+]));
 $testDatabaseConfig = tinycat_test_database_config();
 $pdo = new class ($testDatabaseConfig['dsn'], $testDatabaseConfig['user'], $testDatabaseConfig['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]) extends PDO {
     public int $reputationQueries = 0;

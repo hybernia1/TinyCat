@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCat\Support;
 
+use TinyCat\Core\Modules\DeploymentIdentity;
+
 /** PHP arrays in the signed inventory are cached by OPcache, without JSON parsing. */
 final class CompiledTranslations
 {
@@ -19,8 +21,9 @@ final class CompiledTranslations
         self::$manifest ??= is_file($file) ? require $file : [];
         $manifest = self::$manifest ?? [];
         if ($manifest !== [] && DeploymentIdentity::matchesSelection($manifest)) { return $manifest; }
-        $prepared = PreparedAssets::read();
-        return $prepared === [] ? [] : ['_prepared' => true, 'packages' => $prepared['packages']];
+        $prepared = PreparedAssets::read('packages');
+        if (isset($prepared['identity'])) { $prepared = $prepared['packages'] ?? []; }
+        return $prepared === [] ? [] : ['_prepared' => true, 'packages' => $prepared];
     }
 
     /** @return array<string, string>|null */
@@ -30,30 +33,33 @@ final class CompiledTranslations
     }
 
     /** @return array<mixed>|null */
-    private static function catalog(string $locale): ?array
+    private static function catalog(string $locale, string $channel): ?array
     {
-        if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return null; }
         $manifest = self::manifest();
         if ($manifest === []) { return null; }
-        if ($manifest['_prepared'] ?? false) { return PreparedAssets::read()['catalogs'][$locale] ?? null; }
-        if (isset(self::$catalogs[$locale])) { return self::$catalogs[$locale]; }
+        if ($manifest['_prepared'] ?? false) {
+            $data = PreparedAssets::read($channel, $locale);
+            return isset($data['identity']) ? ($data['catalogs'][$locale][$channel] ?? null) : ($data ?: null);
+        }
+        if (isset(self::$catalogs[$locale])) { return self::$catalogs[$locale][$channel] ?? null; }
         $name = $manifest['catalogs'][$locale] ?? null;
         if (!is_string($name)) { return null; }
         if (!preg_match('/^[a-z0-9-]+\.[a-f0-9]{24}\.php$/D', $name)) {
             throw new \RuntimeException('Invalid compiled translation path.');
         }
-        return self::$catalogs[$locale] = require Paths::basePath('App/Core/Support/compiled/' . $name);
+        $catalog = self::$catalogs[$locale] = require Paths::basePath('App/Core/Support/compiled/' . $name);
+        return $catalog[$channel] ?? null;
     }
 
     /** @return array<string, string>|null */
     public static function application(string $locale): ?array
     {
-        return self::catalog($locale)['app'] ?? null;
+        return self::catalog($locale, 'app');
     }
 
     /** @return array<mixed>|null */
     public static function emails(string $locale): ?array
     {
-        return self::catalog($locale)['emails'] ?? null;
+        return self::catalog($locale, 'emails');
     }
 }

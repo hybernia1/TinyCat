@@ -8,7 +8,7 @@ final class HttpKernel
     public static function respond(): void
     {
         if (in_array(\TinyCat\Http\Request::current()->method(), ['GET', 'HEAD'], true)) {
-            \TinyCat\Support\DeploymentIdentity::withDeploymentSnapshot(self::respondCurrent(...));
+            \TinyCat\Core\Modules\DeploymentIdentity::withDeploymentSnapshot(self::respondCurrent(...));
         } else { self::respondCurrent(); }
     }
 

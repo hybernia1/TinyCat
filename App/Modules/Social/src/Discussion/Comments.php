@@ -97,7 +97,7 @@ final class Comments
         }
 
         \TinyCat\Social\Discussion\Comments::status_preload_comment_user_likes(
-            \TinyCat\Support\Text::positive_int_ids(array_column(\TinyCat\Social\Discussion\ThreadTree::flatten($comments), 'id')),
+            \TinyCat\Support\Values::positive_int_ids(array_column(\TinyCat\Social\Discussion\ThreadTree::flatten($comments), 'id')),
             $userId
         );
     }
@@ -196,7 +196,7 @@ final class Comments
             return;
         }
 
-        $commentIds = \TinyCat\Support\Text::positive_int_ids($commentIds);
+        $commentIds = \TinyCat\Support\Values::positive_int_ids($commentIds);
         $cache =& \TinyCat\Social\Discussion\Reactions::status_comment_user_liked_cache();
         $cache[$userId] ??= [];
         $missing = array_values(array_filter($commentIds, static fn (int $id): bool => !array_key_exists($id, $cache[$userId])));
@@ -304,7 +304,7 @@ final class Comments
             'at' => \TinyCat\Support\Dates::dateDb(),
             'actor' => [
                 'id' => (int) ($actor['id'] ?? 0),
-                'username' => \TinyCat\Support\Text::plain_text_limit((string) ($actor['username'] ?? ''), 32),
+                'username' => \TinyCat\Core\Text\Text::plain_text_limit((string) ($actor['username'] ?? ''), 32),
                 'role' => (string) ($actor['role'] ?? ''),
             ],
             'changes' => [

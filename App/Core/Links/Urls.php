@@ -9,7 +9,7 @@ class Urls
     private static ?\Closure $base = null;
     /** @param \Closure(): string|null $base */
     public static function configure(?\Closure $base): void { self::$base = $base; }
-    private static function baseUrl(): string { return self::$base !== null ? (self::$base)() : \TinyCat\Support\LocalUrls::absolute('/'); }
+    private static function baseUrl(): string { return self::$base !== null ? (self::$base)() : \TinyCat\Http\LocalUrls::absolute('/'); }
 
     public static function hostKey(string $url): string
     {

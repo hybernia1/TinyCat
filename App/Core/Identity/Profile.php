@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace TinyCat\Core\Identity;
 
 use TinyCat\Support\Languages;
-use TinyCat\Support\Text;
+use TinyCat\Core\Text\Text;
 
 /** Account profile writes; transport, session and presentation are caller responsibilities. */
 final class Profile

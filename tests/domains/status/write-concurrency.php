@@ -23,8 +23,7 @@ $copy = static function (string $source, string $target) use (&$copy): void {
 $copy($root . '/App', $workspace . '/App');
 define('TINYCAT', true);
 require $workspace . '/App/Core/Runtime/autoload.php';
-(new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(TinyCat\Support\Config::class, 'config'))->setValue(null, []);
+TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([]));
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 $server->exec('CREATE DATABASE ' . $name . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');

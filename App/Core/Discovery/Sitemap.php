@@ -3,7 +3,9 @@ declare(strict_types=1);
 namespace TinyCat\Core\Discovery;
 
 use TinyCat\Core\Modules\{Registrations, Resources, SitemapSection};
-use TinyCat\Support\{Cache, LocalUrls, Xml};
+use TinyCat\Support\Cache;
+use TinyCat\Http\LocalUrls;
+use TinyCat\Support\Xml;
 use TinyCat\Http\Document;
 
 /** XML and pagination only; active owners provide visibility and canonical URLs. */

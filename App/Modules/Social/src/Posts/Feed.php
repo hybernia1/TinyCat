@@ -273,7 +273,7 @@ final class Feed
      */
     public static function public_status_items_by_ids(array $ids, bool $preload = true): array
     {
-        $ids = \TinyCat\Support\Text::positive_int_ids($ids);
+        $ids = \TinyCat\Support\Values::positive_int_ids($ids);
 
         if ($ids === []) {
             return [];
@@ -309,7 +309,7 @@ final class Feed
      */
     public static function status_preload_feed(array $items): void
     {
-        $ids = \TinyCat\Support\Text::positive_int_ids(array_column($items, 'id'));
+        $ids = \TinyCat\Support\Values::positive_int_ids(array_column($items, 'id'));
 
         if ($ids === []) {
             return;

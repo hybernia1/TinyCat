@@ -57,7 +57,8 @@ foreach ($graph as $owner => $targets) {
         if (in_array($owner, ['Core\\Support\\Config', 'Core\\Support\\Cache', 'Core\\Support\\Localization', 'Core\\Support\\Dates'], true) && str_starts_with($target, 'Core\\Settings\\')) {
             $failures[] = "Technical configuration imports Settings: {$owner} -> {$target}";
         }
-        if (in_array($owner, ['Social\\Posts\\Posts', 'Social\\Posts\\PostCreation', 'Social\\Posts\\Comments', 'Social\\Profiles\\Profiles'], true) && (str_starts_with($target, 'Core\\Http\\') || str_ends_with($target, '\\Actions'))) {
+        // LocalUrls generates URL values; request dispatch and action orchestration remain forbidden.
+        if (in_array($owner, ['Social\\Posts\\Posts', 'Social\\Posts\\PostCreation', 'Social\\Posts\\Comments', 'Social\\Profiles\\Profiles'], true) && ((str_starts_with($target, 'Core\\Http\\') && $target !== 'Core\\Http\\LocalUrls') || str_ends_with($target, '\\Actions'))) {
             $failures[] = "Domain service imports HTTP orchestration: {$owner} -> {$target}";
         }
         if (str_ends_with($owner, '\\Api') && $owner !== 'Core\\Http\\Api' && preg_match('/\\\\(?:Views|ViewData)$/', $target)) {

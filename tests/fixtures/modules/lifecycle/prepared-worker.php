@@ -4,7 +4,8 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require $argv[1] . '/App/Core/Runtime/autoload.php';
 
-use TinyCat\Support\{CompiledTranslations, DeploymentIdentity, PreparedAssets};
+use TinyCat\Support\{CompiledTranslations, PreparedAssets};
+use TinyCat\Core\Modules\DeploymentIdentity;
 
 // A fresh reader must reject the signed build selection and use local metadata.
 $signed = require $argv[1] . '/App/Core/Support/compiled/translations.php';

@@ -32,7 +32,7 @@ final class Reactions
             return;
         }
 
-        $contentIds = \TinyCat\Support\Text::positive_int_ids($contentIds);
+        $contentIds = \TinyCat\Support\Values::positive_int_ids($contentIds);
         $cache =& \TinyCat\Social\Discussion\Reactions::status_user_liked_cache();
         $cache[$userId] ??= [];
         $missing = array_values(array_filter($contentIds, static fn (int $id): bool => !array_key_exists($id, $cache[$userId])));

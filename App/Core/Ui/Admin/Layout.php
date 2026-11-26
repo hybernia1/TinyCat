@@ -4,7 +4,9 @@ namespace TinyCat\Core\Ui\Admin;
 
 use TinyCat\Core\Identity\{Authentication, Integration, Profile};
 use TinyCat\Core\Runtime\Startup;
-use TinyCat\Support\{Assets, ClientAssets, View};
+use TinyCat\Support\Assets;
+use TinyCat\Support\ClientAssets;
+use TinyCat\Core\Ui\View;
 
 /** Shared administration exists independently of the selected public application. */
 final class Layout
@@ -49,6 +51,6 @@ final class Layout
             'bodyAttributes' => ['class' => 'admin-shell-page', 'data-application-version' => \TinyCat\Support\Version::CURRENT,
                 'data-current-user-id' => (int) ($authUser['id'] ?? 0), 'data-icon-sprite' => $iconSprite],
             'styles' => $styles, 'scripts' => $scripts, 'flashToasts' => $flashToasts,
-        ], new \TinyCat\Support\Markup($shell));
+        ], new \TinyCat\Core\Ui\Markup($shell));
     }
 }

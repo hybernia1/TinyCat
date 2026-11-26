@@ -34,7 +34,7 @@ final class Site
         $description = trim((string) \TinyCat\Core\Runtime\Startup::option('site.meta_description', ''));
 
         return $description !== ''
-            ? \TinyCat\Support\Text::excerpt($description, 180)
+            ? \TinyCat\Core\Text\Text::excerpt($description, 180)
             : '';
     }
 

@@ -32,8 +32,7 @@ use TinyCat\Support\Config;
 use TinyCat\Support\FileSweep;
 use TinyCat\Core\Updates\Cleanup;
 
-(new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $root . '/storage/cache']]);
+Config::configure(new \TinyCat\Core\Runtime\Configuration(['cache' => ['directory' => $root . '/storage/cache']]));
 $database = \tinycat_test_database_as(TinyCatTestLockPDO::class);
 \TinyCat\Database\Connection::set($database);
 $database->exec('CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, avatar_exists INTEGER NOT NULL DEFAULT 1, avatar_version VARCHAR(32))');
@@ -196,11 +195,11 @@ $assert(is_file($root . '/storage/updates/backups/incomplete-protected/backup.js
 $assert(!is_file($root . '/storage/updates/staging/old/package/App/old.php') && is_file($root . '/storage/updates/staging/fresh/package/App/old.php'), 'Old staging is swept while a fresh operation is preserved.');
 $assert(!is_file($root . '/storage/updates/downloads/.tinycat-download-abandoned') && is_file($root . '/storage/updates/downloads/unrelated.txt'), 'Only known abandoned download files are removed.');
 $backup('disabled-retention', 150);
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $root . '/storage/cache'], 'updates' => ['backups' => ['cleanup' => false]]]);
+Config::configure(new \TinyCat\Core\Runtime\Configuration(['cache' => ['directory' => $root . '/storage/cache'], 'updates' => ['backups' => ['cleanup' => false]]]));
 for ($attempt = 0; $attempt < 5; $attempt++) { Cleanup::run(100); }
 $assert(is_file($root . '/storage/updates/backups/disabled-retention/files/App/example.php'), 'Backup retention can be disabled without changing scheduler transport.');
 // A persisted old cursor deep in staging must not hold backup retention behind it.
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $root . '/storage/cache']]);
+Config::configure(new \TinyCat\Core\Runtime\Configuration(['cache' => ['directory' => $root . '/storage/cache']]));
 $backup('starvation-old', 200);
 for ($i = 0; $i < 500; $i++) { $file('storage/updates/staging/backlog/file-' . $i, 3 * 86400); }
 touch($root . '/storage/updates/staging/backlog', time() - 3 * 86400);
@@ -267,35 +266,35 @@ $file('App/Core/Support/compiled/translations.php', 259200, '<?php return ' . va
 $backupManifest = $manifest;
 $backupManifest['clients']['/']['app'] = '/assets/build/' . $rollback;
 $file('storage/updates/backups/build-rollback/files/assets/build/manifest.json', 259200, json_encode($backupManifest, JSON_THROW_ON_ERROR));
-$build = \TinyCat\Support\BuildCleanup::run(500);
+$build = \TinyCat\Core\Updates\BuildCleanup::run(500);
 $assert($build['changed'] === 2 && !is_file($root . '/assets/build/' . $old) && !is_file($root . '/App/Core/Support/compiled/' . $retiredCatalog), 'Retired build and PHP catalogs are removed together.');
 foreach ([$asset, $dependency, $rollback, 'unrelated.txt', 'manifest.json'] as $name) { $assert(is_file($root . '/assets/build/' . $name), 'Current, transitive, rollback and unrelated files survive cleanup.'); }
 $file('assets/build/' . $old);
 touch($root . '/assets/build/manifest.json'); clearstatcache();
-$assert(\TinyCat\Support\BuildCleanup::run(500)['changed'] === 0, 'A recent deployment protects already open pages even when its previous assets are old.');
+$assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 0, 'A recent deployment protects already open pages even when its previous assets are old.');
 touch($root . '/assets/build/manifest.json', time() - 259200); clearstatcache();
 $file('assets/build/' . $old, 60);
-$assert(\TinyCat\Support\BuildCleanup::run(500)['changed'] === 0, 'Fresh generated files survive the grace period.');
+$assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 0, 'Fresh generated files survive the grace period.');
 $file('assets/build/' . $old);
 $file('assets/build/manifest.json', 259200, '{invalid');
 $rejected = false;
-try { \TinyCat\Support\BuildCleanup::run(500); } catch (Throwable) { $rejected = true; }
+try { \TinyCat\Core\Updates\BuildCleanup::run(500); } catch (Throwable) { $rejected = true; }
 $assert($rejected && is_file($root . '/assets/build/' . $old), 'Invalid inventory fails before any deletion.');
 $file('assets/build/manifest.json', 259200, json_encode($manifest, JSON_THROW_ON_ERROR));
 unlink($root . '/App/Core/Support/compiled/' . $catalog);
 $rejected = false;
-try { \TinyCat\Support\BuildCleanup::run(500); } catch (Throwable) { $rejected = true; }
+try { \TinyCat\Core\Updates\BuildCleanup::run(500); } catch (Throwable) { $rejected = true; }
 $assert($rejected && is_file($root . '/assets/build/' . $old), 'Incomplete current catalog inventory fails before any deletion.');
 $file('App/Core/Support/compiled/' . $catalog, 259200, '<?php return [];');
 $lock = fopen($root . '/storage/updates/update.lock', 'c+'); flock($lock, LOCK_EX);
-$assert(\TinyCat\Support\BuildCleanup::run(500)['changed'] === 0, 'Deployment lock excludes build cleanup.');
+$assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 0, 'Deployment lock excludes build cleanup.');
 flock($lock, LOCK_UN); fclose($lock);
 $file('storage/maintenance.json', 60, '{}');
-$assert(\TinyCat\Support\BuildCleanup::run(500)['changed'] === 0, 'Recovery maintenance excludes build cleanup.');
+$assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 0, 'Recovery maintenance excludes build cleanup.');
 unlink($root . '/storage/maintenance.json');
 for ($i = 0; $i < 12; $i++) { $file('assets/build/stale.' . str_pad((string) $i, 24, '0', STR_PAD_LEFT) . '.css'); }
 for ($i = 0; $i < 30; $i++) {
-    $build = \TinyCat\Support\BuildCleanup::run(4);
+    $build = \TinyCat\Core\Updates\BuildCleanup::run(4);
     $assert($build['changed'] <= 4, 'Resumable build scans obey their shared batch budget.');
     if (!$build['has_more']) { break; }
 }
@@ -310,7 +309,7 @@ $assert(!array_key_exists('details', \TinyCat\Core\Tasks\Cleanup\Task::detail(['
 // Runtime outputs renew publication time and retain dependencies of recent roots.
 $runtimeUrl = \TinyCat\Support\Minifier::cachedAssetUrl('fixture', 'fixture', 'const value = 1;', 'js', false);
 $runtimeName = basename((string) $runtimeUrl);
-$runtimeRoot = \TinyCat\Support\Cache::directory('assets');
+$runtimeRoot = \TinyCat\Support\Assets::directory('assets');
 $staleRuntime = 'old.' . str_repeat('a', 20) . '.js';
 $runtimeDependency = 'image.' . str_repeat('b', 20) . '.svg';
 foreach ([$staleRuntime, $runtimeDependency, 'unknown.js'] as $name) { file_put_contents($runtimeRoot . '/' . $name, 'fixture'); touch($runtimeRoot . '/' . $name, time() - 40 * 86400); }
@@ -319,10 +318,10 @@ touch($runtimeRoot . '/' . $runtimeName, time() - 40 * 86400);
 \TinyCat\Support\Minifier::cachedAssetUrl('fixture', 'fixture', 'const value = 1;', 'js', false);
 clearstatcache();
 $assert(filemtime($runtimeRoot . '/' . $runtimeName) > time() - 60, 'Warm publication renews asset retention without changing its URL.');
-\TinyCat\Support\RuntimeAssetCleanup::run(500);
+\TinyCat\Support\Assets::cleanup(500);
 $assert(!is_file($runtimeRoot . '/' . $staleRuntime) && is_file($runtimeRoot . '/' . $runtimeDependency) && is_file($runtimeRoot . '/unknown.js'), 'Runtime retention removes only old recognized outputs and protects recent transitive dependencies.');
 touch($runtimeRoot . '/' . basename((string) $referencing), time() - 40 * 86400);
-\TinyCat\Support\RuntimeAssetCleanup::run(500);
+\TinyCat\Support\Assets::cleanup(500);
 $assert(!is_file($runtimeRoot . '/' . $runtimeDependency), 'Dependencies expire after their publication roots also become obsolete.');
 
 // Abandoned package preparation has a different format from generic temporary writes.

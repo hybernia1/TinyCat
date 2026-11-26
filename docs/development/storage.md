@@ -41,7 +41,7 @@ administrator acting maliciously; Apache access restrictions are still required.
 The helper bounds stdin before JSON parsing and accepts at most 1 MiB of content.
 Malformed input is rejected without echoing its potentially secret bytes.
 
-Cache retains its namespaces, configured directory, TTL, Memcached fallback and `0664` generated files. Only disposable cache writes enable the Windows unlink replacement fallback. Update state never enables it, so failed replacement preserves the previous state. Upload owners retain image validation, encoding and naming; they share directory creation.
+Cache retains its private namespaces, configured directory, TTL, Memcached fallback and `0664` disposable files. Only disposable cache writes enable the Windows unlink replacement fallback. Update state never enables it, so failed replacement preserves the previous state. Upload owners retain image validation, encoding and naming; they share directory creation.
 
 New filesystem consumers should use these primitives. Format, retention, cleanup predicates and domain validation stay with the owning module. Developer tooling with explicit external output destinations remains independent.
 
@@ -128,3 +128,45 @@ it can contain private keys, recovery copies and resumable import state.
 
 Versioned reference measurements live in `docs/performance/results/`; new local
 measurements stay in `.work/performance/`.
+
+## Public runtime assets
+
+`Assets` publishes immutable `/cache/assets/<name>` URLs below the fixed
+`storage/cache/assets` web-server mapping. `cache.directory` and
+`TINYCAT_CACHE_DIRECTORY` relocate only private computed cache entries. Prepared
+inventories, publication revision and the runtime asset coordination lock remain
+under the same stable `storage/cache` root. Existing URLs and generations survive
+updates; no migration or public URL change is required. Previously misplaced
+outputs under a custom private cache are regenerated when requested.
+
+Test bootstrap explicitly sets `TINYCAT_RUNTIME_ASSET_DIRECTORY` to its isolated
+cache workspace, inherited by child workers. This is a fixture override, not a
+production relocation option: Apache continues to map the fixed public root.
+Tests overriding private configuration must keep that explicit asset isolation.
+
+Warm outputs take shared admission; publication and hourly retention renewal take
+exclusive admission and change the publication revision. Cleanup first visits a
+bounded candidate batch. With no expired candidates it skips inventory enumeration
+and reference parsing. Deletion batches still inspect all recent roots and their
+transitive JS/CSS references, then validate the publication revision and inventory
+snapshot under exclusive admission before deleting. Thus the batch bounds visits
+and deletion candidates, **not** worst-case graph inspection. No persistent graph
+index is introduced. The 30-day retention and prepared-generation pins are retained.
+
+Array-cache cold misses retain their two-second coordination limit and stale
+refresh behavior. A final fresh lookup also covers a producer that has published
+but still holds its compute lock at the deadline. Locks for computation, cache
+mutation, deployment, staging, cleanup and database tasks keep separate ownership.
+
+Public storage, coordination and runtime cleanup now belong to the existing
+`Assets` class. `Minifier` retains publication entry points needed by already
+loaded updater callers. `CompiledAssets` and `PreparedAssets` retain their
+existing boundary: merging them would require a compatibility bridge for
+already loaded deployment/readers during supported updates. `AssetGraph` owns
+source resolution and ordering; `AssetCompiler` remains build-only and lazy.
+
+When an updater retains the previous `Assets` class in memory, optional preparation
+is deferred rather than calling methods absent from that class. Fresh requests
+continue through the signed inventory or ordinary source fallback; operators can
+prepare the selection with the existing assets CLI in a fresh process. This
+compatibility check does not apply to normal current-code preparations.

@@ -9,12 +9,12 @@ $homeUrl ??= '/';
 $homeLabel ??= 'Home';
 ?>
 <!doctype html>
-<html lang="<?= \TinyCat\Support\Html::e($locale) ?>">
+<html lang="<?= \TinyCat\Core\Ui\Html::e($locale) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="robots" content="noindex">
-    <title><?= \TinyCat\Support\Html::e($title) ?></title>
+    <title><?= \TinyCat\Core\Ui\Html::e($title) ?></title>
     <style>
         :root { color-scheme: light dark; font: 16px/1.6 system-ui, sans-serif; }
         body { margin: 0; padding: 24px; }
@@ -26,9 +26,9 @@ $homeLabel ??= 'Home';
 <body>
     <main>
         <p><?= $status ?></p>
-        <h1><?= \TinyCat\Support\Html::e($title) ?></h1>
-        <p><?= \TinyCat\Support\Html::e($intro) ?></p>
-        <a href="<?= \TinyCat\Support\Html::e($homeUrl) ?>"><?= \TinyCat\Support\Html::e($homeLabel) ?></a>
+        <h1><?= \TinyCat\Core\Ui\Html::e($title) ?></h1>
+        <p><?= \TinyCat\Core\Ui\Html::e($intro) ?></p>
+        <a href="<?= \TinyCat\Core\Ui\Html::e($homeUrl) ?>"><?= \TinyCat\Core\Ui\Html::e($homeLabel) ?></a>
     </main>
 </body>
 </html>

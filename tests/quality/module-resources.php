@@ -6,7 +6,7 @@ use TinyCat\Core\Modules\Catalog;
 use TinyCat\Core\Modules\Definition;
 use TinyCat\Support\AssetGraph;
 use TinyCat\Support\ClientAssets;
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 use TinyCat\Support\Localization;
 use TinyCat\Support\TranslationSources;
 

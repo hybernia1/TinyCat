@@ -4,7 +4,8 @@ namespace TinyCat\Core\Discovery;
 
 use TinyCat\Core\Modules\{Registrations, SearchSource};
 use TinyCat\Http\{Api, Request, Router};
-use TinyCat\Support\{Components, Localization};
+use TinyCat\Core\Ui\Components;
+use TinyCat\Support\Localization;
 
 /** Bounded fan-out over active sources. Owners retain SQL, visibility and cursors. */
 final class Search
@@ -73,15 +74,15 @@ final class Search
         $r = Request::current(); $data = self::requestQuery($r);
         $selected = (string) $r->input('collection', '');
         $sources = [];
-        $navigation = [['label' => Localization::t('common.all'), 'icon' => 'search', 'url' => \TinyCat\Support\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query']])), 'active' => $selected === '']];
+        $navigation = [['label' => Localization::t('common.all'), 'icon' => 'search', 'url' => \TinyCat\Http\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query']])), 'active' => $selected === '']];
         foreach (self::sources() as $source) {
-            $navigation[] = ['label' => ($source->label)(), 'icon' => $source->icon, 'url' => \TinyCat\Support\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query'], 'collection' => $source->id])), 'active' => $selected === $source->id];
+            $navigation[] = ['label' => ($source->label)(), 'icon' => $source->icon, 'url' => \TinyCat\Http\LocalUrls::resolve('/search/all?' . http_build_query(['q' => $data['query'], 'collection' => $source->id])), 'active' => $selected === $source->id];
             $sources[$source->id] = $source;
         }
         foreach ($data['collections'] as &$group) {
             $source = $sources[$group['id']];
-            if ($group['items'] !== [] && $source->render !== null) { $group['content'] = new \TinyCat\Support\Markup(($source->render)($group['items'])); }
-            $group['next_url'] = \TinyCat\Support\LocalUrls::resolve($group['next_url']);
+            if ($group['items'] !== [] && $source->render !== null) { $group['content'] = new \TinyCat\Core\Ui\Markup(($source->render)($group['items'])); }
+            $group['next_url'] = \TinyCat\Http\LocalUrls::resolve($group['next_url']);
         }
         unset($group);
         $title = Localization::t('common.search');

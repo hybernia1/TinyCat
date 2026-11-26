@@ -42,6 +42,31 @@ foreach (['Mail', 'Example'] as $owner) {
 file_put_contents($directory . '/App/modules.php', '<?php return ["fixture.example" => "App/Modules/Example/module.json", "fixture.mail" => "App/Modules/Mail/module.json"];');
 try {
     $reset();
+    \TinyCat\Support\TranslationSources::withSnapshot(static function () use ($directory, $app, &$checks): void {
+        $first = \TinyCat\Support\TranslationSources::read($directory . '/App/Core/Support/lang/en.json');
+        file_put_contents($directory . '/App/Core/Support/lang/en.json', str_replace('Hello', 'Fresh', $app));
+        \TinyCat\Support\TranslationSources::withSnapshot(static function () use ($directory, &$checks): void {
+            if (!str_starts_with(\TinyCat\Support\TranslationSources::read($directory . '/App/Core/Support/lang/en.json')['common.greeting'], 'Fresh')) { throw new RuntimeException('Explicit nested source operation reused its parent'); }
+            $checks++;
+        });
+        if (\TinyCat\Support\TranslationSources::read($directory . '/App/Core/Support/lang/en.json') !== $first) { throw new RuntimeException('Operation snapshot changed during a build'); }
+        $checks++;
+    });
+    if (!str_starts_with(\TinyCat\Support\TranslationSources::read($directory . '/App/Core/Support/lang/en.json')['common.greeting'], 'Fresh')) { throw new RuntimeException('New source operation reused stale documents'); }
+    $checks++;
+    $reset();
+    $mailFile = $directory . '/App/Modules/Mail/lang/cs.json';
+    file_put_contents($mailFile, '{"signature":"first","signature":"second"}');
+    try {
+        \TinyCat\Support\TranslationSources::channel('emails', 'cs', $directory);
+        throw new LogicException('Runtime mail channel accepted duplicate members');
+    } catch (RuntimeException $error) {
+        if (!str_contains($error->getMessage(), 'duplicate key signature')) { throw $error; }
+        $checks++;
+    }
+    $reset();
+    if (\TinyCat\Support\TranslationSources::channel('emails', 'cs', $directory) !== json_decode($emails, true, 512, JSON_THROW_ON_ERROR)) { throw new RuntimeException('Mail channel changed nesting or order'); }
+    $checks++;
     $catalogs = $validate($directory);
     if ($catalogs['cs']['app']['common.empty'] !== '') { throw new RuntimeException('Empty translations must remain valid'); }
     $checks++;

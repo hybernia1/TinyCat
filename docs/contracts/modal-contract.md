@@ -48,7 +48,7 @@ Factory odmítá neznámý typ, velikost či mobilní režim před vytvořením 
    hodnoty ani `<template>` s formulářem. Nevytvářet jej v `init`, `hydrate`
    ani při obnovení seznamu.
 2. Každý spouštěč `data-modal-open` má `data-modal-url` směřující na API stejného
-   originu. `AdminViews::modalAction` vyžaduje API URL. Klikací spouštěče
+   originu. `Core\Ui\Admin\Views::modalAction` vyžaduje API URL. Klikací spouštěče
    neotevírají lokálně předpřipravené DOM podle samotného ID.
 3. GET resource vrací pouze JSON data, oprávnění a potřebná omezení.
    Popisky, rozložení a komponenty vlastní klientská prezentační vrstva.

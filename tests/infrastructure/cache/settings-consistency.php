@@ -20,7 +20,7 @@ foreach (['filesystem', 'memcached'] as $driver) {
     }
     $directory = TinyCat\Tools\Workspace::directory('tests/settings-race-' . $driver . '-' . bin2hex(random_bytes(6)));
     $config = ['database' => ['driver' => 'mysql'], 'install' => ['complete' => true], 'cache' => ['directory' => $directory . '/cache', 'driver' => $driver, 'memcached' => ['prefix' => 'tinycat-settings-race-' . bin2hex(random_bytes(10)) . ':']]];
-    (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true); (new ReflectionProperty(Config::class, 'config'))->setValue(null, $config);
+    Config::configure(new \TinyCat\Core\Runtime\Configuration($config));
     foreach (['driver' => null, 'memcachedClient' => null, 'memcachedInitialized' => false, 'memcachedConfig' => null] as $name => $value) { (new ReflectionProperty(Cache::class, $name))->setValue(null, $value); }
     $db = \tinycat_test_database_as(SettingsCommitPDO::class, $directory . '/settings.database.json'); Connection::set($db); TinyCat\Core\Settings\Schema::install($db);
     Store::reset(); Store::setSetting('site.public_enabled', true, 'bool');

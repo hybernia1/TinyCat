@@ -9,7 +9,7 @@ use TinyCat\Social\Moderation\Restrictions;
 use TinyCat\Core\Ui\Site as Presentation;
 use TinyCat\Support\Dates;
 use TinyCat\Support\Localization;
-use TinyCat\Support\Text;
+use TinyCat\Core\Text\Text;
 use TinyCat\Core\Identity\Authentication;
 use TinyCat\Social\Profiles\Profiles;
 
@@ -44,7 +44,7 @@ final class Pages
                 'type' => 'website',
                 'jsonld' => [
                     '@context' => 'https://schema.org', '@type' => 'WebSite',
-                    '@id' => \TinyCat\Support\LocalUrls::absolute(Feed::homePath()), 'url' => \TinyCat\Support\LocalUrls::absolute(Feed::homePath()),
+                    '@id' => \TinyCat\Http\LocalUrls::absolute(Feed::homePath()), 'url' => \TinyCat\Http\LocalUrls::absolute(Feed::homePath()),
                     'name' => Presentation::site_name(), 'description' => Presentation::site_meta_description(),
                 ],
             ],
@@ -106,7 +106,7 @@ final class Pages
                 'image_alt' => $statusImageUrl !== '' ? \TinyCat\Social\Posts\Images::status_image_alt_text($item) : '',
                 'type' => 'article',
                 'published_time' => (string) ($item['published_at'] ?? ''),
-                'author' => \TinyCat\Support\LocalUrls::absolute(Profiles::author_url((int) ($item['author_id'] ?? 0))),
+                'author' => \TinyCat\Http\LocalUrls::absolute(Profiles::author_url((int) ($item['author_id'] ?? 0))),
                 'tags' => Tags::extractTags((string) ($item['body'] ?? '')),
                 'rss' => Profiles::author_feed_url((int) ($item['author_id'] ?? 0)),
                 'jsonld' => array_filter([
@@ -137,7 +137,7 @@ final class Pages
             return array_filter([
                 '@type' => 'Comment',
                 'identifier' => (string) $comment['id'],
-                'url' => \TinyCat\Support\LocalUrls::absolute($postUrl),
+                'url' => \TinyCat\Http\LocalUrls::absolute($postUrl),
                 'text' => (string) $comment['body'],
                 'datePublished' => !empty($comment['created_at']) ? Dates::dateTime((string) $comment['created_at'], DATE_ATOM) : null,
                 'author' => StructuredData::author($comment),
@@ -194,10 +194,10 @@ final class Pages
         $tagStructuredData = [
             '@context' => 'https://schema.org',
             '@type' => 'CollectionPage',
-            '@id' => \TinyCat\Support\LocalUrls::absolute($pageUrl),
-            'url' => \TinyCat\Support\LocalUrls::absolute($pageUrl),
+            '@id' => \TinyCat\Http\LocalUrls::absolute($pageUrl),
+            'url' => \TinyCat\Http\LocalUrls::absolute($pageUrl),
             'name' => Localization::t('public.tag_feed_title', ['tag' => '#' . $tag]),
-            'isPartOf' => ['@id' => \TinyCat\Support\LocalUrls::absolute('/')],
+            'isPartOf' => ['@id' => \TinyCat\Http\LocalUrls::absolute('/')],
             'mainEntity' => StructuredData::itemList(array_values($statusItems)),
         ];
 

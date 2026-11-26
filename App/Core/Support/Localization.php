@@ -69,7 +69,6 @@ final class Localization
     public static function t(string $key, array $replace = [], ?string $locale = null): string
     {
         $locale ??= self::locale();
-        self::assertLocale($locale);
         $value = self::catalog($locale)[$key] ?? $key;
         return self::format($value, $replace);
     }

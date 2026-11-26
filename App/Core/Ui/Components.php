@@ -1,7 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace TinyCat\Support;
+namespace TinyCat\Core\Ui;
+
+use TinyCat\Support\{CompiledAssets, Dates, Localization, Values};
+use TinyCat\Http\LocalUrls;
 
 use InvalidArgumentException;
 

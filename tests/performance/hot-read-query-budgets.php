@@ -125,16 +125,13 @@ function runScenario(string $scenario): void
 
 function configureTestCore(PDO $database): void
 {
-    $booted = new ReflectionProperty(\TinyCat\Support\Config::class, 'booted');
-    $booted->setValue(null, true);
-    $config = new ReflectionProperty(\TinyCat\Support\Config::class, 'config');
-    $config->setValue(null, [
+    \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([
         'app' => ['url' => 'http://localhost'],
         'database' => ['driver' => 'mysql'],
         'install' => ['complete' => true, 'locale' => 'en'],
         'cache' => ['driver' => 'filesystem'],
         'security' => ['captcha' => ['enabled' => false]],
-    ]);
+    ]));
     $settings = new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings');
     $settings->setValue(null, []);
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);

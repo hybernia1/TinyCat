@@ -8,12 +8,10 @@ use TinyCat\Database\Transactions;
 use TinyCat\Http\Response;
 use TinyCat\Http\Result;
 use TinyCat\Http\Web;
-use TinyCat\Support\AdminSorting;
-use TinyCat\Support\AdminViews;
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
 use TinyCat\Support\Dates;
 use TinyCat\Support\Localization;
-use TinyCat\Support\Pagination;
-use TinyCat\Support\Text;
+use TinyCat\Core\Text\Text;
 
 /** Administrator's publication queue for all bot accounts. */
 final class Queue
@@ -30,7 +28,7 @@ final class Queue
         $source = Administration::sourceFilter(Web::get('source', ''));
         if (!array_key_exists($source, $sources)) { $source = ''; }
         $filters = ['q' => AdminViews::admin_filter_text((string) Web::get('q', '')), 'bot' => $bot > 0 ? (string) $bot : '',
-            'status' => in_array($status, \TinyCat\Core\Identity\Administration::statuses(), true) ? $status : '', 'source' => $source] + AdminSorting::state(\TinyCat\Social\Bots\Sorting::queue());
+            'status' => in_array($status, \TinyCat\Core\Identity\Administration::statuses(), true) ? $status : '', 'source' => $source] + AdminViews::sortState(\TinyCat\Social\Bots\Sorting::queue());
         $query = new Query('SELECT c.id, c.body, c.published_at, u.id AS bot_id, u.username, u.status, bs.id AS source_id, bs.name AS source_name
             FROM social_posts c INNER JOIN users u ON u.id = c.author_id
             LEFT JOIN bot_source_posts bsp ON bsp.content_id = c.id LEFT JOIN bot_sources bs ON bs.id = bsp.source_id');
@@ -39,10 +37,10 @@ final class Queue
         if ($bot > 0) { $query->where('u.id = ?', $bot); }
         if ($filters['status'] !== '') { $query->where('u.status = ?', $filters['status']); }
         Administration::filterSource($query, $source);
-        $pagination = Pagination::paginationMeta($query->count(), AdminViews::admin_page(), AdminViews::admin_per_page());
+        $pagination = AdminViews::paginationMeta($query->count(), AdminViews::admin_page(), AdminViews::admin_per_page());
         $params = $filters + ['per_page' => $pagination['per_page']];
         $items = [];
-        foreach ($query->order(AdminSorting::order(\TinyCat\Social\Bots\Sorting::queue(), $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all() as $row) {
+        foreach ($query->order(AdminViews::sortOrder(\TinyCat\Social\Bots\Sorting::queue(), $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all() as $row) {
             $id = (int) $row['id'];
             $items[] = ['id' => $id, 'bot_id' => (int) $row['bot_id'], 'username' => (string) $row['username'], 'status' => (string) $row['status'],
                 'bot_url' => '/admin/bots/' . (int) $row['bot_id'], 'excerpt' => Text::plain_text_limit((string) $row['body'], 180),
@@ -55,7 +53,7 @@ final class Queue
         $navigation = AdminViews::admin_pagination_view_data($pagination, $list['endpoint'], $list['target'], $params, historyPath: $list['path']);
         unset($navigation['target']);
         return ['items' => $items, 'filters' => $filters, 'pagination' => $pagination, 'bots' => $bots, 'sources' => $sources, 'statuses' => \TinyCat\Core\Identity\Administration::statuses(),
-            'sorting' => AdminSorting::headings(\TinyCat\Social\Bots\Sorting::queue(), $params), 'navigation' => $navigation];
+            'sorting' => AdminViews::sortHeadings(\TinyCat\Social\Bots\Sorting::queue(), $params), 'navigation' => $navigation];
     }
 
     public static function listing(?string $message = null): Result

@@ -9,10 +9,10 @@ use TinyCat\Core\Identity\Integration;
 use TinyCat\Http\Session;
 use TinyCat\Http\Web;
 
-use TinyCat\Support\AdminViews;
-use TinyCat\Support\Markup;
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
+use TinyCat\Core\Ui\Markup;
 use TinyCat\Support\Localization;
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 
 /** HTTP page composition; view components receive already prepared data. */
 final class Pages
@@ -38,7 +38,7 @@ final class Pages
             'user' => $user,
             'account_modal' => Views::accountEditorId((int) $user['id']),
             'account_url' => Views::accountEditorUrl((int) $user['id']),
-            'logout_url' => \TinyCat\Support\LocalUrls::resolve('/logout'),
+            'logout_url' => \TinyCat\Http\LocalUrls::resolve('/logout'),
         ]));
     }
 
@@ -50,7 +50,7 @@ final class Pages
         $definition = \TinyCat\Core\Ui\Admin\Definitions::get('core.users');
         $content = AdminViews::listCard(
             Localization::t($definition['title']), $definition['icon'], substr($definition['target'], 1), $definition['filterId'],
-            new Markup(\TinyCat\Support\Components::render($definition['component'], $data)), primary: true,
+            new Markup(\TinyCat\Core\Ui\Components::render($definition['component'], $data)), primary: true,
         );
         \TinyCat\Core\Ui\Page::render([
             'title' => Localization::t('users.meta_title'), 'current' => $definition['path'],

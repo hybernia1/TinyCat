@@ -19,23 +19,18 @@ final class Minifier
 {
     public const array ASSET_TYPES = ['css', 'js', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'ico', 'woff', 'woff2', 'ttf', 'otf'];
     private const CACHE_VERSION = '5';
-    private const CACHE_NAMESPACE = 'assets';
     private const CACHE_URL = '/cache/assets';
-
-    private function __construct()
-    {
-    }
 
     /** @internal Generation fence for retention scans performed outside the publication lock. */
     public static function publicationRevision(): string|false|null
     {
-        $file = Cache::file('revision', 'asset-publications');
+        $file = Assets::file('revision', 'asset-publications');
         return is_file($file) ? file_get_contents($file) : null;
     }
 
     private static function markPublication(): void
     {
-        if (!Cache::writeFile('revision', bin2hex(random_bytes(16)), 'asset-publications')) { throw new \RuntimeException('Cannot coordinate asset publication.'); }
+        if (!Assets::writeFile('revision', bin2hex(random_bytes(16)), 'asset-publications')) { throw new \RuntimeException('Cannot coordinate asset publication.'); }
     }
 
     public static function cachedAssetUrl(
@@ -60,15 +55,21 @@ final class Minifier
         // Address the source before transforming it: a warm hit never minifies again.
         $hash = substr(hash('sha256', self::CACHE_VERSION . "\0" . $identity . "\0" . ($minify ? 'min' : 'raw') . "\0" . $type . "\0" . $source), 0, 20);
         $fileName = $prefix . '.' . $hash . ($minify ? '.min' : '') . '.' . $type;
-        $target = \TinyCat\Support\Cache::file($fileName, self::CACHE_NAMESPACE);
-        return Cache::synchronized('runtime-assets', static function () use ($target, $minify, $type, $source, $fileName): ?string {
+        $target = Assets::file($fileName);
+        // Shared admission excludes cleanup; a fresh hit neither mutates nor fences publication.
+        $warm = Assets::synchronized(static function () use ($target): bool {
+            clearstatcache(true, $target);
+            return is_file($target) && filemtime($target) >= time() - 3600;
+        }, shared: true);
+        if ($warm) { return self::CACHE_URL . '/' . rawurlencode($fileName); }
+        return Assets::synchronized(static function () use ($target, $minify, $type, $source, $fileName): ?string {
             clearstatcache(true, $target);
             if (!is_file($target)) {
                 self::markPublication();
                 $content = $minify
                     ? ($type === 'css' ? self::minifyCss($source) : self::minifyJavaScript($source))
                     : $source;
-                if (!\TinyCat\Support\Cache::writeFile($fileName, $content, self::CACHE_NAMESPACE)) { return null; }
+                if (!Assets::writeFile($fileName, $content)) { return null; }
             } elseif (filemtime($target) < time() - 3600) {
                 self::markPublication();
                 if (!touch($target)) { throw new \RuntimeException('Unable to renew runtime asset retention.'); }

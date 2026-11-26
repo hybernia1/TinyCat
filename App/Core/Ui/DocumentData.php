@@ -24,14 +24,14 @@ final class DocumentData
             'search' => $data['pageUrls']['/search/all'] ?? '/search/all',
             'login' => $data['pageUrls']['/login'] ?? '/login',
         ];
-        $data['userMenu'] = new \TinyCat\Support\Markup((string) ($data['userMenu'] ?? ''));
-        $data['notificationMenu'] = new \TinyCat\Support\Markup($authenticated
+        $data['userMenu'] = new \TinyCat\Core\Ui\Markup((string) ($data['userMenu'] ?? ''));
+        $data['notificationMenu'] = new \TinyCat\Core\Ui\Markup($authenticated
             ? \TinyCat\Core\Notifications\Views::menu([
                 'current' => $data['current'] ?? '',
                 'state' => $data['notificationState'] ?? [],
                 'notifications' => $data['notificationItems'] ?? [],
             ]) : '');
-        return \TinyCat\Support\Components::render('ui/public-header', $data);
+        return \TinyCat\Core\Ui\Components::render('ui/public-header', $data);
     }
 
     /** @param array<mixed> $data
@@ -106,7 +106,7 @@ final class DocumentData
         $metaRss = $document['rss'];
         $metaPrev = trim((string) ($meta['prev'] ?? ''));
         $metaNext = trim((string) ($meta['next'] ?? ''));
-        $privacyUrl = \TinyCat\Support\LocalUrls::absolute($pageUrls['/privacy']);
+        $privacyUrl = \TinyCat\Http\LocalUrls::absolute($pageUrls['/privacy']);
         $metaJsonLd = $document['jsonld'];
         $metaJsonLdJson = is_array($metaJsonLd)
             ? json_encode($metaJsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
@@ -120,9 +120,9 @@ final class DocumentData
         $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? '');
         $analyticsConfigured = \TinyCat\Core\Ui\Site::site_google_analytics_configured();
         $cookieConsentTextKey = \TinyCat\Core\Ui\Site::site_captcha_enabled() ? 'privacy.cookie_consent_text_captcha' : 'privacy.cookie_consent_text';
-        $metaRssUrl = $metaRss !== '' ? \TinyCat\Support\LocalUrls::absolute($metaRss) : '';
-        $metaPrevUrl = $metaPrev !== '' ? \TinyCat\Support\LocalUrls::absolute($metaPrev) : '';
-        $metaNextUrl = $metaNext !== '' ? \TinyCat\Support\LocalUrls::absolute($metaNext) : '';
+        $metaRssUrl = $metaRss !== '' ? \TinyCat\Http\LocalUrls::absolute($metaRss) : '';
+        $metaPrevUrl = $metaPrev !== '' ? \TinyCat\Http\LocalUrls::absolute($metaPrev) : '';
+        $metaNextUrl = $metaNext !== '' ? \TinyCat\Http\LocalUrls::absolute($metaNext) : '';
         $profileUrl = $authUser !== null ? (\TinyCat\Core\Identity\Integration::profileUrl((int) $authUser['id']) ?? '') : '';
         $profileNeedsEmail = $authUser !== null && trim((string) ($authUser['email'] ?? '')) === '';
         $userMenu = $authUser !== null ? \TinyCat\Core\Identity\Views::userMenu([
@@ -139,12 +139,12 @@ final class DocumentData
             $notificationItems = $data['notificationItems'] ?? \TinyCat\Core\Notifications\Inbox::items($notificationUserId, \TinyCat\Core\Notifications\Inbox::PREVIEW_LIMIT);
         }
         $publicHeader = self::publicHeader(compact('pageUrls', 'appName', 'authUser', 'current', 'loginModalId', 'loginModalUrl', 'nav', 'notificationItems', 'notificationState', 'searchQuery', 'siteLogoUrl', 'viewerIsAdmin', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageLinks', 'languageSuggestion', 'userMenu', 'hasGlobalSearch'));
-        $consent = \TinyCat\Support\Components::render('ui/consent', [
+        $consent = \TinyCat\Core\Ui\Components::render('ui/consent', [
             'show' => $analyticsConfigured && !in_array($analyticsConsent, ['granted', 'denied'], true),
             'googleMeasurementId' => $googleMeasurementId, 'privacyUrl' => $pageUrls['/privacy'],
             'captchaEnabled' => $cookieConsentTextKey === 'privacy.cookie_consent_text_captcha',
         ]);
-        $publicFooter = ($data['privacyFooter'] ?? true) ? \TinyCat\Support\View::render('public-footer', ['privacyUrl' => $privacyUrl], __DIR__ . '/templates') : '';
+        $publicFooter = ($data['privacyFooter'] ?? true) ? \TinyCat\Core\Ui\View::render('public-footer', ['privacyUrl' => $privacyUrl], __DIR__ . '/templates') : '';
         return compact('publicFooter', 'publicHeader', 'consent', 'hasGlobalSearch', 'userMenu', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'interfaceRoutes', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'actions', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'title', 'viewerIsAdmin');
     }
 }

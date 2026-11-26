@@ -53,7 +53,7 @@ final class Resource
     /** @return list<array{value: string, offset: string}> */
     private static function timezones(string $selected): array
     {
-        $items = \TinyCat\Support\Dates::timezone_presets();
+        $items = \TinyCat\Core\Settings\Sections::timezone_presets();
         if (in_array($selected, timezone_identifiers_list(), true) && !isset($items[$selected])) { $items = [$selected => $selected] + $items; }
         $result = [];
         foreach ($items as $value => $_) { $result[] = ['value' => $value, 'offset' => (new \DateTimeImmutable('now', new \DateTimeZone($value)))->format('P')]; }
@@ -64,9 +64,9 @@ final class Resource
     private static function formats(string $type): array
     {
         $items = match ($type) {
-            'date_format' => \TinyCat\Support\Dates::date_format_presets(),
-            'time_format' => \TinyCat\Support\Dates::time_format_presets(),
-            default => \TinyCat\Support\Dates::datetime_format_presets(),
+            'date_format' => \TinyCat\Core\Settings\Sections::date_format_presets(),
+            'time_format' => \TinyCat\Core\Settings\Sections::time_format_presets(),
+            default => \TinyCat\Core\Settings\Sections::datetime_format_presets(),
         };
         $result = [];
         foreach ($items as $value => $_) { $result[] = ['value' => $value]; }

@@ -5,7 +5,7 @@ namespace TinyCat\Social\Site;
 
 use TinyCat\Http\Response;
 use TinyCat\Social\Posts\Resource as Posts;
-use TinyCat\Support\Components;
+use TinyCat\Core\Ui\Components;
 use TinyCat\Support\Localization;
 use TinyCat\Social\Profiles\Profiles as Users;
 
@@ -68,7 +68,7 @@ final class PublicPages
         $items = $context['statusItems'] ?? $home['items'] ?? [];
         $more = $context['feedMore'] ?? $home['feed_more'] ?? [];
         $author = $context['author'] ?? null;
-        $feedId = $context['feedId'] ?? $home['feed_id'] ?? ($kind === 'author' ? 'status-feed-author-' . (int) ($author['id'] ?? 0) : 'status-feed-tag-' . \TinyCat\Support\Text::slug((string) ($context['tag'] ?? '')));
+        $feedId = $context['feedId'] ?? $home['feed_id'] ?? ($kind === 'author' ? 'status-feed-author-' . (int) ($author['id'] ?? 0) : 'status-feed-tag-' . \TinyCat\Core\Text\Text::slug((string) ($context['tag'] ?? '')));
         $editor = $context['editor'] ?? [];
         $url = $kind === 'home' ? (string) ($home['current_feed_url'] ?? '/') : (string) $meta['url'];
         $compactQuery = !empty($context['compact']) ? ['compact' => '1'] : [];

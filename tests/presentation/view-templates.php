@@ -28,9 +28,9 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
     }
 };
 
-$privacy = \TinyCat\Support\Components::render('ui/privacy-page', [
+$privacy = \TinyCat\Core\Ui\Components::render('ui/privacy-page', [
     'siteName' => 'Fixture', 'siteCaptchaEnabled' => false, 'siteGoogleAnalyticsConfigured' => false,
-    'sections' => new \TinyCat\Support\Markup(\TinyCat\Support\Components::render('site/privacy-section', ['siteName' => 'Fixture', 'privacyLimitRows' => []])),
+    'sections' => new \TinyCat\Core\Ui\Markup(\TinyCat\Core\Ui\Components::render('site/privacy-section', ['siteName' => 'Fixture', 'privacyLimitRows' => []])),
 ]);
 $intro = \TinyCat\Support\Localization::t('privacy.intro', ['site' => 'Fixture']);
 $assert($intro !== 'privacy.intro' && substr_count(html_entity_decode(strip_tags($privacy)), $intro) === 1, 'The Social privacy introduction appears once inside the core information page.');
@@ -45,26 +45,26 @@ $sidebar = \TinyCat\Social\Site\Sidebar::resource(['tags' => [], 'authors' => []
 $assert(!array_key_exists('footer', $sidebar) && isset($sidebar['privacy_url']), 'Sidebar resources ignore retired footer input and retain the system privacy link.');
 $errorData = ['status' => 500, 'title' => 'Error <unsafe>', 'intro' => 'Try again', 'locale' => 'en', 'homeUrl' => '/nested/', 'homeLabel' => 'Home', 'searchUrl' => '', 'searchLabel' => 'Search'];
 foreach (['error', 'errorFallback'] as $template) {
-    $errorHtml = \TinyCat\Support\View::render($template, $errorData, $root . '/App/Core/Ui/templates');
+    $errorHtml = \TinyCat\Core\Ui\View::render($template, $errorData, $root . '/App/Core/Ui/templates');
     $assert(str_contains($errorHtml, 'href="/nested/"') && str_contains($errorHtml, 'Error &lt;unsafe&gt;') && !str_contains($errorHtml, '/search/all'), 'Error templates use prepared portable actions and escape titles: ' . $template);
 }
-$bootstrapError = \TinyCat\Support\View::render('errorFallback', array_diff_key($errorData, array_flip(['homeUrl', 'homeLabel', 'searchUrl', 'searchLabel'])), $root . '/App/Core/Ui/templates');
+$bootstrapError = \TinyCat\Core\Ui\View::render('errorFallback', array_diff_key($errorData, array_flip(['homeUrl', 'homeLabel', 'searchUrl', 'searchLabel'])), $root . '/App/Core/Ui/templates');
 $assert(str_contains($bootstrapError, 'href="/"') && str_contains($bootstrapError, '500'), 'Emergency rendering remains compatible with a cached updater that only passes the original error metadata.');
 
-$modal = \TinyCat\Support\Components::render('ui/modal', [
+$modal = \TinyCat\Core\Ui\Components::render('ui/modal', [
     'root_attributes' => ['id' => 'snapshot-modal', 'class' => 'modal', 'role' => 'dialog', 'aria-modal' => 'true', 'aria-labelledby' => 'snapshot-modal-title'],
     'panel_attributes' => ['class' => 'modal-panel', 'data-snapshot' => 'a&b'],
     'title_id' => 'snapshot-modal-title',
     'title' => 'Title <unsafe>',
-    'close_label' => 'Close', 'close_icon' => new \TinyCat\Support\Markup(\TinyCat\Support\Html::icon('close')),
+    'close_label' => 'Close', 'close_icon' => new \TinyCat\Core\Ui\Markup(\TinyCat\Core\Ui\Html::icon('close')),
     'body_class' => 'modal-body',
-    'body' => new \TinyCat\Support\Markup('<p id="snapshot-body">Safe body</p>'),
+    'body' => new \TinyCat\Core\Ui\Markup('<p id="snapshot-body">Safe body</p>'),
 ]);
 $assert(str_contains($modal, 'Title &lt;unsafe&gt;'), 'Modal title is escaped.');
 $assert(str_contains($modal, 'data-snapshot="a&amp;b"'), 'Prepared modal attributes are escaped.');
 $assert(str_contains($modal, '<p id="snapshot-body">Safe body</p>'), 'Prepared modal body HTML is preserved.');
 
-$composerBody = \TinyCat\Support\Components::render('status/composer-body', [
+$composerBody = \TinyCat\Core\Ui\Components::render('status/composer-body', [
     'constraints' => \TinyCat\Social\Posts\Resource::constraints(),
     'viewer' => \TinyCat\Social\Profiles\Profiles::resource(['id' => 1, 'username' => 'alice', 'avatar_exists' => 0]),
     'value' => 'Draft', 'image' => [], 'enabled' => false,
@@ -74,12 +74,12 @@ $assert(str_contains($composerBody, 'class="status-compose-row"'), 'Composer bod
 $assert(str_contains($composerBody, 'name="save"'), 'Composer body can render the edit submit action.');
 $assert(!str_contains($composerBody, 'status-schedule-modal'), 'The shared composer does not expose the scheduler modal.');
 
-$time = \TinyCat\Support\Components::render('status/time', ['item' => ['url' => '/status/7', 'published_at' => '2026-08-09T12:00:00+00:00', 'published_label' => '9 August 2026 12:00', 'permalink_label' => 'Alice'], 'open_modal' => false]);
+$time = \TinyCat\Core\Ui\Components::render('status/time', ['item' => ['url' => '/status/7', 'published_at' => '2026-08-09T12:00:00+00:00', 'published_label' => '9 August 2026 12:00', 'permalink_label' => 'Alice'], 'open_modal' => false]);
 $assert(str_contains($time, 'href="/status/7"'), 'Status time link uses the canonical permalink.');
 $assert(str_contains($time, '<time datetime="'), 'Status time link includes a machine-readable date.');
 $assert(!str_contains($time, 'data-modal-open'), 'Status time link respects the non-modal rendering option.');
 
-$statusCard = \TinyCat\Support\Components::render('status/card', [
+$statusCard = \TinyCat\Core\Ui\Components::render('status/card', [
     'item' => \TinyCat\Social\Posts\Resource::post(['id' => 7, 'author_id' => 1, 'author_name' => 'Alice', 'published_at' => '2026-08-09 12:00:00'], null),
     'anchor' => false, 'open_modal' => false, 'action' => '/',
 ]);
@@ -87,14 +87,14 @@ $assert(!str_contains($statusCard, 'id="status-7"'), 'Modal status cards can omi
 $assert(str_contains($statusCard, 'data-modal-parent-url="/api/statuses/7"'), 'Status cards consume their prepared modal route.');
 $assert(preg_match('/status-time-button[^>]*data-modal-open/', $statusCard) !== 1, 'Modal status cards keep their time link in the current modal.');
 
-$link = \TinyCat\Support\Components::render('publishing/link', ['link' => ['url' => 'https://www.youtube.com/watch?v=abc123', 'title' => 'Demo <video>', 'embed_url' => 'https://www.youtube.com/embed/abc123', 'embed_allowed' => true, 'thumbnail_url' => 'https://i.ytimg.com/vi/abc123/mqdefault.jpg', 'thumbnail_mobile_url' => 'https://i.ytimg.com/vi/abc123/default.jpg', 'thumbnail_webp_url' => '']]);
+$link = \TinyCat\Core\Ui\Components::render('publishing/link', ['link' => ['url' => 'https://www.youtube.com/watch?v=abc123', 'title' => 'Demo <video>', 'embed_url' => 'https://www.youtube.com/embed/abc123', 'embed_allowed' => true, 'thumbnail_url' => 'https://i.ytimg.com/vi/abc123/mqdefault.jpg', 'thumbnail_mobile_url' => 'https://i.ytimg.com/vi/abc123/default.jpg', 'thumbnail_webp_url' => '']]);
 $assert(str_contains($link, 'media="(max-width: 759px)" srcset="https://i.ytimg.com/vi/abc123/default.jpg"') || str_contains($link, 'srcset="https://i.ytimg.com/vi/abc123/default.jpg" media="(max-width: 759px)"'), 'A media source selects the tiny image on mobile regardless of pixel density.');
 $assert(str_contains($link, 'data-embed-url="https://www.youtube.com/embed/abc123"'), 'Video card emits a normalized embed URL.');
 $assert(str_contains($link, 'Demo &lt;video&gt;'), 'Video card escapes its title.');
 $assert(str_contains($link, 'src="https://i.ytimg.com/vi/abc123/mqdefault.jpg"') && !str_contains($link, 'hqdefault'), 'Desktop uses only the medium image without a high-resolution source.');
 
-$pagination = \TinyCat\Support\Components::render('ui/pagination', [
-    'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data(
+$pagination = \TinyCat\Core\Ui\Components::render('ui/pagination', [
+    'navigation' => \TinyCat\Core\Ui\Admin\Views::admin_pagination_view_data(
         ['page' => 2, 'last_page' => 5, 'total' => 50, 'from' => 11, 'to' => 20],
         '/api/users',
         '#users-list',
@@ -110,11 +110,11 @@ $assert(str_contains($pagination, 'data-history="/admin/users?page=3"'), 'Pagina
 $assert(str_contains($pagination, 'data-ajax-target="#users-list"'), 'Pagination preserves its AJAX target.');
 $assert(str_contains($pagination, 'class="pagination-list"') && str_contains($pagination, 'class="pagination-link is-active"'), 'Pagination groups controls using the shared styles instead of spreading numbers across the page.');
 $assert(str_contains($pagination, 'class="pagination-link pagination-prev"') && str_contains($pagination, 'class="pagination-link pagination-next"'), 'Pagination includes previous and next controls.');
-$gaps = \TinyCat\Support\Components::render('ui/pagination', ['navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data(['page' => 10, 'last_page' => 20], '/api/users', '#users-list'), 'target' => '#users-list']);
+$gaps = \TinyCat\Core\Ui\Components::render('ui/pagination', ['navigation' => \TinyCat\Core\Ui\Admin\Views::admin_pagination_view_data(['page' => 10, 'last_page' => 20], '/api/users', '#users-list'), 'target' => '#users-list']);
 $assert(substr_count($gaps, 'class="pagination-ellipsis"') === 2, 'Non-adjacent page ranges are separated by ellipses.');
 
 
-$comment = \TinyCat\Support\Components::render('status/comment', [
+$comment = \TinyCat\Core\Ui\Components::render('status/comment', [
     'item' => \TinyCat\Social\Posts\Resource::comment([
         'id' => 13, 'content_id' => 7, 'author_name' => 'Alice <unsafe>', 'author_id' => 1,
         'body' => 'Hello #tinycat <unsafe>', 'created_at' => '2026-08-09 12:01:00', 'likes_count' => 4, 'replies' => [],
@@ -132,7 +132,7 @@ $notification = \TinyCat\Core\Notifications\Views::items(['notifications' => [[
 ]]], true);
 $assert(str_contains($notification, 'href="/status/7"') && str_contains($notification, 'data-url="/api/notifications/21?open=1"') && str_contains($notification, 'data-method="PATCH"'), 'Unread notifications mark read through the API and retain a read-only destination.');
 $assert(str_contains($notification, 'Notification content text'), 'Notification renders its content excerpt.');
-$assert(str_contains($notification, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::t('notifications.messages.content_mention', ['actor' => 'Bob <unsafe>']))), 'Notification translates raw event data with escaped actor text.');
+$assert(str_contains($notification, \TinyCat\Core\Ui\Html::e(\TinyCat\Support\Localization::t('notifications.messages.content_mention', ['actor' => 'Bob <unsafe>']))), 'Notification translates raw event data with escaped actor text.');
 
 if (class_exists(DOMDocument::class)) {
     $document = new DOMDocument();
@@ -147,19 +147,19 @@ foreach (['google.com', 'https://google.com', '//google.com', '/\\google.com', '
     $assert(\TinyCat\Core\Identity\Login::auth_safe_next_url($unsafeNext) === '', 'Login rejects ambiguous or external redirect destinations: ' . json_encode($unsafeNext));
 }
 $assert(\TinyCat\Core\Identity\Login::auth_safe_next_url('/account?search=hello%20world&url=https%3A%2F%2Fexample.test') === '/account?search=hello%20world&url=https%3A%2F%2Fexample.test', 'Safe local redirects preserve encoded query data.');
-$loginPage = \TinyCat\Support\Components::render('users/auth-content', \TinyCat\Core\Identity\Resource::authenticationForm('login', '/search') + ['error' => '<Failed>']);
+$loginPage = \TinyCat\Core\Ui\Components::render('users/auth-content', \TinyCat\Core\Identity\Resource::authenticationForm('login', '/search') + ['error' => '<Failed>']);
 $assert(str_contains($loginPage, 'action="/api/users/sessions"') && str_contains($loginPage, '&lt;Failed&gt;'), 'The direct login page preserves canonical endpoints, accessible form and escaped errors.');
 $disabledRegistration = \TinyCat\Core\Identity\Resource::authenticationForm('register', '');
 $disabledRegistration['registration_enabled'] = false;
-$disabledRegistration = \TinyCat\Support\Components::render('users/auth-content', $disabledRegistration);
+$disabledRegistration = \TinyCat\Core\Ui\Components::render('users/auth-content', $disabledRegistration);
 $assert(!str_contains($disabledRegistration, '<form') && str_contains($disabledRegistration, 'alert-info'), 'Disabled registration renders its notice without a form.');
 $recoveryData = ['mode' => 'recovery', 'form_url' => '/api/users/password-resets', 'token' => '', 'options' => ['password_max_length' => \TinyCat\Core\Identity\Passwords::maxLength(), 'password_min_bytes' => \TinyCat\Core\Identity\Passwords::minLength()], 'captcha' => ['enabled' => false], 'switch_url' => '/pl/login'];
-$recoveryPage = \TinyCat\Support\Components::render('users/auth-content', $recoveryData);
+$recoveryPage = \TinyCat\Core\Ui\Components::render('users/auth-content', $recoveryData);
 $assert(str_contains($recoveryPage, 'action="/api/users/password-resets"') && str_contains($recoveryPage, 'type="email"') && !str_contains($recoveryPage, 'name="password"'), 'Recovery requests use the email form.');
-$resetPage = \TinyCat\Support\Components::render('users/auth-content', array_replace($recoveryData, ['mode' => 'reset', 'form_url' => '/api/users/password-resets/confirm', 'token' => '"><unsafe>']));
+$resetPage = \TinyCat\Core\Ui\Components::render('users/auth-content', array_replace($recoveryData, ['mode' => 'reset', 'form_url' => '/api/users/password-resets/confirm', 'token' => '"><unsafe>']));
 $assert(str_contains($resetPage, 'action="/api/users/password-resets/confirm"') && str_contains($resetPage, '&quot;&gt;&lt;unsafe&gt;') && substr_count($resetPage, 'autocomplete="new-password"') === 2, 'Password resets preserve the escaped token and both constrained password fields.');
 $assert(substr_count($resetPage, 'data-max-bytes="' . \TinyCat\Core\Identity\Passwords::maxLength() . '"') === 2 && substr_count($resetPage, 'data-min-bytes="' . \TinyCat\Core\Identity\Passwords::minLength() . '"') === 2 && str_contains($resetPage, 'href="/pl/login"'), 'Recovery shares byte-based password constraints and localized navigation.');
-$logoutPage = \TinyCat\Support\Components::render('users/logout-page');
+$logoutPage = \TinyCat\Core\Ui\Components::render('users/logout-page');
 $assert(str_contains($logoutPage, 'method="post"') && str_contains($logoutPage, 'data-api-method="DELETE"') && str_contains($logoutPage, 'data-confirm-variant="danger"') && str_contains($logoutPage, 'name="_csrf"'), 'Logout retains server CSRF, DELETE transport and the shared confirmation lifecycle.');
 
 // Layout composition must preserve a single document and select the correct shell.

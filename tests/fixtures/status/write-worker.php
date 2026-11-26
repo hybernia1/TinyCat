@@ -9,8 +9,7 @@ use TinyCat\Database\Connection;
 use TinyCat\Social\Posts\{PostCreation, Repository, ImageStorage};
 $db = new PDO($state['dsn'], $state['user'], $state['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 Connection::set($db);
-(new ReflectionProperty(TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(TinyCat\Support\Config::class, 'config'))->setValue(null, []);
+TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration([]));
 try {
     $old = \TinyCat\Database\Transactions::run(static function () use ($state): string {
         // Establish a repeatable-read snapshot before waiting for the parent lock.

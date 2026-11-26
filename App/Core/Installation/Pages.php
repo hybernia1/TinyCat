@@ -90,7 +90,7 @@ final class Pages
             'styles' => \TinyCat\Support\ClientAssets::styles('/install'),
             'scripts' => \TinyCat\Support\ClientAssets::scripts('/install'),
             'skipLink' => false, 'colorScheme' => false,
-        ], new \TinyCat\Support\Markup(\TinyCat\Support\Components::render('installation/page', $data)));
+        ], new \TinyCat\Core\Ui\Markup(\TinyCat\Core\Ui\Components::render('installation/page', $data)));
     }
 
     /** Prepare explicit component inputs before rendering; only the tables step probes the database.

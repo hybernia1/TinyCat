@@ -188,6 +188,17 @@ const embedModal = T.status.modal(new URL("https://tinycat.test/api/statuses/42/
 check(embedModal.getAttribute("role") === "dialog" && embedModal.querySelector("iframe").src === "https://tinycat.test/status/42/embed", "Embedding opens the standard dialog with a same-origin preview.");
 check(embedModal.querySelector("code").textContent === '<iframe title="example"></iframe>' && !embedModal.querySelector("code").querySelector("iframe") && !embedModal.querySelector("textarea"), "The embed modal exposes its snippet through the shared code block as literal text, never interpreted markup.");
 assert.throws(() => T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://evil.test/status/42/embed", snippet: "" } }, "foreign-embed"), /Invalid embed preview/);
+for (const origin of ['https://tinycat.test', 'http://tinycat.test', 'https://www.tinycat.test', 'http://tinycat.test:8080']) {
+  const previousLocation = window.location;
+  window.location = new URL(origin + '/cs/');
+  const snippet = '<iframe src="http://canonical.test:8081/site/status/42/embed"></iframe>';
+  const modal = T.status.modal(new URL('/api/statuses/42/embed', window.location), { data: { frame_url: '/status/42/embed', snippet } }, 'local-embed');
+  check(modal.querySelector('iframe').src === origin + '/status/42/embed' && modal.querySelector('code').textContent === snippet, 'Preview follows the actual browser scheme, host and port while canonical sharing markup remains literal.');
+  window.location = previousLocation;
+}
+for (const frame_url of ['http://tinycat.test/status/42/embed', 'https://www.tinycat.test/status/42/embed', 'https://tinycat.test:444/status/42/embed', '//evil.test/status/42/embed', 'https://user:pass@tinycat.test/status/42/embed', '/prefix/status/42/embed', '/status/43/embed', '/status/42/embed?maxheight=1', '/status/42/embed#fragment']) {
+  assert.throws(() => T.status.modal(new URL('https://tinycat.test/api/statuses/42/embed'), { data: { frame_url, snippet: '' } }, 'invalid-embed'), /Invalid embed preview/);
+}
 
 const socialCard = T.components.render("publishing/link", { link: { url: "https://facebook.com/ExamplePage/posts/123", title: "Author", description: "Post text", provider: "facebook", provider_name: "Facebook", card_kind: "social", card_icon: "message-circle" } });
 check(socialCard.querySelector('[data-card-kind="social"]').textContent.includes("Facebook"), "Social cards have a provider header and keep post text local.");

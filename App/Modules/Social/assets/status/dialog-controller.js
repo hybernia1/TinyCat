@@ -31,7 +31,8 @@ import "./controller.js";
       if (!/^\/api\/statuses\//.test(url.pathname)) { return null; }
       if (/\/embed$/.test(url.pathname)) {
         var previewUrl = new URL(data.frame_url, window.location.href);
-        if (previewUrl.origin !== window.location.origin || !/\/status\/[1-9][0-9]*\/embed$/.test(previewUrl.pathname)) throw new TypeError("Invalid embed preview URL.");
+        var previewPath = url.pathname.replace(/^\/api\/statuses\//, "/status/");
+        if (previewUrl.origin !== window.location.origin || previewUrl.username || previewUrl.password || previewUrl.pathname !== previewPath || !/^\/status\/[1-9][0-9]*\/embed$/.test(previewPath) || previewUrl.search || previewUrl.hash) throw new TypeError("Invalid embed preview URL.");
         var preview = document.createElement("iframe");
         preview.src = previewUrl.href; preview.className = "status-embed-preview";
         preview.title = U.text("account.status_embed"); preview.loading = "lazy"; preview.referrerPolicy = "no-referrer"; preview.height = "340";

@@ -4,8 +4,8 @@ declare(strict_types=1);
 /** @var string $csrfToken */
 /** @var array<string, string|int|null> $htmlAttributes */
 /** @var array<string, string|int|null> $bodyAttributes */
-/** @var \TinyCat\Support\Markup $metadata */
-/** @var \TinyCat\Support\Markup $content */
+/** @var \TinyCat\Core\Ui\Markup $metadata */
+/** @var \TinyCat\Core\Ui\Markup $content */
 /** @var list<string> $styles */
 /** @var list<string> $scripts */
 /** @var list<array<string, string>> $flashToasts */
@@ -13,7 +13,7 @@ declare(strict_types=1);
 /** @var bool $skipLink */
 /** @var bool $colorScheme */
 /** @var string $robots */
-use TinyCat\Support\Html;
+use TinyCat\Core\Ui\Html;
 ?>
 <!doctype html>
 <html<?php foreach ($htmlAttributes as $name => $value): ?><?php if ($value !== null): ?> <?= Html::e($name) ?>="<?= Html::e($value) ?>"<?php endif; ?><?php endforeach; ?>>
@@ -28,7 +28,7 @@ use TinyCat\Support\Html;
     <?php foreach ($styles as $url): ?><link rel="stylesheet" href="<?= Html::e($url) ?>"><?php endforeach; ?>
     <?php foreach ($scripts as $url): ?><script src="<?= Html::e($url) ?>" defer></script><?php endforeach; ?>
     <?php if ($analyticsMeasurementId !== ''): ?>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= \TinyCat\Support\Html::e($analyticsMeasurementId) ?>"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= \TinyCat\Core\Ui\Html::e($analyticsMeasurementId) ?>"></script>
         <script>
             window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
             gtag('consent','default',{
@@ -39,7 +39,7 @@ use TinyCat\Support\Html;
                 wait_for_update:500
             });
             gtag('js',new Date());
-            gtag('config','<?= \TinyCat\Support\Html::e($analyticsMeasurementId) ?>');
+            gtag('config','<?= \TinyCat\Core\Ui\Html::e($analyticsMeasurementId) ?>');
         </script>
     <?php endif; ?>
     <?php if ($flashToasts !== []): ?><template data-tinycat-flashes><?= json_encode($flashToasts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></template><?php endif; ?>

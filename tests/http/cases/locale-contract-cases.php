@@ -84,3 +84,32 @@ $localeDatabase = null;
 file_get_contents('http://' . $address . '/pl/tag/t%C3%A9st', false, $redirectContext);
 $redirectHeaders = http_get_last_response_headers() ?? [];
 $assert(str_contains($redirectHeaders[0], '301') && in_array('Location: /pl/tag/test', $redirectHeaders, true), 'Noncanonical UTF-8 tags redirect to the canonical slug while retaining the language.');
+
+// Two already persisted semantic health events; no health run is needed to render them.
+$healthDatabase = \tinycat_test_database($databasePath);
+$healthDatabase->exec("INSERT INTO notifications (user_id, type, notification_key, created_at, updated_at) VALUES (2, 'site_health_ok', 'site_health:900001', '2026-12-01 12:00:00', '2026-12-01 12:00:00'), (2, 'site_health_attention', 'site_health:900002', '2026-12-01 12:00:01', '2026-12-01 12:00:01')");
+$healthBefore = $healthDatabase->query("SELECT * FROM notifications WHERE notification_key IN ('site_health:900001', 'site_health:900002') ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
+try {
+    foreach (['pl' => ['site_health_ok' => 'Kontrola stanu witryny zakończona: wszystko jest w porządku.', 'site_health_attention' => 'Kontrola stanu witryny zakończona: coś wymaga uwagi.'], 'de' => ['site_health_ok' => 'Die Zustandsprüfung der Website ist abgeschlossen: Alles ist in Ordnung.', 'site_health_attention' => 'Die Zustandsprüfung der Website ist abgeschlossen: Etwas erfordert Aufmerksamkeit.']] as $locale => $messages) {
+        foreach (['/api/notifications/preview', '/api/notifications'] as $endpoint) {
+            [$status, $payload] = $request('GET', $endpoint, null, 'user', ['X-TinyCat-Locale' => $locale, 'Accept-Language' => 'en']);
+            $actual = [];
+            foreach ($payload['data']['items'] as $item) { if (isset($messages[$item['type']])) { $actual[$item['type']] = $item['message']; } }
+            ksort($actual); $expected = $messages; ksort($expected);
+            $assert($status === 200 && $actual === $expected, 'Notification resources follow the interface header, not the English account/site locale: ' . $locale . ' ' . $endpoint);
+        }
+        [$status, $state] = $request('GET', '/api/notifications/state', null, 'user', ['X-TinyCat-Locale' => $locale]);
+        $assert($status === 200 && array_keys($state['data']) === ['unread_count', 'latest_id'], 'Language selection preserves state-only polling.');
+        foreach (['/' . $locale . '/', '/' . $locale . '/notifications'] as $path) {
+            [$status, $body, $headers] = $exportRequest($path, 'GET', ['X-Test-Role' => 'user', 'Accept-Language' => 'en']);
+            $assert($status === 200 && ($headers['content-language'] ?? '') === $locale, 'Notification HTML follows the prefixed UI locale: ' . $path);
+            foreach ($messages as $message) { $assert(str_contains($body, $message), 'Both existing health outcomes render in the public menu and full notification page: ' . $path); }
+            $assert(!str_contains($body, 'Site health inspection completed:'), 'The prefixed UI does not retain an English health sentence: ' . $path);
+        }
+    }
+    $assert($healthDatabase->query("SELECT * FROM notifications WHERE notification_key IN ('site_health:900001', 'site_health:900002') ORDER BY id")->fetchAll(PDO::FETCH_ASSOC) === $healthBefore, 'Reading health notices in different languages never rewrites persisted events or their read state.');
+    $assert($healthDatabase->query('SELECT locale FROM users WHERE id = 2')->fetchColumn() === 'en', 'Notification localization preserves the account language.');
+} finally {
+    $healthDatabase->exec("DELETE FROM notifications WHERE notification_key IN ('site_health:900001', 'site_health:900002')");
+    $healthDatabase = null;
+}

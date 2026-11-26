@@ -29,8 +29,8 @@ final readonly class PostCreation
 
     public static function fromText(string $text): self
     {
-        $body = self::normalize(\TinyCat\Support\Text::strip_html_tags_preserving_text($text));
-        $body = \TinyCat\Support\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);
+        $body = self::normalize(\TinyCat\Core\Text\Text::strip_html_tags_preserving_text($text));
+        $body = \TinyCat\Core\Text\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);
         $host = Policy::blockedHost($body);
         $rejection = $host !== ''
             ? ['code' => 'blocked_url', 'message_key' => 'moderation.messages.blocked_url', 'params' => ['host' => $host]]
@@ -39,7 +39,7 @@ final readonly class PostCreation
 
         $body = Mentions::normalize_mentions_for_storage($body);
         $body = Tags::normalizeTagText($body);
-        $body = \TinyCat\Support\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);
+        $body = \TinyCat\Core\Text\Text::plain_text_limit($body, self::BODY_MAX_LENGTH);
         return new self($body, Tags::extractTags($body), Links::status_links_from_text($body), null);
     }
 
@@ -50,25 +50,11 @@ final readonly class PostCreation
         $lines = explode("\n", $body);
         foreach ($lines as &$line) {
             $line = trim($line);
-            // Protect literal URLs, including their query strings and fragments.
-            preg_match_all(LinkParser::pattern(), $line, $urls, PREG_OFFSET_CAPTURE);
-            $parts = [];
-            $offset = 0;
-            foreach ($urls[0] as [$url, $position]) {
-                $parts[] = substr($line, $offset, $position - $offset);
-                $parts[] = $url;
-                $offset = $position + strlen($url);
-            }
-            $parts[] = substr($line, $offset);
-            foreach ($parts as $index => &$part) {
-                if ($index % 2 === 0) {
-                    $part = preg_replace('/[\x{200B}\x{FEFF}]/u', '', $part) ?? $part;
-                    $part = preg_replace('/[^\S\n]+/u', ' ', $part) ?? $part;
-                    $part = preg_replace('/\[\s*(?:\.{3}|…)\s*\]/u', '…', $part) ?? $part;
-                }
-            }
-            unset($part);
-            $line = implode('', $parts);
+            $line = \TinyCat\Core\Text\InlineText::map($line, static function (string $part): string {
+                $part = preg_replace('/[\x{200B}\x{FEFF}]/u', '', $part) ?? $part;
+                $part = preg_replace('/[^\S\n]+/u', ' ', $part) ?? $part;
+                return preg_replace('/\[\s*(?:\.{3}|\x{2026})\s*\]/u', "\u{2026}", $part) ?? $part;
+            });
             $line = trim($line);
         }
         unset($line);
@@ -79,7 +65,7 @@ final readonly class PostCreation
     public static function tagRejection(string $body): ?array
     {
         foreach (Tags::tagTokens($body) as $token) {
-            if (strlen(\TinyCat\Support\Text::slug((string) $token)) > Tags::MAX_BYTES) {
+            if (strlen(\TinyCat\Core\Text\Text::slug((string) $token)) > Tags::MAX_BYTES) {
                 return ['code' => 'status_tag_too_long', 'message_key' => 'account.messages.status_tag_too_long', 'params' => ['max' => (string) Tags::MAX_BYTES]];
             }
         }

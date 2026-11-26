@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
-use TinyCat\Support\Html;
+use TinyCat\Core\Ui\Html;
 use TinyCat\Support\Localization;
 /** @var string $author */
 /** @var string $url */
 /** @var string $siteName */
-/** @var \TinyCat\Support\Markup $card */
+/** @var \TinyCat\Core\Ui\Markup $card */
 /** @var list<string> $cardStyles */
 /** @var string $styleUrl */
 /** @var string $scriptUrl */

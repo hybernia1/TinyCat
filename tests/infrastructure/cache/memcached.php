@@ -12,10 +12,9 @@ $client->addServer('127.0.0.1', 11211);
 if (!is_string(($client->getVersion()['127.0.0.1:11211'] ?? null))) {
     echo "SKIP Memcached integration: local server unavailable\n"; exit(0);
 }
-(new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => [
+Config::configure(new \TinyCat\Core\Runtime\Configuration(['cache' => [
     'driver' => 'memcached', 'memcached' => ['prefix' => 'tinycat:test:' . bin2hex(random_bytes(8)) . ':', 'max_item_bytes' => 1024],
-]]);
+]]));
 $checks = 0;
 $expect = static function (bool $ok, string $message) use (&$checks): void {
     if (!$ok) { throw new RuntimeException($message); }
@@ -73,15 +72,15 @@ try {
     $expect(Cache::forget('partition'), 'Durable local invalidation succeeds during partition.');
     (new ReflectionProperty(Cache::class, 'memcachedClient'))->setValue(null, $primary);
     $expect(Cache::get('partition') === null, 'Recovered primary cannot resurrect an invalidated entry.');
-    $configuration = (new ReflectionProperty(Config::class, 'config'))->getValue();
+    $configuration = Config::get();
     Cache::put('installation', ['first']);
     $other = $configuration;
     $other['cache']['directory'] = Cache::directory() . '/other-installation';
-    (new ReflectionProperty(Config::class, 'config'))->setValue(null, $other);
+    Config::configure(new \TinyCat\Core\Runtime\Configuration($other));
     $expect(Cache::get('installation') === null, 'Configured directories isolate shared Memcached prefixes.');
     Cache::put('installation', ['second']);
     Cache::forget('installation');
-    (new ReflectionProperty(Config::class, 'config'))->setValue(null, $configuration);
+    Config::configure(new \TinyCat\Core\Runtime\Configuration($configuration));
     $expect(Cache::get('installation') === ['first'], 'Other installation mutation preserves the first.');
     echo "PASS real Memcached fallback, recovery, invalidation and expiry ({$checks} checks)\n";
 } finally {

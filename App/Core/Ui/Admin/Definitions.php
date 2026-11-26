@@ -2,7 +2,11 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Ui\Admin;
 
-use TinyCat\Support\{AdminViews, ClientAssets, Components, Localization, Markup};
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
+use TinyCat\Support\ClientAssets;
+use TinyCat\Core\Ui\Components;
+use TinyCat\Support\Localization;
+use TinyCat\Core\Ui\Markup;
 
 /** Module-owned, metadata-only wiring; queries and authorization stay with their handlers. */
 final class Definitions

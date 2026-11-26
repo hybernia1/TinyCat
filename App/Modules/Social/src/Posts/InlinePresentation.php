@@ -84,29 +84,7 @@ final class InlinePresentation
 
     public static function render_status_emoticons(string $text): string
     {
-        if ($text === '') {
-            return '';
-        }
-
-        // Keep URL text untouched. Statuses render URLs separately, while
-        // comments use this generic mention renderer directly.
-        if (!preg_match_all(\TinyCat\Social\Posts\LinkParser::pattern(), $text, $matches, PREG_OFFSET_CAPTURE)) {
-            return self::render_status_emoticons_segment($text);
-        }
-
-        $offset = 0;
-        $result = '';
-
-        foreach ((array) ($matches[0] ?? []) as $match) {
-            $raw = (string) $match[0];
-            $position = (int) $match[1];
-
-            $result .= self::render_status_emoticons_segment(substr($text, $offset, $position - $offset));
-            $result .= $raw;
-            $offset = $position + strlen($raw);
-        }
-
-        return $result . self::render_status_emoticons_segment(substr($text, $offset));
+        return \TinyCat\Core\Text\InlineText::map($text, self::render_status_emoticons_segment(...));
     }
 
     public static function render_status_emoticons_segment(string $text): string

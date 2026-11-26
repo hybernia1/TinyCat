@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCat\Support;
 
+use TinyCat\Core\Ui\Components;
+
 use RuntimeException;
 
 /** Module-owned manifests select public client code, definitions and messages. */

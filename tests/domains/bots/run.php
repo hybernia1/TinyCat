@@ -39,6 +39,14 @@ $podcast = '<rss xmlns:p="http://www.itunes.com/dtds/podcast-1.0.dtd"><channel><
 $podcastItems = \TinyCat\Core\Feeds\FeedParser::parse($podcast);
 $assert($podcastItems[0]['description'] === 'Podcast summary' && $podcastItems[0]['image_urls'] === ['https://93.184.216.34/cover.jpg'], 'Podcast episodes use iTunes summaries and channel artwork without treating audio as an image.');
 $assert($podcastItems[1]['description'] === 'RSS description' && $podcastItems[1]['image_urls'] === ['https://93.184.216.34/episode.jpg'], 'Episode artwork and RSS descriptions take precedence over podcast fallbacks.');
+$duplicateHtml = '<p>one</p><p>two</p><img src="/same.jpg"><img src="/last.jpg">';
+$duplicateItems = \TinyCat\Core\Feeds\FeedParser::parse('<rss xmlns:c="http://purl.org/rss/1.0/modules/content/"><channel><item><guid>duplicate</guid><title>Test</title><enclosure type="image/jpeg" url="/first.jpg"/><description><![CDATA[' . $duplicateHtml . ']]></description><c:encoded><![CDATA[' . $duplicateHtml . ']]></c:encoded></item></channel></rss>', 'https://93.184.216.34/feed');
+$assert($duplicateItems[0]['image_urls'] === ['https://93.184.216.34/first.jpg', 'https://93.184.216.34/same.jpg', 'https://93.184.216.34/last.jpg'], 'Repeated HTML fields retain ordered unique attachments.');
+$assert($duplicateItems[0]['description'] === 'one two', 'HTML block boundaries survive parsing.');
+$audioBase = \TinyCat\Core\Feeds\FeedParser::parse('<feed xmlns="http://www.w3.org/2005/Atom" xml:base="https://93.184.216.34/root/"><entry xml:base="episodes/"><id>base</id><title>Audio</title><link rel="enclosure" type="audio/mpeg" xml:base="media/" href="episode.mp3"/></entry></feed>');
+$assert($audioBase[0]['audio_url'] === 'https://93.184.216.34/root/episodes/media/episode.mp3', 'Audio enclosure resolves all xml:base levels.');
+$preparedHtml = (new \TinyCat\Social\Bots\FeedPublication())->prepare(['post_template' => '{{description}}'], $duplicateItems[0]);
+$assert($preparedHtml->body === 'one two', 'Publication preparation returns final prose, never source HTML.');
 $sourceOnly = \TinyCat\Social\Posts\Links::status_link_prepare_metadata(
     ['normalized_url' => 'https://93.184.216.34/episode'], null, false,
     ['url_hash' => '', 'title' => 'Episode', 'description' => 'RSS description', 'image_urls' => []]

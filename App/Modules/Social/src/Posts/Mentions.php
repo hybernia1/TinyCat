@@ -11,7 +11,7 @@ final class Mentions
      */
     public static function author_mention_users_by_ids(array $userIds): array
     {
-        $userIds = \TinyCat\Support\Text::positive_int_ids($userIds);
+        $userIds = \TinyCat\Support\Values::positive_int_ids($userIds);
 
         if ($userIds === []) {
             return [];
@@ -153,7 +153,7 @@ final class Mentions
             return $text;
         }
 
-        $ids = \TinyCat\Support\Text::positive_int_ids($matches[1]);
+        $ids = \TinyCat\Support\Values::positive_int_ids($matches[1]);
         $users = \TinyCat\Social\Posts\Mentions::author_mention_users_by_ids($ids);
 
         return \TinyCat\Core\Text\InlineText::map($text, static fn (string $part): string => (string) preg_replace_callback(

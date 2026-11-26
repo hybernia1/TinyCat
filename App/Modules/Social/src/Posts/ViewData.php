@@ -14,12 +14,12 @@ final class ViewData
     {
         $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? ''));
         $body = \TinyCat\Social\Posts\Links::status_strip_external_urls((string) ($item['body'] ?? ''));
-        $body = \TinyCat\Support\Text::excerpt($body, 90);
+        $body = \TinyCat\Core\Text\Text::excerpt($body, 90);
 
         if ($body !== '') {
             $title = $author !== '' ? $author . ': ' . $body : $body;
 
-            return \TinyCat\Support\Text::excerpt($title, $limit);
+            return \TinyCat\Core\Text\Text::excerpt($title, $limit);
         }
 
         $linkTitle = \TinyCat\Social\Posts\ViewData::status_meta_link_title($item, 90);
@@ -27,7 +27,7 @@ final class ViewData
         if ($linkTitle !== '') {
             $title = $author !== '' ? $author . ': ' . $linkTitle : $linkTitle;
 
-            return \TinyCat\Support\Text::excerpt($title, $limit);
+            return \TinyCat\Core\Text\Text::excerpt($title, $limit);
         }
 
         if ($author !== '') {
@@ -57,7 +57,7 @@ final class ViewData
                 continue;
             }
 
-            $title = \TinyCat\Support\Text::excerpt((string) ($link['title'] ?? ''), $limit);
+            $title = \TinyCat\Core\Text\Text::excerpt((string) ($link['title'] ?? ''), $limit);
 
             if ($title !== '' && !\TinyCat\Social\Posts\Providers::titleIsPlaceholder($title)) {
                 return $title;
@@ -89,7 +89,7 @@ final class ViewData
             $imageUrl = trim((string) ($thumbnail['fallback'] ?? ''));
 
             if ($imageUrl !== '') {
-                return \TinyCat\Support\LocalUrls::absolute($imageUrl);
+                return \TinyCat\Http\LocalUrls::absolute($imageUrl);
             }
         }
 
@@ -102,7 +102,7 @@ final class ViewData
     public static function status_meta_description(array $item): string
     {
         $body = \TinyCat\Social\Posts\Links::status_strip_external_urls((string) ($item['body'] ?? ''));
-        $body = \TinyCat\Support\Text::excerpt($body, 180);
+        $body = \TinyCat\Core\Text\Text::excerpt($body, 180);
 
         if ($body !== '') {
             return $body;

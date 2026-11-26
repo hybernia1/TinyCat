@@ -25,3 +25,17 @@ na hashtagy je převádí až Social.
 a `FeedPublication`. Příprava vrací přímo `Social/Posts/PostCreation`, stejný
 objekt jako ruční publikování. Mezi importem a publikací není druhý obal
 příspěvku ani jednorázová rozhraní úložiště a cíle.
+
+HTML je pouze dočasný vstup parseru a importní extrakce v paměti. Publikace
+předá finální prostý text do `PostCreation::fromText()`; SQL writer ukládá
+výhradně připravené `body`. Odkazy a přílohy zapisuje odděleně. Náhled používá
+stejnou přípravu, ale nevolá zápis ani claim GUID. Tato hranice nevyžaduje
+automatické čištění existujících uživatelských dat.
+
+XML enclosure a jeho `xml:base` zpracovává `Core/Feeds/FeedParser::audioEnclosure()`.
+`Core/Links/Audio` nadále vlastní obecné ověření audio URL; jeho stará veřejná
+metoda `enclosure()` zůstává kompatibilním delegátem. `FeedParser::text()` také
+zůstává dostupný, ale obecné zpracování chyb používá přímo `Core/Text/Text`.
+Při ručním nasazení přenášejte společně Text, FeedParser, Metadata a související
+Social konzumenty: nové volání `htmlText()` a rozšíření `parseDocument()` vyžadují
+odpovídající verzi core. Publikované migrace a staré snapshoty se nemění.

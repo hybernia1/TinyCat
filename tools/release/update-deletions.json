@@ -2455,5 +2455,21 @@
   "8.0.8": [
     "App/Core/Notifications/assets/styles/notifications-page.css",
     "App/Core/Ui/assets/styles/information-pages.css"
+  ],
+  "8.0.12": [
+    "App/Core/Support/RuntimeAssetCleanup.php",
+    "App/Core/Support/AdminViews.php",
+    "App/Core/Support/AdminSorting.php",
+    "App/Core/Support/Pagination.php",
+    "App/Core/Support/View.php",
+    "App/Core/Support/Components.php",
+    "App/Core/Support/Html.php",
+    "App/Core/Support/Markup.php",
+    "App/Core/Support/Text.php",
+    "App/Core/Support/LocalUrls.php",
+    "App/Core/Support/Format.php",
+    "App/Core/Support/Module.php",
+    "App/Core/Support/DeploymentIdentity.php",
+    "App/Core/Support/BuildCleanup.php"
   ]
 }

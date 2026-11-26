@@ -96,12 +96,12 @@ final class Actions
         }
 
         return [
-            'q' => \TinyCat\Support\AdminViews::admin_filter_text((string) \TinyCat\Http\Web::get('q', '')),
+            'q' => \TinyCat\Core\Ui\Admin\Views::admin_filter_text((string) \TinyCat\Http\Web::get('q', '')),
             'role' => $role,
             'status' => $status,
             'updated_from' => \TinyCat\Core\Identity\ReadModel::tc_admin_user_filter_date((string) \TinyCat\Http\Web::get('updated_from', '')),
             'updated_to' => \TinyCat\Core\Identity\ReadModel::tc_admin_user_filter_date((string) \TinyCat\Http\Web::get('updated_to', '')),
-        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Core\Identity\ReadModel::sorting());
+        ] + \TinyCat\Core\Ui\Admin\Views::sortState(\TinyCat\Core\Identity\ReadModel::sorting());
     }
 
     /** @param array<mixed>|int $user */
@@ -188,12 +188,12 @@ final class Actions
     {
         $filters ??= \TinyCat\Core\Identity\Actions::tc_admin_users_filters();
         $query = \TinyCat\Core\Identity\ReadModel::tc_admin_users_query($filters);
-        $pagination = \TinyCat\Support\Pagination::paginationMeta(
+        $pagination = \TinyCat\Core\Ui\Admin\Views::paginationMeta(
             $total ?? $query->count(),
-            \TinyCat\Support\AdminViews::admin_page(),
-            \TinyCat\Support\AdminViews::admin_per_page()
+            \TinyCat\Core\Ui\Admin\Views::admin_page(),
+            \TinyCat\Core\Ui\Admin\Views::admin_per_page()
         );
-        $items = $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Core\Identity\ReadModel::sorting(), $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
+        $items = $query->order(\TinyCat\Core\Ui\Admin\Views::sortOrder(\TinyCat\Core\Identity\ReadModel::sorting(), $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
 
         return [
             'items' => $items,

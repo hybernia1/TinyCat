@@ -2,7 +2,8 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Ui;
 
-use TinyCat\Support\{Paths, View};
+use TinyCat\Support\Paths;
+use TinyCat\Core\Ui\View;
 
 /** Local public layouts. Reading a manifest never executes theme PHP. */
 final readonly class Theme

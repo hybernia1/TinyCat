@@ -19,7 +19,7 @@ final class Profiles
 
     public static function author_url(int $id): string
     {
-        return \TinyCat\Support\LocalUrls::resolve($id > 0 ? '/author/' . $id : '/');
+        return \TinyCat\Http\LocalUrls::resolve($id > 0 ? '/author/' . $id : '/');
     }
 
     public static function author_feed_url(int $id, string $media = ''): string

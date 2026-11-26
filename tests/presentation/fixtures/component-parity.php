@@ -10,18 +10,18 @@ if (($argv[1] ?? '') === '--page-routes') { echo json_encode(\TinyCat\Http\Route
 if (($argv[1] ?? '') === '--settings-templates') {
     \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json'])->catalog);
     require dirname(__DIR__, 2) . '/fixtures/modules/settings.php';
-    echo json_encode(array_filter(\TinyCat\Support\Components::templates(), static fn (string $key): bool => str_starts_with($key, 'settings/'), ARRAY_FILTER_USE_KEY), JSON_THROW_ON_ERROR); exit(0);
+    echo json_encode(array_filter(\TinyCat\Core\Ui\Components::templates(), static fn (string $key): bool => str_starts_with($key, 'settings/'), ARRAY_FILTER_USE_KEY), JSON_THROW_ON_ERROR); exit(0);
 }
-if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
+if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Core\Ui\Components::json(); exit(0); }
 if (($argv[1] ?? '') === '--contexts') {
     $fixture = json_decode((string) file_get_contents(__DIR__ . '/../../fixtures/component-contexts.json'), true, 512, JSON_THROW_ON_ERROR);
-    $saved = \TinyCat\Support\Components::templates();
-    $property = new ReflectionProperty(\TinyCat\Support\Components::class, 'templates');
+    $saved = \TinyCat\Core\Ui\Components::templates();
+    $property = new ReflectionProperty(\TinyCat\Core\Ui\Components::class, 'templates');
     $property->setValue(null, $saved + $fixture['definitions']);
     $results = [];
     try {
         foreach ($fixture['cases'] as $case) {
-            try { $results[] = ['html' => \TinyCat\Support\Components::render($case['component'], $case['data'])]; }
+            try { $results[] = ['html' => \TinyCat\Core\Ui\Components::render($case['component'], $case['data'])]; }
             catch (InvalidArgumentException $error) { $results[] = ['error' => $error->getMessage()]; }
         }
     } finally { $property->setValue(null, $saved); }
@@ -50,7 +50,7 @@ if (($argv[1] ?? '') === '--dates') {
 if (($argv[1] ?? '') === '--date-fixtures') {
     $cases = ['absolute' => [], 'relative' => []];
     foreach (['2026-10-25T02:30:09+02:00', '2026-10-25T02:30:09+01:00'] as $date) {
-        foreach (array_keys(\TinyCat\Support\Dates::datetime_format_presets()) as $format) {
+        foreach (array_keys(\TinyCat\Core\Settings\Sections::datetime_format_presets()) as $format) {
             $cases['absolute'][] = ['value' => $date, 'format' => $format, 'expected' => \TinyCat\Support\Dates::dateTime($date, $format)];
         }
     }
@@ -71,8 +71,8 @@ if (($argv[1] ?? '') === '--date-fixtures') {
 $fixtures = json_decode((string) file_get_contents(__DIR__ . '/../../fixtures/components.json'), true, 512, JSON_THROW_ON_ERROR);
 $output = [];
 foreach ($fixtures as $fixture) {
-    foreach ($fixture['slots'] ?? [] as $key => $text) { $fixture['data'][$key] = new \TinyCat\Support\Markup(\TinyCat\Support\Html::e($text)); }
-    $html = \TinyCat\Support\Components::render($fixture['component'], $fixture['data']);
+    foreach ($fixture['slots'] ?? [] as $key => $text) { $fixture['data'][$key] = new \TinyCat\Core\Ui\Markup(\TinyCat\Core\Ui\Html::e($text)); }
+    $html = \TinyCat\Core\Ui\Components::render($fixture['component'], $fixture['data']);
     $document = new DOMDocument();
     @$document->loadHTML('<!doctype html><html><head><meta charset="utf-8"></head><body><div id="fixture">' . $html . '</div></body></html>');
     $nodes = [];

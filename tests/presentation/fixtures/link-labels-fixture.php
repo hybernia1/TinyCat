@@ -20,7 +20,7 @@ foreach ([10, 11, 12, 13, 14, 15] as $id) {
 }
 $html = '';
 foreach ($posts as $post) {
-    $html .= TinyCat\Support\Components::render('status/card', ['item' => $post, 'anchor' => false, 'open_modal' => true]);
+    $html .= TinyCat\Core\Ui\Components::render('status/card', ['item' => $post, 'anchor' => false, 'open_modal' => true]);
 }
 $sources = [];
 foreach ([21, 22] as $id) {
@@ -29,6 +29,6 @@ foreach ([21, 22] as $id) {
         'published_url' => '/admin/bots/2?source=' . $id . '&publication=published', 'queue_url' => '/admin/bots/queue?source=' . $id];
 }
 echo json_encode(['posts' => $posts, 'html' => $html, 'sources' => $sources,
-    'detail_html' => TinyCat\Support\Components::render('status/actions', ['item' => $posts[0], 'open_modal' => false]),
-    'source_html' => TinyCat\Support\Components::render('bots/sources', ['items' => $sources, 'filters' => [], 'bots' => [], 'sorting' => [], 'state' => []]),
+    'detail_html' => TinyCat\Core\Ui\Components::render('status/actions', ['item' => $posts[0], 'open_modal' => false]),
+    'source_html' => TinyCat\Core\Ui\Components::render('bots/sources', ['items' => $sources, 'filters' => [], 'bots' => [], 'sorting' => [], 'state' => []]),
     'labels' => TinyCat\Support\Localization::catalog($locale)], JSON_THROW_ON_ERROR);

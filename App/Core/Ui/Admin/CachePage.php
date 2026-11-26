@@ -2,7 +2,11 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Ui\Admin;
 
-use TinyCat\Support\{Cache, ClientAssets, Components, Localization, Markup};
+use TinyCat\Support\Cache;
+use TinyCat\Support\ClientAssets;
+use TinyCat\Core\Ui\Components;
+use TinyCat\Support\Localization;
+use TinyCat\Core\Ui\Markup;
 
 /** Read-only operational cache overview; no cache keys or private paths are exposed. */
 final class CachePage
@@ -17,6 +21,7 @@ final class CachePage
     public static function model(): array
     {
         $cache = Cache::diagnostics();
+        $opcache = \TinyCat\Core\Runtime\Debug::opcacheDiagnostics();
         $application = ['name' => Localization::t('admin.cache.application'), 'description' => Localization::t('admin.cache.application_help'), 'value' => $cache['driver'] === 'memcached' ? 'Memcached' : Localization::t('admin.cache.filesystem'), 'badge_label' => Localization::t('admin.cache.' . ($cache['available'] ? 'available' : 'fallback')), 'tone' => $cache['available'] ? 'success' : 'danger'];
         $assets = ['name' => Localization::t('admin.cache.assets'), 'rows' => []];
         foreach (['css', 'js', 'html'] as $kind) {
@@ -28,7 +33,7 @@ final class CachePage
             ['label' => Localization::t('admin.cache.uploads'), 'value' => Localization::t('admin.cache.thirty_days')],
             ['label' => 'HTML', 'value' => 'no-store'],
         ]];
-        $observations = [['label' => Localization::t('common.home'), 'url' => \TinyCat\Support\LocalUrls::resolve('/')], ['label' => 'CSS', 'url' => ClientAssets::styles('/admin/cache')[0]]];
+        $observations = [['label' => Localization::t('common.home'), 'url' => \TinyCat\Http\LocalUrls::resolve('/')], ['label' => 'CSS', 'url' => ClientAssets::styles('/admin/cache')[0]]];
         foreach ($observations as &$observation) {
             $observation['rows'] = [];
             foreach (['Content-Encoding', 'Cache-Control', 'Vary', 'ETag'] as $header) {
@@ -36,6 +41,6 @@ final class CachePage
             }
         }
         unset($observation);
-        return ['application' => $application, 'assets' => $assets, 'browser' => $browser, 'observations' => $observations, 'services' => new Markup(Diagnostics::render(['cache' => $cache, 'memcached' => $cache['memcached'], 'memcachedStats' => $cache['memcached']['stats'], 'opcache' => $cache['opcache'], 'opcacheStats' => $cache['opcache']['stats'], 'opcacheConfig' => $cache['opcache']['configuration']]))];
+        return ['application' => $application, 'assets' => $assets, 'browser' => $browser, 'observations' => $observations, 'services' => new Markup(Diagnostics::render(['cache' => $cache, 'memcached' => $cache['memcached'], 'memcachedStats' => $cache['memcached']['stats'], 'opcache' => $opcache, 'opcacheStats' => $opcache['stats'], 'opcacheConfig' => $opcache['configuration']]))];
     }
 }

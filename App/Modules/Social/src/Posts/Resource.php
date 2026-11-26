@@ -39,7 +39,7 @@ final class Resource
             'context' => self::context($item),
             'login_url' => \TinyCat\Core\Identity\Login::auth_url_with_next('/login', Posts::status_url($id)),
             'login_modal_url' => \TinyCat\Core\Identity\Login::auth_modal_url('login', Posts::status_url($id)),
-            'image' => ['url' => \TinyCat\Social\Posts\Images::status_image_url($item), 'description' => \TinyCat\Support\Text::excerpt(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Core\Ui\Site::site_name()],
+            'image' => ['url' => \TinyCat\Social\Posts\Images::status_image_url($item), 'description' => \TinyCat\Core\Text\Text::excerpt(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Core\Ui\Site::site_name()],
             'links' => $presentation['links'],
             'likes_count' => (int) ($item['likes_count'] ?? 0),
             'comments_count' => (int) ($item['comments_count'] ?? 0),
@@ -55,7 +55,7 @@ final class Resource
     public static function context(array $item): array
     {
         return ['author' => trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? '')),
-            'excerpt' => \TinyCat\Support\Text::excerpt(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 80),
+            'excerpt' => \TinyCat\Core\Text\Text::excerpt(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 80),
             'id' => max(0, (int) ($item['id'] ?? $item['content_id'] ?? 0))];
     }
 

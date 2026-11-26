@@ -128,7 +128,7 @@ foreach ($files as $file) {
 
         if (is_array($nextToken) && $nextToken[0] === T_DOUBLE_COLON) {
             $class = $imports[$name] ?? ltrim($name, '\\');
-            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Html|View|Localization|Dates|Text|Format|Components|Version)|Core\\\\Security\\\\Csrf|(?:Core\\\\(?:Identity|Notifications)|Social\\\\(?:Profiles|Automation|Presentation))\\\\Views)$~', $class) !== 1) {
+            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Localization|Dates|Version)|Core\\\\Ui\\\\(?:Html|View|Components)|Core\\\\Text\\\\Text|Core\\\\Security\\\\Csrf|(?:Core\\\\(?:Identity|Notifications)|Social\\\\(?:Profiles|Automation|Presentation))\\\\Views)$~', $class) !== 1) {
                 $failures[] = $relative . ':' . $token[2] . ' must compose presentation components instead of calling ' . $class . '::.';
             }
         }

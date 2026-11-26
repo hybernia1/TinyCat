@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Bots;
 
-use TinyCat\Support\AdminViews;
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
 use TinyCat\Support\Dates;
 
 final class Resource
@@ -53,7 +53,7 @@ final class Resource
         $navigation = AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $filters + ['per_page' => (int) ($pagination['per_page'] ?? 10)], 'page', 2, $definition['path']);
         unset($navigation['target']);
         return array_replace($data, ['items' => $items, 'statuses' => array_keys($statuses),
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Bots\Sorting::accounts(), $filters + ['per_page' => (int) ($pagination['per_page'] ?? 25)]),
+            'sorting' => \TinyCat\Core\Ui\Admin\Views::sortHeadings(\TinyCat\Social\Bots\Sorting::accounts(), $filters + ['per_page' => (int) ($pagination['per_page'] ?? 25)]),
             'navigation' => $navigation]);
     }
 

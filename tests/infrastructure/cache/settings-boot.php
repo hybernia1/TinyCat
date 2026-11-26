@@ -20,8 +20,7 @@ final class SettingsBootPDO extends PDO
 $checks = 0;
 $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
 $configure = static function (array $values): void {
-    (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-    (new ReflectionProperty(Config::class, 'config'))->setValue(null, $values);
+        Config::configure(new \TinyCat\Core\Runtime\Configuration($values));
     Store::reset(); Cache::forget('core_autoload_settings');
 };
 $unavailable = new SettingsBootPDO(); Connection::set($unavailable);

@@ -115,7 +115,7 @@ final class Tags
             return [];
         }
 
-        return \TinyCat\Support\Text::positive_int_ids(array_column(
+        return \TinyCat\Support\Values::positive_int_ids(array_column(
             \TinyCat\Database\Connection::all('SELECT term_id FROM social_post_tags WHERE content_id = ?', [$contentId]),
             'term_id'
         ));
@@ -126,7 +126,7 @@ final class Tags
      */
     public static function status_cleanup_unused_term_ids(array $termIds): void
     {
-        $termIds = \TinyCat\Support\Text::positive_int_ids($termIds);
+        $termIds = \TinyCat\Support\Values::positive_int_ids($termIds);
 
         if ($termIds === []) {
             return;
@@ -151,7 +151,7 @@ final class Tags
     {
         $tag = \TinyCat\Social\Posts\Tags::normalizeTag($tag);
 
-        return \TinyCat\Support\LocalUrls::resolve($tag !== '' ? '/tag/' . rawurlencode($tag) : '/');
+        return \TinyCat\Http\LocalUrls::resolve($tag !== '' ? '/tag/' . rawurlencode($tag) : '/');
     }
 
     public static function tag_feed_url(string $tag, string $media = ''): string
@@ -230,7 +230,7 @@ final class Tags
 
     public static function normalizeTag(string $tag): string
     {
-        $tag = \TinyCat\Support\Text::slug(ltrim(trim($tag), "# \t\n\r\0\x0B"));
+        $tag = \TinyCat\Core\Text\Text::slug(ltrim(trim($tag), "# \t\n\r\0\x0B"));
         return !ctype_digit($tag) && strlen($tag) <= self::MAX_BYTES ? $tag : '';
     }
 

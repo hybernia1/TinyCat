@@ -26,6 +26,6 @@ final class Sources
     {
         $rows = \TinyCat\Social\Posts\Feed::public_status_items_by_ids(array_column($items, 'id'));
         $posts = \TinyCat\Social\Posts\Resource::posts($rows, \TinyCat\Core\Identity\Authentication::auth());
-        return \TinyCat\Support\Components::render('search/posts', ['items' => $posts, 'csrf' => \TinyCat\Core\Security\Csrf::token()]);
+        return \TinyCat\Core\Ui\Components::render('search/posts', ['items' => $posts, 'csrf' => \TinyCat\Core\Security\Csrf::token()]);
     }
 }

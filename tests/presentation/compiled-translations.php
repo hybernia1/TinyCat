@@ -20,7 +20,7 @@ $write = static function (string $relative, string $source) use ($directory, &$c
     $created[] = $path;
 };
 try {
-    foreach (['Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/DeploymentIdentity.php', 'Core/Support/PreparedAssets.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
+    foreach (['Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/Storage.php', 'Core/Support/CompiledTranslations.php', 'Core/Modules/DeploymentIdentity.php', 'Core/Support/PreparedAssets.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
         $write('App/' . $relative, (string) file_get_contents($root . '/App/' . $relative));
     }
     foreach ($files as $relative => $source) {
@@ -32,7 +32,7 @@ try {
     exec($command, $output, $exitCode);
     $assert($exitCode === 0, 'Compiled catalogs must work without translation sources or database.');
     $actual = json_decode(implode("\n", $output), true, 512, JSON_THROW_ON_ERROR);
-    $sourceComponents = \TinyCat\Support\Components::withFreshTemplates(static fn (): array => \TinyCat\Support\Components::templates());
+    $sourceComponents = \TinyCat\Core\Ui\Components::withFreshTemplates(static fn (): array => \TinyCat\Core\Ui\Components::templates());
     $assert($actual['components'] === json_decode(json_encode($sourceComponents, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), 'Compiled components work without source definitions or a database.');
     $assert($actual['invalid_components'] === true, 'Compiled component paths reject traversal.');
     $assert($actual['legacy_components'] === null, 'Older release manifests retain the source fallback.');
@@ -55,7 +55,7 @@ try {
     // A source build must ignore catalogs that happen to be loaded in its process.
     (new ReflectionProperty(\TinyCat\Support\Localization::class, 'translations'))->setValue(null, ['en' => ['common.close' => 'STALE']]);
     (new ReflectionProperty(\TinyCat\Support\Localization::class, 'catalogs'))->setValue(null, []);
-    $templates = new ReflectionProperty(\TinyCat\Support\Components::class, 'templates');
+    $templates = new ReflectionProperty(\TinyCat\Core\Ui\Components::class, 'templates');
     $previousTemplates = $templates->getValue(); $templates->setValue(null, ['STALE' => []]);
     try { $assert($compile() === $files, 'Build must ignore stale runtime translations and component definitions.'); }
     finally { $templates->setValue(null, $previousTemplates); }

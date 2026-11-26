@@ -11,7 +11,11 @@ final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Co
                 'href' => '/admin/updates', 'icon' => 'download', 'label' => \TinyCat\Support\Localization::t('updates.title'),
             ], 70)],
             health: [new \TinyCat\Core\Modules\HealthProbe('updates', static fn (): string => Manager::maintenanceActive() ? 'critical' : 'ok', 80)],
-            maintenance: [new \TinyCat\Core\Modules\MaintenanceTask('update_files', static fn (int $batch): array => Cleanup::run($batch), 70, initial: true)],
+            temporaryDirectories: [new \TinyCat\Core\Modules\TemporaryDirectory('module-package-staging', static fn (): string => \TinyCat\Support\Storage::path('modules/staging'), 90)],
+            maintenance: [
+                new \TinyCat\Core\Modules\MaintenanceTask('retired_build_files', BuildCleanup::run(...), 85),
+                new \TinyCat\Core\Modules\MaintenanceTask('abandoned_module_packages', \TinyCat\Core\Modules\ModulePackage::cleanupAbandoned(...), 87),
+                new \TinyCat\Core\Modules\MaintenanceTask('update_files', static fn (int $batch): array => Cleanup::run($batch), 70, initial: true)],
         );
     }
 

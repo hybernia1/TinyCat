@@ -13,18 +13,18 @@ $options = [];
 foreach (['all', 'images', 'videos', 'audio', 'links', 'text'] as $type) {
     $options[] = ['type' => $type, 'url' => '/?media=' . $type, 'active' => $type === 'all'];
 }
-$archive = \TinyCat\Support\Components::render('site/archive-filter', ['archive_type' => '', 'archive_options' => $options]);
+$archive = \TinyCat\Core\Ui\Components::render('site/archive-filter', ['archive_type' => '', 'archive_options' => $options]);
 $users = '<details data-popover><summary>Users</summary><div class="popover-panel filter-menu-panel">'
-    . \TinyCat\Support\Components::render('users/filter-form', ['filters' => ['updated_from' => '2026-01-01', 'updated_to' => '2026-11-01'], 'pagination' => ['per_page' => 25]])
+    . \TinyCat\Core\Ui\Components::render('users/filter-form', ['filters' => ['updated_from' => '2026-01-01', 'updated_to' => '2026-11-01'], 'pagination' => ['per_page' => 25]])
     . '</div></details>';
 $scripts = \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order(['App/Core/Ui/assets/popovers.js']));
 $styles = \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles('/'));
 $filters = [];
 foreach (['bots/queue-filter-form', 'bots/post-filter-form', 'bots/run-filter-form', 'moderation/filter-form', 'scheduler/filter-form'] as $name) {
-    $filters[$name] = \TinyCat\Support\Components::render($name, ['filters' => [], 'pagination' => ['per_page' => 25]]);
+    $filters[$name] = \TinyCat\Core\Ui\Components::render($name, ['filters' => [], 'pagination' => ['per_page' => 25]]);
 }
-$filters['bots/source-filter'] = \TinyCat\Support\Components::render('bots/source-filter-form', ['bots' => []]);
-$filters['bots/account-filter'] = \TinyCat\Support\Components::render('bots/account-filter-form', ['statuses' => ['active']]);
+$filters['bots/source-filter'] = \TinyCat\Core\Ui\Components::render('bots/source-filter-form', ['bots' => []]);
+$filters['bots/account-filter'] = \TinyCat\Core\Ui\Components::render('bots/account-filter-form', ['statuses' => ['active']]);
 $notifications = \TinyCat\Core\Notifications\Views::menu(['state' => [], 'notifications' => []]);
 $public = \TinyCat\Core\Ui\DocumentData::publicHeader([
     'hasGlobalSearch' => true,
@@ -35,5 +35,5 @@ $public = \TinyCat\Core\Ui\DocumentData::publicHeader([
     'languageFlagSprite' => '/flags.svg', 'languageFlagId' => 'flag-cs', 'languageSuggestion' => null,
     'languageLinks' => [['language' => 'cs', 'name' => 'Čeština', 'url' => '/', 'active' => true]],
 ]);
-$post = \TinyCat\Support\Components::render('status/menu', ['item' => ['id' => 10, 'capabilities' => ['edit' => true, 'delete' => true, 'report' => true]]]);
+$post = \TinyCat\Core\Ui\Components::render('status/menu', ['item' => ['id' => 10, 'capabilities' => ['edit' => true, 'delete' => true, 'report' => true]]]);
 echo json_encode(['account' => $account, 'archive' => $archive, 'users' => $users, 'filters' => $filters, 'notifications' => $notifications, 'public' => $public, 'post' => $post, 'scripts' => $scripts, 'styles' => $styles], JSON_THROW_ON_ERROR);

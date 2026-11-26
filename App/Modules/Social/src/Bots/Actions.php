@@ -34,7 +34,7 @@ final class Actions
         }
 
         $payload = [
-            'bio' => \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('bio', ''), 500),
+            'bio' => \TinyCat\Core\Text\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('bio', ''), 500),
         ];
         $statusProvided = \TinyCat\Http\Request::current()->input('status', null) !== null;
         if ($statusProvided) { $payload['status'] = $status; }

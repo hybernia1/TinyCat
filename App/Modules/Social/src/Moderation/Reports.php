@@ -101,13 +101,13 @@ final class Reports
     {
         $definition = \TinyCat\Core\Ui\Admin\Definitions::get('social.moderation-reports');
         $query = self::reportsQuery();
-        $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
-        $filters = self::filters() + ['per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state(\TinyCat\Social\Moderation\Reports::sorting());
+        $pagination = \TinyCat\Core\Ui\Admin\Views::paginationMeta($query->count(), \TinyCat\Core\Ui\Admin\Views::admin_page(), \TinyCat\Core\Ui\Admin\Views::admin_per_page());
+        $filters = self::filters() + ['per_page' => $pagination['per_page']] + \TinyCat\Core\Ui\Admin\Views::sortState(\TinyCat\Social\Moderation\Reports::sorting());
         return [
-            'items' => array_map(static fn (array $report): array => Resource::report($report) + ['action_url' => \TinyCat\Support\AdminViews::admin_list_url($definition['endpoint'] . '/' . (int) $report['id'], $filters + ['page' => $pagination['page']])], $query->order(\TinyCat\Support\AdminSorting::order(\TinyCat\Social\Moderation\Reports::sorting()))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
+            'items' => array_map(static fn (array $report): array => Resource::report($report) + ['action_url' => \TinyCat\Core\Ui\Admin\Views::admin_list_url($definition['endpoint'] . '/' . (int) $report['id'], $filters + ['page' => $pagination['page']])], $query->order(\TinyCat\Core\Ui\Admin\Views::sortOrder(\TinyCat\Social\Moderation\Reports::sorting()))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
             'filters' => $filters, 'pagination' => $pagination,
-            'sorting' => \TinyCat\Support\AdminSorting::headings(\TinyCat\Social\Moderation\Reports::sorting(), $filters),
-            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $filters, historyPath: $definition['path']),
+            'sorting' => \TinyCat\Core\Ui\Admin\Views::sortHeadings(\TinyCat\Social\Moderation\Reports::sorting(), $filters),
+            'navigation' => \TinyCat\Core\Ui\Admin\Views::admin_pagination_view_data($pagination, $definition['endpoint'], $definition['target'], $filters, historyPath: $definition['path']),
         ];
     }
 
@@ -134,7 +134,7 @@ final class Reports
         $status = \TinyCat\Http\Web::get('status', '');
         $reason = \TinyCat\Http\Web::get('reason', '');
         return [
-            'q' => \TinyCat\Support\AdminViews::admin_filter_text((string) \TinyCat\Http\Web::get('q', '')),
+            'q' => \TinyCat\Core\Ui\Admin\Views::admin_filter_text((string) \TinyCat\Http\Web::get('q', '')),
             'status' => in_array($status, ['open', 'reviewed', 'resolved', 'dismissed'], true) ? $status : '',
             'reason' => in_array($reason, ['spam', 'illegal', 'malware', 'abuse', 'other'], true) ? $reason : '',
         ];

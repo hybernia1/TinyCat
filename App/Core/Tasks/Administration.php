@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Tasks;
 
-use TinyCat\Support\AdminViews;
+use TinyCat\Core\Ui\Admin\Views as AdminViews;
 use TinyCat\Http\Web;
 
 /** Validated HTTP list state, shared by the initial page and API requests. */
@@ -19,7 +19,7 @@ final class Administration
             'task' => isset($definitions[$task]) ? $task : '',
             'status' => in_array($status, Resource::STATUSES, true) ? $status : '',
             'per_page' => AdminViews::admin_per_page(),
-        ] + \TinyCat\Support\AdminSorting::state(\TinyCat\Core\Tasks\Repository::sorting());
+        ] + \TinyCat\Core\Ui\Admin\Views::sortState(\TinyCat\Core\Tasks\Repository::sorting());
         $aliases = [];
         if ($filters['q'] !== '') {
             foreach ($definitions as $name => $definition) {
@@ -38,7 +38,7 @@ final class Administration
     public static function configuration(): array
     {
         $token = Tokens::cron_token();
-        $executionUrl = \TinyCat\Support\LocalUrls::absolute('/api/scheduler/executions');
+        $executionUrl = \TinyCat\Http\LocalUrls::absolute('/api/scheduler/executions');
         $runnerPath = \TinyCat\Support\Paths::basePath('scheduled-tasks.php');
         $tasks = [];
         foreach (Tasks::definitions() as $task => $definition) {
@@ -48,7 +48,7 @@ final class Administration
             }
             $taskUrl = $executionUrl . '?task=' . rawurlencode($task);
             $tasks[] = ['id' => $task,
-                'query_url' => \TinyCat\Support\LocalUrls::absolute('/api/scheduler/triggers/' . rawurlencode($task)),
+                'query_url' => \TinyCat\Http\LocalUrls::absolute('/api/scheduler/triggers/' . rawurlencode($task)),
                 'http_command' => 'curl -fsS -X POST -H "Authorization: Bearer ' . $token . '" "' . $taskUrl . '"',
                 'cli_command' => 'php "' . $runnerPath . '" --task=' . $task . ' ' . implode(' ', $arguments)];
         }
