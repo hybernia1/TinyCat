@@ -7,6 +7,50 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.11
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No database
+migration or configuration change is required. Core and Social retain separate
+signed install/update packages, module activation, application data and rollback.
+
+Module lifecycle operations prepare content-addressed assets, components and
+translations for the effective selection. Matching signed release inventories
+remain preferred. Private prepared inventories survive deployment finalization
+and rollback and retain their asset dependencies for 30 days; expired or missing
+generations safely fall back to source delivery. `assets.source` explicitly
+selects source development. Preparing all variants adds work to activation and
+package operations; it is not performed during HTML rendering.
+
+The updater of an older release may still have its original deployment classes
+loaded during the first upgrade. After upgrading an existing installation with
+a module selection that differs from the signed inventory, prepare its assets
+explicitly in a new process:
+
+```sh
+php App/Console.php assets
+```
+
+Default selections already use the matching signed inventory. Subsequent module
+activation and package operations under the new runtime prepare their selection
+automatically. The explicit command preserves installation data and activation.
+
+Warm settings readers share coordination while fill/invalidation remain exclusive.
+Identity, CSRF and flash helpers release sessions they opened and preserve an
+outer caller's write scope. Document preparation batches session reads. These
+changes target concurrency and source fallback costs; they do not imply that
+every page is faster than an already compiled release.
+
+Bot duplicate cleanup uses a bounded candidate scan and a text fingerprint only
+as a prefilter. Exact text bytes and both directions of link, tag and image
+relations still decide matches, including fingerprint collisions. Integer
+cursors and transactional rechecks are preserved; run details report inspected
+candidates even when no duplicate was merged.
+
+Shared administration presentation refines task result headings and statuses,
+modal surfaces, dashboard links and compact comment rows. The administrator link
+moves into the account menu and remains restricted to administrators; the email
+warning uses its own account badge.
+
 ## Upgrading to 8.0.10
 
 Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No database
