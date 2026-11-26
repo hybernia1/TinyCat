@@ -71,6 +71,60 @@ for ($attempt = 0; $attempt < 30; $attempt++) {
 $assert(!is_file(Paths::basePath('uploads/avatars/.avatar-abandoned')) && !is_file(Paths::basePath('uploads/status-images/2026/10/.image-abandoned')), 'Old disposable upload files are removed.');
 $assert(is_file(Paths::basePath('uploads/avatars/.image-fresh')) && is_file(Paths::basePath('uploads/avatars/.avatar-backup-recover')), 'Fresh writes and recovery backups survive temporary cleanup.');
 
+// Empty participants must donate their inspection budget to a busy directory.
+$registered = \TinyCat\Core\Modules\Registrations::current();
+$temporaryDirectories = [];
+for ($i = 0; $i < 8; $i++) {
+    $directory = $root . '/temporary-budget/' . $i;
+    mkdir($directory, 0700, true);
+    $temporaryDirectories[] = new \TinyCat\Core\Modules\TemporaryDirectory('budget-' . $i, static fn (): string => $directory, $i);
+}
+for ($i = 0; $i < 617; $i++) { $file('temporary-budget/7/retained-' . $i); }
+$file('temporary-budget/7/.image-abandoned');
+$file('temporary-budget/7/.image-fresh', 60);
+$file('temporary-budget/7/.avatar-backup-recovery');
+try {
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture' => new \TinyCat\Core\Modules\Contributions(temporaryDirectories: $temporaryDirectories)]));
+    $removed = 0; $inspected = 0;
+    for ($attempt = 0; $attempt < 2; $attempt++) {
+        $result = \TinyCat\Core\Tasks\Cleanup\Files::temporary(500);
+        $assert($result['inspected'] <= 500, 'Redistribution never exceeds the shared inspection budget.');
+        $inspected += $result['inspected'];
+        $removed += $result['changed'];
+        if (!$result['has_more']) { break; }
+    }
+    $assert(!$result['has_more'] && $removed === 1, 'Two batches inspect 620 entries despite seven empty participants, preserving the cursor across runs.');
+    $assert($inspected === 620, 'Inspection counts include preserved files without restarting completed participants.');
+    $assert(count(glob($root . '/temporary-budget/7/retained-*') ?: []) === 617 && is_file($root . '/temporary-budget/7/.image-fresh') && is_file($root . '/temporary-budget/7/.avatar-backup-recovery'), 'Reusing inspection capacity preserves unrelated, fresh and recovery files.');
+    // A busy first participant must also receive capacity left by later empty ones.
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture' => new \TinyCat\Core\Modules\Contributions(temporaryDirectories: array_reverse($temporaryDirectories))]));
+    $first = \TinyCat\Core\Tasks\Cleanup\Files::temporary(500);
+    $second = \TinyCat\Core\Tasks\Cleanup\Files::temporary(500);
+    $assert($first['inspected'] === 500 && $second['inspected'] === 119 && !$second['has_more'], 'Unused capacity returns to an earlier busy participant in the same invocation.');
+    $cursorLock = fopen(\TinyCat\Support\Cache::file(hash('sha256', realpath($root . '/temporary-budget/7') . ':temporary') . '.json', 'cleanup-cursors') . '.lock', 'c+');
+    flock($cursorLock, LOCK_EX);
+    try {
+        $busy = \TinyCat\Core\Tasks\Cleanup\Files::temporary(500);
+        $assert($busy['has_more'] && $busy['inspected'] === 0 && $busy['changed'] === 0, 'A locked participant reports pending work without retrying inside the invocation.');
+    } finally { flock($cursorLock, LOCK_UN); fclose($cursorLock); }
+    $tinyDirectories = [];
+    for ($i = 0; $i < 8; $i++) {
+        $directory = $root . '/temporary-tiny/' . $i;
+        $file('temporary-tiny/' . $i . '/.image-abandoned');
+        $tinyDirectories[] = new \TinyCat\Core\Modules\TemporaryDirectory('tiny-' . $i, static fn (): string => $directory, $i);
+    }
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture' => new \TinyCat\Core\Modules\Contributions(temporaryDirectories: $tinyDirectories)]));
+    $removed = 0;
+    for ($attempt = 0; $attempt < 8; $attempt++) {
+        $tiny = \TinyCat\Core\Tasks\Cleanup\Files::temporary(1);
+        $assert($tiny['inspected'] <= 1 && $tiny['changed'] <= 1, 'Single-entry batches keep one shared budget across every participant.');
+        $removed += $tiny['changed'];
+    }
+    $assert($removed === 8, 'Single-entry invocations eventually visit every participant.');
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries());
+    $assert(\TinyCat\Core\Tasks\Cleanup\Files::temporary(500) === ['changed' => 0, 'has_more' => false, 'inspected' => 0], 'An empty contribution registry completes without inspection.');
+} finally { \TinyCat\Core\Modules\Registrations::configure($registered); }
+
 for ($i = 0; $i < 20; $i++) { $file('scan/nested/f' . $i); }
 $seen = [];
 for ($attempt = 0; $attempt < 30; $attempt++) {
@@ -175,6 +229,12 @@ $database->beforePrepare = static function (string $query) use (&$seenCursor): v
     if ($seenCursor === null && str_contains($query, 'FROM users')) { $seenCursor = \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task'); }
 };
 $full = \TinyCat\Core\Tasks\Cleanup\Task::run(500, true);
+$assert(isset($full['results']['temporary_files']['inspected']) && $full['results']['temporary_files']['inspected'] <= 500, 'The task resource retains the actual temporary inspection count rather than only the configured batch.');
+$presented = \TinyCat\Core\Tasks\Cleanup\Task::detail(['summary' => ['tasks' => ['temporary_files' => $full['results']['temporary_files']]]]);
+$assert(str_contains($presented['details'][0]['rows'][0]['value'], \TinyCat\Support\Localization::t('cron.summary_count', ['count' => $full['results']['temporary_files']['inspected']])), 'The shared run detail distinguishes inspected entries from changes for recorded cleanup results.');
+$legacy = $full['results']['temporary_files']; unset($legacy['inspected']);
+$presented = \TinyCat\Core\Tasks\Cleanup\Task::detail(['summary' => ['tasks' => ['temporary_files' => $legacy]]]);
+$assert($presented['details'][0]['rows'][0]['value'] === \TinyCat\Support\Localization::t('cron.summary_changed', ['count' => $legacy['changed']]), 'Historical results without inspection counts retain their original presentation.');
 $assert(array_key_first($full['results']) === 'orphan_avatar_files', 'A full cleanup resumes from its persisted successor instead of restarting the first task.');
 $maintenanceOrder = \TinyCat\Core\Tasks\Cleanup\Task::taskIds();
 $successor = $maintenanceOrder[((int) array_search('orphan_avatar_files', $maintenanceOrder, true) + 1) % count($maintenanceOrder)];

@@ -37,8 +37,10 @@ final class Task
             if (!is_array($result)) { continue; }
             $error = (string) ($result['error'] ?? '');
             $status = $error !== '' ? 'failed' : (!empty($result['has_more']) ? 'has_more' : 'completed');
+            $counts = \TinyCat\Support\Localization::t('cron.summary_changed', ['count' => (int) ($result['changed'] ?? 0)]);
+            if (isset($result['inspected'])) { $counts = \TinyCat\Support\Localization::t('cron.summary_count', ['count' => (int) $result['inspected']]) . ', ' . $counts; }
             $rows = [
-                ['name' => \TinyCat\Support\Localization::t('cron.result'), 'value' => \TinyCat\Support\Localization::t('cron.summary_changed', ['count' => (int) ($result['changed'] ?? 0)])],
+                ['name' => \TinyCat\Support\Localization::t('cron.result'), 'value' => $counts],
                 ['name' => \TinyCat\Support\Localization::t('cron.duration') . ' (ms)', 'value' => (string) ($result['duration_ms'] ?? '-')],
                 ['name' => \TinyCat\Support\Localization::t('cron.options.cleanup_batch'), 'value' => (string) ($result['batch_size'] ?? '-')],
             ];
@@ -178,7 +180,7 @@ final class Task
             'batch_size' => $batchSize,
             'duration_ms' => max(0, (int) round((hrtime(true) - $startedAt) / 1_000_000)),
             'done' => !$hasMore && $error === '',
-        ] + ($error !== '' ? ['error' => $error] : []);
+        ] + (isset($result['inspected']) ? ['inspected' => max(0, (int) $result['inspected'])] : []) + ($error !== '' ? ['error' => $error] : []);
     }
 
     public static function hasPending(string $task): bool

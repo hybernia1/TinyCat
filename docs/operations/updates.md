@@ -7,6 +7,23 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.10
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No database
+migration or configuration change is required. Signed Core and Social packages
+preserve application data, module activation, migration history and recovery backups.
+
+Temporary-file cleanup reuses inspection capacity left by empty or completed
+directories in the same invocation. Busy directories retain their scan cursors;
+small batches rotate participants, and locked cursors defer work without spinning.
+The shared inspection budget remains bounded, and file age, ownership and recovery
+protection rules are unchanged. Each maintenance part still receives its own batch.
+
+New filesystem scan results show actual processed entries alongside changes in the
+common run detail. Historical runs without these counters keep their recorded
+presentation, including empty task details. Manual cleanup still defaults to 5000;
+scheduled HTTP/CLI cleanup defaults to 500.
+
 ## Upgrading to 8.0.9
 
 Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No database

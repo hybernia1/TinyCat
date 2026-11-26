@@ -8,17 +8,17 @@ final class FileSweep
     /** The callback must process the whole batch, and must not follow symbolic links.
      * @param callable(list<\SplFileInfo>): array{changed: int, has_more: bool} $consume
      * @param (callable(string): bool)|null $allowDirectory
-     * @return array{changed: int, has_more: bool} */
+     * @return array{changed: int, has_more: bool, inspected: int} */
     public static function run(string $directory, int $budget, callable $consume, string $scope = 'files', bool $recursive = true, ?callable $allowDirectory = null, bool $pruneEmpty = false): array
     {
         $root = realpath($directory);
-        if ($root === false || is_link($directory)) { return ['changed' => 0, 'has_more' => false]; }
+        if ($root === false || is_link($directory)) { return ['changed' => 0, 'has_more' => false, 'inspected' => 0]; }
         $state = Cache::file(hash('sha256', $root . ':' . $scope) . '.json', 'cleanup-cursors');
         if (!Storage::ensureDirectory(dirname($state))) { throw new \RuntimeException('Unable to create cleanup cursor directory.'); }
         $lock = fopen($state . '.lock', 'c+');
         if ($lock === false) { throw new \RuntimeException('Unable to open cleanup cursor lock.'); }
         try {
-            if (!flock($lock, LOCK_EX | LOCK_NB)) { return ['changed' => 0, 'has_more' => true]; }
+            if (!flock($lock, LOCK_EX | LOCK_NB)) { return ['changed' => 0, 'has_more' => true, 'inspected' => 0]; }
             $saved = is_file($state) ? json_decode((string) file_get_contents($state), true) : null;
             $stack = is_array($saved) && array_is_list($saved) && count($saved) <= 16 ? $saved : [['path' => '', 'offset' => 0]];
             $files = [];
@@ -83,7 +83,7 @@ final class FileSweep
             if (!Storage::write($state, json_encode($stack === [] ? [['path' => '', 'offset' => 0]] : $stack, JSON_THROW_ON_ERROR))) {
                 throw new \RuntimeException('Unable to save cleanup cursor.');
             }
-            return ['changed' => $result['changed'], 'has_more' => $stack !== [] || $result['has_more']];
+            return ['changed' => $result['changed'], 'has_more' => $stack !== [] || $result['has_more'], 'inspected' => $visited];
         } finally { flock($lock, LOCK_UN); fclose($lock); }
     }
 

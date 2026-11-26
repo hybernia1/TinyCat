@@ -7,14 +7,15 @@ use Closure;
 
 final readonly class MaintenanceTask
 {
-    /** @var Closure(int): array{changed: int, has_more: bool, error?: string} */
+    /** Optional inspected counts directory entries visited, including preserved files and subdirectories.
+     * @var Closure(int): array{changed: int, has_more: bool, error?: string, inspected?: int} */
     public Closure $run;
     /** @var Closure(int): int|null */
     public ?Closure $delete;
     /** @var Closure(): bool|null */
     public ?Closure $pending;
 
-    /** @param callable(int): array{changed: int, has_more: bool, error?: string} $run
+    /** @param callable(int): array{changed: int, has_more: bool, error?: string, inspected?: int} $run
      * @param (callable(int): int)|null $delete
      * @param (callable(): bool)|null $pending */
     public function __construct(public string $id, callable $run, public int $order = 100, ?callable $delete = null, ?callable $pending = null, public bool $initial = false, public bool $whenInactive = false)

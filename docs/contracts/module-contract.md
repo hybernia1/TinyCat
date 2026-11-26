@@ -58,6 +58,10 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
 - Publikované ID a checksumy migrací jsou neměnné. Změna má novou migraci a
   odpovídající fresh schéma. Vypnutí zachovává data; jejich nainstalovaný vlastník
   dál poskytuje potřebný úklid účtu a reference souborů.
+- Výsledek `MaintenanceTask` obsahuje `changed`, `has_more` a případnou chybu
+  `error`. Volitelné `inspected` udává skutečně prohlédnuté položky, včetně
+  zachovaných souborů a podadresářů; není to počet smazaných položek ani
+  přidělený batch. Core jej zachová v historii a zobrazí ve společném detailu.
 - `MaintenanceTask::whenInactive` má výchozí hodnotu `false`. Vlastník může
   výslovně povolit svůj omezený orphan úklid souborů i po deaktivaci. Core přibírá
   pouze tyto příspěvky nainstalovaných neaktivních vlastníků, každé ID nejvýše

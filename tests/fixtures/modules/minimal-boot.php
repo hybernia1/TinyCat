@@ -90,7 +90,7 @@ foreach ([\TinyCat\Core\Tasks\Runner::class, \TinyCat\Core\Tasks\History::class,
     $assert(class_exists($class), 'Platform implementation is available without a module: ' . $class);
 }
 $assert(\TinyCat\Core\Tasks\Health\Checks::scheduler()['metrics'] === [], 'Task diagnostics do not invent business tasks.');
-$assert(\TinyCat\Core\Tasks\Cleanup\Files::temporary(1) === ['changed' => 0, 'has_more' => false], 'An empty catalog supplies no temporary directories.');
+$assert(\TinyCat\Core\Tasks\Cleanup\Files::temporary(1) === ['changed' => 0, 'has_more' => false, 'inspected' => 0], 'An empty catalog supplies no temporary directories.');
 $assert(\TinyCat\Core\Mail\Smtp::email_smtp_send('invalid', 'subject', 'body') === false, 'Unconfigured SMTP fails without loading account validation.');
 $assert(\TinyCat\Core\Tasks\Execution::health()['available_tasks'] === [], 'Core execution metadata does not need the Scheduler module.');
 foreach (['Accounts', 'Scheduler', 'Settings', 'Mail', 'Bots', 'Status'] as $owner) {
