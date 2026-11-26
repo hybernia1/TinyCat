@@ -23,7 +23,29 @@ final class Task
                 (string) ($errors[0] ?? ''), $results,
             );
         }, options: ['cleanup_batch' => 500], admin: ['icon' => 'database', 'title' => 'cron.tasks.cleanup', 'help' => 'cron.tasks.cleanup_help', 'schedule' => 'cron.tasks.cleanup_schedule', 'cadence' => 'cron.cadence.cleanup'],
-            order: 20, normalize: static fn (array $options): array => ['cleanup_batch' => self::batchSize($options['cleanup_batch'])], healthAge: static fn (): int => 4 * 3600, batchOption: 'cleanup_batch', optionLabels: ['cleanup_batch' => 'cron.options.cleanup_batch']);
+            order: 20, normalize: static fn (array $options): array => ['cleanup_batch' => self::batchSize($options['cleanup_batch'])], healthAge: static fn (): int => 4 * 3600, detail: self::detail(...), batchOption: 'cleanup_batch', optionLabels: ['cleanup_batch' => 'cron.options.cleanup_batch'], adminOptions: ['cleanup_batch' => 5000]);
+    }
+
+    /** Historical IDs remain readable even after their owner is disabled or removed.
+     * @param array<string, mixed> $run
+     * @return array<string, mixed> */
+    public static function detail(array $run): array
+    {
+        $run['details'] = [];
+        foreach ($run['summary']['tasks'] ?? [] as $result) {
+            if (!is_array($result)) { continue; }
+            $error = (string) ($result['error'] ?? '');
+            $status = $error !== '' ? 'failed' : (!empty($result['has_more']) ? 'has_more' : 'completed');
+            $rows = [
+                ['name' => \TinyCat\Support\Localization::t('cron.result'), 'value' => \TinyCat\Support\Localization::t('cron.summary_changed', ['count' => (int) ($result['changed'] ?? 0)])],
+                ['name' => \TinyCat\Support\Localization::t('cron.duration') . ' (ms)', 'value' => (string) ($result['duration_ms'] ?? '-')],
+                ['name' => \TinyCat\Support\Localization::t('cron.options.cleanup_batch'), 'value' => (string) ($result['batch_size'] ?? '-')],
+            ];
+            if ($error !== '') { $rows[] = ['name' => \TinyCat\Support\Localization::t('cron.error'), 'value' => $error]; }
+            $tone = match ($status) { 'failed' => 'critical', 'has_more' => 'warning', default => 'ok' };
+            $run['details'][] = ['title' => (string) ($result['task'] ?? ''), 'status' => ['code' => $tone, 'name' => \TinyCat\Support\Localization::t('cron.statuses.' . $status)], 'rows' => $rows];
+        }
+        return $run;
     }
 
     public static function batchSize(mixed $value): int

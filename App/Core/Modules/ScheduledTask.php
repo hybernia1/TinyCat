@@ -27,8 +27,9 @@ final readonly class ScheduledTask
      * @param (callable(array<string, int>): array<string, int>)|null $normalize
      * @param (callable(): (int|null))|null $healthAge
      * @param (callable(array<string, mixed>): array<string, mixed>)|null $detail
-     * @param array<string, string> $optionLabels */
-    public function __construct(public string $id, callable $runner, array $options = [], public array $admin = [], public int $order = 100, public array $modeOptions = [], ?callable $normalize = null, ?callable $healthAge = null, ?callable $detail = null, public ?string $batchOption = null, public array $optionLabels = [])
+     * @param array<string, string> $optionLabels
+     * @param array<string, int> $adminOptions */
+    public function __construct(public string $id, callable $runner, array $options = [], public array $admin = [], public int $order = 100, public array $modeOptions = [], ?callable $normalize = null, ?callable $healthAge = null, ?callable $detail = null, public ?string $batchOption = null, public array $optionLabels = [], public array $adminOptions = [])
     {
         if ($id === 'all' || preg_match('/^' . self::ID_PATTERN . '$/D', $id) !== 1) { throw new \InvalidArgumentException('Invalid scheduled task ID.'); }
         $validated = [];
@@ -38,6 +39,9 @@ final readonly class ScheduledTask
             $validated[$key] = $value;
         }
         $this->options = $validated;
+        foreach ($adminOptions as $key => $value) {
+            if (!array_key_exists($key, $validated)) { throw new \InvalidArgumentException('Invalid manual task default.'); }
+        }
         if ($batchOption !== null && !array_key_exists($batchOption, $options)) { throw new \InvalidArgumentException('Unknown scheduled task batch option.'); }
         $this->runner = Closure::fromCallable($runner);
         $this->normalize = $normalize === null ? null : Closure::fromCallable($normalize);

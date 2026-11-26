@@ -75,11 +75,14 @@ $assert(session_status() === PHP_SESSION_NONE, 'Registry collection did not open
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->tasks) === ['feeds', 'cleanup', 'site-health'], 'Existing task IDs and order remain stable');
 $assert(array_map(static fn ($entry): string => $entry->id, $registries->entries->health) === ['http', 'database', 'cache', 'storage', 'uploads', 'disk', 'runtime', 'scheduler', 'updates'], 'Existing probe IDs and order remain stable');
 $maintenanceIds = array_map(static fn ($entry): string => $entry->id, $registries->entries->maintenance);
-$assert(array_values(array_diff($maintenanceIds, ['orphan_branding_files'])) === [
+$assert(array_values(array_diff($maintenanceIds, ['orphan_branding_files', 'retired_build_files', 'retired_runtime_assets', 'abandoned_module_packages', 'old_debug_logs'])) === [
     'orphan_terms', 'orphan_links', 'orphan_status_image_files', 'orphan_link_image_files', 'orphan_avatar_files', 'temporary_files', 'update_files', 'expired_cache_files',
     'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications', 'old_scheduler_runs', 'bot_history', 'duplicate_bot_posts',
 ], 'Existing maintenance IDs and order remain stable');
 $assert(in_array('orphan_branding_files', $maintenanceIds, true) && $registries->owner('maintenance', 'orphan_branding_files') === 'tinycat.settings', 'Branding adds one owner-declared orphan task');
+$assert(in_array('retired_build_files', $maintenanceIds, true) && $registries->owner('maintenance', 'retired_build_files') === 'tinycat.support', 'Core contributes lazy release build retirement without a module domain dependency');
+foreach (['retired_runtime_assets', 'abandoned_module_packages', 'old_debug_logs'] as $id) { $assert(in_array($id, $maintenanceIds, true) && $registries->owner('maintenance', $id) === 'tinycat.support', 'Technical maintenance is registered lazily: ' . $id); }
+$assert($registries->task('cleanup')->options === ['cleanup_batch' => 500] && $registries->task('cleanup')->adminOptions === ['cleanup_batch' => 5000], 'Cleanup owns distinct scheduled and manual defaults');
 $assert($registries->initialMaintenance() === 'update_files', 'The existing initial cleanup cursor is preserved by its owner');
 $assert($registries->owner('task', 'feeds') === 'tinycat.social' && $registries->owner('maintenance', 'old_password_reset_tokens') === 'tinycat.accounts', 'Tasks and retention have explicit owners');
 $assert($registries->task('feeds')->options === ['bot_limit' => 20], 'Feed defaults remain stable');

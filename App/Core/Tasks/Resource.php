@@ -23,7 +23,8 @@ final class Resource
         $items = [];
         foreach ($definitions as $name => $definition) {
             $latest = $records['latest'][$name] ?? null;
-            $items[] = ['name' => $name, 'options' => $definition['options'], 'latest' => $latest !== null ? self::run($latest) : null,
+            $manual = \TinyCat\Core\Modules\Registrations::current()->task($name)->adminOptions;
+            $items[] = ['name' => $name, 'options' => array_replace($definition['options'], $manual), 'latest' => $latest !== null ? self::run($latest) : null,
                 'run_url' => AdminViews::admin_list_url($listDefinition['endpoint'] . '/' . $name . '/runs', $params + ['page' => $page])];
         }
         $navigation = AdminViews::admin_pagination_view_data($pagination, $listDefinition['endpoint'], $listDefinition['target'], $params, 'page', 2, $listDefinition['path']);

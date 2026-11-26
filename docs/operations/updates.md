@@ -7,6 +7,64 @@ TinyCat provides signed product identities and selective distributions. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 8.0.9
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No database
+migration or configuration change is required. Signed Core and Social packages
+retain installation data, module activation, migration history and recovery backups.
+
+Cleanup now retires unreferenced generated release files, unused runtime assets,
+abandoned module packages and old rotated diagnostic logs. Active references,
+retained rollback backups, recent files and running package/deployment operations
+are protected. Historical backups can therefore retain older build files until
+their own retention expires. See the retention rules below.
+
+Manual cleanup defaults to 5000 per maintenance part; HTTP/CLI defaults remain
+500 and explicit batch parameters retain their meaning. Run details show each
+part's changed count, duration, batch and status, including historical parts.
+Module maintenance remains an owner contribution; core does not list Social data.
+
+## Generated release file retention
+
+The shared `cleanup` task includes `retired_build_files`, contributed by core
+Support through the same lazy `MaintenanceTask` contract as module maintenance.
+It retires recognized hashed files in `assets/build/` and
+`App/Core/Support/compiled/`; it never treats these directories as disposable cache.
+The current asset manifest, PHP translation index, referenced payloads and their
+client dependencies are protected. Retained update backups also protect their
+referenced build files, including backups without a completion marker. Backup
+retention remains owned by Updates; removing build files does not shorten it.
+
+Cleanup waits at least 48 hours after either current index changes and preserves
+generated files younger than 48 hours. This allows already open pages to finish
+using the previous release. Missing or invalid current inventories stop deletion;
+an entirely uncompiled source checkout has nothing to retire. Symbolic links and
+unrecognized filenames are never followed or removed. The operation uses shared
+deployment admission and resumable bounded directory scans, so it cannot run
+beside an update or recovery operation.
+
+Manual cleanup defaults to a batch of 5000; scheduled HTTP/CLI cleanup retains
+500 unless explicitly overridden. The batch is passed to each maintenance part,
+not shared as a global deletion count. Run details show each part's stable ID,
+changed count, duration, batch and completed/pending/failed status. Historical
+parts remain readable after their owner is removed. Social registers its own
+maintenance callbacks; core cleanup contains no Social table or domain list.
+
+Additional technical maintenance participants have separate ownership and retention:
+
+- `retired_runtime_assets` retires recognized generated cache assets after 30 days
+  without publication. Publishing a warm asset renews its timestamp at most once
+  per hour; recent JS/CSS roots also retain their transitive cached dependencies.
+  Publication and cleanup share a coordination lock. Unknown files are preserved.
+- `abandoned_module_packages` retires recognized uploaded ZIPs and extracted
+  module workspaces older than 48 hours. A package-operation lock protects both
+  preparation and installation; cleanup takes it without waiting, then checks
+  deployment admission. Retirement checkpoints survive directory timestamp
+  changes between batches. Recovery and recent workspaces remain protected.
+- `old_debug_logs` expires recognized rotated diagnostic logs after 30 days.
+  The diagnostic writer rotates `debug.log` at 5 MiB under the same stable lock;
+  cleanup never removes the current log, its lock or unrelated log files.
+
 ## Upgrading to 8.0.8
 
 Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. No new

@@ -41,7 +41,7 @@ final class Actions
         $definition = Tasks::definitions()[$task] ?? null;
         if ($definition === null) { Response::error(Localization::t('cron.unknown_task'), 404, 'scheduler_unknown_task'); }
         $user = \TinyCat\Core\Identity\Authentication::auth();
-        return \TinyCat\Http\Session::withoutLock(static fn (): array => Execution::run($task, $definition['options'], 'admin', (int) ($user['id'] ?? 0)));
+        return \TinyCat\Http\Session::withoutLock(static fn (): array => Execution::run($task, [], 'admin', (int) ($user['id'] ?? 0)));
     }
 
     public static function rotateToken(): Result

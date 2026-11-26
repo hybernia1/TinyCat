@@ -49,6 +49,12 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
      * @return array{package: array<string, mixed>, stage: string} */
     public static function prepare(string $archive): array
     {
+        return self::workspace(static fn (): array => self::prepareUnlocked($archive));
+    }
+
+    /** @return array{package: array<string, mixed>, stage: string} */
+    private static function prepareUnlocked(string $archive): array
+    {
         if (!is_file($archive) || filesize($archive) > self::MAX_BYTES) { throw new \RuntimeException('Module ZIP exceeds the upload limit.'); }
         $copy = Paths::basePath('storage/modules/uploads/' . bin2hex(random_bytes(16)) . '.zip');
         self::ensureDirectory(dirname($copy));
@@ -102,13 +108,19 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
     /** @return array<string, mixed> */
     public static function install(string $archive): array
     {
+        return self::workspace(static fn (): array => self::installUnlocked($archive));
+    }
+
+    /** @return array<string, mixed> */
+    private static function installUnlocked(string $archive): array
+    {
         $root = Paths::basePath();
         $baseFile = $root . '/App/distribution.json';
         if (!is_file($baseFile)) { throw new \RuntimeException('Module installation requires an installed distribution.'); }
         $base = Distribution::validate(self::decodeJson((string) file_get_contents($baseFile), 'distribution'));
         $state = Deployment::read($root);
         if (!in_array($base['format'] ?? null, [3, 4], true) || $state === null) { throw new \RuntimeException('Install the current framework before adding module packages.'); }
-        $prepared = self::prepare($archive); $package = $prepared['package']; $stage = $prepared['stage'];
+        $prepared = self::prepareUnlocked($archive); $package = $prepared['package']; $stage = $prepared['stage'];
         try {
             $id = $package['id']; $prefix = 'App/Modules/' . $package['directory'] . '/';
             $packages = PackageRegistry::read($root); $old = $packages[$id] ?? null;
@@ -157,6 +169,73 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
                 if ($installed && $stagedPlan['schemas'] !== []) { ModuleSchemas::pending(Connection::get(), Distribution::schemas($stagedPlan, $mapped, [$id])); }
             }, ['stage' => $mapped, 'files' => $files, 'delete' => $deleted]);
         } finally { self::cleanup($stage); }
+    }
+
+    /** Cleanup never waits for a package operation while the scheduler holds deployment admission.
+     * @return array{changed: int, has_more: bool} */
+    public static function cleanupAbandoned(int $batch): array
+    {
+        $cleanup = static function () use ($batch): array {
+            $entered = false;
+            try {
+                return \TinyCat\Core\Updates\Manager::runTask(static function () use ($batch, &$entered): array {
+                    $entered = true;
+                    $cutoff = time() - 172800;
+                    $root = Paths::basePath('storage/modules');
+                    return \TinyCat\Support\FileSweep::run($root, $batch, static function (array $files) use ($root, $cutoff): array {
+                        $changed = 0;
+                        foreach ($files as $file) {
+                            $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
+                            if (preg_match('/^retiring-([a-f0-9]{32})\.json$/D', $relative, $marker) === 1) {
+                                if (!is_dir($root . '/staging/' . $marker[1]) && \TinyCat\Support\FileSweep::remove($file->getPathname())) { $changed++; }
+                                continue;
+                            }
+                            if (preg_match('~^(?:uploads/[a-f0-9]{32}\.zip|staging/[a-f0-9]{32}/.+)$~D', $relative) !== 1) { continue; }
+                            clearstatcache(true, $file->getPathname());
+                            $modified = @filemtime($file->getPathname());
+                            if ($modified !== false && $modified < $cutoff && \TinyCat\Support\FileSweep::remove($file->getPathname())) { $changed++; }
+                        }
+                        return ['changed' => $changed, 'has_more' => false];
+                    }, 'abandoned-module-packages', true, static function (string $relative) use ($root, $cutoff): bool {
+                        $parts = explode('/', $relative);
+                        if ($relative === 'uploads' || $relative === 'staging') { return true; }
+                        if ($parts[0] !== 'staging' || preg_match('/^[a-f0-9]{32}$/D', $parts[1] ?? '') !== 1) { return false; }
+                        $marker = $root . '/retiring-' . $parts[1] . '.json';
+                        if (is_link($marker)) { throw new \RuntimeException('Unsafe module retirement marker.'); }
+                        if (is_file($marker)) { return true; }
+                        $modified = @filemtime($root . '/staging/' . $parts[1]);
+                        if ($modified === false || $modified >= $cutoff) { return false; }
+                        if (!\TinyCat\Support\Storage::write($marker, '{}')) { throw new \RuntimeException('Cannot checkpoint abandoned module retirement.'); }
+                        return true;
+                    }, true);
+                });
+            } catch (\RuntimeException $error) {
+                if ($entered) { throw $error; }
+                return ['changed' => 0, 'has_more' => true];
+            }
+        };
+        $result = self::workspace($cleanup, false);
+        if (!is_int($result['changed'] ?? null) || !is_bool($result['has_more'] ?? null)) { throw new \RuntimeException('Invalid module workspace cleanup result.'); }
+        return ['changed' => $result['changed'], 'has_more' => $result['has_more']];
+    }
+
+    /** @template T of array<mixed>
+     * @param callable(): T $operation
+     * @return ($wait is true ? T : T|array{changed: int, has_more: bool}) */
+    private static function workspace(callable $operation, bool $wait = true): array
+    {
+        $directory = Paths::basePath('storage/modules');
+        self::ensureDirectory($directory);
+        if (is_link($directory) || is_link($directory . '/workspace.lock')) { throw new \RuntimeException('Unsafe module workspace lock.'); }
+        $lock = fopen($directory . '/workspace.lock', 'c+');
+        if ($lock === false) { throw new \RuntimeException('Cannot open module workspace lock.'); }
+        try {
+            if (!flock($lock, LOCK_EX | ($wait ? 0 : LOCK_NB))) {
+                if ($wait) { throw new \RuntimeException('Cannot acquire module workspace lock.'); }
+                return ['changed' => 0, 'has_more' => true];
+            }
+            return $operation();
+        } finally { flock($lock, LOCK_UN); fclose($lock); }
     }
 
     private static function cleanup(string $stage): void

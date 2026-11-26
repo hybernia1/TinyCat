@@ -28,7 +28,7 @@ class Tasks
             if ($number === false) { throw new \TinyCat\Http\HttpException('Task options must be integers.'); }
             $input[$key] = $number;
         }
-        $options = array_replace($definition->options, $input);
+        $options = array_replace($definition->options, $mode === 'admin' ? $definition->adminOptions : [], $input);
         if ($definition->normalize !== null) { $options = ($definition->normalize)($options); }
         return ['mode' => $mode, 'actor_id' => max(0, (int) ($context['actor_id'] ?? 0)), 'options' => $options];
     }

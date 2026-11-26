@@ -69,6 +69,12 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
 
 ## Povinné ověření
 
+`ScheduledTask::adminOptions` may override declared integer defaults for manual
+administration only. Explicit options take precedence; CLI and HTTP defaults do
+not change. The administrative task list displays these manual defaults. A task
+owns its lazy `detail` callback and contributes generic detail sections; Tasks
+does not interpret module-specific maintenance IDs or results.
+
 Ověř prázdné core, samotný modul, vypnutí a opětovnou aktivaci. Registrace musí
 fungovat bez provozní DB; vypnutý modul nesmí dodávat routy, běžné úlohy ani
 klientské zdroje. Obecné kontrakty testuj malou fixture v `tests/fixtures/modules`,

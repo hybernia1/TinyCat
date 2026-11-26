@@ -49,14 +49,19 @@ final class Minifier
         $hash = substr(hash('sha256', self::CACHE_VERSION . "\0" . $identity . "\0" . ($minify ? 'min' : 'raw') . "\0" . $type . "\0" . $source), 0, 20);
         $fileName = $prefix . '.' . $hash . ($minify ? '.min' : '') . '.' . $type;
         $target = \TinyCat\Support\Cache::file($fileName, self::CACHE_NAMESPACE);
-        if (!is_file($target)) {
-            $content = $minify
-                ? ($type === 'css' ? self::minifyCss($source) : self::minifyJavaScript($source))
-                : $source;
-            if (!\TinyCat\Support\Cache::writeFile($fileName, $content, self::CACHE_NAMESPACE)) { return null; }
-        }
+        return Cache::synchronized('runtime-assets', static function () use ($target, $minify, $type, $source, $fileName): ?string {
+            clearstatcache(true, $target);
+            if (!is_file($target)) {
+                $content = $minify
+                    ? ($type === 'css' ? self::minifyCss($source) : self::minifyJavaScript($source))
+                    : $source;
+                if (!\TinyCat\Support\Cache::writeFile($fileName, $content, self::CACHE_NAMESPACE)) { return null; }
+            } elseif (filemtime($target) < time() - 3600 && !touch($target)) {
+                throw new \RuntimeException('Unable to renew runtime asset retention.');
+            }
 
-        return self::CACHE_URL . '/' . rawurlencode($fileName);
+            return self::CACHE_URL . '/' . rawurlencode($fileName);
+        });
     }
 
     public static function minifyCss(string $source): string
