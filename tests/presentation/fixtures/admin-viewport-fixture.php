@@ -37,7 +37,7 @@ window.TinyCat.i18n = { t: key => ({'common.menu':'Menu', 'common.sort':'≈òazen√
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/dom.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/icons.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/runtime/component-renderer.js')) ?>
-window.TinyCat.components.register(<?= json_encode(array_intersect_key(TinyCat\Core\Ui\Components::templates(), array_flip(['ui/filter-chip', 'ui/list-summary'])), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>);
+window.TinyCat.components.register(<?= json_encode(array_intersect_key(TinyCat\Core\Ui\Components::templates(), array_flip(['ui/filter-chip', 'ui/list-summary', 'ui/button'])), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>);
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/popovers.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/filters.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/App/Core/Ui/assets/tooltips.js')) ?>
