@@ -36,7 +36,7 @@ $comments = Dashboard::commentsWidget();
 $widgets = [
     ['id' => 'fixture.accounts', 'type' => 'metrics', 'title' => 'Accounts', 'icon' => 'users', 'data' => ['id' => 'fixture.accounts', 'groups' => [['id' => 'fixture.accounts', 'label' => 'Users'], ['id' => 'fixture.content', 'label' => 'Content']], 'items' => [['label' => 'Users', 'value' => 3], ['label' => 'Empty', 'value' => 0]], 'url' => '/admin/users']],
     ['id' => 'fixture.comments', 'type' => 'list', 'title' => Localization::t('admin.recent_comments'), 'icon' => 'message-circle', 'data' => $comments],
-    ['id' => 'fixture.status', 'type' => 'status', 'title' => 'Status', 'icon' => 'shield', 'data' => ['text' => 'Healthy', 'tone' => 'success']],
+    ['id' => 'fixture.status', 'type' => 'status', 'title' => 'Status', 'icon' => 'shield', 'data' => ['text' => 'Healthy', 'tone' => 'success', 'url' => '/admin/cron?task=site-health#modal=scheduler/runs/40']],
 ];
 $html = TinyCat\Support\Components::render('ui/dashboard', ['widgets' => $widgets]);
 if (in_array($argv[1] ?? '', ['--fixture', '--cache-fixture'], true)) {
@@ -54,7 +54,8 @@ $check(str_contains($html, '>0</strong>') && str_contains($html, 'data-dashboard
 $check(count($comments['items']) === 5 && str_contains($comments['items'][0]['detail'], 'Comment 9'), 'Owner selects a bounded list in stable order.');
 $check(!str_contains($html, '<script>') && str_contains($html, '@author&lt;unsafe&gt;') && str_contains($html, '&lt;3'), 'Widget data is safely escaped.');
 $check(substr_count($html, 'data-dashboard-widget=') === 3 && !str_contains($html, '<table') && !str_contains($html, 'cache-resets'), 'Dashboard uses shared typed frames and no legacy tables or diagnostics.');
-$check(str_contains($html, '/status/11') && str_contains($html, '/admin/users'), 'Owners retain their canonical links.');
+$check(str_contains($html, '/status/11') && !str_contains($html, 'href="/admin/users"'), 'List items retain canonical links while statistics omit the redundant more button.');
+$check(preg_match('~<a href="/admin/cron\?task=site-health\#modal=scheduler/runs/40"><div class="alert alert-success"~', $html) === 1 && substr_count($html, 'href="/admin/cron?task=site-health#modal=scheduler/runs/40"') === 1, 'Status notice links directly to its owner detail without a duplicate more button.');
 $registries = TinyCat\Core\Modules\Registrations::current();
 $calls = 0;
 $hidden = new TinyCat\Core\Modules\DashboardWidget('fixture.hidden', static function () use (&$calls): array { $calls++; return []; }, type: 'list', visible: static fn (): bool => false);

@@ -307,6 +307,21 @@ check(document.getElementById("scheduler-filter-modal").querySelectorAll("input"
 const schedulerPageForm = schedulerRoot.querySelectorAll("form").find(form => form.className.includes("admin-per-page-form"));
 check(schedulerPageForm.querySelectorAll("input").every(field => field.getAttribute("name") !== "per_page"), "The scheduler page-size form sends no duplicate hidden per_page value.");
 const schedulerDetail = T.scheduler.modal(new URL("https://tinycat.test/api/scheduler/runs/1"), { data: { item: Object.assign({}, schedulerModel.runs[0], { sources: [{ source_name: "Fixture RSS source", status: "interrupted", error: "<b>source failure</b>" }] }) } }, "scheduler-run-detail-fixture");
+for (const [task, status] of [["cleanup", "completed"], ["feeds", "failed"], ["site-health", "running"], ["future.task", "has_more"]]) {
+  const item = { id: 42, task, status, summary: { count: 1, changed: 0 }, details: [
+    { title: "Measured check", status: { code: "ok", name: "Complete" }, rows: [] },
+    { title: "Check without status", rows: [] }
+  ] };
+  const modal = T.scheduler.modal(new URL("https://tinycat.test/api/scheduler/runs/42"), { data: { item } }, "scheduler-layout-" + task.replace(/\./g, "-"));
+  const title = modal.querySelector('[id="' + modal.getAttribute("aria-labelledby") + '"]');
+  const name = T.components.render("scheduler/name", { name: task }).textContent;
+  check(title.textContent === name + " #42" && title.querySelector("svg"), "Every task, including historical unknown owners, has a named, numbered modal heading with its registered or fallback icon.");
+  const body = modal.querySelector(".modal-body"), result = body.querySelectorAll("h3").find(node => node.textContent === T.ui.text("cron.result"));
+  check(!body.querySelectorAll("h3").some(node => node.textContent === name) && result.parent.querySelector(".badge").textContent === T.ui.text("cron.statuses." + status), "The result heading owns the overall state without repeating the task heading in the body.");
+  const summaries = body.querySelectorAll("summary");
+  check(summaries[0].querySelector("strong").parent === summaries[0] && summaries[0].querySelector(".badge").parent === summaries[0] && !summaries[0].querySelector(".disclosure-chevron"), "A detailed check uses its state badge as the trailing disclosure indicator.");
+  check(summaries[1].querySelector(".disclosure-chevron") && summaries.at(-1).querySelector(".disclosure-chevron"), "Checks without a state and technical details retain the disclosure affordance.");
+}
 const schedulerConfiguration = T.scheduler.modal(new URL('https://tinycat.test/api/scheduler/configuration'), { data: { token: 'fixture-token', execution_url: '/api/scheduler/executions', tasks: [] } }, 'scheduler-configuration-fixture');
 check(schedulerConfiguration.getAttribute('data-modal-size') === 'workspace' && schedulerConfiguration.getAttribute('data-modal-kind') === 'editor' && schedulerConfiguration.querySelector('[data-scheduler-token]') && !schedulerConfiguration.querySelector('.modal-body').querySelector('form') && schedulerConfiguration.querySelector('.modal-footer').querySelector('form').getAttribute('action') === '/api/scheduler/tokens', 'Connection resources use the same stable editor frame as accounts and settings, with token rotation outside the read-only body.');
 check(schedulerConfiguration.querySelector('[role="tablist"]') && schedulerConfiguration.querySelector('[data-tab-select]') && !schedulerConfiguration.querySelector('details'), 'Connection sections use the shared pinned tabs and mobile selector without a separate disclosure layout.');

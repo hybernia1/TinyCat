@@ -94,8 +94,6 @@
       "application_help": "Hesaplanan veriler, ilgili işlevin TTL ve geçersizleştirme kurallarını kullanır. Memcached kullanılamazsa disk kullanılır.",
       "assets": "Oluşturulan kaynaklar",
       "browser": "Tarayıcı önbelleği",
-      "compiled": "Derlenmiş sürüm",
-      "on_demand": "İstek üzerine oluşturulur",
       "http": "HTTP önbelleği ve sıkıştırma",
       "http_help": "Gözlemlenen anonim yanıtlar. Content-Encoding sıkıştırmayı, Cache-Control depolamayı belirtir. Bunlar örnektir; tüm URL’lerin denetimi değildir.",
       "observing": "Denetleniyor…",

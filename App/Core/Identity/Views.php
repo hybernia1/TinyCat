@@ -35,6 +35,7 @@ final class Views
         $id = (int) ($user['id'] ?? 0);
         $needsEmail = (bool) ($data['profileNeedsEmail'] ?? false);
         return Components::render('users/menu', [
+            'viewerIsAdmin' => Roles::isAdmin($user),
             'profileUrl' => (string) ($data['profileUrl'] ?? ''), 'profileNeedsEmail' => $needsEmail,
             'theme' => (string) ($data['theme'] ?? 'system'),
             'displayName' => (string) ($data['displayName'] ?? trim((string) ($user['username'] ?? ''))),

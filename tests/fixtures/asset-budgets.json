@@ -2,8 +2,8 @@
   "/access/notifications": {
     "raw_js": 164608,
     "gzip_js": 39680,
-    "raw_css": 32960,
-    "gzip_css": 7168,
+    "raw_css": 33024,
+    "gzip_css": 7184,
     "scripts": 4,
     "stylesheets": 1
   },

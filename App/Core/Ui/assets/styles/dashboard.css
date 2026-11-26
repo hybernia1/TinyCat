@@ -36,23 +36,9 @@
 
 [data-widget-list] { gap: 0; }
 
-[data-widget-row] {
-  row-gap: var(--control-padding-block);
-  padding-block: var(--control-padding-inline);
-  border-block-start: 1px solid var(--border);
-}
-
-[data-widget-time] { grid-column: 2; }
-
 @media (min-width: 900px) {
   .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  [data-widget-row] { grid-template-columns: auto minmax(0, 1fr) auto; }
-
-  [data-widget-time] {
-    grid-column: 3;
-    justify-content: end;
-  }
 }

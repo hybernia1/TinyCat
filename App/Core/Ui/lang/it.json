@@ -94,8 +94,6 @@
       "application_help": "I dati calcolati usano TTL e invalidazione della funzione proprietaria. Se Memcached non è disponibile viene usato il disco.",
       "assets": "Risorse generate",
       "browser": "Cache del browser",
-      "compiled": "Versione compilata",
-      "on_demand": "Generazione su richiesta",
       "http": "Cache HTTP e compressione",
       "http_help": "Risposte anonime osservate. Content-Encoding indica la compressione e Cache-Control la memorizzazione. Sono campioni, non un controllo di tutti gli URL.",
       "observing": "Verifica…",

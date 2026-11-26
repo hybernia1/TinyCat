@@ -294,7 +294,11 @@ $memberHeader = \TinyCat\Core\Ui\DocumentData::publicHeader(array_replace($heade
     'authUser' => $member, 'viewerIsAdmin' => true, 'userMenu' => $accountMenu,
     'notificationState' => ['unread' => 0], 'notificationItems' => [], 'hasGlobalSearch' => false,
 ]));
-$assert(str_contains($memberHeader, 'href="/admin"') && str_contains($memberHeader, 'data-notification-button') && str_contains($memberHeader, 'user-menu-trigger'), 'Authenticated header composes owner menus and administration link.');
+$assert(!str_contains($memberHeader, 'href="/admin"') && str_contains($memberHeader, 'data-notification-button') && str_contains($memberHeader, 'user-menu-trigger'), 'Member header composes owner menus without a standalone administration link.');
+$adminMenu = \TinyCat\Core\Identity\Views::userMenu(['authUser' => $admin]);
+$assert(str_contains($adminMenu, 'href="/admin"') && !str_contains($accountMenu, 'href="/admin"'), 'Shared avatar menu offers administration only to administrators.');
+$adminHeader = \TinyCat\Core\Ui\DocumentData::publicHeader(array_replace($headerData, ['authUser' => $admin, 'viewerIsAdmin' => true, 'userMenu' => $adminMenu]));
+$assert(substr_count($adminHeader, 'href="/admin"') === 1 && str_contains($adminMenu, 'context-menu-action'), 'Administration appears once, inside the shared avatar popover.');
 $assert(!str_contains($memberHeader, 'data-language-menu') && !str_contains($memberHeader, 'data-global-search'), 'Authenticated header respects conditional language and search surfaces.');
 foreach (['/uploads/avatars/member.webp', ''] as $avatarUrl) {
     $identityHtml = \TinyCat\Support\Components::render('users/identity-row', ['user' => ['id' => 17, 'username' => 'Member <unsafe>', 'status' => 'waiting', 'avatar_url' => $avatarUrl]]);

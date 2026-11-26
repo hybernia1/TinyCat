@@ -13,7 +13,7 @@ use TinyCat\Social\Posts\Repository;
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $checks = 0;
 $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
-$exercise = static function (PDO $db) use ($assert): void {
+$exercise = static function (TinyCatTestLockPDO $db) use ($assert): void {
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     Connection::set($db);
@@ -82,6 +82,7 @@ $exercise = static function (PDO $db) use ($assert): void {
     $assert((int) $db->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === 18, 'Preview is read-only.');
     $first = DuplicateCleanup::run(1);
     $assert($first['changed'] === 1 && $first['has_more'], 'Cleanup respects its batch limit and reports remaining work.');
+    $assert($first['inspected'] === 2, 'Inspection counts the candidates visited through the merge limit, not the configured batch.');
     $assert(Repository::redirectTarget(2) === 1 && Repository::redirectTarget(99) === 1, 'New and earlier redirects point directly at the surviving post.');
     $trigger = "CREATE TRIGGER fail_duplicate BEFORE DELETE ON social_posts FOR EACH ROW BEGIN IF OLD.id=3 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='rollback'; END IF; END";
     $db->exec($trigger);
@@ -113,12 +114,46 @@ $exercise = static function (PDO $db) use ($assert): void {
     $seed->execute([2000, 'unique-1000']);
     $window = DuplicateCleanup::run(1);
     $assert($window['changed'] === 0 && $window['has_more'], 'A bounded unique window advances rather than declaring the entire scan finished.');
+    $assert($window['inspected'] === 256, 'A unique inspection window reports real progress even without a merge.');
     for ($round = 0; $round < 10 && $window['has_more']; $round++) { $window = DuplicateCleanup::run(1); }
     $assert(!$window['has_more'] && Repository::redirectTarget(2000) === 1000, 'Later duplicate candidates reach their turn and find keepers outside the current window.');
+
+    $collisionA = 'collision-1fb34678cd8a644bac118672';
+    $collisionB = 'collision-0c5cb8de61d1eef2b0ef6289';
+    $collision = $db->prepare('SELECT CRC32(?)=CRC32(?)'); $collision->execute([$collisionA, $collisionB]);
+    $assert((int) $collision->fetchColumn() === 1 && $collisionA !== $collisionB, 'The fixture exercises different byte strings with an identical CRC32.');
+    $prefix = str_repeat('shared-prefix-', 20);
+    foreach ([3000 => $collisionA, 3001 => $collisionB, 3002 => $collisionB,
+        3100 => $prefix . 'first', 3101 => $prefix . 'second', 3102 => $prefix . 'first',
+        3200 => 'Příliš žluťoučký 🐈', 3201 => 'Příliš žluťoučký 🐈', 3202 => 'PŘÍLIŠ žluťoučký 🐈',
+        3300 => 'trailing ', 3301 => 'trailing', 3302 => 'trailing ', 3400 => '   ',
+        3500 => 'Příliš žluťoučký 🐈', 3501 => 'visibility-keeper', 3502 => 'visibility-keeper', 3503 => 'visibility-keeper', 3504 => 'visibility-keeper',
+        3600 => 'attachment-case', 3601 => 'attachment-case'] as $id => $body) { $seed->execute([$id, $body]); }
+    $db->exec("UPDATE social_posts SET author_id=2 WHERE id=3500");
+    $db->exec("UPDATE social_posts SET status='hidden' WHERE id=3501");
+    $db->exec("UPDATE social_posts SET published_at='2099-01-01' WHERE id=3502");
+    $db->exec("INSERT INTO social_post_images VALUES (3600,'2026/11/Case.webp',20,20,100),(3601,'2026/11/case.webp',20,20,100)");
+    $scan = new ReflectionMethod(DuplicateCleanup::class, 'scan');
+    $edgeCases = $scan->invoke(null, 500, 2999);
+    $expected = [['id' => 3002, 'keeper_id' => 3001], ['id' => 3102, 'keeper_id' => 3100], ['id' => 3201, 'keeper_id' => 3200], ['id' => 3302, 'keeper_id' => 3300], ['id' => 3504, 'keeper_id' => 3503]];
+    $assert($edgeCases['pairs'] === $expected, 'CRC collisions, long prefixes, Unicode, case, trailing spaces, author visibility and attachment path bytes retain exact keeper selection.');
+    $crossCollision = $scan->invoke(null, 500, 3001);
+    $assert($crossCollision['pairs'][0] === ['id' => 3002, 'keeper_id' => 3001], 'A historical hash collision does not replace the lowest fully matching keeper outside the window.');
+    $empty = $scan->invoke(null, 500, 999999);
+    $assert($empty['pairs'] === [] && $empty['inspected'] === 0 && !$empty['has_more'], 'An empty window finishes without a historical matching pass.');
+    $merged = DuplicateCleanup::run(500);
+    $assert($merged['changed'] === 5 && !$merged['has_more'], 'Only the exact matching edge cases merge through the normal checkpointed runner.');
+    $assert($db->query('SELECT 1 FROM social_posts WHERE id=3000')->fetchColumn() !== false && Repository::redirectTarget(3002) === 3001, 'Hash collisions never delete the differing text or select it as a keeper.');
+    for ($id = 4000; $id < 4060; $id++) { $seed->execute([$id, 'dense-' . intdiv($id - 4000, 2)]); }
+    $queries = [];
+    $db->beforePrepare = static function (string $sql) use (&$queries): void { $queries[] = $sql; };
+    try { $dense = $scan->invoke(null, 500, 3999); }
+    finally { $db->beforePrepare = null; }
+    $assert(count($dense['pairs']) === 30 && count($queries) <= 2, 'A dense duplicate window skips the historical prefilter and stays within two queries.');
     $db->exec("UPDATE social_posts SET status='hidden' WHERE id=1");
     $assert(Repository::redirectTarget(2) === null, 'Aliases cannot reveal a subsequently moderated post.');
     $db->exec('DELETE FROM social_posts WHERE id=1');
     $assert($db->query('SELECT 1 FROM social_post_redirects WHERE old_id=2')->fetchColumn() === false, 'Deleting a keeper removes its aliases.');
 };
-$exercise(\tinycat_test_database());
+$exercise(\tinycat_test_database_as(TinyCatTestLockPDO::class));
 echo "PASS bot duplicate housekeeping ($checks checks)\n";

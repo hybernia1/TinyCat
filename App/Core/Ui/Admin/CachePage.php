@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Ui\Admin;
 
-use TinyCat\Support\{Cache, ClientAssets, CompiledAssets, Components, Localization, Markup};
+use TinyCat\Support\{Cache, ClientAssets, Components, Localization, Markup};
 
 /** Read-only operational cache overview; no cache keys or private paths are exposed. */
 final class CachePage
@@ -18,7 +18,7 @@ final class CachePage
     {
         $cache = Cache::diagnostics();
         $application = ['name' => Localization::t('admin.cache.application'), 'description' => Localization::t('admin.cache.application_help'), 'value' => $cache['driver'] === 'memcached' ? 'Memcached' : Localization::t('admin.cache.filesystem'), 'badge_label' => Localization::t('admin.cache.' . ($cache['available'] ? 'available' : 'fallback')), 'tone' => $cache['available'] ? 'success' : 'danger'];
-        $assets = ['name' => Localization::t('admin.cache.assets'), 'mode' => Localization::t('admin.cache.' . (CompiledAssets::client('/admin/cache', Localization::locale()) !== null ? 'compiled' : 'on_demand')), 'rows' => []];
+        $assets = ['name' => Localization::t('admin.cache.assets'), 'rows' => []];
         foreach (['css', 'js', 'html'] as $kind) {
             $enabled = (bool) \TinyCat\Core\Runtime\Startup::option('performance.minify_' . $kind, false);
             $assets['rows'][] = ['label' => Localization::t('settings.fields.minify_' . $kind), 'value' => Localization::t('admin.cache.' . ($enabled ? 'enabled' : 'disabled')), 'badge' => true, 'tone' => $enabled ? 'success' : 'info'];

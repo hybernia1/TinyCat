@@ -295,7 +295,8 @@
         "editModalUrl",
         "profileNeedsEmail",
         "profileUrl",
-        "theme"
+        "theme",
+        "viewerIsAdmin"
       ]
     },
     {
@@ -663,7 +664,6 @@
       "name": "scheduler/run-detail",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
-        "scheduler/name",
         "scheduler/option",
         "scheduler/status",
         "ui/detail-table",
@@ -1271,8 +1271,7 @@
         "urls.home",
         "urls.login",
         "urls.search",
-        "userMenu",
-        "viewerIsAdmin"
+        "userMenu"
       ]
     },
     {
@@ -1444,7 +1443,6 @@
         "application.name",
         "application.tone",
         "application.value",
-        "assets.mode",
         "assets.name",
         "assets.rows",
         "browser.name",
@@ -1504,8 +1502,7 @@
         "metric.icon",
         "metric.key",
         "metric.label",
-        "metric.value",
-        "url"
+        "metric.value"
       ]
     },
     {
@@ -3063,7 +3060,7 @@
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-shell.css",
-        "line": 57,
+        "line": 56,
         "context": [],
         "selector": ".admin-brand"
       }
@@ -3071,13 +3068,13 @@
     "admin-content": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 144,
+        "line": 139,
         "context": [],
         "selector": ".admin-content"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 151,
+        "line": 146,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -3285,7 +3282,7 @@
     "admin-main": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 108,
+        "line": 103,
         "context": [],
         "selector": ".admin-main"
       },
@@ -3327,13 +3324,13 @@
     "admin-nav-chevron": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 71,
+        "line": 67,
         "context": [],
         "selector": ".admin-nav-chevron"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 79,
+        "line": 75,
         "context": [],
         "selector": ".admin-nav-group[open] .admin-nav-chevron"
       }
@@ -3341,19 +3338,19 @@
     "admin-nav-group": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 51,
+        "line": 47,
         "context": [],
         "selector": ".admin-nav-group"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 65,
+        "line": 61,
         "context": [],
         "selector": ".admin-nav-group[data-active=\"true\"] > .admin-nav-summary"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 79,
+        "line": 75,
         "context": [],
         "selector": ".admin-nav-group[open] .admin-nav-chevron"
       }
@@ -3379,13 +3376,7 @@
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 47,
-        "context": [],
-        "selector": ".admin-nav-link[aria-current=\"page\"]"
-      },
-      {
-        "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 88,
+        "line": 84,
         "context": [],
         "selector": ".admin-nav-submenu .admin-nav-link"
       },
@@ -3429,13 +3420,13 @@
     "admin-nav-submenu": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 83,
+        "line": 79,
         "context": [],
         "selector": ".admin-nav-submenu"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 88,
+        "line": 84,
         "context": [],
         "selector": ".admin-nav-submenu .admin-nav-link"
       }
@@ -3443,25 +3434,25 @@
     "admin-nav-summary": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 55,
+        "line": 51,
         "context": [],
         "selector": ".admin-nav-summary"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 61,
+        "line": 57,
         "context": [],
         "selector": ".admin-nav-summary::-webkit-details-marker"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 65,
+        "line": 61,
         "context": [],
         "selector": ".admin-nav-group[data-active=\"true\"] > .admin-nav-summary"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 65,
+        "line": 61,
         "context": [],
         "selector": ".admin-nav-summary:is(:hover, :focus-visible)"
       }
@@ -3563,7 +3554,7 @@
     "admin-sidebar-footer": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 92,
+        "line": 88,
         "context": [],
         "selector": ".admin-sidebar-footer"
       }
@@ -3579,7 +3570,7 @@
     "admin-topbar": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 112,
+        "line": 107,
         "context": [],
         "selector": ".admin-topbar"
       },
@@ -3595,7 +3586,7 @@
     "admin-topbar-actions": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 134,
+        "line": 129,
         "context": [],
         "selector": ".admin-topbar-actions"
       }
@@ -3609,7 +3600,7 @@
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 127,
+        "line": 122,
         "context": [],
         "selector": ".admin-topbar-title"
       }
@@ -3635,7 +3626,7 @@
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 101,
+        "line": 96,
         "context": [],
         "selector": ".admin-user"
       }
@@ -4361,7 +4352,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-confirm-buttons.css",
-        "line": 1,
+        "line": 5,
         "context": [],
         "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer .btn"
       },
@@ -4547,7 +4538,7 @@
     "card": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 151,
+        "line": 146,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -4813,7 +4804,7 @@
     "context-menu-action": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 19,
+        "line": 29,
         "context": [],
         "selector": ".user-menu-popover .context-menu-action"
       },
@@ -4921,7 +4912,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/dashboard.css",
-        "line": 48,
+        "line": 40,
         "context": [
           "@media (min-width: 900px)"
         ],
@@ -5556,18 +5547,6 @@
         "line": 6,
         "context": [],
         "selector": ".avatar-upload-empty .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 17,
-        "context": [],
-        "selector": ".user-menu-trigger > .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 24,
-        "context": [],
-        "selector": ".user-menu[open] .user-menu-trigger > .icon"
       },
       {
         "source": "App/Core/Ui/assets/styles/disclosure.css",
@@ -6285,7 +6264,7 @@
     "modal": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 151,
+        "line": 146,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -6365,6 +6344,12 @@
         "source": "App/Core/Ui/assets/styles/modal-confirm-buttons.css",
         "line": 1,
         "context": [],
+        "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/modal-confirm-buttons.css",
+        "line": 5,
+        "context": [],
         "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer .btn"
       },
       {
@@ -6375,13 +6360,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 11,
-        "context": [],
-        "selector": ".modal[data-modal-size=\"workspace\"] .modal-body"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 96,
+        "line": 93,
         "context": [],
         "selector": ".modal[data-modal-kind=\"confirm\"] > .modal-panel"
       },
@@ -6475,17 +6454,11 @@
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
         "line": 11,
         "context": [],
-        "selector": ".modal[data-modal-size=\"workspace\"] .modal-body"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 15,
-        "context": [],
         "selector": ".modal-body"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 49,
+        "line": 45,
         "context": [],
         "selector": ".modal-body"
       },
@@ -6501,7 +6474,7 @@
     "modal-confirm-message": [
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 100,
+        "line": 99,
         "context": [],
         "selector": ".modal-confirm-message"
       }
@@ -6509,7 +6482,7 @@
     "modal-editor-actions": [
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 83,
+        "line": 80,
         "context": [],
         "selector": ".modal-editor-actions"
       }
@@ -6517,7 +6490,7 @@
     "modal-editor-destructive": [
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 88,
+        "line": 85,
         "context": [],
         "selector": ".modal-editor-destructive"
       }
@@ -6527,29 +6500,35 @@
         "source": "App/Core/Ui/assets/styles/modal-confirm-buttons.css",
         "line": 1,
         "context": [],
+        "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/modal-confirm-buttons.css",
+        "line": 5,
+        "context": [],
         "selector": ".modal[data-modal-kind=\"confirm\"] .modal-footer .btn"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 15,
+        "line": 11,
         "context": [],
         "selector": ".modal-footer"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 67,
+        "line": 64,
         "context": [],
         "selector": ".modal-footer"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 77,
+        "line": 74,
         "context": [],
         "selector": ".modal-footer > .pagination"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 92,
+        "line": 89,
         "context": [],
         "selector": ".modal-footer[hidden]"
       },
@@ -6573,13 +6552,13 @@
     "modal-header": [
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 15,
+        "line": 11,
         "context": [],
         "selector": ".modal-header"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 56,
+        "line": 53,
         "context": [],
         "selector": ".modal-header"
       },
@@ -6649,19 +6628,19 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 21,
+        "line": 17,
         "context": [],
         "selector": ".modal-panel[data-tabs]"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 25,
+        "line": 21,
         "context": [],
         "selector": ".modal-panel > .modal-tabs"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 34,
+        "line": 30,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -6669,7 +6648,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 96,
+        "line": 93,
         "context": [],
         "selector": ".modal[data-modal-kind=\"confirm\"] > .modal-panel"
       },
@@ -6715,13 +6694,13 @@
     "modal-tab-switch": [
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 31,
+        "line": 27,
         "context": [],
         "selector": ".modal-tab-switch"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 39,
+        "line": 35,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -6729,7 +6708,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 45,
+        "line": 41,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -6737,7 +6716,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 46,
+        "line": 42,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -6747,13 +6726,13 @@
     "modal-tabs": [
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 25,
+        "line": 21,
         "context": [],
         "selector": ".modal-panel > .modal-tabs"
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 34,
+        "line": 30,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -6761,7 +6740,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 38,
+        "line": 34,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -7051,7 +7030,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 77,
+        "line": 74,
         "context": [],
         "selector": ".modal-footer > .pagination"
       },
@@ -7887,7 +7866,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 46,
+        "line": 42,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -10247,7 +10226,7 @@
     "tabs": [
       {
         "source": "App/Core/Ui/assets/styles/modal-layout.css",
-        "line": 38,
+        "line": 34,
         "context": [
           "@media (max-width: 899px)"
         ],
@@ -10547,21 +10526,15 @@
     "user-menu": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 7,
+        "line": 18,
         "context": [],
         "selector": ".user-menu > .user-menu-trigger"
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 22,
+        "line": 32,
         "context": [],
         "selector": ".user-menu a"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 24,
-        "context": [],
-        "selector": ".user-menu[open] .user-menu-trigger > .icon"
       }
     ],
     "user-menu-email-warning": [
@@ -10575,7 +10548,7 @@
     "user-menu-identity": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 20,
+        "line": 30,
         "context": [],
         "selector": ".user-menu-identity"
       }
@@ -10583,13 +10556,13 @@
     "user-menu-popover": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 18,
+        "line": 28,
         "context": [],
         "selector": ".user-menu-popover"
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 19,
+        "line": 29,
         "context": [],
         "selector": ".user-menu-popover .context-menu-action"
       }
@@ -10597,7 +10570,7 @@
     "user-menu-theme": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 21,
+        "line": 31,
         "context": [],
         "selector": ".user-menu-theme"
       }
@@ -10605,59 +10578,13 @@
     "user-menu-trigger": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 7,
+        "line": 18,
         "context": [],
         "selector": ".user-menu > .user-menu-trigger"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 17,
-        "context": [],
-        "selector": ".user-menu-trigger > .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 24,
-        "context": [],
-        "selector": ".user-menu[open] .user-menu-trigger > .icon"
       }
     ]
   },
   "repeated_css_selectors": [
-    {
-      "selector": ".admin-nav-link[aria-current=\"page\"]",
-      "context": [],
-      "rules": [
-        {
-          "selector": ".admin-nav-link[aria-current=\"page\"]",
-          "context": [],
-          "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-          "line": 41,
-          "declarations": [
-            [
-              "background",
-              "var(--surface-soft)"
-            ],
-            [
-              "color",
-              "var(--text)"
-            ]
-          ]
-        },
-        {
-          "selector": ".admin-nav-link[aria-current=\"page\"]",
-          "context": [],
-          "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-          "line": 47,
-          "declarations": [
-            [
-              "box-shadow",
-              "inset 3px 0 0 var(--primary)"
-            ]
-          ]
-        }
-      ]
-    },
     {
       "selector": ":is(.badge-info, .badge-success, .badge-warning, .badge-danger, .alert, .toast)::before",
       "context": [],
@@ -10954,7 +10881,7 @@
           "selector": ".modal-header",
           "context": [],
           "source": "App/Core/Ui/assets/styles/modal-layout.css",
-          "line": 15,
+          "line": 11,
           "declarations": [
             [
               "padding",
@@ -10966,7 +10893,7 @@
           "selector": ".modal-header",
           "context": [],
           "source": "App/Core/Ui/assets/styles/modal-layout.css",
-          "line": 56,
+          "line": 53,
           "declarations": [
             [
               "position",
@@ -11012,7 +10939,7 @@
           "selector": ".modal-body",
           "context": [],
           "source": "App/Core/Ui/assets/styles/modal-layout.css",
-          "line": 15,
+          "line": 11,
           "declarations": [
             [
               "padding",
@@ -11024,8 +10951,12 @@
           "selector": ".modal-body",
           "context": [],
           "source": "App/Core/Ui/assets/styles/modal-layout.css",
-          "line": 49,
+          "line": 45,
           "declarations": [
+            [
+              "background",
+              "var(--bg)"
+            ],
             [
               "min-height",
               "0"
@@ -11054,7 +10985,7 @@
           "selector": ".modal-footer",
           "context": [],
           "source": "App/Core/Ui/assets/styles/modal-layout.css",
-          "line": 15,
+          "line": 11,
           "declarations": [
             [
               "padding",
@@ -11066,7 +10997,7 @@
           "selector": ".modal-footer",
           "context": [],
           "source": "App/Core/Ui/assets/styles/modal-layout.css",
-          "line": 67,
+          "line": 64,
           "declarations": [
             [
               "flex-shrink",

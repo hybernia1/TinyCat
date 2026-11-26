@@ -1069,10 +1069,9 @@
         },
         "children": [
           {"tag": "span", "attrs": {"class": "avatar avatar-sm"}, "children": [{"slot": {"get": "avatar"}}]},
-          {"icon": "chevron-down"},
           {
             "tag": "span",
-            "attrs": {"class": "notification-badge user-menu-email-warning", "aria-hidden": "true"},
+            "attrs": {"class": "user-menu-email-warning", "aria-hidden": "true"},
             "when": {"get": "profileNeedsEmail"},
             "children": ["!"]
           },
@@ -1089,6 +1088,12 @@
         "attrs": {"class": "popover-panel user-menu-popover"},
         "children": [
           {"tag": "strong", "attrs": {"class": "user-menu-identity"}, "children": [{"get": "displayName"}]},
+          {
+            "tag": "a",
+            "attrs": {"class": "context-menu-action", "href": "/admin", "data-popover-close": ""},
+            "when": {"get": "viewerIsAdmin"},
+            "children": [{"icon": "dashboard"}, " ", {"tag": "span", "children": [{"t": "common.admin"}]}]
+          },
           {
             "tag": "a",
             "attrs": {"class": "context-menu-action", "href": {"get": "profileUrl"}, "data-popover-close": ""},

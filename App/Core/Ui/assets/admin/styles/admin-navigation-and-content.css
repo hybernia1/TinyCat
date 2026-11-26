@@ -44,10 +44,6 @@
   color: var(--text);
 }
 
-.admin-nav-link[aria-current="page"] {
-  box-shadow: inset 3px 0 0 var(--primary);
-}
-
 .admin-nav-group {
   display: grid;
 }
@@ -94,7 +90,6 @@
   display: grid;
   gap: 0.75rem;
   margin-block-start: auto;
-  border-top: 1px solid var(--border);
   padding: 0.75rem;
 }
 

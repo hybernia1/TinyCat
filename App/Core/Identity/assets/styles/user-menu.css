@@ -1,7 +1,18 @@
 .user-menu-email-warning {
+  position: absolute;
+  inset: auto -0.1rem -0.1rem auto;
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  align-items: center;
+  justify-content: center;
   background: var(--warning);
   color: var(--on-warning);
-  border-radius: var(--radius-sm);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--surface-panel, var(--surface));
 }
 
 .user-menu > .user-menu-trigger {
@@ -10,15 +21,12 @@
   width: auto;
   min-height: 38px;
   align-items: center;
-  gap: 4px;
-  padding: 3px;
+  padding: 0.25rem;
+  overflow: visible;
   cursor: pointer;
 }
-.user-menu-trigger > .icon { width: 14px; height: 14px; }
 .user-menu-popover { --popover-width: min(260px, calc(100vw - 24px)); }
 .user-menu-popover .context-menu-action { display: flex; align-items: center; gap: 8px; }
 .user-menu-identity { padding: 12px 10px; overflow-wrap: anywhere; border-bottom: 1px solid var(--border); }
 .user-menu-theme { display: grid; gap: 6px; padding: 10px; border-block: 1px solid var(--border); font-size: 0.8125rem; }
 .user-menu a { text-decoration: none; }
-
-.user-menu[open] .user-menu-trigger > .icon { transform: rotate(180deg); }

@@ -32,27 +32,78 @@ final class DuplicateCleanup
     }
 
     /** Bounded input window; keepers can precede it, so cross-window duplicates remain visible.
-     * @return array{pairs: list<array{id: int, keeper_id: int}>, next: int, has_more: bool} */
+     * @return array{pairs: list<array{id: int, keeper_id: int}>, next: int, has_more: bool, inspected: int} */
     private static function scan(int $limit, int $after): array
     {
         $window = max(256, min(1000, $limit * 2));
         $now = Dates::dateDb();
-        $body = 'BINARY k.body = BINARY c.body';
-        $rows = Connection::all("SELECT c.id,
+        $rows = Connection::all("SELECT p.id,p.author_id,CRC32(p.body) AS body_crc
+            FROM social_posts p INNER JOIN users u ON u.id=p.author_id
+            WHERE p.id>? AND p.kind='post' AND u.role='bot' AND u.status='active'
+                AND p.status='published' AND p.published_at<=? AND TRIM(p.body)<>''
+            ORDER BY p.id LIMIT " . ($window + 1), [$after, $now]);
+        $selected = array_slice($rows, 0, $window);
+        $possible = self::possibleDuplicates($selected, $now);
+        $keepers = [];
+        if ($possible !== []) {
+            $marks = implode(',', array_fill(0, count($possible), '?'));
+            // These IDs are already bounded; hydrate them before probing author visibility.
+            foreach (Connection::all("SELECT c.id,
             (SELECT k.id FROM social_posts k WHERE k.id<c.id AND k.author_id=c.author_id
-                AND k.kind='post' AND k.status='published' AND k.published_at<=? AND " . $body . '
-                AND ' . self::sameRelations('c', 'k') . " ORDER BY k.id LIMIT 1) AS keeper_id
-            FROM (SELECT p.* FROM social_posts p INNER JOIN users u ON u.id=p.author_id
-                WHERE p.id>? AND p.kind='post' AND u.role='bot' AND u.status='active'
-                    AND p.status='published' AND p.published_at<=? AND TRIM(p.body)<>''
-                ORDER BY p.id LIMIT " . ($window + 1) . ') c ORDER BY c.id', [$now, $after, $now]);
+                AND k.kind='post' AND k.status='published' AND k.published_at<=? AND BINARY k.body = BINARY c.body
+                AND " . self::sameRelations('c', 'k') . " ORDER BY k.id LIMIT 1) AS keeper_id
+            FROM social_posts c STRAIGHT_JOIN users u ON u.id=c.author_id
+            WHERE c.id IN (" . $marks . ") AND c.kind='post' AND u.role='bot' AND u.status='active'
+                AND c.status='published' AND c.published_at<=? AND TRIM(c.body)<>''
+            ORDER BY c.id", [$now, ...$possible, $now]) as $row) {
+                if ($row['keeper_id'] !== null) { $keepers[(int) $row['id']] = (int) $row['keeper_id']; }
+            }
+        }
         $pairs = []; $next = $after; $processed = 0;
-        foreach (array_slice($rows, 0, $window) as $row) {
+        foreach ($selected as $row) {
             $next = (int) $row['id']; $processed++;
-            if ($row['keeper_id'] !== null) { $pairs[] = ['id' => $next, 'keeper_id' => (int) $row['keeper_id']]; }
+            if (isset($keepers[$next])) { $pairs[] = ['id' => $next, 'keeper_id' => $keepers[$next]]; }
             if (count($pairs) >= $limit) { break; }
         }
-        return ['pairs' => $pairs, 'next' => $next, 'has_more' => count($rows) > $processed];
+        return ['pairs' => $pairs, 'next' => $next, 'has_more' => count($rows) > $processed, 'inspected' => $processed];
+    }
+
+    /** One historical pass replaces a correlated keeper scan for every unique text.
+     * Texts already repeated in the window need no historical prefilter.
+     * CRC32 is only a necessary condition: collisions still face the exact byte/relation checks.
+     * @param array<mixed> $rows
+     * @return list<int> */
+    private static function possibleDuplicates(array $rows, string $now): array
+    {
+        if ($rows === []) { return []; }
+        $texts = [];
+        foreach ($rows as $row) {
+            $key = $row['author_id'] . ':' . $row['body_crc'];
+            $texts[$key] ??= ['author' => (int) $row['author_id'], 'crc' => (int) $row['body_crc'], 'count' => 0];
+            $texts[$key]['count']++;
+        }
+        $parameters = [(int) $rows[array_key_last($rows)]['id'], $now];
+        $tuples = [];
+        foreach ($texts as $text) {
+            if ($text['count'] > 1) { continue; }
+            $tuples[] = '(?,?)'; $parameters[] = $text['author']; $parameters[] = $text['crc'];
+        }
+        $first = [];
+        if ($tuples !== []) {
+            foreach (Connection::all("SELECT k.author_id,CRC32(k.body) AS body_crc,MIN(k.id) AS first_id
+                FROM social_posts k WHERE k.id<=? AND k.kind='post' AND k.status='published' AND k.published_at<=?
+                    AND (k.author_id,CRC32(k.body)) IN (" . implode(',', $tuples) . ')
+                GROUP BY k.author_id,CRC32(k.body) HAVING COUNT(*)>1', $parameters) as $row) {
+                $first[$row['author_id'] . ':' . $row['body_crc']] = (int) $row['first_id'];
+            }
+        }
+        $possible = [];
+        foreach ($rows as $row) {
+            $key = $row['author_id'] . ':' . $row['body_crc'];
+            $oldest = $first[$key] ?? null;
+            if ($texts[$key]['count'] > 1 || ($oldest !== null && $oldest < (int) $row['id'])) { $possible[] = (int) $row['id']; }
+        }
+        return $possible;
     }
 
     private static function cursorFile(): string
@@ -91,23 +142,25 @@ final class DuplicateCleanup
         });
     }
 
-    /** @return array{due: bool, changed: int, has_more: bool, error?: string} */
+    /** @return array{due: bool, changed: int, has_more: bool, inspected: int, error?: string} */
     public static function run(int $batch): array
     {
         $batch = max(1, min(500, $batch));
         $changed = 0;
+        $inspected = 0;
         try {
             $cursor = self::cursorFile();
             $saved = is_file($cursor) ? json_decode((string) file_get_contents($cursor), true) : null;
             $scan = self::scan($batch, is_int($saved) ? max(0, $saved) : 0);
+            $inspected = $scan['inspected'];
             foreach ($scan['pairs'] as $row) {
                 if (self::merge((int) $row['id'], (int) $row['keeper_id'])) { $changed++; }
             }
             if (!\TinyCat\Support\Storage::write($cursor, json_encode($scan['has_more'] ? $scan['next'] : 0, JSON_THROW_ON_ERROR))) { throw new \RuntimeException('Cannot save duplicate cleanup progress.'); }
-            return ['due' => true, 'changed' => $changed, 'has_more' => $scan['has_more']];
+            return ['due' => true, 'changed' => $changed, 'has_more' => $scan['has_more'], 'inspected' => $inspected];
         } catch (\Throwable $exception) {
             \TinyCat\Core\Runtime\Failure::report($exception);
-            return ['due' => true, 'changed' => $changed, 'has_more' => false, 'error' => \TinyCat\Core\Runtime\Failure::message($exception, 'Operation failed.')];
+            return ['due' => true, 'changed' => $changed, 'has_more' => false, 'inspected' => $inspected, 'error' => \TinyCat\Core\Runtime\Failure::message($exception, 'Operation failed.')];
         }
     }
 }

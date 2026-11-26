@@ -1012,17 +1012,6 @@
                     "children": [{"icon": {"or": [{"get": "item.icon"}, "link"]}}]
                   }
                 },
-                {
-                  "tag": "a",
-                  "attrs": {
-                    "class": "nav-link nav-link-icon",
-                    "href": "/admin",
-                    "aria-label": {"t": "common.admin"},
-                    "title": {"t": "common.admin"}
-                  },
-                  "when": {"and": [{"get": "authenticated"}, {"get": "viewerIsAdmin"}]},
-                  "children": [{"icon": "dashboard"}]
-                },
                 {"slot": {"get": "notificationMenu"}, "when": {"get": "authenticated"}},
                 {"slot": {"get": "userMenu"}, "when": {"get": "authenticated"}},
                 {
@@ -1775,7 +1764,7 @@
             "as": "entry",
             "children": {
               "tag": "li",
-              "attrs": {"data-widget-row": "", "class": "identity-row identity-row-inset"},
+              "attrs": {"class": "identity-row identity-row-compact"},
               "children": [
                 {
                   "component": "ui/avatar",
@@ -1788,26 +1777,33 @@
                 },
                 {
                   "tag": "div",
-                  "attrs": {"class": "min-w-0"},
+                  "attrs": {"class": "identity-copy identity-copy-truncate"},
                   "children": [
                     {
-                      "tag": "a",
-                      "attrs": {"href": {"get": "entry.url"}},
-                      "children": [{"tag": "strong", "children": [{"get": "entry.label"}]}]
+                      "tag": "div",
+                      "attrs": {"class": "inline-flex justify-between gap-2 text-sm"},
+                      "children": [
+                        {
+                          "tag": "a",
+                          "attrs": {"href": {"get": "entry.url"}},
+                          "children": [{"tag": "strong", "children": [{"get": "entry.label"}]}]
+                        },
+                        " ",
+                        {
+                          "tag": "small",
+                          "attrs": {"class": "text-muted"},
+                          "when": {"get": "entry.time"},
+                          "children": [{"icon": "clock"}, {"get": "entry.time"}]
+                        }
+                      ]
                     },
                     {
                       "tag": "p",
-                      "attrs": {"class": "m-0 is-resource-text"},
+                      "attrs": {"class": "m-0"},
                       "when": {"get": "entry.detail"},
                       "children": [{"get": "entry.detail"}]
                     }
                   ]
-                },
-                {
-                  "tag": "small",
-                  "attrs": {"class": "text-muted cluster gap-1", "data-widget-time": ""},
-                  "when": {"get": "entry.time"},
-                  "children": [{"icon": "clock"}, {"get": "entry.time"}]
                 }
               ]
             }
@@ -1820,19 +1816,31 @@
         "when": {"and": [{"eq": [{"get": "widget.type"}, "list"]}, {"not": {"get": "widget.data.items"}}]}
       },
       {
-        "component": "ui/notice",
-        "data": {
-          "detail": {"get": "widget.data.detail"},
-          "tone": {"get": "widget.data.tone"},
-          "title": {"get": "widget.data.text"}
-        },
-        "when": {"eq": [{"get": "widget.type"}, "status"]}
+        "tag": "a",
+        "attrs": {"href": {"get": "widget.data.url"}},
+        "when": {"eq": [{"get": "widget.type"}, "status"]},
+        "children": [
+          {
+            "component": "ui/notice",
+            "data": {
+              "detail": {"get": "widget.data.detail"},
+              "tone": {"get": "widget.data.tone"},
+              "title": {"get": "widget.data.text"}
+            }
+          }
+        ]
       },
       {"slot": {"get": "widget.content"}, "when": {"eq": [{"get": "widget.type"}, "custom"]}},
       {
         "tag": "a",
         "attrs": {"class": "btn btn-ghost btn-sm", "href": {"get": "widget.data.url"}},
-        "when": {"and": [{"get": "widget.data.url"}, {"not": {"eq": [{"get": "widget.type"}, "metrics"]}}]},
+        "when": {
+          "and": [
+            {"get": "widget.data.url"},
+            {"not": {"eq": [{"get": "widget.type"}, "metrics"]}},
+            {"not": {"eq": [{"get": "widget.type"}, "status"]}}
+          ]
+        },
         "children": [{"t": "admin.widgets.more"}, {"icon": "arrow-right"}]
       }
     ]
@@ -1870,7 +1878,6 @@
             "attrs": {"class": "text-base m-0 cluster gap-2"},
             "children": [{"icon": "code"}, {"get": "assets.name"}]
           },
-          {"tag": "span", "attrs": {"class": "text-muted"}, "children": [{"get": "assets.mode"}]},
           {"component": "ui/detail-table", "data": {"title": {"get": "assets.name"}, "rows": {"get": "assets.rows"}}}
         ]
       },
@@ -2096,12 +2103,6 @@
         "component": "ui/empty-state",
         "data": {"label": {"t": "common.search_empty"}, "compact": true},
         "when": {"not": {"get": "items"}}
-      },
-      {
-        "tag": "a",
-        "attrs": {"class": "btn btn-ghost btn-sm", "href": {"get": "url"}},
-        "when": {"get": "url"},
-        "children": [{"t": "admin.widgets.more"}, {"icon": "arrow-right"}]
       }
     ]
   },

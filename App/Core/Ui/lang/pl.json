@@ -94,8 +94,6 @@
       "application_help": "Obliczone dane używają TTL i unieważniania określonego przez właściciela funkcji. Niedostępny Memcached jest zastępowany dyskiem.",
       "assets": "Generowane zasoby",
       "browser": "Pamięć przeglądarki",
-      "compiled": "Skompilowane wydanie",
-      "on_demand": "Generowanie na żądanie",
       "http": "Pamięć HTTP i kompresja",
       "http_help": "Zaobserwowane odpowiedzi anonimowe. Content-Encoding wskazuje kompresję, Cache-Control zapisywanie. To próbki, a nie kontrola wszystkich URL.",
       "observing": "Sprawdzanie…",

@@ -390,61 +390,43 @@
     "attrs": {"class": "stack stack-gap-16"},
     "children": [
       {
-        "tag": "section",
-        "attrs": {"class": "stack stack-gap-12"},
+        "tag": "dl",
+        "attrs": {"class": "grid sm:grid-2 gap-2 m-0"},
         "children": [
           {
             "tag": "div",
-            "attrs": {"class": "cluster justify-between gap-2"},
+            "attrs": {"class": "stack stack-gap-4"},
             "children": [
+              {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "cron.started"}]},
               {
-                "tag": "h3",
-                "attrs": {"class": "text-lg m-0"},
-                "children": [{"component": "scheduler/name", "data": {"name": {"get": "item.task"}}}]
-              },
-              {"component": "scheduler/status", "data": {"status": {"get": "item.status"}}}
-            ]
-          },
-          {
-            "tag": "dl",
-            "attrs": {"class": "grid sm:grid-2 gap-2 m-0"},
-            "children": [
-              {
-                "tag": "div",
-                "attrs": {"class": "stack stack-gap-4"},
+                "tag": "dd",
+                "attrs": {"class": "m-0"},
                 "children": [
-                  {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "cron.started"}]},
                   {
-                    "tag": "dd",
-                    "attrs": {"class": "m-0"},
-                    "children": [
-                      {
-                        "if": [
-                          {"eq": [{"get": "item.started_at"}, null]},
-                          {"t": "cron.unfinished"},
-                          {"date": {"get": "item.started_at"}}
-                        ]
-                      }
+                    "if": [
+                      {"eq": [{"get": "item.started_at"}, null]},
+                      {"t": "cron.unfinished"},
+                      {"date": {"get": "item.started_at"}}
                     ]
                   }
                 ]
-              },
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {"class": "stack stack-gap-4"},
+            "children": [
+              {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "cron.duration"}]},
               {
-                "tag": "div",
-                "attrs": {"class": "stack stack-gap-4"},
+                "tag": "dd",
+                "attrs": {"class": "m-0"},
                 "children": [
-                  {"tag": "dt", "attrs": {"class": "text-muted"}, "children": [{"t": "cron.duration"}]},
                   {
-                    "tag": "dd",
-                    "attrs": {"class": "m-0"},
-                    "children": [
-                      {
-                        "if": [
-                          {"eq": [{"get": "item.duration_ms"}, null]},
-                          {"t": "cron.unfinished"},
-                          {"concat": [{"get": "item.duration_ms"}, " ms"]}
-                        ]
-                      }
+                    "if": [
+                      {"eq": [{"get": "item.duration_ms"}, null]},
+                      {"t": "cron.unfinished"},
+                      {"concat": [{"get": "item.duration_ms"}, " ms"]}
                     ]
                   }
                 ]
@@ -466,7 +448,14 @@
         "tag": "section",
         "attrs": {"class": "stack stack-gap-8"},
         "children": [
-          {"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"t": "cron.result"}]},
+          {
+            "tag": "div",
+            "attrs": {"class": "cluster justify-between gap-2"},
+            "children": [
+              {"tag": "h3", "attrs": {"class": "text-lg m-0"}, "children": [{"t": "cron.result"}]},
+              {"component": "scheduler/status", "data": {"status": {"get": "item.status"}}}
+            ]
+          },
           {
             "tag": "div",
             "when": {"not": {"eq": [{"get": "item.summary.count"}, null]}},
@@ -493,22 +482,24 @@
                 "attrs": {"class": "disclosure-summary"},
                 "children": [
                   {
-                    "tag": "span",
-                    "attrs": {"class": "cluster gap-2"},
-                    "children": [
-                      {"tag": "strong", "children": [{"get": "detail.title"}]},
-                      {
-                        "component": "ui/status-badge",
-                        "data": {
-                          "label": {"get": "detail.status.name"},
-                          "tone": {"get": "detail.status.code"},
-                          "text": true
-                        },
-                        "when": {"get": "detail.status"}
-                      }
-                    ]
+                    "tag": "strong",
+                    "attrs": {"class": "min-w-0 is-resource-text"},
+                    "children": [{"get": "detail.title"}]
                   },
-                  {"icon": "chevron-down", "class": "icon disclosure-chevron"}
+                  {
+                    "component": "ui/status-badge",
+                    "data": {
+                      "label": {"get": "detail.status.name"},
+                      "tone": {"get": "detail.status.code"},
+                      "text": true
+                    },
+                    "when": {"get": "detail.status"}
+                  },
+                  {
+                    "icon": "chevron-down",
+                    "class": "icon disclosure-chevron",
+                    "when": {"not": {"get": "detail.status"}}
+                  }
                 ]
               },
               {

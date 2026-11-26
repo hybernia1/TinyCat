@@ -68,7 +68,13 @@ import "../../Ui/assets/component-builders.js";
         return dialog;
       }
       if (!/^\/api\/scheduler\/runs\/[0-9]+$/.test(url.pathname)) { return null; }
-      return T.ui.dialog(id, "cron.run_details", T.components.render("scheduler/run-detail", response.data), false, null, { size: "reading", mobile: "fullscreen" });
+      var run = response.data.item, task = { name: run.task };
+      var title = T.components.render("scheduler/name", task).textContent + " #" + run.id;
+      var modal = T.ui.dialog(id, title, T.components.render("scheduler/run-detail", response.data), false, null, { size: "reading", mobile: "fullscreen" });
+      var heading = modal.querySelector('[id="' + modal.getAttribute("aria-labelledby") + '"]');
+      heading.className += " min-w-0 is-resource-text";
+      heading.replaceChildren(T.components.render("scheduler/icon", task), document.createTextNode(title));
+      return modal;
     },
     list: function (target, response) {
       if (!definition) { return false; }

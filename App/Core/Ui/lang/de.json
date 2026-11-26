@@ -94,8 +94,6 @@
       "application_help": "Berechnete Daten verwenden TTL und Invalidierung ihrer Funktion. Ist Memcached nicht verfügbar, wird die Festplatte verwendet.",
       "assets": "Generierte Assets",
       "browser": "Browser-Cache",
-      "compiled": "Kompilierte Veröffentlichung",
-      "on_demand": "Bei Bedarf generiert",
       "http": "HTTP-Cache und Komprimierung",
       "http_help": "Beobachtete anonyme Antworten. Content-Encoding zeigt die Komprimierung, Cache-Control die Speicherung. Dies sind Stichproben, keine Prüfung aller URLs.",
       "observing": "Wird geprüft…",

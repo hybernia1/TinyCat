@@ -5,6 +5,8 @@
     ],
     "components": [
       "scheduler/run-detail",
+      "scheduler/name",
+      "scheduler/icon",
       "scheduler/configuration",
       "scheduler/actions"
     ],
