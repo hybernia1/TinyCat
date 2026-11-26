@@ -200,6 +200,20 @@ try {
         'App/Core/Links/Outbound.php',
         'App/Core/Links/Presentation.php',
         'App/Core/Links/Providers.php',
+        'App/Core/Support/AdminViews.php',
+        'App/Core/Support/AdminSorting.php',
+        'App/Core/Support/Pagination.php',
+        'App/Core/Support/View.php',
+        'App/Core/Support/Components.php',
+        'App/Core/Support/Html.php',
+        'App/Core/Support/Markup.php',
+        'App/Core/Support/Text.php',
+        'App/Core/Support/LocalUrls.php',
+        'App/Core/Support/Format.php',
+        'App/Core/Support/Module.php',
+        'App/Core/Support/DeploymentIdentity.php',
+        'App/Core/Support/BuildCleanup.php',
+        'App/Core/Support/RuntimeAssetCleanup.php',
         'App/Core/Text/Hashtags.php',
         'App/Core/Text/PostText.php',
         'App/Core/Text/Revisions.php',
@@ -373,13 +387,17 @@ if (__CACHED_AUTOLOAD__ && (!function_exists('opcache_is_script_cached') || !opc
 }
 if (!TinyCat\Database\Schema::app_db_ready()) { throw new RuntimeException('Baseline schema must be ready before the web update.'); }
 foreach ([TinyCat\Database\Migrations::class, TinyCat\Database\ModuleSchemas::class, TinyCat\Core\Modules\ModuleSchema::class, TinyCat\Core\Modules\SchemaMigration::class, TinyCat\Core\Tasks\Schema::class, TinyCat\Core\Modules\Lifecycle::class] as $class) { if (!class_exists($class)) { throw new RuntimeException('Missing baseline class.'); } }
-if (!class_exists(TinyCat\Core\Text\Policies::class) || !class_exists(TinyCat\Core\Text\TextPolicy::class)) { throw new RuntimeException('Original text policy classes must be loaded before update.'); }
+foreach (['Policies', 'TextPolicy'] as $textClass) {
+    if (is_file(__ROOT__ . '/App/Core/Text/' . $textClass . '.php') && !class_exists('TinyCat\\Core\\Text\\' . $textClass)) { throw new RuntimeException('Original text policy class was not loaded: ' . $textClass); }
+}
 foreach (['Locale', 'Readiness', 'GeneratedAvatar'] as $identityClass) {
     if (is_file(__ROOT__ . '/App/Core/Identity/' . $identityClass . '.php') && !class_exists('TinyCat\\Core\\Identity\\' . $identityClass)) { throw new RuntimeException('Original Identity class was not loaded: ' . $identityClass); }
 }
 // This code runs inside the immutable supported baseline, before its files change.
 // Cache both original schema provider contracts and schema objects explicitly.
-$cachedAccountSchema = TinyCat\Core\Identity\ServiceProvider::schema();
+$cachedAccountSchema = method_exists(TinyCat\Core\Identity\ServiceProvider::class, 'schemas')
+    ? TinyCat\Core\Identity\ServiceProvider::schemas()['tinycat.accounts']
+    : TinyCat\Core\Identity\ServiceProvider::schema();
 $cachedSocialSchemas = TinyCat\Social\Module::schemas();
 $cachedSchemaParameters = (new ReflectionMethod(TinyCat\Core\Modules\ModuleSchema::class, '__construct'))->getNumberOfParameters();
 $cachedAccountInterfaces = class_implements(TinyCat\Core\Identity\ServiceProvider::class);
@@ -397,7 +415,9 @@ foreach ($retiredContracts as $relative) {
 if ($cachedSchemaParameters !== (new ReflectionMethod(TinyCat\Core\Modules\ModuleSchema::class, '__construct'))->getNumberOfParameters()
     || $cachedAccountInterfaces !== class_implements(TinyCat\Core\Identity\ServiceProvider::class)
     || $cachedSocialInterfaces !== class_implements(TinyCat\Social\Module::class)
-    || $cachedAccountSchema->version !== TinyCat\Core\Identity\ServiceProvider::schema()->version
+    || $cachedAccountSchema->version !== (method_exists(TinyCat\Core\Identity\ServiceProvider::class, 'schemas')
+        ? TinyCat\Core\Identity\ServiceProvider::schemas()['tinycat.accounts']
+        : TinyCat\Core\Identity\ServiceProvider::schema())->version
     || array_keys($cachedSocialSchemas) !== array_keys(TinyCat\Social\Module::schemas())) {
     throw new RuntimeException('The updater must finish with the original schema classes and provider contracts still loaded.');
 }
@@ -412,10 +432,11 @@ PHP;
         [var_export($installRoot, true), var_export($manifestPath, true), var_export($signaturePath, true), var_export($packagePath, true), $cachedAutoload ? 'true' : 'false', var_export($retiredContracts, true)],
         $updateRunner
     );
+    $updateRunner = "try {\n" . $updateRunner . "\n} catch (\\Throwable \$failure) { fwrite(STDERR, get_class(\$failure) . ': ' . \$failure->getMessage() . ' in ' . \$failure->getFile() . ':' . \$failure->getLine() . PHP_EOL); exit(1); }\n";
     [$updateExit, $updateOutput] = $run($updateRunner);
     $update = json_decode(implode("\n", $updateOutput), true);
     if ($updateExit !== 0 || !is_array($update)) {
-        throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
+        throw new RuntimeException('Signed production update failed (exit ' . $updateExit . '): ' . implode(' ', $updateOutput));
     }
     foreach ($retiredContracts as $relative) {
         $assert(!is_file($installRoot . '/' . $relative), 'The supported update physically removes the retired contract: ' . $relative);
