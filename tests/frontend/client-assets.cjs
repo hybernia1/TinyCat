@@ -90,7 +90,8 @@ check(bots.T.bots && bots.T.accounts && bots.T.status, "Bot administration inclu
 const botDetail = load("/admin/bots/detail");
 check(botDetail.T.bots && botDetail.T.status && botDetail.definitions.includes("bots/posts") && botDetail.definitions.includes("status/composer-body"), "Only bot detail loads the post list and shared post editor");
 check(bots.definitions.includes("ui/avatar"), "Component dependencies cross module boundaries without loading unrelated scripts");
-check(bots.definitions.includes("status/composer-body") && !bots.definitions.includes("status/card") && !bots.definitions.includes("notifications/items"), "Bot administration includes the shared post editor without public feed cards or notification lists.");
+check(bots.definitions.includes("status/composer-body") && !bots.definitions.includes("status/card"), "Bot administration includes the shared post editor without public feed cards.");
+check([users, bots, load('/admin')].every(page => page.definitions.includes('notifications/items') && page.sources.includes('App/Core/Notifications/assets/polling.js') && page.T.notifications), 'Administration shares the public notification list, controller and polling lifecycle.');
 check(load("/admin/moderation/reports").T.moderation, "Moderation loads its module");
 check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
 check(load("/admin").T.settings && load("/admin").T.accounts, "Every admin page includes settings and shared profile dialogs");

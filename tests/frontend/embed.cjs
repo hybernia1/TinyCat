@@ -81,7 +81,7 @@ function player(url, origin, kind, audioUrl = "") {
     replaceChildren() { throw new Error('Card metadata and source links must survive mounting a player.'); }
   };
   const win = { location: new URL("https://tinycat.test") }; win.parent = win;
-  const doc = { querySelectorAll() { return [root]; }, getElementById() { return null; }, createElement(tag) { return { tag, setAttribute() {}, playCalls: 0, play() { this.playCalls++; return Promise.resolve(); } }; } };
+  const doc = { querySelectorAll(selector) { return selector === '[data-status-video]' ? [root] : []; }, getElementById() { return null; }, createElement(tag) { return { tag, setAttribute() {}, playCalls: 0, play() { this.playCalls++; return Promise.resolve(); } }; } };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/embed/embed-frame.js"), "utf8"), { window: win, document: doc, URL, Number, Math });
   check(!mounted, "External players stay unloaded before interaction.");
   load(); return mounted;
@@ -97,3 +97,22 @@ const nativeAudio = player("", "", "audio", "https://example.com/episode.mp3");
 check(nativeAudio.tag === "audio" && nativeAudio.controls && nativeAudio.preload === "none" && nativeAudio.playCalls === 1, "The same placeholder starts native audio only after clicking.");
 check(!player("", "", "audio", "javascript:alert(1)"), "Native media rejects executable URLs.");
 console.log("PASS embed resizing, origin/source checks and WordPress protocol (" + checks + " checks)");
+for (const [complete, naturalWidth] of [[true, 184], [true, 0], [false, 0]]) {
+  const handlers = {}, classes = new Set(), fallback = { hidden: false };
+  const card = { classList: { toggle(name, enabled) { if (enabled) classes.add(name); else classes.delete(name); } } };
+  const image = { complete, naturalWidth, hidden: false,
+    closest(selector) { return selector === '.status-link-card' ? card : { querySelector: () => fallback }; },
+    addEventListener(name, handler) { handlers[name] = handler; }
+  };
+  const win = {}; win.parent = win;
+  const doc = { querySelectorAll: selector => selector === '[data-status-link-image]' ? [image] : [], getElementById: () => null };
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../../App/Modules/Social/assets/embed/embed-frame.js'), 'utf8'), { window: win, document: doc });
+  check(classes.has('is-image-ready') === (complete && naturalWidth > 0), 'Cached preview images become visible immediately; pending and failed images retain their fallback.');
+  handlers.load();
+  check(classes.has('is-image-ready') && !classes.has('is-image-missing') && !image.hidden && fallback.hidden, 'Loading a preview reveals its image and hides the fallback.');
+  handlers.error();
+  check(!classes.has('is-image-ready') && classes.has('is-image-missing') && image.hidden && !fallback.hidden, 'A failed preview restores the fallback.');
+  handlers.load();
+  check(classes.has('is-image-ready') && !image.hidden && fallback.hidden, 'A recovered preview becomes visible again.');
+}
+console.log('PASS embed link preview image lifecycle');

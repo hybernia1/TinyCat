@@ -60,3 +60,18 @@ body.admin-nav-open .admin-backdrop {
   gap: 0.625rem;
   color: var(--text);
 }
+
+.admin-sidebar-tools {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.admin-sidebar-tools .brand-logo {
+  width: var(--control-height);
+  height: var(--control-height);
+  object-fit: contain;
+}

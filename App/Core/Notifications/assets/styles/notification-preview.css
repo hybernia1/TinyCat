@@ -2,25 +2,6 @@
   color: var(--primary);
 }
 
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  display: inline-flex;
-  min-width: 18px;
-  height: 18px;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--surface);
-  border-radius: var(--radius-sm);
-  background: var(--danger);
-  color: var(--on-danger);
-  font-size: 0.625rem;
-  font-weight: 850;
-  line-height: 1;
-  padding-inline: 4px;
-}
-
 .notification-panel { --popover-width: min(360px, calc(100vw - 24px)); }
 
 .notification-preview-header {

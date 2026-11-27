@@ -19,8 +19,7 @@ final class Layout
         $actions = (string) ($page['actions'] ?? '');
         $authUser = Authentication::auth();
         $appName = (string) Startup::option('site.name', 'TinyCat');
-        $siteLogoUrl = (string) Startup::option('site.logo_url', '');
-        $adminIdentity = $authUser !== null ? '@' . (string) ($authUser['username'] ?? '') : $appName;
+        $siteLogoUrl = \TinyCat\Core\Ui\Site::site_logo_url() ?: \TinyCat\Core\Ui\Site::site_favicon_url();
         $profileUrl = $authUser !== null ? (Integration::profileUrl((int) $authUser['id']) ?? '') : '';
         $profileNeedsEmail = $authUser !== null && trim((string) ($authUser['email'] ?? '')) === '';
         $theme = Profile::theme((string) ($authUser['theme'] ?? 'system'));
@@ -37,12 +36,17 @@ final class Layout
             'authUser' => $authUser, 'profileUrl' => $profileUrl, 'profileNeedsEmail' => $profileNeedsEmail,
             'theme' => $theme,
         ]) : '';
+        $notificationMenu = $authUser !== null ? \TinyCat\Core\Notifications\Views::menu([
+            'current' => $current,
+            'state' => \TinyCat\Core\Notifications\Inbox::state((int) $authUser['id']),
+            'notifications' => \TinyCat\Core\Notifications\Inbox::items((int) $authUser['id'], \TinyCat\Core\Notifications\Inbox::PREVIEW_LIMIT),
+        ]) : '';
         $flashToasts = [];
         foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', 'info' => 'info'] as $key => $type) {
             $message = \TinyCat\Http\Session::flash($key);
             if (is_string($message) && $message !== '') { $flashToasts[] = ['message' => $message, 'type' => $type]; }
         }
-        $shell = View::render('shell', compact('title', 'actions', 'content', 'authUser', 'appName', 'siteLogoUrl', 'adminIdentity', 'profileUrl', 'profileNeedsEmail', 'nav', 'titleIcon', 'userMenu'), __DIR__ . '/templates');
+        $shell = View::render('shell', compact('title', 'actions', 'content', 'authUser', 'appName', 'siteLogoUrl', 'profileUrl', 'profileNeedsEmail', 'nav', 'titleIcon', 'userMenu', 'notificationMenu'), __DIR__ . '/templates');
         echo \TinyCat\Core\Ui\Document::frame([
             'title' => $title, 'csrfToken' => $csrf, 'robots' => 'noindex,nofollow',
             'htmlAttributes' => ['lang' => \TinyCat\Support\Localization::locale(), 'data-theme' => $theme !== 'system' ? $theme : null,

@@ -2,7 +2,6 @@
 declare(strict_types=1);
 /** @var string $content */
 /** @var string $actions */
-/** @var string $adminIdentity */
 /** @var string $appName */
 /** @var array<mixed> $nav */
 /** @var string $siteLogoUrl */
@@ -11,20 +10,22 @@ declare(strict_types=1);
 /** @var string $profileUrl */
 /** @var bool $profileNeedsEmail */
 /** @var string $userMenu */
+/** @var string $notificationMenu */
 ?>
         <div class="admin-shell" data-admin-shell>
             <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar data-theme="dark">
                 <div class="admin-sidebar-header">
-                    <a class="admin-brand" href="/">
+                    <div class="admin-sidebar-tools">
+                    <a class="admin-brand nav-link nav-link-icon" href="/" aria-label="<?= \TinyCat\Core\Ui\Html::e($appName) ?>">
                         <?php if ($siteLogoUrl !== ''): ?>
                             <img class="brand-logo" src="<?= \TinyCat\Core\Ui\Html::e($siteLogoUrl) ?>" alt="<?= \TinyCat\Core\Ui\Html::et('common.site_logo_alt', ['site' => $appName]) ?>">
                         <?php else: ?>
-                            <?= \TinyCat\Core\Ui\Html::icon('dashboard', 'icon-lg') ?>
+                            <?= \TinyCat\Core\Ui\Html::icon('home') ?>
                         <?php endif; ?>
-                        <span>
-                            <strong<?= $siteLogoUrl !== '' ? ' aria-hidden="true"' : '' ?>><?= \TinyCat\Core\Ui\Html::e($appName) ?></strong>
-                        </span>
                     </a>
+                    <?= $notificationMenu ?>
+                    <?= $userMenu ?>
+                    </div>
                     <button class="btn btn-icon admin-sidebar-close" type="button" data-admin-nav-toggle aria-controls="admin-sidebar" aria-expanded="false" aria-label="<?= \TinyCat\Core\Ui\Html::et('common.close') ?>">
                         <?= \TinyCat\Core\Ui\Html::icon('close') ?>
                     </button>
@@ -58,13 +59,7 @@ declare(strict_types=1);
                 </nav>
 
                 <div class="admin-sidebar-footer">
-                    <div class="admin-user">
-                        <?= $userMenu ?>
-                        <span>
-                            <strong><?= \TinyCat\Core\Ui\Html::e($adminIdentity) ?></strong>
-                            <small>TinyCat v<?= \TinyCat\Core\Ui\Html::e(\TinyCat\Support\Version::CURRENT) ?></small>
-                        </span>
-                    </div>
+                    <small>TinyCat v<?= \TinyCat\Core\Ui\Html::e(\TinyCat\Support\Version::CURRENT) ?></small>
                 </div>
             </aside>
 

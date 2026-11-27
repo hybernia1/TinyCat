@@ -1,5 +1,13 @@
 [
   {
+    "id": "ui.nav-badge",
+    "routes": [],
+    "components": [],
+    "entries": [],
+    "styles": ["App/Core/Ui/assets/styles/nav-badge.css"],
+    "translations": []
+  },
+  {
     "id": "ui.switcher",
     "routes": [],
     "components": [

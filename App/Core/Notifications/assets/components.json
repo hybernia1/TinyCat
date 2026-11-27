@@ -225,11 +225,7 @@
           {"icon": "bell"},
           {
             "tag": "span",
-            "attrs": {
-              "class": "notification-badge",
-              "data-notification-count": "",
-              "hidden": {"not": {"get": "has_unread"}}
-            },
+            "attrs": {"class": "nav-badge", "data-notification-count": "", "hidden": {"not": {"get": "has_unread"}}},
             "children": [{"get": "badge"}]
           }
         ]

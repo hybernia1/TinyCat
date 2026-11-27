@@ -52,7 +52,7 @@
       "App/Core/Identity/assets/styles/user-menu.css"
     ],
     "uses": [
-      "ui.switcher"
+      "ui.switcher", "ui.nav-badge"
     ],
     "translations": [],
     "messages": {

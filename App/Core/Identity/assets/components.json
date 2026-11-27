@@ -1070,7 +1070,7 @@
           {"tag": "span", "attrs": {"class": "avatar avatar-sm"}, "children": [{"slot": {"get": "avatar"}}]},
           {
             "tag": "span",
-            "attrs": {"class": "user-menu-email-warning", "aria-hidden": "true"},
+            "attrs": {"class": "nav-badge", "aria-hidden": "true"},
             "when": {"get": "profileNeedsEmail"},
             "children": ["!"]
           },

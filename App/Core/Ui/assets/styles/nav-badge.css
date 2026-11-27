@@ -1,0 +1,28 @@
+.nav-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-sm);
+  background: var(--danger);
+  color: var(--on-danger);
+  font-size: 0.625rem;
+  font-weight: 850;
+  line-height: 1;
+  padding-inline: 4px;
+}
+
+@media (max-width: 899px) {
+  .nav-badge {
+    top: -3px;
+    right: -3px;
+    min-width: 17px;
+    height: 17px;
+    font-size: 0.5625rem;
+  }
+}

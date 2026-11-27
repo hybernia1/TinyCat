@@ -2,6 +2,7 @@
   {
     "routes": [
       "public",
+      "admin",
       "/notifications",
       "/access/notifications"
     ],
@@ -15,8 +16,7 @@
     "styles": [
       "App/Core/Notifications/assets/styles/notification-nav.css",
       "App/Core/Notifications/assets/styles/notification-preview.css",
-      "App/Core/Notifications/assets/styles/notification-items.css",
-      "App/Core/Notifications/assets/styles/notification-badge-mobile.css"
+      "App/Core/Notifications/assets/styles/notification-items.css"
     ],
     "translations": [
       "notifications.new_count.one",
@@ -29,12 +29,13 @@
       "notification_not_found": "common.not_found"
     },
     "uses": [
-      "ui.identity-rows"
+      "ui.identity-rows", "ui.nav-badge"
     ]
   },
   {
     "routes": [
-      "public"
+      "public",
+      "admin"
     ],
     "entries": [
       "App/Core/Notifications/assets/polling.js"

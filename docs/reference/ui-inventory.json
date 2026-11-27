@@ -2916,7 +2916,6 @@
     "App/Core/Identity/assets/styles/authentication.css",
     "App/Core/Identity/assets/styles/avatar-upload.css",
     "App/Core/Identity/assets/styles/user-menu.css",
-    "App/Core/Notifications/assets/styles/notification-badge-mobile.css",
     "App/Core/Notifications/assets/styles/notification-items.css",
     "App/Core/Notifications/assets/styles/notification-nav.css",
     "App/Core/Notifications/assets/styles/notification-preview.css",
@@ -2968,6 +2967,7 @@
     "App/Core/Ui/assets/styles/modal-layout.css",
     "App/Core/Ui/assets/styles/modal-workspace-desktop.css",
     "App/Core/Ui/assets/styles/modal.css",
+    "App/Core/Ui/assets/styles/nav-badge.css",
     "App/Core/Ui/assets/styles/navbar-mobile.css",
     "App/Core/Ui/assets/styles/navbar.css",
     "App/Core/Ui/assets/styles/pagination-desktop.css",
@@ -3087,13 +3087,13 @@
     "admin-content": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 139,
+        "line": 143,
         "context": [],
         "selector": ".admin-content"
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 146,
+        "line": 150,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -3301,7 +3301,7 @@
     "admin-main": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 103,
+        "line": 107,
         "context": [],
         "selector": ".admin-main"
       },
@@ -3576,6 +3576,12 @@
         "line": 88,
         "context": [],
         "selector": ".admin-sidebar-footer"
+      },
+      {
+        "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
+        "line": 96,
+        "context": [],
+        "selector": ".admin-sidebar-footer small"
       }
     ],
     "admin-sidebar-header": [
@@ -3586,10 +3592,24 @@
         "selector": ".admin-sidebar-header"
       }
     ],
+    "admin-sidebar-tools": [
+      {
+        "source": "App/Core/Ui/assets/admin/styles/admin-shell.css",
+        "line": 64,
+        "context": [],
+        "selector": ".admin-sidebar-tools"
+      },
+      {
+        "source": "App/Core/Ui/assets/admin/styles/admin-shell.css",
+        "line": 73,
+        "context": [],
+        "selector": ".admin-sidebar-tools .brand-logo"
+      }
+    ],
     "admin-topbar": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 107,
+        "line": 111,
         "context": [],
         "selector": ".admin-topbar"
       },
@@ -3605,7 +3625,7 @@
     "admin-topbar-actions": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 129,
+        "line": 133,
         "context": [],
         "selector": ".admin-topbar-actions"
       }
@@ -3619,7 +3639,7 @@
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 122,
+        "line": 126,
         "context": [],
         "selector": ".admin-topbar-title"
       }
@@ -3645,7 +3665,7 @@
       },
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 96,
+        "line": 100,
         "context": [],
         "selector": ".admin-user"
       }
@@ -4306,6 +4326,12 @@
     ],
     "brand-logo": [
       {
+        "source": "App/Core/Ui/assets/admin/styles/admin-shell.css",
+        "line": 73,
+        "context": [],
+        "selector": ".admin-sidebar-tools .brand-logo"
+      },
+      {
         "source": "App/Core/Ui/assets/styles/brand-logo.css",
         "line": 1,
         "context": [],
@@ -4537,7 +4563,7 @@
     "card": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 146,
+        "line": 150,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -4803,7 +4829,7 @@
     "context-menu-action": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 29,
+        "line": 12,
         "context": [],
         "selector": ".user-menu-popover .context-menu-action"
       },
@@ -6245,7 +6271,7 @@
     "modal": [
       {
         "source": "App/Core/Ui/assets/admin/styles/admin-navigation-and-content.css",
-        "line": 146,
+        "line": 150,
         "context": [],
         "selector": ".admin-content .card:not(.modal .card)"
       },
@@ -6744,6 +6770,22 @@
         "selector": ".mx-auto"
       }
     ],
+    "nav-badge": [
+      {
+        "source": "App/Core/Ui/assets/styles/nav-badge.css",
+        "line": 1,
+        "context": [],
+        "selector": ".nav-badge"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/nav-badge.css",
+        "line": 21,
+        "context": [
+          "@media (max-width: 899px)"
+        ],
+        "selector": ".nav-badge"
+      }
+    ],
     "nav-link": [
       {
         "source": "App/Core/Ui/assets/styles/navbar.css",
@@ -6872,22 +6914,6 @@
         "selector": ".notification-actions"
       }
     ],
-    "notification-badge": [
-      {
-        "source": "App/Core/Notifications/assets/styles/notification-badge-mobile.css",
-        "line": 2,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".notification-badge"
-      },
-      {
-        "source": "App/Core/Notifications/assets/styles/notification-preview.css",
-        "line": 5,
-        "context": [],
-        "selector": ".notification-badge"
-      }
-    ],
     "notification-heading": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-items.css",
@@ -6963,7 +6989,7 @@
     "notification-panel": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-preview.css",
-        "line": 24,
+        "line": 5,
         "context": [],
         "selector": ".notification-panel"
       }
@@ -6971,7 +6997,7 @@
     "notification-preview-header": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-preview.css",
-        "line": 26,
+        "line": 7,
         "context": [],
         "selector": ".notification-preview-header"
       }
@@ -6979,7 +7005,7 @@
     "notification-preview-item": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-preview.css",
-        "line": 45,
+        "line": 26,
         "context": [],
         "selector": ".notification-preview-item"
       }
@@ -6987,7 +7013,7 @@
     "notification-preview-list": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-preview.css",
-        "line": 39,
+        "line": 20,
         "context": [],
         "selector": ".notification-preview-list"
       }
@@ -6995,7 +7021,7 @@
     "notification-preview-more": [
       {
         "source": "App/Core/Notifications/assets/styles/notification-preview.css",
-        "line": 47,
+        "line": 28,
         "context": [],
         "selector": ".notification-preview-more"
       }
@@ -10405,29 +10431,21 @@
     "user-menu": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 18,
+        "line": 1,
         "context": [],
         "selector": ".user-menu > .user-menu-trigger"
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 32,
+        "line": 15,
         "context": [],
         "selector": ".user-menu a"
-      }
-    ],
-    "user-menu-email-warning": [
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 1,
-        "context": [],
-        "selector": ".user-menu-email-warning"
       }
     ],
     "user-menu-identity": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 30,
+        "line": 13,
         "context": [],
         "selector": ".user-menu-identity"
       }
@@ -10435,13 +10453,13 @@
     "user-menu-popover": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 28,
+        "line": 11,
         "context": [],
         "selector": ".user-menu-popover"
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 29,
+        "line": 12,
         "context": [],
         "selector": ".user-menu-popover .context-menu-action"
       }
@@ -10449,7 +10467,7 @@
     "user-menu-theme": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 31,
+        "line": 14,
         "context": [],
         "selector": ".user-menu-theme"
       }
@@ -10457,7 +10475,7 @@
     "user-menu-trigger": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 18,
+        "line": 1,
         "context": [],
         "selector": ".user-menu > .user-menu-trigger"
       }
@@ -12469,21 +12487,12 @@
         ]
       }
     ],
-    "App/Core/Notifications/assets/styles/notification-badge-mobile.css": [
-      {
-        "manifest": "App/Core/Notifications/assets/module.json",
-        "routes": [
-          "public",
-          "/notifications",
-          "/access/notifications"
-        ]
-      }
-    ],
     "App/Core/Notifications/assets/styles/notification-items.css": [
       {
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
           "public",
+          "admin",
           "/notifications",
           "/access/notifications"
         ]
@@ -12494,6 +12503,7 @@
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
           "public",
+          "admin",
           "/notifications",
           "/access/notifications"
         ]
@@ -12504,6 +12514,7 @@
         "manifest": "App/Core/Notifications/assets/module.json",
         "routes": [
           "public",
+          "admin",
           "/notifications",
           "/access/notifications"
         ]
@@ -12899,6 +12910,12 @@
         "routes": [
           "*"
         ]
+      }
+    ],
+    "App/Core/Ui/assets/styles/nav-badge.css": [
+      {
+        "manifest": "App/Core/Ui/assets/module.json",
+        "routes": []
       }
     ],
     "App/Core/Ui/assets/styles/navbar-mobile.css": [
@@ -13865,6 +13882,7 @@
           "manifest": "App/Core/Notifications/assets/module.json",
           "routes": [
             "public",
+            "admin",
             "/notifications",
             "/access/notifications"
           ]
@@ -13882,7 +13900,8 @@
         {
           "manifest": "App/Core/Notifications/assets/module.json",
           "routes": [
-            "public"
+            "public",
+            "admin"
           ]
         }
       ],

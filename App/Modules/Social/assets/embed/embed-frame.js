@@ -1,5 +1,21 @@
 (function () {
   "use strict";
+  if (document.querySelectorAll) document.querySelectorAll("[data-status-link-image]").forEach(function (image) {
+    var card = image.closest(".status-link-card");
+    var media = image.closest("[data-status-link-media]");
+    var fallback = media && media.querySelector("[data-status-link-fallback]");
+    function update(ready) {
+      image.hidden = !ready;
+      if (card) {
+        card.classList.toggle("is-image-ready", ready);
+        card.classList.toggle("is-image-missing", !ready);
+      }
+      if (fallback) fallback.hidden = ready;
+    }
+    image.addEventListener("load", function () { update(true); });
+    image.addEventListener("error", function () { update(false); });
+    if (image.complete) update(image.naturalWidth > 0);
+  });
   if (document.querySelectorAll) document.querySelectorAll("[data-status-video]").forEach(function (root) {
     var button = root.querySelector("button");
     var mount = root.querySelector("[data-status-video-mount]");
