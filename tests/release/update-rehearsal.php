@@ -316,7 +316,8 @@ PHP);
     foreach (['Policies.php', 'TextPolicy.php'] as $retiredPolicy) {
         $relative = 'App/Modules/Social/src/Posts/' . $retiredPolicy;
         $ownsSocial = isset($manifest['files']['App/Modules/Social/src/Module.php']);
-        $assert(in_array($relative, $manifest['delete'], true) === $ownsSocial, 'Social policy cleanup follows the actual package owner: ' . $relative);
+        $needsCleanup = $ownsSocial && version_compare($baselineVersion, '8.0.6', '<');
+        $assert(in_array($relative, $manifest['delete'], true) === $needsCleanup, 'Social policy cleanup follows the package owner and supported baseline: ' . $relative);
     }
     $rescue = \TinyCat\Tests\prepareReleaseRescue($installRoot, $run);
     $rescueFile = $rescue['file'];
@@ -325,7 +326,10 @@ PHP);
 define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
 require $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
-if (!class_exists(TinyCat\Core\Text\Policies::class) || !class_exists(TinyCat\Core\Text\TextPolicy::class)) { throw new RuntimeException('Original text policy classes were not loaded.'); }
+foreach (['Policies', 'TextPolicy'] as $textClass) {
+    if (is_file($root . '/App/Core/Text/' . $textClass . '.php') && !class_exists('TinyCat\\Core\\Text\\' . $textClass)) { throw new RuntimeException('Original text policy class was not loaded: ' . $textClass); }
+}
+if (!class_exists(TinyCat\Core\Modules\Definition::class)) { throw new RuntimeException('Original module metadata reader was not loaded.'); }
 foreach (['Locale', 'Readiness', 'GeneratedAvatar'] as $identityClass) {
     if (is_file($root . '/App/Core/Identity/' . $identityClass . '.php') && !class_exists('TinyCat\\Core\\Identity\\' . $identityClass)) { throw new RuntimeException('Original Identity class was not loaded: ' . $identityClass); }
 }
