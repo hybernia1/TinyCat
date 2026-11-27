@@ -39,6 +39,14 @@ $retiredContracts = [
     'App/Core/Text/Policies.php',
     'App/Core/Text/TextPolicy.php',
 ];
+if (version_compare($baselineVersion, '8.0.14', '>=')) {
+    // The reader bridge already removed the older contracts. Exercise the
+    // files actually retired between that published baseline and 9.0.0.
+    $retiredContracts = version_compare($baselineVersion, '9.0.0', '<') ? [
+        'App/Core/Ui/assets/dashboard-stats.js',
+        'App/Core/Notifications/assets/styles/notification-badge-mobile.css',
+    ] : [];
+}
 if ($baselineVersion === '8.0.5') {
     $retiredContracts = [...$retiredContracts,
         'App/Core/Feeds/FeedEntry.php',
