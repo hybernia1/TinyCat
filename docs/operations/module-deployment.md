@@ -3,7 +3,11 @@
 TinyCat odděluje povinný framework od funkčních modulů. Social je jeden
 volitelný modul. Core není součástí aktivačního seznamu.
 
-Aktuální balíčky vyžadují dokončenou instalaci TinyCat 6.0.10 nebo novější.
+Aktualizace na 9.0.0 vyžaduje dokončenou instalaci TinyCat 8.0.14 nebo novější.
+Instalace 6.0.10–8.0.13 nejprve aktualizuj podepsaným reader bridgem 8.0.14;
+starší instalace nejprve převedou neměnná historická vydání na 6.0.10.
+Samostatný Social aktualizuj na 9.0.0 mezi Core 8.0.14 a Core 9.0.0 podle
+[pořadí přechodu](updates.md#upgrading-to-900).
 Kompatibilní transport pro starší verze a builder přechodových balíčků byly
 odstraněny. Historie schémat a checksumy zůstávají zachované; aktualizace musí
 zachovat identitu produktu. Viz [podporovaný výchozí stav](updates.md#supported-update-baseline).

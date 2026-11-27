@@ -67,7 +67,8 @@ i nainstalované vypnuté vlastníky.
 
 ## Archivace migrační historie
 
-Současný zdrojový baseline vyžaduje dokončenou 6.0.10. Neměnný release 6.0.8
+Současný zdrojový baseline vyžaduje dokončenou 8.0.14; instalace 6.0.10–8.0.13
+nejprve převede podepsaný reader bridge 8.0.14. Neměnný release 6.0.8
 zavedl čtení archivní historie a ponechal publikované soubory pro updater 6.0.7.
 Navazující zdroje archivují všech 24 dosavadních vestavěných migrací ve formátu 4;
 každý vlastník má samostatný aktuální fresh snapshot. Původní migrační PHP,
@@ -105,7 +106,8 @@ spuštění ani změnu původních checksumů.
 
 Následující popis zachycuje historický převod v neměnných vydáních. Současné
 zdroje tyto datové adaptéry ani Blog neobsahují; nepřidávej je zpět kvůli novému
-modulu. Pro podporovaný upgrade platí dokončená 6.0.10 a aktuální provozní návod.
+modulu. Pro přímý upgrade na 9.x platí dokončená 8.0.14 a
+[aktuální provozní návod](../operations/updates.md#upgrading-to-900).
 
 Descriptor formátu 3 zachovává seznam povinného frameworku bez Publishingu.
 Schéma vlastníka deklaruje neměnnou historii, případně podepsaný `fresh` soubor

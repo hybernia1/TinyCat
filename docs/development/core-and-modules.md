@@ -197,8 +197,10 @@ Každý vlastník má samostatnou podepsanou `fresh` baseline bez řetězení st
 datových převodů. Původní journalové záznamy se nepřepisují.
 Aktualizační cesta a retirement historie jsou v [datovém kontraktu](domain-storage.md).
 
-Současné zdroje podporují descriptor formátu 3 i 4 a vyžadují dokončenou 6.0.10
-nebo novější instalaci. Archivovaný prefix vyžaduje také odpovídající dokončené
+Současné zdroje podporují descriptor formátu 3 i 4 a vyžadují dokončenou 8.0.14
+nebo novější instalaci. Instalace 6.0.10–8.0.13 nejprve projdou podepsaným
+reader bridgem 8.0.14 podle [provozního návodu](../operations/updates.md#upgrading-to-900).
+Archivovaný prefix vyžaduje také odpovídající dokončené
 schéma vlastníka. Starší aktivační ID převádí nezměněný podepsaný release
 6.0.6, archivní čtení přidává neměnná 6.0.8; současný core nemá seznam částí
 Socialu ani převodní adaptér. Povinné

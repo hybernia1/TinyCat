@@ -114,7 +114,7 @@ Use HTTPS in production. The supplied Apache rules prevent direct web access to 
 
 When Apache terminates TLS, the bundled `.htaccess` also sends `Strict-Transport-Security: max-age=31536000; includeSubDomains`. Enable `includeSubDomains` only when every current and future subdomain is available over HTTPS. If TLS terminates at a reverse proxy or CDN, configure HSTS there instead (or ensure Apache receives the original HTTPS state).
 
-Current sources support updates from completed TinyCat 6.0.10 and newer. Older installations must first reach 6.0.10 using the supported historical releases.
+Current sources support direct updates from completed TinyCat 8.0.14 and newer. Install the signed 8.0.14 reader bridge first on 6.0.10-8.0.13 sites; older installations must first reach 6.0.10 using the supported historical releases.
 
 ## Updates
 
