@@ -29,7 +29,9 @@ return static function (string $root, string $temporary, string $version, string
     file_put_contents($channel . '/crm-runtime-update.sig', base64_encode(sodium_crypto_sign_detached($json, $secretKey)) . "\n");
     // Give the installed fixture a genuinely older runtime version without touching source files.
     $runtime = $installed . '/App/Core/Support/Version.php';
-    file_put_contents($runtime, str_replace("CURRENT = '" . $version . "'", "CURRENT = '6.0.10'", (string) file_get_contents($runtime)));
+    $installedVersion = (string) $core['minimum_version'];
+    if (!version_compare($installedVersion, $version, '<')) { throw new RuntimeException('The product-channel fixture requires a supported older runtime.'); }
+    file_put_contents($runtime, str_replace("CURRENT = '" . $version . "'", "CURRENT = '" . $installedVersion . "'", (string) file_get_contents($runtime)));
     $worker = $root . '/tests/fixtures/releases/product-channel.php';
     $run = static function (array $input, bool $success = true) use ($temporary, $installed, $publicKey, $worker): string {
         $file = $temporary . '/channel-input.json';
