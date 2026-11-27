@@ -204,7 +204,7 @@
 - Offer Login as an Identity-owned homepage, including in core-only installations. Preserve module landing destinations and valid next URLs; terminate authentication/homepage redirects with an account overview when no other destination exists.
 - Keep automatic functional-module homepages and public navigation unchanged. Allow homepage candidates to opt out of navigation.
 - Apply existing HTML minification to the shared document, revalidate unversioned assets and gzip web app manifests. Preserve existing minification settings on update.
-- Keep public error-page navigation and asset selection consistent across public and administrative URLs, with HTML, HEAD and JSON regression coverage for 400â€“503 responses.
+- Keep public error-page navigation and asset selection consistent across public and administrative URLs, with HTML, HEAD and JSON regression coverage for 400–503 responses.
 - Preserve the completed 6.0.10 update baseline, published migration history and installed Blog ownership. Introduce no database migrations.
 
 ## 6.0.13 - 2026-11-18
@@ -374,7 +374,7 @@
 - Normalize post whitespace, truncation markers and read-more/WordPress boilerplate through the same text preparation for manual posts, edits and imports. Preserve paragraph boundaries and ordinary sentences containing these words.
 - Remove read-more anchor labels and preserve HTML block spacing in feed summaries. Add a CLI plan/apply/restore tool for historical text cleanup with exact backups, relation checks and transactional conflict detection.
 - Apply the same cleanup when storing link descriptions and displaying cached link cards.
-- Add the standalone ÄŚSFD cinema-premieres RSS endpoint with premiere dates, posters, stable film/date IDs and month-specific caching. Standalone feeds remain outside the managed updater package.
+- Add the standalone ČSFD cinema-premieres RSS endpoint with premiere dates, posters, stable film/date IDs and month-specific caching. Standalone feeds remain outside the managed updater package.
 - Preserve the 5.16.0 update baseline; no new schema migration or configuration change is required. Historical content and thumbnail cleanup remain explicit, backed-up maintenance operations.
 
 ## 5.18.1 - 2026-11-01
@@ -608,7 +608,7 @@
 - Improve Google Maps cards with place names and exact place coordinates; accept public map previews only when a numeric marker matches the place, retaining text cards when Google requires consent or supplies no suitable image.
 - Cover bot imports, normalized links, local feed previews, API rendering and duplicate-link migrations with regression checks.
 
-## 4.7.0 - 2026-10-27 â€” Optimization release #1
+## 4.7.0 - 2026-10-27 — Optimization release #1
 
 - Centralize post creation for users and bot imports, sharing validation, normalization and transactional storage; report rejected feed items without blocking valid items.
 - Remove unused post scheduling: new posts publish immediately, and post resources no longer expose scheduled metadata.
@@ -743,7 +743,7 @@
 - Convert bot lists, filters, source controls, moderation, sidebar and CAPTCHA to JSON resources and local DOM rendering; preserve modal forms across list updates and display canonical validation errors at fields.
 - Add partial settings updates with explicit false values, redact sensitive setting resources, and use path IDs for administration mutations.
 - Use canonical resource URLs, explicit private/public account fields, cursor pagination and idempotent follow/like state writes.
-- Relax usernames to 2â€“32 Unicode letters, numbers, dots, hyphens and underscores; preserve display case while keeping case-insensitive login and uniqueness. Numeric-only names remain reserved for internal mention IDs.
+- Relax usernames to 2–32 Unicode letters, numbers, dots, hyphens and underscores; preserve display case while keeping case-insensitive login and uniqueness. Numeric-only names remain reserved for internal mention IDs.
 - Standardize routing, access policies, CSRF, statuses and JSON serialization; remove `App/Core.php`, `App/functions.php`, central domain `App/Api.php` and temporary delegation classes.
 - Separate administration API handlers from page rendering and remove the former standalone bot API controllers.
 - Replace implicit filesystem routing with explicit public page routes; templates and controller implementation files are no longer routable.
