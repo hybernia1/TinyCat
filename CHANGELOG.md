@@ -11,6 +11,11 @@
 - Reveal loaded link-preview images in standalone embeds and restore their fallback after load failures.
 - Preserve application data, module activation, task IDs and published migration history. No new database migration is introduced. Ship matching signed Core and Social install/update artifacts.
 
+## 8.0.14 - 2026-11-27
+
+- Prepare the module metadata reader for HTTP namespaces and owner-declared read-only legacy routes used by the next major release. Existing modules may continue without those fields.
+- Preserve current APIs, navigation, module activation, data and migration history. This is a reader compatibility bridge, not the namespaced API migration.
+
 ## 8.0.12 - 2026-11-26
 
 - Consolidate administration helpers and move UI, text, deployment and update utilities to their owning core areas. Reuse immutable configuration snapshots and remove redundant helper files.
