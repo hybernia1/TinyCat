@@ -1,5 +1,12 @@
 # Nástroje TinyCat
 
+`tools/release/release-update-rehearsal.php --artifact=PATH` ověřuje podepsaný
+update a rollback proti publikovanému tagu `v<baseline-version>`. Pro ověření
+řetězce přes dosud nevydaný přemosťovací kandidát lze navíc zadat
+`--baseline-ref=<celý 40znakový commit SHA>` a odpovídající `--baseline-version`.
+Jde o vstup do stejného izolovaného runneru, nikoli o vytvoření nebo publikaci tagu.
+Takový výsledek vždy označ jako ověření kandidáta, ne publikované verze.
+
 Příkazy spouštěj z kořene repozitáře. Hlavní vstup pro vývoj a CI je
 `composer preflight`; jeho [runner](preflight.php) skládá jednotlivé kontroly.
 Produkční aplikace tyto nástroje nenačítá a distribuční balíčky je neobsahují.

@@ -15,10 +15,12 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
 $baselineVersion = \TinyCat\Support\Version::MINIMUM_UPDATE;
-$options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'direct-web', 'cached-autoload', 'snapshot::', 'platform-baseline']);
+$options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'baseline-ref::', 'direct-web', 'cached-autoload', 'snapshot::', 'platform-baseline']);
 $cachedAutoload = array_key_exists('cached-autoload', $options);
 $directWeb = array_key_exists('direct-web', $options);
 $baselineVersion = (string) ($options['baseline-version'] ?? $baselineVersion);
+$baselineRef = (string) ($options['baseline-ref'] ?? ('v' . $baselineVersion));
+if (isset($options['baseline-ref']) && preg_match('/^[a-f0-9]{40}$/D', $baselineRef) !== 1) { throw new InvalidArgumentException('A candidate baseline ref must be a full commit hash.'); }
 if (preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/D', $baselineVersion) !== 1 || version_compare($baselineVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<')) { throw new InvalidArgumentException('Use a completed supported release older than the candidate.'); }
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
@@ -252,7 +254,7 @@ try {
         throw new RuntimeException('Unable to create product rehearsal directory.');
     }
 
-    exec('git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion), $archiveOutput, $archiveExit);
+    exec('git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg($baselineRef), $archiveOutput, $archiveExit);
     if ($archiveExit !== 0) { throw new RuntimeException('Cannot extract the published supported baseline.'); }
     $extractZip($baselineArchive, $installRoot);
     $retiredContracts = array_values(array_filter($retiredContracts, static fn (string $relative): bool => is_file($installRoot . '/' . $relative)));
