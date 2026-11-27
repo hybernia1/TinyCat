@@ -9,6 +9,7 @@
 - Share scalable component size variants, spacing and geometry across Core and Social. Reuse the existing UI-scale and density tokens instead of adding per-context size exceptions; preserve viewport and accessibility limits.
 - Move profile controls and shared notification popovers to the administration sidebar header. Share navigation badge styles and show all registered dashboard statistics together as icon badges.
 - Reveal loaded link-preview images in standalone embeds and restore their fallback after load failures.
+- Prune completed temporary directory trees after consuming their final file batch, preserving bounded cleanup and resumable cursors.
 - Preserve application data, module activation, task IDs and published migration history. No new database migration is introduced. Ship matching signed Core and Social install/update artifacts.
 
 ## 8.0.14 - 2026-11-27

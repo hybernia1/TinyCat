@@ -22,6 +22,7 @@ final class FileSweep
             $saved = is_file($state) ? json_decode((string) file_get_contents($state), true) : null;
             $stack = is_array($saved) && array_is_list($saved) && count($saved) <= 16 ? $saved : [['path' => '', 'offset' => 0]];
             $files = [];
+            $completedDirectories = [];
             $visited = 0;
             while ($stack !== [] && $visited < max(1, $budget)) {
                 $index = count($stack) - 1;
@@ -64,13 +65,20 @@ final class FileSweep
                 }
                 if ($exhausted || !$iterator->valid()) {
                     array_pop($stack);
-                    if ($pruneEmpty && $relative !== '' && @rmdir($path) && $stack !== []) {
-                        $parent = count($stack) - 1;
-                        $stack[$parent]['offset'] = max(0, $stack[$parent]['offset'] - 1);
-                    }
+                    if ($pruneEmpty && $relative !== '') { $completedDirectories[] = $path; }
                 }
             }
             $result = $consume($files);
+            // Consume the last files before pruning their completed directories.
+            // Otherwise a full final batch can leave empty trees with has_more=false.
+            foreach ($completedDirectories as $path) {
+                if (!@rmdir($path)) { continue; }
+                foreach ($stack as &$frame) {
+                    $parent = $root . ($frame['path'] === '' ? '' : DIRECTORY_SEPARATOR . $frame['path']);
+                    if ($parent === dirname($path)) { $frame['offset'] = max(0, $frame['offset'] - 1); }
+                }
+                unset($frame);
+            }
             // Numeric directory positions shift after removal. Correct active frames.
             foreach ($files as $file) {
                 if (file_exists($file->getPathname())) { continue; }

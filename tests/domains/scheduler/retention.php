@@ -135,6 +135,21 @@ for ($attempt = 0; $attempt < 30; $attempt++) {
     if (!$result['has_more']) { break; }
 }
 $assert(count($seen) === 20 && !$result['has_more'], 'The cursor reaches the end of a tree containing only preserved files.');
+foreach ([1, 500] as $budget) {
+    $directory = 'prune-' . $budget;
+    foreach (['nested/deeper/a', 'nested/b', 'sibling/c'] as $relative) { $file($directory . '/' . $relative); }
+    $removed = 0;
+    for ($attempt = 0; $attempt < 30; $attempt++) {
+        $result = FileSweep::run($root . '/' . $directory, $budget, static function (array $files) use (&$removed): array {
+            $changed = 0;
+            foreach ($files as $entry) { if (FileSweep::remove($entry->getPathname())) { $changed++; $removed++; } }
+            return ['changed' => $changed, 'has_more' => false];
+        }, 'prune-after-consume', true, null, true);
+        $assert($result['inspected'] <= $budget && $result['changed'] <= $budget, 'Post-consume pruning preserves inspection and deletion budgets.');
+        if (!$result['has_more']) { break; }
+    }
+    $assert($removed === 3 && !$result['has_more'] && (scandir($root . '/' . $directory) ?: []) === ['.', '..'], 'The completed final batch prunes nested and sibling directories after deleting their contents.');
+}
 $file('retry/a');
 try { FileSweep::run($root . '/retry', 1, static function (): array { throw new RuntimeException('injected failure'); }); }
 catch (RuntimeException $exception) { $assert($exception->getMessage() === 'injected failure', 'A failed batch reports its original failure.'); }

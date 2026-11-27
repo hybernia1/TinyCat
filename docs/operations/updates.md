@@ -52,6 +52,8 @@ and dashboard statistics render all visible owner groups together as icon badges
 These presentation changes preserve counts and owner authorization. Standalone
 embeds now reveal successfully loaded link-preview images and retain fallbacks
 on failures. No new database migration is introduced by 9.0.0.
+Cleanup also removes completed empty temporary directory trees after their final
+file batch, retaining the existing bounded scans and resumable cursors.
 
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
