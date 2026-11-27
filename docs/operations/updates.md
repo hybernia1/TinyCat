@@ -1,5 +1,13 @@
 # TinyCat updates
 
+## Upgrading to 8.0.14
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. This reader
+bridge accepts and validates the module metadata fields `httpNamespace` and
+`legacyReadRoutes` before the next major release starts requiring them. Old
+module manifests remain valid. Existing routes, APIs, data and activation are
+unchanged. No migration is introduced. Deploy matching Core and Social packages.
+
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 

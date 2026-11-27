@@ -36,6 +36,9 @@ final readonly class Definition
         public string $translationDomain = 'app',
         public ?array $distribution = null,
         public bool $development = false,
+        public ?string $httpNamespace = null,
+        /** @var list<string> Documented read-only legacy routes retained by the owning module. */
+        public array $legacyReadRoutes = [],
     ) {}
 
     public static function fromManifest(string $file): self
@@ -60,7 +63,7 @@ final readonly class Definition
 
     private static function parse(stdClass $data, string $root, ?string $manifest): self
     {
-        $allowed = ['format', 'id', 'coreApi', 'namespace', 'requires', 'exports', 'providers', 'resources', 'translationDomain', 'distribution', 'development'];
+        $allowed = ['format', 'id', 'coreApi', 'namespace', 'httpNamespace', 'legacyReadRoutes', 'requires', 'exports', 'providers', 'resources', 'translationDomain', 'distribution', 'development'];
         if (array_diff(array_keys(get_object_vars($data)), $allowed) !== []) {
             throw new InvalidArgumentException('Unknown module metadata field.');
         }
@@ -84,6 +87,13 @@ final readonly class Definition
         foreach ($exports as $export) { self::ownedClass($export, $namespace); }
         $providers = self::stringMap(property_exists($data, 'providers') ? $data->providers : new stdClass(), array_keys(self::PROVIDER_TYPES));
         foreach ($providers as $provider) { self::ownedClass($provider, $namespace); }
+        $httpNamespace = property_exists($data, 'httpNamespace') ? self::httpNamespace($data->httpNamespace) : null;
+        // Reader bridge: existing modules may omit HTTP ownership until the next major release.
+        $legacyReadRoutes = self::stringList(property_exists($data, 'legacyReadRoutes') ? $data->legacyReadRoutes : [], 'legacyReadRoutes');
+        foreach ($legacyReadRoutes as $path) {
+            if ($httpNamespace === null || preg_match('~^/(?:admin|api)/([a-z][a-z0-9-]*)(?:/[^?#\x00]*)?$~D', $path, $match) !== 1) { throw new InvalidArgumentException('Invalid legacy read route.'); }
+            self::httpNamespace($match[1]);
+        }
         $resources = self::stringMap(property_exists($data, 'resources') ? $data->resources : new stdClass(), [
             'translations', 'emails', 'templates', 'assets', 'components', 'componentExtensions', 'migrations', 'entrypoints',
         ]);
@@ -117,7 +127,17 @@ final readonly class Definition
             foreach ($required as $requiredId) { self::id($requiredId); }
             $distribution = ['product' => $profile->product, 'legacy' => $profile->legacy, 'required' => $required, 'artifact' => $profile->artifact];
         }
-        return new self($id, $namespace, $resolvedRoot, $requires, $exports, $providers, $resources, $manifest, $translationDomain, $distribution, $data->development ?? false);
+        return new self($id, $namespace, $resolvedRoot, $requires, $exports, $providers, $resources, $manifest, $translationDomain, $distribution, $data->development ?? false, $httpNamespace, $legacyReadRoutes);
+    }
+
+    /** Core transport/service roots cannot be claimed by a functional module. */
+    public static function httpNamespace(mixed $value): string
+    {
+        if (!is_string($value) || preg_match('/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/D', $value) !== 1
+            || in_array($value, ['api', 'admin', 'assets', 'users', 'notifications', 'settings', 'scheduler', 'tasks', 'health', 'dashboard', 'modules', 'updates', 'installation', 'security', 'auth', 'session', 'captcha', 'search', 'discovery', 'cache', 'mail', 'site', 'site-health', 'cron'], true)) {
+            throw new InvalidArgumentException('Invalid or reserved module HTTP namespace.');
+        }
+        return $value;
     }
 
     private static function id(mixed $id): string
