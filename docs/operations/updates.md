@@ -2,9 +2,24 @@
 
 ## Upgrading to 9.0.0
 
-Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. This is a
+Requires completed **8.0.14 or newer**, PHP 8.4 and MySQL/MariaDB. Install
+the signed 8.0.14 reader bridge first on existing 6.0.10-8.0.13 installations;
+older sites first follow the immutable supported chain to 6.0.10. Refresh the
+private rescue launcher while still on 6.0.10 as described below. A direct
+update from 8.0.13 or older cannot read the new module metadata and is rejected
+by the minimum-version gate before changing data or managed files. This is a
 major release because Social API paths and third-party route-provider manifest
 requirements change. Publish and deploy matching signed Core and Social packages.
+
+For the Social distribution (one signed product containing Core and Social),
+install its 8.0.14 update and then its 9.0.0 update. For a Core distribution with
+Social installed as an independent module package, install Core 8.0.14, update
+the Social module to 9.0.0, and only then install Core 9.0.0. The intermediate
+reader bridge accepts the new Social manifest before the new Core requires its
+HTTP namespace. Keep each updater backup until the whole sequence is verified;
+reverse that order when rolling back. Other independently installed route-provider
+modules likewise need a bridge-compatible package declaring their namespace
+before Core 9.0.0. Inactive installed modules are part of this inventory too.
 
 The current Social sources use `/admin/social/...` and `/api/social/...`.
 Deploy their matching prepared assets together. Third-party clients must migrate
@@ -1583,12 +1598,14 @@ new top-level managed file requires a prior updater bridge release. Removed runt
 listed by target version in `tools/release/update-deletions.json`; this prevents legacy
 PHP files from surviving an overlay update.
 
-Release tools use **6.0.10** as the minimum supported update source, defined by
-`TinyCat\Support\Version::MINIMUM_UPDATE`. Production update rehearsals start
-from the exact `v6.0.10` tag and verify signed installation, protected files,
-migration checksums and rollback. Older releases and upgrade instructions remain
-available in Git history. Historical performance comparisons against 2.0.25 are
-benchmark references, not supported upgrade paths.
+Release tools use **8.0.14** as the minimum direct update source for 9.x, defined
+by `TinyCat\Support\Version::MINIMUM_UPDATE`. The signed 8.0.14 bridge retains
+6.0.10 as its floor, preserving the older-site chain. Production rehearsals must
+verify both bridge steps, protected files, loaded updater classes, migration
+checksums and rollback. Before a bridge tag is published, the standard rehearsal
+runner can use its exact candidate commit through `--baseline-ref`. Older releases
+and upgrade instructions remain available in Git history. Historical performance
+comparisons against 2.0.25 are benchmarks, not supported upgrade paths.
 
 For a fresh installation, build into a separate output directory:
 

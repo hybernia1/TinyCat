@@ -2,6 +2,7 @@
 
 ## 9.0.0 - 2026-11-27
 
+- Require the signed 8.0.14 metadata-reader bridge before updating from older installations. The bridge retains old module manifests and prepares the loaded updater classes for the new contract.
 - Give route-provider modules a stable, metadata-only HTTP namespace. Reject namespace collisions, reserved Core roots and routes outside their owner's API or administration prefix; roll back failed provider registration.
 - Move Social administration to `/admin/social/...` and all canonical Social domain APIs to `/api/social/...`. Group its four administration links under one Social menu. Third-party API clients and module manifests must adopt the new contract; old mutation APIs are not redirected.
 - Retain only documented admin bookmark redirects, stored modal-history conversion and the two link-resolver GET patterns already published in HTML and feeds. Core APIs, public permalinks, RSS and embed entry points keep their contracts.

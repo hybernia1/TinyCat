@@ -182,9 +182,11 @@ vydání. Historické pole verze může být celý název migrace, například
 Update testuj i s touto historií a původními PHP třídami již načtenými v updateru;
 čerstvá instalace stejné verze není náhradou tohoto scénáře.
 
-Současné zdroje přijímají pouze dokončenou 6.0.10 a novější. Starší podporované
-weby nejprve převádí neměnný podepsaný release 6.0.10, případně přes jeho
-podporované předchůdce. Před updatem z 6.0.10 obnov privátní rescue launcher
+Současné zdroje 9.x přijímají pouze dokončenou 8.0.14 a novější. Instalace
+6.0.10–8.0.13 nejprve převádí podepsaný reader bridge 8.0.14, který přijímá nová
+HTTP metadata modulů před jejich vynucením. Starší podporované weby nejprve
+převádí neměnný podepsaný release 6.0.10 přes jeho podporované předchůdce.
+Zachovej a ověř oba kroky řetězce. Před updatem z 6.0.10 obnov privátní rescue launcher
 příkazem `php App/Console.php rescue` a ověř jeho `help`; starší launchery ve
 storage mohou stále načítat odstraněné `App/autoload.php`. Publikovaný updater
 tuto podmínku nevynucuje. Externí skripty načítají přímo core runtime loader.
