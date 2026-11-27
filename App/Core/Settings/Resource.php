@@ -77,7 +77,7 @@ final class Resource
     public static function items(): array
     {
         $items = [];
-        foreach (\TinyCat\Core\Settings\Administration::tc_admin_settings_sections() as $section) {
+        foreach (Sections::current() as $section) {
             foreach ($section['fields'] as $field) {
                 $key = $field['key'];
                 $sensitive = preg_match('/(?:password|secret|token|smtp)/', $key) === 1;

@@ -38,6 +38,23 @@ try {
         [3, 'Bot', null, $hash, 'bot', 'active'], [4, 'Banned', null, $hash, 'user', 'ban'], [5, 'Waiting', null, $hash, 'user', 'waiting'],
         [6, 'Unknown', null, $hash, 'unknown', 'active']] as $row) { $insert->execute($row); }
     $assert(ServiceProvider::ready(), 'Accounts readiness needs only the users table');
+    $pdo->exec('ALTER TABLE users RENAME COLUMN email TO email_unavailable');
+    try {
+        $failed = false;
+        try { Authentication::authAttempt(['username' => 'admin@example.test', 'password' => $password]); }
+        catch (PDOException) { $failed = true; }
+        $assert($failed, 'Email lookup database failures propagate instead of falling back to username login');
+    } finally {
+        $pdo->exec('ALTER TABLE users RENAME COLUMN email_unavailable TO email');
+    }
+    $pdo->exec('ALTER TABLE users RENAME COLUMN status TO status_unavailable');
+    try {
+        $assert(!Authentication::authAttempt(['username' => 'Admin', 'password' => $password]), 'An account without explicit status cannot authenticate');
+        $assert(!Authentication::authLogin(1), 'Direct login also rejects an account without explicit status');
+    } finally {
+        $pdo->exec('ALTER TABLE users RENAME COLUMN status_unavailable TO status');
+    }
+
     $assert(Roles::rolesWith('allows_login') === ['admin', 'user'] && Roles::rolesWith('managed_by_core_admin') === ['admin', 'user'], 'Account capabilities retain order and meaning');
     $assert(!Roles::allowsLogin('bot') && !Roles::allowsLogin('unknown'), 'Noninteractive and unknown roles cannot log in');
     foreach (['TinyCat\\Social\\Profiles\\Roles', 'TinyCat\\Social\\Profiles\\Profiles', 'TinyCat\\Social\\Posts\\Api', 'TinyCat\\Social\\Bots\\Api', 'TinyCat\\Core\\Settings\\Store'] as $class) {

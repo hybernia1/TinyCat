@@ -24,14 +24,9 @@ final class Login
         return \TinyCat\Http\Request::current()->path((string) (parse_url($next, PHP_URL_PATH) ?: '/'));
     }
 
-    public static function auth_normalize_next_url(string $next): string
-    {
-        return Integration::normalizeNext($next);
-    }
-
     public static function auth_safe_next_url(string $next): string
     {
-        $next = \TinyCat\Core\Identity\Login::auth_normalize_next_url(trim($next));
+        $next = Integration::normalizeNext(trim($next));
 
         if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
             return '';

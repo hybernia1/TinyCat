@@ -242,7 +242,7 @@ $assert(count($history) === 1 && $history[0]['actor']['id'] === 2 && $history[0]
 $assert(\TinyCat\Social\Discussion\Comments::appendHistory('Same', 'Same', $owner ?? []) === null && \TinyCat\Social\Discussion\Comments::readHistory('broken') === [], 'Unchanged text and malformed historical JSON retain their semantics.');
 $importDraft = (new \TinyCat\Social\Bots\FeedPublication())->prepare(['post_template' => '{{title}}'], ['title' => "An excerpt. Continue reading\nThe post Story appeared first on Site.\nhttps://alpha.example/?a=[...]#part"]);
 $assert($importDraft->body === "An excerpt.\n\nhttps://alpha.example/?a=[...]#part", 'Import and pure preview select editorial cleanup before canonical normalization while preserving literal query and fragment.');
-$cleanCard = \TinyCat\Social\Posts\Resource::link(['normalized_url' => 'https://alpha.example', 'description' => 'Cached  preview […] Read more', 'link_type' => 'web']);
+$cleanCard = \TinyCat\Social\Posts\TextResource::link(['normalized_url' => 'https://alpha.example', 'description' => 'Cached  preview […] Read more', 'link_type' => 'web']);
 $assert($cleanCard['description'] === 'Cached preview …', 'Previously cached metadata follows the same rules in server and API link-card resources.');
 $textConstraints = \TinyCat\Social\Posts\Resource::constraints();
 $assert($textConstraints['body']['max_length'] === \TinyCat\Social\Posts\PostCreation::BODY_MAX_LENGTH && $textConstraints['comment']['max_length'] === $textConstraints['body']['max_length'], 'Post and comment resource constraints use their owner rules.');

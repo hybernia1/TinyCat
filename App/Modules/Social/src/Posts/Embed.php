@@ -57,7 +57,7 @@ final class Embed
         $links = array_filter(Links::status_links_for_content((int) $item['id']), static fn (array $link): bool => !Links::status_link_is_internal($link));
         $media = [];
         foreach (array_slice(array_values($links), 0, 3) as $link) {
-            $card = Resource::link($link, (int) $item['id']);
+            $card = TextResource::link($link, (int) $item['id']);
             $card['outbound_url'] = \TinyCat\Http\LocalUrls::absolute($card['outbound_url']);
             $card['url'] = \TinyCat\Core\Security\Sanitizer::sanitize_html_url($card['url']);
             if ($card['url'] === '') { continue; }

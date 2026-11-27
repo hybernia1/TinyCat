@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Core\Identity;
 
-use Throwable;
 use \TinyCat\Http\Session;
 use \TinyCat\Http\Request;
 use \TinyCat\Database\Connection;
@@ -369,14 +368,9 @@ final class Authentication
         $identifier = trim($identifier);
 
         if (filter_var($identifier, FILTER_VALIDATE_EMAIL) !== false) {
-            try {
-                $user = Connection::find('users', ['email' => strtolower($identifier)]);
-
-                if ($user !== null) {
-                    return $user;
-                }
-            } catch (Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure);
-                // Older installations may not have the optional email column yet.
+            $user = Connection::find('users', ['email' => strtolower($identifier)]);
+            if ($user !== null) {
+                return $user;
             }
         }
 
@@ -392,11 +386,7 @@ final class Authentication
             return false;
         }
 
-        if (!array_key_exists('status', $user)) {
-            return true;
-        }
-
-        return (string) $user['status'] === 'active';
+        return ($user['status'] ?? '') === 'active';
     }
 
     /**

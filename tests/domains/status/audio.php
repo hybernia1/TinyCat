@@ -64,7 +64,7 @@ $stored = Links::status_link_find_by_hash($link['url_hash']);
 $assert($linkId > 0 && $stored['audio_url'] === $media && $stored['link_type'] === 'audio', 'Audio metadata survives storage and an idempotent migration.');
 $cached = Links::status_link_apply_cached_metadata([], $stored, true);
 $assert($cached['audio_url'] === $media, 'Cached metadata retains playback URLs.');
-$resource = \TinyCat\Social\Posts\Resource::link($stored);
+$resource = \TinyCat\Social\Posts\TextResource::link($stored);
 $html = \TinyCat\Core\Ui\Components::render('publishing/link', ['link'=>$resource]);
 $assert(!str_contains($html, '<audio') && str_contains($html, 'data-audio-url=') && str_contains($html, 'data-status-video-load'), 'Audio cards show the shared play button without creating a player before interaction.');
 $assert($resource['card_kind'] === 'audio' && $resource['embed_url'] === '', 'Native audio does not become an iframe.');

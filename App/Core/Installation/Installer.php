@@ -109,19 +109,8 @@ final class Installer
     /** @param array<mixed> $state */
     public static function default_settings(array $state): void
     {
-        self::default_public_web();
-        \TinyCat\Core\Settings\Sections::seed((string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
-    }
-
-    /** Shared by staged web setup and signed-product CLI installation. */
-    public static function default_public_web(): void
-    {
         \TinyCat\Core\Ui\PublicWeb::seed();
-    }
-
-    public static function create_admin_account(string $username, string $password, string $locale): int
-    {
-        return \TinyCat\Core\Identity\Setup::administrator($username, $password, $locale);
+        \TinyCat\Core\Settings\Sections::seed((string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
     }
 
     /** @param callable(): array<string, mixed> $apply

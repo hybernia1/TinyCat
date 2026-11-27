@@ -5,6 +5,7 @@ namespace TinyCat\Core\Feeds;
 
 use SimpleXMLElement;
 use TinyCat\Http\Client;
+use TinyCat\Core\Text\Text;
 
 /** Syndication normalization, independent of import history and post storage. */
 final class FeedParser
@@ -43,10 +44,10 @@ final class FeedParser
             $feed = self::decode($body);
             if (is_array($feed) && in_array($feed['version'] ?? '', ['https://jsonfeed.org/version/1', 'https://jsonfeed.org/version/1.1'], true)) {
                 $format = $feed['version'] === 'https://jsonfeed.org/version/1.1' ? 'json_feed_1_1' : 'json_feed_1';
-                $title = self::text(self::string($feed['title'] ?? ''), 120);
+                $title = Text::htmlText(self::string($feed['title'] ?? ''), 120);
             } elseif ($feed instanceof SimpleXMLElement) {
                 $format = match ($feed->getName()) { 'rss' => 'rss', 'feed' => 'atom', 'RDF' => 'rss_1', default => 'unknown' };
-                $title = self::text((string) ($feed->channel->title ?? $feed->title ?? $feed->head->title), 120);
+                $title = Text::htmlText((string) ($feed->channel->title ?? $feed->title ?? $feed->head->title), 120);
             }
             if ($format === 'unknown') { $sources = self::discovery($body, $url); if ($sources !== []) { $format = 'discovery'; } }
             $items = is_array($feed) ? self::jsonItems($feed, $url) : ($feed instanceof SimpleXMLElement ? self::items($feed, $url) : []);
@@ -123,14 +124,14 @@ final class FeedParser
             }
             $categories = [];
             foreach ($entry->category as $category) {
-                $value = self::text((string) ($category->attributes()['term'] ?? $category), 200);
+                $value = Text::htmlText((string) ($category->attributes()['term'] ?? $category), 200);
                 if ($value !== '') { $categories[] = $value; }
             }
             foreach (($seznam->sections->children('')->value ?? []) as $value) {
-                $value = self::text((string) $value, 200);
+                $value = Text::htmlText((string) $value, 200);
                 if ($value !== '') { $categories[] = $value; }
             }
-            $title = self::text((string) $entry->title, 500);
+            $title = Text::htmlText((string) $entry->title, 500);
             $encoded = (string) $node->children(self::CONTENT)->encoded;
             $description = (string) ($entry->description ?: $entry->summary);
             $content = isset($entry->content) ? (string) $entry->content : '';
@@ -153,13 +154,13 @@ final class FeedParser
             $published = trim((string) ($entry->pubDate ?: $entry->published ?: $entry->updated ?: $node->children('http://purl.org/dc/elements/1.1/')->date));
             $timestamp = self::timestamp($published);
             $items[] = [
-                'guid' => $guid, 'title' => $title, 'description' => self::text($descriptionSource, self::MAX_BYTES), 'description_html' => $descriptionSource,
-                'content' => self::text(trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource), self::MAX_BYTES),
+                'guid' => $guid, 'title' => $title, 'description' => Text::htmlText($descriptionSource, self::MAX_BYTES), 'description_html' => $descriptionSource,
+                'content' => Text::htmlText(trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource), self::MAX_BYTES),
                 'content_html' => trim($encoded) !== '' ? $encoded : (trim($content) !== '' ? $content : $descriptionSource),
                 'url' => Client::isSafeUrl($link) ? $link : '',
                 'image_url' => $images[0] ?? '', 'image_urls' => $images,
                 'audio_url' => $audio,
-                'author' => self::text($creator, 200), 'categories' => array_values(array_unique($categories)),
+                'author' => Text::htmlText($creator, 200), 'categories' => array_values(array_unique($categories)),
                 'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null,
                 '_timestamp' => $timestamp !== false ? $timestamp : 0,
                 'generator' => $generator, 'home_url' => $home, 'feed_url' => $baseUrl,
@@ -210,20 +211,20 @@ final class FeedParser
             $authors = $item['authors'] ?? (isset($item['author']) ? [$item['author']] : ($feed['authors'] ?? [$feed['author'] ?? []]));
             $names = [];
             foreach (array_slice(is_array($authors) ? $authors : [], 0, 10) as $author) {
-                if (is_array($author)) { $names[] = self::text(self::string($author['name'] ?? ''), 200); }
+                if (is_array($author)) { $names[] = Text::htmlText(self::string($author['name'] ?? ''), 200); }
             }
             $tags = array_slice(is_array($item['tags'] ?? null) ? $item['tags'] : [], 0, 50);
-            $tags = array_values(array_unique(array_filter(array_map(static fn (mixed $tag): string => self::text(self::string($tag), 200), $tags))));
+            $tags = array_values(array_unique(array_filter(array_map(static fn (mixed $tag): string => Text::htmlText(self::string($tag), 200), $tags))));
             $date = self::string($item['date_published'] ?? $item['date_modified'] ?? '');
             $timestamp = self::timestamp($date);
             $description = self::string($item['summary'] ?? $item['content_text'] ?? $html);
             $fullText = self::string($item['content_text'] ?? '');
-            $items[] = ['guid' => $item['id'], 'title' => self::text(self::string($item['title'] ?? ''), 500),
-                'description' => isset($item['summary']) || isset($item['content_text']) ? $description : self::text($html, self::MAX_BYTES),
+            $items[] = ['guid' => $item['id'], 'title' => Text::htmlText(self::string($item['title'] ?? ''), 500),
+                'description' => isset($item['summary']) || isset($item['content_text']) ? $description : Text::htmlText($html, self::MAX_BYTES),
                 'description_html' => !isset($item['summary']) && !isset($item['content_text']) ? $html : '',
-                'content' => $fullText !== '' ? $fullText : self::text($html, self::MAX_BYTES), 'content_html' => $html,
+                'content' => $fullText !== '' ? $fullText : Text::htmlText($html, self::MAX_BYTES), 'content_html' => $html,
                 'url' => Client::isSafeUrl($url) ? $url : '',
-                'author' => self::text(implode(', ', array_filter($names)), 200), 'categories' => $tags,
+                'author' => Text::htmlText(implode(', ', array_filter($names)), 200), 'categories' => $tags,
                 'image_url' => $images[0] ?? '', 'image_urls' => $images,
                 'audio_url' => $audio,
                 'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null, '_timestamp' => $timestamp !== false ? $timestamp : 0];
@@ -251,7 +252,7 @@ final class FeedParser
                 if (!in_array('alternate', $rels, true) || !in_array($type, ['application/rss+xml', 'application/atom+xml', 'application/feed+json'], true)) { continue; }
                 $url = Client::absoluteUrl($base, $link->getAttribute('href') ?? '');
                 if ($url === '' || strlen($url) > 2048 || !Client::isSafeUrl($url)) { continue; }
-                $sources[$url] = ['name' => self::text($link->getAttribute('title') ?? '', 120) ?: $url, 'feed_url' => $url];
+                $sources[$url] = ['name' => Text::htmlText($link->getAttribute('title') ?? '', 120) ?: $url, 'feed_url' => $url];
                 if (count($sources) >= 8) { break; }
             }
             return array_values($sources);
@@ -320,11 +321,6 @@ final class FeedParser
         }
         return $candidates;
     }
-    public static function text(string $value, int $limit): string
-    {
-        return \TinyCat\Core\Text\Text::htmlText($value, $limit);
-    }
-
     /** @param list<string> $candidates */
     private static function addImage(array &$candidates, string $url, string $base): void
     {

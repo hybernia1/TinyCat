@@ -20,17 +20,9 @@ final class Administration
     /**
      * @return array<mixed>
      */
-    public static function tc_admin_settings_sections(): array
-    {
-        return \TinyCat\Core\Settings\Sections::current();
-    }
-
-    /**
-     * @return array<mixed>
-     */
     public static function tc_admin_settings_view_sections(): array
     {
-        $sections = \TinyCat\Core\Settings\Administration::tc_admin_settings_sections();
+        $sections = Sections::current();
 
         foreach ($sections as &$section) {
             foreach ($section['fields'] as &$field) {
@@ -52,7 +44,7 @@ final class Administration
 
         $updates = [];
         $images = [];
-        foreach (\TinyCat\Core\Settings\Administration::tc_admin_settings_sections() as $group => $section) {
+        foreach (Sections::current() as $group => $section) {
             foreach ((array) $section['fields'] as $field) {
                 if (!array_key_exists($field['key'], $posted)) {
                     continue;

@@ -25,7 +25,7 @@ foreach ([
     '&amp;lt;b&amp;gt;literal&amp;lt;/b&amp;gt;' => '&lt;b&gt;literal&lt;/b&gt;',
 ] as $html => $plain) {
     $assert(\TinyCat\Core\Text\Text::htmlText($html) === $plain);
-    $assert(\TinyCat\Core\Feeds\FeedParser::text($html, 1000) === $plain);
+    $assert(\TinyCat\Core\Feeds\FeedParser::parse('<rss><channel><item><guid>text</guid><title><![CDATA[' . $html . ']]></title></item></channel></rss>')[0]['title'] === $plain);
 }
 $assert(\TinyCat\Core\Text\Text::plain_text_limit('&lt;b&gt;hello&lt;/b&gt; <3', 100) === '&lt;b&gt;hello&lt;/b&gt; <3');
 $assert(\TinyCat\Core\Text\Text::htmlText("<p>\u{732B}\u{017E}lu\u{0165}</p>", 2) === "\u{732B}\u{017E}");

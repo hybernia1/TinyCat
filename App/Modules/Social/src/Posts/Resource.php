@@ -70,15 +70,6 @@ final class Resource
     }
 
     /**
-     * @param array<mixed> $link
-     * @return array<string, mixed>
-     */
-    public static function link(array $link, int $contentId = 0): array
-    {
-        return \TinyCat\Social\Posts\TextResource::link($link, $contentId);
-    }
-
-    /**
      * @param array<mixed> $comment
      * @param array<mixed>|null $user
      * @return array<string, mixed>

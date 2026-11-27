@@ -177,8 +177,8 @@ try {
     $assert(\TinyCat\Core\Installation\Installer::missing_tables() === [], 'Restarted installer still recognizes the complete schema.');
 
     $password = 'Installer-Rehearsal-2026';
-    $firstAdmin = \TinyCat\Core\Installation\Installer::create_admin_account('installer_stage1', $password, 'en');
-    $secondAdmin = \TinyCat\Core\Installation\Installer::create_admin_account('installer_stage1', $password, 'cs');
+    $firstAdmin = \TinyCat\Core\Identity\Setup::administrator('installer_stage1', $password, 'en');
+    $secondAdmin = \TinyCat\Core\Identity\Setup::administrator('installer_stage1', $password, 'cs');
     $assert($firstAdmin > 0 && $secondAdmin === $firstAdmin, 'Admin creation updates the same account after restart.');
     $assert(
         (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM users WHERE username = 'installer_stage1' AND role = 'admin' AND locale = 'cs'") === 1,

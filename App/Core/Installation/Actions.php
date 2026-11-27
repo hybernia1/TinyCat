@@ -167,7 +167,7 @@ final class Actions
         try {
             $plan = \TinyCat\Core\Modules\Distribution::read(\TinyCat\Support\Paths::basePath());
             $result = Installer::operation('admin', static function () use ($username, $password, $state, $plan): array {
-                $adminId = Installer::create_admin_account($username, $password, (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
+                $adminId = \TinyCat\Core\Identity\Setup::administrator($username, $password, (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
                 Installer::default_settings($state);
                 if ($plan !== null) { \TinyCat\Core\Modules\Lifecycle::completeInstallation($plan); }
                 Installer::write_config($state);

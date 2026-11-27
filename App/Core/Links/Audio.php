@@ -20,10 +20,4 @@ class Audio
     {
         return strlen($url) <= 2048 && \TinyCat\Http\Client::isSafeUrl($url) ? $url : '';
     }
-
-    /** @deprecated Use FeedParser::audioEnclosure() for feed XML. */
-    public static function enclosure(\SimpleXMLElement $node, string $base): string
-    {
-        return \TinyCat\Core\Feeds\FeedParser::audioEnclosure($node, $base);
-    }
 }
