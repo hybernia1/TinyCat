@@ -11,17 +11,17 @@
 .navbar-inner {
   display: flex;
   flex-wrap: wrap;
-  min-height: 58px;
+  min-height: 3.625rem;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .navbar-brand {
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   color: var(--text);
 }
 
@@ -30,7 +30,7 @@
   flex: 0 0 auto;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .nav-link {
@@ -39,7 +39,7 @@
   justify-content: center;
   border: 0;
   border-radius: var(--radius-sm);
-  padding: 7px 10px;
+  padding: 0.4375rem var(--space-2-5);
   background: transparent;
   color: var(--muted);
   cursor: pointer;
@@ -48,14 +48,14 @@
 }
 
 .nav-link-icon {
-  width: 40px;
-  min-height: 40px;
+  width: var(--control-height);
+  min-height: var(--control-height);
   padding: 0;
 }
 
 .nav-link-icon .icon {
-  width: 20px;
-  height: 20px;
+  width: 1.25em;
+  height: 1.25em;
 }
 
 .nav-link:is(:hover, :focus-visible),

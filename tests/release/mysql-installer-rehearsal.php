@@ -278,7 +278,7 @@ try {
         // Detail URLs redirect and are covered by the HTTP contract scenarios.
         foreach (['accounts-page.php', 'sources-page.php'] as $botPage) {
             $_GET = ['id' => $botId];
-            $_SERVER['REQUEST_URI'] = '/admin/bots/' . $botId;
+            $_SERVER['REQUEST_URI'] = '/admin/social/bots/' . $botId;
             ob_start();
             try {
                 match ($botPage) {

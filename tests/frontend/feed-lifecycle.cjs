@@ -39,7 +39,7 @@ C.dispose(feed); assert.equal(next.lease.signal.aborted, true);
   const waiting = [];
   T.dialog = { current: () => null };
   T.api.request = () => new Promise((_resolve, reject) => waiting.push(reject));
-  feed.dataset.statusFeedRefreshUrl = "/api/statuses";
+  feed.dataset.statusFeedRefreshUrl = "/api/social/statuses";
   const obsolete = C.refreshPrunedStatusFeed(feed);
   C.dispose(feed);
   const current = C.refreshPrunedStatusFeed(feed);

@@ -20,14 +20,15 @@ if ($packagePhase === 'install') {
     $pdo->exec("INSERT INTO lifecycle_addon(body) VALUES ('Retained addon data')");
     $addonHash = hash_file('sha256', $root . '/App/Modules/Addon/src/Module.php');
     // An inventory cannot authorize paths outside the module, extra ZIP files or changed bytes.
-    foreach (['traversal', 'tampered', 'namespace', 'missing-dependency', 'core-table'] as $attack) {
+    foreach (['traversal', 'tampered', 'namespace', 'http-namespace', 'missing-dependency', 'core-table'] as $attack) {
         $bad = $workspace . '/bad-' . $attack . '.zip'; copy($moduleZip, $bad);
         $zip = new ZipArchive(); $zip->open($bad); $meta = json_decode($zip->getFromName('package.json'), true);
         if ($attack === 'traversal') { $zip->addFromString('../config.php', '<?php'); }
         if ($attack === 'tampered') { $zip->addFromString('src/Module.php', '<?php echo "tampered";'); }
-        if (in_array($attack, ['namespace', 'missing-dependency'], true)) {
+        if (in_array($attack, ['namespace', 'http-namespace', 'missing-dependency'], true)) {
+            if ($attack === 'http-namespace') { $meta['manifest']['httpNamespace'] = 'renamed-addon'; $meta['version'] = '1.0.1'; }
             if ($attack === 'namespace') { $meta['manifest']['namespace'] = 'TinyCat\\Core\\'; }
-            else { $meta['manifest']['requires'] = ['unavailable.dependency']; }
+            elseif ($attack === 'missing-dependency') { $meta['manifest']['requires'] = ['unavailable.dependency']; }
             $body = json_encode($meta['manifest']); $meta['files']['module.json'] = hash('sha256', $body); $zip->addFromString('module.json', $body);
         }
         if ($attack === 'core-table') { $meta['schemas']['fixture.addon']['tables'] = ['users']; }

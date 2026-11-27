@@ -14,7 +14,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
     querySelector(selector) { if (selector === "[data-public-page]") { return publicPage; } if (selector === "[data-global-search-input]") { return input; } return selector === "#main-content > .container" ? target : {}; },
     querySelectorAll: selector => selector === "[data-global-search-results]" ? [results] : [], getElementById: () => ({ focus() {} }),
     createElement: () => ({ setAttribute(key, value) { this[key] = value; }, remove() { const metaIndex = metaNodes.indexOf(this); if (metaIndex >= 0) { metaNodes.splice(metaIndex, 1); } const index = tagNodes.indexOf(this); if (index >= 0) { tagNodes.splice(index, 1); } } }), addEventListener: (name, fn) => { handlers[name] = fn; } };
-  const data = { version: "4.5.0", locale: "cs", viewer: null, kind: "tag", url: "/tag/quartz", document: { title: "Search quartz", url: "http://tinycat.test/tag/quartz" }, sidebar_url: "/api/site/sidebar" };
+  const data = { version: "4.5.0", locale: "cs", viewer: null, kind: "tag", url: "/tag/quartz", document: { title: "Search quartz", url: "http://tinycat.test/tag/quartz" }, sidebar_url: "/api/social/sidebar" };
   const T = { urls: { split: p => ({ path: p, locale: "" }), prefix: () => "" }, dialog: { current: () => null },
     navigation: {},
     api: { request: async url => { requests.push(url); return { data }; }, csrfToken: () => "test" },
@@ -46,7 +46,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   assert.equal(intercepted,false,"Modified clicks retain native browser navigation");
   await go(new URL("http://tinycat.test/tag/quartz"));
   assert.equal(retained, side, "Search navigation retains the exact sidebar node");
-  assert.equal(requests.length, 1); assert.equal(new URL(requests[0]).pathname, "/api/site/pages");
+  assert.equal(requests.length, 1); assert.equal(new URL(requests[0]).pathname, "/api/social/pages");
   assert.equal(new URL(requests[0]).searchParams.get("path"), "/tag/quartz");
   assert.equal(input.value, ""); assert.equal(results.hidden, true);
   assert.equal(assigned, 0, "Search does not fall back to a document reload"); assert.equal(disposed, 1);

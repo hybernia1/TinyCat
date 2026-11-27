@@ -11,7 +11,7 @@ const sidebar = {
   getBoundingClientRect: () => ({ height: 300 })
 };
 const slot = {
-  dataset: { sidebarUrl: "/api/site/sidebar" }, isConnected: true,
+  dataset: { sidebarUrl: "/api/social/sidebar" }, isConnected: true,
   classList: { add() {}, remove() {} },
   hasAttribute: () => false, replaceWith() { this.isConnected = false; }
 };

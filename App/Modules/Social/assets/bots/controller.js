@@ -1,3 +1,4 @@
+import "../legacy-modal-links.js";
 import "../../../../Core/Ui/assets/content-updates.js";
 import "../../../../Core/Ui/assets/list-navigation.js";
 import "../../../../Core/Ui/assets/runtime/dates.js";
@@ -18,9 +19,9 @@ import "./workspace.js";
   function sourceUrl(suffix) {
     var workspace = document.querySelector("[data-bot-workspace-id]");
     var bot = workspace ? workspace.dataset.botWorkspaceId : new URLSearchParams(window.location.search).get("bot");
-    return "/api/bots/sources" + (suffix || "") + (Number(bot) > 0 ? "?bot=" + encodeURIComponent(bot) : "");
+    return "/api/social/bots/sources" + (suffix || "") + (Number(bot) > 0 ? "?bot=" + encodeURIComponent(bot) : "");
   }
-  function submit(form, key) { form.appendChild(U.button(key || "common.save", { type: "submit", "class": "btn btn-primary btn-sm" })); return form; }
+  function submit(form, key) { form.appendChild(U.button(key || "common.save", { type: "submit", "class": "btn btn-primary sm" })); return form; }
   function sourceForm(source, botNames, constraints) {
     var form = U.form(sourceUrl(source.id ? "/" + source.id : ""), source.id ? "PATCH" : "POST");
     form.dataset.ajaxTarget = document.querySelector("[data-bot-workspace-id]") ? "#bot-detail-sources-list" : "#bots-list"; form.dataset.modalCloseOnSuccess = "true";
@@ -56,8 +57,8 @@ import "./workspace.js";
       T.content.replaceChildren(target, T.components.render("bots/queue", Object.assign({}, data, { state: data })));
     },
     modal: function (url, response, id) {
-      if (/^\/api\/bots\/accounts\/[0-9]+$/.test(url.pathname) && url.searchParams.get("panel") === "detail") { return T.botDetail.modal(url, response, id); }
-      if (/^\/api\/bots\/accounts\/[0-9]+\/posts\/[0-9]+\/management$/.test(url.pathname)) {
+      if (/^\/api\/social\/bots\/accounts\/[0-9]+$/.test(url.pathname) && url.searchParams.get("panel") === "detail") { return T.botDetail.modal(url, response, id); }
+      if (/^\/api\/social\/bots\/accounts\/[0-9]+\/posts\/[0-9]+\/management$/.test(url.pathname)) {
         var dialog = T.status.edit(response.data, id, response.data.update_url);
         dialog.addEventListener("tinycat:success", function () {
           refreshPosts();
@@ -66,7 +67,7 @@ import "./workspace.js";
         });
         return dialog;
       }
-      if (/^\/api\/bots\/sources\/(?:[0-9]+\/)?management$/.test(url.pathname)) {
+      if (/^\/api\/social\/bots\/sources\/(?:[0-9]+\/)?management$/.test(url.pathname)) {
         return U.sectionedDialog(id, response.data.item.id ? "bots.edit_source" : "bots.new_source", sourceForm(response.data.item, response.data.bot_names, response.data.constraints));
       }
       return null;
@@ -74,7 +75,7 @@ import "./workspace.js";
     result: function (source, response, target) {
       if (source.matches && source.matches('form[data-status-form]')) { return false; }
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
-      if (!url.pathname.startsWith("/api/bots/")) { return false; }
+      if (!url.pathname.startsWith("/api/social/bots/")) { return false; }
       var detail = T.botDetail.result(source, response, target);
       if (detail) { return detail; }
       if (target && target.id === "bot-queue-list") { T.bots.queue(target, response); return [target]; }

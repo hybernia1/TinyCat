@@ -19,6 +19,37 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
 
 ## Registrace a provoz
 
+### HTTP namespace vlastníka
+
+Manifest s providerem `routes` povinně deklaruje `httpNamespace`, například
+`"httpNamespace": "notes"`. Jde o stabilní URL segment, nikoli aktivační ID
+ani PHP namespace. Formát je malé ASCII písmeno následované písmeny, číslicemi
+a případnými pomlčkami mezi neprázdnými částmi. Namespace musí být jedinečný
+v celém metadata-only inventáři, tedy i mezi neaktivními moduly. Kolize vyřadí
+všechny kolidující zdroje; nezapíná se první nalezený adresář. Core servisní
+kořeny včetně `users`, `settings`, `scheduler`, `notifications`, `site`,
+`site-health`, `modules`, `updates`, `search`, `installation` a `cron` jsou rezervované.
+
+Doménová API mají výhradně `/api/<httpNamespace>/...`, administrační stránky
+`/admin/<httpNamespace>/...`. Provider dostává existující `Api` s kontextem
+vlastníka. `whenReady()` i `forPublicWeb()` kontext zachovají; prefix nemění
+oprávnění operace, CSRF, dostupnost schématu ani veřejného webu. Registrar
+odmítne cizí API a router ověří i přímé registrace při atomickém dokončení
+provideru.
+
+Registrátor nadále přijímá plnou API cestu nebo cestu bez segmentu `/api`:
+například `$api->get('/notes/records', ...)` registruje `/api/notes/records`.
+Namespace se ověřuje, nepřidává se podruhé ani se neodvozuje z názvu PHP třídy.
+
+Úzký seznam `legacyReadRoutes` může deklarovat přesné GET/HEAD route patterns
+pro doložené staré odkazy. Admin vstupy sdílí owner redirect a povolené query
+parametry. Výslovně deklarované publikované API odkazy mohou použít tentýž
+`Api::get` handler, oprávnění, readiness i public-web scope jako kanonická cesta;
+mutation API přes ně neprocházejí. Výjimky musí mít důvod a plán odstranění.
+Rezervované Core kořeny nelze tímto seznamem obejít.
+
+### Provozní registrace
+
 - Načtení metadat ani sestavení příspěvků nevyžaduje databázi, session, síť nebo
   zápis na disk. Callback předávej jako callable; nevyhodnocuj jej při registraci.
 - Zachovej také odložené načtení provozních tříd: `static fn () => Handler::run()`
@@ -33,7 +64,7 @@ manifest ukazuje [manuál autora](../development/module-authoring.md).
 - U modulu členěného na oblasti skládá `Module` pojmenovanými privátními metodami
   jejich API a HTML routy;
   vlastní JSON endpointy deklaruje příslušná `Api`. Nemíchej další endpointy do
-  registračních pomocníků. Sociální profily používají `/api/profiles`, správu
+  registračních pomocníků. Sociální profily používají `/api/social/profiles`, správu
   identity poskytuje core pod `/api/users`. Sdílené hledání hostuje core;
   vlastník přispívá zdroji a kurzorovými daty, ne paralelním výsledkovým API.
 - Nastavení vlastní jednu PHP definici sekcí, polí, validace a popisků. Úloha

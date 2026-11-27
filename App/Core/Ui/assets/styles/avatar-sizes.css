@@ -1,7 +1,9 @@
+.avatar.sm,
 .avatar-sm {
   --avatar-size: 2.125rem;
 }
 
+.avatar.xl,
 .avatar-xl {
   --avatar-size: 6rem;
 }

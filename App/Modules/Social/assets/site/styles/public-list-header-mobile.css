@@ -9,7 +9,7 @@
     flex-direction: row;
   }
 
-.public-list-header-actions > .text-2xl {
+.public-list-header-actions > .public-list-title {
     min-width: 0;
     overflow-wrap: anywhere;
   }

@@ -81,7 +81,7 @@ final class Comments
         $rows = $query->where('cc.content_id = ?', $contentId)->where(self::visiblePredicate())->order('cc.created_at ASC, cc.id ASC')->all();
         $last = $rows === [] ? null : end($rows);
         $next = count($rows) === $limit && is_array($last)
-            ? '/api/statuses/' . $contentId . '/comments?' . http_build_query(['parent_id' => $parentId, 'cursor_at' => $last['created_at'], 'cursor_id' => $last['id'], 'limit' => $limit]) : '';
+            ? '/api/social/statuses/' . $contentId . '/comments?' . http_build_query(['parent_id' => $parentId, 'cursor_at' => $last['created_at'], 'cursor_id' => $last['id'], 'limit' => $limit]) : '';
         foreach ($rows as &$row) { $row['replies'] = []; }
         unset($row);
         return ['items' => $rows, 'next_url' => $next];

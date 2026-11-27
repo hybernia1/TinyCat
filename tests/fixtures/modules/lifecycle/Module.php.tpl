@@ -30,9 +30,9 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
 
     public static function register(\TinyCat\Http\Api $api): void
     {
-        $api->get('/fixture/@@SHORT@@', static fn (): array => ['items' => \TinyCat\Database\Connection::all('SELECT * FROM @@TABLE@@ ORDER BY id')]);
-        \TinyCat\Http\Router::route('GET', '/fixture/@@SHORT@@', static function (): void {
-            \TinyCat\Core\Ui\Page::render(['title' => \TinyCat\Support\Localization::t('@@TABLE@@.title'), 'current' => '/fixture/@@SHORT@@', 'surface' => 'public'], '<p>Fixture content</p>');
+        $api->get('/fixture-@@SHORT@@', static fn (): array => ['items' => \TinyCat\Database\Connection::all('SELECT * FROM @@TABLE@@ ORDER BY id')]);
+        \TinyCat\Http\Router::route('GET', '/fixture-@@SHORT@@', static function (): void {
+            \TinyCat\Core\Ui\Page::render(['title' => \TinyCat\Support\Localization::t('@@TABLE@@.title'), 'current' => '/fixture-@@SHORT@@', 'surface' => 'public'], '<p>Fixture content</p>');
         }, publicWeb: true);
     }
 }

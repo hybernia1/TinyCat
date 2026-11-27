@@ -1,7 +1,7 @@
 [data-list-summary]:not(:has(.badge)) { display: none; }
 
-.filter-chip { gap: 6px; border: 0; font-family: inherit; text-align: left; cursor: pointer; }
+.filter-chip { gap: var(--space-1-5); border: 0; font-family: inherit; text-align: left; cursor: pointer; }
 .filter-chip > span { min-width: 0; overflow-wrap: anywhere; }
-.filter-chip > .icon { width: 12px; height: 12px; flex-shrink: 0; }
+.filter-chip > .icon { width: 0.75rem; height: 0.75rem; flex-shrink: 0; }
 .filter-chip:is(:hover, :focus-visible) { background: var(--surface-soft); color: var(--primary-strong); }
 

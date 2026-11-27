@@ -59,7 +59,7 @@ foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/mod
             $social = array_filter($scripts, static fn (string $file): bool => str_starts_with($file, 'App/Modules/Social/'));
             $assert(($social !== []) === ($socialSelected && ($route === '/social' || str_starts_with($route, '/status/'))), $assembly . ': Social imports follow activation and the owner page scope');
         }
-        foreach (['/admin', '/admin/users', '/admin/bots', '/admin/fixture'] as $route) {
+        foreach (['/admin', '/admin/users', '/admin/social/bots', '/admin/fixture'] as $route) {
             $assert(in_array('App/Core/Identity/assets/admin.js', AssetGraph::order(ClientAssets::entries($route)), true), $assembly . ': administrative account actions retain the list adapter');
         }
     });
@@ -205,8 +205,8 @@ try {
     $assert(!Resources::isScoped(), 'Invalid scope setup does not mutate the active selection');
     $withoutBots = new Catalog(array_values(array_filter($default->definitions(), static fn (Definition $definition): bool => $definition->id !== 'tinycat.social')));
     Resources::withCatalog($withoutBots, static function () use ($assert): void {
-        $assert(!in_array('App/Modules/Social/assets/bots/index.js', ClientAssets::entries('/admin/bots'), true), 'Removing a real legacy module removes its manifest entries');
-        $styles = AssetGraph::stylesheet(ClientAssets::sourceStyles('/admin/bots'));
+        $assert(!in_array('App/Modules/Social/assets/bots/index.js', ClientAssets::entries('/admin/social/bots'), true), 'Removing a real legacy module removes its manifest entries');
+        $styles = AssetGraph::stylesheet(ClientAssets::sourceStyles('/admin/social/bots'));
         $assert($styles !== '', 'Legacy cascade ignores unselected module imports while preserving other styles');
     });
 } finally {

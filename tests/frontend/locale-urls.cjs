@@ -21,7 +21,7 @@ let checks = 0;
 const cases = [
   ["/", "/pl/"], ["/author/2", "/pl/author/2"], ["/status/10?compact=1#comments", "/pl/status/10?compact=1#comments"],
   ["/search/all?q=article", "/pl/search/all?q=article"], ["/tag/a%20b", "/pl/tag/a%20b"], ["/login?next=%2Fpl%2F", "/pl/login?next=%2Fpl%2F"], ["/privacy", "/pl/privacy"],
-  ["/de/status/10", "/de/status/10"], ["/api/statuses/10", "/api/statuses/10"], ["/admin", "/admin"],
+  ["/de/status/10", "/de/status/10"], ["/api/social/statuses/10", "/api/social/statuses/10"], ["/admin", "/admin"],
   ["/author/2/feed", "/author/2/feed"], ["/App/Core/Ui/assets/icons.svg", "/App/Core/Ui/assets/icons.svg"], ["/uploads/image.webp", "/uploads/image.webp"],
   ["/zz/privacy", "/zz/privacy"], ["//other.test/", "//other.test/"], ["https://other.test/privacy", "https://other.test/privacy"], ["#content", "#content"]
 ];
@@ -40,11 +40,11 @@ vm.runInNewContext(source("urls"), { window: regionalWindow, document: regionalD
 assert.equal(regionalWindow.TinyCat.urls.local("/eng/privacy?x=1#policy", "pt-br"), "/pt-br/privacy?x=1#policy"); checks++;
 assert.equal(regionalWindow.TinyCat.urls.split("/pt-br/privacy").locale, "pt-br"); checks++;
 async function run() {
-  await window.TinyCat.api.request("/api/site/sidebar");
+  await window.TinyCat.api.request("/api/social/sidebar");
   assert.equal(lastHeaders.get("X-TinyCat-Locale"), "pl"); checks++;
   dataset.interfacePrefix = "";
   assert.equal(urls.local("/status/10"), "/status/10"); checks++;
-  await window.TinyCat.api.request("/api/site/sidebar");
+  await window.TinyCat.api.request("/api/social/sidebar");
   assert.equal(lastHeaders.has("X-TinyCat-Locale"), false); checks++;
   console.log("PASS localized URLs, global service URLs and API interface propagation (" + checks + " checks)");
 }

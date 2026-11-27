@@ -207,7 +207,7 @@
       {
         "tag": "button",
         "attrs": {
-          "class": {"or": [{"get": "button_class"}, "btn btn-sm btn-ghost"]},
+          "class": {"or": [{"get": "button_class"}, "btn sm btn-ghost"]},
           "type": "submit",
           "aria-label": {"get": "label"},
           "title": {"if": [{"get": "icon"}, {"get": "label"}, null]}
@@ -250,7 +250,7 @@
               {
                 "tag": "button",
                 "attrs": {
-                  "class": "btn btn-sm btn-ghost btn-icon",
+                  "class": "btn sm btn-ghost btn-icon",
                   "type": "button",
                   "data-modal-close": "",
                   "aria-label": {"get": "close_label"}
@@ -429,7 +429,18 @@
   "ui/avatar": {
     "tag": "span",
     "attrs": {
-      "class": {"concat": ["avatar", {"if": [{"get": "small"}, " avatar-sm", ""]}]},
+      "class": {
+        "concat": [
+          "avatar",
+          {
+            "if": [
+              {"eq": [{"get": "size"}, "xl"]},
+              " xl",
+              {"if": [{"or": [{"eq": [{"get": "size"}, "sm"]}, {"get": "small"}]}, " sm", ""]}
+            ]
+          }
+        ]
+      },
       "data-avatar-user-id": {"get": "user.id"}
     },
     "children": [
@@ -781,7 +792,7 @@
       "fields": {"enabled": {"if": [{"get": "active"}, "0", "1"]}},
       "label": {"if": [{"get": "active"}, {"t": "common.deactivate"}, {"t": "common.activate"}]},
       "icon": {"if": [{"get": "active"}, "pause", "play"]},
-      "button_class": "btn btn-sm btn-ghost btn-icon"
+      "button_class": "btn sm btn-ghost btn-icon"
     }
   },
   "ui/filter-trigger": {
@@ -790,7 +801,7 @@
     "children": [
       {
         "tag": "summary",
-        "attrs": {"class": "btn btn-ghost btn-sm", "aria-label": {"t": "common.filters"}},
+        "attrs": {"class": "btn btn-ghost sm", "aria-label": {"t": "common.filters"}},
         "children": [{"icon": "filter"}, {"tag": "span", "children": [{"t": "common.filters"}]}]
       },
       {"tag": "div", "attrs": {"class": "popover-panel filter-menu-panel", "data-filter-panel": {"get": "id"}}}
@@ -1139,7 +1150,7 @@
             {
               "tag": "a",
               "attrs": {
-                "class": "btn btn-secondary btn-sm",
+                "class": "btn btn-secondary sm",
                 "href": {"get": "languageSuggestion.url"},
                 "data-popover-close": "",
                 "data-language-link": {"get": "languageSuggestion.language"}
@@ -1282,12 +1293,12 @@
         "children": [
           {
             "tag": "button",
-            "attrs": {"class": "btn btn-primary btn-sm", "type": "button", "data-cookie-consent-choice": "granted"},
+            "attrs": {"class": "btn btn-primary sm", "type": "button", "data-cookie-consent-choice": "granted"},
             "children": [{"t": "privacy.cookie_consent_accept"}]
           },
           {
             "tag": "button",
-            "attrs": {"class": "btn btn-secondary btn-sm", "type": "button", "data-cookie-consent-choice": "denied"},
+            "attrs": {"class": "btn btn-secondary sm", "type": "button", "data-cookie-consent-choice": "denied"},
             "children": [{"t": "privacy.cookie_consent_necessary"}]
           }
         ]
@@ -1455,7 +1466,7 @@
       {"tag": "input", "attrs": {"type": "hidden", "name": "enabled", "value": {"get": "enabled"}}},
       {
         "tag": "button",
-        "attrs": {"type": "submit", "class": "btn btn-secondary btn-sm", "disabled": {"get": "disabled"}},
+        "attrs": {"type": "submit", "class": "btn btn-secondary sm", "disabled": {"get": "disabled"}},
         "children": [{"get": "label"}]
       }
     ]
@@ -1515,11 +1526,7 @@
                               "tag": "div",
                               "attrs": {"class": "identity-row identity-row-inset"},
                               "children": [
-                                {
-                                  "tag": "span",
-                                  "attrs": {"class": "avatar avatar-sm"},
-                                  "children": [{"icon": "settings"}]
-                                },
+                                {"tag": "span", "attrs": {"class": "avatar sm"}, "children": [{"icon": "settings"}]},
                                 {
                                   "tag": "div",
                                   "attrs": {"class": "table-identity-body"},
@@ -1700,66 +1707,13 @@
             "tag": "h2",
             "attrs": {"class": "text-base m-0 cluster gap-2"},
             "children": [{"icon": {"get": "widget.icon"}}, {"get": "widget.title"}]
-          },
-          {
-            "tag": "form",
-            "attrs": {
-              "method": "get",
-              "action": "/admin",
-              "data-dashboard-stats-form": "",
-              "data-ajax-form": "",
-              "data-api-method": "GET",
-              "data-ajax-action": "/api/site/dashboard-stats",
-              "data-ajax-target": "#dashboard-statistics-body",
-              "data-history": "false"
-            },
-            "when": {"get": "widget.data.groups"},
-            "children": [
-              {
-                "tag": "select",
-                "attrs": {
-                  "class": "select",
-                  "name": "stats",
-                  "data-submit-on-change": "",
-                  "aria-label": {"t": "admin.widgets.stats_group"}
-                },
-                "children": [
-                  {
-                    "each": {"get": "widget.data.groups"},
-                    "as": "group",
-                    "children": {
-                      "tag": "option",
-                      "attrs": {
-                        "value": {"get": "group.id"},
-                        "selected": {"if": [{"eq": [{"get": "group.id"}, {"get": "widget.data.id"}]}, true, null]}
-                      },
-                      "children": [{"get": "group.label"}]
-                    }
-                  }
-                ]
-              },
-              {
-                "tag": "noscript",
-                "children": [
-                  {
-                    "tag": "button",
-                    "attrs": {"type": "submit", "class": "btn btn-secondary btn-sm"},
-                    "children": [{"t": "common.confirm"}]
-                  }
-                ]
-              }
-            ]
           }
         ]
       },
       {
-        "tag": "div",
-        "attrs": {
-          "id": {"if": [{"get": "widget.data.groups"}, "dashboard-statistics-body", null]},
-          "data-stats-current": {"get": "widget.data.id"}
-        },
-        "when": {"eq": [{"get": "widget.type"}, "metrics"]},
-        "children": [{"component": "ui/dashboard-metrics", "data": {"get": "widget.data"}}]
+        "component": "ui/dashboard-metrics",
+        "data": {"get": "widget.data"},
+        "when": {"eq": [{"get": "widget.type"}, "metrics"]}
       },
       {
         "tag": "ul",
@@ -1777,7 +1731,7 @@
                   "component": "ui/avatar",
                   "data": {
                     "user": {"get": "entry.user"},
-                    "small": true,
+                    "size": "sm",
                     "alt": "",
                     "fallback_icon": {"or": [{"get": "entry.icon"}, "file-text"]}
                   }
@@ -1840,7 +1794,7 @@
       {"slot": {"get": "widget.content"}, "when": {"eq": [{"get": "widget.type"}, "custom"]}},
       {
         "tag": "a",
-        "attrs": {"class": "btn btn-ghost btn-sm", "href": {"get": "widget.data.url"}},
+        "attrs": {"class": "btn btn-ghost sm", "href": {"get": "widget.data.url"}},
         "when": {
           "and": [
             {"get": "widget.data.url"},
@@ -1976,7 +1930,7 @@
           {"tag": "input", "attrs": {"type": "hidden", "name": "action", "value": "reset-opcache"}},
           {
             "tag": "button",
-            "attrs": {"class": "btn btn-secondary btn-sm", "type": "submit"},
+            "attrs": {"class": "btn btn-secondary sm", "type": "submit"},
             "children": [{"icon": "refresh"}, {"tag": "span", "children": [{"t": "admin.cache.opcache_reset"}]}]
           }
         ]
@@ -2033,83 +1987,27 @@
   },
   "ui/dashboard-metrics": {
     "tag": "div",
-    "attrs": {"class": "stack stack-gap-12"},
+    "attrs": {"class": "cluster", "data-widget-metrics": ""},
     "children": [
       {
-        "tag": "div",
-        "attrs": {"class": "grid", "data-widget-metrics": ""},
-        "children": [
-          {
-            "each": {"get": "items"},
-            "as": "metric",
-            "children": {
-              "tag": "div",
-              "attrs": {"data-widget-metric": "", "class": "identity-row identity-row-inset"},
-              "children": [
-                {
-                  "tag": "span",
-                  "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
-                  "children": [
-                    {
-                      "icon": {
-                        "or": [
-                          {"get": "metric.icon"},
-                          {
-                            "lookup": {"get": "metric.key"},
-                            "default": "chart",
-                            "catalog": "dashboard.statistics",
-                            "field": "icon"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attrs": {"class": "stack stack-gap-4 min-w-0"},
-                  "children": [
-                    {
-                      "tag": "span",
-                      "attrs": {"class": "text-muted"},
-                      "children": [
-                        {
-                          "or": [
-                            {"get": "metric.label"},
-                            {
-                              "lookup": {"get": "metric.key"},
-                              "default": "",
-                              "catalog": "dashboard.statistics",
-                              "field": "label"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "strong",
-                      "attrs": {"class": "text-xl"},
-                      "children": [
-                        {
-                          "if": [
-                            {"get": "metric.display_value"},
-                            {"get": "metric.display_value"},
-                            {"get": "metric.value"}
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
+        "each": {"get": "groups"},
+        "as": "group",
+        "children": {
+          "each": {"get": "group.items"},
+          "as": "metric",
+          "children": {"component": "ui/dashboard-metric", "data": {"metric": {"get": "metric"}}}
+        }
+      },
+      {
+        "each": {"get": "items"},
+        "as": "metric",
+        "when": {"not": {"get": "groups"}},
+        "children": {"component": "ui/dashboard-metric", "data": {"metric": {"get": "metric"}}}
       },
       {
         "component": "ui/empty-state",
         "data": {"label": {"t": "common.search_empty"}, "compact": true},
-        "when": {"not": {"get": "items"}}
+        "when": {"not": {"or": [{"get": "groups"}, {"get": "items"}]}}
       }
     ]
   },
@@ -2134,6 +2032,33 @@
         "data-ajax-form": "",
         "data-ajax-target": {"get": "target"},
         "data-history": {"get": "history"}
+      }
+    ]
+  },
+  "ui/dashboard-metric": {
+    "tag": "span",
+    "attrs": {"class": "badge", "data-widget-metric": ""},
+    "children": [
+      {
+        "icon": {
+          "or": [
+            {"get": "metric.icon"},
+            {"lookup": {"get": "metric.key"}, "default": "chart", "catalog": "dashboard.statistics", "field": "icon"}
+          ]
+        }
+      },
+      {
+        "or": [
+          {"get": "metric.label"},
+          {"lookup": {"get": "metric.key"}, "default": "", "catalog": "dashboard.statistics", "field": "label"}
+        ]
+      },
+      ": ",
+      {
+        "tag": "strong",
+        "children": [
+          {"if": [{"get": "metric.display_value"}, {"get": "metric.display_value"}, {"get": "metric.value"}]}
+        ]
       }
     ]
   }

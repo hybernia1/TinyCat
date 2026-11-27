@@ -8,10 +8,10 @@ final class Api
     {
         $api = $api->forPublicWeb();
 
-        $api->get('/site/pages', static function (\TinyCat\Http\Request $request): array {
+        $api->get('/social/pages', static function (\TinyCat\Http\Request $request): array {
             $request->validated(['path' => 'string', 'feed' => 'string', 'media' => 'string', 'compact' => 'string']);
             return PublicPages::find($request->path((string) $request->input('path', '/')));
         });
-        $api->get('/site/sidebar', static fn (): array => Sidebar::load());
+        $api->get('/social/sidebar', static fn (): array => Sidebar::load());
     }
 }

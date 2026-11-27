@@ -98,7 +98,7 @@ final class PublicPages
             'comments' => Posts::comments($context['comments'] ?? [], $viewer),
             'comments_next_url' => (string) ($context['commentsNextUrl'] ?? ''),
             'next_url' => (string) ($more['next_url'] ?? ''),
-            'sidebar_url' => '/api/site/sidebar' . (!empty($context['tag']) ? '?tag=' . rawurlencode($context['tag']) : ''),
+            'sidebar_url' => '/api/social/sidebar' . (!empty($context['tag']) ? '?tag=' . rawurlencode($context['tag']) : ''),
             'sidebar' => in_array($kind, ['home', 'tag', 'status'], true) && empty($context['compact']),
             'author' => $author !== null ? Users::resource($author) : null,
             'bio' => (string) ($context['bio'] ?? ''), 'member_since' => !empty($context['memberSince']) ? \TinyCat\Support\Dates::dateIso($context['memberSince']) : '',

@@ -1,4 +1,5 @@
 {
+  "social": {"title": "Social"},
   "account": {
     "posts_title": "Post",
     "status_create": "Pubblica",

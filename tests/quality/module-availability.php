@@ -57,7 +57,7 @@ mkdir($directory . '/migrations', 0700);
 file_put_contents($directory . '/migrations/1.php', <<<'PHP'
 <?php return static function (PDO $pdo): void { $pdo->exec('CREATE TABLE local_notes (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, body TEXT)'); };
 PHP);
-file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.localnotes', 'namespace' => 'Fixture\\LocalNotes\\', 'providers' => ['routes' => 'Fixture\\LocalNotes\\Module', 'schema' => 'Fixture\\LocalNotes\\Module'], 'resources' => ['migrations' => 'migrations']], JSON_THROW_ON_ERROR));
+file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.localnotes', 'httpNamespace' => 'local-notes', 'namespace' => 'Fixture\\LocalNotes\\', 'providers' => ['routes' => 'Fixture\\LocalNotes\\Module', 'schema' => 'Fixture\\LocalNotes\\Module'], 'resources' => ['migrations' => 'migrations']], JSON_THROW_ON_ERROR));
 file_put_contents($directory . '/src/Module.php', <<<'PHP'
 <?php
 namespace Fixture\LocalNotes;

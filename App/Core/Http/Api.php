@@ -17,18 +17,25 @@ final class Api
     private ?array $actor = null;
 
     /** @param (callable(): (array<string, mixed>|null))|null $currentUser
-     * @param (callable(): bool)|null $ready */
-    public function __construct(?callable $currentUser = null, ?callable $ready = null, private readonly bool $publicWeb = false)
+     * @param (callable(): bool)|null $ready
+     * @param list<string> $legacyReadRoutes */
+    public function __construct(?callable $currentUser = null, ?callable $ready = null, private readonly bool $publicWeb = false, private readonly ?string $httpNamespace = null, private readonly array $legacyReadRoutes = [])
     {
         $this->currentUser = $currentUser === null ? static fn (): null => null : Closure::fromCallable($currentUser);
         $this->ready = $ready === null ? static fn (): bool => true : Closure::fromCallable($ready);
     }
 
     /** @param callable(): bool $ready */
-    public function whenReady(callable $ready): self { return new self($this->currentUser, fn (): bool => ($this->ready)() && $ready(), $this->publicWeb); }
+    public function whenReady(callable $ready): self { return new self($this->currentUser, fn (): bool => ($this->ready)() && $ready(), $this->publicWeb, $this->httpNamespace, $this->legacyReadRoutes); }
 
     /** Scope availability independently of authentication and authorization. */
-    public function forPublicWeb(): self { return new self($this->currentUser, $this->ready, true); }
+    public function forPublicWeb(): self { return new self($this->currentUser, $this->ready, true, $this->httpNamespace, $this->legacyReadRoutes); }
+
+    /** @param list<string> $legacyReadRoutes */
+    public function forModule(string $httpNamespace, array $legacyReadRoutes = []): self
+    {
+        return new self($this->currentUser, $this->ready, $this->publicWeb, \TinyCat\Core\Modules\Definition::httpNamespace($httpNamespace), $legacyReadRoutes);
+    }
 
     /** Identity already authorized for the currently executing route.
      * @return array<string, mixed>|null */
@@ -67,6 +74,11 @@ final class Api
     /** @param callable(Request, array<string, string>): (array<string, mixed>|Result) $handler */
     private function register(string $method, string $path, callable $handler, string $access, int $status): void
     {
+        $apiPath = str_starts_with($path, '/api/') ? $path : '/api/' . ltrim($path, '/');
+        if ($this->httpNamespace !== null && !str_starts_with($apiPath . '/', '/api/' . $this->httpNamespace . '/')
+            && !($method === 'GET' && in_array($apiPath, $this->legacyReadRoutes, true))) {
+            throw new LogicException('API route escapes its module HTTP namespace: ' . $path);
+        }
         if (!Middleware::known($access) || !in_array($status, [200, 201], true)) {
             throw new LogicException('Invalid API route contract.');
         }

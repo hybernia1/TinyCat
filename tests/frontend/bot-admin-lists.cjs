@@ -6,8 +6,8 @@ const response = value => ({ data: { items: [value], filters: { q: "active", bot
 
 (async function () {
   const s = setup();
-  s.window.location = new URL("https://tinycat.test/admin/bots/list?q=active&bot=3&per_page=10&page=2&sort=name&direction=desc");
-  for (const [id, endpoint, mutation] of [["bots-list", "/api/bots/sources", "/api/bots/sources/7"], ["bot-accounts-list", "/api/bots/accounts", "/api/bots/accounts/3"]]) {
+  s.window.location = new URL("https://tinycat.test/admin/social/bots/sources?q=active&bot=3&per_page=10&page=2&sort=name&direction=desc");
+  for (const [id, endpoint, mutation] of [["bots-list", "/api/social/bots/sources", "/api/social/bots/sources/7"], ["bot-accounts-list", "/api/social/bots/accounts", "/api/social/bots/accounts/3"]]) {
     const root = s.targets.get(id), start = s.pending.length;
     assert.equal(s.T.modules.result(s.source(mutation, "PATCH", id), { data: {} }, root).length, 0);
     assert.equal(s.pending[start].url, endpoint + s.window.location.search);
@@ -36,12 +36,12 @@ const response = value => ({ data: { items: [value], filters: { q: "active", bot
   assert.equal(generic.rendered.at(-1).name, 'fixture/queue');
   assert.equal(generic.rendered.at(-1).data.items[0], 'generic-owner');
   const moderation = setup();
-  moderation.window.location = new URL('https://tinycat.test/admin/moderation/reports?status=open&reason=spam&page=2&sort=reason&direction=desc');
+  moderation.window.location = new URL('https://tinycat.test/admin/social/moderation/reports?status=open&reason=spam&page=2&sort=reason&direction=desc');
   const reports = moderation.targets.get('moderation-reports');
-  for (const [url, method] of [['/api/moderation/reports/12','PATCH'],['/api/moderation/posts/42/publication','POST']]) {
+  for (const [url, method] of [['/api/social/moderation/reports/12','PATCH'],['/api/social/moderation/posts/42/publication','POST']]) {
     const count = moderation.pending.length;
     moderation.T.modules.result(moderation.source(url, method, reports.id), {data:{}}, reports);
-    assert.equal(moderation.pending[count].url, '/api/moderation/reports' + moderation.window.location.search);
+    assert.equal(moderation.pending[count].url, '/api/social/moderation/reports' + moderation.window.location.search);
     moderation.pending[count].resolve(response('remaining-reports')); await tick();
     assert.equal(moderation.rendered.at(-1).name, 'moderation/reports');
     assert.equal(moderation.rendered.at(-1).data.pagination.page, 2);

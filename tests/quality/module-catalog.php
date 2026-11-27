@@ -97,6 +97,14 @@ try {
     $assert(TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.notes') === $sources, 'Standalone source selection includes transitive dependencies');
     $assert(array_keys(TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.extra')) === ['fixture.extra'], 'Standalone source selection excludes unrelated modules');
     $reject(static fn () => TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.missing'), 'Unknown source module');
+
+    $notes['httpNamespace'] = 'same-route'; $extra['httpNamespace'] = 'same-route';
+    file_put_contents($sourceRoot . '/App/Modules/Notes/module.json', json_encode($notes, JSON_THROW_ON_ERROR));
+    file_put_contents($sourceRoot . '/App/Modules/Extra/module.json', json_encode($extra, JSON_THROW_ON_ERROR));
+    $collision = TinyCat\Core\Modules\SourceModules::inventory($sourceRoot);
+    $assert($collision['selection'] === [] && count($collision['errors']) === 2, 'Metadata-only inventory quarantines every colliding owner before PHP is loaded');
+    unset($notes['httpNamespace'], $extra['httpNamespace']);
+    file_put_contents($sourceRoot . '/App/Modules/Extra/module.json', json_encode($extra, JSON_THROW_ON_ERROR));
     $notes['requires'] = ['fixture.missing'];
     file_put_contents($sourceRoot . '/App/Modules/Notes/module.json', json_encode($notes, JSON_THROW_ON_ERROR));
     $reject(static fn () => TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.notes'), 'Missing source dependency');
@@ -115,6 +123,36 @@ try {
     $assert($ids(new Catalog([$gamma, $beta, $alpha])) === ['fixture.alpha', 'fixture.beta', 'fixture.gamma'], 'Dependencies precede dependants with stable ID tie breaking');
     $assert($ids(new Catalog([$alpha, $gamma, $beta])) === $ids(new Catalog([$gamma, $beta, $alpha])), 'Input order does not change the resolved catalog');
     $reject(static fn () => new Catalog([$alpha, $alpha]), 'Duplicate module ID');
+    $httpA = $metadata('httpalpha'); $httpA->httpNamespace = 'independent';
+    $httpB = $metadata('httpbeta'); $httpB->httpNamespace = 'independent';
+    $reject(static fn () => new Catalog([Definition::fromMetadata($httpA, $temporary), Definition::fromMetadata($httpB, $temporary)]), 'Different activation IDs cannot claim one HTTP namespace');
+    foreach (['users', 'admin', 'UPPER', 'nested/path', '', 'social?x'] as $invalidNamespace) {
+        $badHttp = $metadata('httpinvalid'); $badHttp->httpNamespace = $invalidNamespace;
+        $reject(static fn () => Definition::fromMetadata($badHttp, $temporary), 'Invalid/reserved HTTP namespace');
+    }
+    $legacyHttp = $metadata('legacyhttp'); $legacyHttp->httpNamespace='independent';
+    $legacyHttp->legacyReadRoutes=['/api/users/escape'];
+    $reject(static fn () => Definition::fromMetadata($legacyHttp, $temporary), 'Read exceptions cannot claim a reserved Core API');
+    $legacyHttp->legacyReadRoutes=['/api/fixture-old/read'];
+    $readOwner=Definition::fromMetadata($legacyHttp, $temporary);
+    $readApi=(new TinyCat\Http\Api())->forModule($readOwner->httpNamespace, $readOwner->legacyReadRoutes)->whenReady(static fn (): bool => true)->forPublicWeb();
+    $readApi->get('/fixture-old/read', static fn (): array => []);
+    $assert(TinyCat\Http\Router::isPublicWebPath('/api/fixture-old/read'), 'Read exception scope survives readiness and public-web copies');
+    try { $readApi->post('/fixture-old/read', static fn (): array => []); $assert(false, 'A read exception cannot register mutations'); }
+    catch (LogicException) { $assert(true, 'Mutation registration cannot use a read exception'); }
+    $reject(static fn () => TinyCat\Http\Router::registerModule(static fn () => TinyCat\Http\Router::route('POST', '/api/fixture-old/read', static fn (): array => []), 'independent', ['/api/fixture-old/read']), 'Direct router mutations cannot use read exceptions');
+    $router = new ReflectionProperty(TinyCat\Http\Router::class, 'routes');
+    $beforeRoutes = $router->getValue();
+    $reject(static fn () => TinyCat\Http\Router::registerModule(static function (): void {
+        TinyCat\Http\Router::route('GET', '/api/independent/valid', static fn (): array => []);
+        TinyCat\Http\Router::route('POST', '/api/users/escape', static fn (): array => []);
+    }, 'independent'), 'Direct router escape from provider namespace');
+    $assert($router->getValue() === $beforeRoutes, 'Failed owner registration rolls back every partial route');
+    try {
+        (new TinyCat\Http\Api())->forModule('independent')->whenReady(static fn (): bool => true)->forPublicWeb()->post('/users/escape', static fn (): array => []);
+        $assert(false, 'Scoped API rejected foreign ownership');
+    } catch (LogicException) { $assert(true, 'Availability/public-web copies preserve API owner scope'); }
+
     $reject(static fn () => new Catalog([$beta]), 'Missing dependency');
     $reject(static fn () => new Catalog([$definition('alpha', ['fixture.beta']), $beta]), 'Two-module dependency cycle');
     $reject(static fn () => new Catalog([$definition('alpha', ['fixture.beta']), $definition('beta', ['fixture.gamma']), $definition('gamma', ['fixture.alpha'])]), 'Three-module dependency cycle');
@@ -154,12 +192,20 @@ try {
     mkdir($temporary . '/assets');
     file_put_contents($temporary . '/assets/module.json', '[]');
     $data = $metadata('alpha');
+    $data->httpNamespace = 'fixture-alpha';
     $data->providers = (object) ['routes' => 'Fixture\\Alpha\\Routes'];
     $data->resources = (object) ['translations' => 'lang', 'assets' => 'assets/module.json'];
     file_put_contents($temporary . '/module.json', json_encode($data, JSON_THROW_ON_ERROR));
     $catalog = Catalog::fromManifests(['fixture.alpha' => $temporary . '/module.json']);
     $assert($catalog->get('fixture.alpha')->resources['translations'] === realpath($temporary . '/lang'), 'Resource paths are canonical and module owned');
     $assert(!class_exists('Fixture\\Alpha\\Routes', false), 'Loading providers only records class names');
+    file_put_contents($temporary . '/assets/module.json', json_encode([['admin' => ['fixture.foreign' => ['path' => '/admin/other/records', 'api' => '/api/fixture-alpha/records']]]], JSON_THROW_ON_ERROR));
+    try {
+        TinyCat\Core\Modules\Resources::withCatalog($catalog, static fn (): array => TinyCat\Support\ClientAssets::administration());
+        $assert(false, 'Admin metadata cannot target another HTTP owner');
+    } catch (RuntimeException) { $assert(true, 'Admin metadata rejects a foreign owner without executing module PHP'); }
+    file_put_contents($temporary . '/assets/module.json', '[]');
+
     // An unselected malformed manifest must never be inspected or activated.
     mkdir($temporary . '/unselected');
     file_put_contents($temporary . '/unselected/module.json', '{broken');
@@ -195,7 +241,7 @@ try {
         file_put_contents($directory . '/migrations/initial.php', '<?php return static function (\PDO $pdo): void { throw new \RuntimeException("Offline registration must not run DDL"); };');
         $source = '<?php namespace ' . $namespace . '; final class Module implements \\TinyCat\\Core\\Modules\\Module, \\TinyCat\\Core\\Modules\\ProvidesSchemas { public static function schemas(): array { \\TinyCat\\ModuleFixture\\Calls::$schemas["' . strtolower($owner) . '"] = (\\TinyCat\\ModuleFixture\\Calls::$schemas["' . strtolower($owner) . '"] ?? 0) + 1; return ["fixture.' . strtolower($owner) . '" => new \\TinyCat\\Core\\Modules\\ModuleSchema(1, [' . var_export($table, true) . '], static function (\\PDO $pdo): void { throw new \\RuntimeException("Offline DDL"); }, [new \\TinyCat\\Core\\Modules\\SchemaMigration(1, "fixture.' . strtolower($owner) . '.initial", dirname(__DIR__) . "/migrations/initial.php")])]; } public static function register(\\TinyCat\\Http\\Api $api): void { \\TinyCat\\ModuleFixture\\Calls::$registered[] = ' . var_export(strtolower($owner), true) . '; } }';
         file_put_contents($directory . '/src/Module.php', $source);
-        file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.' . $id, 'namespace' => $namespace . '\\', 'providers' => ['routes' => $namespace . '\\Module', 'schema' => $namespace . '\\Module'], 'resources' => ['migrations' => 'migrations']], JSON_THROW_ON_ERROR));
+        file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.' . $id, 'httpNamespace' => 'fixture-' . strtolower($owner), 'namespace' => $namespace . '\\', 'providers' => ['routes' => $namespace . '\\Module', 'schema' => $namespace . '\\Module'], 'resources' => ['migrations' => 'migrations']], JSON_THROW_ON_ERROR));
     }
     $adapter = Loader::fromSelection($temporary, [
         'fixture.beta' => TinyCat\FixtureBeta\Module::class,

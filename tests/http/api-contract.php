@@ -146,22 +146,22 @@ try {
         usleep(50_000);
     }
 
-    foreach (['/api', '/api/missing', '/api/admin/missing', '/api/status/unsupported', '/api/bots/sources/accounts-api'] as $path) {
+    foreach (['/api', '/api/missing', '/api/admin/missing', '/api/status/unsupported', '/api/social/bots/sources/accounts-api'] as $path) {
         [$status, $payload] = $request('POST', $path);
         $assert($status === 404 && $payload['code'] === 'not_found', 'Unknown API endpoints must return the same 404.');
     }
-    foreach (['/api/users', '/api/bots/accounts', '/api/bots/sources'] as $path) {
+    foreach (['/api/users', '/api/social/bots/accounts', '/api/social/bots/sources'] as $path) {
         [$status, $payload, $headers] = $request('PUT', $path);
         $assert($status === 405 && $payload['code'] === 'method_not_allowed', 'Unsupported methods must be rejected before handlers.');
         $assert(count(array_filter($headers, static fn (string $header): bool => str_starts_with($header, 'Allow: GET, HEAD, POST'))) === 1, '405 responses must include explicit allowed methods.');
     }
-    foreach (['/api/users', '/api/bots/sources', '/api/notifications', '/api/statuses'] as $path) {
-        [$status, $payload] = $request($path === '/api/statuses' ? 'POST' : 'GET', $path);
+    foreach (['/api/users', '/api/social/bots/sources', '/api/notifications', '/api/social/statuses'] as $path) {
+        [$status, $payload] = $request($path === '/api/social/statuses' ? 'POST' : 'GET', $path);
         $assert($status === 401 && $payload['code'] === 'unauthenticated', 'Protected API routes must share the authentication error.');
     }
-    [$status] = $request('GET', '/api/bots/sources', null, 'user');
+    [$status] = $request('GET', '/api/social/bots/sources', null, 'user');
     $assert($status === 403, 'A regular user cannot access bot administration.');
-    foreach (['/api/users', '/api/bots/sources', '/api/bots/accounts', '/api/scheduler/tokens', '/api/scheduler/tasks/feeds/runs'] as $path) {
+    foreach (['/api/users', '/api/social/bots/sources', '/api/social/bots/accounts', '/api/scheduler/tokens', '/api/scheduler/tasks/feeds/runs'] as $path) {
         [$status, $payload] = $request('POST', $path, [], 'admin');
         $assert($status === 403 && $payload['code'] === 'csrf_token_mismatch', 'All API mutations must use the shared CSRF guard.');
     }
@@ -249,36 +249,36 @@ try {
     $assert($status === 201 && $payload['data']['count'] === '0', 'Valid form-style numbers remain unchanged in validated resources.');
     [$status, $payload] = $request('POST', '/api/foundation/invalid-validation-definition', [], '', $csrf);
     $assert($status === 500 && $payload['code'] === 'server_error' && $payload['message'] === 'Server error.', 'A broken module validation definition is a server contract violation, including for an absent optional field.');
-    [$status, $payload] = $request('POST', '/api/bots/sources', ['_method' => []], 'admin', $csrf);
+    [$status, $payload] = $request('POST', '/api/social/bots/sources', ['_method' => []], 'admin', $csrf);
     $assert($status === 400, 'Malformed method overrides must not produce PHP diagnostics.');
-    [$status, $payload] = $request('POST', '/api/bots/sources', ['_csrf' => []], 'admin');
+    [$status, $payload] = $request('POST', '/api/social/bots/sources', ['_csrf' => []], 'admin');
     $assert($status === 403, 'Malformed CSRF tokens must not produce PHP diagnostics.');
     foreach (['0', '-1', 'invalid'] as $invalidId) {
-        [$status] = $request('DELETE', '/api/bots/accounts/' . $invalidId, ['id' => 1], 'admin', $csrf);
+        [$status] = $request('DELETE', '/api/social/bots/accounts/' . $invalidId, ['id' => 1], 'admin', $csrf);
         $assert($status === 404, 'Invalid path IDs cannot fall back to a body ID.');
     }
-    [$status, $payload] = $request('POST', '/api/profiles/1/followers/me', [], 'user', $csrf);
+    [$status, $payload] = $request('POST', '/api/social/profiles/1/followers/me', [], 'user', $csrf);
     $assert($status === 405, 'Follow state must use PUT or DELETE, never an action toggle.');
-    [$status, $payload] = $request('POST', '/api/bots/sources', '{invalid', 'admin', $csrf);
+    [$status, $payload] = $request('POST', '/api/social/bots/sources', '{invalid', 'admin', $csrf);
     $assert($status === 400 && $payload['code'] === 'bad_request', 'Malformed JSON must use the same error envelope.');
     [$status, $payload] = $request('GET', '/api/foundation/database-error', null, 'admin');
     $assert($status === 500 && $payload['message'] === 'Server error.' && !str_contains(json_encode($payload), 'SQL'), 'Unexpected database failures must remain JSON without leaking internals.');
-    [$status, $payload] = $request('POST', '/api/bots/accounts', ['username' => 'Žaneta.Novák', 'status' => 'active'], 'admin', $csrf);
+    [$status, $payload] = $request('POST', '/api/social/bots/accounts', ['username' => 'Žaneta.Novák', 'status' => 'active'], 'admin', $csrf);
     $assert($status === 201 && $payload['data']['item']['username'] === 'Žaneta.Novák', 'Bot account creation must preserve Unicode and case and return 201.');
     $assert(is_string($payload['message']) && !isset($payload['data']['message']), 'Success messages must be exposed consistently.');
 
     $editableBotId = $payload['data']['item']['id'];
-    [$status, $botManagement] = $request('GET', '/api/bots/accounts/' . $editableBotId, null, 'admin');
+    [$status, $botManagement] = $request('GET', '/api/social/bots/accounts/' . $editableBotId, null, 'admin');
     $assert($status === 200 && $botManagement['data']['item']['id'] === $editableBotId && isset($botManagement['data']['item']['active_source_count'], $botManagement['data']['item']['run_count']) && !isset($botManagement['data']['runs'], $botManagement['data']['sources'], $botManagement['data']['profile_url']), 'Bot management loads counts without legacy history, source snapshots or a public profile link.');
-    [$status] = $request('GET', '/api/bots/accounts/' . $editableBotId, null, 'user');
+    [$status] = $request('GET', '/api/social/bots/accounts/' . $editableBotId, null, 'user');
     $assert($status === 403, 'Bot edit resources remain restricted to administrators.');
-    [$status] = $request('GET', '/api/bots/accounts/2', null, 'admin');
+    [$status] = $request('GET', '/api/social/bots/accounts/2', null, 'admin');
     $assert($status === 404, 'Bot management cannot load a regular user account.');
-    [$status] = $request('GET', '/api/bots/accounts/' . $editableBotId . '/management', null, 'admin');
+    [$status] = $request('GET', '/api/social/bots/accounts/' . $editableBotId . '/management', null, 'admin');
     $assert($status === 404, 'The duplicate bot editor resource is retired.');
-    [$status] = $request('PATCH', '/api/bots/accounts/' . $editableBotId, ['status' => 'active', 'bio' => 'Updated in list'], 'admin');
+    [$status] = $request('PATCH', '/api/social/bots/accounts/' . $editableBotId, ['status' => 'active', 'bio' => 'Updated in list'], 'admin');
     $assert($status === 403, 'Bot modal writes retain shared CSRF protection.');
-    [$status, $botSaved] = $request('PATCH', '/api/bots/accounts/' . $editableBotId . '?per_page=50', ['status' => 'active', 'bio' => 'Updated in list'], 'admin', $csrf);
+    [$status, $botSaved] = $request('PATCH', '/api/social/bots/accounts/' . $editableBotId . '?per_page=50', ['status' => 'active', 'bio' => 'Updated in list'], 'admin', $csrf);
     $assert($status === 200 && $botSaved['code'] === 'bot_saved' && $botSaved['data']['item']['bio'] === 'Updated in list' && $botSaved['meta']['pagination']['per_page'] === 50, 'Saving the bot modal returns updated list data and preserves the page-size contract.');
 
     [$status] = $request('PUT', '/api/users/2/activation', ['enabled' => false], 'user', $csrf);
@@ -297,69 +297,69 @@ try {
     [$status, $activated] = $request('PUT', '/api/users/2/activation', ['enabled' => true], 'admin', $csrf);
     $assert($status === 200 && $activated['data']['item']['status'] === 'active', 'The same action reactivates an account.');
     $assert($activated['code'] === 'record_activated' && $activated['message'] !== '', 'Activation returns its own success notice.');
-    [$status] = $request('PUT', '/api/bots/accounts/' . $editableBotId . '/activation', ['enabled' => false], 'admin', $csrf);
+    [$status] = $request('PUT', '/api/social/bots/accounts/' . $editableBotId . '/activation', ['enabled' => false], 'admin', $csrf);
     $assert($status === 200, 'Bot accounts use the same explicit activation contract.');
-    [$status, $inactiveSaved] = $request('PATCH', '/api/bots/accounts/' . $editableBotId, ['bio' => 'Still inactive'], 'admin', $csrf);
+    [$status, $inactiveSaved] = $request('PATCH', '/api/social/bots/accounts/' . $editableBotId, ['bio' => 'Still inactive'], 'admin', $csrf);
     $assert($status === 200 && $inactiveSaved['data']['item']['status'] === 'ban', 'Editing a biography does not change activation.');
-    [$status, $activatedBot] = $request('PUT', '/api/bots/accounts/' . $editableBotId . '/activation', ['enabled' => true], 'admin', $csrf);
+    [$status, $activatedBot] = $request('PUT', '/api/social/bots/accounts/' . $editableBotId . '/activation', ['enabled' => true], 'admin', $csrf);
     $assert($status === 200 && $activatedBot['data']['item']['bio'] === 'Still inactive', 'Activation preserves the bot biography.');
     $assert($activatedBot['code'] === 'record_activated' && $activatedBot['params']['entity'] === '@' . $activatedBot['data']['item']['username'] && str_contains($activatedBot['message'], $activatedBot['params']['entity']), 'Bot activation names the concrete account through the shared entity parameter.');
-    foreach (['/api/users/2/activation', '/api/bots/accounts/' . $editableBotId . '/activation'] as $activationEndpoint) {
+    foreach (['/api/users/2/activation', '/api/social/bots/accounts/' . $editableBotId . '/activation'] as $activationEndpoint) {
         foreach ([['true', 'active'], ['on', 'active'], ['yes', 'active'], ['false', 'ban'], ['off', 'ban'], ['no', 'ban'], [true, 'active']] as [$enabled, $expectedState]) {
             [$status, $activation] = $request('PUT', $activationEndpoint, ['enabled' => $enabled], 'admin', $csrf);
             $assert($status === 200 && $activation['data']['item']['status'] === $expectedState, 'Account activation honors every accepted boolean spelling for ' . $activationEndpoint);
         }
     }
 
-    [$status, $sourceDefaults] = $request('GET', '/api/bots/sources/management?bot=3', null, 'admin');
+    [$status, $sourceDefaults] = $request('GET', '/api/social/bots/sources/management?bot=3', null, 'admin');
     $assert($status === 200 && $sourceDefaults['data']['item']['bot_user_id'] === 3 && $sourceDefaults['data']['item']['enabled'] && $sourceDefaults['data']['item']['post_template'] !== '', 'Source creation loads defaults for the same sectioned editor as existing sources.');
-    [$status] = $request('GET', '/api/bots/sources/management', null, 'user');
+    [$status] = $request('GET', '/api/social/bots/sources/management', null, 'user');
     $assert($status === 403, 'Source creation options remain administrator-only.');
     $source = ['bot_user_id' => 3, 'name' => 'Contract feed', 'feed_url' => 'https://93.184.216.34/feed', 'interval_minutes' => 60, 'post_template' => '{{title}}', 'enabled' => '1'];
     $assert($sourceDefaults['data']['constraints']['name']['max_bytes'] === 120 && $sourceDefaults['data']['constraints']['post_template']['max_bytes'] === 2000, 'Social source editors publish their actual byte limits.');
     foreach (['name' => str_repeat("\u{11B}", 61), 'post_template' => str_repeat("\u{11B}", 1001)] as $field => $value) {
-        [$status, $overflow] = $request('POST', '/api/bots/sources', array_replace($source, [$field => $value]), 'admin', $csrf);
+        [$status, $overflow] = $request('POST', '/api/social/bots/sources', array_replace($source, [$field => $value]), 'admin', $csrf);
         $assert($status === 422 && $overflow['error']['details']['errors'][$field][0]['code'] === 'validation_max_bytes', 'Direct Social source input cannot bypass the byte limits advertised to the editor.');
     }
-    [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);
+    [$status, $payload] = $request('POST', '/api/social/bots/sources', $source, 'admin', $csrf);
     $assert($status === 201 && $payload['data']['item']['name'] === 'Contract feed', 'Bot source creation must return the same 201 contract.');
     $sourceId = $payload['data']['id'];
     $assert(!isset($payload['data']['item']['source_type']) && !isset($payload['data']['source_types']), 'Sources expose one unified resource without a type selector.');
     $assert($payload['data']['item']['publication_interval_minutes'] === 30, 'Older API clients receive the default 30-minute publication interval.');
-    [$status, $publicationSaved] = $request('PATCH', '/api/bots/sources/' . $sourceId, $source + ['publication_interval_minutes' => 45], 'admin', $csrf);
+    [$status, $publicationSaved] = $request('PATCH', '/api/social/bots/sources/' . $sourceId, $source + ['publication_interval_minutes' => 45], 'admin', $csrf);
     $assert($status === 200 && $publicationSaved['data']['item']['publication_interval_minutes'] === 45 && $publicationSaved['data']['item']['interval_minutes'] === 60, 'Publication spacing is independent of the RSS check interval.');
-    [$status, $publicationPreserved] = $request('PATCH', '/api/bots/sources/' . $sourceId, $source, 'admin', $csrf);
+    [$status, $publicationPreserved] = $request('PATCH', '/api/social/bots/sources/' . $sourceId, $source, 'admin', $csrf);
     $assert($status === 200 && $publicationPreserved['data']['item']['publication_interval_minutes'] === 45, 'Legacy updates do not reset a configured publication interval.');
-    [$status, $invalidInterval] = $request('PATCH', '/api/bots/sources/' . $sourceId, $source + ['publication_interval_minutes' => 0], 'admin', $csrf);
+    [$status, $invalidInterval] = $request('PATCH', '/api/social/bots/sources/' . $sourceId, $source + ['publication_interval_minutes' => 0], 'admin', $csrf);
     $assert($status === 422 && isset($invalidInterval['error']['details']['errors']['publication_interval_minutes']), 'Invalid publication intervals return field validation errors.');
 
     $sourceDatabase = \tinycat_test_database($databasePath);
     $previewDocument = json_encode(['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Preview feed', 'items' => [['id' => 'preview-only', 'title' => 'Preview post', 'content_text' => 'Preview text', 'url' => '/entry', 'image' => 'https://93.184.216.34/preview-image.png']]]);
     $previewInput = ['document' => $previewDocument, 'feed_url' => 'https://93.184.216.34/feed', 'post_template' => '{{title}} {{image}}'];
-    [$status] = $request('POST', '/api/bots/sources/previews', $previewInput, 'user', $csrf);
+    [$status] = $request('POST', '/api/social/bots/sources/previews', $previewInput, 'user', $csrf);
     $assert($status === 403, 'Source previews require administrator privileges.');
-    [$status] = $request('POST', '/api/bots/sources/previews', $previewInput, 'admin');
+    [$status] = $request('POST', '/api/social/bots/sources/previews', $previewInput, 'admin');
     $assert($status === 403, 'Source previews retain CSRF protection.');
     $beforePreview = $sourceDatabase->query('SELECT COUNT(*) FROM social_posts')->fetchColumn();
-    [$status, $previewResource] = $request('POST', '/api/bots/sources/previews', $previewInput, 'admin', $csrf);
+    [$status, $previewResource] = $request('POST', '/api/social/bots/sources/previews', $previewInput, 'admin', $csrf);
     $assert($status === 201 && $previewResource['data']['format'] === 'json_feed_1_1' && $previewResource['data']['items'][0]['body'] === 'Preview post', 'Preview uses the selected template and returns plain JSON resources.');
     $assert($previewResource['data']['items'][0]['url'] === 'https://93.184.216.34/entry', 'Provided feed documents use the same base URL resolution as downloaded feeds.');
     $assert($previewResource['data']['items'][0]['image_url'] === 'https://93.184.216.34/preview-image.png', 'Image previews return the remote source rather than downloading a persistent link image.');
     $assert($sourceDatabase->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $beforePreview && (int) $sourceDatabase->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'preview-only') . "'")->fetchColumn() === 0, 'Preview never creates posts or claims import history.');
-    [$status, $privatePreview] = $request('POST', '/api/bots/sources/previews', ['feed_url' => 'http://127.0.0.1/private'], 'admin', $csrf);
+    [$status, $privatePreview] = $request('POST', '/api/social/bots/sources/previews', ['feed_url' => 'http://127.0.0.1/private'], 'admin', $csrf);
     $assert($status === 422 && isset($privatePreview['error']['details']['errors']['feed_url']), 'Unsafe preview URLs use the standard validation envelope.');
-    [$status] = $request('POST', '/api/bots/sources/previews', ['document' => '<opml><body><outline xmlUrl="https://93.184.216.34/feed"/></body></opml>'], 'admin', $csrf);
+    [$status] = $request('POST', '/api/social/bots/sources/previews', ['document' => '<opml><body><outline xmlUrl="https://93.184.216.34/feed"/></body></opml>'], 'admin', $csrf);
     $assert($status === 422, 'Subscription lists are not supported feed documents.');
-    [$status] = $request('POST', '/api/bots/sources/imports', [], 'admin', $csrf);
+    [$status] = $request('POST', '/api/social/bots/sources/imports', [], 'admin', $csrf);
     $assert($status === 404, 'No bulk subscription import endpoint is exposed.');
-    [$status] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'user', $csrf);
+    [$status] = $request('POST', '/api/social/bots/sources/' . $sourceId . '/runs', [], 'user', $csrf);
     $assert($status === 403, 'Manual source imports require administrator privileges.');
-    [$status] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'admin');
+    [$status] = $request('POST', '/api/social/bots/sources/' . $sourceId . '/runs', [], 'admin');
     $assert($status === 403, 'Manual source imports require CSRF protection.');
-    [$status, $busy] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'admin', $csrf + ['X-Test-Scheduler-Lock' => '0']);
+    [$status, $busy] = $request('POST', '/api/social/bots/sources/' . $sourceId . '/runs', [], 'admin', $csrf + ['X-Test-Scheduler-Lock' => '0']);
     $assert($status === 409 && $busy['code'] === 'scheduler_already_running', 'Manual source imports share the feeds scheduler lock.');
     $sourceDatabase->prepare('UPDATE bot_sources SET feed_url = ? WHERE id = ?')->execute(['http://127.0.0.1/blocked-feed', $sourceId]);
-    [$status, $manual] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'admin', $csrf);
+    [$status, $manual] = $request('POST', '/api/social/bots/sources/' . $sourceId . '/runs', [], 'admin', $csrf);
     $assert($status === 201 && $manual['code'] === 'bot_run_failed' && $manual['meta']['type'] === 'danger', 'Failed manual imports refresh the list with a stable failure code and danger notice.');
     $manualParent = $sourceDatabase->query("SELECT * FROM scheduler_runs WHERE task = 'feeds' ORDER BY id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
     $assert($manualParent['mode'] === 'admin' && (int) $manualParent['actor_id'] === 1 && json_decode($manualParent['options_json'], true)['source_id'] === $sourceId, 'Manual imports persist their initiator and selected source.');
@@ -371,23 +371,23 @@ try {
     $sourceDatabase->prepare('UPDATE bot_sources SET feed_url = ? WHERE id = ?')->execute([$source['feed_url'], $sourceId]);
 
     $sourceDatabase = null;
-    [$status, $payload] = $request('PATCH', '/api/bots/sources/' . $sourceId, ['enabled' => false], 'admin', $csrf);
+    [$status, $payload] = $request('PATCH', '/api/social/bots/sources/' . $sourceId, ['enabled' => false], 'admin', $csrf);
     $assert($status === 200 && !$payload['data']['item']['enabled'], 'Named action parameters must dispatch through the same API middleware.');
     $assert($payload['code'] === 'record_deactivated' && $payload['params']['entity'] === $payload['data']['item']['name'] && str_contains($payload['message'], $payload['params']['entity']), 'Source deactivation identifies the source in the flash notice.');
     $sourceEditWithoutActivation = $source;
     unset($sourceEditWithoutActivation['enabled']);
-    [$status, $pausedSourceEdited] = $request('PATCH', '/api/bots/sources/' . $sourceId, $sourceEditWithoutActivation, 'admin', $csrf);
+    [$status, $pausedSourceEdited] = $request('PATCH', '/api/social/bots/sources/' . $sourceId, $sourceEditWithoutActivation, 'admin', $csrf);
     $assert($status === 200 && !$pausedSourceEdited['data']['item']['enabled'], 'Editing a source without an activation field preserves its paused state.');
-    [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);
+    [$status, $payload] = $request('POST', '/api/social/bots/sources', $source, 'admin', $csrf);
     $assert($status === 422 && isset($payload['error']['details']['errors']['feed_url']), 'Duplicate source validation must use the shared validation envelope.');
 
-    [$status, $payload] = $request('GET', '/api/bots/sources?view=html', null, 'admin');
+    [$status, $payload] = $request('GET', '/api/social/bots/sources?view=html', null, 'admin');
     $assert($status === 200 && isset($payload['data']['items']) && !isset($payload['data']['html']), 'Legacy presentation requests still receive only JSON data.');
     [$status, $payload] = $request('GET', '/api/users?view=html', null, 'admin');
     $assert($status === 200 && isset($payload['data']['items'], $payload['meta']['pagination']) && !isset($payload['data']['html']), 'User administration must return only resources and canonical pagination even when HTML is requested.');
-    [$status, $payload] = $request('POST', '/api/bots/sources/' . $sourceId, $source + ['_method' => 'PATCH', 'id' => 1], 'admin', $csrf);
+    [$status, $payload] = $request('POST', '/api/social/bots/sources/' . $sourceId, $source + ['_method' => 'PATCH', 'id' => 1], 'admin', $csrf);
     $assert($status === 200 && $payload['data']['id'] === $sourceId, 'POST method overrides must use the same registered PATCH route.');
-    [$status] = $request('DELETE', '/api/bots/sources/' . $sourceId, ['id' => 1], 'admin', $csrf);
+    [$status] = $request('DELETE', '/api/social/bots/sources/' . $sourceId, ['id' => 1], 'admin', $csrf);
     $assert($status === 200, 'Source deletion must use the shared response contract.');
     require __DIR__ . '/cases/bot-post-cases.php';
     require __DIR__ . '/cases/bot-run-cases.php';

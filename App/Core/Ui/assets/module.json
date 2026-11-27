@@ -360,9 +360,7 @@
     "routes": [
       "/admin"
     ],
-    "entries": [
-      "App/Core/Ui/assets/dashboard-stats.js"
-    ],
+    "entries": [],
     "components": [
       "ui/dashboard-metrics"
     ],

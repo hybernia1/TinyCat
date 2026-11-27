@@ -62,7 +62,7 @@ profil. Vlastník může předat `asset_path` pro konkrétní profil stejné plo
 profil jiné plochy se odmítá. Klasifikaci cest sdílí layout a výběr manifestů.
 
 Administrativní operace nesmějí záviset na veřejných API. Správa botích příspěvků
-používá autorizované endpointy pod `/api/bots/accounts/{id}/posts/{postId}`,
+používá autorizované endpointy pod `/api/social/bots/accounts/{id}/posts/{postId}`,
 včetně návrhů editoru; sdílí přípravu zápisu a editor s veřejnou prezentací.
 Odkazy notifikací do vypnuté veřejné části vedou na schránku, přičemž původní
 událost zůstává zachována. Chybové stránky respektují plochu a oprávnění návštěvníka.

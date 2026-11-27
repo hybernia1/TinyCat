@@ -11,7 +11,7 @@ import "./form-actions.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
-  function base(id) { return "/api/statuses/" + Number(id); }
+  function base(id) { return "/api/social/statuses/" + Number(id); }
   function form(url, action, id, body, className, enctype) {
     var view = T.components.render("status/dialog-form", { action: action, id: id, body: body, form_class: className || null, enctype: enctype || null });
     var prepared = U.form(url, T.status.method(view, action), view);
@@ -26,16 +26,16 @@ import "./form-actions.js";
     },
     modal: function (url, response, id) {
       var data = response.data, item = data.item;
-      if (url.pathname === "/api/moderation/report-options") {
+      if (url.pathname === "/api/social/moderation/report-options") {
         var reportModel = Object.assign({}, data, { id: url.searchParams.get("id"), note_max_length: data.note_max_length || 1000,
           reasons: Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; })) });
-        var report = form("/api/moderation/reports", "report", reportModel.id, T.components.render("status/report-fields", reportModel), "status-modal-form");
+        var report = form("/api/social/moderation/reports", "report", reportModel.id, T.components.render("status/report-fields", reportModel), "status-modal-form");
         return U.formDialog(id, "moderation.report_submit", report);
       }
-      if (!/^\/api\/statuses\//.test(url.pathname)) { return null; }
+      if (!/^\/api\/social\/statuses\//.test(url.pathname)) { return null; }
       if (/\/embed$/.test(url.pathname)) {
         var previewUrl = new URL(data.frame_url, window.location.href);
-        var previewPath = url.pathname.replace(/^\/api\/statuses\//, "/status/");
+        var previewPath = url.pathname.replace(/^\/api\/social\/statuses\//, "/status/");
         if (previewUrl.origin !== window.location.origin || previewUrl.username || previewUrl.password || previewUrl.pathname !== previewPath || !/^\/status\/[1-9][0-9]*\/embed$/.test(previewPath) || previewUrl.search || previewUrl.hash) throw new TypeError("Invalid embed preview URL.");
         var preview = document.createElement("iframe");
         preview.src = previewUrl.href; preview.className = "status-embed-preview";

@@ -23,7 +23,7 @@ final class ContentLinks
     /** The caller already parsed and classified the link while preparing the feed. */
     public static function navigation(int $contentId, string $hash, int $commentId = 0): string
     {
-        return '/api/statuses/' . $contentId . ($commentId > 0 ? '/comments/' . $commentId : '') . '/links/' . $hash . '?navigate=1';
+        return '/api/social/statuses/' . $contentId . ($commentId > 0 ? '/comments/' . $commentId : '') . '/links/' . $hash . '?navigate=1';
     }
 
     /** @return array{url: string, original_url: string}|null */

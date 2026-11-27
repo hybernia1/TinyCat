@@ -119,7 +119,8 @@ final class Providers
                         ? $api->whenReady(static fn (): bool => \TinyCat\Database\ModuleSchemas::ready(\TinyCat\Database\Connection::get(), $owned))
                         : $api;
                     $class = self::provider($definition, 'routes', Module::class);
-                    \TinyCat\Http\Router::registerModule(static fn () => $class::register($moduleApi));
+                    if ($definition->httpNamespace !== null) { $moduleApi = $moduleApi->forModule($definition->httpNamespace, $definition->legacyReadRoutes); }
+                    \TinyCat\Http\Router::registerModule(static fn () => $class::register($moduleApi), $definition->httpNamespace, $definition->legacyReadRoutes);
                 }
             }
         });

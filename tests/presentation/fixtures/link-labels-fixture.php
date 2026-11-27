@@ -26,7 +26,7 @@ $sources = [];
 foreach ([21, 22] as $id) {
     $sources[] = ['id' => $id, 'name' => 'Same source', 'feed_url' => 'https://example.test/' . $id,
         'bot_user_id' => 2, 'bot_username' => 'Alice', 'enabled' => true, 'published_count' => 0, 'queued_count' => 0, 'interval_minutes' => 60, 'publication_interval_minutes' => 30,
-        'published_url' => '/admin/bots/2?source=' . $id . '&publication=published', 'queue_url' => '/admin/bots/queue?source=' . $id];
+        'published_url' => '/admin/social/bots/2?source=' . $id . '&publication=published', 'queue_url' => '/admin/social/bots/queue?source=' . $id];
 }
 echo json_encode(['posts' => $posts, 'html' => $html, 'sources' => $sources,
     'detail_html' => TinyCat\Core\Ui\Components::render('status/actions', ['item' => $posts[0], 'open_modal' => false]),

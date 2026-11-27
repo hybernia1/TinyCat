@@ -12,7 +12,7 @@ if (preg_match('/^tinycat_perf_[a-z0-9_]+$/D', $settings['name']) !== 1) { throw
 $db = new PDO('mysql:host=' . $settings['host'] . ';dbname=' . $settings['name'] . ';charset=utf8mb4', $settings['user'], $settings['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 if ((int) $db->query("SELECT COUNT(*) FROM social_links WHERE link_type = 'video'")->fetchColumn() !== 0) { throw new RuntimeException('This scenario requires no video matches.'); }
 $cursor = $db->query('SELECT id, published_at FROM social_posts ORDER BY published_at DESC, id DESC LIMIT 1 OFFSET 50000')->fetch(PDO::FETCH_ASSOC);
-$paths = ['/api/statuses?limit=50&media=video', '/api/search/query?q=performance&collection=content&limit=20',
+$paths = ['/api/social/statuses?limit=50&media=video', '/api/search/query?q=performance&collection=content&limit=20',
     '/api/search/query?' . http_build_query(['q' => 'performance', 'collection' => 'content', 'limit' => 20, 'cursor' => ['cursor_at' => $cursor['published_at'], 'cursor_id' => $cursor['id']]])];
 if (isset($options['search-only'])) {
     array_shift($paths);

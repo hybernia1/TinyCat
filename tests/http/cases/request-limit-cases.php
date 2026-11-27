@@ -41,12 +41,12 @@ $limitDb->exec("DELETE FROM ip_action_limits WHERE action_name IN ('search_guest
 // Changes consume a follow budget, but already satisfied requests remain idempotent.
 $limitDb->exec('DELETE FROM user_followers WHERE user_id = 1 AND follower_id = 2');
 $seedLimit('user:2', 'follow', 3600);
-[$status] = $request('PUT', '/api/profiles/1/followers/me', [], 'user', $csrf);
+[$status] = $request('PUT', '/api/social/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 429 && (int) $limitDb->query('SELECT COUNT(*) FROM user_followers WHERE user_id = 1 AND follower_id = 2')->fetchColumn() === 0, 'Exhausted follow budgets cannot change state.');
-[$status] = $request('DELETE', '/api/profiles/1/followers/me', [], 'user', $csrf);
+[$status] = $request('DELETE', '/api/social/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200, 'An already satisfied unfollow does not consume a budget.');
 $limitDb->exec('INSERT INTO user_followers (user_id, follower_id) VALUES (1, 2)');
-[$status] = $request('PUT', '/api/profiles/1/followers/me', [], 'user', $csrf);
+[$status] = $request('PUT', '/api/social/profiles/1/followers/me', [], 'user', $csrf);
 $assert($status === 200, 'An already satisfied follow does not consume a budget.');
 
 $seedLimit('user:2', 'upload', 3600);
@@ -61,7 +61,7 @@ $seedLimit('user:1', 'upload', 3600);
 [$status, $invalidUpload] = $request('POST', '/api/users/2/avatar', $multipart, 'admin', $csrf + ['Content-Type' => 'multipart/form-data; boundary=' . $boundary]);
 $assert($status === 422 && $invalidUpload['code'] === 'avatar_invalid', 'Admins bypass even exhausted upload budgets and still undergo image validation.');
 $seedLimit('user:1', 'follow', 3600);
-[$status] = $request('PUT', '/api/profiles/2/followers/me', [], 'admin', $csrf);
+[$status] = $request('PUT', '/api/social/profiles/2/followers/me', [], 'admin', $csrf);
 $assert($status === 200, 'Admins bypass exhausted follow budgets.');
 // Earlier requests may cross a fixed-window boundary; seed the bucket this request uses.
 $seedLimit('127.0.0.1', 'login', 900);

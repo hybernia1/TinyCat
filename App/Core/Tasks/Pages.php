@@ -20,7 +20,7 @@ final class Pages
             'target_id' => substr($definition['target'], 1),
             'content' => new Markup(Components::render($definition['component'], $data + ['state' => $data])),
         ]);
-        Layout::render(['title' => Localization::t($definition['title']), 'current' => $definition['path'], 'actions' => Components::render('ui/modal-trigger', ['modal' => 'scheduler-configuration', 'url' => '/api/scheduler/configuration', 'label' => Localization::t('cron.configuration'), 'icon' => 'plug', 'class' => 'btn btn-primary btn-sm'])], $content);
+        Layout::render(['title' => Localization::t($definition['title']), 'current' => $definition['path'], 'actions' => Components::render('ui/modal-trigger', ['modal' => 'scheduler-configuration', 'url' => '/api/scheduler/configuration', 'label' => Localization::t('cron.configuration'), 'icon' => 'plug', 'class' => 'btn btn-primary sm'])], $content);
     }
 
 }

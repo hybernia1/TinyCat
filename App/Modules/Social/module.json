@@ -24,5 +24,17 @@
     "legacy": false,
     "required": [],
     "artifact": "tinycat"
-  }
+  },
+  "httpNamespace": "social",
+  "legacyReadRoutes": [
+    "/admin/bots",
+    "/admin/bots/accounts",
+    "/admin/bots/list",
+    "/admin/bots/queue",
+    "/admin/bots/{id:[0-9]+}",
+    "/admin/moderation",
+    "/admin/moderation/reports",
+    "/api/statuses/{id:[0-9]+}/links/{hash:[a-f0-9]{64}}",
+    "/api/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/links/{hash:[a-f0-9]{64}}"
+  ]
 }

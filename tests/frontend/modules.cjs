@@ -184,20 +184,20 @@ for (const [tone, icon, css] of [['ok', 'check-circle', 'success'], ['critical',
 check(T.components.render('scheduler/status', { status: 'running' }).textContent === T.ui.text('cron.statuses.running'), 'Running work retains a distinct progress label instead of a success or error icon.');
 
 T.i18n.register("en", labels);
-const embedModal = T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://tinycat.test/status/42/embed", snippet: '<iframe title="example"></iframe>' } }, "status-embed-modal-42");
+const embedModal = T.status.modal(new URL("https://tinycat.test/api/social/statuses/42/embed"), { data: { frame_url: "https://tinycat.test/status/42/embed", snippet: '<iframe title="example"></iframe>' } }, "status-embed-modal-42");
 check(embedModal.getAttribute("role") === "dialog" && embedModal.querySelector("iframe").src === "https://tinycat.test/status/42/embed", "Embedding opens the standard dialog with a same-origin preview.");
 check(embedModal.querySelector("code").textContent === '<iframe title="example"></iframe>' && !embedModal.querySelector("code").querySelector("iframe") && !embedModal.querySelector("textarea"), "The embed modal exposes its snippet through the shared code block as literal text, never interpreted markup.");
-assert.throws(() => T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://evil.test/status/42/embed", snippet: "" } }, "foreign-embed"), /Invalid embed preview/);
+assert.throws(() => T.status.modal(new URL("https://tinycat.test/api/social/statuses/42/embed"), { data: { frame_url: "https://evil.test/status/42/embed", snippet: "" } }, "foreign-embed"), /Invalid embed preview/);
 for (const origin of ['https://tinycat.test', 'http://tinycat.test', 'https://www.tinycat.test', 'http://tinycat.test:8080']) {
   const previousLocation = window.location;
   window.location = new URL(origin + '/cs/');
   const snippet = '<iframe src="http://canonical.test:8081/site/status/42/embed"></iframe>';
-  const modal = T.status.modal(new URL('/api/statuses/42/embed', window.location), { data: { frame_url: '/status/42/embed', snippet } }, 'local-embed');
+  const modal = T.status.modal(new URL('/api/social/statuses/42/embed', window.location), { data: { frame_url: '/status/42/embed', snippet } }, 'local-embed');
   check(modal.querySelector('iframe').src === origin + '/status/42/embed' && modal.querySelector('code').textContent === snippet, 'Preview follows the actual browser scheme, host and port while canonical sharing markup remains literal.');
   window.location = previousLocation;
 }
 for (const frame_url of ['http://tinycat.test/status/42/embed', 'https://www.tinycat.test/status/42/embed', 'https://tinycat.test:444/status/42/embed', '//evil.test/status/42/embed', 'https://user:pass@tinycat.test/status/42/embed', '/prefix/status/42/embed', '/status/43/embed', '/status/42/embed?maxheight=1', '/status/42/embed#fragment']) {
-  assert.throws(() => T.status.modal(new URL('https://tinycat.test/api/statuses/42/embed'), { data: { frame_url, snippet: '' } }, 'invalid-embed'), /Invalid embed preview/);
+  assert.throws(() => T.status.modal(new URL('https://tinycat.test/api/social/statuses/42/embed'), { data: { frame_url, snippet: '' } }, 'invalid-embed'), /Invalid embed preview/);
 }
 
 const socialCard = T.components.render("publishing/link", { link: { url: "https://facebook.com/ExamplePage/posts/123", title: "Author", description: "Post text", provider: "facebook", provider_name: "Facebook", card_kind: "social", card_icon: "message-circle" } });
@@ -288,13 +288,13 @@ T.api.registerMessages({ example_saved: "common.save", example_invalid: "common.
 check(T.api.message({ code: "example_saved", params: {}, message: "Server fallback" }) === T.i18n.t("common.save"), "Known message codes use the client catalog.");
 check(T.api.message({ code: "unknown_event", params: {}, message: "Readable fallback" }) === "Readable fallback", "Unknown codes preserve the readable API fallback.");
 check(T.api.errors({ data: { error: { details: { errors: { name: [{ code: "example_invalid", params: {}, message: "Fallback" }] } } } } }).name[0] === T.i18n.t("common.request_failed"), "Field issue codes use the same client message mapping.");
-const countedSidebar = T.site.sidebar({ tags: [], authors: [{ id: 2, username: "Member", url: "/author/2", avatar_url: "", posts_count: 5 }] }, "/api/site/sidebar");
+const countedSidebar = T.site.sidebar({ tags: [], authors: [{ id: 2, username: "Member", url: "/author/2", avatar_url: "", posts_count: 5 }] }, "/api/social/sidebar");
 check(countedSidebar.textContent.includes(T.i18n.plural("public.active_user_posts", 5)), "A translation parameter named count is a value binding, not the count operator.");
 const canonicalFieldErrors = T.api.errors;
 const followForm = new Node("form"), followButton = new Node("button"), followAction = new Node("input");
 followForm.appendChild(followButton);
 followForm.elements = { namedItem: () => followAction };
-const followingDialog = T.socialUsers.modal(new URL('/api/profiles/2/following', window.location.href), {data:{items:[]},meta:{pagination:{next_url:''}}}, 'following-route-contract');
+const followingDialog = T.socialUsers.modal(new URL('/api/social/profiles/2/following', window.location.href), {data:{items:[]},meta:{pagination:{next_url:''}}}, 'following-route-contract');
 check(followingDialog && followingDialog.querySelector('.following-modal-grid'), 'Following resources use the canonical profile modal route');
 check(!T.socialUsers.modal(new URL('/api/users/2/following', window.location.href), {data:{}}, 'retired-following'), 'Retired following routes have no client modal alias');
 followingDialog.remove();
@@ -384,17 +384,17 @@ check(node.querySelector(".public-content-meta").getAttribute("href") === post.u
 check(T.ui.avatar(user).querySelector("use").getAttribute("href").endsWith("#user"), "Missing avatars use the same SVG user icon as server-rendered cards.");
 const modalPost = Object.assign({}, post, { capabilities: { edit: true, delete: true, report: false, interact: true }, image: { url: "/uploads/statuses/fixture.webp", alt: "Fixture" } });
 const detailData = { constraints: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--social-constraints"], {encoding:"utf8"})), item: modalPost, viewer: user, comments: [], options: { images_enabled: true } };
-const commentEditDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10?panel=comment-edit&comment_id=20"), { data: { ...detailData, comments: [{ id: 20, editable_body: unsafe, capabilities: { edit: true }, replies: [] }] } }, "comment-edit-fixture");
+const commentEditDialog = T.status.modal(new URL("https://tinycat.test/api/social/statuses/10?panel=comment-edit&comment_id=20"), { data: { ...detailData, comments: [{ id: 20, editable_body: unsafe, capabilities: { edit: true }, replies: [] }] } }, "comment-edit-fixture");
 check(commentEditDialog.querySelector(".status-modal-form") && commentEditDialog.querySelector("textarea").textContent === unsafe, "Comment editing renders a spaced form with literal editable text.");
 check(commentEditDialog.querySelector("textarea").getAttribute("aria-labelledby") === "comment-edit-fixture-label", "Comment editor has an explicit visible label.");
-const historyDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10/comments/20/revisions"), { data: { items: [{ at: "2026-01-01T12:00:00Z", changes: { body: { from: "Hello old world", to: "Hello new world" } } }] } }, "history-fixture");
+const historyDialog = T.status.modal(new URL("https://tinycat.test/api/social/statuses/10/comments/20/revisions"), { data: { items: [{ at: "2026-01-01T12:00:00Z", changes: { body: { from: "Hello old world", to: "Hello new world" } } }] } }, "history-fixture");
 check(historyDialog.querySelector("del").textContent === "old" && historyDialog.querySelector("ins").textContent === "new", "Revision history highlights changed text while retaining context.");
 check(T.ui.avatar({ ...user, avatar_url: "/avatar.webp", avatar_custom: true }).querySelector("img").getAttribute("alt") === unsafe, "Feed avatar images always have alternative text.");
-const statusDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10"), { data: detailData }, "status-layout-fixture");
+const statusDialog = T.status.modal(new URL("https://tinycat.test/api/social/statuses/10"), { data: detailData }, "status-layout-fixture");
 check(statusDialog.querySelector(".modal-backdrop") && statusDialog.querySelector(".status-post-modal-content"), "Status dialogs retain the shared backdrop and original content layout.");
 check(statusDialog.querySelector(".status-comment-input-shell") && statusDialog.querySelector(".status-comment-form").children.some(child => child.className.split(/\s+/).includes("avatar")), "The comment form retains a separate avatar column and a full-width editor shell.");
 check(statusDialog.querySelector(".status-time-button").getAttribute("data-modal-open") === null, "A status dialog does not recursively open itself from its timestamp.");
-const editDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10?panel=edit"), { data: detailData }, "status-editor-fixture");
+const editDialog = T.status.modal(new URL("https://tinycat.test/api/social/statuses/10?panel=edit"), { data: detailData }, "status-editor-fixture");
 check(editDialog.querySelector(".status-compose-main") && editDialog.querySelector('[data-status-image-input]') && editDialog.querySelector('[data-status-image-remove-input]').getAttribute("value") === "0", "Status editing preserves the composer layout, image picker and explicit removal state.");
 check(editDialog.querySelector(".modal-footer").querySelector('[type="submit"]').getAttribute("form") === editDialog.querySelector("form").id && !editDialog.querySelector(".modal-body").querySelector('[type="submit"]'), "Post editors keep the image picker in the body and save in the shared footer.");
 check(editDialog.querySelector('[name="body"]').value === post.editable_body, "Opening the status editor preserves the exact editable text.");
@@ -428,7 +428,7 @@ check(initialsAvatarDialog.querySelector('[data-avatar-upload-preview]').getAttr
 check(!initialsAvatarDialog.querySelector('[data-avatar-appearance-form]') && !initialsAvatarDialog.querySelector('[data-avatar-creator-toggle]'), "The upload dialog has no configurable avatar creator.");
 const botAccount = { id: 3, username: "FixtureBot", status: "active", bio: unsafe, avatar_url: "", source_count: 2, active_source_count: 0, run_count: 0, post_count: 4, updated_at: "2026-10-26T12:00:00Z" };
 const botAccountTable = T.components.render("bots/accounts", { items: [botAccount], filters: {}, pagination: { per_page: 25 }, navigation: { visible: false } });
-check(!botAccountTable.querySelector("tbody").querySelector("td").querySelector("a") && botAccountTable.querySelector('[data-modal-url="/api/bots/accounts/3?panel=detail"]'), "Bot account names are plain text and editing uses the same icon-modal interaction as user rows.");
+check(!botAccountTable.querySelector("tbody").querySelector("td").querySelector("a") && botAccountTable.querySelector('[data-modal-url="/api/social/bots/accounts/3?panel=detail"]'), "Bot account names are plain text and editing uses the same icon-modal interaction as user rows.");
 for (const active of [true, false]) {
   const status = active ? 'active' : 'ban', tone = active ? 'success' : 'danger';
   const cases = [
@@ -444,7 +444,7 @@ for (const active of [true, false]) {
     check(row.className.includes('table-row-inactive') === !active, 'Inactive rows keep the shared muted appearance: ' + component);
   }
 }
-const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-account-edit-fixture");
+const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/social/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-account-edit-fixture");
 const botTitle = botAccountDialog.querySelector('[id="bot-account-edit-fixture-title"]');
 check(!botAccountDialog.querySelector('[data-bot-summary]') && !botAccountDialog.querySelector('[data-bot-stat]'), "Bot account editors contain no redundant statistic block.");
 check(botAccountDialog.querySelector('[data-tab-panel="avatar"]').querySelector('[data-modal-url="/api/users/3/avatar"]') && !botAccountDialog.querySelector('form').querySelector('[data-modal-url="/api/users/3/avatar"]'), "Bot avatars use the shared account control in a separate avatar tab.");
@@ -561,19 +561,19 @@ const sourceRoot = new Node("div");
 T.bots.sources(sourceRoot, { bots: [user], items: [{ id: 7, bot_user_id: 2, bot_username: unsafe, name: unsafe, feed_url: "https://example.test/feed", enabled: true, interval_minutes: 60, last_error: unsafe }] });
 check(sourceRoot.textContent.includes(unsafe) && sourceRoot.querySelectorAll("img").length === 0, "Bot source values remain literal text during AJAX rendering.");
 const sourceActions = sourceRoot.querySelectorAll("form");
-check(sourceActions.some(form => form.getAttribute("action") === "/api/bots/sources/7" && form.dataset.apiMethod === "PATCH" && form.querySelector('[name="enabled"]').getAttribute("value") === "0"), "Source pause requests an explicit disabled state at the resource URL.");
-check(sourceActions.some(form => form.getAttribute("action") === "/api/bots/sources/7/runs" && form.dataset.apiMethod === "POST"), "Manual feed imports create a run resource.");
-node = T.bots.modal(new URL('https://tinycat.test/api/bots/sources/7/management'), { data: { item: { id: 7, bot_user_id: 2, name: unsafe, post_template: unsafe }, bots: [user], bot_names: { [user.id]: user.username } } }, 'source-template-fixture').querySelector('form');
+check(sourceActions.some(form => form.getAttribute("action") === "/api/social/bots/sources/7" && form.dataset.apiMethod === "PATCH" && form.querySelector('[name="enabled"]').getAttribute("value") === "0"), "Source pause requests an explicit disabled state at the resource URL.");
+check(sourceActions.some(form => form.getAttribute("action") === "/api/social/bots/sources/7/runs" && form.dataset.apiMethod === "POST"), "Manual feed imports create a run resource.");
+node = T.bots.modal(new URL('https://tinycat.test/api/social/bots/sources/7/management'), { data: { item: { id: 7, bot_user_id: 2, name: unsafe, post_template: unsafe }, bots: [user], bot_names: { [user.id]: user.username } } }, 'source-template-fixture').querySelector('form');
 check(node.dataset.apiMethod === "PATCH" && node.querySelector('[name="post_template"]').value === unsafe, "Source editing uses a local form and preserves the template as text.");
-const sourceEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/7/management"), { data: { item: { id: 7, bot_user_id: 2, name: "Fresh source", feed_url: "https://example.test/feed", post_template: "{{title}}", enabled: true }, bots: [user], bot_names: { [user.id]: user.username } } }, "source-editor-test");
-check(T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/2/management"), { data: { item: user } }, "bot-editor-test") === null, "The duplicate bot editor is retired.");
+const sourceEditor = T.bots.modal(new URL("https://tinycat.test/api/social/bots/sources/7/management"), { data: { item: { id: 7, bot_user_id: 2, name: "Fresh source", feed_url: "https://example.test/feed", post_template: "{{title}}", enabled: true }, bots: [user], bot_names: { [user.id]: user.username } } }, "source-editor-test");
+check(T.bots.modal(new URL("https://tinycat.test/api/social/bots/accounts/2/management"), { data: { item: user } }, "bot-editor-test") === null, "The duplicate bot editor is retired.");
 for (const editor of [createDialog, sourceEditor, botAccountDialog]) {
   check(editor.dataset.modalKind === "editor" && editor.dataset.modalSize === "workspace", "User and bot editors share the responsive administration frame.");
   check(editor.querySelector('.modal-tabs').parent === editor.querySelector('.modal-panel') && !editor.querySelector('.modal-header').querySelector('.tabs') && !editor.querySelector('.modal-body').querySelector('.tabs') && editor.querySelector('[data-tabs]') === editor.querySelector('.modal-panel'), 'Tabbed editors keep navigation in a separate row between header and body and their fields in the body.');
   check(editor.querySelector('.modal-panel').children.map(child => child.className).join('|') === 'modal-header|modal-tabs|modal-body|modal-footer', 'Header, navigation, scrolling body and footer occupy four independent rows.');
 }
-const sourceCreateEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/management"), { data: { item: { enabled: true, post_template: '{{title}}', bot_user_id: 2 }, bots: [user], bot_names: { [user.id]: user.username } } }, "source-create-test");
-const reportEditor = T.status.modal(new URL('https://tinycat.test/api/moderation/report-options?id=10'), { data: { reasons: ['spam'] } }, 'report-contract-fixture');
+const sourceCreateEditor = T.bots.modal(new URL("https://tinycat.test/api/social/bots/sources/management"), { data: { item: { enabled: true, post_template: '{{title}}', bot_user_id: 2 }, bots: [user], bot_names: { [user.id]: user.username } } }, "source-create-test");
+const reportEditor = T.status.modal(new URL('https://tinycat.test/api/social/moderation/report-options?id=10'), { data: { reasons: ['spam'] } }, 'report-contract-fixture');
 const authEditor = T.accounts.modal(new URL('https://tinycat.test/api/users/authentication'), { data: { mode: 'login', registration_enabled: true, captcha: { enabled: false }, options: {}, old: {} } }, 'auth-contract-fixture');
 for (const dialog of [commentEditDialog, editDialog, profileDialog, avatarDialog, createDialog, sourceEditor, sourceCreateEditor, botAccountDialog, reportEditor, authEditor]) {
   check(dialog.dataset.modalKind === 'editor', 'Every editable surface opts into the common mobile and keyboard contract.');
@@ -605,28 +605,28 @@ const reportFilter = document.getElementById('moderation-filter-modal');
 check(reportFilter.querySelector('[name="status"]').value === 'open' && reportFilter.querySelector('[name="reason"]').value === 'spam' && reportFilter.querySelector('[name="q"]').value === 'review search', 'Declared moderation filters retain status, reason and search state without initializing a report dialog.');
 
 check(disposedListViews.includes(oldReportView) && !disposedListViews.includes(reportRoot), "Moderation replacement uses child-scoped lifecycle cleanup.");
-check(reportRoot.querySelector('[data-modal-url]').dataset.modalUrl === "/api/moderation/reports/12" && reportRoot.querySelectorAll("form").length === 0, "Moderation rows open a review detail before exposing decisions.");
+check(reportRoot.querySelector('[data-modal-url]').dataset.modalUrl === "/api/social/moderation/reports/12" && reportRoot.querySelectorAll("form").length === 0, "Moderation rows open a review detail before exposing decisions.");
 const moderationData = { content: { id: 9, author_name: unsafe, body: unsafe, image_url: "", status: "published" }, reports: [{ id: 12, status: "open", reason: "spam", reporter_name: unsafe, note: unsafe, created_at: "2026-01-01", reviewed_at: null }] };
 moderationData.preview = { item: { ...post, capabilities: { edit:false, delete:false, report:false, interact:false } }, comments: [{ id:81, content_id:10, author:user, created_at:"2026-01-01", segments:[{type:"text",text:unsafe}], capabilities:{edit:false,delete:false,interact:false}, likes_count:2, replies:[{id:82,content_id:10,parent_id:81,author:user,segments:[{type:"text",text:"Reply evidence"}],capabilities:{edit:false,delete:false,interact:false},replies:[]}] }] };
-const moderationDialog = T.moderation.modal(new URL("https://tinycat.test/api/moderation/reports/12"), { data: moderationData }, "moderation-detail-test");
+const moderationDialog = T.moderation.modal(new URL("https://tinycat.test/api/social/moderation/reports/12"), { data: moderationData }, "moderation-detail-test");
 check(moderationDialog.querySelectorAll('[role="tab"]').length === 2, "Report details use the shared accessible tabs.");
 check(moderationDialog.textContent.includes(unsafe) && moderationDialog.querySelectorAll("script").length === 0, "Post previews and report notes render untrusted content as text.");
 check(moderationDialog.querySelectorAll("form").length === 2 && moderationDialog.querySelectorAll("form").every(form => form.dataset.apiMethod === "PATCH" && form.dataset.modalCloseOnSuccess === "true"), "Review decisions use the shared mutation lifecycle and close after success.");
 check(moderationDialog.querySelectorAll("table").length === 1 && moderationDialog.querySelectorAll("tbody").length === 1, "Report history uses a standard native table.");
-check(moderationDialog.querySelector('[data-modal-url]').dataset.modalUrl === "/api/moderation/reports/12?panel=report", "Each report has the standard eye preview trigger.");
+check(moderationDialog.querySelector('[data-modal-url]').dataset.modalUrl === "/api/social/moderation/reports/12?panel=report", "Each report has the standard eye preview trigger.");
 check(moderationDialog.querySelectorAll(".status-card").length === 1 && moderationDialog.querySelectorAll(".status-comment").length === 2, "Moderation previews reuse the frontend card and nested comment renderers.");
 check(moderationDialog.querySelectorAll(".status-comment-form").length === 0 && moderationDialog.querySelectorAll('[data-modal-open="auth-modal"]').length === 0, "Evidence previews show the thread without comment editors or login prompts.");
-const reportPreview = T.moderation.modal(new URL("https://tinycat.test/api/moderation/reports/12?panel=report"), {data:moderationData}, "report-preview-test");
+const reportPreview = T.moderation.modal(new URL("https://tinycat.test/api/social/moderation/reports/12?panel=report"), {data:moderationData}, "report-preview-test");
 check(reportPreview.textContent.includes(unsafe) && reportPreview.querySelectorAll("script").length === 0, "The eye preview exposes the full report note as literal text.");
 check(moderationDialog.querySelector(".modal-editor-actions") && moderationDialog.querySelector('[data-modal-close]'), "Moderation decisions use the shared editor footer with cancellation.");
 const emptyHistory = T.components.render("moderation/history", {reports:[]});
 check(emptyHistory.querySelectorAll("table").length === 0 && emptyHistory.querySelector(".empty-state"), "Empty report history uses the shared empty state without a redundant table.");
 moderationData.reports[0].status = "resolved";
 moderationData.content.status = "hidden";
-const hiddenReview = T.moderation.modal(new URL("https://tinycat.test/api/moderation/reports/12"), {data:moderationData}, "hidden-review-test");
-check(hiddenReview.querySelectorAll("form").length === 1 && hiddenReview.querySelector("form").getAttribute("action").startsWith("/api/moderation/posts/9/publication") && hiddenReview.querySelector("form").dataset.apiMethod === "POST", "Hidden content has one explicit administrative publication action instead of an edit lock.");
+const hiddenReview = T.moderation.modal(new URL("https://tinycat.test/api/social/moderation/reports/12"), {data:moderationData}, "hidden-review-test");
+check(hiddenReview.querySelectorAll("form").length === 1 && hiddenReview.querySelector("form").getAttribute("action").startsWith("/api/social/moderation/posts/9/publication") && hiddenReview.querySelector("form").dataset.apiMethod === "POST", "Hidden content has one explicit administrative publication action instead of an edit lock.");
 moderationData.content.status = "published";
-const reviewedDialog = T.moderation.modal(new URL("https://tinycat.test/api/moderation/reports/12"), { data: moderationData }, "moderation-reviewed-test");
+const reviewedDialog = T.moderation.modal(new URL("https://tinycat.test/api/social/moderation/reports/12"), { data: moderationData }, "moderation-reviewed-test");
 check(reviewedDialog.querySelectorAll("form").length === 0, "Reviewed reports preserve their preview without showing stale decisions.");
 check(reviewedDialog.dataset.modalKind === "content" && !reviewedDialog.querySelector(".modal-footer"), "Reviewed evidence remains an ordinary read-only dialog without an editor footer.");
 check(reportRoot.querySelectorAll("img").length === 0 && reportRoot.textContent.includes(unsafe), "Report excerpts never become markup.");
@@ -679,13 +679,13 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
     check(schedulerRoot.querySelectorAll("select").find(field => field.getAttribute("name") === "per_page").value === "50", "History restoration uses metadata instead of stale embedded pagination.");
     const schedulerFilters = document.getElementById("scheduler-filter-modal");
     check(schedulerFilters.querySelectorAll("select").find(field => field.getAttribute("name") === "status").value === "failed", "The filter modal stays synchronized after AJAX navigation.");
-    window.location = new URL("https://tinycat.test/admin/bots/accounts?per_page=50&page=2");
+    window.location = new URL("https://tinycat.test/admin/social/bots/accounts?per_page=50&page=2");
     const botAccountsPage = new Node("div");
     document.querySelector = selector => selector === "#bot-accounts-list" ? botAccountsPage : schedulerQuery(selector);
     let restoredBotUrl = "";
     T.api.request = async url => { restoredBotUrl = url; return { data: { items: [], filters: {}, navigation: { visible: false } }, meta: { pagination: { page: 2, per_page: 50 } } }; };
     await T.navigation.restore();
-    check(restoredBotUrl === "/api/bots/accounts?per_page=50&page=2" && botAccountsPage.querySelectorAll("select").find(field => field.getAttribute("name") === "per_page").value === "50", "Bot accounts restore their page and page size through browser history like other admin lists.");
+    check(restoredBotUrl === "/api/social/bots/accounts?per_page=50&page=2" && botAccountsPage.querySelectorAll("select").find(field => field.getAttribute("name") === "per_page").value === "50", "Bot accounts restore their page and page size through browser history like other admin lists.");
   } finally {
     window.location = schedulerLocation; document.querySelector = schedulerQuery; T.api.request = schedulerRequest; T.lifecycle.hydrate = schedulerHydrate;
   }
@@ -706,7 +706,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.lifecycle.start();
   async function submitStatus(event) { for (const callback of handlers.submit) { await callback(event); } }
   const statusForm = new Node("form");
-  statusForm.setAttribute("action", "/api/statuses/10/likes/me"); statusForm.setAttribute("method", "POST");
+  statusForm.setAttribute("action", "/api/social/statuses/10/likes/me"); statusForm.setAttribute("method", "POST");
   statusForm.fields = [{ name: "action", value: "react", disabled: false }, { name: "body", value: "Retained draft", disabled: false }];
   statusForm.querySelectorAll = selector => selector === "button, input, select, textarea" ? statusForm.fields : [];
   statusForm.setAttribute("data-status-form", "");
@@ -777,13 +777,13 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.dialog.close = savedPartClose;
   const queueRoot = new Node("div"); queueRoot.id = "bot-queue-list";
   T.api.csrfToken = () => "queue-test-csrf";
-  const queueModel = { items: [{ id: 41, bot_id: 7, username: "QueueBot", status: "active", bot_url: "/admin/bots/7", excerpt: "Waiting post", published_at: "2099-01-01T12:00:00+00:00", can_publish: true, publish_url: "/api/bots/queue/41/publication?bot=7" }],
+  const queueModel = { items: [{ id: 41, bot_id: 7, username: "QueueBot", status: "active", bot_url: "/admin/social/bots/7", excerpt: "Waiting post", published_at: "2099-01-01T12:00:00+00:00", can_publish: true, publish_url: "/api/social/bots/queue/41/publication?bot=7" }],
     filters: { bot: "7", q: "Waiting", status: "active", source: "12" }, bots: { "": "All", "7": "QueueBot" }, sources: { "": "All feeds", "12": "RSS fixture" }, statuses: ["active", "waiting", "ban"], sorting: {}, navigation: { visible: false } };
-  queueModel.items[0].edit_url = "/api/bots/accounts/7/posts/41/management?panel=edit";
-  queueModel.items[0].source = { id: 12, name: "RSS fixture", url: "/admin/bots/7?source=12" };
+  queueModel.items[0].edit_url = "/api/social/bots/accounts/7/posts/41/management?panel=edit";
+  queueModel.items[0].source = { id: 12, name: "RSS fixture", url: "/admin/social/bots/7?source=12" };
   T.bots.queue(queueRoot, { data: queueModel, meta: { pagination: { page: 1, per_page: 10 } } });
   T.modules.hydrate(queueRoot);
-  check(queueRoot.querySelector('[data-modal-url="/api/bots/accounts/7/posts/41/management?panel=edit"]'), "Queue rows expose the same editor as bot detail posts.");
+  check(queueRoot.querySelector('[data-modal-url="/api/social/bots/accounts/7/posts/41/management?panel=edit"]'), "Queue rows expose the same editor as bot detail posts.");
   const queuePublish = queueRoot.querySelectorAll("form").find(form => (form.getAttribute("action") || "").includes("/publication"));
   check(queuePublish && queuePublish.dataset.ajaxTarget === "#bot-queue-list" && queuePublish.querySelectorAll("input").some(field => field.getAttribute("name") === "_csrf"), "Queued posts publish through the shared CSRF-protected AJAX form.");
   const queueFilter = document.getElementById("bot-queue-filter-modal");
@@ -793,14 +793,14 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   check(queueRoot.textContent.includes(T.i18n.t("common.no_records")) && !queueRoot.textContent.includes("Waiting post"), "Publication replaces the queue and removes the published row.");
   const unknownSource = T.components.render("bots/post-source", { source: null });
   check(unknownSource.textContent.includes(T.i18n.t("bots.unknown_source")), "Legacy posts show an explicit unknown source.");
-  const sourceCounts = T.components.render("bots/sources", { items: [{ id: 12, bot_user_id: 7, name: "RSS fixture", bot_username: "QueueBot", interval_minutes: 60, enabled: true, published_count: 120, queued_count: 70, published_url: "/admin/bots/7?source=12&publication=published", queue_url: "/admin/bots/queue?source=12" }], bots: [], sorting: {}, state: {} });
-  const publishedCount = sourceCounts.querySelectorAll("a").find(link => link.getAttribute("href") === "/admin/bots/7?source=12&publication=published");
-  const queuedCount = sourceCounts.querySelectorAll("a").find(link => link.getAttribute("href") === "/admin/bots/queue?source=12");
+  const sourceCounts = T.components.render("bots/sources", { items: [{ id: 12, bot_user_id: 7, name: "RSS fixture", bot_username: "QueueBot", interval_minutes: 60, enabled: true, published_count: 120, queued_count: 70, published_url: "/admin/social/bots/7?source=12&publication=published", queue_url: "/admin/social/bots/queue?source=12" }], bots: [], sorting: {}, state: {} });
+  const publishedCount = sourceCounts.querySelectorAll("a").find(link => link.getAttribute("href") === "/admin/social/bots/7?source=12&publication=published");
+  const queuedCount = sourceCounts.querySelectorAll("a").find(link => link.getAttribute("href") === "/admin/social/bots/queue?source=12");
   check(publishedCount && publishedCount.textContent.endsWith(": 120") && queuedCount && queuedCount.textContent.endsWith(": 70"), "Source counts retain accessible context and link directly to the corresponding feed queue.");
   const savedRequest = T.api.request, savedQuery = document.querySelector, savedHydrate = T.lifecycle.hydrate;
   const detailEvents = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
-  const workspace = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-detail-modal");
+  const workspace = T.bots.modal(new URL("https://tinycat.test/api/social/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-detail-modal");
   Node.prototype.addEventListener = detailEvents;
   workspace.isConnected = true;
   const workspaceTabs = workspace.querySelector('[data-tabs]');
@@ -813,20 +813,20 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const parentQuery = new Node('input'); parentQuery.name = 'q'; parentQuery.value = 'parent search'; parentFilter.appendChild(parentQuery); document.body.appendChild(parentFilter);
   check(workspaceTabs.querySelectorAll('[data-tab]').length === 5 && !workspace.querySelector('.modal-footer').hidden, "The bot workspace starts on its editable account tab with one footer save and a separate avatar tab.");
   const detailDraft = workspace.querySelector('textarea'); detailDraft.value = 'Unsaved account draft';
-  const sourceNavigation = { visible: true, from: 1, to: 10, total: 11, previous: null, next: { url: '/api/bots/sources?bot=3&page=2', history_url: false }, pages: [{ page: 1, current: true }, { page: 2, current: false, url: '/api/bots/sources?bot=3&page=2', history_url: false }] };
+  const sourceNavigation = { visible: true, from: 1, to: 10, total: 11, previous: null, next: { url: '/api/social/bots/sources?bot=3&page=2', history_url: false }, pages: [{ page: 1, current: true }, { page: 2, current: false, url: '/api/social/bots/sources?bot=3&page=2', history_url: false }] };
   const workspaceCalls = [];
   T.api.request = async url => {
     workspaceCalls.push(url);
-    if (url.startsWith('/api/bots/accounts/3/runs')) {
-      return { data: { runs: [], filters: { q: '', status: '', source: '' }, sources: {}, sorting: {}, navigation: { visible: false }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', clear_url: '/api/bots/accounts/3/runs', url }, meta: { pagination: { page: 1, per_page: 25 } } };
+    if (url.startsWith('/api/social/bots/accounts/3/runs')) {
+      return { data: { runs: [], filters: { q: '', status: '', source: '' }, sources: {}, sorting: {}, navigation: { visible: false }, api_url: '/api/social/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', clear_url: '/api/social/bots/accounts/3/runs', url }, meta: { pagination: { page: 1, per_page: 25 } } };
     }
-    return url.startsWith('/api/bots/sources')
+    return url.startsWith('/api/social/bots/sources')
       ? { data: { items: [], bots: [botAccount], filters: { q: '', bot: '3' }, sorting: {}, navigation: sourceNavigation }, meta: { pagination: { page: 1, per_page: 25 } } }
-      : { data: { items: [], total_count: 4, filters: { q: '', scope: 'modal' }, sources: {}, sorting: {}, navigation: { visible: false }, api_url: '/api/bots/accounts/3/posts', history_url: false, list_target: '#bot-detail-posts-list', filter_modal: 'bot-detail-posts-filter-modal', clear_url: '/api/bots/accounts/3/posts?scope=modal', url: '/api/bots/accounts/3/posts?scope=modal' }, meta: { pagination: { page: 1, per_page: 25 } } };
+      : { data: { items: [], total_count: 4, filters: { q: '', scope: 'modal' }, sources: {}, sorting: {}, navigation: { visible: false }, api_url: '/api/social/bots/accounts/3/posts', history_url: false, list_target: '#bot-detail-posts-list', filter_modal: 'bot-detail-posts-filter-modal', clear_url: '/api/social/bots/accounts/3/posts?scope=modal', url: '/api/social/bots/accounts/3/posts?scope=modal' }, meta: { pagination: { page: 1, per_page: 25 } } };
   };
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'sources' } });
   await new Promise(resolve => setImmediate(resolve));
-  check(workspaceCalls[0] === '/api/bots/sources?bot=3' && detailSources.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-sources-list', "Source tabs load and submit to a dedicated list target.");
+  check(workspaceCalls[0] === '/api/social/bots/sources?bot=3' && detailSources.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-sources-list', "Source tabs load and submit to a dedicated list target.");
   check(parentQuery.value === 'parent search' && !detailSources.querySelector('.admin-search-form').dataset.history, "Workspace filters do not modify the parent list or browser history.");
   T.modules.hydrate(detailSources);
   check(!detailSources.querySelector('[data-admin-list]') && parentQuery.value === 'parent search', 'A scoped source workspace cannot register or replace the parent list filter.');
@@ -836,13 +836,13 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   check(sourcePageLink.dataset.ajaxTarget === '#bot-detail-sources-list' && !sourcePageLink.dataset.history, 'Moving pagination preserves its AJAX list target and disables page history.');
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'posts' } });
   await new Promise(resolve => setImmediate(resolve));
-  check(workspaceCalls[1] === '/api/bots/accounts/3/posts?scope=modal' && detailPosts.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-posts-list', "Posts are loaded lazily with independent modal scope.");
+  check(workspaceCalls[1] === '/api/social/bots/accounts/3/posts?scope=modal' && detailPosts.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-posts-list', "Posts are loaded lazily with independent modal scope.");
   check(detailDraft.value === 'Unsaved account draft' && workspace.querySelector('.modal-footer').hidden, "Changing tabs preserves account drafts and hides irrelevant save actions.");
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'history' } });
   await new Promise(resolve => setImmediate(resolve));
-  check(workspaceCalls[2] === '/api/bots/accounts/3/runs' && detailRuns.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-runs-list' && document.getElementById('bot-detail-runs-filter-modal'), 'History loads lazily with shared search and a dedicated filter dialog.');
+  check(workspaceCalls[2] === '/api/social/bots/accounts/3/runs' && detailRuns.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-runs-list' && document.getElementById('bot-detail-runs-filter-modal'), 'History loads lazily with shared search and a dedicated filter dialog.');
   const runSearch = new Node('form'); runSearch.dataset.apiMethod = 'GET';
-  const changedHistoryRoots = T.botDetail.result(runSearch, { data: { runs: [], filters: { q: 'failure', status: 'error' }, sources: {}, navigation: { visible: true, from: 11, to: 20, total: 20, previous: { url: '/api/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, next: null, pages: [{ page: 1, current: false, url: '/api/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, { page: 2, current: true }] }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', url: '/api/bots/accounts/3/runs?q=failure&status=error&page=2' }, meta: { pagination: { page: 2, per_page: 10 } } }, detailRuns);
+  const changedHistoryRoots = T.botDetail.result(runSearch, { data: { runs: [], filters: { q: 'failure', status: 'error' }, sources: {}, navigation: { visible: true, from: 11, to: 20, total: 20, previous: { url: '/api/social/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, next: null, pages: [{ page: 1, current: false, url: '/api/social/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, { page: 2, current: true }] }, api_url: '/api/social/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', url: '/api/social/bots/accounts/3/runs?q=failure&status=error&page=2' }, meta: { pagination: { page: 2, per_page: 10 } } }, detailRuns);
   check(changedHistoryRoots.length === 1 && changedHistoryRoots[0] === detailRuns, "Direct workspace GET results report their real changed root for one hydration pass.");
   const historyPager = workspaceFooter.querySelector('.pagination');
   check(historyPager && historyPager !== sourcePager && !detailRuns.querySelector('.pagination') && historyPager.querySelector('a').dataset.ajaxTarget === '#bot-detail-runs-list', 'History filters replace footer pagination without leaving a duplicate in the table body.');
@@ -853,12 +853,12 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'sources' } });
   check(workspaceFooter.querySelector('.pagination') === sourcePager, 'Source pagination survives history filtering without acquiring its state.');
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'posts' } });
-  const postResponse = { data: { items: [], total_count: 11, filters: { q: 'post draft', scope: 'modal' }, sources: {}, sorting: {}, navigation: { ...sourceNavigation, next: { url: '/api/bots/accounts/3/posts?q=post+draft&scope=modal&page=2', history_url: false }, pages: [] }, api_url: '/api/bots/accounts/3/posts', history_url: false, list_target: '#bot-detail-posts-list', filter_modal: 'bot-detail-posts-filter-modal', clear_url: '/api/bots/accounts/3/posts', url: '/api/bots/accounts/3/posts?q=post+draft&scope=modal&page=1' }, meta: { pagination: { page: 1, per_page: 10 } } };
+  const postResponse = { data: { items: [], total_count: 11, filters: { q: 'post draft', scope: 'modal' }, sources: {}, sorting: {}, navigation: { ...sourceNavigation, next: { url: '/api/social/bots/accounts/3/posts?q=post+draft&scope=modal&page=2', history_url: false }, pages: [] }, api_url: '/api/social/bots/accounts/3/posts', history_url: false, list_target: '#bot-detail-posts-list', filter_modal: 'bot-detail-posts-filter-modal', clear_url: '/api/social/bots/accounts/3/posts', url: '/api/social/bots/accounts/3/posts?q=post+draft&scope=modal&page=1' }, meta: { pagination: { page: 1, per_page: 10 } } };
   T.bots.posts(detailPosts, postResponse);
   const postPager = workspaceFooter.querySelector('.pagination'), nextPostPage = postPager.querySelector('a');
   nextPostPage.closest = selector => selector === '.pagination' ? postPager : null;
   workspace.querySelector('.modal-body').scrollTop = 400;
-  T.bots.result(nextPostPage, { ...postResponse, data: { ...postResponse.data, navigation: { visible: false }, url: '/api/bots/accounts/3/posts?q=post+draft&scope=modal&page=2' } }, detailPosts);
+  T.bots.result(nextPostPage, { ...postResponse, data: { ...postResponse.data, navigation: { visible: false }, url: '/api/social/bots/accounts/3/posts?q=post+draft&scope=modal&page=2' } }, detailPosts);
   check(workspaceFooter.hidden && !detailPosts.querySelector('.pagination') && workspace.querySelector('.modal-body').scrollTop === 0, 'A page response refreshes the active footer, hides a single-page result and reveals the start of the new rows.');
 
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'account' } });
@@ -886,13 +886,13 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   document.querySelector = selector => selector === '#bot-accounts-list' ? backgroundList : null;
   T.api.request = url => { backgroundReads.push(url); return new Promise(() => {}); };
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
-  const readOnlyWorkspace = T.bots.modal(new URL('https://tinycat.test/api/bots/accounts/3?panel=detail'), {data:{item:botAccount}}, 'read-only-workspace');
+  const readOnlyWorkspace = T.bots.modal(new URL('https://tinycat.test/api/social/bots/accounts/3?panel=detail'), {data:{item:botAccount}}, 'read-only-workspace');
   readOnlyWorkspace.listeners['tinycat:modal-close'](); readOnlyWorkspace.remove();
   check(backgroundReads.length === 0, 'Closing a read-only workspace preserves the background list DOM and its focused opener.');
-  const editedWorkspace = T.bots.modal(new URL('https://tinycat.test/api/bots/accounts/3?panel=detail'), {data:{item:botAccount}}, 'edited-workspace');
+  const editedWorkspace = T.bots.modal(new URL('https://tinycat.test/api/social/bots/accounts/3?panel=detail'), {data:{item:botAccount}}, 'edited-workspace');
   editedWorkspace.listeners['tinycat:success']({target:sourceChange});
   editedWorkspace.listeners['tinycat:modal-close'](); editedWorkspace.remove();
-  check(backgroundReads.length === 1 && backgroundReads[0] === '/api/bots/accounts' + window.location.search, 'Closing a changed workspace still refreshes the filtered background list.');
+  check(backgroundReads.length === 1 && backgroundReads[0] === '/api/social/bots/accounts' + window.location.search, 'Closing a changed workspace still refreshes the filtered background list.');
   Node.prototype.addEventListener = detailEvents;
   T.api.request = savedRequest; document.querySelector = savedQuery; T.lifecycle.hydrate = savedHydrate;
   check(!T.settings.hydrate && !document.getElementById('modal-settings-editor'), 'Settings do not create a modal during initial hydration.');
@@ -949,14 +949,14 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
   check(!document.getElementById('global-search-captcha-modal'), 'Unsafe challenge URLs never create a verification form');
   searchInput.value = 'valid-captcha';
-  T.api.request = async () => { const error = new Error('Verify search'); error.data = { code: 'captcha_required', message: unsafe, error: { details: { verify_url: '/api/search/challenges', captcha: { enabled: true } } } }; throw error; };
+  T.api.request = async () => { const error = new Error('Verify search'); error.data = { code: 'captcha_required', message: unsafe, error: { details: { verify_url: '/api/social/search/challenges', captcha: { enabled: true } } } }; throw error; };
   T.search.hydrate({querySelectorAll: () => [searchRoot]});
   searchInput.listeners.focus();
   await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
   const searchChallenge = document.getElementById('global-search-captcha-modal');
   check(searchChallenge && searchChallenge.dataset.modalKind === 'editor' && searchChallenge.dataset.modalSize === 'compact', 'A real search challenge opens through the shared compact editor.');
   check(searchChallenge.querySelector('.text-muted').textContent === unsafe && !searchChallenge.querySelector('img'), 'Untrusted search error messages remain literal text in the challenge dialog.');
-  check(searchChallenge.querySelector('form').action === '/api/search/challenges', 'Search verification uses the owning source challenge endpoint.');
+  check(searchChallenge.querySelector('form').action === '/api/social/search/challenges', 'Search verification uses the owning source challenge endpoint.');
   check(searchChallenge.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === searchChallenge.querySelector('form').id && !searchChallenge.querySelector('.modal-body').querySelector('[type="submit"]'), 'Search verification uses the same associated footer action as other forms.');
   T.dialog.close(searchChallenge);
   T.api.request = savedCaptchaRequest; T.ui.captcha = savedCaptcha; Node.prototype.addEventListener = savedCaptchaListener;

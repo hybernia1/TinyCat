@@ -43,6 +43,24 @@
       check(decoration.maskImage!=='none' && toast.children.length===2 && toast.querySelector('.toast-body').textContent==='Readable notice', 'Toasts share CSS severity symbols without a decoration node.');
       toast.querySelector('.toast-close').click();
     }
+    for (const density of ['regular','compact']) {
+      document.documentElement.dataset.uiDensity=density;
+      let normal=null;
+      for (const scale of [1,0.75,1.25,1.5,2]) {
+        document.documentElement.style.setProperty('--ui-scale',scale);
+        const host=document.createElement('div');
+        for (const size of ['', 'sm', 'xl', 'unknown']) host.append(T.components.render('ui/avatar',{user:{username:'Fallback'},size}));
+        const button=document.createElement('button');button.className='btn sm btn-icon';button.type='button';button.textContent='+';host.append(button);document.body.append(host);
+        const avatars=[...host.querySelectorAll('.avatar')].map(node=>node.getBoundingClientRect().width), box=button.getBoundingClientRect();
+        check(avatars[1]<avatars[0] && avatars[0]<avatars[2] && avatars[3]===avatars[0], 'Avatar size API orders variants and safely defaults unknown sizes: '+density+'/'+scale);
+        check(Math.abs(box.width-box.height)<1, 'Small icon button stays square: '+density+'/'+scale);
+        if (!normal) normal={avatar:avatars[0],button:box.width};
+        check(Math.abs(avatars[0]-normal.avatar*scale)<1 && Math.abs(box.width-normal.button*scale)<1, 'Component dimensions follow the single root scale: '+density+'/'+scale);
+        host.remove();
+      }
+    }
+    delete document.documentElement.dataset.uiDensity;
+    document.documentElement.style.removeProperty('--ui-scale');
     let previousIdentitySize=0;
     for (const scale of ['1','1.5','2']) {
       document.documentElement.style.setProperty('--ui-scale',scale);
@@ -129,7 +147,7 @@
     const copy = document.createElement('span'); copy.className = 'identity-copy'; const title = document.createElement('strong'); title.textContent = 'Name'; const meta = document.createElement('small'); meta.textContent = 'Metadata'; copy.append(title, meta); row.append(copy); document.body.append(row);
     const compactSymbolWidth=row.querySelector('.avatar').getBoundingClientRect().width;
     row.classList.remove('identity-row-compact');
-    check(row.querySelector('.avatar').getBoundingClientRect().width === compactSymbolWidth && parseFloat(getComputedStyle(meta).fontSize)<parseFloat(getComputedStyle(title).fontSize), 'Compact and normal identity rows share the core symbol size and secondary typography');
+    check(row.querySelector('.avatar').getBoundingClientRect().width > compactSymbolWidth && parseFloat(getComputedStyle(meta).fontSize)<parseFloat(getComputedStyle(title).fontSize), 'Compact identity rows use a smaller symbol while retaining secondary typography');
     row.classList.add('identity-row-compact');
     const modal = document.createElement('div'); modal.className = 'modal'; modal.dataset.open = 'true';
     const grid = document.createElement('div'); grid.className = 'following-modal-grid'; modal.append(grid);
@@ -142,7 +160,7 @@
     check(!more.isConnected, 'Exhausted following pagination removes its entire frame');
     modal.remove(); sidebar.remove(); row.remove(); form.remove();
     const draft = document.createElement('form'); draft.style.cssText = 'position:fixed;top:100px;left:12px;right:12px';
-    draft.append(T.components.render('publishing/editor', {name:'body',value:'',placeholder:'Text',comment:false,suggest_url:'/api/search/suggestions'})); document.body.append(draft);
+    draft.append(T.components.render('publishing/editor', {name:'body',value:'',placeholder:'Text',comment:false,suggest_url:'/api/social/search/suggestions'})); document.body.append(draft);
     const E = T.publishing.controllers.editor, pendingSuggestions = [];
     T.api.request = (url, options) => new Promise(resolve => pendingSuggestions.push({url,options,resolve}));
     E.hydrate(draft);
@@ -292,7 +310,7 @@
     }
     for (const density of ['regular','compact']) {
       let normal = null;
-      for (const scale of [1,1.5,2]) {
+      for (const scale of [1,0.75,1.25,1.5,2]) {
         document.documentElement.dataset.uiDensity = density;
         document.documentElement.style.setProperty('--ui-scale', scale);
         const host = document.createElement('main'); host.className = 'container';
@@ -304,7 +322,7 @@
         const avatar = profile.querySelector('.profile-identity .avatar'), body = profile.querySelector('.profile-card-body');
         const size = {avatar:avatar.getBoundingClientRect().width,padding:parseFloat(getComputedStyle(body).paddingTop),gap:parseFloat(getComputedStyle(body).rowGap)};
         if (!normal) { normal = size; }
-        check(['padding','gap'].every(key => Math.abs(size[key] - normal[key] * scale) < 1) && size.avatar <= normal.avatar * scale + 1 && (scale === 1 || size.avatar > normal.avatar), 'Social avatar grows within available space while card inset and spacing scale together: '+density+'/'+scale);
+        check(['padding','gap'].every(key => Math.abs(size[key] - normal[key] * scale) < 1) && size.avatar <= normal.avatar * scale + 1 && (scale <= 1 || size.avatar > normal.avatar), 'Social avatar grows within available space while card inset and spacing scale together: '+density+'/'+scale);
         for (const selector of ['.profile-card','.status-card','.status-comment','.status-link-card']) {
           const surface = profile.querySelector(selector);
           check(surface && surface.scrollWidth <= surface.clientWidth + 1, 'Social content contains long text without horizontal overflow: '+selector+'/'+density+'/'+scale);

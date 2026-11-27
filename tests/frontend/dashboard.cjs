@@ -28,7 +28,8 @@ try {
         doc.querySelectorAll('[data-cache-header]').forEach(node=>node.textContent='header-'+ 'x'.repeat(200));
         const widgets = [...grid.querySelectorAll(':scope > section')];
         results.push({width,cache, documentWidth:doc.documentElement.scrollWidth, widgets:widgets.length,
-          rowsFit:cache || [...doc.querySelectorAll('[data-widget-list] .identity-row')].every(row=>{const avatar=row.querySelector('.avatar'),content=row.querySelector('.identity-copy'),text=content.querySelector('p');return content.getBoundingClientRect().height<=avatar.getBoundingClientRect().height+1 && (!text || (win.getComputedStyle(text).textOverflow==='ellipsis' && text.clientHeight<=parseFloat(win.getComputedStyle(text).lineHeight)+1));}),
+          rowsFit:cache || [...doc.querySelectorAll('[data-widget-list] .identity-row')].every(row=>{const avatar=row.querySelector('.avatar'),content=row.querySelector('.identity-copy'),text=content.querySelector('p');return content.getBoundingClientRect().bottom<=row.getBoundingClientRect().bottom+1 && avatar.getBoundingClientRect().bottom<=row.getBoundingClientRect().bottom+1 && (!text || (win.getComputedStyle(text).textOverflow==='ellipsis' && text.clientHeight<=parseFloat(win.getComputedStyle(text).lineHeight)+1));}),
+          badges:cache || (doc.querySelectorAll('[data-widget-metric].badge').length===6 && !doc.querySelector('[data-dashboard-stats-form]') && [...doc.querySelectorAll('[data-widget-metric]')].every(metric=>metric.querySelector('svg') && metric.textContent.includes(':'))),
           columns:win.getComputedStyle(grid).gridTemplateColumns.split(' ').length,
           fits:widgets.every(widget=>widget.getBoundingClientRect().right<=width+1 && widget.scrollWidth<=widget.clientWidth+1),
           noLegacy:!doc.querySelector('#dashboard-cache') && (cache || !doc.querySelector('table')), underlines:!cache || [...doc.querySelectorAll('table')].every(table=>{const cells=table.rows[table.rows.length-1].cells;return win.getComputedStyle(cells[0]).borderBottomWidth===win.getComputedStyle(cells[1]).borderBottomWidth;}), normalized:!cache || [...doc.querySelectorAll('table')].every(table=>[...table.rows].every(row=>row.cells.length===2 && row.cells[0].getAttribute('scope')==='row')), links:[...grid.querySelectorAll('a')].every(link=>link.getBoundingClientRect().right<=width+1)});
@@ -43,7 +44,7 @@ try {
   const results = JSON.parse(match[1].replace(/&quot;/g,'"').replace(/&amp;/g,'&'));
   assert.equal(results.length,14);
   for (const item of results) {
-    assert.ok(item.documentWidth <= item.width && item.fits && item.links && item.noLegacy && item.normalized && item.underlines && item.rowsFit, 'Widget layout fits: '+JSON.stringify(item));
+    assert.ok(item.documentWidth <= item.width && item.fits && item.links && item.noLegacy && item.normalized && item.underlines && item.rowsFit && item.badges, 'Widget layout fits: '+JSON.stringify(item));
     assert.equal(item.widgets,item.cache ? 7 : 3);
     assert.equal(item.columns,item.width < 900 ? 1 : 2);
 

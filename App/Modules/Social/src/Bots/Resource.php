@@ -20,7 +20,7 @@ final class Resource
     public static function postSource(array $row, int $botId): ?array
     {
         $id = (int) ($row['source_id'] ?? 0);
-        return $id > 0 ? ['id' => $id, 'name' => (string) $row['source_name'], 'url' => '/admin/bots/' . $botId . '?source=' . $id] : null;
+        return $id > 0 ? ['id' => $id, 'name' => (string) $row['source_name'], 'url' => '/admin/social/bots/' . $botId . '?source=' . $id] : null;
     }
 
     /**

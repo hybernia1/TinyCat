@@ -9,14 +9,14 @@ final class Api
     public static function register(\TinyCat\Http\Api $api): void
     {
         $api = $api->forPublicWeb();
-        $api->post('/search/challenges', static function (): \TinyCat\Http\Result {
+        $api->post('/social/search/challenges', static function (): \TinyCat\Http\Result {
             if (!\TinyCat\Social\Search\Guard::public_search_captcha_verify()) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('auth.invalid_captcha'), 422, 'captcha_invalid', ['captcha' => \TinyCat\Core\Security\Captcha::configuration('search')]); }
             $next = \TinyCat\Core\Identity\Login::auth_safe_next_url((string) \TinyCat\Http\Request::current()->input('next', ''));
             $data = ['unlocked' => true];
             if ($next !== '') { $data['redirect'] = $next; }
             return new \TinyCat\Http\Result($data, \TinyCat\Support\Localization::t('public.search_captcha_unlocked'), [], 'search_search_captcha_unlocked', []);
         }, 'public', 200);
-        $api->get('/search/suggestions', self::suggestions(...), 'user');
+        $api->get('/social/search/suggestions', self::suggestions(...), 'user');
     }
 
     /** @return array<string, mixed> */

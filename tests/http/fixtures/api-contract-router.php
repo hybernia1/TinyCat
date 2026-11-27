@@ -95,4 +95,9 @@ foreach ([400, 401, 403, 404, 405, 422, 429, 500, 502, 503] as $errorStatus) {
 if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && $embedDocument) {
     \TinyCat\Database\Connection::set(\tinycat_test_database());
 }
+if (($_SERVER['HTTP_X_TEST_WITHOUT_SOCIAL'] ?? '') === '1') {
+    \TinyCat\Core\Runtime\Application::start(null, \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []));
+    \TinyCat\Core\Runtime\HttpKernel::respond();
+    return;
+}
 require __DIR__ . '/../../../index.php';

@@ -59,7 +59,23 @@ final class ClientAssets
     private static function manifest(string $file): array
     {
         self::synchronize();
-        return self::$manifests[$file] ??= json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
+        if (isset(self::$manifests[$file])) { return self::$manifests[$file]; }
+        $features = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
+        foreach (\TinyCat\Core\Modules\Resources::catalog()->definitions() as $owner) {
+            if (($owner->resources['assets'] ?? null) !== $file || $owner->manifest === null) { continue; }
+            foreach ($features as $feature) {
+                if (($feature['admin'] ?? []) !== [] && $owner->httpNamespace === null) { throw new RuntimeException('Module admin resources require an HTTP namespace.'); }
+                foreach ($feature['admin'] ?? [] as $definition) {
+                    $paths = array_intersect_key($definition, array_flip(['path', 'api', 'endpoint']));
+                    foreach (array_intersect_key($definition['editor'] ?? [], array_flip(['creation', 'management'])) as $path) { $paths[] = $path; }
+                    foreach ($paths as $path) {
+                        $root = str_starts_with($path, '/admin/') ? '/admin/' : '/api/';
+                        if (!str_starts_with($path . '/', $root . $owner->httpNamespace . '/')) { throw new RuntimeException('Admin resource escapes its module HTTP namespace: ' . $path); }
+                    }
+                }
+            }
+        }
+        return self::$manifests[$file] = $features;
     }
     /**
      * @return list<array<mixed>>

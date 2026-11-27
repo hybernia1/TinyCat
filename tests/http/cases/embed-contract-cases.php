@@ -63,13 +63,13 @@ $embedDb->exec('DELETE FROM social_post_images WHERE content_id = 910001');
 $assert($otherStatus === 200 && $otherHtml === $html, 'Embed output is independent of viewer identity and preferred language.');
 [$errorStatus, $errorBody, $errorHeaders] = $exportRequest('/status/910001/embed', 'GET', ['X-Test-Embed-Failure' => '1']);
 $assert($errorStatus === 500 && !isset($errorHeaders['set-cookie']) && !str_contains($errorBody, '<html') && !str_contains($errorBody, 'SELECT'), 'Embed failures stay session-free and do not fall back to the interactive application shell.');
-[$status, $sharing] = $request('GET', '/api/statuses/910001/embed');
+[$status, $sharing] = $request('GET', '/api/social/statuses/910001/embed');
 $assert($status === 200 && $sharing['data']['frame_url'] === '/status/910001/embed' && str_contains($sharing['data']['snippet'], 'http://localhost/status/910001/embed'), 'The modal receives a browser-local preview route while its copyable snippet retains the configured canonical URL.');
 $previousEmbedBase = $embedDb->query("SELECT * FROM settings WHERE setting_key = 'app.url'")->fetch(PDO::FETCH_ASSOC);
 try {
     foreach (['http://localhost', 'https://localhost', 'https://www.example.test:8443/site'] as $canonicalBase) {
         $embedDb->prepare("INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES ('app.url', ?, 'string', 'app') ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)")->execute([$canonicalBase]);
-        [$status, $sharing] = $request('GET', '/api/statuses/910001/embed');
+        [$status, $sharing] = $request('GET', '/api/social/statuses/910001/embed');
         $assert($status === 200 && $sharing['data']['frame_url'] === '/status/910001/embed' && str_contains($sharing['data']['snippet'], $canonicalBase . '/status/910001/embed'), 'Changing canonical scheme, host, port or path never moves the browser preview to another origin or route.');
         [$status] = $exportRequest('/oembed?url=' . rawurlencode($canonicalBase . '/status/910001'));
         $assert($status === 200, 'oEmbed continues to resolve the configured canonical origin and path prefix.');
@@ -125,7 +125,7 @@ $assert($status === 200 && str_contains($code, '<iframe') && str_contains($code,
 $dom = new DOMDocument(); @$dom->loadHTML($detail); $xpath = new DOMXPath($dom);
 $discovery = html_entity_decode($xpath->evaluate('string(//link[@type="application/json+oembed"]/@href)'));
 $assert($status === 200 && $detailHeaders['x-frame-options'] === 'SAMEORIGIN' && str_contains($detailHeaders['content-security-policy'], "frame-ancestors 'self'"), 'Ordinary post pages retain frame protections.');
-$assert(str_contains($discovery, '/oembed?url=') && $xpath->query('//link[@type="text/xml+oembed"]')->length === 1 && $xpath->query('//a[@href="/status/910001/embed-code" and @data-modal-open="status-embed-modal-910001" and @data-modal-url="/api/statuses/910001/embed"]')->length === 1, 'Public posts expose discovery links and a user-visible embed action.');
+$assert(str_contains($discovery, '/oembed?url=') && $xpath->query('//link[@type="text/xml+oembed"]')->length === 1 && $xpath->query('//a[@href="/status/910001/embed-code" and @data-modal-open="status-embed-modal-910001" and @data-modal-url="/api/social/statuses/910001/embed"]')->length === 1, 'Public posts expose discovery links and a user-visible embed action.');
 foreach ([$embedUrl, '/status/910001/embed'] as $path) {
     [$status, $empty, $headHeaders] = $exportRequest($path, 'HEAD');
     $assert($status === 200 && $empty === '' && isset($headHeaders['etag']), 'oEmbed and frame HEAD requests retain validators with no body.');
@@ -142,7 +142,7 @@ foreach ([910001, 910002, 910003, 99999999] as $id) {
         $assert($status === 404 && !str_contains($hidden, 'EMBED-SECRET') && !str_contains($hidden, 'Updated embed') && str_contains($hiddenHeaders['cache-control'], 'no-store'), 'Unavailable posts cannot be exposed through an embed or a stale conditional response, even to an administrator.');
     }
 }
-[$hiddenStatus] = $request('GET', '/api/statuses/910001/embed', null, 'admin');
+[$hiddenStatus] = $request('GET', '/api/social/statuses/910001/embed', null, 'admin');
 $assert($hiddenStatus === 404, 'The modal resource respects public visibility even for administrators.');
 $embedDb->exec('DELETE FROM social_posts WHERE id IN (910001,910002,910003)');
 $embedDb->exec('DELETE FROM social_post_likes WHERE content_id = 910001');

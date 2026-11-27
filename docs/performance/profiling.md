@@ -53,7 +53,7 @@ Wait for a complete import before collecting results.
 
 ```sh
 php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/release-app --output=.work/performance/run/before-public.json --requests=40
-php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/release-app --output=.work/performance/run/before-admin.json --requests=40 --user=1 --paths=/admin,/admin/users,/admin/moderation/reports,/api/notifications
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/release-app --output=.work/performance/run/before-admin.json --requests=40 --user=1 --paths=/admin,/admin/users,/admin/social/moderation/reports,/api/notifications
 ```
 
 `--root` selects an extracted release or a source checkout. Prefer the extracted
@@ -104,8 +104,8 @@ same visibility, permissions, content and pagination behavior.
 ## Concurrent refresh and response validation
 
 ```sh
-php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/candidate-app --output=.work/performance/run/cold-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar
-php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/candidate-app --output=.work/performance/run/expired-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar --expire=public_trending_tags_v2_8_7,public_top_authors_ranked_5_7
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/candidate-app --output=.work/performance/run/cold-cache.json --workers=4 --requests=40 --paths=/api/social/sidebar
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/candidate-app --output=.work/performance/run/expired-cache.json --workers=4 --requests=40 --paths=/api/social/sidebar --expire=public_trending_tags_v2_8_7,public_top_authors_ranked_5_7
 ```
 
 The first command sends a simultaneous cold burst, then warm traffic. `--expire`
@@ -120,7 +120,7 @@ equivalent API runs. HTTP 200 with a warning-corrupted JSON body fails validatio
 
 ```sh
 php tools/performance/instrument-performance.php --source=.work/performance/candidate-app --directory=.work/performance/profile-candidate
-php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/profile-candidate --output=.work/performance/run/php-calls.json --requests=10 --paths=/api/statuses?limit=50
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/profile-candidate --output=.work/performance/run/php-calls.json --requests=10 --paths=/api/social/statuses?limit=50
 ```
 
 The first command copies an uninstrumented export into a **new** directory under

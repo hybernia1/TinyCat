@@ -56,19 +56,19 @@ $assert($postSchema['url'] === 'http://localhost/status/10', 'Post structured da
 $assert($xpath->evaluate('string(//meta[@property="og:locale"]/@content)') === 'pl_PL', 'Open Graph uses a valid language-region locale.');
 [$status, $body, $headers] = $exportRequest('/pl/privacy', 'HEAD');
 $assert($status === 200 && $body === '' && ($headers['content-language'] ?? '') === 'pl', 'Localized HEAD has GET metadata and no response body.');
-foreach (['/zz/privacy', '/pl/admin', '/pl/api/site/pages', '/pl/assets/no.js', '/pl/author/2/feed', '/pl/pl/privacy'] as $path) {
+foreach (['/zz/privacy', '/pl/admin', '/pl/api/social/pages', '/pl/assets/no.js', '/pl/author/2/feed', '/pl/pl/privacy'] as $path) {
     [$status] = $exportRequest($path);
     $assert($status === 404, 'Invalid and non-HTML prefixes do not expose aliases: ' . $path);
 }
 
-[$status, $payload] = $request('GET', '/api/site/pages?path=' . rawurlencode('/pl/status/10'), null, 'user', ['Accept-Language' => 'de']);
+[$status, $payload] = $request('GET', '/api/social/pages?path=' . rawurlencode('/pl/status/10'), null, 'user', ['Accept-Language' => 'de']);
 $assert($status === 200 && $payload['data']['locale'] === 'pl' && $payload['data']['url'] === '/pl/status/10', 'Page API accepts the same prefixed public paths.');
 $assert($payload['data']['document']['url'] === 'http://localhost/status/10' && $payload['data']['item']['author']['url'] === '/pl/author/1', 'AJAX resources preserve localized navigation and the original canonical.');
-[$status, $payload] = $request('GET', '/api/site/pages?path=' . rawurlencode('/en/status/10'), null, 'user', ['X-TinyCat-Locale' => 'pl']);
+[$status, $payload] = $request('GET', '/api/social/pages?path=' . rawurlencode('/en/status/10'), null, 'user', ['X-TinyCat-Locale' => 'pl']);
 $assert($status === 200 && $payload['data']['locale'] === 'en', 'An explicit page API path takes precedence over its interface header.');
-[$status, $payload] = $request('GET', '/api/statuses/10', null, 'user', ['X-TinyCat-Locale' => 'pl']);
+[$status, $payload] = $request('GET', '/api/social/statuses/10', null, 'user', ['X-TinyCat-Locale' => 'pl']);
 $assert($status === 200 && $payload['data']['item']['url'] === '/pl/status/10', 'Other UI API calls inherit the explicit interface header.');
-[$status, $payload] = $request('GET', '/api/statuses/10', null, 'user', ['X-TinyCat-Locale' => 'zz']);
+[$status, $payload] = $request('GET', '/api/social/statuses/10', null, 'user', ['X-TinyCat-Locale' => 'zz']);
 $assert($status === 200 && $payload['data']['item']['url'] === '/status/10', 'Unsupported interface headers are ignored.');
 [$status, $body] = $exportRequest('/sitemap-pages-1.xml');
 $assert($status === 200 && str_contains($body, 'http://localhost/pl/privacy') && !str_contains($body, '/pl/status/'), 'Sitemap includes genuine translated pages without multiplying untranslated posts.');

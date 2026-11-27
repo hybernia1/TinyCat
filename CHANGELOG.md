@@ -1,5 +1,15 @@
 # Changelog
 
+## 9.0.0 - 2026-11-27
+
+- Give route-provider modules a stable, metadata-only HTTP namespace. Reject namespace collisions, reserved Core roots and routes outside their owner's API or administration prefix; roll back failed provider registration.
+- Move Social administration to `/admin/social/...` and all canonical Social domain APIs to `/api/social/...`. Group its four administration links under one Social menu. Third-party API clients and module manifests must adopt the new contract; old mutation APIs are not redirected.
+- Retain only documented admin bookmark redirects, stored modal-history conversion and the two link-resolver GET patterns already published in HTML and feeds. Core APIs, public permalinks, RSS and embed entry points keep their contracts.
+- Share scalable component size variants, spacing and geometry across Core and Social. Reuse the existing UI-scale and density tokens instead of adding per-context size exceptions; preserve viewport and accessibility limits.
+- Move profile controls and shared notification popovers to the administration sidebar header. Share navigation badge styles and show all registered dashboard statistics together as icon badges.
+- Reveal loaded link-preview images in standalone embeds and restore their fallback after load failures.
+- Preserve application data, module activation, task IDs and published migration history. No new database migration is introduced. Ship matching signed Core and Social install/update artifacts.
+
 ## 8.0.12 - 2026-11-26
 
 - Consolidate administration helpers and move UI, text, deployment and update utilities to their owning core areas. Reuse immutable configuration snapshots and remove redundant helper files.

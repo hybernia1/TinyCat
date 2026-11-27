@@ -31,10 +31,10 @@ try {
     $run([PHP_BINARY, __DIR__ . '/tag-query-probe.php', '--config=' . $configPath, '--output=' . $output . '/plans.json']);
     if (!isset($options['probe-only'])) {
         $paths = [];
-        foreach (isset($options['focused']) ? ['all', 'text'] : ['all', 'images', 'links', 'video', 'audio', 'text'] as $type) { $paths[] = '/api/statuses?context=tag&tag=community&limit=50' . ($type === 'all' ? '' : '&media=' . $type); }
+        foreach (isset($options['focused']) ? ['all', 'text'] : ['all', 'images', 'links', 'video', 'audio', 'text'] as $type) { $paths[] = '/api/social/statuses?context=tag&tag=community&limit=50' . ($type === 'all' ? '' : '&media=' . $type); }
         if (isset($options['home'])) {
-            $paths = ['/api/statuses?context=tag&tag=community&limit=50', '/api/statuses?context=tag&tag=community&limit=50&media=text'];
-            foreach (['images', 'links', 'video', 'audio'] as $type) { $paths[] = '/api/statuses?limit=50&media=' . $type; }
+            $paths = ['/api/social/statuses?context=tag&tag=community&limit=50', '/api/social/statuses?context=tag&tag=community&limit=50&media=text'];
+            foreach (['images', 'links', 'video', 'audio'] as $type) { $paths[] = '/api/social/statuses?limit=50&media=' . $type; }
         }
         foreach (['baseline', 'candidate', 'candidate', 'baseline'] as $round => $variant) {
             $root = realpath((string) ($options[$variant] ?? ''));

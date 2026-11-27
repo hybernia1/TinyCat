@@ -1,3 +1,4 @@
+import "../legacy-modal-links.js";
 // @component-owned: structure is declared in owner catalogs.
 import "../content/comments.js";
 import "../content/runtime.js";
@@ -43,7 +44,7 @@ import "../../../../Core/Ui/assets/component-builders.js";
   };
   T.status.result = function (source, response, target) {
     var url = new URL(source.dataset.url || source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
-    if (url.pathname !== "/api/statuses" || !target || !target.matches(".home-feed-section")) { return false; }
+    if (url.pathname !== "/api/social/statuses" || !target || !target.matches(".home-feed-section")) { return false; }
     T.status.feed(target, response); return [target];
   };
   T.status.controllers = {};

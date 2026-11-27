@@ -68,6 +68,13 @@ Uložené identifikátory se při změnách konzumentů nepřepočítávají.
 Následující `Notes` je minimální informační modul bez databáze. Je to ukázka,
 nikoli předinstalovaný modul. ID, namespace, URL a komponenty mají vlastní prefix.
 
+Provider rout musí v manifestu deklarovat stabilní `httpNamespace` (v příkladu
+`notes`). Není odvozený z poslední části ID ani PHP namespace. Použij
+`/admin/notes/...` a `/api/notes/...`; cizí nebo rezervované prefixy se odmítnou.
+Před aktivací inventář ověří také kolizi s neaktivními zdroji. Podrobný
+[HTTP kontrakt vlastníka](../contracts/module-contract.md#http-namespace-vlastníka)
+popisuje úzké kompatibilní výjimky.
+
 ```text
 App/Modules/Notes/
   module.json
@@ -89,6 +96,7 @@ Prázdné zdroje nemusíš deklarovat. `module.json`:
   "coreApi": 1,
   "id": "tinycat.notes",
   "namespace": "TinyCat\\Notes\\",
+  "httpNamespace": "notes",
   "requires": [],
   "providers": {
     "routes": "TinyCat\\Notes\\Module",
@@ -354,12 +362,12 @@ Například položka `admin` uvnitř scope vlastního `assets/module.json` můž
 ```json
 {
   "example.records": {
-    "path": "/admin/records", "endpoint": "/api/records", "api": "/api/records",
+    "path": "/admin/notes/records", "endpoint": "/api/notes/records", "api": "/api/notes/records",
     "target": "#records-list", "component": "example/records-list",
     "filter": "example/records-filter", "filterId": "records-filter",
     "title": "example.records", "icon": "list",
     "editor": {
-      "creation": "/api/records/creation", "management": "/api/records/{id}/management",
+      "creation": "/api/notes/records/creation", "management": "/api/notes/records/{id}/management",
       "fields": "example/record-fields", "title": "example.new_record", "method": "PATCH"
     }
   }

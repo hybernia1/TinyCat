@@ -5,6 +5,22 @@ Social is optional and owns profiles, follows, posts, discussions and moderation
 Blog and its article/source endpoints are absent from current distributions.
 Owners register data resources through the common authorized JSON transport.
 
+Functional modules declare a metadata-only `httpNamespace`. Their APIs use
+`/api/<httpNamespace>/...` and administration uses `/admin/<httpNamespace>/...`.
+Social owns `/api/social/bots`, `/api/social/moderation`, `/api/social/statuses`,
+`/api/social/profiles`, `/api/social/search/challenges`,
+`/api/social/search/suggestions`, `/api/social/pages` and `/api/social/sidebar`.
+The old unprefixed domain API families are retired, without redirecting mutations.
+Only the two previously published GET resolvers `/api/statuses/{id}/links/{hash}`
+and `/api/statuses/{id}/comments/{commentId}/links/{hash}` retain the same
+visibility checks, JSON/native navigation policy and handler as their canonical
+Social counterparts. They do not expose status reads or mutations.
+Deploy matching clients and reload previously loaded clients when upgrading.
+Core `/api/users`, `/api/notifications`, `/api/settings`, `/api/scheduler`,
+`/api/search` and technical `/api/site` resources retain their existing ownership.
+Authorization remains per operation: reporting a post is a user operation;
+reviewing reports and managing blocked URLs require an administrator.
+
 The mandatory framework registers core routes; explicitly activated modules register their own API and page routes from their manifests.
 `App/Core/Http/Api.php` only receives registrations and handles authentication, CSRF,
 request parsing and JSON serialization. There is no filesystem route discovery.
@@ -14,7 +30,7 @@ All application APIs use the same JSON transport. `App/Core.php`,
 Modules own their routes; the entry point only composes and dispatches the app.
 
 `tinycat.accounts` owns authentication, account management, administration and
-avatars under the existing `/api/users/...` URLs. `tinycat.social` owns public profiles and follows under `/api/profiles` and its own author feeds. An Accounts-only assembly omits social
+avatars under the existing `/api/users/...` URLs. `tinycat.social` owns public profiles and follows under `/api/social/profiles` and its own author feeds. An Accounts-only assembly omits social
 endpoints and public profile URLs; product composition supplies those URLs when
 available. Account component IDs and API response codes remain stable.
 
@@ -29,7 +45,7 @@ Public HTML supports explicit language prefixes, for example `/pl/status/123`.
 API routes retain their global `/api/...` addresses. Clients on a prefixed page
 send `X-TinyCat-Locale: pl` to keep server messages and navigation URLs in that
 interface language. The header accepts shipped locale codes and never modifies
-profile preferences. `/api/site/pages?path=/pl/status/123` also accepts a prefixed
+profile preferences. `/api/social/pages?path=/pl/status/123` also accepts a prefixed
 public path; its explicit language takes precedence over the header. Service URLs
 and RSS remain unprefixed, and prefixed API aliases return 404.
 
@@ -221,7 +237,7 @@ and do not implement a second set of operations.
 ### Public metadata and RSS
 
 Post, author, tag and search pages share document metadata between their HTML
-head and `/api/site/pages` navigation response. The document includes separate
+head and `/api/social/pages` navigation response. The document includes separate
 browser and social titles (`title` and `meta_title`), canonical URLs, Open Graph
 locale, image properties, author URL, article tags, RSS discovery and JSON-LD.
 Search results remain `noindex,follow`; their JSON-LD describes the currently
@@ -257,14 +273,14 @@ Account status values come from `Core/Identity/Administration::statuses()`
 | PATCH | `/api/users/me/email` | Own email |
 | PUT | `/api/users/me/password` | Own account, current password required |
 | GET, POST | `/api/users` | Administrator, list/create |
-| GET | `/api/profiles/{id}` | Social public profile whitelist |
+| GET | `/api/social/profiles/{id}` | Social public profile whitelist |
 | GET | `/api/users/{id}/management` | Owner or administrator |
 | GET | `/api/users/creation` | Administrator-only fresh options and constraints for creating an account |
 | PATCH | `/api/users/{id}` | Owner profile; `scope=administration` requires administrator |
 | DELETE | `/api/users/{id}` | Administrator, protected administrator rules apply |
 | GET, PUT, PATCH, DELETE | `/api/users/{id}/avatar` | Owner or administrator |
-| PUT, DELETE | `/api/profiles/{id}/followers/me` | Signed-in user, desired follow state |
-| GET | `/api/profiles/{id}/following` | Signed-in user, cursor list |
+| PUT, DELETE | `/api/social/profiles/{id}/followers/me` | Signed-in user, desired follow state |
+| GET | `/api/social/profiles/{id}/following` | Signed-in user, cursor list |
 
 Public profiles contain only `id`, `username`, `bio`, `url`, `avatar_url`,
 `avatar_custom`.
@@ -296,11 +312,11 @@ Unknown columns retain the list's default order. Supported sort keys are:
 | List endpoint | Sort keys |
 | --- | --- |
 | `/api/users` | `username`, `role`, `status`, `updated_at` |
-| `/api/bots/accounts` | `username`, `status`, `source_count`, `post_count`, `updated_at` |
-| `/api/bots/sources` | `name`, `bot`, `status`, `interval`, `last_import` |
-| `/api/bots/queue` | `bot`, `source`, `body`, `published_at` |
+| `/api/social/bots/accounts` | `username`, `status`, `source_count`, `post_count`, `updated_at` |
+| `/api/social/bots/sources` | `name`, `bot`, `status`, `interval`, `last_import` |
+| `/api/social/bots/queue` | `bot`, `source`, `body`, `published_at` |
 | `/api/scheduler/tasks` | `task`, `started_at`, `status`, `duration_ms` (run history) |
-| `/api/moderation/reports` | `content`, `reason`, `status` |
+| `/api/social/moderation/reports` | `content`, `reason`, `status` |
 
 ## Notifications
 
@@ -321,15 +337,15 @@ excerpt, URL, read state and timestamps. Cursor pages contain up to 40 items;
 
 | Method | Path | Operation |
 | --- | --- | --- |
-| GET, POST | `/api/statuses` | Read feed / create post |
-| GET, PATCH, DELETE | `/api/statuses/{id}` | Public detail / authorized edit / delete; `GET ?panel=edit` is a private owner/admin edit read, including hidden posts |
-| GET, POST | `/api/statuses/{id}/comments` | Read / create comment or reply |
-| PATCH, DELETE | `/api/statuses/{id}/comments/{commentId}` | Edit / delete |
-| GET | `/api/statuses/{id}/comments/{commentId}/revisions` | Authorized text history |
-| PUT, DELETE | `/api/statuses/{id}/likes/me` | Desired post like state |
-| PUT, DELETE | `/api/statuses/{id}/comments/{commentId}/likes/me` | Desired comment like state |
-| GET | `/api/moderation/report-options` | Report reasons and `note_max_length`, signed-in user |
-| POST | `/api/moderation/reports` | Report a post, signed-in user; notes exceeding the published limit receive field validation errors |
+| GET, POST | `/api/social/statuses` | Read feed / create post |
+| GET, PATCH, DELETE | `/api/social/statuses/{id}` | Public detail / authorized edit / delete; `GET ?panel=edit` is a private owner/admin edit read, including hidden posts |
+| GET, POST | `/api/social/statuses/{id}/comments` | Read / create comment or reply |
+| PATCH, DELETE | `/api/social/statuses/{id}/comments/{commentId}` | Edit / delete |
+| GET | `/api/social/statuses/{id}/comments/{commentId}/revisions` | Authorized text history |
+| PUT, DELETE | `/api/social/statuses/{id}/likes/me` | Desired post like state |
+| PUT, DELETE | `/api/social/statuses/{id}/comments/{commentId}/likes/me` | Desired comment like state |
+| GET | `/api/social/moderation/report-options` | Report reasons and `note_max_length`, signed-in user |
+| POST | `/api/social/moderation/reports` | Report a post, signed-in user; notes exceeding the published limit receive field validation errors |
 
 Feed queries accept `context=home|author|tag`, `feed=all|following`, `author_id`,
 `tag`, `limit` (1–50), `cursor_at`, `cursor_id` and
@@ -339,11 +355,11 @@ content. Images require an attachment, video/audio require a matching stored
 link type, links include any stored link, and text excludes attachments and
 stored links. Categories can overlap. `meta.pagination` contains `next_url`
 and `done`, retaining the filter. Public page navigation accepts the same
-`media` parameter through `/api/site/pages`. Posts return author data, literal
+`media` parameter through `/api/social/pages`. Posts return author data, literal
 and editable body, typed text/mention/tag/link segments, image/link/video
 metadata, counts and capabilities.
 Details include the first page of root comments and `comments_next_url`; replies
-are loaded separately. `GET /api/statuses/{id}/comments` accepts `parent_id`
+are loaded separately. `GET /api/social/statuses/{id}/comments` accepts `parent_id`
 (zero for roots), `limit` (1–50, default `public.status_limit`), `cursor_at` and
 `cursor_id`. Roots and direct replies use ascending creation time and ID;
 `data.items` and `meta.pagination` carry the page and continuation. Roots expose
@@ -444,28 +460,28 @@ Manual imports of one source use the same feeds task and lock, with
 
 | Method | Path | Operation |
 | --- | --- | --- |
-| GET, POST | `/api/bots/accounts` | List / create bot accounts |
-| GET | `/api/bots/accounts/creation` | Administrator-only bot account creation constraints |
-| GET, PATCH, DELETE | `/api/bots/accounts/{id}` | Account metadata and aggregate counts / edit / delete |
-| PUT | `/api/bots/accounts/{id}/activation` | Set account activation with boolean `enabled`; disabling also disables its sources |
-| GET | `/api/bots/accounts/{id}/runs` | Search, filter by `q`, `source`, `status` (one of the returned status choices), sort and paginate source import history |
-| GET | `/api/bots/accounts/{id}/posts` | Search, sort and paginate the bot's posts, including scheduled posts |
-| GET | `/api/bots/accounts/{id}/posts/{postId}/management` | Administrator payload for the shared post edit modal |
-| PATCH, DELETE | `/api/bots/accounts/{id}/posts/{postId}` | Administrator and CSRF required; update / delete a post owned by the selected bot, independently of public website availability |
-| GET | `/api/bots/accounts/{id}/posts/{postId}/suggestions` | Administrator editor suggestions; validates bot ownership and accepts the shared `q`, `type`, `limit` parameters |
-| GET, POST | `/api/bots/sources` | List / create feed sources |
-| GET | `/api/bots/sources/management` | Defaults and bot choices for source creation |
-| GET | `/api/bots/sources/{id}/management` | Current source fields and bot choices for editing |
-| POST | `/api/bots/sources/previews` | Inspect a feed or website and preview its template; administrator and CSRF token required |
-| PATCH, DELETE | `/api/bots/sources/{id}` | Edit / delete |
-| POST | `/api/bots/sources/{id}/runs` | Run a feed import |
-| GET | `/api/bots/queue` | Paginated future bot posts; filter by `q` (text), `bot` (account ID), `status` (account status), and `source` (RSS source ID or `unknown`) |
-| POST | `/api/bots/queue/{id}/publication` | Publish immediately and return the refreshed queue; administrator and CSRF token required |
-| GET | `/api/moderation/reports` | List moderation reports |
-| GET | `/api/moderation/reports/{id}` | Admin-only preserved post preview and all reports, notes and reviewers for that post |
-| PATCH | `/api/moderation/reports/{id}` | Review with `decision=remove|dismiss`; `remove` sets post status to `hidden`, while `dismiss` leaves visibility unchanged |
-| POST | `/api/moderation/posts/{id}/publication` | Administrator and CSRF required; explicitly restore a hidden post to `published` without changing report outcomes |
-| GET, PUT | `/api/moderation/blocked-urls` | Read / replace blocked URL rules |
+| GET, POST | `/api/social/bots/accounts` | List / create bot accounts |
+| GET | `/api/social/bots/accounts/creation` | Administrator-only bot account creation constraints |
+| GET, PATCH, DELETE | `/api/social/bots/accounts/{id}` | Account metadata and aggregate counts / edit / delete |
+| PUT | `/api/social/bots/accounts/{id}/activation` | Set account activation with boolean `enabled`; disabling also disables its sources |
+| GET | `/api/social/bots/accounts/{id}/runs` | Search, filter by `q`, `source`, `status` (one of the returned status choices), sort and paginate source import history |
+| GET | `/api/social/bots/accounts/{id}/posts` | Search, sort and paginate the bot's posts, including scheduled posts |
+| GET | `/api/social/bots/accounts/{id}/posts/{postId}/management` | Administrator payload for the shared post edit modal |
+| PATCH, DELETE | `/api/social/bots/accounts/{id}/posts/{postId}` | Administrator and CSRF required; update / delete a post owned by the selected bot, independently of public website availability |
+| GET | `/api/social/bots/accounts/{id}/posts/{postId}/suggestions` | Administrator editor suggestions; validates bot ownership and accepts the shared `q`, `type`, `limit` parameters |
+| GET, POST | `/api/social/bots/sources` | List / create feed sources |
+| GET | `/api/social/bots/sources/management` | Defaults and bot choices for source creation |
+| GET | `/api/social/bots/sources/{id}/management` | Current source fields and bot choices for editing |
+| POST | `/api/social/bots/sources/previews` | Inspect a feed or website and preview its template; administrator and CSRF token required |
+| PATCH, DELETE | `/api/social/bots/sources/{id}` | Edit / delete |
+| POST | `/api/social/bots/sources/{id}/runs` | Run a feed import |
+| GET | `/api/social/bots/queue` | Paginated future bot posts; filter by `q` (text), `bot` (account ID), `status` (account status), and `source` (RSS source ID or `unknown`) |
+| POST | `/api/social/bots/queue/{id}/publication` | Publish immediately and return the refreshed queue; administrator and CSRF token required |
+| GET | `/api/social/moderation/reports` | List moderation reports |
+| GET | `/api/social/moderation/reports/{id}` | Admin-only preserved post preview and all reports, notes and reviewers for that post |
+| PATCH | `/api/social/moderation/reports/{id}` | Review with `decision=remove|dismiss`; `remove` sets post status to `hidden`, while `dismiss` leaves visibility unchanged |
+| POST | `/api/social/moderation/posts/{id}/publication` | Administrator and CSRF required; explicitly restore a hidden post to `published` without changing report outcomes |
+| GET, PUT | `/api/social/moderation/blocked-urls` | Read / replace blocked URL rules |
 | GET, PATCH | `/api/settings` | Read setting resources / update supplied settings |
 | GET | `/api/updates/release-notes` | Administrator-only cached release version and notes; 404 when unavailable, no remote release fetch |
 | GET | `/api/settings/editor` | Administrator-only current editor values, field constraints and available choices; fetched when opening settings |
@@ -490,7 +506,7 @@ After a report is reviewed, the same user can submit a new open report under
 the normal rate limits. One open report per reporter/post is updated in place;
 earlier reviewed rows, notes and decisions are retained.
 
-The publication queue is available at `/admin/bots/queue`. It includes future
+The publication queue is available at `/admin/social/bots/queue`. It includes future
 posts belonging to bot accounts, ordered by planned publication time by default.
 Publishing requires an active bot and changes only the selected post's publication
 time. Repeated requests preserve its first publication time. Other queued posts
@@ -544,7 +560,7 @@ and `published_at`. The parser bounds parsing to 100 items and eight image
 candidates per item. Additional feed formats must preserve stable item identity and apply
 equivalent bounds and URL checks before entering the shared import path.
 
-`POST /api/bots/sources/previews` accepts `feed_url`, `name` and `post_template`.
+`POST /api/social/bots/sources/previews` accepts `feed_url`, `name` and `post_template`.
 Clients may supply `document` instead of downloading a URL (maximum 2 MiB).
 The result contains `format`, `title`, the final `feed_url`, `item_count`, up to
 three newest normalized `items` and advertised feed `sources` for website
@@ -675,7 +691,7 @@ The Social maintenance optimizer normalizes stored identities and merges duplica
 relations transactionally with an explicit backup, preserving post associations
 and complementary cached metadata. See [link optimization](../operations/link-optimization.md).
 
-Account activation for regular users uses administrator-only `PUT /api/users/{id}/activation` with boolean `enabled`; protected core administrators cannot be deactivated. Source activation uses `PATCH /api/bots/sources/{id}` with boolean `enabled`. All activation writes require CSRF.
+Account activation for regular users uses administrator-only `PUT /api/users/{id}/activation` with boolean `enabled`; protected core administrators cannot be deactivated. Source activation uses `PATCH /api/social/bots/sources/{id}` with boolean `enabled`. All activation writes require CSRF.
 
 The bot account resource returns `item` with `source_count`, `active_source_count`, `post_count` and `run_count`. Sources, posts and run history are loaded through their separate list resources; the duplicate bot-account `/management` view is retired.
 
@@ -699,10 +715,10 @@ disposes the editor after the standard unsaved-change guard accepts it.
 | Method | Path | Access / data |
 | --- | --- | --- |
 | GET | `/api/search?q=...` | Public search suggestions, guarded by existing limits |
-| GET | `/api/search/suggestions` | Signed-in editor suggestions; `q`, `type`, `limit` |
+| GET | `/api/social/search/suggestions` | Signed-in editor suggestions; `q`, `type`, `limit` |
 | GET | `/api/search/query` | Shared search collections; `q`, `collection`, `cursor`, `limit` |
-| POST | `/api/search/challenges` | Social search CAPTCHA verification with CSRF |
-| GET | `/api/site/sidebar` | Public tags, author resources and `privacy_url` |
+| POST | `/api/social/search/challenges` | Social search CAPTCHA verification with CSRF |
+| GET | `/api/social/sidebar` | Public tags, author resources and `privacy_url` |
 
 CAPTCHA errors contain public widget configuration under `error.details.captcha`,
 never widget markup or provider secrets. `error.details.verify_url` identifies the
@@ -764,7 +780,7 @@ Both operations belong to core and remain available when Social is disabled.
   Unknown or inactive collections return 404; nested cursor values return 400.
   Social contributes `content`, `users` and `tags`; each retains its visibility
   rules and stable cursor. API results are canonical data, without rendered HTML.
-- `GET /api/search/suggestions?q=...&type=all&limit=8` remains the signed-in
+- `GET /api/social/search/suggestions?q=...&type=all&limit=8` remains the signed-in
   editor completion endpoint (`type=all|tag|user`, limit 1-12).
 
 Queries normalize whitespace and accept at most 80 characters. Full post search
@@ -796,10 +812,10 @@ use up to 20 results per page. New posts do not shift the continuation boundary.
 
 `/search/all` is the only public search page, with source navigation in the shared
 workspace. The Social-specific `/search`, `/api/search/results` and
-`/api/site/pages?path=/search` are removed, without aliases. The former
+`/api/social/pages?path=/search` are removed, without aliases. The former
 `/api/users/{id}` GET/follower paths and `/api/security/challenges/search` are also
 removed. Account management stays under `/api/users`; social profiles and follows
-use `/api/profiles`. Deploy matching runtime and versioned client assets together.
+use `/api/social/profiles`. Deploy matching runtime and versioned client assets together.
 
 Search RSS remains a separate representation at `/search/feed?q=...&media=...`.
 It advertises the shared search page as its canonical HTML destination. Media
@@ -819,7 +835,7 @@ JSON and XML discovery links in the document head, including after client naviga
 - `GET /status/{id}/embed` is a standalone read-only HTML card suitable for an iframe.
 - `GET /status/{id}/embed-code` shows the card and a selectable copy/paste HTML snippet.
   The **Embed post** action on each post opens the standard application modal with a live preview and selectable code. The page remains a fallback when JavaScript is unavailable.
-- `GET /api/statuses/{id}/embed` supplies the modal with a public root-relative `frame_url` and `snippet` in the normal JSON envelope. The preview uses the browser origin; the copyable snippet retains the configured canonical application URL.
+- `GET /api/social/statuses/{id}/embed` supplies the modal with a public root-relative `frame_url` and `snippet` in the normal JSON envelope. The preview uses the browser origin; the copyable snippet retains the configured canonical application URL.
 
 Only URLs on the configured installation origin are accepted, including supported
 localized post URLs. The provider never fetches the supplied URL. Unknown URLs,
@@ -873,8 +889,8 @@ post. HEAD requests expose the same metadata without a body.
 
 ## Content-link navigation
 
-`GET /api/statuses/{id}/links/{hash}` and
-`GET /api/statuses/{id}/comments/{commentId}/links/{hash}` resolve only links in
+`GET /api/social/statuses/{id}/links/{hash}` and
+`GET /api/social/statuses/{id}/comments/{commentId}/links/{hash}` resolve only links in
 currently visible content. The hash uses the existing normalized link identity.
 The standard JSON envelope contains `data.url` (the configured UTM destination)
 and `data.original_url` (the original published URL). Arbitrary URL parameters

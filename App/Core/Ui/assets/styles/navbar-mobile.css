@@ -7,13 +7,13 @@
       "brand nav"
       "search search";
     align-items: center;
-    gap: 8px 10px;
-    padding-block: 8px;
+    gap: var(--space-2) var(--space-2-5);
+    padding-block: var(--space-2);
   }
 
 .navbar-brand {
     grid-area: brand;
-    min-height: 36px;
+    min-height: var(--control-height-compact);
     overflow: hidden;
     font-size: 0.9375rem;
   }
@@ -37,16 +37,12 @@
     grid-area: nav;
     min-width: 0;
     justify-content: flex-end;
-    gap: 2px;
+    gap: var(--space-0-5);
   }
 
 .nav-link-icon {
-    width: 36px;
-    min-height: 36px;
+    width: var(--control-height-compact);
+    min-height: var(--control-height-compact);
   }
 
-.nav-link-icon .icon {
-    width: 19px;
-    height: 19px;
-  }
 }

@@ -202,12 +202,12 @@
   if (mode === 'queue-edit') {
     document.body.classList.add('admin-shell-page');
     document.documentElement.dataset.uiDensity = 'compact';
-    const data = {update_url:'/api/bots/accounts/2/posts/7',suggest_url:'/api/bots/accounts/2/posts/7/suggestions',item:{id:7,editable_body:'Scheduled post draft',author:{id:2,username:'bot'},capabilities:{edit:true}},constraints:window.socialConstraints,options:{images_enabled:true}};
-    const dialog = T.modules.modal(new URL('/api/bots/accounts/2/posts/7/management',location.href),{data},'queue-edit-fixture');
+    const data = {update_url:'/api/social/bots/accounts/2/posts/7',suggest_url:'/api/social/bots/accounts/2/posts/7/suggestions',item:{id:7,editable_body:'Scheduled post draft',author:{id:2,username:'bot'},capabilities:{edit:true}},constraints:window.socialConstraints,options:{images_enabled:true}};
+    const dialog = T.modules.modal(new URL('/api/social/bots/accounts/2/posts/7/management',location.href),{data},'queue-edit-fixture');
     check(dialog && dialog.querySelector('form'), 'The delivered queue bundle opens the bot post editor');
     document.body.append(dialog); T.lifecycle.start(); T.dialog.open(dialog);
     const form = dialog.querySelector('form'), body = form.elements.namedItem('body');
-    check(body.value === data.item.editable_body && form.getAttribute('action') === '/api/bots/accounts/2/posts/7', 'Queue editing retains the existing draft and canonical write endpoint');
+    check(body.value === data.item.editable_body && form.getAttribute('action') === '/api/social/bots/accounts/2/posts/7', 'Queue editing retains the existing draft and canonical write endpoint');
       check(dialog.querySelector('[data-status-editor-source]').dataset.statusSuggestUrl === data.suggest_url, 'Queue editing uses internal suggestions independently of the public website');
     check(T.api.csrfToken() === 'test' && T.status.method(form,'update') === 'PATCH', 'Queue editing retains CSRF and its update method');
     check(dialog.querySelector('[data-status-editor-input]') && dialog.querySelector('input[type="file"]'), 'The delivered editor contains its rich text and image controls');
@@ -267,11 +267,11 @@
   }
   if (mode === 'social-forms') {
     check(!T.publishing.controllers.editor && !T.accounts.avatarUpload, 'The public bundle initially excludes editor implementations');
-    await T.deferred.resource(new URL('/api/moderation/report-options', location.href));
+    await T.deferred.resource(new URL('/api/social/moderation/report-options', location.href));
     check(T.publishing.controllers.editor && T.accounts.avatarUpload, 'The native browser loads editor implementations on demand');
-    const follow=T.dom.element('form',{method:'post',action:'/api/profiles/2/followers/me','data-follow-form':'','data-author-id':'2'});
+    const follow=T.dom.element('form',{method:'post',action:'/api/social/profiles/2/followers/me','data-follow-form':'','data-author-id':'2'});
     follow.append(T.ui.hidden('action','follow'),T.ui.button('public.follow',{type:'submit'})); document.body.append(follow);
-    const react=T.dom.element('form',{method:'post',action:'/api/statuses/7/likes/me','data-status-form':'','data-status-id':'7'});
+    const react=T.dom.element('form',{method:'post',action:'/api/social/statuses/7/likes/me','data-status-form':'','data-status-id':'7'});
     const like=T.ui.button('common.save',{type:'submit','data-status-like-button':'','aria-pressed':'false'});
     react.append(T.ui.hidden('action','react'),like); document.body.append(react);
     const calls=[]; let release;
@@ -294,7 +294,7 @@
     document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
   }
   if (mode === 'social-constraints') {
-    const constraints = window.socialConstraints, form = T.ui.form('/api/statuses', 'POST');
+    const constraints = window.socialConstraints, form = T.ui.form('/api/social/statuses', 'POST');
     form.append(T.components.render('status/composer-body', {constraints,viewer:{id:1},value:''}));
     const commentForm = T.components.render('status/comment-form', {constraints,content_id:7,parent_id:0,viewer:{id:1}});
     check(new FormData(commentForm).get('parent_id') === '0', 'Root comments submit numeric zero through native FormData');
@@ -364,7 +364,7 @@
     window.fetch = async (url, config) => {
       const path = new URL(url).pathname;
       reads[path] = (reads[path] || 0) + 1;
-      const data = path === '/api/users/creation' ? {user:{},options} : path === '/api/bots/accounts/creation' ? {options} : path === '/api/updates/release-notes' ? {notes:'<img src=x onerror=alert(1)>Literal release notes'} : path === '/api/users' && config.method === 'GET' ? listing : {item:{id:8}};
+      const data = path === '/api/users/creation' ? {user:{},options} : path === '/api/social/bots/accounts/creation' ? {options} : path === '/api/updates/release-notes' ? {notes:'<img src=x onerror=alert(1)>Literal release notes'} : path === '/api/users' && config.method === 'GET' ? listing : {item:{id:8}};
       return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data,meta:{pagination:{page:1,per_page:25,total:0}}}),{status:200,headers:{'Content-Type':'application/json'}});
     };
     let initBlocked = false;
@@ -420,8 +420,8 @@
     const again = await T.dialog.openResource('modal-users-creation','/api/users/creation');
     check(reads['/api/users/creation'] === beforeReopen + 1 && again !== editor && !again.querySelector('[name="username"]').value, 'Reopening creation fetches a fresh empty form');
     T.dialog.close(again,{history:false});
-    const bot = await T.dialog.openResource('modal-bots-accounts-creation','/api/bots/accounts/creation');
-    check(bot.querySelector('[name="username"]').pattern === options.username_pattern && bot.querySelector('form').getAttribute('action') === '/api/bots/accounts', 'Bot creation uses remote constraints and its existing POST resource');
+    const bot = await T.dialog.openResource('modal-bots-accounts-creation','/api/social/bots/accounts/creation');
+    check(bot.querySelector('[name="username"]').pattern === options.username_pattern && bot.querySelector('form').getAttribute('action') === '/api/social/bots/accounts', 'Bot creation uses remote constraints and its existing POST resource');
     check(document.getElementById(bot.querySelector('[name="username"]').getAttribute('aria-describedby')), 'Bot username constraints retain an accessible help description');
     T.dialog.close(bot,{history:false});
     const notes = await T.dialog.openResource('modal-updates-release-notes','/api/updates/release-notes');
@@ -513,12 +513,12 @@
     const post = {id:42,url:'/status/42',author,segments:[{type:'text',text:'Original frontend card'}],published_at:'2026-01-01',image:{url:''},links:[],likes_count:3,comments_count:1,capabilities:{edit:false,delete:false,report:false,interact:false}};
     const data = {content:{id:42,status:'hidden'},preview:{item:post,comments:[{id:9,content_id:42,author,created_at:'2026-01-01',segments:[{type:'text',text:'Preserved comment'}],likes_count:1,capabilities:{edit:false,delete:false,interact:false},replies:[]}]},reports:[{id:12,reporter_name:'Reporter',reason:'spam',status:'resolved',created_at:'2026-01-01',note:'Full note <b>literal</b>'}]};
     T.modules.register('moderation',T.moderation);
-    const dialog = T.moderation.modal(new URL('/api/moderation/reports/12',location.href),{data},'moderation-native');
+    const dialog = T.moderation.modal(new URL('/api/social/moderation/reports/12',location.href),{data},'moderation-native');
     T.lifecycle.start(); T.dialog.open(dialog);
     check(dialog.querySelector('.status-card .status-body').textContent === 'Original frontend card', 'Moderation renders the frontend card');
     check(dialog.querySelector('.status-comment-body').textContent === 'Preserved comment', 'Moderation includes the actual frontend comment thread');
     check(!dialog.querySelector('[data-tab-panel="preview"] form'), 'The evidence preview has no mutation forms');
-    check(dialog.querySelector('form').action.includes('/api/moderation/posts/42/publication'), 'Only an explicit admin publication action can restore hidden content');
+    check(dialog.querySelector('form').action.includes('/api/social/moderation/posts/42/publication'), 'Only an explicit admin publication action can restore hidden content');
     T.tabs.activate(dialog.querySelector('[data-tab="reports"]'),false);
     const table = dialog.querySelector('table'), eye = table.querySelector('[data-modal-url]');
     check(table.querySelectorAll('th').length === 5 && table.querySelectorAll('tbody tr').length === 1, 'Report history uses the standard table columns and rows');
@@ -535,7 +535,7 @@
     return;
   }
   if (mode === 'report') {
-    const dialog = T.status.modal(new URL('/api/moderation/report-options?id=42', location.href), {data:{reasons:['spam','abuse']}}, 'status-report-modal-42');
+    const dialog = T.status.modal(new URL('/api/social/moderation/report-options?id=42', location.href), {data:{reasons:['spam','abuse']}}, 'status-report-modal-42');
     const form = dialog.querySelector('form'), submit = dialog.querySelector('.modal-footer [type="submit"]');
     document.body.append(dialog);
     check(form.elements.namedItem('id').value === '42', 'The report retains its content ID field');
@@ -543,7 +543,7 @@
     let calls = 0;
     window.fetch = async (url, options) => {
       calls++;
-      check(new URL(url).pathname === '/api/moderation/reports' && options.method === 'POST', 'Reporting uses the canonical POST endpoint');
+      check(new URL(url).pathname === '/api/social/moderation/reports' && options.method === 'POST', 'Reporting uses the canonical POST endpoint');
       check(options.body.get('id') === '42' && options.body.get('reason') === 'abuse' && options.body.get('note') === 'Report fixture', 'Reporting sends the content ID, selected reason and note');
       return new Response(JSON.stringify({ok:true,status:201,code:'report_created',params:{},message:'Report sent',data:{action:'report',status_id:42},meta:{}}), {status:201,headers:{'Content-Type':'application/json'}});
     };

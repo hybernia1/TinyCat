@@ -43,10 +43,10 @@ for (const mode of [false, true, "min"]) {
   check(search.sources.includes("App/Modules/Social/assets/status/index.js"), "Search cards use the same status controller as feed cards");
   check(search.style_sources.includes("App/Modules/Social/assets/status/styles/status-header.css") && search.style_sources.includes("App/Modules/Social/assets/status/styles/status-content-mobile.css"), "Search SSR cards receive the owner's desktop and mobile styles");
   check(new Set(search.sources).size===search.sources.length && new Set(search.style_sources).size===search.style_sources.length, "Search dependencies are initialized and styled once");
-  const queue = load("/admin/bots/queue", "en", mode);
+  const queue = load("/admin/social/bots/queue", "en", mode);
   check(["status/edit-fields", "status/dialog-form"].every(name => queue.definitions.includes(name)), "Bot queue delivers its complete status editor dependency in every asset variant");
   const profile = load("/author/2", "cs", mode);
-  const followForm = { dataset: {}, getAttribute: name => name === "action" ? "/api/profiles/2/followers/me" : null };
+  const followForm = { dataset: {}, getAttribute: name => name === "action" ? "/api/social/profiles/2/followers/me" : null };
   const response = { data: { author_id: 2, following: true, followers_count: 1 } };
   const followers = { textContent: "4" }, following = { textContent: "7" };
   profile.document.querySelectorAll = selector => selector.includes("data-author-stat='followers'") ? [followers] : selector.includes("data-author-stat='following'") ? [following] : [];
@@ -85,14 +85,14 @@ const users = load("/admin/users");
 check(users.T.adminDefinitions["core.users"].component === "users/list", "User administration loads its declared list");
 check(users.T.accounts && !users.T.status && !users.T.bots, "User administration boots independently");
 check(users.definitions.includes("users/admin-fields"), "User administration receives its form definitions");
-const bots = load("/admin/bots/accounts");
+const bots = load("/admin/social/bots/accounts");
 check(bots.T.bots && bots.T.accounts && bots.T.status, "Bot administration includes account controls and the shared post editor");
-const botDetail = load("/admin/bots/detail");
+const botDetail = load("/admin/social/bots/detail");
 check(botDetail.T.bots && botDetail.T.status && botDetail.definitions.includes("bots/posts") && botDetail.definitions.includes("status/composer-body"), "Only bot detail loads the post list and shared post editor");
 check(bots.definitions.includes("ui/avatar"), "Component dependencies cross module boundaries without loading unrelated scripts");
 check(bots.definitions.includes("status/composer-body") && !bots.definitions.includes("status/card"), "Bot administration includes the shared post editor without public feed cards.");
 check([users, bots, load('/admin')].every(page => page.definitions.includes('notifications/items') && page.sources.includes('App/Core/Notifications/assets/polling.js') && page.T.notifications), 'Administration shares the public notification list, controller and polling lifecycle.');
-check(load("/admin/moderation/reports").T.moderation, "Moderation loads its module");
+check(load("/admin/social/moderation/reports").T.moderation, "Moderation loads its module");
 check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
 check(load("/admin").T.settings && load("/admin").T.accounts, "Every admin page includes settings and shared profile dialogs");
 check(load("/admin/updates").sources.includes("App/Core/Updates/assets/index.js") && !load("/admin").sources.includes("App/Core/Updates/assets/index.js"), "The release-notes renderer is scoped to the updates page.");
@@ -125,7 +125,7 @@ const rawPublic = load("/", "cs", true);
 check(minifiedPublic.assets[0].url !== rawPublic.assets[0].url && minifiedPublic.assets[3].url !== rawPublic.assets[3].url && minifiedPublic.styles[0] !== rawPublic.styles[0], "Minification selects distinct runtime, application and CSS variants");
 load("/admin", "en", "min");
 const cs = load("/", "cs");
-for (const route of ["/", "/admin/users", "/admin/bots/accounts", "/admin/bots/detail", "/admin/moderation/reports", "/admin/cron", "/admin/updates", "/admin", "/install"]) {
+for (const route of ["/", "/admin/users", "/admin/social/bots/accounts", "/admin/social/bots/detail", "/admin/social/moderation/reports", "/admin/cron", "/admin/updates", "/admin", "/install"]) {
   const compiled = load(route, "cs", true);
   check(compiled.assets.every(item => item.url.startsWith("/assets/build/")), "Release assets use the signed precompiled inventory: " + route);
   check(compiled.T.i18n.has("common.close"), "Compiled catalogs initialize before modules: " + route);
@@ -160,7 +160,7 @@ console.log("PASS scoped external client assets and translation runtime (" + che
       } };
       await T.deferred.resource(new URL("https://tinycat.test/api/users-other/8/avatar"));
       check(requests === 0, "Resource prefixes match complete path segments");
-      const resource = new URL("https://tinycat.test" + (route.startsWith("/tag") ? "/api/moderation/report-options" : route.startsWith("/author") ? "/api/users/8/avatar" : "/api/statuses/8"));
+      const resource = new URL("https://tinycat.test" + (route.startsWith("/tag") ? "/api/social/moderation/report-options" : route.startsWith("/author") ? "/api/users/8/avatar" : "/api/social/statuses/8"));
       if (failOnce) {
         await assert.rejects(T.deferred.resource(resource));
         check(!T.accounts.avatarUpload, "A failed script load does not initialize editor modules");

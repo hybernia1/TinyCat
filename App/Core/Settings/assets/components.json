@@ -198,7 +198,7 @@
           "children": [
             {
               "tag": "label",
-              "attrs": {"class": "btn btn-secondary btn-sm"},
+              "attrs": {"class": "btn btn-secondary sm"},
               "children": [
                 {"icon": "upload"},
                 {"tag": "span", "children": [{"t": "settings.image_upload"}]},

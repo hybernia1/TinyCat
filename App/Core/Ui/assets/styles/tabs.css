@@ -7,7 +7,7 @@
 
 .tab {
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-bottom: 0.125rem solid transparent;
   background: transparent;
   color: var(--muted);
   padding: var(--control-padding-inline) calc(var(--control-padding-block) / 2);

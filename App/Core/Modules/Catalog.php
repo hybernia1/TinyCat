@@ -15,6 +15,7 @@ final readonly class Catalog
     {
         $remaining = [];
         $namespaces = [];
+        $httpNamespaces = [];
         foreach ($definitions as $definition) {
             if (isset($remaining[$definition->id])) { throw new InvalidArgumentException('Duplicate module ID: ' . $definition->id); }
             foreach ($namespaces as $namespace) {
@@ -24,7 +25,19 @@ final readonly class Catalog
                 }
             }
             $namespaces[] = $definition->namespace;
+            if ($definition->httpNamespace !== null) {
+                if (isset($httpNamespaces[$definition->httpNamespace])) { throw new InvalidArgumentException('Duplicate module HTTP namespace: ' . $definition->httpNamespace); }
+                $httpNamespaces[$definition->httpNamespace] = true;
+            }
             $remaining[$definition->id] = $definition;
+        }
+        foreach ($definitions as $definition) {
+            foreach ($definition->legacyReadRoutes as $path) {
+                $namespace = explode('/', $path)[2];
+                foreach ($definitions as $other) {
+                    if ($other->id !== $definition->id && ($other->httpNamespace === $namespace || array_any($other->legacyReadRoutes, static fn (string $alias): bool => explode('/', $alias)[2] === $namespace))) { throw new InvalidArgumentException('Conflicting legacy HTTP namespace: ' . $namespace); }
+                }
+            }
         }
         foreach ($remaining as $definition) {
             foreach ($definition->requires as $id) {

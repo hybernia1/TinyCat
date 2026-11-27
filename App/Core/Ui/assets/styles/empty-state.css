@@ -3,16 +3,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  min-height: clamp(200px, 32vh, 320px);
-  padding: 32px 20px;
+  gap: var(--space-3);
+  min-height: clamp(12.5rem, 32vh, 20rem);
+  padding: var(--space-8) var(--space-5);
   color: var(--muted);
   text-align: center;
 }
 
 .empty-state-icon {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   stroke-width: 1.5;
 }
 
@@ -24,6 +24,6 @@
   overflow-wrap: anywhere;
 }
 
-.empty-state-compact { min-height: 116px; gap: 8px; padding: 20px 12px; }
-.empty-state-compact .empty-state-icon { width: 28px; height: 28px; }
+.empty-state-compact { min-height: 7.25rem; gap: var(--space-2); padding: var(--space-5) var(--space-3); }
+.empty-state-compact .empty-state-icon { width: 1.75rem; height: 1.75rem; }
 .empty-state-compact .empty-state-label { font-size: 0.875rem; }

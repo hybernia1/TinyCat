@@ -163,7 +163,7 @@ try {
     }
     $validateClients = require __DIR__ . '/../../tools/quality/client-translations.php';
     foreach (array_keys($real) as $locale) {
-        $botCatalog = \TinyCat\Support\ClientAssets::catalog('/admin/bots/accounts', $locale);
+        $botCatalog = \TinyCat\Support\ClientAssets::catalog('/admin/social/bots/accounts', $locale);
         if (($botCatalog['account.avatar'] ?? null) !== $real[$locale]['app']['account.avatar']) {
             throw new RuntimeException('Bot workspace avatar tab translation missing: ' . $locale);
         }

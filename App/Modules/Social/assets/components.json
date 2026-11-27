@@ -7,7 +7,7 @@
       "aria-label": {"get": "user.username"}
     },
     "children": [
-      {"component": "ui/avatar", "data": {"user": {"get": "user"}, "small": true, "alt": ""}},
+      {"component": "ui/avatar", "data": {"user": {"get": "user"}, "size": "sm", "alt": ""}},
       {
         "tag": "span",
         "attrs": {"class": "identity-copy identity-copy-truncate"},
@@ -29,7 +29,7 @@
         }
       },
       "data-modal-open": {"if": [{"get": "open_modal"}, {"concat": ["status-post-modal-", {"get": "item.id"}]}, null]},
-      "data-modal-url": {"if": [{"get": "open_modal"}, {"concat": ["/api/statuses/", {"get": "item.id"}]}, null]}
+      "data-modal-url": {"if": [{"get": "open_modal"}, {"concat": ["/api/social/statuses/", {"get": "item.id"}]}, null]}
     },
     "when": {"get": "item.published_at"},
     "children": [
@@ -51,7 +51,7 @@
           "class": "status-image-link",
           "href": {"get": "item.url"},
           "data-modal-open": {"concat": ["status-post-modal-", {"get": "item.id"}]},
-          "data-modal-url": {"concat": ["/api/statuses/", {"get": "item.id"}]},
+          "data-modal-url": {"concat": ["/api/social/statuses/", {"get": "item.id"}]},
           "aria-label": {"use": "status/permalink", "data": {"item": {"get": "item"}}}
         },
         "when": {"get": "open_modal"},
@@ -80,7 +80,7 @@
       {
         "component": "ui/menu-item",
         "data": {
-          "attributes": {"class": "context-menu-action btn-sm is-danger", "type": "submit", "data-popover-close": ""},
+          "attributes": {"class": "context-menu-action sm is-danger", "type": "submit", "data-popover-close": ""},
           "label": {"t": "common.delete"}
         }
       }
@@ -102,7 +102,7 @@
     "children": [
       {
         "tag": "summary",
-        "attrs": {"class": "btn btn-ghost btn-icon btn-sm status-manage-icon", "aria-label": {"t": "common.actions"}},
+        "attrs": {"class": "btn btn-ghost btn-icon sm status-manage-icon", "aria-label": {"t": "common.actions"}},
         "children": [{"icon": "more"}]
       },
       {
@@ -113,7 +113,7 @@
             "component": "ui/menu-item",
             "data": {
               "attributes": {
-                "class": "context-menu-action btn-sm",
+                "class": "context-menu-action sm",
                 "type": "button",
                 "data-popover-close": "",
                 "data-modal-open": {
@@ -124,7 +124,7 @@
                 },
                 "data-modal-url": {
                   "concat": [
-                    "/api/statuses/",
+                    "/api/social/statuses/",
                     {"or": [{"get": "content_id"}, {"get": "item.id"}]},
                     {
                       "if": [
@@ -144,12 +144,18 @@
             "component": "ui/menu-item",
             "data": {
               "attributes": {
-                "class": "context-menu-action btn-sm",
+                "class": "context-menu-action sm",
                 "type": "button",
                 "data-popover-close": "",
                 "data-modal-open": {"concat": ["status-comment-history-modal-", {"get": "item.id"}]},
                 "data-modal-url": {
-                  "concat": ["/api/statuses/", {"get": "content_id"}, "/comments/", {"get": "item.id"}, "/revisions"]
+                  "concat": [
+                    "/api/social/statuses/",
+                    {"get": "content_id"},
+                    "/comments/",
+                    {"get": "item.id"},
+                    "/revisions"
+                  ]
                 }
               },
               "label": {"t": "account.status_comment_history"}
@@ -161,7 +167,7 @@
             "data": {
               "url": {
                 "concat": [
-                  "/api/statuses/",
+                  "/api/social/statuses/",
                   {"or": [{"get": "content_id"}, {"get": "item.id"}]},
                   {"if": [{"get": "comment"}, {"concat": ["/comments/", {"get": "item.id"}]}, ""]}
                 ]
@@ -175,11 +181,11 @@
             "component": "ui/menu-item",
             "data": {
               "attributes": {
-                "class": "context-menu-action btn-sm",
+                "class": "context-menu-action sm",
                 "type": "button",
                 "data-popover-close": "",
                 "data-modal-open": {"concat": ["status-report-modal-", {"get": "item.id"}]},
-                "data-modal-url": {"concat": ["/api/moderation/report-options?id=", {"get": "item.id"}]}
+                "data-modal-url": {"concat": ["/api/social/moderation/report-options?id=", {"get": "item.id"}]}
               },
               "label": {"t": "moderation.report_action"}
             },
@@ -208,8 +214,8 @@
       "comment": {"get": "comment"},
       "content_id": {"get": "content_id"},
       "url": {"get": "url"},
-      "api_base": {"concat": ["/api/statuses/", {"get": "content_id"}]},
-      "suggest_url": "/api/search/suggestions",
+      "api_base": {"concat": ["/api/social/statuses/", {"get": "content_id"}]},
+      "suggest_url": "/api/social/search/suggestions",
       "submit_controller": "social"
     }
   },
@@ -219,7 +225,7 @@
     "children": [
       {
         "tag": "span",
-        "attrs": {"class": "btn btn-ghost btn-sm status-reaction"},
+        "attrs": {"class": "btn btn-ghost sm status-reaction"},
         "when": {"get": "preview"},
         "children": [{"icon": "thumb-up"}, {"get": "item.likes_count"}]
       },
@@ -228,14 +234,14 @@
         "data": {
           "item": {"get": "item"},
           "content_id": {"get": "item.id"},
-          "url": {"concat": ["/api/statuses/", {"get": "item.id"}, "/likes/me"]}
+          "url": {"concat": ["/api/social/statuses/", {"get": "item.id"}, "/likes/me"]}
         },
         "when": {"and": [{"get": "item.capabilities.interact"}, {"not": {"get": "preview"}}]}
       },
       {
         "tag": "a",
         "attrs": {
-          "class": "btn btn-ghost btn-sm status-reaction",
+          "class": "btn btn-ghost sm status-reaction",
           "href": {"get": "item.login_url"},
           "data-modal-open": "auth-modal",
           "data-modal-url": {"get": "item.login_modal_url"},
@@ -258,12 +264,14 @@
       {
         "tag": "a",
         "attrs": {
-          "class": "btn btn-ghost btn-sm status-reaction",
+          "class": "btn btn-ghost sm status-reaction",
           "href": {"concat": [{"get": "item.url"}, "#status-comments-thread-", {"get": "item.id"}]},
           "data-modal-open": {
             "if": [{"get": "open_modal"}, {"concat": ["status-post-modal-", {"get": "item.id"}]}, null]
           },
-          "data-modal-url": {"if": [{"get": "open_modal"}, {"concat": ["/api/statuses/", {"get": "item.id"}]}, null]},
+          "data-modal-url": {
+            "if": [{"get": "open_modal"}, {"concat": ["/api/social/statuses/", {"get": "item.id"}]}, null]
+          },
           "data-modal-scroll": {"if": [{"not": {"get": "open_modal"}}, "", null]}
         },
         "children": [
@@ -288,7 +296,7 @@
       {
         "tag": "a",
         "attrs": {
-          "class": "btn btn-ghost btn-sm status-reaction",
+          "class": "btn btn-ghost sm status-reaction",
           "href": {"concat": ["/status/", {"get": "item.id"}, "/embed-code"]},
           "aria-label": {
             "use": "ui/action-label",
@@ -298,7 +306,7 @@
             }
           },
           "data-modal-open": {"concat": ["status-embed-modal-", {"get": "item.id"}]},
-          "data-modal-url": {"concat": ["/api/statuses/", {"get": "item.id"}, "/embed"]},
+          "data-modal-url": {"concat": ["/api/social/statuses/", {"get": "item.id"}, "/embed"]},
           "data-modal-refresh": "true",
           "title": {
             "use": "ui/action-label",
@@ -322,7 +330,7 @@
       "data-status-url": {"get": "item.url"},
       "data-status-action": {"get": "action"},
       "data-modal-parent-open": {"concat": ["status-post-modal-", {"get": "item.id"}]},
-      "data-modal-parent-url": {"concat": ["/api/statuses/", {"get": "item.id"}]}
+      "data-modal-parent-url": {"concat": ["/api/social/statuses/", {"get": "item.id"}]}
     },
     "children": [
       {
@@ -375,8 +383,8 @@
       "parent_id": {"get": "parent_id"},
       "mention": {"get": "mention"},
       "viewer": {"get": "viewer"},
-      "api_base": {"concat": ["/api/statuses/", {"get": "content_id"}]},
-      "suggest_url": "/api/search/suggestions",
+      "api_base": {"concat": ["/api/social/statuses/", {"get": "content_id"}]},
+      "suggest_url": "/api/social/search/suggestions",
       "submit_controller": "social",
       "constraints": {"get": "constraints"}
     }
@@ -390,8 +398,8 @@
       "show_replies": {"get": "show_replies"},
       "show_reply_form": {"get": "show_reply_form"},
       "preview": {"get": "preview"},
-      "api_base": {"concat": ["/api/statuses/", {"get": "item.content_id"}]},
-      "suggest_url": "/api/search/suggestions",
+      "api_base": {"concat": ["/api/social/statuses/", {"get": "item.content_id"}]},
+      "suggest_url": "/api/social/search/suggestions",
       "submit_controller": "social",
       "reply_mentions": true,
       "constraints": {"get": "item.constraints"}
@@ -442,7 +450,7 @@
         "tag": "button",
         "attrs": {
           "type": "button",
-          "class": "btn btn-secondary btn-sm",
+          "class": "btn btn-secondary sm",
           "data-comment-page": {"get": "comments_next_url"},
           "data-comment-parent": "0"
         },
@@ -452,7 +460,7 @@
       {
         "tag": "a",
         "attrs": {
-          "class": "btn btn-secondary btn-sm",
+          "class": "btn btn-secondary sm",
           "href": {"get": "item.login_url"},
           "data-modal-open": "auth-modal",
           "data-modal-url": {"get": "item.login_modal_url"}
@@ -478,7 +486,7 @@
               "value": {"get": "value"},
               "placeholder": {"t": "account.status_body"},
               "comment": false,
-              "suggest_url": {"or": [{"get": "suggest_url"}, "/api/search/suggestions"]},
+              "suggest_url": {"or": [{"get": "suggest_url"}, "/api/social/search/suggestions"]},
               "max_characters": {"get": "constraints.body.max_length"}
             }
           },
@@ -1004,7 +1012,7 @@
                                 "children": [
                                   {
                                     "tag": "span",
-                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "attrs": {"class": "avatar sm", "aria-hidden": "true"},
                                     "children": [{"icon": "rss"}]
                                   },
                                   {
@@ -1066,10 +1074,14 @@
                               {
                                 "tag": "a",
                                 "attrs": {
-                                  "href": {"concat": ["/admin/bots/", {"get": "source.bot_user_id"}]},
+                                  "href": {"concat": ["/admin/social/bots/", {"get": "source.bot_user_id"}]},
                                   "data-modal-open": "bot-detail-modal",
                                   "data-modal-url": {
-                                    "concat": ["/api/bots/accounts/", {"get": "source.bot_user_id"}, "?panel=detail"]
+                                    "concat": [
+                                      "/api/social/bots/accounts/",
+                                      {"get": "source.bot_user_id"},
+                                      "?panel=detail"
+                                    ]
                                   },
                                   "aria-label": {
                                     "t": "bots.account_manage",
@@ -1106,7 +1118,7 @@
                                   "data-modal-open": "bot-detail-modal",
                                   "data-modal-url": {
                                     "concat": [
-                                      "/api/bots/accounts/",
+                                      "/api/social/bots/accounts/",
                                       {"get": "source.bot_user_id"},
                                       "?panel=detail&tab=posts&source=",
                                       {"get": "source.id"},
@@ -1176,9 +1188,11 @@
                                   {
                                     "component": "ui/modal-trigger",
                                     "data": {
-                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "class": "btn sm btn-ghost btn-icon",
                                       "modal": {"concat": ["bot-source-edit-", {"get": "source.id"}]},
-                                      "url": {"concat": ["/api/bots/sources/", {"get": "source.id"}, "/management"]},
+                                      "url": {
+                                        "concat": ["/api/social/bots/sources/", {"get": "source.id"}, "/management"]
+                                      },
                                       "label": {"t": "bots.edit_source"},
                                       "icon": "edit",
                                       "icon_only": true
@@ -1188,7 +1202,7 @@
                                     "component": "ui/activation-action",
                                     "data": {
                                       "active": {"get": "source.enabled"},
-                                      "url": {"concat": ["/api/bots/sources/", {"get": "source.id"}]},
+                                      "url": {"concat": ["/api/social/bots/sources/", {"get": "source.id"}]},
                                       "target": {
                                         "or": [
                                           {"get": "list_target"},
@@ -1201,7 +1215,7 @@
                                   {
                                     "component": "ui/api-action",
                                     "data": {
-                                      "url": {"concat": ["/api/bots/sources/", {"get": "source.id"}, "/runs"]},
+                                      "url": {"concat": ["/api/social/bots/sources/", {"get": "source.id"}, "/runs"]},
                                       "method": "POST",
                                       "target": {
                                         "or": [
@@ -1211,13 +1225,13 @@
                                       },
                                       "label": {"t": "bots.detail_run_now"},
                                       "icon": "refresh",
-                                      "button_class": "btn btn-sm btn-ghost btn-icon"
+                                      "button_class": "btn sm btn-ghost btn-icon"
                                     }
                                   },
                                   {
                                     "component": "ui/api-action",
                                     "data": {
-                                      "url": {"concat": ["/api/bots/sources/", {"get": "source.id"}]},
+                                      "url": {"concat": ["/api/social/bots/sources/", {"get": "source.id"}]},
                                       "method": "DELETE",
                                       "target": {
                                         "or": [
@@ -1228,7 +1242,7 @@
                                       "label": {"t": "common.delete"},
                                       "confirm": {"t": "bots.delete_confirm"},
                                       "icon": "trash",
-                                      "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
+                                      "button_class": "btn sm btn-ghost btn-icon text-danger"
                                     }
                                   }
                                 ]
@@ -1355,9 +1369,11 @@
                                   {
                                     "component": "ui/modal-trigger",
                                     "data": {
-                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "class": "btn sm btn-ghost btn-icon",
                                       "modal": "bot-detail-modal",
-                                      "url": {"concat": ["/api/bots/accounts/", {"get": "account.id"}, "?panel=detail"]},
+                                      "url": {
+                                        "concat": ["/api/social/bots/accounts/", {"get": "account.id"}, "?panel=detail"]
+                                      },
                                       "label": {"t": "bots.edit_account"},
                                       "icon": "edit",
                                       "icon_only": true
@@ -1367,14 +1383,16 @@
                                     "component": "ui/activation-action",
                                     "data": {
                                       "active": {"eq": [{"get": "account.status"}, "active"]},
-                                      "url": {"concat": ["/api/bots/accounts/", {"get": "account.id"}, "/activation"]},
+                                      "url": {
+                                        "concat": ["/api/social/bots/accounts/", {"get": "account.id"}, "/activation"]
+                                      },
                                       "target": {"admin_ref": "social.bot-creation", "field": "target"}
                                     }
                                   },
                                   {
                                     "component": "ui/api-action",
                                     "data": {
-                                      "url": {"concat": ["/api/bots/accounts/", {"get": "account.id"}]},
+                                      "url": {"concat": ["/api/social/bots/accounts/", {"get": "account.id"}]},
                                       "method": "DELETE",
                                       "target": {"admin_ref": "social.bot-creation", "field": "target"},
                                       "confirm": {
@@ -1383,7 +1401,7 @@
                                       },
                                       "label": {"t": "common.delete"},
                                       "icon": "trash",
-                                      "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
+                                      "button_class": "btn sm btn-ghost btn-icon text-danger"
                                     }
                                   }
                                 ]
@@ -1470,7 +1488,7 @@
                               "children": [
                                 {
                                   "tag": "span",
-                                  "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                  "attrs": {"class": "avatar sm", "aria-hidden": "true"},
                                   "children": [{"icon": "clock"}]
                                 },
                                 {
@@ -1630,7 +1648,7 @@
                                 "children": [
                                   {
                                     "tag": "span",
-                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "attrs": {"class": "avatar sm", "aria-hidden": "true"},
                                     "children": [{"icon": "file-text"}]
                                   },
                                   {
@@ -1704,7 +1722,7 @@
                                     "tag": "button",
                                     "attrs": {
                                       "type": "button",
-                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "class": "btn sm btn-ghost btn-icon",
                                       "title": {"t": "common.edit"},
                                       "aria-label": {"t": "common.edit"},
                                       "data-modal-open": {"concat": ["bot-post-edit-", {"get": "post.id"}]},
@@ -1729,7 +1747,7 @@
                                         "tag": "button",
                                         "attrs": {
                                           "type": "submit",
-                                          "class": "btn btn-sm btn-ghost btn-icon text-danger",
+                                          "class": "btn sm btn-ghost btn-icon text-danger",
                                           "title": {"t": "common.delete"},
                                           "aria-label": {"t": "common.delete"}
                                         },
@@ -1837,7 +1855,7 @@
                                 "children": [
                                   {
                                     "tag": "span",
-                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "attrs": {"class": "avatar sm", "aria-hidden": "true"},
                                     "children": [{"icon": "file-text"}]
                                   },
                                   {
@@ -1850,7 +1868,11 @@
                                           "href": {"get": "post.bot_url"},
                                           "data-modal-open": "bot-detail-modal",
                                           "data-modal-url": {
-                                            "concat": ["/api/bots/accounts/", {"get": "post.bot_id"}, "?panel=detail"]
+                                            "concat": [
+                                              "/api/social/bots/accounts/",
+                                              {"get": "post.bot_id"},
+                                              "?panel=detail"
+                                            ]
                                           },
                                           "class": "table-primary",
                                           "title": {"get": "post.username"}
@@ -1919,7 +1941,7 @@
                                   {
                                     "component": "ui/modal-trigger",
                                     "data": {
-                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "class": "btn sm btn-ghost btn-icon",
                                       "modal": {"concat": ["bot-queue-edit-", {"get": "post.id"}]},
                                       "url": {"get": "post.edit_url"},
                                       "label": {"t": "common.edit"},
@@ -1943,7 +1965,7 @@
                                         "tag": "button",
                                         "attrs": {
                                           "type": "submit",
-                                          "class": "btn btn-sm btn-ghost btn-icon",
+                                          "class": "btn sm btn-ghost btn-icon",
                                           "disabled": {"not": {"get": "post.can_publish"}},
                                           "title": {
                                             "if": [
@@ -2126,11 +2148,7 @@
               },
               {
                 "tag": "button",
-                "attrs": {
-                  "type": "button",
-                  "class": "btn btn-secondary btn-sm",
-                  "data-bot-preview-source": {"get": "_key"}
-                },
+                "attrs": {"type": "button", "class": "btn btn-secondary sm", "data-bot-preview-source": {"get": "_key"}},
                 "children": [{"t": "bots.preview_title"}]
               }
             ]
@@ -2477,7 +2495,7 @@
                                 "children": [
                                   {
                                     "tag": "span",
-                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "attrs": {"class": "avatar sm", "aria-hidden": "true"},
                                     "children": [{"icon": "shield"}]
                                   },
                                   {
@@ -2567,9 +2585,9 @@
                                   {
                                     "component": "ui/modal-trigger",
                                     "data": {
-                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "class": "btn sm btn-ghost btn-icon",
                                       "modal": {"concat": ["report-detail-", {"get": "report.id"}]},
-                                      "url": {"concat": ["/api/moderation/reports/", {"get": "report.id"}, ""]},
+                                      "url": {"concat": ["/api/social/moderation/reports/", {"get": "report.id"}, ""]},
                                       "label": {"t": "moderation.detail"},
                                       "icon": "eye",
                                       "icon_only": true
@@ -2707,7 +2725,7 @@
                                 "children": [
                                   {
                                     "tag": "span",
-                                    "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                    "attrs": {"class": "avatar sm", "aria-hidden": "true"},
                                     "children": [{"icon": "user"}]
                                   },
                                   {
@@ -2762,10 +2780,14 @@
                                   {
                                     "component": "ui/modal-trigger",
                                     "data": {
-                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "class": "btn sm btn-ghost btn-icon",
                                       "modal": {"concat": ["report-preview-", {"get": "report.id"}]},
                                       "url": {
-                                        "concat": ["/api/moderation/reports/", {"get": "report.id"}, "?panel=report"]
+                                        "concat": [
+                                          "/api/social/moderation/reports/",
+                                          {"get": "report.id"},
+                                          "?panel=report"
+                                        ]
                                       },
                                       "label": {"t": "moderation.detail"},
                                       "icon": "eye",
@@ -2956,7 +2978,7 @@
                         "tag": "a",
                         "attrs": {"class": "identity-row identity-row-compact", "href": {"get": "author.url"}},
                         "children": [
-                          {"component": "ui/avatar", "data": {"user": {"get": "author"}, "small": true}},
+                          {"component": "ui/avatar", "data": {"user": {"get": "author"}, "size": "sm"}},
                           {
                             "tag": "span",
                             "attrs": {"class": "identity-copy identity-copy-truncate"},
@@ -3035,7 +3057,7 @@
                       {
                         "tag": "button",
                         "attrs": {
-                          "class": "btn btn-secondary btn-sm btn-icon profile-edit-toggle",
+                          "class": "btn btn-secondary sm btn-icon profile-edit-toggle",
                           "type": "button",
                           "data-modal-open": {"get": "profile_edit_id"},
                           "data-modal-url": {"get": "profile_edit_url"},
@@ -3059,7 +3081,7 @@
                           },
                           {
                             "tag": "div",
-                            "attrs": {"class": "avatar avatar-xl"},
+                            "attrs": {"class": "avatar"},
                             "when": {"not": {"get": "can_edit"}},
                             "children": [
                               {
@@ -3208,7 +3230,7 @@
                             "tag": "form",
                             "attrs": {
                               "method": "post",
-                              "action": {"concat": ["/api/profiles/", {"get": "author.id"}, "/followers/me"]},
+                              "action": {"concat": ["/api/social/profiles/", {"get": "author.id"}, "/followers/me"]},
                               "data-follow-form": "",
                               "data-author-id": {"get": "author.id"}
                             },
@@ -3226,9 +3248,7 @@
                               {
                                 "tag": "button",
                                 "attrs": {
-                                  "class": {
-                                    "if": [{"get": "following"}, "btn btn-secondary btn-sm", "btn btn-primary btn-sm"]
-                                  },
+                                  "class": {"if": [{"get": "following"}, "btn btn-secondary sm", "btn btn-primary sm"]},
                                   "type": "submit"
                                 },
                                 "children": [
@@ -3246,7 +3266,7 @@
                           {
                             "tag": "a",
                             "attrs": {
-                              "class": "btn btn-secondary btn-sm",
+                              "class": "btn btn-secondary sm",
                               "href": {"get": "login_url"},
                               "data-modal-open": "auth-modal",
                               "data-modal-url": {"get": "login_modal_url"}
@@ -3308,7 +3328,7 @@
                 "children": [
                   {
                     "tag": "h1",
-                    "attrs": {"class": "text-2xl m-0"},
+                    "attrs": {"class": "public-list-title m-0"},
                     "children": [{"t": "public.tag_feed_title", "values": {"tag": {"concat": ["#", {"get": "tag"}]}}}]
                   },
                   {
@@ -3363,7 +3383,7 @@
                         "tag": "form",
                         "attrs": {
                           "method": "post",
-                          "action": "/api/statuses",
+                          "action": "/api/social/statuses",
                           "enctype": "multipart/form-data",
                           "data-status-form": "",
                           "data-status-scope": "feed",
@@ -3400,7 +3420,7 @@
                 "attrs": {"class": "public-list-header public-list-header-actions"},
                 "when": {"eq": [{"get": "kind"}, "author"]},
                 "children": [
-                  {"tag": "h2", "attrs": {"class": "text-2xl m-0"}, "children": [{"t": "public.feed_title"}]},
+                  {"tag": "h2", "attrs": {"class": "public-list-title m-0"}, "children": [{"t": "public.feed_title"}]},
                   {
                     "component": "site/archive-actions",
                     "data": {
@@ -3478,7 +3498,7 @@
                       {
                         "tag": "a",
                         "attrs": {
-                          "class": "btn btn-secondary btn-sm",
+                          "class": "btn btn-secondary sm",
                           "href": {"get": "login_url"},
                           "data-modal-open": "auth-modal",
                           "data-modal-url": {"get": "login_modal_url"}
@@ -3544,7 +3564,7 @@
       {
         "tag": "summary",
         "attrs": {
-          "class": {"if": [{"get": "archive_type"}, "btn btn-secondary btn-sm", "btn btn-ghost btn-sm"]},
+          "class": {"if": [{"get": "archive_type"}, "btn btn-secondary sm", "btn btn-ghost sm"]},
           "title": {
             "concat": [
               {"t": "public.filter_content"},
@@ -3598,7 +3618,7 @@
       {
         "tag": "a",
         "attrs": {
-          "class": "btn btn-ghost btn-sm",
+          "class": "btn btn-ghost sm",
           "href": {"get": "rss_url"},
           "target": "_blank",
           "rel": "noopener",
@@ -3781,7 +3801,7 @@
         "name": "comment",
         "comment": false,
         "value": {"get": "comment.editable_body"},
-        "suggest_url": "/api/search/suggestions",
+        "suggest_url": "/api/social/search/suggestions",
         "max_characters": {"get": "constraints.comment.max_length"},
         "placeholder": {"t": "account.status_comment_placeholder"},
         "labelledby": {"concat": [{"get": "dialog_id"}, "-label"]},
@@ -3856,7 +3876,7 @@
       },
       {
         "tag": "a",
-        "attrs": {"href": {"get": "clear_filter_url"}, "class": "btn btn-secondary btn-sm"},
+        "attrs": {"href": {"get": "clear_filter_url"}, "class": "btn btn-secondary sm"},
         "when": {"get": "archive_type"},
         "children": [{"t": "public.filter_all"}]
       }
@@ -4542,7 +4562,7 @@
       {
         "tag": "label",
         "attrs": {
-          "class": "btn btn-secondary btn-sm btn-icon status-image-picker",
+          "class": "btn btn-secondary sm btn-icon status-image-picker",
           "data-status-image-picker": "",
           "aria-label": {"t": "account.status_image_add"},
           "hidden": {"if": [{"not": {"and": [{"get": "enabled"}, {"not": {"get": "image.url"}}]}}, true, null]}
@@ -4609,7 +4629,7 @@
           "value": {"if": [{"get": "parent_id"}, {"get": "parent_id"}, 0]}
         }
       },
-      {"component": "ui/avatar", "data": {"user": {"get": "viewer"}, "small": true}},
+      {"component": "ui/avatar", "data": {"user": {"get": "viewer"}, "size": "sm"}},
       {
         "tag": "div",
         "attrs": {"class": "status-comment-input-shell"},
@@ -4636,7 +4656,7 @@
             "tag": "button",
             "attrs": {
               "type": "submit",
-              "class": "btn btn-primary btn-icon btn-sm status-comment-submit",
+              "class": "btn btn-primary btn-icon sm status-comment-submit",
               "aria-label": {
                 "if": [{"get": "parent_id"}, {"t": "account.status_reply"}, {"t": "account.status_comment"}]
               }
@@ -4673,7 +4693,7 @@
       {
         "tag": "a",
         "attrs": {"href": {"get": "item.author.url"}, "aria-label": {"get": "item.author.username"}},
-        "children": [{"component": "ui/avatar", "data": {"user": {"get": "item.author"}, "small": true}}]
+        "children": [{"component": "ui/avatar", "data": {"user": {"get": "item.author"}, "size": "sm"}}]
       },
       {
         "tag": "div",
@@ -4702,7 +4722,7 @@
                     "tag": "a",
                     "attrs": {
                       "href": {"concat": [{"get": "api_base"}, "/comments/", {"get": "item.id"}]},
-                      "class": "btn btn-ghost btn-sm",
+                      "class": "btn btn-ghost sm",
                       "data-modal-url": {"concat": [{"get": "api_base"}, "/comments/", {"get": "item.id"}]},
                       "data-modal-open": {"concat": ["modal-comment-", {"get": "item.id"}]}
                     },
@@ -4791,7 +4811,7 @@
             "tag": "button",
             "attrs": {
               "type": "button",
-              "class": "btn btn-secondary btn-sm",
+              "class": "btn btn-secondary sm",
               "data-comment-page": {"concat": [{"get": "api_base"}, "/comments?parent_id=", {"get": "item.id"}]},
               "data-comment-parent": {"get": "item.id"}
             },
@@ -4858,7 +4878,7 @@
           "type": "submit",
           "class": {
             "concat": [
-              {"if": [{"get": "comment"}, "status-comment-like-button", "btn btn-ghost btn-sm status-reaction"]},
+              {"if": [{"get": "comment"}, "status-comment-like-button", "btn btn-ghost sm status-reaction"]},
               {"if": [{"get": "item.liked"}, " is-active", ""]}
             ]
           },

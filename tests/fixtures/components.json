@@ -703,7 +703,7 @@
   {
     "component": "site/sidebar",
     "data": {
-      "url": "/api/site/sidebar?tag=tinycat",
+      "url": "/api/social/sidebar?tag=tinycat",
       "active_tag": "tinycat",
       "tags": [
         {
@@ -1185,7 +1185,7 @@
     "component": "status/feed-more",
     "data": {
       "target": "#feed",
-      "url": "/api/statuses?before_id=10"
+      "url": "/api/social/statuses?before_id=10"
     }
   },
   {

@@ -151,7 +151,7 @@ $assert(array_map(static fn ($entry): string => $entry->id, $reverse->entries->t
 $assert((new ReflectionMethod(\TinyCat\Support\Cache::class, 'driver'))->invoke(null) === 'filesystem' && !class_exists(\TinyCat\Core\Settings\Store::class, false), 'Technical cache configuration does not load Settings');
 \TinyCat\Support\Localization::locale('en');
 $menu = \TinyCat\Core\Ui\Admin\Navigation::administration();
-$assert(count($menu) === 9 && $menu[0]['href'] === '/admin' && $menu[1]['href'] === '/admin/users' && $menu[8]['modal_url'] === '/api/settings/editor', 'Navigation retains core module management and one shared task page');
+$assert(count($menu) === 8 && $menu[0]['href'] === '/admin' && $menu[1]['href'] === '/admin/users' && $menu[7]['modal_url'] === '/api/settings/editor', 'Navigation retains core module management and one shared task page');
 $assert(in_array('/admin/modules', array_column($menu, 'href'), true), 'Core module management is present in administration');
 \TinyCat\Support\Localization::locale('cs');
 $assert(\TinyCat\Core\Ui\Admin\Navigation::administration()[1]['label'] !== $menu[1]['label'], 'Navigation labels resolve in the current language at render time');
@@ -175,7 +175,7 @@ $assert(Resources::fingerprint() === $fingerprint, 'Leaving a scope restores the
 $temporary = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/registry-provider-' . bin2hex(random_bytes(6));
 mkdir($temporary . '/App/Modules/RegistryFixture/src', 0700, true);
 copy($root . '/tests/fixtures/modules/registry-provider.php', $temporary . '/App/Modules/RegistryFixture/src/Module.php');
-file_put_contents($temporary . '/App/Modules/RegistryFixture/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.provider', 'namespace' => 'TinyCat\\RegistryFixture\\', 'providers' => ['routes' => 'TinyCat\\RegistryFixture\\Module', 'contributions' => 'TinyCat\\RegistryFixture\\Module']], JSON_THROW_ON_ERROR));
+file_put_contents($temporary . '/App/Modules/RegistryFixture/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.provider', 'httpNamespace' => 'registry-fixture', 'namespace' => 'TinyCat\\RegistryFixture\\', 'providers' => ['routes' => 'TinyCat\\RegistryFixture\\Module', 'contributions' => 'TinyCat\\RegistryFixture\\Module']], JSON_THROW_ON_ERROR));
 try {
     $fixture = Loader::fromSelection($temporary, ['fixture.provider' => \TinyCat\RegistryFixture\Module::class]);
     $selection = new Catalog([$fixture->catalog->get('fixture.provider')]);
@@ -196,7 +196,7 @@ try {
             \TinyCat\Core\Modules\Providers::validateAll($selection);
             $assert($ownership->getValue() !== $cached, 'A selection revision invalidates successful ownership checks');
         });
-        $foreign = \TinyCat\Core\Modules\Definition::fromMetadata((object) ['format' => 1, 'coreApi' => 1, 'id' => 'fixture.provider', 'namespace' => 'TinyCat\\RegistryFixture\\', 'providers' => (object) ['routes' => \TinyCat\RegistryFixture\Module::class]], $root . '/App/Core');
+        $foreign = \TinyCat\Core\Modules\Definition::fromMetadata((object) ['format' => 1, 'coreApi' => 1, 'id' => 'fixture.provider', 'httpNamespace' => 'registry-fixture', 'namespace' => 'TinyCat\\RegistryFixture\\', 'providers' => (object) ['routes' => \TinyCat\RegistryFixture\Module::class]], $root . '/App/Core');
         $reject(static fn () => \TinyCat\Core\Modules\Providers::checked($foreign, 'routes', \TinyCat\Core\Modules\Module::class), 'The same ID with a foreign source root cannot reuse ownership');
     });
     $assert($ownership->getValue() === null, 'Startup ownership results do not survive the startup scope');

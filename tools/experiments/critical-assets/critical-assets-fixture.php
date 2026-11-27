@@ -40,7 +40,7 @@ try {
         $page['html'] = $document->saveHtml();
         $pages[$name] = $page;
     }
-    $sidebar = $get('/api/site/sidebar');
+    $sidebar = $get('/api/social/sidebar');
 } finally { $pool->stop(); }
 define('TINYCAT', true);
 require_once $root . '/App/Core/Runtime/autoload.php';

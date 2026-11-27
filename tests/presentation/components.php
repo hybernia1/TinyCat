@@ -120,10 +120,10 @@ $assert($hintXPath->query('//label/span[contains(@class,"label")]/span[@data-hel
 $assert($hintXPath->query('//span[@id="fixture-help"][@hidden]')->item(0)?->textContent === 'Literal <img src=x>' && $hintXPath->query('//img')->length === 0, 'Help retains an escaped description target for existing field associations.');
 $assert(\TinyCat\Core\Ui\Components::render('ui/help', ['text' => '']) === '', 'Empty hints do not render an empty info control.');
 $accountFilters = \TinyCat\Core\Ui\Components::render('bots/account-filter-form', ['filters' => ['q' => 'Bot <unsafe>', 'status' => 'ban'], 'pagination' => ['per_page' => 25], 'statuses' => ['active', 'waiting', 'ban']]);
-$assert(str_contains($accountFilters, 'action="/api/bots/accounts') && str_contains($accountFilters, 'name="status"') && str_contains($accountFilters, 'value="ban" selected'), 'Account filters share their canonical owner component and selected status.');
+$assert(str_contains($accountFilters, 'action="/api/social/bots/accounts') && str_contains($accountFilters, 'name="status"') && str_contains($accountFilters, 'value="ban" selected'), 'Account filters share their canonical owner component and selected status.');
 $assert(str_contains($accountFilters, 'Bot &lt;unsafe&gt;') && str_contains($accountFilters, 'data-ajax-target="#bot-accounts-list"') && !str_contains($accountFilters, 'role="dialog"') && !str_contains($accountFilters, 'type="submit"'), 'Account filters preserve escaped search state and automatic submission.');
 $sourceFilters = \TinyCat\Core\Ui\Components::render('bots/source-filter-form', ['bot_names' => [3 => 'Bot <unsafe>'], 'filters' => ['bot' => '3', 'q' => 'Feed'], 'pagination' => ['per_page' => 25]]);
-$assert(str_contains($sourceFilters, 'action="/api/bots/sources"') && str_contains($sourceFilters, 'value="3" selected'), 'Source filters share their canonical owner component and selected bot.');
+$assert(str_contains($sourceFilters, 'action="/api/social/bots/sources"') && str_contains($sourceFilters, 'value="3" selected'), 'Source filters share their canonical owner component and selected bot.');
 $assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source filters preserve their scoped controls and automatic submission.');
 
 $settingsSections = \TinyCat\Core\Settings\Administration::tc_admin_settings_view_sections();
@@ -132,7 +132,7 @@ foreach ($settingsSections as $section) {
     $assert(str_contains($iconSprite, 'id="' . $section['icon'] . '"'), 'Every settings section has a real shared SVG icon: ' . $section['icon']);
 }
 $assert(in_array('analytics', array_column(\TinyCat\Core\Settings\Resource::editor()['sections'], 'key'), true), 'Deferred settings expose the analytics section.');
-$sidebar = \TinyCat\Core\Ui\Components::render('site/sidebar', \TinyCat\Social\Site\Sidebar::resource(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]) + ['active_tag' => '', 'url' => '/api/site/sidebar']);
+$sidebar = \TinyCat\Core\Ui\Components::render('site/sidebar', \TinyCat\Social\Site\Sidebar::resource(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]) + ['active_tag' => '', 'url' => '/api/social/sidebar']);
 $assert(str_contains($sidebar, \TinyCat\Core\Ui\Html::e(\TinyCat\Support\Localization::plural('public.active_user_posts', 5))), 'Translation parameter maps preserve a parameter named count.');
 $assert(str_contains($sidebar, 'href="/author/1"') && str_contains($sidebar, 'href="/author/2"'), 'Sidebar authors retain distinct destinations.');
 $assert(str_contains($sidebar, 'href="/tag/tinycat"'), 'Sidebar topics use their prepared destination.');
@@ -179,14 +179,14 @@ $assert(preg_match('/name="publication_interval_minutes"[^>]*value="30"/', $sour
 $configuredFields = \TinyCat\Core\Ui\Components::render('bots/source-fields', array_replace($sourceModel, ['source' => \TinyCat\Social\Bots\Administration::prepareSourceInput($source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45])]));
 $assert(preg_match('/name="publication_interval_minutes"[^>]*value="45"/', $configuredFields) === 1 && preg_match('/name="interval_minutes"[^>]*value="60"/', $configuredFields) === 1, 'Source forms display separate polling and publication intervals.');
 $sources = \TinyCat\Core\Ui\Components::render('bots/sources', ['bots' => [['id' => 3, 'username' => 'Bot']], 'items' => [\TinyCat\Social\Bots\Importer::sourceResource($source)]]);
-$assert($hasAction($sources, '/api/bots/sources/7/runs') && $hasAction($sources, '/api/bots/sources/7'), 'Source run and edit/delete actions address the same source.');
+$assert($hasAction($sources, '/api/social/bots/sources/7/runs') && $hasAction($sources, '/api/social/bots/sources/7'), 'Source run and edit/delete actions address the same source.');
 $accounts = \TinyCat\Core\Ui\Components::render('bots/accounts', ['items' => [\TinyCat\Social\Bots\Administration::accountResource(['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01'])]]);
-$assert(str_contains($accounts, '/api/bots/accounts'), 'Bot accounts retain canonical API actions.');
+$assert(str_contains($accounts, '/api/social/bots/accounts'), 'Bot accounts retain canonical API actions.');
 $item = ['id' => 7, 'likes_count' => 2, 'comments_count' => 1];
 $actions = \TinyCat\Core\Ui\Components::render('status/actions', ['item' => \TinyCat\Social\Posts\Resource::post($item, $member), 'open_modal' => true]);
-$assert(str_contains($actions, 'action="/api/statuses/7/likes/me"'), 'Status reactions use the resource action.');
+$assert(str_contains($actions, 'action="/api/social/statuses/7/likes/me"'), 'Status reactions use the resource action.');
 $form = \TinyCat\Core\Ui\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Profiles::resource($member), 'parent_id' => 0, 'mention' => '']);
-$assert(str_contains($form, 'action="/api/statuses/7/comments"') && str_contains($form, 'status-comment-input-shell'), 'Comment forms preserve the API action and editor structure.');
+$assert(str_contains($form, 'action="/api/social/statuses/7/comments"') && str_contains($form, 'status-comment-input-shell'), 'Comment forms preserve the API action and editor structure.');
 foreach ([null, 0, 20] as $parentId) {
     $commentForm = \TinyCat\Core\Ui\Components::render('status/comment-form', ['content_id' => 7, 'constraints' => \TinyCat\Social\Posts\Resource::constraints(), 'viewer' => \TinyCat\Social\Profiles\Profiles::resource($member), 'parent_id' => $parentId]);
     $assert(str_contains($commentForm, 'name="parent_id" value="' . ($parentId ?? 0) . '"'), 'Comment forms submit a numeric zero for root comments and preserve reply parent IDs.');
@@ -302,7 +302,7 @@ $assert(substr_count($adminHeader, 'href="/admin"') === 1 && str_contains($admin
 $assert(!str_contains($memberHeader, 'data-language-menu') && !str_contains($memberHeader, 'data-global-search'), 'Authenticated header respects conditional language and search surfaces.');
 foreach (['/uploads/avatars/member.webp', ''] as $avatarUrl) {
     $identityHtml = \TinyCat\Core\Ui\Components::render('users/identity-row', ['user' => ['id' => 17, 'username' => 'Member <unsafe>', 'status' => 'waiting', 'avatar_url' => $avatarUrl]]);
-    $assert(str_contains($identityHtml, 'avatar avatar-sm') && str_contains($identityHtml, 'data-avatar-user-id="17"') && str_contains($identityHtml, 'Member &lt;unsafe&gt;'), 'Shared account cells preserve avatar identity and escaped names.');
+    $assert(str_contains($identityHtml, 'avatar sm') && str_contains($identityHtml, 'data-avatar-user-id="17"') && str_contains($identityHtml, 'Member &lt;unsafe&gt;'), 'Shared account cells preserve avatar identity and escaped names.');
     $assert($avatarUrl === '' ? !str_contains($identityHtml, '<img') && str_contains($identityHtml, 'avatar-fallback') : str_contains($identityHtml, 'src="' . $avatarUrl . '"'), 'Shared account cells render uploaded avatars or the existing fallback.');
 }
 restore_error_handler();

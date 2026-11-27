@@ -58,6 +58,16 @@ final class SourceModules
                 $definitions[$definition->id] = $definition;
             } catch (\InvalidArgumentException $error) { $errors['App/Modules/' . $entry->getFilename()] = $error->getMessage(); }
         }
+        $claims = [];
+        foreach ($definitions as $definition) {
+            if ($definition->httpNamespace !== null) { $claims[$definition->httpNamespace][] = $definition->id; }
+            foreach ($definition->legacyReadRoutes as $path) { $claims[explode('/', $path)[2]][] = $definition->id; }
+        }
+        foreach ($claims as $namespace => $ids) {
+            $ids = array_unique($ids);
+            if (count($ids) < 2) { continue; }
+            foreach ($ids as $id) { $errors[$selection[$id] ?? $id] = 'Duplicate module HTTP namespace: ' . $namespace; unset($selection[$id], $definitions[$id]); }
+        }
         ksort($selection, SORT_STRING);
         return compact('selection', 'definitions', 'errors');
     }

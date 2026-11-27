@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../support/mysql.php';
 [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.public_enabled' => false]], 'admin', $csrf);
 $assert($status === 200, 'Administrators can disable the public website through the existing settings API.');
 foreach (['', 'user', 'admin'] as $role) {
-    foreach (['/api/site/pages?path=/', '/api/site/sidebar', '/api/search?q=Export', '/api/search/query?q=Export', '/api/statuses', '/api/statuses/10', '/api/profiles/2'] as $path) {
+    foreach (['/api/social/pages?path=/', '/api/social/sidebar', '/api/search?q=Export', '/api/search/query?q=Export', '/api/social/statuses', '/api/social/statuses/10', '/api/social/profiles/2'] as $path) {
         [$status, $payload] = $request('GET', $path, null, $role);
         $assert($status === 404 && $payload['code'] === 'not_found', 'Closed public JSON resources use the shared 404 for every role: ' . $path);
     }
@@ -39,20 +39,20 @@ $assert($status === 200, 'Disabling the website preserves the authenticated core
 $closedDb = \tinycat_test_database($databasePath);
 $closedDb->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (980001, 3, 'Closed website draft', '2999-01-01 12:00:00')");
 foreach (['' => 401, 'user' => 403] as $role => $expected) {
-    [$status] = $request('PATCH', '/api/bots/accounts/3/posts/980001', ['body' => 'Forbidden'], $role, $csrf);
+    [$status] = $request('PATCH', '/api/social/bots/accounts/3/posts/980001', ['body' => 'Forbidden'], $role, $csrf);
     $assert($status === $expected, 'Internal bot mutations retain authorization with the website disabled.');
 }
-[$status] = $request('PATCH', '/api/bots/accounts/3/posts/980001', ['body' => 'Forbidden'], 'admin');
+[$status] = $request('PATCH', '/api/social/bots/accounts/3/posts/980001', ['body' => 'Forbidden'], 'admin');
 $assert($status === 403, 'Internal bot mutations require CSRF.');
-[$status] = $request('DELETE', '/api/bots/accounts/1/posts/980001', [], 'admin', $csrf);
+[$status] = $request('DELETE', '/api/social/bots/accounts/1/posts/980001', [], 'admin', $csrf);
 $assert($status === 404, 'Internal bot mutations reject another account owner.');
-[$status, $editor] = $request('GET', '/api/bots/accounts/3/posts/980001/management', null, 'admin');
-$assert($status === 200 && $editor['data']['update_url'] === '/api/bots/accounts/3/posts/980001' && isset($editor['data']['constraints']), 'Internal editing provides its own canonical write endpoint and constraints.');
-[$status] = $request('GET', '/api/bots/accounts/3/posts/980001/suggestions?q=mem&type=user', null, 'admin');
+[$status, $editor] = $request('GET', '/api/social/bots/accounts/3/posts/980001/management', null, 'admin');
+$assert($status === 200 && $editor['data']['update_url'] === '/api/social/bots/accounts/3/posts/980001' && isset($editor['data']['constraints']), 'Internal editing provides its own canonical write endpoint and constraints.');
+[$status] = $request('GET', '/api/social/bots/accounts/3/posts/980001/suggestions?q=mem&type=user', null, 'admin');
 $assert($status === 200, 'Internal editor suggestions remain available without the public website.');
-[$status] = $request('PATCH', '/api/bots/accounts/3/posts/980001', ['body' => 'Updated closed website draft'], 'admin', $csrf);
+[$status] = $request('PATCH', '/api/social/bots/accounts/3/posts/980001', ['body' => 'Updated closed website draft'], 'admin', $csrf);
 $assert($status === 200 && $closedDb->query('SELECT body FROM social_posts WHERE id = 980001')->fetchColumn() === 'Updated closed website draft', 'Administration updates bot posts independently of the public API.');
-[$status] = $request('DELETE', '/api/bots/accounts/3/posts/980001', [], 'admin', $csrf);
+[$status] = $request('DELETE', '/api/social/bots/accounts/3/posts/980001', [], 'admin', $csrf);
 $assert($status === 200 && (int) $closedDb->query('SELECT COUNT(*) FROM social_posts WHERE id = 980001')->fetchColumn() === 0, 'Administration deletes bot posts with the website disabled.');
 $closedDb = null;
 foreach (['admin' => true, '' => false] as $role => $adminShell) {
@@ -61,5 +61,5 @@ foreach (['admin' => true, '' => false] as $role => $adminShell) {
 }
 [$status] = $request('PATCH', '/api/settings', ['settings' => ['site.public_enabled' => true]], 'admin', $csrf);
 $assert($status === 200, 'The public website can be enabled again without installation or build.');
-[$status, $payload] = $request('GET', '/api/site/pages?path=/author/2');
+[$status, $payload] = $request('GET', '/api/social/pages?path=/author/2');
 $assert($status === 200 && $payload['data']['kind'] === 'author', 'Re-enabling restores owner page resources in the same running fixture.');

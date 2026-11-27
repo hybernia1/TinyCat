@@ -1,6 +1,6 @@
 .result-list {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -9,9 +9,9 @@
 .result-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
 }

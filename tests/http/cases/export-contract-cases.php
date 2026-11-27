@@ -81,7 +81,7 @@ $headXPath = new DOMXPath($headDocument);
 $assert($headXPath->evaluate('string(//meta[@property="article:author"]/@content)') === 'http://localhost/author/900001', 'Open Graph author is the canonical profile URL.');
 $assert($headXPath->query('//meta[@property="article:tag"]')->length === 1 && $headXPath->evaluate('string(//meta[@property="article:tag"]/@content)') === 'exportpublic', 'Open Graph exports normalized article tags.');
 $assert($headXPath->evaluate('string(//link[@type="application/rss+xml"]/@href)') === 'http://localhost/author/900001/feed', 'Post detail advertises its author RSS feed.');
-[$status, $navigationBody] = $exportRequest('/api/site/pages?path=/status/900001');
+[$status, $navigationBody] = $exportRequest('/api/social/pages?path=/status/900001');
 $navigationDocument = json_decode($navigationBody, true, 512, JSON_THROW_ON_ERROR)['data']['document'];
 $assert($status === 200 && $navigationDocument['tags'] === ['exportpublic'] && $navigationDocument['author'] === $postSchema['author']['url'] && $navigationDocument['rss'] === 'http://localhost/author/900001/feed', 'Client navigation carries the same article tags, author URL and RSS discovery as HTML.');
 $commentSchema = $postSchema['comment'][0];
@@ -113,7 +113,7 @@ foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/pl/status/9
     $metadataDom = new DOMDocument();
     libxml_use_internal_errors(true); $metadataDom->loadHTML($metadataHtml); libxml_clear_errors();
     $metadataXPath = new DOMXPath($metadataDom);
-    $navigationUrl = '/api/site/pages?path=' . rawurlencode((string) parse_url($metadataPath, PHP_URL_PATH));
+    $navigationUrl = '/api/social/pages?path=' . rawurlencode((string) parse_url($metadataPath, PHP_URL_PATH));
     $metadataQuery = (string) parse_url($metadataPath, PHP_URL_QUERY);
     if ($metadataQuery !== '') { $navigationUrl .= '&' . $metadataQuery; }
     [$navigationStatus, $metadataJson] = $exportRequest($navigationUrl, 'GET', ['Accept-Language' => 'en']);
@@ -135,7 +135,7 @@ foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/pl/status/9
 }
 foreach (['/author/900001', '/tag/exportpublic'] as $filteredPage) {
     $combinedUrl = $filteredPage . '?compact=1&media=images';
-    [$combinedStatus, $combinedJson] = $exportRequest('/api/site/pages?path=' . rawurlencode($filteredPage) . '&compact=1&media=images');
+    [$combinedStatus, $combinedJson] = $exportRequest('/api/social/pages?path=' . rawurlencode($filteredPage) . '&compact=1&media=images');
     $combined = json_decode($combinedJson, true, 512, JSON_THROW_ON_ERROR)['data'];
     $assert($combinedStatus === 200 && $combined['url'] === $combinedUrl && $combined['compact'] === true
         && $combined['archive_type'] === 'images' && !$combined['sidebar'], 'Native owner data reaches navigation with compact and media together.');

@@ -33,6 +33,6 @@
 /* Native disclosure remains usable before JavaScript is available. */
 [data-popover][open] > .popover-panel:not([popover]) {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 0.25rem);
   right: 0;
 }

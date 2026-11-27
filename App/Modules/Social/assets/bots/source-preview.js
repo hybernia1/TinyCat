@@ -27,7 +27,7 @@ import "../../../../Core/Ui/assets/form-requests.js";
     T.dialog.open(dialog);
     try {
       if (!dialog.isConnected) { return; }
-      var result = await T.forms.request(form, "/api/bots/sources/previews", { method: "POST", body: data });
+      var result = await T.forms.request(form, "/api/social/bots/sources/previews", { method: "POST", body: data });
       if (!dialog.isConnected || !form.isConnected) { return; }
       if (signature(form) !== initial) { content.textContent = U.text("bots.preview_changed"); return; }
       var resource = result.data, name = form.querySelector('[name="name"]');

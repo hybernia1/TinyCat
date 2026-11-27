@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace TinyCat\Core\Modules;
 
-/** One owner-scoped group in the core statistics widget; data loads on selection. */
+/** One owner-scoped group; data loads lazily when the dashboard or API requests counts. */
 final readonly class DashboardStats
 {
     /** @param \Closure(): string $label

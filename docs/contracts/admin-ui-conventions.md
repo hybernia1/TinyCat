@@ -1,5 +1,11 @@
 # Administration lists and editors
 
+Functional-module administration is rooted at `/admin/<httpNamespace>/...` and
+its resources at `/api/<httpNamespace>/...`. Social contributes one lazy group
+with four direct links: bot accounts, sources, publication queue and reports.
+The shared shell and active-state normalization own opening and highlighting;
+owners do not add nested submenu renderers or a second navigation registry.
+
 Simple resource lists may declare `api` and `apply` through `TinyCat.lists.register`
 and delegate response handling to `TinyCat.lists.result(selector, source, response, target)`.
 The shared adapter checks the origin and endpoint boundary, renders reads and
@@ -10,7 +16,7 @@ this adapter. Prepared filter defaults belong to the shared `ui.filterPanel`.
 
 All dialogs follow the authoritative [modal contract](modal-contract.md).
 This includes new-record forms and read-only release notes. Creation editors
-load `/api/users/creation` or `/api/bots/accounts/creation` on demand; refreshing
+load `/api/users/creation` or `/api/social/bots/accounts/creation` on demand; refreshing
 their background list never rebuilds or removes an open editor.
 
 `/admin/users` is the reference for administration lists.
@@ -144,7 +150,7 @@ Avatar tab using the same `users/avatar-control` as user administration;
 the avatar editor saves independently and the parent tab has no competing
 Save action. Do not duplicate account statistics above the editor.
 
-Bot run history uses `/api/bots/accounts/{id}/runs` with its own
+Bot run history uses `/api/social/bots/accounts/{id}/runs` with its own
 `#bot-detail-runs-list` target, shared list toolbar and pagination.
 Search matches source names and diagnostic notes; filters select source
 and result. Sorting, filters and pagination never change browser history
@@ -319,7 +325,7 @@ list targets, query state, and filters; they do not push browser history
 or update the list behind the modal. Mutations refresh affected tabs,
 and closing refreshes the background list.
 
-Direct `/admin/bots/{id}` links open the same modal over the accounts list.
+Direct `/admin/social/bots/{id}` links open the same modal over the accounts list.
 There is no standalone detail page or duplicate bot account editor.
 
 Use `TinyCat.ui.tabbedContent()` for tabbed detail layouts. For one form
@@ -375,8 +381,8 @@ open. Source, post and run lists load through their paginated endpoints;
 do not preload retired page snapshots or the public profile URL.
 Bot administration reuses the post composer without public feed-card,
 thread or notification-list definitions and without public-only styles.
-The removed `/admin/bots/detail` asset scope is consolidated into
-`/admin/bots`, whose JS ceiling inherits the former detail's 320 KiB raw /
+The removed `/admin/social/bots/detail` asset scope is consolidated into
+`/admin/social/bots`, whose JS ceiling inherits the former detail's 320 KiB raw /
 64 KiB gzip limits. Its CSS ceiling is 50 KiB raw / 10 KiB gzip. Reviewed
 shared editor/filter growth is recorded per scope in `asset-budgets.json`;
 keep four scripts, one stylesheet and no unreachable asset sources.
@@ -426,7 +432,7 @@ Filter state must agree between the query, popover and removable chips. Normaliz
 
 Resource modals use the shared dialog-history
 service. Opening adds one entry; selecting a tab replaces that entry. For example,
-`/admin/bots/accounts?status=active#modal=bots/accounts/123&panel=detail&tab=history`
+`/admin/social/bots/accounts?status=active#modal=social/bots/accounts/123&panel=detail&tab=history`
 keeps list filters in the page query and modal identity/tab in the fragment.
 Ordinary anchors are restored on close. Do not put form drafts or credentials in
 URLs, history state or browser storage.
@@ -557,8 +563,9 @@ to `/admin/cache`. There is no new bulk cache deletion action.
 
 ### Statistics groups
 
-The core `core.statistics` widget hosts `DashboardStats` contributions in a native
-select. Each owner provides an ID, label, lazy count loader and metadata-only
+The core `core.statistics` widget presents all visible `DashboardStats` contributions
+together as shared icon badges, without a group selector. Each owner provides an
+ID, label, lazy count loader and metadata-only
 `fields` callback. The callback maps local metric keys to translation expressions.
 The shared `dashboard.statistics` component lookup compiles this metadata for PHP
 and browser rendering. It must not query data or evaluate the count loader.
@@ -567,13 +574,13 @@ and browser rendering. It must not query data or evaluate the count loader.
 checks owner visibility and loads only the selected group. It returns canonical
 `id`, `items` (`key`, integer `value`) and an optional canonical `url`. No labels,
 component definitions or rendered HTML belong in this response. Inactive owners
-are absent and unknown or hidden groups return 404. The first HTML render uses
-the same metrics component and selects the first visible group by default.
+are absent and unknown or hidden groups return 404. The dashboard loads every visible group on demand and renders their metrics
+through the shared badge component. Each group retains its own eight-item bound;
+combining groups does not truncate later owners. A failed group is reported and
+does not suppress healthy groups.
 
-The selector uses the shared AJAX form and auto-submit lifecycle, including stale
-request protection, loading, errors and content disposal. No hidden panels or
-preloaded counts for other groups are created. Without JavaScript its GET form
-continues to work. A failed request preserves the previous metrics and selection.
+The statistics endpoint remains available for authorized owner-specific reads.
+Rendering the dashboard does not depend on JavaScript or preload hidden panels.
 
 Dashboard list items may supply `user` (the shared avatar model) or a fallback
 `icon`. Their title and detail occupy the flexible middle column; time is a

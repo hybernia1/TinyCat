@@ -125,7 +125,7 @@ $assert(str_contains($html, 'home-feed-toolbar') && str_contains($html, 'archive
 $assert(str_contains($html, 'href="/?feed=following&amp;media=images"'), 'Rendered filter links preserve query parameters.');
 $resource['items'] = [];
 $html = \TinyCat\Core\Ui\Components::render('site/public-page', $resource);
-$assert(str_contains($html, \TinyCat\Support\Localization::t('public.feed_empty_filtered')) && str_contains($html, 'href="/?feed=following" class="btn btn-secondary btn-sm"'), 'Empty filtered feeds explain the result and allow clearing the filter.');
+$assert(str_contains($html, \TinyCat\Support\Localization::t('public.feed_empty_filtered')) && str_contains($html, 'href="/?feed=following" class="btn btn-secondary sm"'), 'Empty filtered feeds explain the result and allow clearing the filter.');
 foreach (['author' => '/author/1', 'tag' => '/tag/tinycat'] as $kind => $base) {
     foreach ([false, true] as $compact) {
         foreach (['', 'images', 'video'] as $media) {

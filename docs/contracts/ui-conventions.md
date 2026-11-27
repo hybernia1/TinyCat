@@ -55,8 +55,9 @@ Komponenta vlastní buňku `th`, `scope`, `aria-sort` a skládá `ui/sort-headin
 vlastník dodává pořadí a URL.
 
 Řádky s avatarem používají `.identity-row` a `.identity-copy` ze společného
-`identity-rows.css`. Varianta `identity-row-compact` má avatar 36 px,
-běžná 44 px; `identity-copy-truncate` slouží pro jednořádkové náhledy.
+`identity-rows.css`. Varianta `identity-row-compact` odvozuje avatar z
+`--control-height-compact` (2.25rem), běžná z `--identity-symbol-size`
+podle řádků identity; `identity-copy-truncate` slouží pro jednořádkové náhledy.
 `identity-row-inset` odstraňuje vnitřní odsazení při vložení do většího řádku.
 Hover, typografii a rozložení neurčuje znovu každý modul.
 
@@ -537,3 +538,22 @@ including joined authors, comment authors and notification actors. Core does not
 names from domain projections or query per rendered row. Username-derived immutable
 URLs change when the name changes. The account avatar dialog provides upload/remove
 only; no appearance, palette, gender or other generated-avatar editor is registered.
+
+## Component sizes and global scale
+
+`ui/avatar` accepts presentation `size`: `sm`, `xl` or the default size.
+It renders `.avatar.sm` (2.125rem), `.avatar.xl` (6rem) or `.avatar` (2.75rem).
+Unknown sizes use the default. Legacy `small: true`, `avatar-sm` and `avatar-xl`
+remain compatible inputs to the same implementation. Internal callers use `size`.
+Identity rows own both the symbol size and matching grid column.
+
+Small buttons use `.btn.sm`; menu actions use `.context-menu-action.sm`.
+Legacy `btn-sm` remains an alias. The local `--button-height` controls minimum
+height and icon button width. Nested buttons initialize their own metric.
+Size modifiers must never define a standalone global `.sm` rule. Typography,
+responsive grids and purpose-specific modal sizes remain separate axes.
+
+Scale 0.75 with compact density 0.875 gives a root of 65.625% of the browser
+base. Components do not multiply it again. The native Social matrix covers
+75/100/125/150/200% in both densities. Viewport breakpoints, hairlines,
+decorative effects and explicit mobile input/touch floors retain their purpose.

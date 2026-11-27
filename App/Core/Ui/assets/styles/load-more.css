@@ -1,9 +1,9 @@
 .load-more {
   display: flex;
-  min-height: 48px;
+  min-height: 3rem;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 .load-more > .btn { align-self: center; }
 .load-more-state { color: var(--muted); font-size: 0.875rem; font-weight: 600; }

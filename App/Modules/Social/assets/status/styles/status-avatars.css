@@ -1,9 +1,3 @@
-.status-header .avatar {
-  width: 2.75rem;
-  height: 2.75rem;
-}
-
-.status-compose-row .avatar {
-  width: var(--control-height-compact);
-  height: var(--control-height-compact);
+.status-compose-row > .avatar {
+  --avatar-size: inherit;
 }

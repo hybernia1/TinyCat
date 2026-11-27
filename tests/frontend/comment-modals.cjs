@@ -29,7 +29,7 @@ const html = '<!doctype html><html lang="cs"><head><meta name="viewport" content
         const T = TinyCat;
         const comment = {id:20,content_id:10,author:{id:7,username:'Test',url:'/author/7'},capabilities:{edit:true},editable_body:'Test',created_at:'2026-11-01T12:00:00Z',segments:[{type:'text',text:'Test comment body'}],replies:[]};
         window.commentModalReads = []; window.commentModalErrors = [];
-        const wrap = document.createElement('div'); wrap.className='status-card'; wrap.dataset.modalParentOpen='status-post-modal-10'; wrap.dataset.modalParentUrl='/api/statuses/10'; wrap.dataset.statusUrl='/status/10';
+        const wrap = document.createElement('div'); wrap.className='status-card'; wrap.dataset.modalParentOpen='status-post-modal-10'; wrap.dataset.modalParentUrl='/api/social/statuses/10'; wrap.dataset.statusUrl='/status/10';
         wrap.append(T.status.comment(comment)); document.querySelector("main").append(wrap);
         T.api.request = async url => { commentModalReads.push(url); return {data:url.includes('revisions') ? {items:[]} : {constraints,item:{id:10},comments:[comment]}}; };
         document.addEventListener('tinycat:dialog-error',event => commentModalErrors.push(event.detail.error.message));
@@ -51,7 +51,7 @@ const html = '<!doctype html><html lang="cs"><head><meta name="viewport" content
     await page.evaluate(async constraints => {
       const viewer = {id:7,username:'Test',url:'/author/7'}, make = (id, parent) => ({id,content_id:10,parent_id:parent,author:viewer,created_at:'2026-01-01T00:00:00Z',segments:[{type:'text',text:'Comment '+id}],capabilities:{interact:true},constraints,replies:[],has_replies:id===1});
       window.commentFixture = {viewer,make};
-      document.querySelector('main').append(TinyCat.components.render('status/thread', {item:{id:10,constraints},viewer,comments:[make(1,0)],comments_next_url:'/api/statuses/10/comments?cursor_id=1'}));
+      document.querySelector('main').append(TinyCat.components.render('status/thread', {item:{id:10,constraints},viewer,comments:[make(1,0)],comments_next_url:'/api/social/statuses/10/comments?cursor_id=1'}));
       TinyCat.status.init(); TinyCat.lifecycle.hydrate(document);
       TinyCat.api.request = () => new Promise(resolve => { window.finishCommentRequest = resolve; });
       const field = document.querySelector('[data-status-editor-input], textarea.status-comment-input'); field.focus();
@@ -76,7 +76,7 @@ const html = '<!doctype html><html lang="cs"><head><meta name="viewport" content
       const field = root.querySelector('.status-reply-form-container textarea.status-comment-input');
       field.value = 'Reply draft'; field.focus();
       root.querySelector('[data-comment-parent="1"]').click();
-      window.finishCommentRequest({data:{items:[commentFixture.make(4,1)],viewer:commentFixture.viewer},meta:{pagination:{next_url:'/api/statuses/10/comments?parent_id=1&cursor_id=4',done:false}}});
+      window.finishCommentRequest({data:{items:[commentFixture.make(4,1)],viewer:commentFixture.viewer},meta:{pagination:{next_url:'/api/social/statuses/10/comments?parent_id=1&cursor_id=4',done:false}}});
     });
     await page.waitForFunction(() => !!document.querySelector('.status-comment[data-comment-id="4"]'));
     const replyDraft = await page.evaluate(() => ({value:document.activeElement.value,focused:document.activeElement.matches('.status-reply-form-container textarea.status-comment-input')}));

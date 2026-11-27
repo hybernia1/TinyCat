@@ -21,7 +21,7 @@ import "../../../../Core/Ui/assets/tabs.js";
   }
   function refreshMetadata(state) {
     var serial = state.metadataRevision = (state.metadataRevision || 0) + 1;
-    return request(state, "/api/bots/accounts/" + state.id).then(function (response) {
+    return request(state, "/api/social/bots/accounts/" + state.id).then(function (response) {
       if (!state.disposed && state.dialog.isConnected && state.metadataRevision === serial) { metadata(state, response.data); }
     }).catch(function (error) { if (!state.disposed && state.dialog.isConnected && state.metadataRevision === serial) { failed(error); } });
   }
@@ -51,7 +51,7 @@ import "../../../../Core/Ui/assets/tabs.js";
     Object.values(data.sorting || {}).forEach(function (heading) { heading.target = data.list_target; heading.history = false; });
     var navigation = data.navigation || {};
     [navigation.previous, navigation.next].concat(navigation.pages || []).forEach(function (link) { if (link) { link.history_url = false; } });
-    state.sources.dataset.listUrl = "/api/bots/sources?" + new URLSearchParams(Object.assign({}, data.filters, { bot: state.id, page: data.pagination.page || 1, per_page: data.pagination.per_page }));
+    state.sources.dataset.listUrl = "/api/social/bots/sources?" + new URLSearchParams(Object.assign({}, data.filters, { bot: state.id, page: data.pagination.page || 1, per_page: data.pagination.per_page }));
     T.bots.sources(state.sources, data);
     state.sources.dataset.loaded = "true";
     pagination(state.sources, source);
@@ -96,16 +96,16 @@ import "../../../../Core/Ui/assets/tabs.js";
     var params = new URLSearchParams();
     ["q", "source", "publication", "sort", "direction", "page", "per_page"].forEach(function (key) { if (query.has(key)) { params.set(key, query.get(key)); } });
     params.set("scope", "modal");
-    return "/api/bots/accounts/" + id + "/posts?" + params;
+    return "/api/social/bots/accounts/" + id + "/posts?" + params;
   }
   T.botDetail = {
     modal: function (url, response, id) {
       var data = response.data, botId = Number(data.item.id);
-      var form = U.form("/api/bots/accounts/" + botId, "PATCH", T.components.render("bots/workspace-form", { resource: data }));
+      var form = U.form("/api/social/bots/accounts/" + botId, "PATCH", T.components.render("bots/workspace-form", { resource: data }));
       var dialog = U.adminDialog(id, data.item.username, form);
       dialog.dataset.botWorkspaceId = String(botId);
       var status = U.accountDialogTitle(dialog, data.item);
-      var lists = T.components.render("bots/workspace-lists", { sources_url: "/api/bots/sources?bot=" + botId, runs_url: "/api/bots/accounts/" + botId + "/runs", posts_url: postUrl(botId, url.searchParams) });
+      var lists = T.components.render("bots/workspace-lists", { sources_url: "/api/social/bots/sources?bot=" + botId, runs_url: "/api/social/bots/accounts/" + botId + "/runs", posts_url: postUrl(botId, url.searchParams) });
       var sources = lists.querySelector("#bot-detail-sources-list"), posts = lists.querySelector("#bot-detail-posts-list"), history = lists.querySelector("#bot-detail-runs-list");
       var initial = url.searchParams.get("tab") || (url.searchParams.has("source") || url.searchParams.has("publication") || url.searchParams.has("q") ? "posts" : "account");
       var layout = U.tabbedContent(id, [
@@ -132,7 +132,7 @@ import "../../../../Core/Ui/assets/tabs.js";
         var link = event.target.closest && event.target.closest("a[href]");
         if (!link) { return; }
         var target = new URL(link.getAttribute("href"), window.location.href);
-        if (target.pathname !== "/admin/bots/" + botId) { return; }
+        if (target.pathname !== "/admin/social/bots/" + botId) { return; }
         event.preventDefault(); event.stopPropagation();
         if (!target.search) { T.tabs.activate(tabButtons.account, true); return; }
         posts.dataset.botPostsUrl = postUrl(botId, target.searchParams); delete posts.dataset.loaded;

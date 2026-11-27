@@ -155,8 +155,8 @@ final class Administration
         $pagination = \TinyCat\Core\Ui\Admin\Views::paginationMeta($query->count(), \TinyCat\Core\Ui\Admin\Views::admin_page(), \TinyCat\Core\Ui\Admin\Views::admin_per_page());
         $params = ['q' => $q, 'source' => $source, 'publication' => $publication, 'per_page' => $pagination['per_page']] + $sortingState;
         $params['scope'] = 'modal';
-        $apiUrl = '/api/bots/accounts/' . $botId . '/posts';
-        $pageUrl = '/admin/bots/' . $botId;
+        $apiUrl = '/api/social/bots/accounts/' . $botId . '/posts';
+        $pageUrl = '/admin/social/bots/' . $botId;
         $items = $query->order(\TinyCat\Core\Ui\Admin\Views::sortOrder(\TinyCat\Social\Bots\Sorting::LISTS['bot_posts'], $sortingState))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
         $now = \TinyCat\Support\Dates::dateDb();
         $items = array_map(static function (array $post) use ($botId, $now): array {
@@ -164,8 +164,8 @@ final class Administration
             $published = (string) $post['published_at'] <= $now;
             return $post + ['source' => Resource::postSource($post, $botId), 'excerpt' => \TinyCat\Core\Text\Text::plain_text_limit((string) $post['body'], 180),
                 'published' => $published, 'url' => $published && \TinyCat\Core\Ui\PublicWeb::enabled() ? \TinyCat\Social\Posts\Posts::status_url($id) : '',
-                'edit_url' => '/api/bots/accounts/' . $botId . '/posts/' . $id . '/management?panel=edit',
-                'action_url' => '/api/bots/accounts/' . $botId . '/posts/' . $id, 'published_iso' => \TinyCat\Support\Dates::dateIso((string) $post['published_at'])];
+                'edit_url' => '/api/social/bots/accounts/' . $botId . '/posts/' . $id . '/management?panel=edit',
+                'action_url' => '/api/social/bots/accounts/' . $botId . '/posts/' . $id, 'published_iso' => \TinyCat\Support\Dates::dateIso((string) $post['published_at'])];
         }, $items);
         $sorting = \TinyCat\Core\Ui\Admin\Views::sortHeadings(\TinyCat\Social\Bots\Sorting::LISTS['bot_posts'], $params, $apiUrl, $pageUrl);
         $totalCount = $q === '' && $source === '' && $publication === '' ? (int) $pagination['total'] : (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_posts WHERE author_id = ?', [$botId]);
@@ -197,8 +197,8 @@ final class Administration
         if ($item === null) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
         $user = \TinyCat\Core\Identity\Authentication::auth();
         return ['item' => \TinyCat\Social\Posts\Resource::post($item, $user), 'comments' => [],
-            'update_url' => '/api/bots/accounts/' . $botId . '/posts/' . $postId,
-            'suggest_url' => '/api/bots/accounts/' . $botId . '/posts/' . $postId . '/suggestions',
+            'update_url' => '/api/social/bots/accounts/' . $botId . '/posts/' . $postId,
+            'suggest_url' => '/api/social/bots/accounts/' . $botId . '/posts/' . $postId . '/suggestions',
             'constraints' => \TinyCat\Social\Posts\Resource::constraints(),
             'viewer' => $user !== null ? \TinyCat\Social\Profiles\Profiles::resource($user) : null,
             'options' => ['images_enabled' => \TinyCat\Social\Posts\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Social\Posts\Images::status_image_max_upload_bytes()]];
@@ -226,7 +226,7 @@ final class Administration
         $sortingState = \TinyCat\Core\Ui\Admin\Views::sortState(\TinyCat\Social\Bots\Sorting::LISTS['bot_runs']);
         $pagination = \TinyCat\Core\Ui\Admin\Views::paginationMeta($query->count(), \TinyCat\Core\Ui\Admin\Views::admin_page(), \TinyCat\Core\Ui\Admin\Views::admin_per_page());
         $params = ['q' => $q, 'source' => $source, 'status' => $status, 'per_page' => $pagination['per_page']] + $sortingState;
-        $apiUrl = '/api/bots/accounts/' . $botId . '/runs';
+        $apiUrl = '/api/social/bots/accounts/' . $botId . '/runs';
         $sorting = \TinyCat\Core\Ui\Admin\Views::sortHeadings(\TinyCat\Social\Bots\Sorting::LISTS['bot_runs'], $params, $apiUrl);
         foreach ($sorting as &$heading) { $heading['history'] = false; }
         unset($heading);

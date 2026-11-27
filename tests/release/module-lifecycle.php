@@ -47,7 +47,7 @@ try {
         foreach (['src', 'migrations', 'lang', 'assets'] as $directory) { if (!is_dir($root . '/' . $directory)) { mkdir($root . '/' . $directory, 0700, true); } }
         file_put_contents($root . '/src/Module.php', strtr((string) file_get_contents($fixture . '/Module.php.tpl'), ['@@NAMESPACE@@' => $namespace, '@@ID@@' => $id, '@@SHORT@@' => $short, '@@TABLE@@' => $table, '@@VERSION@@' => (string) $version]));
         $class = 'TinyCat\\Modules\\' . $namespace . '\\Module';
-        file_put_contents($root . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => $id, 'namespace' => 'TinyCat\\Modules\\' . $namespace . '\\', 'requires' => $requires,
+        file_put_contents($root . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => $id, 'httpNamespace' => 'fixture-' . $short, 'namespace' => 'TinyCat\\Modules\\' . $namespace . '\\', 'requires' => $requires,
             'providers' => ['routes' => $class, 'schema' => $class, 'contributions' => $class], 'resources' => ['translations' => 'lang', 'assets' => 'assets/module.json', 'migrations' => 'migrations']], JSON_THROW_ON_ERROR));
         file_put_contents($root . '/migrations/1.php', '<?php return static function (PDO $pdo): void { $id = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === \'mysql\' ? \'INTEGER PRIMARY KEY AUTO_INCREMENT\' : \'INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY\'; $pdo->exec(\'CREATE TABLE ' . $table . ' (id \' . $id . \', body TEXT NOT NULL, ticks INTEGER NOT NULL DEFAULT 0)\'); };');
         if ($version >= 2) { file_put_contents($root . '/migrations/2.php', '<?php return static function (PDO $pdo): void { $pdo->exec(\'ALTER TABLE ' . $table . ' ADD COLUMN revision INTEGER NOT NULL DEFAULT 2\'); };'); }
@@ -134,15 +134,15 @@ try {
         return [$status, is_string($body) ? $body : ''];
     };
     for ($attempt = 0; $attempt < 100; $attempt++) { $probe = @stream_socket_client('tcp://' . $address, $socketError, $socketMessage, 0.1); if (is_resource($probe)) { fclose($probe); break; } usleep(50000); }
-    [$status] = $request('/api/fixture/notes'); $assert($status === 404, 'Inactive module exposes no HTTP API');
+    [$status] = $request('/api/fixture-notes'); $assert($status === 404, 'Inactive module exposes no HTTP API');
     [$exit, $text, $error] = $console(['activate', 'fixture.reports']); $assert($exit === 0, 'Module activation installs immutable migrations: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
     $assert($exit === 0, 'A new process reads the prepared generation after lifecycle finalization despite mismatched signed inventory: ' . $text . $error);
     $body = "Unicode 🐈; quotes ' and \" and\nnewlines";
     $insert = $pdo->prepare('INSERT INTO lifecycle_notes(body) VALUES (?)'); $insert->execute([$body]);
-    [$status, $json] = $request('/api/fixture/notes'); $assert($status === 200 && str_contains($json, 'Unicode'), 'Activation registers the real authorized product API');
-    [$status, $html] = $request('/fixture/notes'); $assert($status === 200 && str_contains($html, 'Selected notes'), 'Activation adds module-owned translations');
-    [$status, $html] = $request('/fixture/notes'); $assert($status === 200, 'fixture product public HTTP boot remains ready after optional activation');
+    [$status, $json] = $request('/api/fixture-notes'); $assert($status === 200 && str_contains($json, 'Unicode'), 'Activation registers the real authorized product API');
+    [$status, $html] = $request('/fixture-notes'); $assert($status === 200 && str_contains($html, 'Selected notes'), 'Activation adds module-owned translations');
+    [$status, $html] = $request('/fixture-notes'); $assert($status === 200, 'fixture product public HTTP boot remains ready after optional activation');
     $assert(preg_match_all('~(?:src|href)="(/cache/assets/[^"?]+)~', $html, $assetMatches) > 0, 'Changed selection falls back from stale compiled assets');
     $delivered = '';
     foreach ($assetMatches[1] as $url) { [$assetStatus, $asset] = $request(html_entity_decode($url)); $assert($assetStatus === 200, 'Selected fallback asset is served'); $delivered .= $asset; }
@@ -155,7 +155,7 @@ try {
     [$exit] = $console(['deactivate', 'fixture.notes']); $assert($exit !== 0, 'Active dependents block deactivation');
     [$exit, $text, $error] = $console(['deactivate', 'fixture.reports', 'fixture.notes']); $assert($exit === 0 && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Deactivation retains data and schema history: ' . $text . $error);
     [$exit] = $console(['task', 'fixture.notes.tick']); $assert($exit !== 0 && (int) $pdo->query('SELECT ticks FROM lifecycle_notes')->fetchColumn() === 1, 'Inactive contributions cannot execute');
-    [$status] = $request('/api/fixture/notes'); $assert($status === 404, 'Deactivation removes HTTP routes on the next request');
+    [$status] = $request('/api/fixture-notes'); $assert($status === 404, 'Deactivation removes HTTP routes on the next request');
     proc_terminate($http); proc_close($http); $http = null;
     echo "PASS activation, assets and deactivation HTTP checks; HTTP worker stopped\n";
     $state = json_decode((string) file_get_contents($root . '/storage/deployment.json'), true, 512, JSON_THROW_ON_ERROR);

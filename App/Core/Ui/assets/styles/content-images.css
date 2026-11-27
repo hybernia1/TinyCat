@@ -1,6 +1,6 @@
 .content-image-preview {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .content-image-preview img {
@@ -11,7 +11,7 @@
 }
 
 .content-image-preview[data-empty="true"] {
-  min-height: 88px;
+  min-height: 5.5rem;
   place-items: center;
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
@@ -21,7 +21,7 @@
 .content-image-preview-empty {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   color: var(--muted);
   font-size: 0.875rem;
   font-weight: 650;
@@ -31,6 +31,6 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 

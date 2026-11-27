@@ -125,18 +125,9 @@ final class Module implements
             ],
             navigation: [
                 new Core\NavigationItem(
-                    'tinycat.bots.admin',
-                    static fn (): array => self::botsAdminNavigation(),
+                    'tinycat.social.admin',
+                    static fn (): array => self::adminNavigation(),
                     30,
-                ),
-                new Core\NavigationItem(
-                    'tinycat.moderation.admin',
-                    static fn (): array => [
-                        'icon' => 'shield',
-                        'label' => Support\Localization::t('moderation.title'),
-                        'children' => [Definitions::navigation('social.moderation-reports')],
-                    ],
-                    40,
                 ),
             ],
             search: Search\Sources::all(),
@@ -214,6 +205,7 @@ final class Module implements
         self::registerBots($api);
         self::registerSite($api);
         self::registerSearch($api);
+        self::registerLegacyAdmin();
     }
 
     /** @param list<string> $candidates
@@ -258,30 +250,56 @@ final class Module implements
     }
 
     /** @return array<string, mixed> */
-    private static function botsAdminNavigation(): array
+    private static function adminNavigation(): array
     {
         return [
-            'icon' => 'rss',
-            'label' => Support\Localization::t('bots.title'),
+            'icon' => 'message-circle',
+            'label' => Support\Localization::t('social.title'),
             'children' => [
                 Definitions::navigation('social.bot-creation'),
                 Definitions::navigation('social.bot-sources'),
                 Definitions::navigation('social.bot-queue'),
+                Definitions::navigation('social.moderation-reports'),
             ],
         ];
+    }
+
+    /** Bookmarked admin pages retain only the owner's supported list parameters. */
+    private static function registerLegacyAdmin(): void
+    {
+        foreach ([
+            '/admin/bots' => 'social.bot-creation',
+            '/admin/bots/accounts' => 'social.bot-creation',
+            '/admin/bots/list' => 'social.bot-sources',
+            '/admin/bots/queue' => 'social.bot-queue',
+            '/admin/moderation' => 'social.moderation-reports',
+            '/admin/moderation/reports' => 'social.moderation-reports',
+        ] as $old => $definition) {
+            Router::route('GET', $old, static function () use ($old, $definition): never {
+                \TinyCat\Core\Identity\Access::require_admin();
+                $query = array_intersect_key(\TinyCat\Http\Request::current()->query(), array_flip(['bot', 'q', 'enabled', 'status', 'reason', 'publication', 'media', 'sort', 'direction', 'page', 'per_page', 'source', 'cursor_at', 'cursor_id']));
+                if ($old === '/admin/bots' && max(0, (int) ($query['bot'] ?? 0)) > 0) { $definition = 'social.bot-sources'; }
+                Web::redirect(Definitions::route($definition) . ($query !== [] ? '?' . http_build_query($query) : ''));
+            });
+        }
+        Router::route('GET', '/admin/bots/{id:[0-9]+}', static fn (string $id) => Bots\Pages::detail((int) $id));
     }
 
     private static function registerBots(Api $api): void
     {
         Bots\Api::register($api);
+        Router::route('GET', '/admin/social', static function (): never {
+            \TinyCat\Core\Identity\Access::require_admin();
+            Web::redirect(Definitions::route('social.bot-creation'));
+        });
         Router::route('GET', Definitions::route('social.bot-queue'), static function (): void { Bots\Pages::queue(); });
-        Router::route('GET', '/admin/bots', static function (): void {
+        Router::route('GET', '/admin/social/bots', static function (): void {
             $botId = max(0, (int) Web::get('bot', 0));
             Web::redirect($botId > 0
-                ? '/admin/bots/list?' . http_build_query(['bot' => $botId])
-                : '/admin/bots/accounts');
+                ? '/admin/social/bots/sources?' . http_build_query(['bot' => $botId])
+                : '/admin/social/bots/accounts');
         });
-        Router::route('GET', '/admin/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
+        Router::route('GET', '/admin/social/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
             Bots\Pages::detail(max(0, (int) $bot_id));
         });
         Router::route('GET', Definitions::route('social.bot-creation'), static function (): void { Bots\Pages::accounts(); });
@@ -291,7 +309,7 @@ final class Module implements
     private static function registerModeration(Api $api): void
     {
         Moderation\Api::register($api);
-        Router::route('GET', '/admin/moderation', static function (): void {
+        Router::route('GET', '/admin/social/moderation', static function (): void {
             Web::redirect(Definitions::route('social.moderation-reports'));
         });
         Router::route('GET', Definitions::route('social.moderation-reports'), Moderation\Pages::reports(...));

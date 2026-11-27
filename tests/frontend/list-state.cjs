@@ -70,7 +70,7 @@ const response = label => ({ data: { items: [label], tasks: [], filters: {} }, m
   applying = s.click(source); await tick(); s.pending[0].resolve({ data: { token: "new" }, meta: {} }); await applying;
   assert.equal(s.hydrated.length, 0, "A token action without an explicit target never hydrates the document.");
   assert.equal(s.saved.length, 1);
-  for (const [id, endpoint] of [["scheduler-list", "/api/scheduler/tasks"], ["moderation-reports", "/api/moderation/reports"]]) {
+  for (const [id, endpoint] of [["scheduler-list", "/api/scheduler/tasks"], ["moderation-reports", "/api/social/moderation/reports"]]) {
     s = setup(); root = s.targets.get(id);
     applying = s.click(s.source(endpoint, "GET", id)); await tick(); s.pending[0].resolve(response("read")); await applying;
     assert.deepEqual(s.hydrated, [root], id + " reports exactly its changed region");

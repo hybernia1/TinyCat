@@ -1,5 +1,43 @@
 # TinyCat updates
 
+## Upgrading to 9.0.0
+
+Requires completed **6.0.10 or newer**, PHP 8.4 and MySQL/MariaDB. This is a
+major release because Social API paths and third-party route-provider manifest
+requirements change. Publish and deploy matching signed Core and Social packages.
+
+The current Social sources use `/admin/social/...` and `/api/social/...`.
+Deploy their matching prepared assets together. Third-party clients must migrate
+the old Bots, Moderation, Statuses, Profiles, Social search and page/sidebar API
+families; old mutation APIs are not redirected. Existing loaded browser clients
+need a reload. Core APIs retain their owners and paths. Published status/author/tag
+permalinks, feeds and embed entry points remain unchanged.
+
+The two link-resolver GET patterns already published inside HTML/feed content
+retain read-only aliases through the same Social handler and visibility policy.
+They are not a fallback for old status API reads or mutations; their eventual
+removal requires a separate published-link migration plan.
+
+Old admin bookmarks have owner GET redirects through the 9.x compatibility window.
+An owner script upgrades their modal fragments and stored modal history before
+the shared resource loader reads them. The next major-version cleanup removes those
+redirects and that script together. The [implementation audit](../audits/module-navigation-and-url-ownership-2026-11-27.md)
+lists each compatibility entry and its reason.
+
+Route-provider manifests must declare a unique `httpNamespace`. An existing
+module without that field must add it when adopting these sources; the value is
+then stable across module-package updates. Namespace collisions, including
+inactive owners, are rejected before exposing routes. No database migration,
+activation-ID conversion or task-ID conversion is part of this change. Historical
+release notes below describe their respective versions and keep their old URLs.
+
+Shared Core and Social size variants now follow the existing global UI scale and
+density model. Navigation controls share their profile/notification presentation,
+and dashboard statistics render all visible owner groups together as icon badges.
+These presentation changes preserve counts and owner authorization. Standalone
+embeds now reveal successfully loaded link-preview images and retain fallbacks
+on failures. No new database migration is introduced by 9.0.0.
+
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 

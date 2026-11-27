@@ -5,6 +5,44 @@ require_once __DIR__ . '/../../support/mysql.php';
 
 // Uses the disposable database and HTTP server from api-contract.php.
 $seed = \tinycat_test_database($databasePath);
+foreach (['/api/bots/accounts', '/api/moderation/reports', '/api/statuses', '/api/profiles/1', '/api/site/pages', '/api/search/suggestions'] as $retiredApi) {
+    foreach (['GET', 'POST'] as $method) {
+        [$status, $payload] = $request($method, $retiredApi, null, 'admin');
+        $assert($status === 404 && $payload['code'] === 'not_found', 'Retired module APIs do not become redirects or parallel implementations: ' . $retiredApi);
+    }
+}
+foreach (['/api/social/statuses', '/api/social/pages', '/api/social/bots/accounts'] as $moduleApi) {
+    [$status] = $request('GET', $moduleApi, null, 'admin', ['X-Test-Without-Social' => '1']);
+    $assert($status === 404, 'Inactive Social contributes no module API: ' . $moduleApi);
+}
+[$status] = $request('GET', '/api/users', null, 'admin', ['X-Test-Without-Social' => '1']);
+$assert($status === 200, 'Core account API remains available without Social');
+foreach ([
+    '/admin/bots/accounts' => '/admin/social/bots/accounts',
+    '/admin/bots/list' => '/admin/social/bots/sources',
+    '/admin/bots/queue' => '/admin/social/bots/queue',
+    '/admin/moderation/reports' => '/admin/social/moderation/reports',
+] as $old => $canonical) {
+    file_get_contents('http://' . $address . $old . '?q=retained&sort=name&untrusted=drop', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true, 'follow_location' => 0]]));
+    $headers = http_get_last_response_headers() ?? [];
+    $location = implode('', array_filter($headers, static fn (string $header): bool => str_starts_with($header, 'Location:')));
+    $assert(str_contains($headers[0], '302') && str_contains($location, $canonical . '?q=retained&sort=name') && !str_contains($location, 'untrusted'), 'Owner redirects preserve allowed list state only: ' . $old);
+}
+foreach ([
+    '/admin/social' => '/admin/social/bots/accounts',
+    '/admin/bots' => '/admin/social/bots/accounts',
+    '/admin/bots?bot=3' => '/admin/social/bots/sources?bot=3',
+    '/admin/moderation' => '/admin/social/moderation/reports',
+] as $entry => $destination) {
+    file_get_contents('http://' . $address . $entry, false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true, 'follow_location' => 0]]));
+    $headers = http_get_last_response_headers() ?? [];
+    $location = implode('', array_filter($headers, static fn (string $header): bool => str_starts_with($header, 'Location:')));
+    $assert(str_contains($headers[0], '302') && str_ends_with($location, $destination), 'Module entries redirect directly to a canonical list: ' . $entry);
+}
+foreach (['' => 401, 'user' => 403] as $entryRole => $entryStatus) {
+    [$status] = $request('GET', '/admin/social', null, $entryRole, ['Accept' => 'application/json']);
+    $assert($status === $entryStatus, 'The Social admin entry preserves administrator authorization.');
+}
 foreach (['GET', 'POST'] as $retiredSettingsMethod) {
     $retiredSettings = file_get_contents('http://' . $address . '/admin/settings', false, stream_context_create(['http' => ['method' => $retiredSettingsMethod, 'header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
     $retiredHeaders = http_get_last_response_headers() ?? [];
@@ -37,7 +75,7 @@ foreach (['en' => 'Automatic', 'cs' => 'Automaticky'] as $editorLocale => $autom
     $assert($editorStatus === 200 && $siteFields['site.homepage']['options'][0]['name'] === $automaticLabel && $siteFields['site.theme']['options'][0]['name'] === $automaticLabel, 'Settings option names respect the administration interface language.');
 }
 $assert(is_string($settingsHostPage) && str_contains($settingsHostPage, 'data-modal-open="modal-settings-editor"') && str_contains($settingsHostPage, 'data-modal-url="/api/settings/editor"') && !str_contains($settingsHostPage, 'data-settings-editor') && !str_contains($settingsHostPage, 'href="/admin/settings"'), 'Admin navigation opens the shared settings modal without a standalone page.');
-$assert(!str_contains($settingsHostPage, 'name="settings[') && !str_contains($settingsHostPage, 'id="modal-settings-editor"') && !str_contains($settingsHostPage, 'href="/admin/moderation/blocking"'), 'Settings fields and editor DOM are absent from the initial page and blocked websites have no separate navigation page.');
+$assert(!str_contains($settingsHostPage, 'name="settings[') && !str_contains($settingsHostPage, 'id="modal-settings-editor"') && !str_contains($settingsHostPage, 'href="/admin/social/moderation/blocking"'), 'Settings fields and editor DOM are absent from the initial page and blocked websites have no separate navigation page.');
 $assert(!str_contains($settingsHostPage, 'data-settings-presentation'), 'Admin HTML contains no deferred settings presentation payload.');
 $searchDocumentHtml = file_get_contents('http://' . $address . '/search/all', false, stream_context_create(['http' => ['header' => "Accept: text/html", 'ignore_errors' => true]]));
 $searchDocument = new DOMDocument();
@@ -46,24 +84,24 @@ $searchXPath = new DOMXPath($searchDocument);
 $assert($searchXPath->query('//input[@type="search"]')->length === 1 && $searchXPath->query('//*[@id="main-content"]//form')->length === 0, 'The full search page uses only the shared header search field.');
 $assert($searchXPath->query('//*[@id="main-content"]//h1')->length === 1 && $searchXPath->query('//*[@id="main-content"]//*[contains(concat(" ", normalize-space(@class), " "), " empty-state ")]')->length === 1, 'An empty full search page has one contextual heading and shared empty state.');
 
-$moderationPage = file_get_contents('http://' . $address . '/admin/moderation/reports?status=open&reason=spam', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$moderationPage = file_get_contents('http://' . $address . '/admin/social/moderation/reports?status=open&reason=spam', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $moderationDocument = new DOMDocument();
 @$moderationDocument->loadHTML((string) $moderationPage);
 $moderationList = (new DOMXPath($moderationDocument))->query('//*[@data-admin-list="social.moderation-reports"]')->item(0);
 $moderationState = json_decode($moderationList?->getAttribute('data-admin-state') ?? '{}', true, 512, JSON_THROW_ON_ERROR);
 $assert(($moderationState['filters']['status'] ?? null) === 'open' && ($moderationState['filters']['reason'] ?? null) === 'spam' && array_keys($moderationState) === ['filters', 'pagination'], 'Initial moderation HTML preserves canonical filter state without duplicating report rows or creating a detail dialog.');
-file_get_contents('http://' . $address . '/admin/moderation/blocking', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+file_get_contents('http://' . $address . '/admin/social/moderation/blocking', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $blockingHeaders = http_get_last_response_headers() ?? [];
 $assert(preg_match('/\s404\s/', (string) ($blockingHeaders[0] ?? '')) === 1, 'The standalone URL blocking page is retired.');
-foreach (['/api/admin/bot-accounts', '/api/admin/bots', '/api/admin/settings', '/api/admin/moderation/reports', '/api/admin/cron-token', '/api/sidebar', '/api/status-suggest', '/api/search-captcha'] as $retired) {
+foreach (['/api/admin/bot-accounts', '/api/admin/social/bots', '/api/admin/settings', '/api/admin/social/moderation/reports', '/api/admin/cron-token', '/api/sidebar', '/api/status-suggest', '/api/search-captcha'] as $retired) {
     [$status] = $request('GET', $retired, null, 'admin');
     $assert($status === 404, 'Retired endpoints have no compatibility aliases: ' . $retired);
 }
-foreach (['/api/users/creation', '/api/bots/accounts/creation', '/api/updates/release-notes', '/api/settings/editor', '/api/settings', '/api/moderation/reports', '/api/moderation/blocked-urls', '/api/bots/accounts'] as $private) {
+foreach (['/api/users/creation', '/api/social/bots/accounts/creation', '/api/updates/release-notes', '/api/settings/editor', '/api/settings', '/api/social/moderation/reports', '/api/social/moderation/blocked-urls', '/api/social/bots/accounts'] as $private) {
     [$status] = $request('GET', $private, null, 'user');
     $assert($status === 403, 'Remaining modules retain administrator authorization.');
 }
-foreach (['/api/users/creation' => 'roles', '/api/bots/accounts/creation' => 'username_pattern'] as $endpoint => $option) {
+foreach (['/api/users/creation' => 'roles', '/api/social/bots/accounts/creation' => 'username_pattern'] as $endpoint => $option) {
     [$status, $creation] = $request('GET', $endpoint, null, 'admin');
     $assert($status === 200 && isset($creation['data']['options'][$option]), 'Creation metadata loads through an authorized resource: ' . $endpoint);
     $pure($creation);
@@ -71,7 +109,7 @@ foreach (['/api/users/creation' => 'roles', '/api/bots/accounts/creation' => 'us
 [$status, $createdUnicode] = $request('POST', '/api/users', ['username' => 'UnicodeFixture', 'role' => 'user', 'status' => 'active', 'password' => 'éééé'], 'admin', $csrf);
 $assert($status === 201, 'Administrator creation accepts a password of exactly eight UTF-8 bytes.');
 $seed->exec("DELETE FROM users WHERE username = 'UnicodeFixture'");
-foreach (['/admin/users' => 'modal-users-creation', '/admin/bots/accounts' => 'modal-bots-accounts-creation'] as $page => $id) {
+foreach (['/admin/users' => 'modal-users-creation', '/admin/social/bots/accounts' => 'modal-social-bots-accounts-creation'] as $page => $id) {
     $html = file_get_contents('http://' . $address . $page, false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
     $assert(str_contains($html, 'data-modal-open="' . $id . '"') && !str_contains($html, 'id="' . $id . '"') && !str_contains($html, 'class="modal"'), 'Creation pages contain resource triggers, never hidden dialogs: ' . $page);
 }
@@ -116,99 +154,99 @@ $pure($payload);
 $assert($status === 200 && $seed->query("SELECT setting_value FROM settings WHERE setting_key = 'moderation.blocked_urls'")->fetchColumn() === 'example.org, domain:ru', 'Settings normalize blocked hosts, remove duplicates and preserve domain rules.');
 [$status] = $request('PATCH', '/api/settings', ['settings' => ['moderation.blocked_urls' => '']], 'admin', $csrf);
 $assert($status === 200 && $seed->query("SELECT setting_value FROM settings WHERE setting_key = 'moderation.blocked_urls'")->fetchColumn() === '', 'Settings can clear the blocking rules.');
-[$status, $payload] = $request('PUT', '/api/moderation/blocked-urls', ['blocked_urls' => 'example.org'], 'admin', $csrf);
+[$status, $payload] = $request('PUT', '/api/social/moderation/blocked-urls', ['blocked_urls' => 'example.org'], 'admin', $csrf);
 $assert($status === 200 && in_array('example.org', $payload['data']['items'], true), 'URL blocking uses a data response without a redirect.');
 $assert(!isset($payload['data']['redirect']), 'Inline moderation writes preserve AJAX.');
-[$status, $created] = $request('POST', '/api/statuses', ['body' => 'Immediate API publication fixture', 'schedule_post' => '1', 'scheduled_at' => '2099-01-01T12:00'], 'admin', $csrf);
+[$status, $created] = $request('POST', '/api/social/statuses', ['body' => 'Immediate API publication fixture', 'schedule_post' => '1', 'scheduled_at' => '2099-01-01T12:00'], 'admin', $csrf);
 $assert($status === 201 && $created['code'] === 'status_created' && !str_starts_with($created['data']['item']['published_at'], '2099'), 'Obsolete scheduling inputs cannot create future posts through the API.');
 $assert(!array_key_exists('scheduled', $created['data']['item']), 'Post resources no longer expose scheduling metadata.');
 $seed->prepare('DELETE FROM social_posts WHERE id = ?')->execute([$created['data']['status_id']]);
 [$status] = $request('POST', '/api/scheduler/tasks/publish/runs', [], 'admin', $csrf);
 $assert($status === 404, 'The removed publication-notification task is no longer available.');
-[$status, $payload] = $request('POST', '/api/statuses', ['body' => 'https://example.org/blocked'], 'admin', $csrf);
+[$status, $payload] = $request('POST', '/api/social/statuses', ['body' => 'https://example.org/blocked'], 'admin', $csrf);
 $assert($status === 422 && $payload['code'] === 'blocked_url' && $payload['params'] === ['host' => 'example.org'], 'Post creation maps shared URL rejection to the existing HTTP contract.');
 $assert($payload['error']['details']['host'] === 'example.org', 'Blocked URL responses retain their existing error details.');
-[$status, $payload] = $request('POST', '/api/statuses', ['body' => '#' . str_repeat('a', 33)], 'admin', $csrf);
+[$status, $payload] = $request('POST', '/api/social/statuses', ['body' => '#' . str_repeat('a', 33)], 'admin', $csrf);
 $assert($status === 422 && $payload['code'] === 'status_tag_too_long' && $payload['params'] === ['max' => '32'], 'Post creation maps shared tag rejection to the existing HTTP contract.');
 // Social uses the shared validator before coercion or persistence.
 $originalBody = $seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn();
 $originalComments = (int) $seed->query('SELECT COUNT(*) FROM social_comments WHERE content_id = 10')->fetchColumn();
 foreach ([['not text'], null, true, 42, str_repeat("\u{1F642}", 2001)] as $invalidText) {
-    foreach ([['POST', '/api/statuses', 'body'], ['PATCH', '/api/statuses/10', 'body'], ['POST', '/api/statuses/10/comments', 'comment'], ['PATCH', '/api/statuses/10/comments/10', 'comment']] as [$method, $endpoint, $field]) {
+    foreach ([['POST', '/api/social/statuses', 'body'], ['PATCH', '/api/social/statuses/10', 'body'], ['POST', '/api/social/statuses/10/comments', 'comment'], ['PATCH', '/api/social/statuses/10/comments/10', 'comment']] as [$method, $endpoint, $field]) {
         [$status, $invalidResource] = $request($method, $endpoint, [$field => $invalidText], 'admin', $csrf);
         $assert($status === 422 && isset($invalidResource['error']['details']['errors'][$field]), 'Social rejects malformed or oversized ' . $field . ' through shared field validation: ' . $method);
     }
 }
 $assert($seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn() === $originalBody && (int) $seed->query('SELECT COUNT(*) FROM social_comments WHERE content_id = 10')->fetchColumn() === $originalComments, 'Rejected social text never overwrites posts or creates comments.');
-[$status, $editorConstraints] = $request('GET', '/api/statuses/10?panel=edit', null, 'admin');
+[$status, $editorConstraints] = $request('GET', '/api/social/statuses/10?panel=edit', null, 'admin');
 $assert($status === 200 && $editorConstraints['data']['constraints']['body']['max_length'] === 2000 && $editorConstraints['data']['constraints']['comment']['max_length'] === 2000, 'Social editor metadata derives post and comment limits from server rules.');
-[$status, $payload] = $request('PATCH', '/api/statuses/10', ['body' => 'https://example.org/blocked'], 'admin', $csrf);
+[$status, $payload] = $request('PATCH', '/api/social/statuses/10', ['body' => 'https://example.org/blocked'], 'admin', $csrf);
 $assert($status === 422 && $payload['code'] === 'blocked_url', 'Post edits use the same shared content validation.');
 $assert($seed->query('SELECT body FROM social_posts WHERE id = 10')->fetchColumn() !== 'https://example.org/blocked', 'Rejected edits do not modify stored posts.');
-[$status] = $request('PATCH', '/api/moderation/reports/999999', ['decision' => 'dismiss'], 'admin', $csrf);
+[$status] = $request('PATCH', '/api/social/moderation/reports/999999', ['decision' => 'dismiss'], 'admin', $csrf);
 $assert($status === 409, 'Reviewing a missing or already closed report returns a conflict.');
 $seed->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (9000, 2, 'Review fixture', '2026-01-01 12:00:00')");
 $seed->exec("INSERT INTO social_reports (id, content_id, reporter_id, reason, status, created_at) VALUES (9000, 9000, 1, 'other', 'open', '2026-01-01 12:01:00')");
-[$status, $reportList] = $request('GET', '/api/moderation/reports?q=Review%20fixture&status=open&reason=other&per_page=10', null, 'admin');
+[$status, $reportList] = $request('GET', '/api/social/moderation/reports?q=Review%20fixture&status=open&reason=other&per_page=10', null, 'admin');
 $assert($status === 200 && count($reportList['data']['items']) === 1 && $reportList['data']['items'][0]['id'] === 9000, 'Report search, status and reason filters compose on the grouped list.');
 $assert($reportList['meta']['pagination']['per_page'] === 10 && $reportList['meta']['pagination']['total'] === 1, 'Reports expose shared pagination metadata.');
 $assert(str_contains($reportList['data']['items'][0]['action_url'], 'status=open') && str_contains($reportList['data']['sorting']['content']['url'], 'reason=other'), 'Review actions and sorting preserve active report filters.');
-[$status] = $request('GET', '/api/moderation/reports/9000', null, 'user');
+[$status] = $request('GET', '/api/social/moderation/reports/9000', null, 'user');
 $assert($status === 403, 'Report notes and preserved evidence are restricted to administrators.');
-[$status] = $request('GET', '/api/moderation/reports/9000');
+[$status] = $request('GET', '/api/social/moderation/reports/9000');
 $assert($status === 401, 'Anonymous visitors cannot load report details.');
-[$status, $reportDetail] = $request('GET', '/api/moderation/reports/9000', null, 'admin');
+[$status, $reportDetail] = $request('GET', '/api/social/moderation/reports/9000', null, 'admin');
 $assert($status === 200 && $reportDetail['data']['preview']['item']['body'] === 'Review fixture', 'Report details use the canonical frontend post resource.');
 $assert(array_keys($reportDetail['data']['content']) === ['id', 'status'] && !isset($reportDetail['data']['reports'][0]['reviewed_by']), 'Report details expose resource fields instead of raw database rows.');
 $assert(str_contains($reportDetail['data']['reports'][0]['created_at'], 'T'), 'Report history timestamps use the shared ISO date contract.');
-[$status, $reportOptions] = $request('GET', '/api/moderation/report-options?id=9000', null, 'admin');
+[$status, $reportOptions] = $request('GET', '/api/social/moderation/report-options?id=9000', null, 'admin');
 $assert($status === 200 && $reportOptions['data']['note_max_length'] === 1000, 'Report options publish the server-owned note limit.');
-[$status, $tooLongReport] = $request('POST', '/api/moderation/reports', ['id' => 9000, 'reason' => 'spam', 'note' => str_repeat('x', 1001)], 'admin', $csrf);
+[$status, $tooLongReport] = $request('POST', '/api/social/moderation/reports', ['id' => 9000, 'reason' => 'spam', 'note' => str_repeat('x', 1001)], 'admin', $csrf);
 $assert($status === 422 && isset($tooLongReport['error']['details']['errors']['note']), 'Long report notes fail visibly instead of being silently truncated.');
-[$status, $closedReports] = $request('GET', '/api/moderation/reports?q=Review%20fixture&status=dismissed', null, 'admin');
+[$status, $closedReports] = $request('GET', '/api/social/moderation/reports?q=Review%20fixture&status=dismissed', null, 'admin');
 $assert($status === 200 && $closedReports['data']['items'] === [], 'Open reports are excluded from the dismissed filter.');
-[$status, $wrongReason] = $request('GET', '/api/moderation/reports?q=Review%20fixture&reason=spam', null, 'admin');
+[$status, $wrongReason] = $request('GET', '/api/social/moderation/reports?q=Review%20fixture&reason=spam', null, 'admin');
 $assert($status === 200 && $wrongReason['data']['items'] === [], 'Report reason filtering excludes other reasons.');
-[$status, $payload] = $request('PATCH', '/api/moderation/reports/9000', ['decision' => 'dismiss', 'report_id' => 1], 'admin', $csrf);
+[$status, $payload] = $request('PATCH', '/api/social/moderation/reports/9000', ['decision' => 'dismiss', 'report_id' => 1], 'admin', $csrf);
 $assert($status === 200 && $seed->query('SELECT status FROM social_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Reviewing a report targets its path ID and updates the report.');
 $pure($payload);
 $assert(!str_contains(json_encode($payload), 'status_badge_class'), 'Moderation resources do not contain DOM styling instructions.');
-[$status, $again] = $request('POST', '/api/moderation/reports', ['id' => 9000, 'reason' => 'spam', 'note' => 'New evidence after dismissal'], 'admin', $csrf);
+[$status, $again] = $request('POST', '/api/social/moderation/reports', ['id' => 9000, 'reason' => 'spam', 'note' => 'New evidence after dismissal'], 'admin', $csrf);
 $assert($status === 201 && $again['code'] === 'report_created', 'Closed reports do not permanently prevent reporting the same post again.');
 $newReportId = (int) $seed->query("SELECT id FROM social_reports WHERE content_id = 9000 AND status = 'open'")->fetchColumn();
 $assert($newReportId !== 9000 && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'published', 'A new report retains the earlier decision and does not hide the post.');
-[$status] = $request('POST', '/api/moderation/reports', ['id' => 9000, 'reason' => 'abuse', 'note' => 'Updated open report'], 'admin', $csrf);
+[$status] = $request('POST', '/api/social/moderation/reports', ['id' => 9000, 'reason' => 'abuse', 'note' => 'Updated open report'], 'admin', $csrf);
 $assert($status === 201 && (int) $seed->query("SELECT COUNT(*) FROM social_reports WHERE content_id = 9000 AND reporter_id = 1 AND status = 'open'")->fetchColumn() === 1, 'One reporter has at most one open report for a post.');
-[$status] = $request('PATCH', '/api/moderation/reports/' . $newReportId, ['decision' => 'remove'], 'admin', $csrf);
+[$status] = $request('PATCH', '/api/social/moderation/reports/' . $newReportId, ['decision' => 'remove'], 'admin', $csrf);
 $assert($status === 200 && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'hidden', 'Only an explicit moderation hide decision hides the post.');
-[$status] = $request('GET', '/api/statuses/9000', null, 'user');
+[$status] = $request('GET', '/api/social/statuses/9000', null, 'user');
 $assert($status === 404, 'Hidden posts stay unavailable through the public detail even to signed-in users.');
-[$status] = $request('GET', '/api/statuses/9000?panel=edit');
+[$status] = $request('GET', '/api/social/statuses/9000?panel=edit');
 $assert($status === 401, 'Private edit reads require authentication.');
-[$status, $hiddenEditor] = $request('GET', '/api/statuses/9000?panel=edit', null, 'user');
+[$status, $hiddenEditor] = $request('GET', '/api/social/statuses/9000?panel=edit', null, 'user');
 $assert($status === 200 && $hiddenEditor['data']['item']['status'] === 'hidden' && !$hiddenEditor['data']['item']['capabilities']['interact'], 'An owner can load a private hidden-post editor without enabling public interactions.');
 $seed->exec('UPDATE users SET muted_until = NULL WHERE id = 2');
-[$status, $hiddenEdit] = $request('PATCH', '/api/statuses/9000', ['body' => 'Review fixture corrected privately', 'status' => 'published'], 'user', $csrf);
+[$status, $hiddenEdit] = $request('PATCH', '/api/social/statuses/9000', ['body' => 'Review fixture corrected privately', 'status' => 'published'], 'user', $csrf);
 $assert($status === 200 && $hiddenEdit['data']['item']['status'] === 'hidden' && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'hidden', 'Editing and forged status fields cannot publish hidden content.');
-[$status] = $request('POST', '/api/moderation/posts/9000/publication', [], 'user', $csrf);
+[$status] = $request('POST', '/api/social/moderation/posts/9000/publication', [], 'user', $csrf);
 $assert($status === 403, 'The author cannot use the administrator publication endpoint.');
-[$status] = $request('POST', '/api/moderation/posts/9000/publication', [], 'admin');
+[$status] = $request('POST', '/api/social/moderation/posts/9000/publication', [], 'admin');
 $assert($status === 403, 'Administrative publication requires CSRF protection.');
-[$status, $published] = $request('POST', '/api/moderation/posts/9000/publication', [], 'admin', $csrf);
+[$status, $published] = $request('POST', '/api/social/moderation/posts/9000/publication', [], 'admin', $csrf);
 $assert($status === 200 && $published['code'] === 'content_published' && $seed->query('SELECT status FROM social_posts WHERE id = 9000')->fetchColumn() === 'published', 'Explicit administrative publication restores visibility.');
 $assert($seed->query('SELECT status FROM social_reports WHERE id = ' . $newReportId)->fetchColumn() === 'resolved' && $seed->query('SELECT status FROM social_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Publishing preserves earlier report outcomes.');
-[$status, $payload] = $request('GET', '/api/site/sidebar');
+[$status, $payload] = $request('GET', '/api/social/sidebar');
 $assert($status === 200 && isset($payload['data']['tags'], $payload['data']['authors'], $payload['data']['privacy_url']) && !array_key_exists('footer', $payload['data']), 'The sidebar exposes resources and the privacy link without retired custom footer data.');
 $pure($payload);
-foreach ([['POST', '/api/bots/accounts', ['username' => []]], ['GET', '/api/search?q[]=invalid', null], ['PATCH', '/api/moderation/reports/9000', ['decision' => []]]] as [$verb, $path, $input]) {
+foreach ([['POST', '/api/social/bots/accounts', ['username' => []]], ['GET', '/api/search?q[]=invalid', null], ['PATCH', '/api/social/moderation/reports/9000', ['decision' => []]]] as [$verb, $path, $input]) {
     [$status, $payload] = $request($verb, $path, $input, 'admin', $csrf);
     $assert($status === 422, 'Malformed scalar fields fail validation without PHP diagnostics.');
 }
-foreach (['/api/bots/accounts?q=feedbot', '/api/users?q=admin'] as $filtered) {
+foreach (['/api/social/bots/accounts?q=feedbot', '/api/users?q=admin'] as $filtered) {
     [$status, $payload] = $request('GET', $filtered, null, 'admin');
     $assert($status === 200 && count($payload['data']['items']) === 1, 'Account filtering works through the canonical JSON collection.');
 }
-[$status, $payload] = $request('GET', '/api/bots/accounts?q=%25', null, 'admin');
+[$status, $payload] = $request('GET', '/api/social/bots/accounts?q=%25', null, 'admin');
 $assert($status === 200 && $payload['data']['items'] === [], 'Literal wildcard characters cannot broaden an account search.');
 // One public search collection API; autocomplete and editor completion have separate purposes.
 $seed->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (9100, 2, 'quartz bright nebula', '2026-01-01 12:00:00'), (9101, 2, 'unrelated post', '2026-01-02 12:00:00')");
@@ -257,16 +295,16 @@ $insertSource = $seed->prepare('INSERT INTO bot_sources (id, bot_user_id, name, 
 foreach (range(1, 12) as $number) {
     $insertSource->execute([96000 + $number, 'Layout fixture ' . sprintf('%02d', $number), 'https://example.test/layout/' . $number, hash('sha256', 'layout-fixture-' . $number), '{{title}}']);
 }
-[$status, $sourceList] = $request('GET', '/api/bots/sources?q=Layout%20fixture&bot=3&per_page=10&sort=name&direction=asc', null, 'admin');
+[$status, $sourceList] = $request('GET', '/api/social/bots/sources?q=Layout%20fixture&bot=3&per_page=10&sort=name&direction=asc', null, 'admin');
 $assert($status === 200 && count($sourceList['data']['items']) === 10 && $sourceList['meta']['pagination']['total'] === 12, 'Sources combine search and bot filters with shared pagination.');
-[$status, $sourcePage] = $request('GET', '/api/bots/sources?q=Layout%20fixture&bot=3&per_page=10&page=2&sort=name&direction=asc', null, 'admin');
+[$status, $sourcePage] = $request('GET', '/api/social/bots/sources?q=Layout%20fixture&bot=3&per_page=10&page=2&sort=name&direction=asc', null, 'admin');
 $assert($status === 200 && array_column($sourcePage['data']['items'], 'id') === [96011, 96012], 'Source sorting has a stable filtered second page.');
-[$status] = $request('GET', '/api/bots/sources/96001/management', null, 'user');
+[$status] = $request('GET', '/api/social/bots/sources/96001/management', null, 'user');
 $assert($status === 403, 'Only administrators can load source editors.');
 $seed->exec("UPDATE bot_sources SET name = 'Fresh editor value' WHERE id = 96001");
-[$status, $sourceEditor] = $request('GET', '/api/bots/sources/96001/management', null, 'admin');
+[$status, $sourceEditor] = $request('GET', '/api/social/bots/sources/96001/management', null, 'admin');
 $assert($status === 200 && $sourceEditor['data']['item']['name'] === 'Fresh editor value' && $sourceEditor['data']['bots'] !== [], 'Source editors load current values and available bot accounts.');
-[$status] = $request('GET', '/api/bots/sources/999999/management', null, 'admin');
+[$status] = $request('GET', '/api/social/bots/sources/999999/management', null, 'admin');
 $assert($status === 404, 'Missing sources do not open an empty editor.');
 $seed->exec('DELETE FROM bot_sources WHERE id BETWEEN 96001 AND 96012');
 $insertSource = null;

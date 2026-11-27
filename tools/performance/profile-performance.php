@@ -12,7 +12,7 @@ $workers = filter_var($options['workers'] ?? 1, FILTER_VALIDATE_INT);
 $requests = filter_var($options['requests'] ?? 20, FILTER_VALIDATE_INT);
 $actorId = filter_var($options['user'] ?? 0, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
 if ($actorId === false || $workers === false || $workers < 1 || $workers > 8 || !$root || !is_file($root . '/index.php') || !$configPath || $output === '' || $requests === false || $requests < 5 || $requests > 1000) {
-    fwrite(STDERR, "Usage: php tools/performance/profile-performance.php --config=... --output=... [--root=release/app] [--requests=20] [--workers=1] [--user=1] [--paths=/,/api/statuses]\n");
+    fwrite(STDERR, "Usage: php tools/performance/profile-performance.php --config=... --output=... [--root=release/app] [--requests=20] [--workers=1] [--user=1] [--paths=/,/api/social/statuses]\n");
     exit(2);
 }
 if (!is_dir(dirname($output))) { mkdir(dirname($output), 0775, true); }
@@ -25,7 +25,7 @@ if ($cacheDriver === 'memcached' && isset($options['expire'])) { throw new Runti
 putenv('TINYCAT_PROFILE_CACHE_DRIVER=' . $cacheDriver);
 $pool = new \TinyCat\Tools\Performance\ProfileServerPool($root, $configPath, $log, $workers, $actorId);
 try {
-    $paths = explode(',', (string) ($options['paths'] ?? '/,/api/statuses,/api/statuses/1,/author/2,/search/all?q=performance,/api/site/sidebar'));
+    $paths = explode(',', (string) ($options['paths'] ?? '/,/api/social/statuses,/api/social/statuses/1,/author/2,/search/all?q=performance,/api/social/sidebar'));
     $runner = new \TinyCat\Tools\Performance\HttpLoadRunner();
     $scenarios = [];
     foreach ($paths as $path) {

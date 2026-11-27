@@ -2,6 +2,60 @@
 
 Datum: 27. listopadu 2026. Stav: pracovní zdroje včetně aktuální úpravy administrace a společného navigačního badge. Audit popisuje současný stav a návrh; nezavádí nový CSS kontrakt.
 
+## Implemented follow-up (27 November 2026)
+
+The inventory and findings below describe the original state. The follow-up
+keeps the existing root scale and compact multiplier, with no new global tokens.
+Core navigation, badges, account/notification/search/language menus, empty states,
+result lists, galleries and small form layouts now use rem and existing spacing
+or control tokens. Navigation icons follow text in em. Badge geometry is shared
+between desktop and mobile.
+
+Avatar presentation accepts `size`, with scoped `sm`/`xl` classes and compatible
+legacy aliases. Compact identity rows now reduce the symbol and matching column.
+Small buttons and menu actions use scoped `sm`; icon buttons share one local
+height/width metric. Social no longer repeats composer button dimensions.
+Composer grid and avatar share one metric; status headers use the default avatar.
+Public list titles own their typography without overriding `text-2xl`.
+
+Intentional exceptions: the profile avatar keeps 4.75rem for the narrow profile
+panel, shared by editable/read-only states, without redefining general `xl`.
+The composer avatar aligns with its control. Content/media layouts remain Social
+owned and scale in rem; viewport caps remain relative to the viewport. Hairlines,
+decorative effects and explicit accessibility floors remain independent.
+
+CSS rule fingerprints were reviewed and regenerated without weakening the full
+inventory assertion. Only exceeded CSS delivery budgets were adjusted for the
+longer shared-variable notation and compatibility selectors; script/stylesheet
+counts remain unchanged. Targeted reports live under `.work/tests/runs/`.
+A full preflight was explicitly excluded by the user.
+
+Verification completed for this follow-up:
+
+- PHP syntax for the two changed presentation classes, Composer style and
+  PHPStan analysis passed. Catalog formatting, generated UI inventory and
+  diff whitespace checks passed.
+- [Boundaries, render-only, UI contracts, presentation and isolated MySQL archive regression](../../.work/tests/runs/20261127-112436-e50fbc9e06/report.json) passed.
+- [Native UI scale and component-size matrix](../../.work/tests/runs/20261127-112539-1020035b12/report.json) passed, including fallback avatars, unknown size,
+  small square buttons and both densities at 75/100/125/150/200%.
+- [Modal validation and admin viewport matrix](../../.work/tests/runs/20261127-112214-b37c077f5b/report.json),
+  [embed, tag layout, language, sidebar and stylesheet inventory](../../.work/tests/runs/20261127-112455-88d760967e/report.json),
+  and [final native popover, sizing and touch regressions](../../.work/tests/runs/20261127-112617-dba13b6980/report.json) passed.
+  Comment resource dialogs and account menu behavior also passed in the earlier
+  targeted run; its later identity assertion failure was corrected and rerun above.
+- Asset delivery passed all 24 scopes; the [measured report](../../.work/audits/ui-scale/asset-report.json)
+  records final sizes. Six raw CSS limits increased by 256 or 384 bytes;
+  compressed CSS, JavaScript and request-count limits were not increased.
+- Runtime files were synchronized and assets rebuilt in the external Laragon
+  installation. Live homepage, profile, status detail, admin users, notifications
+  and the user-creation dialog were checked on mobile and desktop across all
+  five scales. No page/dialog horizontal overflow was observed. Public profile
+  screenshots at 75% and 200% and the admin fixture at 75% were visually reviewed.
+
+The full preflight, complete frontend suite, release/update/rollback tests and
+production deployment were not performed. Live checks did not submit forms or
+change data. Earlier failed targeted reports are not final verification.
+
 ## Zadání navazující implementace
 
 Uživatel po auditu požaduje dotáhnout Core i Social do společně škálovatelného systému v jednom navazujícím pracovním vlákně. Škálování, znovupoužití komponent a sjednocení velikostních variant se mají řešit společně podle skutečného účelu prvků. Níže popsané pořadí je pracovní návrh, nikoli omezení tohoto cíle.

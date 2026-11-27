@@ -129,6 +129,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
             if ($old === null && file_exists($root . '/' . rtrim($prefix, '/'))) { throw new \RuntimeException('Target module directory is already present.'); }
             if ($old !== null) {
                 if ($old['directory'] !== $package['directory'] || $old['manifest']['namespace'] !== $package['manifest']['namespace'] || version_compare($package['version'], $old['version'], '<=')) { throw new \RuntimeException('Select a newer package with the same module identity.'); }
+                if (isset($old['manifest']['httpNamespace']) && $old['manifest']['httpNamespace'] !== ($package['manifest']['httpNamespace'] ?? null)) { throw new \RuntimeException('A module update must preserve its HTTP namespace.'); }
                 foreach ($old['schemas'] as $stream => $schema) {
                     foreach ($schema['migrations'] as $index => $migration) {
                         $nextMigration = $package['schemas'][$stream]['migrations'][$index] ?? null;

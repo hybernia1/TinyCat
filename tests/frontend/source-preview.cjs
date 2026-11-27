@@ -33,13 +33,13 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), vm = requ
   }
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/assets/bots/source-preview.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window: { TinyCat: T, location: { search: "" } }, document, FormData });
   const flush = async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); };
-  const form = document.body.appendChild(new Element("form", { action: "/api/bots/sources" }));
+  const form = document.body.appendChild(new Element("form", { action: "/api/social/bots/sources" }));
   for (const [name, value] of Object.entries({ feed_url: "https://public.example/feed", name: "Feed", post_template: "{{title}}" })) form.appendChild(new Element("input", { name, value }));
   const button = form.appendChild(new Element("button", { "data-bot-source-preview": "" }));
   form.appendChild(new Element("input", { name: "_method", value: "PATCH" }));
   service.hydrate(document.body);
   form.requestSubmit(); assert.equal(saves, 0, "Saving cannot bypass the preview.");
-  assert.equal(requests[0].url, "/api/bots/sources/previews");
+  assert.equal(requests[0].url, "/api/social/bots/sources/previews");
   assert.equal(requests[0].options.body._method, undefined, "Edit form method overrides never leak into the POST preview request.");
   form.requestSubmit(); assert.equal(requests.length, 1, "Repeated submits share the pending preview.");
   const feed = { format: "rss", title: "Feed", feed_url: "https://public.example/redirected-feed", items: [{ body: "Sample" }], sources: [] };
@@ -54,7 +54,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), vm = requ
   button.fire("click"); T.dialog.close(dialogs.at(-1)); requests[2].resolve({ data: feed }); await flush();
   assert.equal(saves, 1, "Closing a preview never saves a source.");
   assert.ok(cancelled > 0, "Closing previews cancels pending work.");
-  const run = document.body.appendChild(new Element("form", { action: "/api/bots/sources/1/runs" }));
+  const run = document.body.appendChild(new Element("form", { action: "/api/social/bots/sources/1/runs" }));
   for (const [name, value] of Object.entries({ feed_url: "https://public.example/feed", name: "Feed", post_template: "{{title}}" })) run.appendChild(new Element("input", { name, value }));
   const requestsBeforeRun = requests.length, dialogsBeforeRun = dialogs.length;
   service.hydrate(document.body); run.requestSubmit();
@@ -62,7 +62,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), vm = requ
   assert.equal(requests.length, requestsBeforeRun, "Manual runs never request a source preview.");
   assert.equal(dialogs.length, dialogsBeforeRun, "Manual runs never open a preview modal.");
   const editModal = document.body.appendChild(new Element("modal"));
-  const editForm = editModal.appendChild(new Element("form", { action: "/api/bots/sources/1" }));
+  const editForm = editModal.appendChild(new Element("form", { action: "/api/social/bots/sources/1" }));
   for (const [name, value] of Object.entries({ feed_url: "https://public.example/feed", name: "Existing source", post_template: "{{title}}", _method: "PATCH" })) editForm.appendChild(new Element("input", { name, value }));
   const editPreview = editForm.appendChild(new Element("button", { "data-bot-source-preview": "" }));
   service.hydrate(editModal);

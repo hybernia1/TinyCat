@@ -136,9 +136,10 @@
 }
 
 .btn {
+  --button-height: var(--control-height);
   align-self: flex-start;
   display: inline-flex;
-  min-height: var(--control-height);
+  min-height: var(--button-height);
   align-items: center;
   justify-content: center;
   gap: var(--control-padding-block);
@@ -200,15 +201,18 @@
   background: var(--surface-soft);
 }
 
+.btn.sm,
 .btn-sm,
+.context-menu-action.sm,
 .context-menu-action.btn-sm {
+  --button-height: var(--control-height-compact);
   min-height: var(--control-height-compact);
   padding: calc(var(--control-padding-block) * 0.75) var(--control-padding-inline);
   font-size: 0.875rem;
 }
 
-.btn-icon {
-  width: var(--control-height);
+.btn.btn-icon {
+  width: var(--button-height);
   padding-inline: 0;
 }
 

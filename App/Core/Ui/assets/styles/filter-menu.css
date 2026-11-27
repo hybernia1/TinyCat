@@ -16,6 +16,6 @@
 
 .filter-menu-panel .field {
   overflow-x: clip;
-  overflow-clip-margin: 4px;
+  overflow-clip-margin: var(--space-1);
 }
 

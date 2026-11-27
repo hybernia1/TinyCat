@@ -1,3 +1,4 @@
+import "../legacy-modal-links.js";
 // @component-owned: structure is declared in owner catalogs.
 import "../../../../Core/Ui/assets/content-updates.js";
 import "../../../../Core/Ui/assets/runtime/dates.js";
@@ -10,7 +11,7 @@ import "../../../../Core/Ui/assets/runtime/dom.js";
   var T = window.TinyCat;
   T.moderation = {
     modal: function (url, response, id) {
-      if (!/^\/api\/moderation\/reports\/\d+$/.test(url.pathname)) { return null; }
+      if (!/^\/api\/social\/moderation\/reports\/\d+$/.test(url.pathname)) { return null; }
       var U = T.ui, data = response.data, post = data.content, definition = T.adminDefinitions["social.moderation-reports"];
       if (url.searchParams.get("panel") === "report") {
         var reportId = Number(url.pathname.split("/").pop());

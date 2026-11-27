@@ -7,7 +7,7 @@ if (!browser) { console.log('SKIP native modal history: set TINYCAT_TEST_CHROME'
 const root = path.resolve(__dirname, '../..'), php = process.env.TINYCAT_TEST_PHP || 'php';
 const assets = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--core'], {encoding:'utf8',maxBuffer:8e6}));
 const templates = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--templates'], {encoding:'utf8',maxBuffer:8e6}));
-const source = assets.map(asset => asset.source).join('\n');
+const source = assets.map(asset => asset.source).join('\n') + '\n' + fs.readFileSync(path.resolve(__dirname, '../../App/Modules/Social/assets/legacy-modal-links.js'), 'utf8');
 const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/dialog-history-fixture.js'),'utf8');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(),'tinycat-modal-history-'));
 let server;
@@ -18,10 +18,11 @@ try {
   server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{res.setHeader("Content-Type","text/html");res.end(fs.readFileSync(process.argv[1]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', file], {stdio:['ignore','pipe','pipe']});
   const port = await new Promise((resolve,reject) => { server.once('error',reject); server.stdout.once('data',data=>resolve(Number(String(data).trim()))); });
   let checks = 0;
-  for (const mode of ['deferred','replacement','basic','deep','deep-filtered','reload','invalid','anchor','legacy','nonmodal','confirm','article-create','article-edit']) {
+  for (const mode of ['deferred','replacement','basic','deep','deep-filtered','deep-legacy','deep-legacy-state','reload','invalid','anchor','legacy','nonmodal','confirm','article-create','article-edit']) {
     const url = new URL('http://127.0.0.1:'+port+'/fixture.html'); url.searchParams.set('case',mode);
-    if (mode === 'deep') url.hash = 'modal=bots/accounts/7&panel=detail&tab=history';
-    if (mode === 'deep-filtered') url.hash = 'modal=bots/accounts/7&panel=detail&tab=history&source=12&publication=published&q=RSS+fixture';
+    if (mode === 'deep-legacy' || mode === 'deep-legacy-state') url.hash = 'modal=bots/accounts/7&panel=detail&tab=history';
+    if (mode === 'deep') url.hash = 'modal=social/bots/accounts/7&panel=detail&tab=history';
+    if (mode === 'deep-filtered') url.hash = 'modal=social/bots/accounts/7&panel=detail&tab=history&source=12&publication=published&q=RSS+fixture';
     if (mode === 'article-create') url.hash = 'modal=articles/creation';
     if (mode === 'article-edit') url.hash = 'modal=articles/7/management';
     if (mode === 'invalid') url.hash = 'modal=../../outside';

@@ -35,7 +35,7 @@ import "../../../../Core/Ui/assets/dialogs.js";
     var main = document.getElementById("main-content"); main.focus({ preventScroll: true });
   }
   T.navigation.registerPage({ accepts: supported, target: "#main-content > .container", apply: apply, load: async function (url, signal) {
-    var request = new URL("/api/site/pages", window.location.href); request.searchParams.set("path", url.pathname);
+    var request = new URL("/api/social/pages", window.location.href); request.searchParams.set("path", url.pathname);
     url.searchParams.forEach(function (value, key) { request.searchParams.set(key, value); });
     var response = await T.api.request(request.href, { signal: signal, cache: "no-store" });
     return response.data;

@@ -412,7 +412,7 @@ final class Feed
     public static function status_feed_next_url(string $context, int $limit, array $params = [], bool $html = true): string
     {
         unset($params['offset'], $params['view']);
-        return '/api/statuses?' . http_build_query($params + ['context' => $context, 'limit' => max(1, min(50, $limit))]);
+        return '/api/social/statuses?' . http_build_query($params + ['context' => $context, 'limit' => max(1, min(50, $limit))]);
     }
 
     /**

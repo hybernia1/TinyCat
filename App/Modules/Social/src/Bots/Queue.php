@@ -43,11 +43,11 @@ final class Queue
         foreach ($query->order(AdminViews::sortOrder(\TinyCat\Social\Bots\Sorting::queue(), $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all() as $row) {
             $id = (int) $row['id'];
             $items[] = ['id' => $id, 'bot_id' => (int) $row['bot_id'], 'username' => (string) $row['username'], 'status' => (string) $row['status'],
-                'bot_url' => '/admin/bots/' . (int) $row['bot_id'], 'excerpt' => Text::plain_text_limit((string) $row['body'], 180),
+                'bot_url' => '/admin/social/bots/' . (int) $row['bot_id'], 'excerpt' => Text::plain_text_limit((string) $row['body'], 180),
                 'published_at' => Dates::dateIso((string) $row['published_at']), 'can_publish' => $row['status'] === 'active',
                 'source' => Resource::postSource($row, (int) $row['bot_id']),
-                'edit_url' => '/api/bots/accounts/' . (int) $row['bot_id'] . '/posts/' . $id . '/management?panel=edit',
-                'publish_url' => AdminViews::admin_list_url('/api/bots/queue/' . $id . '/publication', $params + ['page' => $pagination['page']])];
+                'edit_url' => '/api/social/bots/accounts/' . (int) $row['bot_id'] . '/posts/' . $id . '/management?panel=edit',
+                'publish_url' => AdminViews::admin_list_url('/api/social/bots/queue/' . $id . '/publication', $params + ['page' => $pagination['page']])];
         }
         $list = \TinyCat\Core\Ui\Admin\Definitions::get('social.bot-queue');
         $navigation = AdminViews::admin_pagination_view_data($pagination, $list['endpoint'], $list['target'], $params, historyPath: $list['path']);

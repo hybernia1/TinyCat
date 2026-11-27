@@ -6,8 +6,8 @@ namespace TinyCat\Social\Bots;
 final class Sorting
 {
     public const LISTS = [
-        'bot_runs' => ['/api/bots/accounts', '/admin/bots', '#bot-detail-runs-list', ['source' => 'bs.name', 'status' => 'br.status', 'started_at' => 'br.started_at', 'items_seen' => 'br.items_seen'], 'br.started_at DESC, br.id DESC', 'br.id'],
-        'bot_posts' => ['/api/bots/accounts', '/admin/bots', '#bot-detail-posts-list', ['body' => 'c.body', 'source' => 'bs.name', 'published_at' => 'c.published_at'], 'c.published_at DESC, c.id DESC', 'c.id'],
+        'bot_runs' => ['/api/social/bots/accounts', '/admin/social/bots', '#bot-detail-runs-list', ['source' => 'bs.name', 'status' => 'br.status', 'started_at' => 'br.started_at', 'items_seen' => 'br.items_seen'], 'br.started_at DESC, br.id DESC', 'br.id'],
+        'bot_posts' => ['/api/social/bots/accounts', '/admin/social/bots', '#bot-detail-posts-list', ['body' => 'c.body', 'source' => 'bs.name', 'published_at' => 'c.published_at'], 'c.published_at DESC, c.id DESC', 'c.id'],
     ];
     /** @return array{string, string, string, array<string, string>, string, string} */
     public static function queue(): array { return \TinyCat\Core\Ui\Admin\Definitions::sorting('social.bot-queue', ['bot' => 'u.username', 'source' => 'bs.name', 'body' => 'c.body', 'published_at' => 'c.published_at'], 'c.published_at ASC, c.id ASC', 'c.id'); }

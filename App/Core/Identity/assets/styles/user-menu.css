@@ -2,14 +2,13 @@
   position: relative;
   display: inline-flex;
   width: auto;
-  min-height: 38px;
+  min-height: var(--control-height-compact);
   align-items: center;
   padding: 0.25rem;
   overflow: visible;
   cursor: pointer;
 }
-.user-menu-popover { --popover-width: min(260px, calc(100vw - 24px)); }
-.user-menu-popover .context-menu-action { display: flex; align-items: center; gap: 8px; }
-.user-menu-identity { padding: 12px 10px; overflow-wrap: anywhere; border-bottom: 1px solid var(--border); }
-.user-menu-theme { display: grid; gap: 6px; padding: 10px; border-block: 1px solid var(--border); font-size: 0.8125rem; }
+.user-menu-popover { --popover-width: min(16.25rem, calc(100vw - 1.5rem)); }
+.user-menu-identity { padding: var(--space-3) var(--space-2-5); overflow-wrap: anywhere; border-bottom: 1px solid var(--border); }
+.user-menu-theme { display: grid; gap: var(--space-1-5); padding: var(--space-2-5); border-block: 1px solid var(--border); font-size: 0.8125rem; }
 .user-menu a { text-decoration: none; }

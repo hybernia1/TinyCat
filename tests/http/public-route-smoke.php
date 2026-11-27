@@ -60,7 +60,7 @@ foreach ([
     ['GET', '/api/search/all?q=runtime'],
     ['GET', '/api/admin/users'],
     ['POST', '/api/admin/cron-token'],
-    ['GET', '/api/admin/moderation/reports'],
+    ['GET', '/api/admin/social/moderation/reports'],
     ['POST', '/api/admin/settings'],
 ] as [$method, $uri]) {
     $pipes = [];
@@ -134,7 +134,7 @@ $adminScript = str_replace(['__BOOTSTRAP__', '__ENTRY__'], [$bootstrap, $entry],
 foreach ([
     '/admin',
     '/admin/users',
-    '/admin/moderation/reports',
+    '/admin/social/moderation/reports',
     '/admin/cron',
     '/admin/updates',
 ] as $uri) {

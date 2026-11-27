@@ -36,9 +36,10 @@ final class Router
     /** @var list<array{group: string, path: string, resource: callable, query: list<string>}> */
     private static array $pages = [];
 
-    /** Validate one provider before exposing its routes; preserve legacy aliases.
-     * @param callable(): void $register */
-    public static function registerModule(callable $register): void
+    /** Validate one provider atomically before exposing its routes.
+     * @param callable(): void $register
+     * @param list<string> $legacyReadRoutes */
+    public static function registerModule(callable $register, ?string $httpNamespace = null, array $legacyReadRoutes = []): void
     {
         $before = self::$routes;
         $beforeKeys = self::$routeKeys;
@@ -47,6 +48,14 @@ final class Router
             $register();
             $seen = $beforeKeys;
             foreach (array_slice(self::$routes, count($before)) as $route) {
+                if ($httpNamespace !== null) {
+                    foreach (['/api/', '/admin/'] as $root) {
+                        if (str_starts_with($route['path'] . '/', $root) && !str_starts_with($route['path'] . '/', $root . $httpNamespace . '/')) {
+                            if (in_array($route['path'], $legacyReadRoutes, true) && array_diff($route['methods'], ['GET', 'HEAD']) === []) { continue; }
+                            throw new InvalidArgumentException('Route escapes its module HTTP namespace: ' . $route['path']);
+                        }
+                    }
+                }
                 $methods = $route['methods'];
                 foreach (array_unique($methods) as $method) {
                     $key = $method . ':' . $route['path'];

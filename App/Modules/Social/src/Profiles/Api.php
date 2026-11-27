@@ -14,15 +14,15 @@ final class Api
     public static function register(Registrar $api): void
     {
         $api = $api->forPublicWeb();
-        $api->get('/profiles/{id:[0-9]+}', static function (Request $r, array $p): array {
+        $api->get('/social/profiles/{id:[0-9]+}', static function (Request $r, array $p): array {
             $user = Repository::public_author_find((int) $p['id']);
             if ($user === null) { Response::error(\TinyCat\Support\Localization::t('public.author_not_found'), 404, 'user_not_found'); }
             return ['user' => Profiles::resource($user)];
         });
         foreach (['put', 'delete'] as $method) {
-            $api->$method('/profiles/{id:[0-9]+}/followers/me', static fn (Request $r, array $p): array => self::follow((int) $p['id'], $r->method() === 'PUT'));
+            $api->$method('/social/profiles/{id:[0-9]+}/followers/me', static fn (Request $r, array $p): array => self::follow((int) $p['id'], $r->method() === 'PUT'));
         }
-        $api->get('/profiles/{id:[0-9]+}/following', self::following(...), 'user');
+        $api->get('/social/profiles/{id:[0-9]+}/following', self::following(...), 'user');
     }
 
 
@@ -51,7 +51,7 @@ final class Api
         if ($author === null) { Response::error(\TinyCat\Support\Localization::t('public.author_not_found'), 404, 'user_not_found'); }
         $profiles = Following::author_following_profiles($id, 36, (string) $request->input('cursor_at', ''), (int) $request->input('cursor_id', 0));
         $cursor = Following::author_following_cursor_params($profiles);
-        $next = count($profiles) < 36 ? '' : '/api/profiles/' . $id . '/following?' . http_build_query($cursor);
+        $next = count($profiles) < 36 ? '' : '/api/social/profiles/' . $id . '/following?' . http_build_query($cursor);
         return new Result(['author' => Profiles::resource($author), 'items' => array_map(Profiles::resource(...), $profiles)], null, ['pagination' => ['next_url' => $next, 'done' => $next === '']]);
     }
 }

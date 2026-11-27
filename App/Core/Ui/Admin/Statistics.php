@@ -5,7 +5,7 @@ namespace TinyCat\Core\Ui\Admin;
 use TinyCat\Core\Modules\Registrations;
 use TinyCat\Support\Localization;
 
-/** Registry-backed statistics: metadata is cheap; only the selected owner loads data. */
+/** Registry-backed statistics: owners load counts only when the widget or API requests them. */
 final class Statistics
 {
     /** @return list<array{id: string, label: string}> */
@@ -57,8 +57,13 @@ final class Statistics
     public static function widget(): array
     {
         $groups = self::groups();
-        $selected = (string) \TinyCat\Http\Request::current()->input('stats', '');
-        if (!in_array($selected, array_column($groups, 'id'), true)) { $selected = $groups[0]['id'] ?? ''; }
-        return ($selected !== '' ? self::resource($selected) : ['id' => '', 'items' => [], 'url' => '']) + ['groups' => $groups];
+        $resources = [];
+        $lastFailure = null;
+        foreach ($groups as $group) {
+            try { $resources[] = self::resource($group['id']); }
+            catch (\Throwable $failure) { \TinyCat\Core\Runtime\Failure::report($failure); $lastFailure = $failure; }
+        }
+        if ($resources === [] && $lastFailure !== null) { throw $lastFailure; }
+        return ['groups' => $resources];
     }
 }

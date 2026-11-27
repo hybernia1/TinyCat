@@ -145,7 +145,7 @@ foreach (['/login', '/search/all', '/privacy', '/notifications'] as $route) {
 foreach (['/admin/users', '/install'] as $route) { $assertStyle($route, 'App/Core/Ui/assets/styles/tables.css', true); }
 $assertStyle('/search/all', 'App/Modules/Social/assets/status/styles/status-header.css', true);
 $assertStyle('/search/all', 'App/Modules/Social/assets/status/styles/status-content-mobile.css', true);
-foreach (['/', '/admin/moderation'] as $route) { $assertStyle($route, 'App/Modules/Social/assets/status/styles/author-meta.css', true); }
+foreach (['/', '/admin/social/moderation'] as $route) { $assertStyle($route, 'App/Modules/Social/assets/status/styles/author-meta.css', true); }
 foreach (['/admin', '/install'] as $route) {
     $assertStyle($route, 'App/Modules/Social/assets/status/styles/home-feed.css', false);
     $assertStyle($route, 'App/Core/Ui/assets/styles/global-search.css', false);

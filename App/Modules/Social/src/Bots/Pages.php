@@ -32,7 +32,7 @@ final class Pages
     {
         Access::require_admin();
         $data = Administration::payload();
-        $actions = AdminViews::modalAction('bot-source-create-modal', Localization::t('bots.new_source'), 'plus', AdminViews::admin_list_url('/api/bots/sources/management', ['bot' => $data['filter_bot_user_id']]));
+        $actions = AdminViews::modalAction('bot-source-create-modal', Localization::t('bots.new_source'), 'plus', AdminViews::admin_list_url('/api/social/bots/sources/management', ['bot' => $data['filter_bot_user_id']]));
         \TinyCat\Core\Ui\Admin\Definitions::page('social.bot-sources', $data, $actions);
     }
 
@@ -43,14 +43,13 @@ final class Pages
             http_response_code(404);
             Layout::render([
                 'title' => Localization::t('bots.detail_not_found'),
-                'current' => '/admin/bots/accounts',
+                'current' => '/admin/social/bots/accounts',
             ], \TinyCat\Core\Ui\Components::render('ui/notice', ['tone' => 'info', 'label' => Localization::t('bots.detail_not_found')]));
             return;
         }
 
-        $query = \TinyCat\Http\Request::current()->query();
-        unset($query['view'], $query['modal']);
+        $query = array_intersect_key(\TinyCat\Http\Request::current()->query(), array_flip(['tab', 'q', 'source', 'publication', 'status', 'sort', 'direction', 'page', 'per_page']));
         $query['panel'] = 'detail';
-        \TinyCat\Http\Web::redirect('/admin/bots/accounts#modal=bots/accounts/' . $botId . '&' . http_build_query($query));
+        \TinyCat\Http\Web::redirect('/admin/social/bots/accounts#modal=social/bots/accounts/' . $botId . '&' . http_build_query($query));
     }
 }

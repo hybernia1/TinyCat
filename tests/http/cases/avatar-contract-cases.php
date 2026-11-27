@@ -15,7 +15,7 @@ $fixtureOwnsAvatar = false;
 try {
     $canvas = imagecreatetruecolor(8, 8);
     ob_start(); imagepng($canvas); $png = (string) ob_get_clean(); imagedestroy($canvas);
-    [$status, $generatedUser] = $request('GET', '/api/profiles/' . $avatarId);
+    [$status, $generatedUser] = $request('GET', '/api/social/profiles/' . $avatarId);
     $generatedUrl = '/avatar/initials/v3/AV.svg';
     $assert($status === 200 && $generatedUser['data']['user']['avatar_url'] === $generatedUrl && !$generatedUser['data']['user']['avatar_custom'], 'A new user receives a generated avatar before uploading.');
     [$modalStatus, $avatarModal] = $request('GET', '/api/users/' . $avatarId . '/avatar', null, 'admin');
@@ -39,7 +39,7 @@ try {
     $avatarUrl = $payload['data']['user']['avatar_url'];
     $assert(preg_match('~^/uploads/avatars/' . $avatarId . '-[a-f0-9]{32}\.webp$~D', $avatarUrl) === 1, 'Upload returns the immutable versioned avatar resource.');
     $assert((int) $seed->query('SELECT avatar_exists FROM users WHERE id = ' . $avatarId)->fetchColumn() === 1, 'Successful upload persists avatar availability.');
-    [$status, $payload] = $request('GET', '/api/profiles/' . $avatarId);
+    [$status, $payload] = $request('GET', '/api/social/profiles/' . $avatarId);
     $assert($status === 200 && $payload['data']['user']['avatar_url'] === $avatarUrl, 'Subsequent public resources preserve the uploaded avatar URL.');
     $imageBytes = file_get_contents('http://' . $address . $avatarUrl);
     $assert(is_string($imageBytes) && getimagesizefromstring($imageBytes)['mime'] === 'image/webp', 'The returned avatar URL actually serves a WebP image.');
@@ -71,11 +71,11 @@ try {
     $seed->exec("UPDATE users SET role = 'bot' WHERE id = " . $avatarId);
     $seed->prepare('INSERT INTO bot_sources (bot_user_id, name, feed_url, feed_hash, post_template, enabled) VALUES (?, ?, ?, ?, ?, 1)')->execute([$avatarId, 'Avatar rollback source', 'http://127.0.0.1/blocked', hash('sha256', 'avatar-' . $avatarId), '{{title}}']);
     $seed->exec('CREATE TRIGGER fail_bot_avatar_sources BEFORE UPDATE ON bot_sources FOR EACH ROW BEGIN IF NEW.bot_user_id = ' . $avatarId . " THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced bot side effect failure'; END IF; END");
-    [$status] = $request('POST', '/api/bots/accounts/' . $avatarId, $multipartBody(['_method' => 'PATCH', 'status' => 'ban'], $redPng), 'admin', $multipartHeaders);
+    [$status] = $request('POST', '/api/social/bots/accounts/' . $avatarId, $multipartBody(['_method' => 'PATCH', 'status' => 'ban'], $redPng), 'admin', $multipartHeaders);
     $assert($status === 500 && hash_file('sha256', $avatarFile) === $originalHash, 'Failure disabling bot sources rolls back the avatar replacement.');
     $assert($seed->query('SELECT status FROM users WHERE id = ' . $avatarId)->fetchColumn() === 'active', 'A bot side effect failure rolls back the account status.');
     $seed->exec('DROP TRIGGER fail_bot_avatar_sources');
-    [$status, $payload] = $request('POST', '/api/bots/accounts/' . $avatarId, $multipartBody(['_method' => 'PATCH', 'status' => 'active'], $redPng), 'admin', $multipartHeaders);
+    [$status, $payload] = $request('POST', '/api/social/bots/accounts/' . $avatarId, $multipartBody(['_method' => 'PATCH', 'status' => 'active'], $redPng), 'admin', $multipartHeaders);
     $version = (string) $seed->query('SELECT avatar_version FROM users WHERE id = ' . $avatarId)->fetchColumn();
     $newAvatarFile = $root . '/uploads/avatars/' . $avatarId . '-' . $version . '.webp';
     $assert($status === 200 && !is_file($avatarFile) && is_file($newAvatarFile) && hash_file('sha256', $newAvatarFile) !== $originalHash, 'A successful bot update switches to a new immutable avatar and cleans the legacy file.');
@@ -85,7 +85,7 @@ try {
     [$status] = $request('DELETE', '/api/users/' . $avatarId . '/avatar', [], 'admin', $csrf);
     clearstatcache(true, $avatarFile);
     $assert($status === 200 && !is_file($avatarFile), 'Removing the avatar clears its file.');
-    [$status, $payload] = $request('GET', '/api/profiles/' . $avatarId);
+    [$status, $payload] = $request('GET', '/api/social/profiles/' . $avatarId);
     $assert($status === 200 && $payload['data']['user']['avatar_url'] === $generatedUrl && !$payload['data']['user']['avatar_custom'], 'Removed avatars return the stable generated fallback.');
     $seed->exec('CREATE TRIGGER fail_new_avatar BEFORE UPDATE ON users FOR EACH ROW BEGIN IF NEW.id = ' . $avatarId . " THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced first avatar failure'; END IF; END");
     [$status] = $request('POST', '/api/users/' . $avatarId . '/avatar', $multipartBody(['_method' => 'PUT'], $redPng), 'admin', $multipartHeaders);
@@ -93,7 +93,7 @@ try {
     $assert($status === 500 && !is_file($avatarFile), 'A failed first upload removes its new file when there is no previous avatar.');
     $assert((int) $seed->query('SELECT avatar_exists FROM users WHERE id = ' . $avatarId)->fetchColumn() === 0, 'A failed first upload preserves the absent-avatar database state.');
     $seed->exec('DROP TRIGGER fail_new_avatar');
-    [$status, $postUpload] = $request('POST', '/api/statuses', $multipartBody(['body' => 'Raster upload fixture ' . $avatarId], $redPng, 'image'), 'admin', $multipartHeaders);
+    [$status, $postUpload] = $request('POST', '/api/social/statuses', $multipartBody(['body' => 'Raster upload fixture ' . $avatarId], $redPng, 'image'), 'admin', $multipartHeaders);
     $assert($status === 201, 'Post images upload through the shared raster processing helpers.');
     $postId = (int) $postUpload['data']['status_id'];
     $path = $seed->query('SELECT path FROM social_post_images WHERE content_id = ' . $postId)->fetchColumn();
@@ -102,7 +102,7 @@ try {
     try {
         $dimensions = getimagesize($postImageFile);
         $assert($dimensions[0] === 12 && $dimensions[1] === 8, 'Post images preserve aspect ratio without the avatar crop or upscaling.');
-        [$status] = $request('DELETE', '/api/statuses/' . $postId, [], 'admin', $csrf);
+        [$status] = $request('DELETE', '/api/social/statuses/' . $postId, [], 'admin', $csrf);
         clearstatcache(true, $postImageFile);
         $assert($status === 200 && !is_file($postImageFile), 'Deleting the post removes its encoded image.');
     } finally {

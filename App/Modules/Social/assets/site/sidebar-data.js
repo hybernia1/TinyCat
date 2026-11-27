@@ -12,7 +12,7 @@ import "./views.js";
   function loadSidebar() {
     if (cached && Date.now() - updated < 300000) { return Promise.resolve(cached); }
     if (!loading) {
-      loading = TinyCat.api.request("/api/site/sidebar", { method: "GET", cache: "no-store" }).then(function (response) {
+      loading = TinyCat.api.request("/api/social/sidebar", { method: "GET", cache: "no-store" }).then(function (response) {
         cached = response; updated = Date.now(); return response;
       }).finally(function () { loading = null; });
     }
@@ -119,7 +119,7 @@ import "./views.js";
     TinyCat.lifecycle.register("sidebar-freshness", { init: function () {
       document.addEventListener("tinycat:success", function (event) {
         var source = event.target, action = source && (source.getAttribute("action") || source.getAttribute("href") || "");
-        if (/^\/api\/(?:statuses|profiles\/[0-9]+\/followers)/.test(action)) { updated = 0; TinyCat.site.refresh(); }
+        if (/^\/api\/social\/(?:statuses|profiles\/[0-9]+\/followers)/.test(action)) { updated = 0; TinyCat.site.refresh(); }
       });
     } });
 }());

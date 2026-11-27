@@ -84,7 +84,7 @@ $statusCard = \TinyCat\Core\Ui\Components::render('status/card', [
     'anchor' => false, 'open_modal' => false, 'action' => '/',
 ]);
 $assert(!str_contains($statusCard, 'id="status-7"'), 'Modal status cards can omit the feed anchor.');
-$assert(str_contains($statusCard, 'data-modal-parent-url="/api/statuses/7"'), 'Status cards consume their prepared modal route.');
+$assert(str_contains($statusCard, 'data-modal-parent-url="/api/social/statuses/7"'), 'Status cards consume their prepared modal route.');
 $assert(preg_match('/status-time-button[^>]*data-modal-open/', $statusCard) !== 1, 'Modal status cards keep their time link in the current modal.');
 
 $link = \TinyCat\Core\Ui\Components::render('publishing/link', ['link' => ['url' => 'https://www.youtube.com/watch?v=abc123', 'title' => 'Demo <video>', 'embed_url' => 'https://www.youtube.com/embed/abc123', 'embed_allowed' => true, 'thumbnail_url' => 'https://i.ytimg.com/vi/abc123/mqdefault.jpg', 'thumbnail_mobile_url' => 'https://i.ytimg.com/vi/abc123/default.jpg', 'thumbnail_webp_url' => '']]);
@@ -287,7 +287,7 @@ try {
     }
     \TinyCat\Core\Identity\Authentication::reset(['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'theme' => 'dark'], true);
     ob_start();
-    \TinyCat\Core\Ui\Page::render(['title' => 'Administration', 'current' => '/admin/moderation/reports'], '<p>Admin content</p>');
+    \TinyCat\Core\Ui\Page::render(['title' => 'Administration', 'current' => '/admin/social/moderation/reports'], '<p>Admin content</p>');
     $adminLayout = (string) ob_get_clean();
     ob_start();
     \TinyCat\Core\Ui\Admin\Definitions::page('social.bot-creation', ['items' => [], 'filters' => [], 'sorting' => [], 'pagination' => []], '<button data-custom-list-action>Custom action</button>');
@@ -313,7 +313,7 @@ try {
 
 $assert(\TinyCat\Core\Ui\Surface::Administration->assetPath(['current' => '/crm']) === '/admin', 'An explicit admin surface selects admin assets on a nonstandard path.');
 $assert(\TinyCat\Core\Ui\Surface::Access->assetPath(['current' => '/private-entry']) === '/login', 'An explicit access surface selects access assets on a nonstandard path.');
-$assert(\TinyCat\Core\Ui\Surface::Administration->assetPath(['asset_path' => '/admin/bots']) === '/admin/bots', 'An owner can select a matching surface asset profile.');
+$assert(\TinyCat\Core\Ui\Surface::Administration->assetPath(['asset_path' => '/admin/social/bots']) === '/admin/social/bots', 'An owner can select a matching surface asset profile.');
 foreach (['cs', 'en', 'pl'] as $locale) {
     foreach (['/author/1', '/status/10', '/tag/tinycat', '/social', '/search/all'] as $path) {
         $assetPath = \TinyCat\Core\Ui\Surface::PublicWeb->assetPath(['current' => '/' . $locale . $path]);

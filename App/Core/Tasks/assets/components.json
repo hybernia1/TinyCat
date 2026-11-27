@@ -176,7 +176,7 @@
                                             "children": [
                                               {
                                                 "tag": "span",
-                                                "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                                                "attrs": {"class": "avatar sm", "aria-hidden": "true"},
                                                 "children": [
                                                   {"component": "scheduler/icon", "data": {"name": {"get": "run.task"}}}
                                                 ]
@@ -292,7 +292,7 @@
                                               {
                                                 "component": "ui/modal-trigger",
                                                 "data": {
-                                                  "class": "btn btn-sm btn-ghost btn-icon",
+                                                  "class": "btn sm btn-ghost btn-icon",
                                                   "modal": {"concat": ["scheduler-run-", {"get": "run.id"}]},
                                                   "url": {"get": "run.detail_url"},
                                                   "label": {"t": "cron.run_details"},
@@ -834,7 +834,7 @@
             "children": [
               {
                 "tag": "span",
-                "attrs": {"class": "avatar avatar-sm", "aria-hidden": "true"},
+                "attrs": {"class": "avatar sm", "aria-hidden": "true"},
                 "children": [{"component": "scheduler/icon", "data": {"name": {"get": "task.name"}}}]
               },
               {
@@ -947,7 +947,7 @@
                   "target": {"admin_ref": "core.scheduler-runs", "field": "target"},
                   "label": {"t": "cron.run_now"},
                   "icon": "play",
-                  "button_class": "btn btn-sm btn-secondary",
+                  "button_class": "btn sm btn-secondary",
                   "show_label": true
                 }
               }

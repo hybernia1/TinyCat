@@ -141,7 +141,7 @@
   },
   {
     "routes": [
-      "/admin/bots"
+      "/admin/social/bots"
     ],
     "components": [
       "status/composer-body",
@@ -225,7 +225,7 @@
   },
   {
     "routes": [
-      "/admin/moderation"
+      "/admin/social/moderation"
     ],
     "components": [
       "status/card",
@@ -311,7 +311,7 @@
   },
   {
     "routes": [
-      "/admin/bots"
+      "/admin/social/bots"
     ],
     "components": [
       "ui/avatar",
@@ -389,9 +389,9 @@
     ],
     "admin": {
       "social.bot-queue": {
-        "path": "/admin/bots/queue",
-        "api": "/api/bots/queue",
-        "endpoint": "/api/bots/queue",
+        "path": "/admin/social/bots/queue",
+        "api": "/api/social/bots/queue",
+        "endpoint": "/api/social/bots/queue",
         "target": "#bot-queue-list",
         "component": "bots/queue",
         "filter": "bots/queue-filter-form",
@@ -400,26 +400,26 @@
         "icon": "clock"
       },
       "social.bot-creation": {
-        "api": "/api/bots/accounts",
+        "api": "/api/social/bots/accounts",
         "target": "#bot-accounts-list",
         "title": "bots.accounts_title",
         "icon": "users",
         "editor": {
-          "creation": "/api/bots/accounts/creation",
+          "creation": "/api/social/bots/accounts/creation",
           "fields": "bots/account-creation-fields",
           "title": "bots.new_account",
           "submit": "common.create"
         },
-        "path": "/admin/bots/accounts",
-        "endpoint": "/api/bots/accounts",
+        "path": "/admin/social/bots/accounts",
+        "endpoint": "/api/social/bots/accounts",
         "component": "bots/accounts",
         "filter": "bots/account-filter-form",
         "filterId": "bot-accounts-filter-modal"
       },
       "social.bot-sources": {
-        "path": "/admin/bots/list",
-        "endpoint": "/api/bots/sources",
-        "api": "/api/bots/sources",
+        "path": "/admin/social/bots/sources",
+        "endpoint": "/api/social/bots/sources",
+        "api": "/api/social/bots/sources",
         "target": "#bots-list",
         "title": "bots.sources_title",
         "icon": "rss",
@@ -431,7 +431,7 @@
   },
   {
     "routes": [
-      "/admin/moderation"
+      "/admin/social/moderation"
     ],
     "components": [
       "ui/api-action",
@@ -474,9 +474,9 @@
     },
     "admin": {
       "social.moderation-reports": {
-        "path": "/admin/moderation/reports",
-        "endpoint": "/api/moderation/reports",
-        "api": "/api/moderation",
+        "path": "/admin/social/moderation/reports",
+        "endpoint": "/api/social/moderation/reports",
+        "api": "/api/social/moderation",
         "target": "#moderation-reports",
         "component": "moderation/reports",
         "filter": "moderation/filter-form",
@@ -697,8 +697,8 @@
     ],
     "defer": {
       "resources": [
-        "/api/statuses",
-        "/api/moderation/report-options"
+        "/api/social/statuses",
+        "/api/social/moderation/report-options"
       ],
       "selectors": [
         "[data-status-editor]"

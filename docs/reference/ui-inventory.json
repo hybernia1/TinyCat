@@ -979,6 +979,7 @@
       "inputs": [
         "alt",
         "fallback_icon",
+        "size",
         "small",
         "user",
         "user.id"
@@ -1413,13 +1414,9 @@
         "entry.time",
         "entry.url",
         "entry.user",
-        "group.id",
-        "group.label",
         "widget.content",
         "widget.data",
         "widget.data.detail",
-        "widget.data.groups",
-        "widget.data.id",
         "widget.data.items",
         "widget.data.text",
         "widget.data.tone",
@@ -1495,15 +1492,14 @@
       "name": "ui/dashboard-metrics",
       "source": "App/Core/Ui/assets/components.json",
       "dependencies": [
+        "ui/dashboard-metric",
         "ui/empty-state"
       ],
       "inputs": [
+        "group.items",
+        "groups",
         "items",
-        "metric.display_value",
-        "metric.icon",
-        "metric.key",
-        "metric.label",
-        "metric.value"
+        "metric"
       ]
     },
     {
@@ -1537,6 +1533,18 @@
         "history",
         "target",
         "url"
+      ]
+    },
+    {
+      "name": "ui/dashboard-metric",
+      "source": "App/Core/Ui/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "metric.display_value",
+        "metric.icon",
+        "metric.key",
+        "metric.label",
+        "metric.value"
       ]
     },
     {
@@ -3838,6 +3846,18 @@
     ],
     "avatar": [
       {
+        "source": "App/Core/Ui/assets/styles/avatar-sizes.css",
+        "line": 1,
+        "context": [],
+        "selector": ".avatar.sm"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/avatar-sizes.css",
+        "line": 6,
+        "context": [],
+        "selector": ".avatar.xl"
+      },
+      {
         "source": "App/Core/Ui/assets/styles/avatar.css",
         "line": 1,
         "context": [],
@@ -3865,21 +3885,13 @@
         "source": "App/Modules/Social/assets/status/styles/status-avatars.css",
         "line": 1,
         "context": [],
-        "selector": ".status-header .avatar"
+        "selector": ".status-compose-row > .avatar"
       },
       {
-        "source": "App/Modules/Social/assets/status/styles/status-avatars.css",
-        "line": 6,
+        "source": "App/Modules/Social/assets/users/styles/profile.css",
+        "line": 36,
         "context": [],
-        "selector": ".status-compose-row .avatar"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
-        "line": 7,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".status-composer .status-compose-row .avatar"
+        "selector": ".profile-identity .avatar"
       }
     ],
     "avatar-editor": [
@@ -4043,15 +4055,9 @@
     "avatar-xl": [
       {
         "source": "App/Core/Ui/assets/styles/avatar-sizes.css",
-        "line": 5,
+        "line": 6,
         "context": [],
         "selector": ".avatar-xl"
-      },
-      {
-        "source": "App/Modules/Social/assets/users/styles/profile.css",
-        "line": 36,
-        "context": [],
-        "selector": ".profile-identity .avatar-xl"
       }
     ],
     "badge": [
@@ -4087,13 +4093,13 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/dashboard.css",
-        "line": 14,
+        "line": 9,
         "context": [],
         "selector": "[data-cache-page] h2 > .badge"
       },
       {
         "source": "App/Core/Ui/assets/styles/dashboard.css",
-        "line": 18,
+        "line": 13,
         "context": [],
         "selector": "[data-cache-page] td:has(> .badge)"
       },
@@ -4353,21 +4359,33 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 155,
+        "line": 156,
         "context": [],
         "selector": ".btn:hover"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 159,
+        "line": 160,
         "context": [],
         "selector": ".btn:disabled"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 159,
+        "line": 160,
         "context": [],
         "selector": ".btn[aria-disabled=\"true\"]"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/buttons.css",
+        "line": 204,
+        "context": [],
+        "selector": ".btn.sm"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/buttons.css",
+        "line": 214,
+        "context": [],
+        "selector": ".btn.btn-icon"
       },
       {
         "source": "App/Core/Ui/assets/styles/cards.css",
@@ -4438,16 +4456,8 @@
         "selector": ".public-list-header-actions > .btn"
       },
       {
-        "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
-        "line": 12,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".status-compose-main .btn"
-      },
-      {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 14,
+        "line": 15,
         "context": [],
         "selector": ".status-compose-main .btn"
       }
@@ -4455,13 +4465,13 @@
     "btn-danger": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 185,
+        "line": 186,
         "context": [],
         "selector": ".btn-danger"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 190,
+        "line": 191,
         "context": [],
         "selector": ".btn-danger:hover"
       }
@@ -4469,13 +4479,13 @@
     "btn-ghost": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 195,
+        "line": 196,
         "context": [],
         "selector": ".btn-ghost"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 199,
+        "line": 200,
         "context": [],
         "selector": ".btn-ghost:hover"
       }
@@ -4483,7 +4493,7 @@
     "btn-group": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 226,
+        "line": 230,
         "context": [],
         "selector": ".btn-group"
       }
@@ -4491,27 +4501,21 @@
     "btn-icon": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 210,
+        "line": 214,
         "context": [],
-        "selector": ".btn-icon"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 48,
-        "context": [],
-        "selector": ".status-compose-actions > .btn-icon"
+        "selector": ".btn.btn-icon"
       }
     ],
     "btn-primary": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 165,
+        "line": 166,
         "context": [],
         "selector": ".btn-primary"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 170,
+        "line": 171,
         "context": [],
         "selector": ".btn-primary:hover"
       }
@@ -4519,13 +4523,13 @@
     "btn-secondary": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 175,
+        "line": 176,
         "context": [],
         "selector": ".btn-secondary"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 180,
+        "line": 181,
         "context": [],
         "selector": ".btn-secondary:hover"
       }
@@ -4533,13 +4537,13 @@
     "btn-sm": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 203,
+        "line": 204,
         "context": [],
         "selector": ".btn-sm"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 203,
+        "line": 204,
         "context": [],
         "selector": ".context-menu-action.btn-sm"
       }
@@ -4828,14 +4832,14 @@
     ],
     "context-menu-action": [
       {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 12,
+        "source": "App/Core/Ui/assets/styles/buttons.css",
+        "line": 204,
         "context": [],
-        "selector": ".user-menu-popover .context-menu-action"
+        "selector": ".context-menu-action.sm"
       },
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 203,
+        "line": 204,
         "context": [],
         "selector": ".context-menu-action.btn-sm"
       },
@@ -4931,13 +4935,7 @@
       },
       {
         "source": "App/Core/Ui/assets/styles/dashboard.css",
-        "line": 10,
-        "context": [],
-        "selector": ".dashboard-grid [data-widget-metrics]"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/dashboard.css",
-        "line": 40,
+        "line": 20,
         "context": [
           "@media (min-width: 900px)"
         ],
@@ -5586,14 +5584,6 @@
         "selector": ".input-icon > .icon"
       },
       {
-        "source": "App/Core/Ui/assets/styles/navbar-mobile.css",
-        "line": 48,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".nav-link-icon .icon"
-      },
-      {
         "source": "App/Core/Ui/assets/styles/navbar.css",
         "line": 56,
         "context": [],
@@ -5640,12 +5630,6 @@
         "line": 313,
         "context": [],
         "selector": ".status-video-source .icon"
-      },
-      {
-        "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 35,
-        "context": [],
-        "selector": ".status-image-picker .icon"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
@@ -5907,7 +5891,7 @@
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 167,
+        "line": 155,
         "context": [],
         "selector": ".status-editor-suggestion.is-active"
       }
@@ -5967,7 +5951,7 @@
     "is-limit": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 127,
+        "line": 115,
         "context": [],
         "selector": ".status-editor-counter.is-limit"
       }
@@ -6033,7 +6017,7 @@
     "is-warning": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 123,
+        "line": 111,
         "context": [],
         "selector": ".status-editor-counter.is-warning"
       }
@@ -6075,7 +6059,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 74,
+        "line": 67,
         "context": [],
         "selector": ".status-modal-form > .label"
       }
@@ -6151,7 +6135,7 @@
     "link-button": [
       {
         "source": "App/Core/Ui/assets/styles/buttons.css",
-        "line": 215,
+        "line": 219,
         "context": [],
         "selector": ".link-button"
       }
@@ -6776,14 +6760,6 @@
         "line": 1,
         "context": [],
         "selector": ".nav-badge"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/nav-badge.css",
-        "line": 21,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".nav-badge"
       }
     ],
     "nav-link": [
@@ -6820,14 +6796,6 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".nav-link-icon"
-      },
-      {
-        "source": "App/Core/Ui/assets/styles/navbar-mobile.css",
-        "line": 48,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".nav-link-icon .icon"
       },
       {
         "source": "App/Core/Ui/assets/styles/navbar.css",
@@ -7361,7 +7329,7 @@
         "source": "App/Modules/Social/assets/users/styles/profile.css",
         "line": 36,
         "context": [],
-        "selector": ".profile-identity .avatar-xl"
+        "selector": ".profile-identity .avatar"
       }
     ],
     "profile-identity-main": [
@@ -7582,12 +7550,6 @@
         "line": 1,
         "context": [],
         "selector": ".public-list-header"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 9,
-        "context": [],
-        "selector": ".public-list-header .text-2xl"
       }
     ],
     "public-list-header-actions": [
@@ -7605,7 +7567,7 @@
         "context": [
           "@media (max-width: 899px)"
         ],
-        "selector": ".public-list-header-actions > .text-2xl"
+        "selector": ".public-list-header-actions > .public-list-title"
       },
       {
         "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
@@ -7614,6 +7576,22 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".public-list-header-actions > .btn"
+      }
+    ],
+    "public-list-title": [
+      {
+        "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
+        "line": 12,
+        "context": [
+          "@media (max-width: 899px)"
+        ],
+        "selector": ".public-list-header-actions > .public-list-title"
+      },
+      {
+        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
+        "line": 9,
+        "context": [],
+        "selector": ".public-list-title"
       }
     ],
     "public-sidebar": [
@@ -7778,12 +7756,6 @@
     ],
     "select": [
       {
-        "source": "App/Core/Ui/assets/styles/dashboard.css",
-        "line": 27,
-        "context": [],
-        "selector": "[data-dashboard-stats-form] > .select"
-      },
-      {
         "source": "App/Core/Ui/assets/styles/fields.css",
         "line": 19,
         "context": [],
@@ -7834,6 +7806,26 @@
         "line": 96,
         "context": [],
         "selector": ".skip-link:focus"
+      }
+    ],
+    "sm": [
+      {
+        "source": "App/Core/Ui/assets/styles/avatar-sizes.css",
+        "line": 1,
+        "context": [],
+        "selector": ".avatar.sm"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/buttons.css",
+        "line": 204,
+        "context": [],
+        "selector": ".btn.sm"
+      },
+      {
+        "source": "App/Core/Ui/assets/styles/buttons.css",
+        "line": 204,
+        "context": [],
+        "selector": ".context-menu-action.sm"
       }
     ],
     "sm:grid-2": [
@@ -8425,31 +8417,25 @@
     "status-compose-actions": [
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 41,
+        "line": 40,
         "context": [],
         "selector": ".status-compose-actions"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 48,
-        "context": [],
-        "selector": ".status-compose-actions > .btn-icon"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 54,
+        "line": 47,
         "context": [],
         "selector": ".status-compose-actions .status-image-field"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 58,
+        "line": 51,
         "context": [],
         "selector": ".status-compose-actions .status-image-preview"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 67,
+        "line": 60,
         "context": [],
         "selector": ".status-compose-actions .status-image-preview img"
       }
@@ -8457,13 +8443,13 @@
     "status-compose-counter": [
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 27,
+        "line": 26,
         "context": [],
         "selector": ".status-compose-counter"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 35,
+        "line": 34,
         "context": [],
         "selector": ".status-compose-counter .status-editor-meta"
       }
@@ -8471,35 +8457,27 @@
     "status-compose-footer": [
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 20,
+        "line": 19,
         "context": [],
         "selector": ".status-compose-footer"
       }
     ],
     "status-compose-main": [
       {
-        "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
-        "line": 12,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".status-compose-main .btn"
-      },
-      {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 9,
+        "line": 10,
         "context": [],
         "selector": ".status-compose-main"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 14,
+        "line": 15,
         "context": [],
         "selector": ".status-compose-main .btn"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 63,
+        "line": 56,
         "context": [],
         "selector": ".status-compose-main .status-image-picker"
       }
@@ -8507,9 +8485,9 @@
     "status-compose-row": [
       {
         "source": "App/Modules/Social/assets/status/styles/status-avatars.css",
-        "line": 6,
+        "line": 1,
         "context": [],
-        "selector": ".status-compose-row .avatar"
+        "selector": ".status-compose-row > .avatar"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
@@ -8518,14 +8496,6 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".status-compose-row"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
-        "line": 7,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".status-composer .status-compose-row .avatar"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
@@ -8542,32 +8512,24 @@
           "@media (max-width: 899px)"
         ],
         "selector": ".status-composer .card-body"
-      },
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-content-mobile.css",
-        "line": 7,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".status-composer .status-compose-row .avatar"
       }
     ],
     "status-editor-counter": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 117,
+        "line": 105,
         "context": [],
         "selector": ".status-editor-counter"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 123,
+        "line": 111,
         "context": [],
         "selector": ".status-editor-counter.is-warning"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 127,
+        "line": 115,
         "context": [],
         "selector": ".status-editor-counter.is-limit"
       }
@@ -8595,25 +8557,25 @@
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 81,
+        "line": 69,
         "context": [],
         "selector": ".status-editor-input"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 99,
+        "line": 87,
         "context": [],
         "selector": ".status-editor-input:focus"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 104,
+        "line": 92,
         "context": [],
         "selector": ".status-editor-input:empty::before"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 76,
+        "line": 69,
         "context": [],
         "selector": ".status-modal-form .status-editor-input"
       }
@@ -8621,13 +8583,13 @@
     "status-editor-meta": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 110,
+        "line": 98,
         "context": [],
         "selector": ".status-editor-meta"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 35,
+        "line": 34,
         "context": [],
         "selector": ".status-compose-counter .status-editor-meta"
       }
@@ -8635,7 +8597,7 @@
     "status-editor-shell": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 77,
+        "line": 65,
         "context": [],
         "selector": ".status-editor-shell"
       }
@@ -8643,25 +8605,25 @@
     "status-editor-suggestion": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 151,
+        "line": 139,
         "context": [],
         "selector": ".status-editor-suggestion"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 167,
+        "line": 155,
         "context": [],
         "selector": ".status-editor-suggestion:hover"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 167,
+        "line": 155,
         "context": [],
         "selector": ".status-editor-suggestion:focus"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 167,
+        "line": 155,
         "context": [],
         "selector": ".status-editor-suggestion.is-active"
       }
@@ -8669,13 +8631,13 @@
     "status-editor-suggestion-avatar": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 174,
+        "line": 162,
         "context": [],
         "selector": ".status-editor-suggestion-avatar"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 190,
+        "line": 178,
         "context": [],
         "selector": "img.status-editor-suggestion-avatar"
       }
@@ -8683,7 +8645,7 @@
     "status-editor-suggestion-text": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 194,
+        "line": 182,
         "context": [],
         "selector": ".status-editor-suggestion-text"
       }
@@ -8691,13 +8653,13 @@
     "status-editor-suggestions": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 131,
+        "line": 119,
         "context": [],
         "selector": ".status-editor-suggestions"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 147,
+        "line": 135,
         "context": [],
         "selector": ".status-editor-suggestions[hidden]"
       }
@@ -8757,18 +8719,12 @@
     "status-field": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 63,
+        "line": 51,
         "context": [],
         "selector": ".status-field"
       }
     ],
     "status-header": [
-      {
-        "source": "App/Modules/Social/assets/status/styles/status-avatars.css",
-        "line": 1,
-        "context": [],
-        "selector": ".status-header .avatar"
-      },
       {
         "source": "App/Modules/Social/assets/status/styles/status-header.css",
         "line": 1,
@@ -8779,13 +8735,13 @@
     "status-image": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 40,
+        "line": 28,
         "context": [],
         "selector": ".status-image"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 49,
+        "line": 37,
         "context": [],
         "selector": ".status-image img"
       }
@@ -8813,7 +8769,7 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 54,
+        "line": 47,
         "context": [],
         "selector": ".status-compose-actions .status-image-field"
       }
@@ -8821,27 +8777,15 @@
     "status-image-link": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 57,
+        "line": 45,
         "context": [],
         "selector": ".status-image-link"
       }
     ],
     "status-image-picker": [
       {
-        "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 28,
-        "context": [],
-        "selector": ".status-image-picker"
-      },
-      {
-        "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 35,
-        "context": [],
-        "selector": ".status-image-picker .icon"
-      },
-      {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 63,
+        "line": 56,
         "context": [],
         "selector": ".status-compose-main .status-image-picker"
       }
@@ -8867,13 +8811,13 @@
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 58,
+        "line": 51,
         "context": [],
         "selector": ".status-compose-actions .status-image-preview"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 67,
+        "line": 60,
         "context": [],
         "selector": ".status-compose-actions .status-image-preview img"
       }
@@ -9301,19 +9245,19 @@
     "status-modal-form": [
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 72,
+        "line": 65,
         "context": [],
         "selector": ".status-modal-form"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 74,
+        "line": 67,
         "context": [],
         "selector": ".status-modal-form > .label"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-editing.css",
-        "line": 76,
+        "line": 69,
         "context": [],
         "selector": ".status-modal-form .status-editor-input"
       }
@@ -9505,13 +9449,13 @@
     "status-textarea": [
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 68,
+        "line": 56,
         "context": [],
         "selector": ".status-textarea"
       },
       {
         "source": "App/Modules/Social/assets/content/styles/status-editing.css",
-        "line": 73,
+        "line": 61,
         "context": [],
         "selector": ".status-textarea[hidden]"
       }
@@ -10176,20 +10120,6 @@
         "line": 121,
         "context": [],
         "selector": ".text-2xl"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
-        "line": 12,
-        "context": [
-          "@media (max-width: 899px)"
-        ],
-        "selector": ".public-list-header-actions > .text-2xl"
-      },
-      {
-        "source": "App/Modules/Social/assets/site/styles/public-list-header.css",
-        "line": 9,
-        "context": [],
-        "selector": ".public-list-header .text-2xl"
       }
     ],
     "text-base": [
@@ -10437,7 +10367,7 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 15,
+        "line": 14,
         "context": [],
         "selector": ".user-menu a"
       }
@@ -10445,7 +10375,7 @@
     "user-menu-identity": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 13,
+        "line": 12,
         "context": [],
         "selector": ".user-menu-identity"
       }
@@ -10456,18 +10386,12 @@
         "line": 11,
         "context": [],
         "selector": ".user-menu-popover"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 12,
-        "context": [],
-        "selector": ".user-menu-popover .context-menu-action"
       }
     ],
     "user-menu-theme": [
       {
         "source": "App/Core/Identity/assets/styles/user-menu.css",
-        "line": 14,
+        "line": 13,
         "context": [],
         "selector": ".user-menu-theme"
       }
@@ -10478,6 +10402,14 @@
         "line": 1,
         "context": [],
         "selector": ".user-menu > .user-menu-trigger"
+      }
+    ],
+    "xl": [
+      {
+        "source": "App/Core/Ui/assets/styles/avatar-sizes.css",
+        "line": 6,
+        "context": [],
+        "selector": ".avatar.xl"
       }
     ]
   },
@@ -11050,7 +10982,7 @@
             ],
             [
               "top",
-              "calc(100% + 4px)"
+              "calc(100% + 0.25rem)"
             ],
             [
               "right",
@@ -12162,19 +12094,6 @@
         {
           "name": "replaceNode",
           "line": 17
-        }
-      ]
-    },
-    {
-      "source": "App/Core/Ui/assets/dashboard-stats.js",
-      "methods": [
-        {
-          "name": "result",
-          "line": 7
-        },
-        {
-          "name": "init",
-          "line": 15
         }
       ]
     },
@@ -13317,7 +13236,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13336,7 +13255,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13433,7 +13352,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13452,7 +13371,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13471,7 +13390,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13490,13 +13409,13 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/bots"
+          "/admin/social/bots"
         ]
       },
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13541,7 +13460,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13560,7 +13479,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13579,7 +13498,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -13598,7 +13517,7 @@
       {
         "manifest": "App/Modules/Social/assets/module.json",
         "routes": [
-          "/admin/moderation"
+          "/admin/social/moderation"
         ]
       }
     ],
@@ -14172,22 +14091,6 @@
       "standalone": false
     },
     {
-      "source": "App/Core/Ui/assets/dashboard-stats.js",
-      "imports": [
-        "App/Core/Ui/assets/ajax-bindings.js",
-        "App/Core/Ui/assets/content-updates.js"
-      ],
-      "entries": [
-        {
-          "manifest": "App/Core/Ui/assets/module.json",
-          "routes": [
-            "/admin"
-          ]
-        }
-      ],
-      "standalone": false
-    },
-    {
       "source": "App/Core/Ui/assets/dialog-history.js",
       "imports": [
         "App/Core/Ui/assets/runtime/navigation.js",
@@ -14551,6 +14454,7 @@
     {
       "source": "App/Modules/Social/assets/bots/controller.js",
       "imports": [
+        "App/Modules/Social/assets/legacy-modal-links.js",
         "App/Core/Ui/assets/content-updates.js",
         "App/Core/Ui/assets/list-navigation.js",
         "App/Core/Ui/assets/runtime/dates.js",
@@ -14580,7 +14484,7 @@
         {
           "manifest": "App/Modules/Social/assets/module.json",
           "routes": [
-            "/admin/bots"
+            "/admin/social/bots"
           ]
         }
       ],
@@ -14657,7 +14561,7 @@
         {
           "manifest": "App/Modules/Social/assets/module.json",
           "routes": [
-            "/admin/bots"
+            "/admin/social/bots"
           ]
         },
         {
@@ -14698,7 +14602,7 @@
         {
           "manifest": "App/Modules/Social/assets/module.json",
           "routes": [
-            "/admin/moderation"
+            "/admin/social/moderation"
           ]
         },
         {
@@ -14767,8 +14671,15 @@
       "standalone": true
     },
     {
+      "source": "App/Modules/Social/assets/legacy-modal-links.js",
+      "imports": [],
+      "entries": [],
+      "standalone": false
+    },
+    {
       "source": "App/Modules/Social/assets/moderation/controller.js",
       "imports": [
+        "App/Modules/Social/assets/legacy-modal-links.js",
         "App/Core/Ui/assets/content-updates.js",
         "App/Core/Ui/assets/runtime/dates.js",
         "App/Core/Ui/assets/runtime/component-renderer.js",
@@ -14790,7 +14701,7 @@
         {
           "manifest": "App/Modules/Social/assets/module.json",
           "routes": [
-            "/admin/moderation"
+            "/admin/social/moderation"
           ]
         }
       ],
@@ -14894,6 +14805,7 @@
     {
       "source": "App/Modules/Social/assets/status/controller.js",
       "imports": [
+        "App/Modules/Social/assets/legacy-modal-links.js",
         "App/Modules/Social/assets/content/comments.js",
         "App/Modules/Social/assets/content/runtime.js",
         "App/Core/Ui/assets/content-updates.js",
@@ -14922,7 +14834,7 @@
         {
           "manifest": "App/Modules/Social/assets/module.json",
           "routes": [
-            "/admin/bots"
+            "/admin/social/bots"
           ]
         },
         {
@@ -15019,7 +14931,7 @@
         {
           "manifest": "App/Modules/Social/assets/module.json",
           "routes": [
-            "/admin/bots"
+            "/admin/social/bots"
           ]
         }
       ],
@@ -15037,6 +14949,7 @@
     {
       "source": "App/Modules/Social/assets/users/controller.js",
       "imports": [
+        "App/Modules/Social/assets/legacy-modal-links.js",
         "App/Core/Ui/assets/runtime/dom.js",
         "App/Core/Ui/assets/runtime/component-renderer.js",
         "App/Core/Ui/assets/component-builders.js"

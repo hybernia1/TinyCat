@@ -29,10 +29,7 @@
         "tag": "button",
         "attrs": {
           "class": {
-            "concat": [
-              "btn btn-ghost btn-icon btn-sm",
-              {"if": [{"eq": [{"get": "method"}, "DELETE"]}, " text-danger", ""]}
-            ]
+            "concat": ["btn btn-ghost btn-icon sm", {"if": [{"eq": [{"get": "method"}, "DELETE"]}, " text-danger", ""]}]
           },
           "type": "submit",
           "aria-label": {
@@ -163,7 +160,7 @@
                   {"tag": "input", "attrs": {"type": "hidden", "name": "read", "value": "1"}},
                   {
                     "tag": "button",
-                    "attrs": {"class": "btn btn-secondary btn-sm", "type": "submit"},
+                    "attrs": {"class": "btn btn-secondary sm", "type": "submit"},
                     "children": [
                       {"icon": "check"},
                       " ",

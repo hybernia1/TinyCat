@@ -30,7 +30,7 @@ import "../content/translation.js";
   };
   TinyCat.modules.register("status", TinyCat.status);
   TinyCat.navigation.register("/", {
-    target: ".home-feed-section", url: function () { return "/api/statuses" + window.location.search; },
+    target: ".home-feed-section", url: function () { return "/api/social/statuses" + window.location.search; },
     apply: function (target, response) { TinyCat.status.feed(target, response); }
   });
 }());

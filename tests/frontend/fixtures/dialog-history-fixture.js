@@ -23,7 +23,7 @@
     });
   };
   T.modules.register('history-test', {modal(url, response, id) {
-    if (url.pathname === '/api/bots/accounts/7' || url.pathname === '/api/users/7/avatar' || /^\/api\/articles\/(?:creation|7\/management)$/.test(url.pathname)) return editor(id, false);
+    if (url.pathname === '/api/social/bots/accounts/7' || url.pathname === '/api/users/7/avatar' || /^\/api\/articles\/(?:creation|7\/management)$/.test(url.pathname)) return editor(id, false);
     return null;
   }});
   if (!history.state && !mode.startsWith('deep')) history.replaceState({pageIndex:0, retained:'list-state'}, '');
@@ -38,7 +38,7 @@
   const base = location.pathname + location.search;
   const count = () => history.length;
   if (mode === 'deferred') {
-    await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail');
     history.back(); await wait(() => !modal() && !location.hash, 'Close before restoring a dialog with deferred assets');
     let releaseAssets;
     T.deferred = {resource: () => new Promise(resolve => { releaseAssets = resolve; })};
@@ -47,7 +47,7 @@
     releaseAssets(); await pause();
     check(!modal() && !document.body.dataset.dialogError, 'Late assets cannot resurrect a cancelled dialog');
     T.deferred = null;
-    const current = await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    const current = await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail');
     releaseAssets = null;
     T.deferred = {resource: () => new Promise(resolve => { releaseAssets = resolve; })};
     const refresh = T.dialog.refresh(current).catch(error => { check(error.name === 'AbortError', 'A deferred refresh reports cancellation'); });
@@ -57,7 +57,7 @@
     check(modal() === current && input.value === 'Draft entered during asset loading', 'Deferred refresh preserves edits made after the resource response');
   } else if (mode === 'replacement') {
     const opener = document.getElementById('opener'); opener.focus();
-    const first = await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    const first = await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail');
     check(first.querySelectorAll('[data-modal-resource-refresh]').length===1, 'Ordinary resource editors retain Refresh by default');
     const switcher = T.dom.element('button',{'data-modal-open':first.id,'data-modal-url':'/api/users/7/avatar'},'Switch');
     first.querySelector('.modal-body').append(switcher); switcher.focus(); switcher.click();
@@ -86,7 +86,7 @@
     delete document.body.dataset.dialogError;
   } else if (mode === 'legacy') {
     const list = base + '&list=1';
-    await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail', {baseUrl:list});
+    await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail', {baseUrl:list});
     check(T.navigation.pageUrl() === list, 'A legacy entry point identifies its already-rendered list as the modal background');
     history.back(); await wait(() => !modal() && location.pathname + location.search === list, 'A legacy modal closes to its canonical list');
     check(restores === 0, 'Legacy modal close does not reload the existing list');
@@ -94,11 +94,21 @@
     check(!modal() && requests.length === 0, 'Malformed modal fragments never trigger resource requests');
   } else if (mode === 'anchor') {
     const original = location.href;
-    await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
-    check(location.hash.includes('modal=bots/accounts/7') && !location.hash.includes('#section'), 'A modal replaces the visible fragment without corrupting the base anchor');
+    await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail');
+    check(location.hash.includes('modal=social/bots/accounts/7') && !location.hash.includes('#section'), 'A modal replaces the visible fragment without corrupting the base anchor');
     history.back(); await wait(() => !modal() && location.href === original, 'Closing restores the original page anchor');
   } else if (mode.startsWith('deep')) {
     await wait(() => modal() && tab('history').getAttribute('aria-selected') === 'true', 'A direct URL opens its remote modal and selected tab');
+    if (mode === 'deep-legacy-state') {
+      if (!sessionStorage.getItem('legacy-modal-state')) {
+        const saved=history.state;
+        saved.tinycatModal.stack[0].url='/api/bots/accounts/7?panel=detail';
+        saved.tinycatModal.stack[0].id='bot-detail-modal';
+        history.replaceState(saved,'',location.pathname+location.search+'#modal=bots/accounts/7&panel=detail&tab=history');
+        sessionStorage.setItem('legacy-modal-state','true');location.reload();return;
+      }
+      check(modal().id === 'bot-detail-modal' && modal().dataset.modalUrl === '/api/social/bots/accounts/7?panel=detail', 'Old serialized modal history upgrades its resource and preserves explicit logical IDs');
+    }
     if (mode === 'deep-filtered') {
       const resource = new URL(requests[0], location.href);
       check(resource.searchParams.get('source') === '12' && resource.searchParams.get('publication') === 'published' && resource.searchParams.get('q') === 'RSS fixture', 'Canonical bot detail fragments preserve resource filters without hidden markers');
@@ -113,15 +123,15 @@
     await wait(() => modal() && modal().dataset.modalUrl === '/api/users/7/avatar', 'Reload reconstructs the complete nested modal stack');
     check(count() === length, 'Reload does not seed another base or modal entry');
     history.back();
-    await wait(() => modal() && modal().dataset.modalUrl === '/api/bots/accounts/7?panel=detail' && tab('history').getAttribute('aria-selected') === 'true', 'Back after reload restores the parent tab');
+    await wait(() => modal() && modal().dataset.modalUrl === '/api/social/bots/accounts/7?panel=detail' && tab('history').getAttribute('aria-selected') === 'true', 'Back after reload restores the parent tab');
     history.back(); await wait(() => !modal() && !location.hash, 'The next Back closes the parent after reload');
     check(restores === 0, 'Reloaded modal history never reloads the underlying list');
   } else {
     window.scrollTo(0, 180); const scroll = scrollY;
     const opener = document.getElementById('opener'); opener.focus({preventScroll:true});
-    await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail');
     const length = count();
-    check(location.hash.includes('modal=bots/accounts/7') && location.hash.includes('panel=detail'), 'Opening a modal adds its readable resource URL');
+    check(location.hash.includes('modal=social/bots/accounts/7') && location.hash.includes('panel=detail'), 'Opening a modal adds its readable resource URL');
     check(history.state.pageIndex === 0 && history.state.retained === 'list-state' && history.state.tinycatModal.stack.length === 1, 'Modal metadata is isolated from the page navigation state');
     tab('history').click();
     check(location.hash.includes('tab=history') && count() === length, 'Tab selection replaces the modal entry');
@@ -143,7 +153,7 @@
     const input = modal().querySelector('input'); input.value = 'Unsaved'; input.dispatchEvent(new Event('input', {bubbles:true}));
     history.back(); await wait(() => modal() && modal().dataset.modalKind === 'confirm', 'Back uses the shared unsaved-changes confirmation');
     modal().querySelector('.modal-footer button').click();
-    await wait(() => location.hash.includes('modal=bots/accounts/7') && modal() && modal().id === 'bot-detail-modal', 'Cancel restores the same modal history entry');
+    await wait(() => location.hash.includes('modal=social/bots/accounts/7') && modal() && modal().id === 'bot-detail-modal', 'Cancel restores the same modal history entry');
     check(modal().querySelector('input').value === 'Unsaved', 'Cancel preserves the unsaved draft');
     check(!JSON.stringify(history.state).includes('Unsaved'), 'Form drafts are never serialized into history state');
     history.back(); await wait(() => modal() && modal().dataset.modalKind === 'confirm', 'A later Back can retry discarding');
@@ -158,17 +168,17 @@
     // Persistent Forward is synchronous; use the remote entry for a pending-read race.
     await wait(() => modal() === persistent, 'Persistent Forward settles before opening a remote editor');
     await T.dialog.requestClose(persistent); await wait(() => !location.hash, 'Return to the base before opening a remote resource');
-    delayed = false; await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    delayed = false; await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail');
     T.dialog.close(modal()); await wait(() => !location.hash, 'Close the remote editor before slow Forward');
     delayed = true; history.forward(); await wait(() => releaseRead !== null, 'Forward starts its resource request');
     history.back(); await wait(() => !location.hash, 'Back cancels a pending Forward read');
     releaseRead({data:{}}); await pause(); check(!modal() && !document.body.dataset.dialogError, 'A late response cannot resurrect a closed modal');
-    delayed = false; await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    delayed = false; await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail');
     await T.navigation.go(base + '&next=1');
     check(!modal() && !location.hash && !history.state.tinycatModal, 'Ordinary page navigation clears modal state');
     history.back(); await wait(() => restores === 1, 'Back from a page visit restores the underlying page once');
     await T.navigation.go(base + '&other=1');
-    await T.dialog.openResource('bot-detail-modal', '/api/bots/accounts/7?panel=detail');
+    await T.dialog.openResource('bot-detail-modal', '/api/social/bots/accounts/7?panel=detail');
     history.go(-2); await wait(() => !modal() && T.navigation.pageUrl() === base, 'Skipping a modal and its base restores the previous page');
     history.go(2); await wait(() => modal() && T.navigation.pageUrl().endsWith('&other=1'), 'Forward across pages restores the modal background before its editor');
     const draft = modal().querySelector('input'); draft.value = 'Cross-page draft'; draft.dispatchEvent(new Event('input', {bubbles:true}));

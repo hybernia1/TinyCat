@@ -2,12 +2,12 @@
   "/access/notifications": {
     "raw_js": 164608,
     "gzip_js": 39680,
-    "raw_css": 33024,
+    "raw_css": 33280,
     "gzip_css": 7184,
     "scripts": 4,
     "stylesheets": 1
   },
-  "/admin/moderation": {
+  "/admin/social/moderation": {
     "raw_js": 303616,
     "gzip_js": 62720,
     "raw_css": 63488,
@@ -18,7 +18,7 @@
   "/access/privacy": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 30848,
+    "raw_css": 31104,
     "gzip_css": 6912,
     "scripts": 4,
     "stylesheets": 1
@@ -63,7 +63,7 @@
     "scripts": 4,
     "stylesheets": 1
   },
-  "/admin/bots": {
+  "/admin/social/bots": {
     "raw_js": 383744,
     "gzip_js": 80640,
     "raw_css": 55296,
@@ -90,7 +90,7 @@
   "/recovery": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 29696,
+    "raw_css": 30080,
     "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
@@ -98,7 +98,7 @@
   "/register": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 29696,
+    "raw_css": 30080,
     "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
@@ -138,7 +138,7 @@
   "/logout": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 29696,
+    "raw_css": 29952,
     "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1
@@ -170,7 +170,7 @@
   "/login": {
     "raw_js": 153088,
     "gzip_js": 37120,
-    "raw_css": 29696,
+    "raw_css": 30080,
     "gzip_css": 6656,
     "scripts": 4,
     "stylesheets": 1

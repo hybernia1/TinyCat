@@ -25,7 +25,7 @@ const schedulerMarkup = JSON.parse(execFileSync(php, [path.join(root,'tests/pres
 const schedulerSource = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/cron','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6})).assets.map(asset => asset.source).join('\n');
 const publicBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/author/2','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
 const publicSource = publicBundle.assets.map(asset => asset.source).join('\n');
-const queueBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/bots/queue','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
+const queueBundle = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/client-assets-fixture.php'),'/admin/social/bots/queue','en','--compiled-min'], {encoding:'utf8',maxBuffer:8e6}));
 const queueSource = queueBundle.assets.map(asset => asset.source).join('\n');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(),'tinycat-form-validation-'));
 let server;

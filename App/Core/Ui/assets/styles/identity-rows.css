@@ -9,7 +9,7 @@
   border-radius: var(--radius-sm);
   color: var(--text);
 }
-.identity-row-compact { padding: 0.5rem 0.625rem; }
+.identity-row-compact { --avatar-size: var(--control-height-compact); padding: 0.5rem 0.625rem; }
 .identity-row-inset { padding: 0; }
 .identity-row > .avatar { --avatar-size: inherit; --avatar-border: 0; --avatar-background: var(--surface-muted); width: var(--avatar-size); height: var(--avatar-size); }
 .identity-row:is(a, button):is(:hover, :focus-visible) { background: var(--surface-soft); }

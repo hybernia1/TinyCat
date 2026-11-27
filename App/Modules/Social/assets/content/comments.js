@@ -80,7 +80,7 @@ import "../../../../Core/Ui/assets/dialogs.js";
 
       editorRoot = qs("[data-status-editor]", details.closest(".status-comment-main"));
       if (editorRoot && !TinyCat.publishing.controllers.editor && TinyCat.deferred) {
-        try { await TinyCat.deferred.resource(new URL("/api/statuses", window.location.href)); }
+        try { await TinyCat.deferred.resource(new URL("/api/social/statuses", window.location.href)); }
         catch (error) { TinyCat.toasts.show(error.message, "danger"); return; }
         if (!details.open || details.isConnected === false) { return; }
       }

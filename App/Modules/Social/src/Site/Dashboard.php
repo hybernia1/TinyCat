@@ -22,7 +22,7 @@ final class Dashboard
     /** @return array<string, array<string, mixed>> */
     public static function statisticsFields(): array
     {
-        return ['published' => ['label' => ['t' => 'bots.post_published']], 'scheduled' => ['label' => ['t' => 'bots.post_scheduled']], 'comments' => ['label' => ['t' => 'admin.stats.comments']], 'likes' => ['label' => ['t' => 'admin.stats.likes']]];
+        return ['published' => ['label' => ['t' => 'bots.post_published'], 'icon' => 'file-text'], 'scheduled' => ['label' => ['t' => 'bots.post_scheduled'], 'icon' => 'clock'], 'comments' => ['label' => ['t' => 'admin.stats.comments'], 'icon' => 'message-circle'], 'likes' => ['label' => ['t' => 'admin.stats.likes'], 'icon' => 'thumb-up']];
     }
 
     /** @return array<string, mixed> */

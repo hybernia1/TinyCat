@@ -9,10 +9,10 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
-        $api->get('/moderation/blocked-urls', \TinyCat\Social\Posts\Policy::resource(...), 'admin');
-        $api->put('/moderation/blocked-urls', \TinyCat\Social\Posts\Policy::save(...), 'admin');
+        $api->get('/social/moderation/blocked-urls', \TinyCat\Social\Posts\Policy::resource(...), 'admin');
+        $api->put('/social/moderation/blocked-urls', \TinyCat\Social\Posts\Policy::save(...), 'admin');
 
-        $api->get('/moderation/report-options', static function (Request $r): array {
+        $api->get('/social/moderation/report-options', static function (Request $r): array {
             $r->validated(['id' => 'required|integer']);
             $item = \TinyCat\Social\Posts\Feed::public_status_item((int) $r->input('id'));
             if ($item === null || !\TinyCat\Social\Posts\Repository::visible($item)) {
@@ -20,7 +20,7 @@ final class Api
             }
             return ['reasons' => array_keys(\TinyCat\Social\Posts\Posts::status_report_reasons()), 'note_max_length' => \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH];
         }, 'user');
-        $api->post('/moderation/reports', static function (Request $r): Result {
+        $api->post('/social/moderation/reports', static function (Request $r): Result {
             $r->validated(['id' => 'required|integer', 'reason' => 'string', 'note' => 'string|max:' . \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH]);
             \TinyCat\Social\Posts\Actions::status_json_require_session_interval('report');
             $data = \TinyCat\Social\Posts\Actions::status_json_report((int) $r->input('id'), \TinyCat\Core\Identity\Access::requireAuth());
@@ -29,9 +29,9 @@ final class Api
             return Result::from($data);
         });
         $api->get(\TinyCat\Core\Ui\Admin\Definitions::route('social.moderation-reports', 'endpoint'), static fn (): Result => Result::from(Reports::tc_admin_moderation_reports_payload()), 'admin');
-        $api->get('/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Reports::detail((int) $p['id'])), 'admin');
-        $api->patch('/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(self::adminReportReview((int) $p['id'])), 'admin');
-        $api->post('/moderation/posts/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Result::from(self::adminPostPublish((int) $p['id'])), 'admin', 200);
+        $api->get('/social/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Reports::detail((int) $p['id'])), 'admin');
+        $api->patch('/social/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(self::adminReportReview((int) $p['id'])), 'admin');
+        $api->post('/social/moderation/posts/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Result::from(self::adminPostPublish((int) $p['id'])), 'admin', 200);
     }
 
     /** @return array<mixed> */

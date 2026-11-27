@@ -1,14 +1,9 @@
 .dashboard-grid {
-  --summary-item-min-width: 8rem;
   display: grid;
   overflow-wrap: anywhere;
   gap: var(--control-padding-inline);
   padding: var(--control-padding-inline);
   background: var(--bg);
-}
-
-.dashboard-grid [data-widget-metrics] {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--summary-item-min-width)), 1fr));
 }
 
 [data-cache-page] h2 > .badge {
@@ -17,21 +12,6 @@
 
 [data-cache-page] td:has(> .badge) {
   text-align: end;
-}
-
-[data-dashboard-stats-form] {
-  max-width: 100%;
-  margin-inline-start: auto;
-}
-
-[data-dashboard-stats-form] > .select {
-  width: auto;
-  max-width: 100%;
-}
-
-[data-widget-metric] {
-  display: flex;
-  align-items: center;
 }
 
 [data-widget-list] { gap: 0; }

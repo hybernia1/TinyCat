@@ -18,39 +18,43 @@ final class Api
     public static function register(Registrar $api): void
     {
         $api = $api->forPublicWeb();
-        $api->get('/statuses', self::listing(...));
-        $api->get('/statuses/{id:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
-        $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
-        $api->get('/statuses/{id:[0-9]+}/embed', static function (Request $request, array $params): array {
+        $api->get('/social/statuses', self::listing(...));
+        // Published HTML/feed links keep their resolver, never a second publication API.
+        $api->get('/statuses/{id:[0-9]+}/links/{hash:[a-f0-9]{64}}', self::contentLink(...));
+        $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/links/{hash:[a-f0-9]{64}}', self::contentLink(...));
+
+        $api->get('/social/statuses/{id:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
+        $api->get('/social/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
+        $api->get('/social/statuses/{id:[0-9]+}/embed', static function (Request $request, array $params): array {
             $data = Embed::sharing((int) $params['id']);
             if ($data === null) { Response::error(\TinyCat\Support\Localization::t('public.status_not_found'), 404, 'status_not_found'); }
             return $data;
         });
-        $api->post('/statuses', static fn (): Result => self::write(static fn (): array => Actions::status_json_create(IdentityApi::actor()), 'create'));
-        $api->get('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): array => self::detail((int) $p['id']));
-        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::update((int) $p['id']));
-        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::delete((int) $p['id']));
-        $api->get('/statuses/{id:[0-9]+}/comments', self::comments(...));
-        $api->post('/statuses/{id:[0-9]+}/comments', static function (Request $r, array $p): Result {
+        $api->post('/social/statuses', static fn (): Result => self::write(static fn (): array => Actions::status_json_create(IdentityApi::actor()), 'create'));
+        $api->get('/social/statuses/{id:[0-9]+}', static fn (Request $r, array $p): array => self::detail((int) $p['id']));
+        $api->patch('/social/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::update((int) $p['id']));
+        $api->delete('/social/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::delete((int) $p['id']));
+        $api->get('/social/statuses/{id:[0-9]+}/comments', self::comments(...));
+        $api->post('/social/statuses/{id:[0-9]+}/comments', static function (Request $r, array $p): Result {
             $r->validated(['parent_id' => 'integer|min:0']);
             return self::write(static fn (): array => Actions::status_json_comment((int) $p['id'], max(0, (int) $r->input('parent_id', 0)), IdentityApi::actor()), 'comment');
         });
-        $api->patch('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}', static function (Request $r, array $p): Result {
+        $api->patch('/social/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}', static function (Request $r, array $p): Result {
             self::commentTarget($p);
             return self::write(static fn (): array => Actions::status_json_comment_update((int) $p['commentId'], IdentityApi::actor()), 'comment_update');
         });
-        $api->delete('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}', static function (Request $r, array $p): Result {
+        $api->delete('/social/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}', static function (Request $r, array $p): Result {
             self::commentTarget($p);
             return self::write(static fn (): array => Actions::status_json_comment_delete((int) $p['commentId'], IdentityApi::actor()), 'comment_delete');
         });
-        $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/revisions', static function (Request $r, array $p): array {
+        $api->get('/social/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/revisions', static function (Request $r, array $p): array {
             $comment = self::commentTarget($p);
             if (!Comments::status_comment_can_edit($comment, IdentityApi::actor())) { Response::error(\TinyCat\Support\Localization::t('auth.forbidden'), 403, 'forbidden'); }
             return ['items' => Comments::readHistory((string) ($comment['comments_diff'] ?? ''))];
         }, 'user');
         foreach (['put', 'delete'] as $method) {
-            $api->$method('/statuses/{id:[0-9]+}/likes/me', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_react((int) $p['id'], IdentityApi::actor(), $r->method() === 'PUT'), 'react'));
-            $api->$method('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/likes/me', static function (Request $r, array $p): Result {
+            $api->$method('/social/statuses/{id:[0-9]+}/likes/me', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_react((int) $p['id'], IdentityApi::actor(), $r->method() === 'PUT'), 'react'));
+            $api->$method('/social/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/likes/me', static function (Request $r, array $p): Result {
                 self::commentTarget($p);
                 return self::write(static fn (): array => Actions::status_json_comment_like((int) $p['commentId'], IdentityApi::actor(), $r->method() === 'PUT'), 'comment_like');
             });
