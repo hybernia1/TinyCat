@@ -11,6 +11,8 @@ require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\App
 
 // Rendering fixtures must not depend on an installed workspace/CI database.
 $database = \tinycat_test_database();
+$database->exec('CREATE TABLE notifications (id INT UNSIGNED PRIMARY KEY, user_id INT UNSIGNED NOT NULL, actor_id INT UNSIGNED NULL, read_at DATETIME NULL, created_at DATETIME)');
+$database->exec('CREATE TABLE users (id INT UNSIGNED PRIMARY KEY, username VARCHAR(254), avatar_exists TINYINT, avatar_version INT UNSIGNED, updated_at DATETIME)');
 $database->exec('CREATE TABLE social_post_links (content_id INT UNSIGNED, link_id INT UNSIGNED)');
 $database->exec('CREATE TABLE social_post_images (content_id INT UNSIGNED, path TEXT)');
 $database->exec('CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash CHAR(64), provider VARCHAR(200), link_type VARCHAR(200), title TEXT, description TEXT, image_url TEXT, video_id VARCHAR(200), audio_url TEXT, created_at DATETIME, updated_at DATETIME)');
