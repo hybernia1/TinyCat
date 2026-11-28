@@ -278,6 +278,7 @@ try {
     file_put_contents($installRoot . '/uploads/avatars/release-sentinel.txt', 'uploads-' . $baselineVersion, LOCK_EX);
     $installRunner = <<<'PHP'
 define('TINYCAT', true);
+try {
 require_once __ROOT__ . '/App/Core/Runtime/autoload.php';
 if (class_exists(TinyCat\Core\Modules\Distribution::class)) {
     $sourceSelection = is_file(__ROOT__ . '/App/available-modules.php') ? require __ROOT__ . '/App/available-modules.php' : TinyCat\Core\Modules\SourceModules::selection(__ROOT__);
@@ -285,16 +286,24 @@ if (class_exists(TinyCat\Core\Modules\Distribution::class)) {
     file_put_contents(__ROOT__ . '/storage/baseline-schemas.json', json_encode($available['schemas'], JSON_THROW_ON_ERROR));
     $plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', __PLATFORM_BASELINE__ ? $sourceSelection : require __ROOT__ . '/App/modules.php');
     file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
+    // A Git archive excludes generated outputs; prepare the baseline exactly
+    // as its release builder does before booting the installed application.
+    TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection(__ROOT__, TinyCat\Core\Modules\Distribution::selection($plan, $plan['active']))->catalog);
+    $compile = require __ROOT__ . '/tools/assets/compile-assets.php';
+    foreach ($compile() as $relative => $content) {
+        if (!TinyCat\Support\Storage::write(__ROOT__ . '/' . $relative, $content, 0644)) { throw new RuntimeException('Cannot prepare baseline release assets.'); }
+    }
 }
 \TinyCat\Core\Runtime\Application::start();
 TinyCat\Core\Installation\Installer::create_tables();
-TinyCat\Core\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
+TinyCat\Core\Identity\Setup::administrator('release_admin', 'Release-Rehearsal-2026', 'en');
 TinyCat\Core\Installation\Installer::default_settings(['locale' => 'en']);
 if (isset($plan) && !$plan['legacy']) { TinyCat\Core\Modules\Deployment::write(__ROOT__, $plan, $plan['active'], $plan['active'], TinyCat\Support\Version::CURRENT); }
+} catch (Throwable $error) { fwrite(STDERR, $error->getMessage() . "\n"); exit(1); }
 PHP;
     [$installExit, $installOutput] = $run(str_replace(['__ROOT__', '__PLATFORM_BASELINE__'], [var_export($installRoot, true), array_key_exists('platform-baseline', $options) ? 'true' : 'false'], $installRunner));
     if ($installExit !== 0) {
-        throw new RuntimeException('Baseline installer failed: ' . implode(' ', $installOutput));
+        throw new RuntimeException('Baseline installer failed (exit ' . $installExit . '): ' . implode(' ', $installOutput));
     }
     $assert(true, 'Supported baseline installer prepares the representative database.');
     $baselineSchemas = json_decode((string) file_get_contents($installRoot . '/storage/baseline-schemas.json'), true, 512, JSON_THROW_ON_ERROR);
