@@ -197,3 +197,11 @@ instalaci, nebo o prázdnou izolovanou sestavu. Zachovej odpovídající zálohu
 a ověř výsledek na cílové doméně. Používej společné instalační a aktualizační
 vstupy podle [module deployment](../operations/module-deployment.md) a
 [aktualizačního postupu](../operations/updates.md).
+
+### Synchronizing asset sources
+
+After changing client sources, components or translations, synchronize the related
+runtime files and run `php App/Console.php assets` in the external installation.
+HTTP no longer publishes fallback cache bundles. The installed manifest references
+only `/assets/build/` files. The command uses standard deployment maintenance,
+backup and journal; use normal recovery if the deployment fails.

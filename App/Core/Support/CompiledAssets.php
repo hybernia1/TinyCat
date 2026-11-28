@@ -5,7 +5,7 @@ namespace TinyCat\Support;
 
 use TinyCat\Core\Modules\DeploymentIdentity;
 
-/** Signed release inventory; development checkouts can use the source fallback. */
+/** Read the single installed build; HTTP never compiles or publishes assets. */
 final class CompiledAssets
 {
     /** @return array<mixed> */
@@ -30,12 +30,6 @@ final class CompiledAssets
     public static function components(): ?array
     {
         $manifest = self::manifest();
-        if ($manifest['_prepared'] ?? false) {
-            $prepared = PreparedAssets::read('components', null, DeploymentIdentity::inventory()['prepared']);
-            if ($prepared === []) { DeploymentIdentity::reject(); return null; }
-            DeploymentIdentity::delivered();
-            return $prepared;
-        }
         $name = $manifest['server_components'] ?? null;
         if ($name === null) { return null; }
         if (!is_string($name) || preg_match('/^components\.[a-f0-9]{24}\.php$/D', $name) !== 1) { throw new \RuntimeException('Invalid compiled component path.'); }

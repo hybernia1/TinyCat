@@ -1839,7 +1839,19 @@
             "attrs": {"class": "text-base m-0 cluster gap-2"},
             "children": [{"icon": "code"}, {"get": "assets.name"}]
           },
-          {"component": "ui/detail-table", "data": {"title": {"get": "assets.name"}, "rows": {"get": "assets.rows"}}}
+          {"component": "ui/detail-table", "data": {"title": {"get": "assets.name"}, "rows": {"get": "assets.rows"}}},
+          {
+            "tag": "form",
+            "attrs": {"method": "post", "action": "/api/site/asset-builds", "data-ajax-form": ""},
+            "children": [
+              {"csrf": true},
+              {
+                "tag": "button",
+                "attrs": {"class": "btn btn-secondary sm", "type": "submit"},
+                "children": [{"icon": "refresh"}, {"t": "admin.cache.rebuild_assets"}]
+              }
+            ]
+          }
         ]
       },
       {"slot": {"get": "services"}},

@@ -266,7 +266,7 @@ class Manager extends Package
                 \TinyCat\Core\Installation\Installer::validateConfigurationSnapshot($backup);
             }
             if (($metadata['format'] ?? null) !== 2 || !is_array($metadata['files'] ?? null) || !is_array($metadata['new_files'] ?? null) || !array_key_exists('deployment', $metadata)) { throw new RuntimeException('This backup requires the documented manual restoration procedure.'); }
-            if ($installing && (($metadata['database_backup_required'] ?? null) !== true || $metadata['files'] !== [] || $metadata['new_files'] !== [] || $metadata['deployment'] !== null)) { throw new RuntimeException('Invalid fresh installation backup metadata.'); }
+            if ($installing && (($metadata['database_backup_required'] ?? null) !== true || array_diff(array_keys($metadata['files']), ['assets/build/manifest.json']) !== [] || array_diff($metadata['new_files'], ['assets/build/manifest.json']) !== [] || $metadata['deployment'] !== null)) { throw new RuntimeException('Invalid fresh installation backup metadata.'); }
             foreach ($metadata['files'] as $path => $hash) {
                 $source = self::pathBelow($backup . '/files', (string) $path);
                 self::assertNoManagedSymlink($source, (string) $path);
@@ -802,7 +802,8 @@ class Manager extends Package
 
         $targets = array_values(array_unique(array_merge(
             array_keys((array) ($manifest['files'] ?? [])),
-            (array) ($manifest['delete'] ?? [])
+            (array) ($manifest['delete'] ?? []),
+            ['assets/build/manifest.json']
         )));
 
         foreach ($targets as $path) {
@@ -858,7 +859,8 @@ class Manager extends Package
         self::ensureDirectory($filesDirectory);
         $paths = array_values(array_unique(array_merge(
             array_keys((array) ($manifest['files'] ?? [])),
-            (array) ($manifest['delete'] ?? [])
+            (array) ($manifest['delete'] ?? []),
+            ['assets/build/manifest.json']
         )));
         $backedUp = []; $newFiles = [];
 
@@ -882,7 +884,7 @@ class Manager extends Package
             // Files present in the package are not necessarily changed: every
             // signed release ships the complete managed tree. A deletion always
             // needs a copy; a replacement only does when its contents differ.
-            if ($targetHash !== '' && hash_equals($targetHash, $sourceHash)) {
+            if (!in_array($path, ['assets/build/manifest.json'], true) && $targetHash !== '' && hash_equals($targetHash, $sourceHash)) {
                 continue;
             }
 
@@ -1048,8 +1050,7 @@ class Manager extends Package
             // Immutable URLs can still be referenced by pages opened before an update.
             $relative = str_replace('\\', '/', substr($path, strlen($cache) + 1));
             if ($relative === 'assets' || str_starts_with($relative, 'assets/')) { continue; }
-            // Deployment::write publishes selection-bound inventories before finalization.
-            // Keep their retention-managed generations alongside the immutable assets.
+            // Legacy pages may still reference these retired cache generations.
             if ($relative === 'prepared-assets' || str_starts_with($relative, 'prepared-assets/')) { continue; }
             if ($relative === 'asset-publications' || str_starts_with($relative, 'asset-publications/')) { continue; }
             // Never unlink an inode on which another asset reader/publisher may be waiting.

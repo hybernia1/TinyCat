@@ -8,7 +8,7 @@ let checks = 0;
 let preparedBuild;
 const bundles = new Map();
 function check(value, message) { checks++; assert.ok(value, message); }
-function load(route, locale = "en", compiled = false) {
+function load(route, locale = "en", compiled = true) {
   const key = JSON.stringify([route, locale, compiled]);
   if (!bundles.has(key)) {
     const php = process.env.TINYCAT_TEST_PHP || "php";
@@ -30,7 +30,7 @@ function load(route, locale = "en", compiled = false) {
   return { ...bundle, T: window.TinyCat, context, document };
 }
 const publicPage = load("/");
-for (const mode of [false, true, "min"]) {
+for (const mode of [true, "min"]) {
   for (const route of ["/login", "/register", "/recovery", "/logout", "/privacy", "/notifications"]) {
     const page = load(route, "en", mode);
     check(page.T.authentication && !page.T.status && !page.T.socialUsers && !page.T.site, "Core public pages exclude the Social feed runtime in every delivery variant: " + route);
@@ -67,7 +67,7 @@ for (const mode of [false, true, "min"]) {
 }
 check(publicPage.T.accounts !== publicPage.T.socialUsers && typeof publicPage.T.accounts.follow === "undefined" && typeof publicPage.T.socialUsers.follow === "function", "Social relationships never mutate the core account service");
 check(typeof publicPage.T.accounts.list === "undefined" && !publicPage.T.accounts.avatarUpload && publicPage.T.deferredAssets.script, "Public account controls defer avatar editing without the administrative list adapter");
-for (const mode of [false, true, "min"]) {
+for (const mode of [true, "min"]) {
   for (const route of ["/login", "/account", "/access/notifications"]) {
     const access = load(route, "en", mode);
     check(!access.sources.some(source => source.startsWith("App/Modules/")), "Access delivery excludes optional module assets in source and compiled variants: " + route);
@@ -110,7 +110,7 @@ check(load("/install").sources.includes("App/Core/Ui/assets/form-constraints.js"
 const schedulerPage = load("/admin/cron");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");
-for (const mode of [false, true, "min"]) {
+for (const mode of [true, "min"]) {
   const health = load("/admin/cron", "cs", mode);
   check(health.T.scheduler && health.T.settings && health.T.adminNavigation && health.T.adminDefinitions['core.scheduler-runs'] && !health.definitions.includes('health/report') && health.definitions.includes('ui/detail-table'), "The unified scheduler delivers shared history, configuration and shared result tables without Health components.");
   check(health.T.scheduler.result({dataset:{},getAttribute:name=>name==="action"?"/api/scheduler/tasks/site-health/runs":null},{data:{}},null) !== false, "Health task actions use the shared scheduler list transport.");
@@ -130,7 +130,7 @@ for (const route of ["/", "/admin/users", "/admin/social/bots/accounts", "/admin
   check(compiled.assets.every(item => item.url.startsWith("/assets/build/")), "Release assets use the signed precompiled inventory: " + route);
   check(compiled.T.i18n.has("common.close"), "Compiled catalogs initialize before modules: " + route);
 }
-const asset = (page, name) => page.assets.find(item => item.url.includes("/client-" + name + ".") || item.url.includes("/client-" + name + "-")).url;
+const asset = (page, name) => page.assets.find(item => item.url.includes("/" + name + ".") || item.url.includes("/" + name + "-")).url;
 check(asset(publicPage, "components") === asset(cs, "components"), "Component content hashes are independent of language");
 check(asset(publicPage, "i18n") !== asset(cs, "i18n"), "Translation URLs vary with language content");
 check(asset(publicPage, "components") === asset(load("/"), "components"), "Asset hashes are deterministic");
@@ -143,7 +143,7 @@ check(!i18n.has("common.close") && i18n.t("test.label") === "Test", "Changing lo
 console.log("PASS scoped external client assets and translation runtime (" + checks + " checks)");
 
 (async function () {
-  for (const mode of [false, true, "min"]) {
+  for (const mode of [true, "min"]) {
     for (const route of ["/", "/tag/games", "/author/8"]) {
       const page = load(route, "cs", mode), T = page.T;
       check(!T.publishing.controllers.editor && !T.accounts.avatarUpload, "Reading a public page excludes editor implementations: " + route);
@@ -173,5 +173,5 @@ console.log("PASS scoped external client assets and translation runtime (" + che
       check(requests === previous && requests === (route.startsWith("/author") ? 3 : 2), "Concurrent editor opens share assets and failed scripts can retry without reloading CSS");
     }
   }
-  console.log("PASS deferred editor loading in source, compiled and minified public bundles");
+  console.log("PASS deferred editor loading in compiled and minified public bundles");
 })().catch(error => { console.error(error); process.exitCode = 1; });

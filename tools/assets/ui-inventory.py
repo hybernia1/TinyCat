@@ -85,7 +85,7 @@ def generate():
     for path in sorted((ROOT / 'App').rglob('*Views.php')):
         source = path.read_text(encoding='utf-8')
         renderers.append(dict(source=rel(path), methods=re.findall(r'public static function\s+(\w+)', source)))
-    standalone = [dict(source=rel(p), classes=sorted(set(re.findall(r'\.([a-zA-Z_][\w-]*)', p.read_text(encoding='utf-8'))))) for p in sorted(list((ROOT / 'assets').rglob('*.css')) + list((ROOT / 'App').rglob('assets/**/*.css'))) if p.resolve() not in imports]
+    standalone = [dict(source=rel(p), classes=sorted(set(re.findall(r'\.([a-zA-Z_][\w-]*)', p.read_text(encoding='utf-8'))))) for p in sorted(list((ROOT / 'assets').rglob('*.css')) + list((ROOT / 'App').rglob('assets/**/*.css'))) if p.resolve() not in imports and 'build' not in p.relative_to(ROOT).parts]
     ownership = collections.defaultdict(list)
     js_entries = collections.defaultdict(list)
     js_standalone = set()

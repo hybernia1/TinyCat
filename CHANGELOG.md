@@ -1,5 +1,13 @@
 # Changelog
 
+## 9.0.2 - 2026-11-28
+
+- Replace the redundant runtime asset cache with one installed build and manifest for client assets, PHP components and translations. Updates and module activation prepare assets in a fresh PHP worker; HTTP requests only read the build.
+- Add an administrator asset rebuild action using the existing deployment lock, maintenance, backup and rollback mechanisms.
+- Retire obsolete public and compiled PHP build files independently of frequent updates, preserving the current build, latest rollback and recent snapshots.
+- Automatically retire recognized legacy asset and prepared-cache files after a one-time thirty-day grace period and remove empty retired directories. Preserve unknown files and unrelated application cache data.
+- Rebuild assets once during supported upgrades, including updates retaining old PHP classes, without modifying published migrations.
+
 ## 9.0.1 - 2026-11-28
 
 - Bind release assets, PHP components and translations to one deterministic content generation. Validate used payloads, reject stale or incomplete inventories, and preserve consistent source recovery before delivery.

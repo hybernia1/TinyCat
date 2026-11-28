@@ -152,7 +152,7 @@ final class Lifecycle
                     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {
                         \TinyCat\Support\ClientAssets::componentScript($scope);
                         \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($scope)));
-                        \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles($scope));
+                        \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles($scope), static fn (string $path): string => $path);
                         foreach (array_keys(\TinyCat\Support\TranslationSources::packages()) as $locale) { \TinyCat\Support\ClientAssets::catalog($scope, $locale); }
                     }
                 });

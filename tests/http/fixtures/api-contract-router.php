@@ -19,9 +19,8 @@ ini_set('error_log', 'php://stderr');
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 
 
-if (preg_match('~^/cache/assets/([A-Za-z0-9._-]+[.]svg)$~D', $assetPath, $asset)) {
-    $file = \TinyCat\Support\Assets::file($asset[1], 'assets');
-    if (is_file($file)) { header('Content-Type: image/svg+xml'); readfile($file); return; }
+if (preg_match('~^/assets/build/[A-Za-z0-9_-]+[.][a-f0-9]{24}[.]svg$~D', $assetPath) === 1 && is_file(dirname(__DIR__, 3) . $assetPath)) {
+    header('Content-Type: image/svg+xml'); readfile(dirname(__DIR__, 3) . $assetPath); return;
 }
 
 $database = \tinycat_test_database_as(TinyCatTestLockPDO::class, (string) getenv('TINYCAT_API_TEST_DATABASE'));
@@ -96,8 +95,13 @@ if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && $embedDocument) {
     \TinyCat\Database\Connection::set(\tinycat_test_database());
 }
 if (($_SERVER['HTTP_X_TEST_WITHOUT_SOCIAL'] ?? '') === '1') {
-    \TinyCat\Core\Runtime\Application::start(null, \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []));
-    \TinyCat\Core\Runtime\HttpKernel::respond();
+    // This JSON-only probe selects a fixture catalog, without deploying over the
+    // other requests' installed build. Real activation/rebuild has its own HTTP fixture.
+    $modules = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);
+    \TinyCat\Core\Modules\Resources::withCatalog($modules->catalog, static function () use ($modules): void {
+        \TinyCat\Core\Runtime\Application::start(null, $modules);
+        \TinyCat\Core\Runtime\HttpKernel::respond();
+    });
     return;
 }
 require __DIR__ . '/../../../index.php';

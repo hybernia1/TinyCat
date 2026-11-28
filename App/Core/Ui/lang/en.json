@@ -93,6 +93,7 @@
       "application": "Application data",
       "application_help": "Computed data uses the owning feature's TTL and invalidation. Unavailable Memcached falls back to disk.",
       "assets": "Generated assets",
+      "rebuild_assets": "Rebuild assets",
       "browser": "Browser cache",
       "http": "HTTP cache and compression",
       "http_help": "Observed anonymous responses. Content-Encoding identifies compression; Cache-Control describes storage. These are samples, not a configuration test of every URL.",

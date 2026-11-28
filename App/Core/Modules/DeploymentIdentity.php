@@ -3,33 +3,18 @@ declare(strict_types=1);
 
 namespace TinyCat\Core\Modules;
 
-use TinyCat\Support\{Paths, Storage, Version, PreparedAssets, Assets};
+use TinyCat\Support\{Paths, Storage, Version};
 
-/** Shared identity for prepared assets, components and translations. */
+/** One installed build identity for assets, components and translations. */
 final class DeploymentIdentity
 {
     /** @var array{revision: int, packages: string|false|null}|null */
     private static ?array $deployment = null;
     private static bool $snapshot = false;
-    private static bool $modulesLoaded = false;
-    private static string|false|null $loadedPackages = null;
-
-    /** Capture before executing any selected module PHP, including scoped catalogs. */
-    public static function captureModules(): void
-    {
-        if (!self::$modulesLoaded) { self::$loadedPackages = self::current()['packages']; self::$modulesLoaded = true; }
-    }
-
-    public static function canPrepare(): bool
-    {
-        return in_array('guardsGeneration', get_class_methods(ModuleAutoload::class), true)
-            && (!self::$modulesLoaded || self::$loadedPackages === self::current()['packages']);
-    }
-
     /** @var array<mixed>|null */
     private static ?array $inventory = null;
     private static int $inventoryRevision = -1;
-    /** @var array{assets: array<mixed>, translations: array<mixed>, anchor: string}|null */
+    /** @var array{assets: array<mixed>, translations: array<mixed>}|null */
     private static ?array $release = null;
     /** @var array<string, true> */
     private static array $checked = [];
@@ -63,41 +48,45 @@ final class DeploymentIdentity
         $deployment = self::current();
         if ($deployment['packages'] === false || ($manifest['server_components_packages'] ?? null) !== $deployment['packages']) { return false; }
         if (class_exists(\TinyCat\Core\Modules\Resources::class)) {
-            return $manifest['selection'] === \TinyCat\Core\Modules\Resources::fingerprint();
+            if ($manifest['selection'] === Resources::fingerprint()) { return true; }
+            if (Resources::isScoped()) { return false; }
+            // Missing sources suspend PHP providers, but do not change saved activation.
+            // Keep the installed build usable for core administration and recovery.
+            $root = Paths::basePath();
+            $selected = Deployment::selection($root, static fn (): array => require $root . '/App/modules.php');
+            $available = Loader::availableSelection($root, $selected);
+            if ($available === $selected) { return false; }
+            $fingerprint = static function (array $selection): string {
+                $ids = [...\TinyCat\Core\Runtime\Framework::CAPABILITIES, ...array_keys($selection)];
+                sort($ids, SORT_STRING);
+                return hash('sha256', json_encode($ids, JSON_THROW_ON_ERROR));
+            };
+            return $manifest['selection'] === $fingerprint($selected) && Resources::fingerprint() === $fingerprint($available);
         }
         return !is_file(Storage::path('deployment.json'));
     }
 
-    /** One small, immutable release pair; no source traversal or network operations.
-     * The anchor binds a local overlay even to an absent or damaged release pair.
-     * @return array{assets: array<mixed>, translations: array<mixed>, anchor: string} */
+    /** One installed manifest commits public assets, server components and translations together.
+     * @return array{assets: array<mixed>, translations: array<mixed>} */
     public static function release(bool $fresh = false): array
     {
         if (!$fresh && self::$release !== null) { return self::$release; }
-        $assetFile = Paths::basePath('assets/build/manifest.json');
-        $translationFile = Paths::basePath('App/Core/Support/compiled/translations.php');
-        $assetText = is_file($assetFile) ? @file_get_contents($assetFile) : false;
-        $translationText = is_file($translationFile) ? @file_get_contents($translationFile) : false;
-        if (($assetText === false && is_file($assetFile)) || ($translationText === false && is_file($translationFile))) {
-            \TinyCat\Core\Runtime\Failure::report(new \RuntimeException('Cannot read the release asset inventory.'));
-        }
-        $assets = []; $translations = [];
+        $file = Paths::basePath('assets/build/manifest.json');
+        $assets = [];
         try {
-            if ($assetText !== false) { $assets = json_decode($assetText, true, 512, JSON_THROW_ON_ERROR); }
-            if ($translationText !== false) { $translations = require $translationFile; }
-        } catch (\JsonException | \ParseError $error) {
-            \TinyCat\Core\Runtime\Failure::report($error);
-        }
-        return self::$release = ['assets' => is_array($assets) ? $assets : [], 'translations' => is_array($translations) ? $translations : [], 'anchor' => hash('sha256', serialize([$assetText, $translationText]))];
+            if (is_file($file) && !is_link($file)) { $assets = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR); }
+        } catch (\JsonException $error) { \TinyCat\Core\Runtime\Failure::report($error); }
+        $assets = is_array($assets) ? $assets : [];
+        return self::$release = ['assets' => $assets, 'translations' => is_array($assets['translations'] ?? null) ? $assets['translations'] : []];
     }
 
     /** Pin one generation for both readers, including each used page's deferred variants.
-     * A rejected inventory uses the existing source fallback for every channel.
+     * Missing builds are reported by client delivery; readers never publish a fallback.
      * @return array<mixed> */
     public static function inventory(?string $locale = null, ?string $path = null): array
     {
         $resources = class_exists(Resources::class);
-        if (($resources && Resources::isScoped()) || (class_exists(\TinyCat\Support\Config::class) && (bool) \TinyCat\Support\Config::get('assets.source', false))) { return []; }
+        if ($resources && Resources::isScoped()) { return []; }
         $revision = $resources ? Resources::revision() : 0;
         if (self::$inventoryRevision !== $revision) { self::$inventory = null; self::$checked = []; self::$delivered = false; self::$failed = false; self::$inventoryRevision = $revision; }
         if (self::$failed) { self::reject(); }
@@ -120,27 +109,20 @@ final class DeploymentIdentity
             && is_array($t['packages'] ?? null) && is_array($t['catalogs'] ?? null)) {
             $candidate = ['assets' => $a, 'translations' => $t];
         }
-        // Older classes retained by an updater must defer optional preparation to fresh code.
-        if ($resources && in_array('index', get_class_methods(PreparedAssets::class), true)) {
-            $index = PreparedAssets::index();
-            if ($index !== [] && ($candidate === [] || $candidate['assets']['generation'] !== $index['generation']
-                || ($locale !== null && !self::available($candidate, $locale, $path)))) {
-                $manifest = PreparedAssets::read('manifest', null, $index);
-                $overlay = ($manifest['generation'] ?? null) === $index['generation'] && ($manifest['version'] ?? null) === $index['version']
-                    ? ['assets' => $manifest, 'translations' => $index, 'prepared' => $index] : [];
-                if ($overlay !== []) { $candidate = $overlay; }
-            }
-        }
         // Package metadata may be needed to resolve locale before a payload is requested.
+        if ($candidate === [] && PHP_SAPI !== 'cli') { self::reject(); throw new \TinyCat\Http\HttpException('Asset build is unavailable. Run php App/Console.php assets.', 503, 'asset_inventory_unavailable'); }
         if ($locale === null) { return self::$inventory = $candidate; }
-        if ($candidate !== [] && !self::available($candidate, $locale, $path)) { $candidate = []; }
+        if ($candidate !== [] && !self::available($candidate, $locale, $path)) {
+            if (PHP_SAPI !== 'cli') { throw new \TinyCat\Http\HttpException('Asset build is incomplete. Run php App/Console.php assets.', 503, 'asset_inventory_unavailable'); }
+            $candidate = [];
+        }
         self::$checked[$context] = true;
         return self::$inventory = $candidate;
     }
 
     public static function delivered(): void { self::$delivered = true; }
 
-    /** A fresh request can choose sources; an existing payload cannot change generation. */
+    /** An existing payload cannot change generation; missing builds never trigger compilation. */
     public static function reject(): void
     {
         if (self::$delivered || self::$failed) {
@@ -155,17 +137,10 @@ final class DeploymentIdentity
     {
         // Unknown/regional locales retain Localization's existing parent/en fallback.
         if (!array_key_exists($locale, $inventory['translations']['packages'])) { $locale = 'en'; }
-        if (isset($inventory['prepared'])) {
-            $index = $inventory['prepared'];
-            foreach ([$index['parts']['components'] ?? null, $index['parts']['catalogs'][$locale]['app'] ?? null, $index['parts']['catalogs'][$locale]['emails'] ?? null] as $name) {
-                if (!is_string($name) || preg_match('/^[a-f0-9]{64}\.part\.json$/D', $name) !== 1 || !is_file(Assets::file($name, 'prepared-assets'))) { return false; }
-            }
-        } else {
-            foreach ([$inventory['assets']['server_components'] ?? null, $inventory['translations']['catalogs'][$locale] ?? null] as $name) {
-                if (!is_string($name) || preg_match('/^(?:components|[a-z0-9-]+)\.[a-f0-9]{24}\.php$/D', $name) !== 1) { return false; }
-                $file = Paths::basePath('App/Core/Support/compiled/' . $name);
-                if (!is_file($file) || is_link($file)) { return false; }
-            }
+        foreach ([$inventory['assets']['server_components'] ?? null, $inventory['translations']['catalogs'][$locale] ?? null] as $name) {
+            if (!is_string($name) || preg_match('/^(?:components|[a-z0-9-]+)\.[a-f0-9]{24}\.php$/D', $name) !== 1) { return false; }
+            $file = Paths::basePath('App/Core/Support/compiled/' . $name);
+            if (!is_file($file) || is_link($file)) { return false; }
         }
         $path ??= (string) (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
         foreach ($inventory['assets']['clients'] ?? [] as $prefix => $client) {
@@ -197,7 +172,6 @@ final class DeploymentIdentity
     public static function availableUrl(string $url): bool
     {
         if (preg_match('~^/assets/build/([A-Za-z0-9_-][A-Za-z0-9._-]*\.[a-f0-9]{24}\.(?:js|css|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf))$~D', $url, $match) === 1) { $file = Paths::basePath('assets/build/' . $match[1]); }
-        elseif (preg_match('~^/cache/assets/([a-z0-9_-]{1,120}\.[a-f0-9]{20}(?:\.min)?\.(?:js|css|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf))$~D', $url, $match) === 1) { $file = Assets::file($match[1], 'assets'); }
         else { return false; }
         return is_file($file) && !is_link($file);
     }

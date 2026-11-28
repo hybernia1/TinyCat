@@ -266,12 +266,7 @@ final class ClientAssets
         $locale = Localization::locale();
         $minify = self::option('performance.minify_js');
         $compiled = CompiledAssets::client($path, $locale, $minify, self::option('performance.minify_css'));
-        $urls = $compiled !== null ? $compiled['scripts'] : AssetGraph::withSnapshot(static fn (): array => [
-            self::bundle('runtime', AssetGraph::javascript(self::runtime()), 'js', $minify),
-            self::bundle('components', self::componentScript($path)),
-            self::bundle('i18n-' . strtolower($locale), self::catalogScript($path, $locale)),
-            self::bundle('app', AssetGraph::javascript(AssetGraph::order(self::entries($path), self::runtime())), 'js', $minify),
-        ]);
+        $urls = ($compiled ?? throw new \TinyCat\Http\HttpException('Asset build is unavailable. Run php App/Console.php assets.', 503, 'asset_inventory_unavailable'))['scripts'];
         foreach ($extraScripts as $script) { $urls[] = Assets::asset($script); }
         return $urls;
     }
@@ -281,7 +276,7 @@ final class ClientAssets
     {
         $minify = self::option('performance.minify_css');
         $compiled = CompiledAssets::client($path, Localization::locale(), false, $minify);
-        return [$compiled !== null ? $compiled['style'] : AssetGraph::withSnapshot(static fn (): string => self::bundle('styles', AssetGraph::stylesheet(self::sourceStyles($path)), 'css', $minify))];
+        return [($compiled ?? throw new \TinyCat\Http\HttpException('Asset build is unavailable. Run php App/Console.php assets.', 503, 'asset_inventory_unavailable'))['style']];
     }
 
     /** @return list<string> */
@@ -333,7 +328,7 @@ final class ClientAssets
             }
         }
         if ($resources === [] && $selectors === []) { return []; }
-        $emit ??= static fn (string $kind, string $source, string $type): string => self::bundle($kind, $source, $type, self::option($type === 'css' ? 'performance.minify_css' : 'performance.minify_js'));
+        if ($emit === null) { throw new \LogicException('Deferred assets must be compiled before delivery.'); }
         $definitions = array_diff_key(self::definitions($path, true), self::definitions($path));
         $catalog = array_diff_key(self::catalog($path, $locale, $dictionary, true), self::catalog($path, $locale, $dictionary));
         $messages = array_diff_key(self::messages($path, true), self::messages($path));
@@ -352,10 +347,4 @@ final class ClientAssets
         return json_encode($value, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
     }
 
-    private static function bundle(string $kind, string $source, string $type = 'js', bool $minify = false): string
-    {
-        $url = Minifier::cachedAssetUrl('client-' . $kind, 'client-' . $kind, $source, $type, $minify);
-        if ($url === null) { throw new RuntimeException('Could not write client asset: ' . $kind); }
-        return $url;
-    }
 }

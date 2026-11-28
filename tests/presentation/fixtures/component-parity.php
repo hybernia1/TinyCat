@@ -10,7 +10,8 @@ if (($argv[1] ?? '') === '--page-routes') { echo json_encode(\TinyCat\Http\Route
 if (($argv[1] ?? '') === '--settings-templates') {
     \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json'])->catalog);
     require dirname(__DIR__, 2) . '/fixtures/modules/settings.php';
-    echo json_encode(array_filter(\TinyCat\Core\Ui\Components::templates(), static fn (string $key): bool => str_starts_with($key, 'settings/'), ARRAY_FILTER_USE_KEY), JSON_THROW_ON_ERROR); exit(0);
+    $templates = \TinyCat\Core\Ui\Components::withFreshTemplates(\TinyCat\Core\Ui\Components::templates(...));
+    echo json_encode(array_filter($templates, static fn (string $key): bool => str_starts_with($key, 'settings/'), ARRAY_FILTER_USE_KEY), JSON_THROW_ON_ERROR); exit(0);
 }
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Core\Ui\Components::json(); exit(0); }
 if (($argv[1] ?? '') === '--contexts') {

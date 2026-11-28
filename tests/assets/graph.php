@@ -34,18 +34,8 @@ try {
     $reject(static fn () => AssetGraph::javascript([$relative . '/b.js']));
     file_put_contents($directory . '/image.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>');
     file_put_contents($directory . '/theme.css', '.example { background: url("./image.svg"); }');
-    $css = AssetGraph::stylesheet([$relative . '/theme.css']);
-    if (!str_contains($css, '/cache/assets/asset-image.') || str_contains($css, './image.svg')) { throw new RuntimeException('Runtime CSS asset URLs were not rebased.'); }
-    $checks++;
-    $publication = \TinyCat\Support\Minifier::publicationRevision();
-    $cssAgain = AssetGraph::stylesheet([$relative . '/theme.css']);
-    if ($cssAgain !== $css || \TinyCat\Support\Minifier::publicationRevision() !== $publication) { throw new RuntimeException('An unchanged warm asset should not invalidate retention scans.'); }
-    $checks++;
-    \TinyCat\Support\Minifier::cachedAssetUrl('publication-probe', 'publication-probe', 'window.publicationProbe = true;', 'js', false);
-    if (\TinyCat\Support\Minifier::publicationRevision() === $publication) { throw new RuntimeException('New publication must invalidate a concurrent retention scan.'); }
-    $checks++;
     $compiled = AssetGraph::stylesheet([$relative . '/theme.css'], static fn (string $path): string => '/assets/build/image.fixture.svg');
-    if (!str_contains($compiled, '/assets/build/image.fixture.svg')) { throw new RuntimeException('Build CSS does not use the same asset resolver.'); }
+    if (!str_contains($compiled, '/assets/build/image.fixture.svg') || str_contains($compiled, './image.svg')) { throw new RuntimeException('Build CSS does not rebase dependency URLs.'); }
     $checks++;
         $registry = \TinyCat\Support\Paths::basePath('App/module-packages.json');
         $revision = is_file($registry) ? hash_file('sha256', $registry) : null;

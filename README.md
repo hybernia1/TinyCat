@@ -9,11 +9,11 @@ Social is optional; a core-only assembly provides the foundation for other
 applications. Modules follow the [module contract](docs/contracts/module-contract.md)
 and share the [module lifecycle](docs/operations/module-deployment.md).
 
-The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
+The application runs without Composer packages, a JavaScript package manager, or Node-based build tools. Release packages include compiled assets; source deployments build them with `php App/Console.php assets`. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
 TinyCat defines the [authoritative core contract for API, UI and validation](docs/contracts/core-application-contract.md). Modules retain their domain rules and extend the common platform through its declared interfaces.
 
-Current release: **9.0.1**. Module-owned HTTP namespaces make Social administration and APIs explicit under `/admin/social/` and `/api/social/`. Social has one administration menu; shared size variants and UI scale work across Core and Social, and dashboard statistics share icon badges. This major release requires third-party Social API clients and route-provider modules to adopt the new HTTP contract. Core APIs, public post/profile/tag permalinks and embed entry points remain stable. MySQL/MariaDB is the only supported database backend. Core and Social have independent signed installation/update packages; deploy matching versions. Updates to 9.0.0 require completed **8.0.14** or newer and PHP 8.4. Existing 6.0.10-8.0.13 sites must first install the signed 8.0.14 reader bridge; older sites first use the immutable 6.0.10 chain. Refresh the private rescue launcher with `php App/Console.php rescue` while still on 6.0.10. See [9.0.0 compatibility notes](docs/operations/updates.md#upgrading-to-900), [runtime diagnostics](docs/operations/debugging.md), the [update procedure](docs/operations/updates.md#supported-update-baseline) and [theme authoring](docs/development/themes.md). TinyCat uses [Semantic Versioning](https://semver.org/).
+Current release: **9.0.2**. Assets use one installed build, regenerated during deployment or explicitly from administration; old generated files retire automatically. Module-owned HTTP namespaces make Social administration and APIs explicit under `/admin/social/` and `/api/social/`. This major series requires third-party Social API clients and route-provider modules to adopt the new HTTP contract. Core APIs, public post/profile/tag permalinks and embed entry points remain stable. MySQL/MariaDB is the only supported database backend. Core and Social have independent signed installation/update packages; deploy matching versions. Updates to 9.x require completed **8.0.14** or newer and PHP 8.4. Existing 6.0.10-8.0.13 sites must first install the signed 8.0.14 reader bridge; older sites first use the immutable 6.0.10 chain. Refresh the private rescue launcher with `php App/Console.php rescue` while still on 6.0.10. See [9.0.0 compatibility notes](docs/operations/updates.md#upgrading-to-900), [runtime diagnostics](docs/operations/debugging.md), the [update procedure](docs/operations/updates.md#supported-update-baseline) and [theme authoring](docs/development/themes.md). TinyCat uses [Semantic Versioning](https://semver.org/).
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -68,8 +68,8 @@ runtime.
 ### Optional Memcached cache
 
 TinyCat uses the filesystem cache by default. Hosts with the PHP `memcached`
-extension can use Memcached for computed JSON cache entries while generated
-assets remain on disk. Add this to the private `config.php` file:
+extension can use Memcached for computed JSON cache entries. Compiled assets are deployment outputs on disk,
+independent of the data cache. Add this to the private `config.php` file:
 
 ```php
 'cache' => [

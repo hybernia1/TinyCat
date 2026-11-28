@@ -108,7 +108,7 @@ echo "PASS build snapshot/invalidation, ZIP backends and prepared publication ({
 $compile = require $root . '/tools/assets/compile-assets.php';
 $files = $compile();
 $assetManifest = json_decode($files['assets/build/manifest.json'], true, flags: JSON_THROW_ON_ERROR);
-$translationManifest = eval(substr($files['App/Core/Support/compiled/translations.php'], 5));
+$translationManifest = $assetManifest['translations'];
 $assert(array_key_exists('server_components_packages', $translationManifest), 'Translation build declares its package registry identity.');
 $assert($translationManifest['server_components_packages'] === $assetManifest['server_components_packages'], 'All compiled readers share the same deployment identity.');
 $assert(\TinyCat\Core\Modules\DeploymentIdentity::matchesSelection($translationManifest), 'Fresh compiled catalogs match the current installation.');

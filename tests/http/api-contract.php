@@ -161,12 +161,16 @@ try {
     }
     [$status] = $request('GET', '/api/social/bots/sources', null, 'user');
     $assert($status === 403, 'A regular user cannot access bot administration.');
-    foreach (['/api/users', '/api/social/bots/sources', '/api/social/bots/accounts', '/api/scheduler/tokens', '/api/scheduler/tasks/feeds/runs'] as $path) {
+    foreach (['/api/users', '/api/social/bots/sources', '/api/social/bots/accounts', '/api/scheduler/tokens', '/api/scheduler/tasks/feeds/runs', '/api/site/asset-builds'] as $path) {
         [$status, $payload] = $request('POST', $path, [], 'admin');
         $assert($status === 403 && $payload['code'] === 'csrf_token_mismatch', 'All API mutations must use the shared CSRF guard.');
     }
 
     $csrf = ['X-CSRF-Token' => str_repeat('a', 64)];
+    [$status] = $request('POST', '/api/site/asset-builds');
+    $assert($status === 401, 'Anonymous requests cannot rebuild assets.');
+    [$status] = $request('POST', '/api/site/asset-builds', [], 'user', $csrf);
+    $assert($status === 403, 'Only administrators can rebuild assets.');
     [$status] = $request('GET', '/api/scheduler/tasks', null, 'user');
     $assert($status === 403, 'Only administrators may inspect cron history.');
     [$status] = $request('GET', '/api/scheduler/tasks');

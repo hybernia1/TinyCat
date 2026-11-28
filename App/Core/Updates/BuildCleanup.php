@@ -42,15 +42,32 @@ final class BuildCleanup
             self::safePath($root . '/' . $relative);
             if (!is_file($root . '/' . $relative)) { throw new \RuntimeException('Incomplete current build cleanup inventory.'); }
         }
-        if (max((int) filemtime($manifest), (int) filemtime($index)) > time() - self::GRACE) { return ['changed' => 0, 'has_more' => false]; }
+        $operation = $root . '/storage/updates/operation.json';
+        $latest = is_file($operation) ? (json_decode(self::read($operation), true, 512, JSON_THROW_ON_ERROR)['backup'] ?? null) : null;
         $backups = $root . '/storage/updates/backups';
+        if (!is_string($latest) || preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/D', $latest) !== 1 || !is_dir($backups . '/' . $latest)) { $latest = null; }
         if (is_link($backups)) { throw new \RuntimeException('Unsafe build cleanup backup directory.'); }
         if (is_dir($backups)) {
             $visited = 0;
             foreach (new \FilesystemIterator($backups, \FilesystemIterator::SKIP_DOTS) as $backup) {
                 if (!$backup instanceof \SplFileInfo) { throw new \RuntimeException('Invalid build cleanup backup entry.'); }
                 if (++$visited > 1000 || $backup->isLink()) { throw new \RuntimeException('Unsafe build cleanup backup inventory.'); }
-                if ($backup->isDir()) { self::inventory($backup->getPathname() . '/files', $keep, false); }
+                if (!$backup->isDir()) { continue; }
+                $metadata = $backup->getPathname() . '/backup.json';
+                $created = is_file($metadata) ? (json_decode(self::read($metadata), true, 512, JSON_THROW_ON_ERROR)['created_at'] ?? null) : null;
+                $retired = is_string($created) ? strtotime($created) : false;
+                $completion = $backup->getPathname() . '/completed.json';
+                if (is_file($completion)) {
+                    $completed = json_decode(self::read($completion), true, 512, JSON_THROW_ON_ERROR)['completed_at'] ?? null;
+                    if (!is_string($completed) || strtotime($completed) === false) { $retired = false; }
+                    elseif ($retired !== false) { $retired = max($retired, strtotime($completed)); }
+                }
+                // Only the latest operation supports automatic rollback. Recent
+                // snapshots protect open pages, independently of later updates.
+                // Unknown historical metadata stays protected rather than guessed.
+                if (!is_string($latest) || $backup->getFilename() === $latest || $retired === false || $retired >= time() - self::GRACE) {
+                    self::inventory($backup->getPathname() . '/files', $keep, false);
+                }
             }
         }
         // Resolve references inside current and rollback client payloads before deleting anything.
@@ -93,6 +110,7 @@ final class BuildCleanup
     {
         $manifest = $root . '/assets/build/manifest.json';
         $index = $root . '/App/Core/Support/compiled/translations.php';
+        $catalogs = null;
         if ($required || is_file($manifest)) {
             $data = json_decode(self::read($manifest), true, 512, JSON_THROW_ON_ERROR);
             if (!is_array($data) || !is_array($data['assets'] ?? null) || !is_array($data['clients'] ?? null)
@@ -102,12 +120,18 @@ final class BuildCleanup
             $keep['App/Core/Support/compiled/' . $data['server_components']] = true;
             if ($required && !is_file($root . '/App/Core/Support/compiled/' . $data['server_components'])) { throw new \RuntimeException('Missing current build cleanup components.'); }
             self::assetReferences(json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), $keep);
+            $catalogs = $data['translations']['catalogs'] ?? null;
         }
-        if ($required || is_file($index)) {
+        // Historical rollback snapshots can still contain the former separate PHP index.
+        if ($catalogs === null && is_file($index)) {
             self::safePath($index);
             $data = (static fn (string $path): mixed => require $path)($index);
             if (!is_array($data) || !is_array($data['catalogs'] ?? null) || $data['catalogs'] === []) { throw new \RuntimeException('Invalid build cleanup translation index.'); }
-            foreach ($data['catalogs'] as $name) {
+            $catalogs = $data['catalogs'];
+        }
+        if ($required && (!is_array($catalogs) || $catalogs === [])) { throw new \RuntimeException('Missing current build translation inventory.'); }
+        if (is_array($catalogs)) {
+            foreach ($catalogs as $name) {
                 if (!is_string($name) || preg_match(self::PHP_NAME, $name) !== 1) { throw new \RuntimeException('Invalid build cleanup catalog path.'); }
                 $keep['App/Core/Support/compiled/' . $name] = true;
                 if ($required && !is_file($root . '/App/Core/Support/compiled/' . $name)) { throw new \RuntimeException('Missing current build cleanup catalog.'); }

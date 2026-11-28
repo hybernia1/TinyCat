@@ -45,10 +45,9 @@ final class Platform
     public static function contributions(): Contributions
     {
         return new Contributions(
-            temporaryDirectories: [new \TinyCat\Core\Modules\TemporaryDirectory('runtime-assets', static fn (): string => \TinyCat\Support\Assets::directory(''), 75)],
             maintenance: [
                 new \TinyCat\Core\Modules\MaintenanceTask('retired_runtime_assets', \TinyCat\Support\Assets::cleanup(...), 86),
-                new \TinyCat\Core\Modules\MaintenanceTask('expired_prepared_assets', \TinyCat\Support\PreparedAssets::cleanup(...), 87),
+                new \TinyCat\Core\Modules\MaintenanceTask('expired_prepared_assets', \TinyCat\Support\Assets::cleanupPrepared(...), 87),
             ], sitemaps: [new \TinyCat\Core\Modules\SitemapSection('pages', static fn (): int => count(Information::pages()), static fn (int $limit, int $offset): array => array_slice(Information::pages(), $offset, $limit), 10)], crawlerHints: [new \TinyCat\Core\Modules\CrawlerHint('tinycat.core.llms', static fn (): string => 'AI and LLM context: ' . \TinyCat\Http\LocalUrls::absolute('/llms.txt'))], componentLookups: [new \TinyCat\Core\Modules\ComponentLookup('dashboard.statistics', Admin\Statistics::fieldLookup(...))], localizedRoutes: [
             new LocalizedRoute('core.home', '^/$'),
             new LocalizedRoute('core.identity', '^/(?:login|register|logout)$', ['next']),
@@ -69,6 +68,10 @@ final class Platform
             return Admin\Statistics::resource((string) $request->input('stats'));
         }, 'admin');
         Router::route('GET', '/admin/cache', Admin\CachePage::respond(...));
+        $api->post('/site/asset-builds', static function (): array {
+            $result = \TinyCat\Support\AssetCompiler::regenerate();
+            return $result + ['redirect' => '/admin/cache'];
+        }, 'admin', 200);
         $api->post('/site/cache-resets', static fn (): array => ['reset' => \TinyCat\Core\Runtime\Debug::resetOpcache(), 'redirect' => '/admin/cache'], 'admin', 200);
     }
 }

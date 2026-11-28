@@ -93,6 +93,7 @@
       "application": "Applicatiegegevens",
       "application_help": "Berekende gegevens gebruiken de TTL en invalidatie van de verantwoordelijke functie. Bij onbereikbaar Memcached wordt schijfopslag gebruikt.",
       "assets": "Gegenereerde bestanden",
+      "rebuild_assets": "Assets opnieuw bouwen",
       "browser": "Browsercache",
       "http": "HTTP-cache en compressie",
       "http_help": "Waargenomen anonieme antwoorden. Content-Encoding toont compressie, Cache-Control opslag. Dit zijn steekproeven, geen controle van alle URL’s.",

@@ -4,8 +4,9 @@ define('TINYCAT', true);
 $root = $argv[1]; $mode = $argv[2];
 require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Core\Modules\{DeploymentIdentity, Loader, Resources};
-use TinyCat\Support\{AssetCompiler, Assets, CompiledAssets, CompiledTranslations, Config, PreparedAssets};
+use TinyCat\Support\{AssetCompiler, Assets, CompiledAssets, CompiledTranslations, Config};
 Config::configure(new TinyCat\Core\Runtime\Configuration([]));
+set_exception_handler(static function (Throwable $error): never { fwrite(STDERR, (string) $error . "\n"); exit(1); });
 putenv('TINYCAT_RUNTIME_ASSET_DIRECTORY=' . $root . '/private-assets');
 Resources::configure(Loader::fromSelection($root, require $root . '/App/modules.php')->catalog);
 $assert = static function (bool $ok, string $message): void { if (!$ok) { throw new RuntimeException($message); } };
@@ -29,13 +30,19 @@ $restore = [];
 register_shutdown_function(static function () use (&$restore): void { foreach ($restore as $path => $text) { file_put_contents($path, $text); } });
 $remove = static function (string $path) use (&$restore): void { $restore[$path] = file_get_contents($path); unlink($path); };
 $rewrite = static function () use ($root, &$manifest, &$server, &$restore): void {
-    foreach (['assets/build/manifest.json' => json_encode($manifest, JSON_THROW_ON_ERROR), 'App/Core/Support/compiled/translations.php' => '<?php return ' . var_export($server, true) . ';'] as $path => $text) {
-        $file = $root . '/' . $path; $restore[$file] = file_get_contents($file); file_put_contents($file, $text);
-    }
+    $manifest['translations'] = $server;
+    $file = $root . '/assets/build/manifest.json'; $restore[$file] = file_get_contents($file);
+    file_put_contents($file, json_encode($manifest, JSON_THROW_ON_ERROR));
 };
 $expectedSource = true;
 switch ($mode) {
     case 'release': $expectedSource = false; break;
+    case 'missing-module':
+        $remove($root . '/App/Modules/Social/module.json');
+        Resources::configure(Loader::load($root)->catalog);
+        $assert(!Resources::catalog()->has('tinycat.social'), 'Missing module PHP is suspended.');
+        $assert(CompiledAssets::client('/admin', 'en') !== null && CompiledTranslations::application('en') !== null, 'The installed build keeps core recovery usable without source compilation.');
+        echo "PASS missing module suspension retains installed recovery assets\n"; exit;
     case 'old-version': $manifest['version'] = $server['version'] = '0.0.0'; $rewrite(); break;
     case 'legacy': unset($manifest['generation'], $server['generation']); $rewrite(); break;
     case 'mismatch': $server['generation'] = str_repeat('f', 64); $rewrite(); break;
@@ -139,115 +146,49 @@ switch ($mode) {
     case 'invalid-client-url':
         $manifest['clients']['/']['runtime']['raw'] = 'https://outside.invalid/unowned.js';
         $rewrite(); break;
-    case 'capture-before-include':
-        $file = $root . '/App/Modules/Social/src/GenerationProbe.php';
-        $registry = $root . '/App/module-packages.json';
-        $original = is_file($registry) ? file_get_contents($registry) : null;
-        register_shutdown_function(static function () use ($file, $registry, $original): void { unlink($file); if ($original === null) { unlink($registry); } else { file_put_contents($registry, $original); } });
-        file_put_contents($file, '<?php namespace TinyCat\Social; file_put_contents(' . var_export($registry, true) . ', \'{"format":1,"packages":[]}\'); final class GenerationProbe {}');
-        TinyCat\Core\Modules\ModuleAutoload::withCatalog(Resources::catalog(), static fn (): bool => class_exists('TinyCat\Social\GenerationProbe'));
-        $assert(!DeploymentIdentity::canPrepare(), 'Registry identity is captured before first module include, even when the include changes it.');
-        echo "PASS capture before first scoped module include\n"; exit;
-    case 'loaded-module':
-        $directory = $root . '/App/Modules/GenerationGuard';
-        mkdir($directory . '/src', 0700, true);
-        file_put_contents($directory . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.guard', 'namespace' => 'TinyCat\\GenerationGuard\\', 'providers' => ['contributions' => 'TinyCat\GenerationGuard\Provider'], 'resources' => ['components' => 'components.json']], JSON_THROW_ON_ERROR));
-        file_put_contents($directory . '/components.json', json_encode(['fixture/guard' => ['tag' => 'span', 'text' => ['catalog' => 'fixture.guard', 'field' => 'label', 'lookup' => 'value']]], JSON_THROW_ON_ERROR));
-        $provider = '<?php declare(strict_types=1); namespace TinyCat\GenerationGuard; use TinyCat\Core\Modules as M; final class Provider implements M\ProvidesContributions { public static function contributions(): M\Contributions { return new M\Contributions(componentLookups: [new M\ComponentLookup("fixture.guard", static fn (): array => ["value" => ["label" => "OLD"]])]); } }';
-        file_put_contents($directory . '/src/Provider.php', $provider);
-        $selection = require $root . '/App/modules.php'; $selection['fixture.guard'] = 'App/Modules/GenerationGuard/module.json';
-        file_put_contents($root . '/App/modules.php', '<?php return ' . var_export($selection, true) . ';');
-        Resources::configure(Loader::fromSelection($root, $selection)->catalog);
-        $old = AssetCompiler::compile(); $publish($old['files']); PreparedAssets::prepare();
-        $oldIndex = Assets::file(DeploymentIdentity::key() . '.json', 'prepared-assets');
-        $before = hash_file('sha256', $oldIndex);
-        // The provider is already loaded; the next package publication must not reuse it.
-        $registry = $root . '/App/module-packages.json';
-        file_put_contents($registry, '{"format":1,"packages":[]}');
-        file_put_contents($directory . '/src/Provider.php', str_replace('OLD', 'NEW', $provider));
-        $assert(!DeploymentIdentity::canPrepare(), 'Module code loaded through compiler withCatalog pins its earlier registry identity.');
-        Resources::withCatalog(Resources::catalog(), static fn () => PreparedAssets::prepare(TinyCat\Support\Version::CURRENT), $root);
-        $assert(hash_file('sha256', $oldIndex) === $before && !is_file(Assets::file(DeploymentIdentity::key() . '.json', 'prepared-assets')), 'Deferred scoped prepare publishes no index for old callbacks and new identity.');
-        try { PreparedAssets::prepare(); throw new RuntimeException('Explicit preparation falsely succeeded.'); }
-        catch (RuntimeException $error) { $assert(str_contains($error->getMessage(), 'fresh PHP'), 'Explicit assets command reports deferral.'); }
-        echo "PASS loaded provider defers scoped preparation without publication\n"; exit;
-    case 'fresh-module':
-        $assert(PreparedAssets::index() === [] && CompiledAssets::components() === null && CompiledTranslations::application('en') === null, 'Fresh HTTP rejects both inventories after module registry replacement.');
-        $components = TinyCat\Core\Ui\Components::templates();
-        $assert(($components['fixture/guard']['text']['cases']['value'] ?? null) === 'NEW', 'Whole source fallback resolves the freshly loaded callback.');
-        $new = AssetCompiler::compile();
-        $assert($new['server']['generation'] !== DeploymentIdentity::release()['assets']['generation'], 'Changed PHP lookup data changes the content generation.');
-        PreparedAssets::prepare();
-        $assert(PreparedAssets::index() !== [], 'Fresh CLI preparation actually publishes the current generation.');
-        echo "PASS fresh source callback and explicit lifecycle repair\n"; exit;
-    case 'repaired-module':
-        $components = CompiledAssets::components();
-        $assert(($components['fixture/guard']['text']['cases']['value'] ?? null) === 'NEW', 'Fresh reader consumes newly prepared callback data.');
-        $assert(isset(DeploymentIdentity::inventory()['prepared']) && CompiledTranslations::application('en') !== null && CompiledAssets::client('/', 'en') !== null, 'Every channel selects the complete repaired generation.');
-        echo "PASS fresh reader consumes repaired generation consistently\n"; exit;
-    case 'source-overlay-release':
-        $remove($root . '/assets/build/manifest.json');
-        $remove($root . '/App/Core/Support/compiled/translations.php');
-        PreparedAssets::prepare();
-        $assert(CompiledAssets::client('/', 'en') !== null && isset(DeploymentIdentity::inventory()['prepared']), 'A source checkout without either release index reads its complete prepared generation.');
-        $publish($built['files']); DeploymentIdentity::release(true);
-        DeploymentIdentity::withDeploymentSnapshot(static function () use ($assert, $built): void {
-            $assert(PreparedAssets::index() === [], 'A later release rejects an overlay anchored to absent indexes, even with identical version and content.');
-            $assert(CompiledAssets::components() === $built['components'] && !isset(DeploymentIdentity::inventory()['prepared']), 'The fresh request returns to the complete release PHP generation.');
-        });
-        echo "PASS source checkout overlay rejects later release anchor\n"; exit;
-    case 'identical-overlay':
-        PreparedAssets::prepare();
-        $assert(PreparedAssets::index()['generation'] === $server['generation'], 'Transport URL differences do not change content generation.');
-        $assert(AssetCompiler::compile()['server']['generation'] === $server['generation'], 'Repeated compilation is deterministic.');
-        $assert(!isset(DeploymentIdentity::inventory('en')['prepared']), 'Identical prepared data retains release PHP readers.');
-        $assert(CompiledAssets::components() === $built['components'], 'Identical data keeps compiled PHP components.');
-        echo "PASS deterministic content generation and PHP priority\n"; exit;
-    case 'identical-repair':
-        $assert(CompiledTranslations::packages() !== null, 'Metadata caches a provisional release candidate before checking payloads.');
-        $remove($root . $client['runtime']['raw']);
-        $assert(isset(DeploymentIdentity::inventory('en')['prepared']), 'Complete identical prepared generation repairs incomplete release before delivery.');
-        $assert(CompiledTranslations::application('en') === $built['catalogs']['en']['app'], 'Repair retains exact catalog data.');
-        echo "PASS complete prepared repair before payload\n"; exit;
-    case 'overlay':
-        $path = TinyCat\Support\ClientAssets::runtime()[0];
-        file_put_contents($root . '/' . $path, "\nwindow.assetGenerationFixture = true;\n", FILE_APPEND);
-        PreparedAssets::prepare();
-        $index = PreparedAssets::index();
-        $assert($index !== [] && $index['generation'] !== $server['generation'], 'Same-version source content changes the prepared generation.');
-        $current = CompiledAssets::client('/', 'en');
-        $assert($current !== null && str_starts_with($current['scripts'][0], '/cache/assets/'), 'Complete prepared overlay takes priority over the matching older release.');
-        $assert(isset(DeploymentIdentity::inventory()['prepared']), 'All consumers use the same pinned overlay.');
-        $assert(CompiledTranslations::application('en') === $built['catalogs']['en']['app'], 'Overlay translations retain parity.');
-        $before = CompiledAssets::client('/', 'en');
-        $process = proc_open([PHP_BINARY, __FILE__, $root, 'republish-overlay'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-        if (!is_resource($process)) { throw new RuntimeException('Cannot republish isolated overlay.'); }
-        fclose($pipes[0]); $out = stream_get_contents($pipes[1]); $err = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
-        $assert(proc_close($process) === 0 && $err === '', 'Concurrent publisher finishes without changing request state. ' . $out . $err);
-        $next = json_decode(file_get_contents($root . '/republished-client.json'), true, 512, JSON_THROW_ON_ERROR);
-        $assert($next['scripts'][0] !== $before['scripts'][0] && CompiledAssets::client('/', 'en') === $before, 'An existing reader retains the exact old index while a complete new generation is published.');
-        echo "PASS same-version content overlay\n"; exit;
-    case 'republish-overlay':
-        $path = TinyCat\Support\ClientAssets::runtime()[0];
-        file_put_contents($root . '/' . $path, "\nwindow.assetGenerationRepublished = true;\n", FILE_APPEND);
-        PreparedAssets::prepare();
-        file_put_contents($root . '/republished-client.json', json_encode(CompiledAssets::client('/', 'en'), JSON_THROW_ON_ERROR));
-        exit;
-    case 'overlay-fresh':
-        $expected = json_decode(file_get_contents($root . '/republished-client.json'), true, 512, JSON_THROW_ON_ERROR);
-        $assert(CompiledAssets::client('/', 'en') === $expected, 'A fresh request sees the newly published complete generation.');
-        echo "PASS fresh reader after overlay publication\n"; exit;
-    case 'new-release':
-        $new = AssetCompiler::compile(); $publish($new['files']);
-        $assert($new['server']['generation'] !== $server['generation'], 'New release generation changes without changing SemVer or module IDs.');
-        $assert(PreparedAssets::index() === [], 'Old prepared overlay cannot mask a later release.');
-        $assert(!isset(DeploymentIdentity::inventory('en')['prepared']), 'Readers choose the new coherent release pair.');
-        echo "PASS later same-version release\n"; exit;
-    case 'rollback':
-        $publish($built['files']);
-        $assert(PreparedAssets::index() !== [], 'Restoring the original release pair restores its complete overlay binding.');
-        $assert(isset(DeploymentIdentity::inventory('en')['prepared']), 'Rollback chooses one coherent generation.');
-        echo "PASS restored release/overlay binding\n"; exit;
+    case 'rebuild':
+        $before = file_get_contents($root . '/assets/build/manifest.json');
+        AssetCompiler::rebuild();
+        $assert(file_get_contents($root . '/assets/build/manifest.json') === $before, 'Rebuilding unchanged sources keeps the canonical inventory and URLs.');
+        $style = TinyCat\Support\ClientAssets::sourceStyles('/')[0];
+        $restore[$root . '/' . $style] = file_get_contents($root . '/' . $style);
+        file_put_contents($root . '/' . $style, "\n.changed-build { color: red; }", FILE_APPEND);
+        AssetCompiler::rebuild();
+        $next = json_decode(file_get_contents($root . '/assets/build/manifest.json'), true, 512, JSON_THROW_ON_ERROR);
+        $assert($next['clients']['/']['styles']['raw'] !== $client['styles']['raw'] && is_file($root . $client['styles']['raw']), 'Changed builds publish new URLs and retain old output for open pages.');
+        $current = file_get_contents($root . '/assets/build/manifest.json');
+        file_put_contents($root . '/' . $style, "\n@import './missing.css';", FILE_APPEND);
+        try { AssetCompiler::rebuild(); throw new RuntimeException('Broken compilation unexpectedly published.'); }
+        catch (RuntimeException $error) { $assert(str_contains($error->getMessage(), 'Asset build failed'), 'The fresh compiler reports its failure.'); }
+        $assert(file_get_contents($root . '/assets/build/manifest.json') === $current, 'Failed compilation leaves the previous installed build intact.');
+        try { AssetCompiler::regenerate(); throw new RuntimeException('Broken manual rebuild unexpectedly succeeded.'); }
+        catch (RuntimeException $error) { $assert(str_contains($error->getMessage(), 'Asset build failed'), 'Manual rebuild reports the compiler failure.'); }
+        $assert(!is_file($root . '/storage/maintenance.json') && file_get_contents($root . '/assets/build/manifest.json') === $current, 'Failed manual regeneration restores the previous build and clears its own maintenance.');
+        $assert(!is_dir($root . '/storage/cache/assets') && !is_dir($root . '/storage/cache/prepared-assets'), 'Rebuild creates no second asset/cache tree.');
+        echo "PASS deterministic rebuild, fresh worker, failure preservation and old URLs\n"; exit;
+    case 'legacy-updater':
+        eval('namespace TinyCat\\Support; final class AssetCompiler {}');
+        $selection = $root . '/App/modules.php'; $restore[$selection] = file_get_contents($selection);
+        file_put_contents($selection, '<?php return [];');
+        require dirname(__DIR__, 2) . '/support/mysql.php';
+        $database = tinycat_test_database();
+        $next = TinyCat\Core\Tasks\Schema::schema();
+        $fresh = $root . '/App/Core/Tasks/migrations/fresh-v5.php';
+        $previous = new TinyCat\Core\Modules\ModuleSchema(5, ['scheduler_runs'], static function (PDO $pdo) use ($fresh): void { (require $fresh)($pdo); }, array_slice($next->migrations, 0, 5), new TinyCat\Core\Modules\SchemaMigration(5, 'tinycat.core.tasks.fresh-v5', $fresh));
+        TinyCat\Database\ModuleSchemas::synchronize($database, ['tinycat.support' => $previous]);
+        $database->exec("INSERT INTO scheduler_runs(task, mode, status, started_at, options_json) VALUES ('retained', 'cli', 'completed', NOW(), '{}')");
+        $history = TinyCat\Database\Migrations::history($database, 'schema', 'tinycat.support');
+        TinyCat\Database\Migrations::record($database, 'global', 'tinycat', 'fixture.historical', null, '20260801_profile_links_and_legacy_cleanup', str_repeat('a', 64));
+        TinyCat\Database\ModuleSchemas::synchronize($database, ['tinycat.support' => $next]);
+        TinyCat\Support\PreparedAssets::prepare('inherited-updater');
+        $after = TinyCat\Database\Migrations::history($database, 'schema', 'tinycat.support');
+        $assert(array_values(array_filter($after, static fn (array $row): bool => (int) $row['sequence'] <= 5)) === $history && count($after) === 6, 'The upgrade appends its transition without changing published history.');
+        $assert($database->query('SELECT task FROM scheduler_runs')->fetchColumn() === 'retained', 'The real version-five database retains its existing data.');
+        $assert(TinyCat\Database\Migrations::history($database, 'global', 'tinycat')[0]['release_version'] === '20260801_profile_links_and_legacy_cleanup', 'Opaque historical release labels survive the transition.');
+        Resources::configure(Loader::load($root)->catalog);
+        $assert(CompiledAssets::client('/admin', 'en') !== null && CompiledAssets::components() !== null, 'An inherited compiler cannot prevent the signed transition from building the actual local selection.');
+        $assert(!is_dir($root . '/storage/cache/assets'), 'The legacy transition does not restore an asset cache layer.');
+        echo "PASS inherited updater transition builds the local selection in a fresh process\n"; exit;
     default: throw new RuntimeException('Unknown generation fixture mode.');
 }
 $app = CompiledTranslations::application('en');
@@ -255,8 +196,9 @@ $actual = CompiledAssets::client('/', 'en');
 $components = CompiledAssets::components();
 if ($expectedSource) {
     $assert($app === null && $actual === null && $components === null, 'All compiled readers must fall back together: ' . $mode);
-    $assert(TinyCat\Support\Localization::catalog('en') !== [], 'Source fallback keeps core presentation available.');
-    $assert(TinyCat\Core\Ui\Components::templates() !== [], 'Source fallback preserves core/admin component rendering.');
+    try { TinyCat\Support\ClientAssets::scripts('/'); throw new RuntimeException('Missing build triggered HTTP-style source compilation.'); }
+    catch (TinyCat\Http\HttpException $error) { $assert($error->status === 503, 'Client delivery reports an unavailable build instead of compiling.'); }
+    $assert(!is_dir($root . '/storage/cache/assets'), 'No asset cache is generated by a failed read.');
 } else {
     $assert($actual !== null && $app === $built['catalogs']['en']['app'] && $components === $built['components'], 'Complete release retains compiled fast paths.');
 }

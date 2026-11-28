@@ -19,6 +19,7 @@ foreach ($directories as $directory) {
         if (!$file instanceof SplFileInfo || !$file->isFile() || $file->getExtension() !== 'php') continue;
         $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
         if (str_starts_with($relative, 'tests/security/')) continue;
+        if (str_starts_with($relative, 'App/Core/Support/compiled/')) continue;
         $files[$relative] = $file->getPathname();
     }
 }

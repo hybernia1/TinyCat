@@ -93,6 +93,7 @@
       "application": "Données de l’application",
       "application_help": "Les données calculées utilisent le TTL et l’invalidation de leur fonction. Le disque remplace Memcached s’il est indisponible.",
       "assets": "Ressources générées",
+      "rebuild_assets": "Reconstruire les ressources",
       "browser": "Cache du navigateur",
       "http": "Cache HTTP et compression",
       "http_help": "Réponses anonymes observées. Content-Encoding indique la compression et Cache-Control le stockage. Ce sont des exemples, pas un contrôle de toutes les URL.",

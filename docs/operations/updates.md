@@ -226,14 +226,18 @@ The shared `cleanup` task includes `retired_build_files`, contributed by core
 Support through the same lazy `MaintenanceTask` contract as module maintenance.
 It retires recognized hashed files in `assets/build/` and
 `App/Core/Support/compiled/`; it never treats these directories as disposable cache.
-The current asset manifest, PHP translation index, referenced payloads and their
-client dependencies are protected. Retained update backups also protect their
-referenced build files, including backups without a completion marker. Backup
+The current asset manifest, compiled catalogs, referenced payloads and their
+client dependencies are protected. The latest operation's rollback snapshot and
+snapshots created/completed within the last 48 hours protect their referenced
+build files. Unknown historical snapshot metadata is protected conservatively. Backup
 retention remains owned by Updates; removing build files does not shorten it.
 
-Cleanup waits at least 48 hours after either current index changes and preserves
-generated files younger than 48 hours. This allows already open pages to finish
-using the previous release. Missing or invalid current inventories stop deletion;
+Cleanup preserves generated files younger than 48 hours and uses recent snapshot
+references to let already open pages finish. A new manifest does not postpone
+cleanup of older unused generations, and older non-current snapshots do not pin
+public build files indefinitely. Their source/database backups remain intact;
+a manual restoration of an older snapshot may require rebuilding assets.
+Missing or invalid current inventories stop deletion;
 an entirely uncompiled source checkout has nothing to retire. Symbolic links and
 unrecognized filenames are never followed or removed. The operation uses shared
 deployment admission and resumable bounded directory scans, so it cannot run
@@ -248,10 +252,14 @@ maintenance callbacks; core cleanup contains no Social table or domain list.
 
 Additional technical maintenance participants have separate ownership and retention:
 
-- `retired_runtime_assets` retires recognized generated cache assets after 30 days
-  without publication. Publishing a warm asset renews its timestamp at most once
-  per hour; recent JS/CSS roots also retain their transitive cached dependencies.
-  Publication and cleanup share a coordination lock. Unknown files are preserved.
+- `retired_runtime_assets` and `expired_prepared_assets` only retire recognized
+  legacy asset-cache outputs after the thirty-day transition grace period. New
+  deployments publish a canonical build, never another asset-cache generation.
+  The first cleanup records retirement once in each old cache directory; later
+  updates cannot restart its grace period. Cleanup removes an empty retired
+  directory after its recognized files expire. Unknown files are preserved.
+  `retired_build_files` protects current and rollback
+  references while retiring obsolete canonical build outputs.
 - `abandoned_module_packages` retires recognized uploaded ZIPs and extracted
   module workspaces older than 48 hours. A package-operation lock protects both
   preparation and installation; cleanup takes it without waiting, then checks
@@ -1600,7 +1608,7 @@ and all translation catalogs into `assets/build/`, including a runtime manifest.
 These generated files are added directly to the signed package; the source
 checkout and runtime cache are not modified. Production pages select URLs from
 this inventory instead of minifying or scanning translation sources per request.
-Source checkouts without the inventory retain an on-demand development fallback.
+Source checkouts build the inventory explicitly with `php App/Console.php assets`.
 
 The builder creates:
 

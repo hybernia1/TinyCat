@@ -93,6 +93,7 @@
       "application": "Aplikační data",
       "application_help": "Vypočtená data mají TTL a invalidaci určenou vlastníkem funkce. Při nedostupném Memcached se použije disk.",
       "assets": "Generované assety",
+      "rebuild_assets": "Znovu sestavit assety",
       "browser": "Cache prohlížeče",
       "http": "HTTP cache a komprese",
       "http_help": "Pozorované anonymní odpovědi. Content-Encoding určuje kompresi, Cache-Control pravidla ukládání. Jde o vzorky, nikoli kontrolu konfigurace všech URL.",

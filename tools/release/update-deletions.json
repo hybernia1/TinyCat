@@ -2482,5 +2482,8 @@
   ],
   "9.0.1": [
     "App/Modules/Social/src/Discussion/Resource.php"
+  ],
+  "9.0.2": [
+    "App/Core/Support/compiled/translations.php"
   ]
 }

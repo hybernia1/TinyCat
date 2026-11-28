@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 $path = (string) ($argv[1] ?? '/');
 $locale = (string) ($argv[2] ?? 'en');
 $repo = dirname(__DIR__, 3);
-$compiled = in_array($argv[3] ?? '', ['--compiled', '--compiled-min'], true);
+$compiled = $path !== '--build';
 $root = $repo;
 if ($compiled) {
     if (($argv[4] ?? '') === '--prepared') { $descriptor = (string) stream_get_contents(STDIN); }
@@ -52,16 +52,14 @@ if ($path === '--build') {
 \TinyCat\Core\Ui\Components::withFreshTemplates(static function () use ($path, $locale): void {
     $assets = [];
     foreach (\TinyCat\Support\ClientAssets::scripts($path) as $url) {
-        $file = str_starts_with($url, '/cache/assets/')
-            ? \TinyCat\Support\Assets::file(basename($url), 'assets')
-            : \TinyCat\Support\Paths::basePath((string) parse_url($url, PHP_URL_PATH));
+        $file = \TinyCat\Support\Paths::basePath((string) parse_url($url, PHP_URL_PATH));
         $assets[] = ['url' => $url, 'source' => (string) file_get_contents($file)];
     }
     $compiledClient = \TinyCat\Support\CompiledAssets::client($path, $locale, \TinyCat\Support\ClientAssets::option('performance.minify_js'), \TinyCat\Support\ClientAssets::option('performance.minify_css'));
-    $deferred = $compiledClient['deferred'] ?? \TinyCat\Support\ClientAssets::deferred($path, $locale);
+    $deferred = $compiledClient['deferred'] ?? [];
     $deferredAssets = [];
     foreach (array_filter([$deferred['script'] ?? null, $deferred['style'] ?? null]) as $url) {
-        $deferredAssets[$url] = (string) file_get_contents(str_starts_with($url, '/cache/assets/') ? \TinyCat\Support\Assets::file(basename($url), 'assets') : \TinyCat\Support\Paths::basePath($url));
+        $deferredAssets[$url] = (string) file_get_contents(\TinyCat\Support\Paths::basePath($url));
     }
     echo json_encode(['locale' => $locale, 'assets' => $assets, 'deferred_assets' => $deferredAssets,
         'styles' => \TinyCat\Support\ClientAssets::styles($path),

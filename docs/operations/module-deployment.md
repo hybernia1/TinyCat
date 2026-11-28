@@ -106,8 +106,8 @@ hesla používají Core/Identity. Opakovaná instalace nebo neprázdná DB se od
 ani média. [Inventář a datové vlastnictví](../development/domain-storage.md).
 Bootstrap nikdy neprovádí DDL.
 Webserver musí používat kořenový `.htaccess` nebo ekvivalentní pravidla:
-`App/`, konfigurace a `storage/` nejsou veřejné soubory; cache assetů se
-zpřístupňuje jen přes úzké pravidlo `/cache/assets/`.
+`App/`, konfigurace a soukromé `storage/` nejsou veřejné soubory. Nové assety
+se doručují z `/assets/build/`; `/cache/assets/` zůstává pro staré otevřené stránky.
 
 Statické WebP soubory musí vracet `Content-Type: image/webp`. Apache má explicitní
 mapování v kořenovém `.htaccess`. Pokud soubory obsluhuje přímo nginx, načti jeho
@@ -161,76 +161,49 @@ moduly témata neregistrují. Bez vybraného tématu je společný core rám.
 Obě volby jsou v editoru nastavení webu. Nastavení, jeho klientské
 popisky a e-mailové šablony přispívají pouze aktivní vlastníci.
 
-Předkompilované výstupy obsahují otisk výběru. Při změně aktivace runtime
-odmítne výstupy jiné sestavy a použije společný assetový a překladový compiler
-nad dostupnými zdroji. Cache musí být zapisovatelná. Úlohy drží sdílený zámek,
-nasazení výhradní; souběžný konflikt se odmítá a může se později zopakovat.
+### Asset, component and translation build
 
-### Asset, component and translation generations
+Release and local deployments use the same `AssetCompiler`, output format and
+`/assets/build/<name>.<24hex>.<ext>` URLs. One `assets/build/manifest.json`
+references public files, PHP components and locale catalogs in
+`App/Core/Support/compiled/`. PHP catalogs benefit from OPcache. There is no
+prepared-cache generation or source compilation during HTTP rendering.
 
-The signed `assets/build/manifest.json` and
-`App/Core/Support/compiled/translations.php` are one pair with `version` and a
-shared deterministic content `generation`. The compiler hashes emitted content,
-normalized internal references, server components and all translation channels
-before either index is written. Neither index participates in its own hash.
-Publication URL differences do not change content identity. Identical prepared
-data retain the release PHP path; changed data can overlay the same-version
-release only as a complete prepared generation.
+Installation, application/module updates and activation changes build the target
+selection before publishing its deployment state. Builds run in a fresh PHP CLI
+worker so already loaded old providers cannot contaminate new output. Hosting
+must allow `proc_open` and provide PHP CLI alongside web PHP. All locales,
+raw/min variants, deferred editors and standalone theme assets build together.
 
-Metadata retains a provisional candidate once per request, without declaring a
-payload delivered. Before delivery an unavailable candidate is reconsidered for
-a complete overlay or source fallback; after delivery failure remains 503.
-Runtime checks the used locale and client scope, including raw/min variants,
-deferred script/style, catalog variants and compiler-recorded CSS font/image
-dependencies. It never recursively hashes sources or stats every scope/locale.
-Deferred `resources` are API triggers, not files. Domain media/srcset are outside
-the inventory; individual owned build assets use the same URL check. Canonical
-managed paths are `/assets/build/<name>.<24hex>.<ext>` and
-`/cache/assets/<name>.<20hex>[.min].<ext>` for supported asset extensions. Inventory
-URLs reject queries, fragments, traversal, foreign paths and origins. CSS can
-append its original fragment to a checked base dependency; external/data CSS
-references are outside the local inventory. Storage access rules do not change.
+The existing updater lock, maintenance, journal and rollback protect publication.
+Compilation finishes before output writes; hashed dependencies precede the single
+manifest commit. Compiler failure leaves the previous build intact. An explicit
+rebuild rolls back its own uncommitted failure automatically. Application/module
+deployment failure retains maintenance and standard recovery. Rollback restores the exact
+previous manifest. HTTP never attempts a repair; an incomplete build returns 503
+and the existing emergency document without external assets. Source checkouts
+need a build just as release installations do.
 
-Before payload delivery, rejection selects the existing source fallback for all
-channels. After delivery, a request retains its pinned generation; a late missing
-locale/chunk raises recoverable `503 asset_inventory_unavailable`. Failed readers
-fail fast on reentry. The HTTP kernel discards partial HTML and uses an emergency
-document without external assets. Fresh requests can use complete source fallback,
-including admin/updater. Missing build is normal in source checkouts; malformed
-present release indexes are diagnosed and rejected as a pair.
-
-Preparation publishes immutable public files/private JSON parts before its
-format-3 index. The index anchors the exact release pair bytes, including absence
-in source checkouts. A later release rejects the old overlay even at the same
-SemVer; rollback restores its original anchor. Identical prepared data can repair
-an incomplete release before delivery. Concurrent publication cannot alter a
-pinned reader. Retention protects old format-2 references and already open pages.
-No manual build/cache deletion is required.
-
-Supported module lifecycle updates the content checksums in
-`App/module-packages.json`. ModuleAutoload captures this identity before the first
-module include, including withCatalog/scoped builds. Loaded providers from an old
-registry, old core version or old reader API defer optional preparation without
-publishing a new index. Fresh workers then use the release or a temporary complete
-source fallback; no automatic preparation is scheduled. Explicit preparation
-reports failure when a fresh process is required. After a coherent update, run
-this existing command in the target installation in a fresh process:
+After manual source changes, use **Admin > Cache > Rebuild assets** or run in
+the target installation:
 
 ```sh
 php App/Console.php assets
 ```
 
-Manual source edits, including copied same-version modules outside the package
-lifecycle, require this command: HTTP does not discover arbitrary source changes
-on each GET. Concurrent manual editing during preparation is unsupported. Changed
-release anchor/selection aborts publication. Editing hashed outputs without the
-index is corruption, not a new generation; HTTP does not checksum all output bytes.
+Content changes produce new immutable URLs. Minification selects existing raw/min
+variants. HTTP cache rules remain unchanged. `retired_build_files` cleans obsolete
+build files after its grace period while protecting current and rollback references.
+Historical `retired_runtime_assets` and `expired_prepared_assets` only retire
+recognized old cache files after the thirty-day transition grace period; no new
+outputs are written there. Local configuration, media and unknown files are kept.
+The `/cache/assets/` Apache rule remains solely for URLs in already open old pages.
 
-Completed 8.0.14 updates require no published baseline changes. New readers reject
-legacy indexes without generation and prepared formats 1/2, while retention can
-keep their files. Fresh installations receive the new signed pair. Old classes
-already loaded by an updater can defer optional preparation as above. PHP catalogs
-remain release-managed; OPcache is independent of Memcached.
+The version-six `tinycat.support` migration is a one-time reader transition for
+inherited updaters: it builds the local selection in a fresh process even when
+the running request retains the old asset classes. It preserves the existing
+tables and historical checksums. Fresh installations use the independent
+`fresh-v6.php` baseline; they do not replay the transition.
 
 ## Aktualizace a obnova
 

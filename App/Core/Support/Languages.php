@@ -65,7 +65,7 @@ final class Languages
             return CompiledTranslations::packages() ?? TranslationSources::packages();
         }
         $configuration = Config::snapshot();
-        $key = \TinyCat\Core\Modules\Resources::revision() . ':' . ((bool) $configuration->get('assets.source', false) ? 'source' : \TinyCat\Core\Modules\DeploymentIdentity::key());
+        $key = \TinyCat\Core\Modules\Resources::revision() . ':' . \TinyCat\Core\Modules\DeploymentIdentity::key();
         if (self::$packagesKey !== $key || self::$configuration !== $configuration) {
             self::$sourcePackages = CompiledTranslations::packages() ?? TranslationSources::packages();
             self::$packagesKey = $key;

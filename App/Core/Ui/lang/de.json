@@ -93,6 +93,7 @@
       "application": "Anwendungsdaten",
       "application_help": "Berechnete Daten verwenden TTL und Invalidierung ihrer Funktion. Ist Memcached nicht verfügbar, wird die Festplatte verwendet.",
       "assets": "Generierte Assets",
+      "rebuild_assets": "Assets neu erstellen",
       "browser": "Browser-Cache",
       "http": "HTTP-Cache und Komprimierung",
       "http_help": "Beobachtete anonyme Antworten. Content-Encoding zeigt die Komprimierung, Cache-Control die Speicherung. Dies sind Stichproben, keine Prüfung aller URLs.",

@@ -46,24 +46,18 @@ $expectFailure = static function (callable $callback): void {
     throw new RuntimeException('Expected operation was accepted.');
 };
 
-$test('cache finalization preserves public generations, revision and lock across private roots', static function () use ($expect): void {
+$test('cache finalization preserves legacy public URLs across private roots', static function () use ($expect): void {
     $configuration = \TinyCat\Support\Config::snapshot();
-    $root = \TinyCat\Support\Assets::directory('');
+    $root = (string) getenv('TINYCAT_RUNTIME_ASSET_DIRECTORY');
     $name = 'update-probe.' . str_repeat('a', 20) . '.js';
     try {
         foreach ([$root, $root . '/private-compute'] as $private) {
             $values = $configuration->values(); $values['cache']['directory'] = $private;
             \TinyCat\Support\Config::configure(new \TinyCat\Core\Runtime\Configuration($values));
-            \TinyCat\Support\Assets::writeFile($name, 'immutable');
-            \TinyCat\Support\Assets::writeFile('revision', 'generation-fence', 'asset-publications');
-            \TinyCat\Support\Assets::writeFile(str_repeat('b', 64) . '.json', '{}', 'prepared-assets');
-            \TinyCat\Support\Assets::synchronized(static fn (): bool => true);
+            \TinyCat\Support\Storage::write($root . '/assets/' . $name, 'immutable');
             \TinyCat\Support\Cache::writeFile('computed.json', '{}');
             (new ReflectionMethod(Manager::class, 'clearRuntimeCache'))->invoke(null);
-            $expect(is_file(\TinyCat\Support\Assets::file($name)), 'Open-page asset survived finalization.');
-            $expect(\TinyCat\Support\Minifier::publicationRevision() === 'generation-fence', 'Publication fence survived finalization.');
-            $expect(is_file(\TinyCat\Support\Assets::file(str_repeat('b', 64) . '.json', 'prepared-assets')), 'Prepared generation survived finalization.');
-            $expect(is_file(\TinyCat\Support\Assets::directory('coordination') . '/' . hash('sha256', 'runtime-assets') . '.lock'), 'Coordination inode survived finalization.');
+            $expect(is_file($root . '/assets/' . $name), 'Old open-page asset survived finalization.');
             $expect(!is_file(\TinyCat\Support\Cache::file('computed.json')), 'Private computed cache was cleared.');
         }
     } finally { \TinyCat\Support\Config::configure($configuration); }
@@ -160,7 +154,11 @@ $test('file backups exclude unchanged files from a complete release package', st
     try {
         $metadata = json_decode((string) file_get_contents($backup . DIRECTORY_SEPARATOR . 'backup.json'), true);
         $expect(is_array($metadata));
-        $expect(($metadata['files'] ?? null) === []);
+        $expect(!isset($metadata['files']['App/Core/Support/Version.php']), 'Unchanged application sources are not backed up.');
+        $manifest = \TinyCat\Support\Paths::basePath('assets/build/manifest.json');
+        if (is_file($manifest)) {
+            $expect(($metadata['files']['assets/build/manifest.json'] ?? null) === hash_file('sha256', $manifest), 'The installed build manifest is always pinned for rollback.');
+        } else { $expect(in_array('assets/build/manifest.json', $metadata['new_files'], true), 'Rollback restores an initially absent build manifest.'); }
         $expect(($metadata['database_backup_required'] ?? true) === false);
         $expect(!is_file($backup . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'Version.php'));
     } finally {

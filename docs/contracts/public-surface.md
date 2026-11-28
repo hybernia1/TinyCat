@@ -80,6 +80,11 @@ prefixového pravidla. Závislosti lazy dialogů musí být deklarované v profi
 jejich hostitelské stránky. Nevytvářej balíčky podle identity návštěvníka
 ani druhý frontendový build mechanismus.
 
+HTTP reads the installed build only; it never compiles or publishes asset cache
+fallbacks. Releases, explicit rebuilds and module lifecycle use one build format.
+Missing or incomplete output returns 503 through the existing emergency document.
+
+
 ## Ověření
 
 Regrese patří do existujících Identity, presentation, HTTP a client-assets

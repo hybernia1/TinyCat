@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Included by the canonical prepared-assets group; no live installation or database.
+// Isolated build tree; the reader bridge uses its own disposable MySQL database.
 $fixture = \TinyCat\Tools\Workspace::directory('tests/asset-generation-' . bin2hex(random_bytes(6)));
 $sourceRoot = dirname(__DIR__, 3);
 $copy = static function (string $source, string $target) use (&$copy): void {
@@ -22,16 +22,8 @@ $invoke = static function (string $mode) use ($fixture): void {
     echo $out;
 };
 $invoke('build');
+$invoke('missing-module');
 foreach (['release', 'missing-client-scope', 'old-version', 'legacy', 'mismatch', 'missing-script', 'missing-asset-entry', 'missing-style', 'missing-variant', 'missing-deferred-script', 'missing-deferred-style', 'missing-component', 'missing-catalog', 'corrupt-index', 'packages', 'nested-snapshot', 'metadata-components-late-locale', 'client-late-locale', 'components-late-client', 'catalog-late-components', 'error-document', 'missing-dependency', 'missing-font', 'invalid-client-url', 'canonical-paths'] as $mode) { $invoke($mode); }
-$invoke('capture-before-include');
-$invoke('source-overlay-release');
-$invoke('identical-overlay');
-$invoke('identical-repair');
-$invoke('overlay');
-$invoke('overlay-fresh');
-$invoke('new-release');
-$invoke('rollback');
-$invoke('loaded-module');
-$invoke('fresh-module');
-$invoke('repaired-module');
+$invoke('rebuild');
+$invoke('legacy-updater');
 echo 'Generation fixture: ' . $fixture . "\n";

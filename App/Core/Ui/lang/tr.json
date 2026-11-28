@@ -93,6 +93,7 @@
       "application": "Uygulama verileri",
       "application_help": "Hesaplanan veriler, ilgili işlevin TTL ve geçersizleştirme kurallarını kullanır. Memcached kullanılamazsa disk kullanılır.",
       "assets": "Oluşturulan kaynaklar",
+      "rebuild_assets": "Varlıkları yeniden derle",
       "browser": "Tarayıcı önbelleği",
       "http": "HTTP önbelleği ve sıkıştırma",
       "http_help": "Gözlemlenen anonim yanıtlar. Content-Encoding sıkıştırmayı, Cache-Control depolamayı belirtir. Bunlar örnektir; tüm URL’lerin denetimi değildir.",

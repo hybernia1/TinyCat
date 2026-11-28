@@ -22,7 +22,10 @@ App/Themes/company/
 ```
 
 The complete theme stays under the HTTP-protected `App` directory. Its assets
-use the shared compiler/cache and are published as content-addressed outputs. Theme files are
+use the shared compiler and are published in the installed `/assets/build/` output.
+All available theme assets are built during deployment. After manually adding or
+editing a theme, run `php App/Console.php assets` in the target installation;
+HTTP never compiles a missing theme asset. Theme files are
 trusted deployment code; there is no theme upload or package manager.
 
 ```json

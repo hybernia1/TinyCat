@@ -152,9 +152,9 @@ try {
     [$status, $json] = $request('/api/fixture-notes'); $assert($status === 200 && str_contains($json, 'Unicode'), 'Activation registers the real authorized product API');
     [$status, $html] = $request('/fixture-notes'); $assert($status === 200 && str_contains($html, 'Selected notes'), 'Activation adds module-owned translations');
     [$status, $html] = $request('/fixture-notes'); $assert($status === 200, 'fixture product public HTTP boot remains ready after optional activation');
-    $assert(preg_match_all('~(?:src|href)="(/cache/assets/[^"?]+)~', $html, $assetMatches) > 0, 'Changed selection falls back from stale compiled assets');
+    $assert(preg_match_all('~(?:src|href)="(/assets/build/[^"?]+)~', $html, $assetMatches) > 0, 'Changed selection receives its rebuilt canonical assets');
     $delivered = '';
-    foreach ($assetMatches[1] as $url) { [$assetStatus, $asset] = $request(html_entity_decode($url)); $assert($assetStatus === 200, 'Selected fallback asset is served'); $delivered .= $asset; }
+    foreach ($assetMatches[1] as $url) { [$assetStatus, $asset] = $request(html_entity_decode($url)); $assert($assetStatus === 200, 'Selected build asset is served'); $delivered .= $asset; }
     $assert(str_contains($delivered, 'lifecycleNotesLoaded'), 'Activated module JavaScript is delivered');
     [$exit, $text, $error] = $console(['task', 'fixture.notes.tick']); $assert($exit === 0 && (int) $pdo->query('SELECT ticks FROM lifecycle_notes')->fetchColumn() === 1, 'Activated scheduled contribution runs through the shared CLI: ' . $text . $error);
     $assert((int) $pdo->query("SELECT COUNT(*) FROM scheduler_runs WHERE task = 'fixture.notes.tick' AND status = 'completed' AND finished_at IS NOT NULL")->fetchColumn() === 1, 'CLI records persistent core execution history without Scheduler');
@@ -205,15 +205,15 @@ try {
     $assert($exit === 0 && (json_decode($text, true)['cached_provider_version'] ?? null) === 2, 'Update uses signed migrations while the old PHP provider is cached: ' . $text . $error);
     $assert((int) $pdo->query('SELECT revision_three FROM lifecycle_notes')->fetchColumn() === 3, 'Cached old provider cannot suppress the next migration');
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root, '--source'], $root);
-    $assert($exit === 0, 'Fresh updated runtime uses sources when old loaded classes defer publication: ' . $text . $error);
+    $assert($exit === 0, 'Fresh updated runtime reads the build made by a fresh worker: ' . $text . $error);
     $http = $startHttp();
     [$status, $html] = $request('/fixture-notes');
-    $assert($status === 200 && str_contains($html, 'Selected notes'), 'A fresh HTTP worker renders the complete source fallback after deferred preparation.');
-    $assert(preg_match_all('~(?:src|href)="(/cache/assets/[^"?]+)~', $html, $assetMatches) > 0, 'Deferred lifecycle delivers current local source bundles.');
-    foreach ($assetMatches[1] as $url) { [$assetStatus] = $request(html_entity_decode($url)); $assert($assetStatus === 200, 'Fresh source fallback asset exists after old-provider update.'); }
+    $assert($status === 200 && str_contains($html, 'Selected notes'), 'A fresh HTTP worker renders the current build after a cached-provider update.');
+    $assert(preg_match_all('~(?:src|href)="(/assets/build/[^"?]+)~', $html, $assetMatches) > 0, 'Lifecycle delivers current canonical build bundles.');
+    foreach ($assetMatches[1] as $url) { [$assetStatus] = $request(html_entity_decode($url)); $assert($assetStatus === 200, 'Fresh build asset exists after old-provider update.'); }
     proc_terminate($http); proc_close($http); $http = null;
     [$exit, $text, $error] = $console(['assets']);
-    $assert($exit === 0 && (json_decode($text, true)['assets'] ?? null) === 'prepared', 'Explicit fresh CLI completes deferred preparation: ' . $text . $error);
+    $assert($exit === 0 && (json_decode($text, true)['assets'] ?? null) === 'built', 'Explicit CLI rebuilds the same canonical inventory: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
     $assert($exit === 0, 'Fresh reader consumes the generation actually published by the repair command: ' . $text . $error);
     // A valid signature does not authorize a different product or a fresh-install artifact.

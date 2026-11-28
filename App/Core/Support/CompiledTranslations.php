@@ -16,7 +16,7 @@ final class CompiledTranslations
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return []; }
         if (!in_array('inventory', get_class_methods(DeploymentIdentity::class), true)) { return []; }
         $inventory = DeploymentIdentity::inventory($locale);
-        return isset($inventory['prepared']) ? ['_prepared' => true, 'packages' => $inventory['translations']['packages']] : ($inventory['translations'] ?? []);
+        return $inventory['translations'] ?? [];
     }
 
     /** @return array<string, string>|null */
@@ -30,12 +30,6 @@ final class CompiledTranslations
     {
         $manifest = self::manifest($locale);
         if ($manifest === []) { return null; }
-        if ($manifest['_prepared'] ?? false) {
-            $data = PreparedAssets::read($channel, $locale, DeploymentIdentity::inventory()['prepared']);
-            if ($data === []) { DeploymentIdentity::reject(); return null; }
-            DeploymentIdentity::delivered();
-            return $data;
-        }
         $key = $manifest['generation'] . ':' . $locale;
         if (isset(self::$catalogs[$key])) { DeploymentIdentity::delivered(); return self::$catalogs[$key][$channel] ?? null; }
         $name = $manifest['catalogs'][$locale] ?? null;

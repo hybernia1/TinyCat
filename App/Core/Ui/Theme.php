@@ -54,6 +54,9 @@ final readonly class Theme
         return new self($id, $manifest['label'], $directory, $manifest['layout'], $assets['styles'], $assets['scripts']);
     }
 
+    /** @return list<string> */
+    public function assets(): array { return [...$this->styles, ...$this->scripts]; }
+
     /** @param array<string, mixed> $page
      * @param array<string, mixed>|null $document */
     public function render(array $page, string $content, ?array $document = null): void

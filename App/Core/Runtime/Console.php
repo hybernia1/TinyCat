@@ -28,13 +28,7 @@ final class Console
             }
             if ($command === 'assets') {
                 if (count($arguments) !== 2) { throw new \InvalidArgumentException('Asset preparation takes no arguments.'); }
-                $result = \TinyCat\Core\Updates\Manager::runTask(static function (): array {
-                    return \TinyCat\Support\Cache::synchronized('prepared-assets', static function (): array {
-                        Application::start();
-                        \TinyCat\Support\PreparedAssets::prepare();
-                        return ['assets' => 'prepared'];
-                    });
-                });
+                $result = \TinyCat\Support\AssetCompiler::regenerate();
             }
             elseif ($command === 'rescue') {
                 $file = $root . '/storage/updates/console.php';

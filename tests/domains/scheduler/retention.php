@@ -271,8 +271,7 @@ $rollback = 'app.' . str_repeat('d', 24) . '.js';
 $component = 'components.' . str_repeat('e', 24) . '.php';
 $catalog = 'cs.' . str_repeat('f', 24) . '.php';
 $retiredCatalog = 'cs.' . str_repeat('1', 24) . '.php';
-$manifest = ['assets' => [], 'clients' => ['/' => ['app' => '/assets/build/' . $asset]], 'server_components' => $component];
-$index = ['catalogs' => ['cs' => $catalog]];
+$manifest = ['assets' => [], 'clients' => ['/' => ['app' => '/assets/build/' . $asset]], 'server_components' => $component, 'translations' => ['catalogs' => ['cs' => $catalog]]];
 $file('assets/build/' . $asset, 259200, 'const image="/assets/build/' . $dependency . '";');
 $file('assets/build/' . $dependency);
 $file('assets/build/' . $old);
@@ -281,17 +280,29 @@ $file('assets/build/unrelated.txt');
 $file('App/Core/Support/compiled/' . $component, 259200, '<?php return [];');
 $file('App/Core/Support/compiled/' . $catalog, 259200, '<?php return [];');
 $file('App/Core/Support/compiled/' . $retiredCatalog, 259200, '<?php return [];');
-$file('assets/build/manifest.json', 259200, json_encode($manifest, JSON_THROW_ON_ERROR));
-$file('App/Core/Support/compiled/translations.php', 259200, '<?php return ' . var_export($index, true) . ';');
+$file('assets/build/manifest.json', 60, json_encode($manifest, JSON_THROW_ON_ERROR));
 $backupManifest = $manifest;
 $backupManifest['clients']['/']['app'] = '/assets/build/' . $rollback;
 $file('storage/updates/backups/build-rollback/files/assets/build/manifest.json', 259200, json_encode($backupManifest, JSON_THROW_ON_ERROR));
+$file('storage/updates/backups/build-rollback/backup.json', 259200, json_encode(['created_at' => date(DATE_ATOM, time() - 40 * 86400)], JSON_THROW_ON_ERROR));
+$file('storage/updates/operation.json', 60, json_encode(['phase' => 'complete', 'kind' => 'modules', 'backup' => 'build-rollback'], JSON_THROW_ON_ERROR));
+$staleManifest = $manifest; $staleManifest['clients']['/']['app'] = '/assets/build/' . $old;
+$file('storage/updates/backups/retired-build/files/assets/build/manifest.json', 259200, json_encode($staleManifest, JSON_THROW_ON_ERROR));
+$file('storage/updates/backups/retired-build/backup.json', 259200, json_encode(['created_at' => date(DATE_ATOM, time() - 259200)], JSON_THROW_ON_ERROR));
+$recent = 'app.' . str_repeat('2', 24) . '.js';
+$file('assets/build/' . $recent, 40 * 86400);
+$recentManifest = $manifest; $recentManifest['clients']['/']['app'] = '/assets/build/' . $recent;
+$file('storage/updates/backups/recent-build/files/assets/build/manifest.json', 60, json_encode($recentManifest, JSON_THROW_ON_ERROR));
+$file('storage/updates/backups/recent-build/backup.json', 60, json_encode(['created_at' => date(DATE_ATOM, time() - 60)], JSON_THROW_ON_ERROR));
 $build = \TinyCat\Core\Updates\BuildCleanup::run(500);
 $assert($build['changed'] === 2 && !is_file($root . '/assets/build/' . $old) && !is_file($root . '/App/Core/Support/compiled/' . $retiredCatalog), 'Retired build and PHP catalogs are removed together.');
-foreach ([$asset, $dependency, $rollback, 'unrelated.txt', 'manifest.json'] as $name) { $assert(is_file($root . '/assets/build/' . $name), 'Current, transitive, rollback and unrelated files survive cleanup.'); }
+foreach ([$asset, $dependency, $rollback, $recent, 'unrelated.txt', 'manifest.json'] as $name) { $assert(is_file($root . '/assets/build/' . $name), 'Current, transitive, latest rollback, recent-page and unrelated files survive cleanup.'); }
 $file('assets/build/' . $old);
 touch($root . '/assets/build/manifest.json'); clearstatcache();
-$assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 0, 'A recent deployment protects already open pages even when its previous assets are old.');
+$assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 1 && !is_file($root . '/assets/build/' . $old), 'Frequent updates cannot postpone cleanup of older unused generations, even while obsolete backups remain.');
+$assert(is_file($root . '/assets/build/' . $recent), 'A recent snapshot protects old-timestamp assets still used by open pages.');
+$file('storage/updates/backups/recent-build/backup.json', 259200, json_encode(['created_at' => date(DATE_ATOM, time() - 259200)], JSON_THROW_ON_ERROR));
+$assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 1 && !is_file($root . '/assets/build/' . $recent), 'A previous generation expires independently of the current manifest age.');
 touch($root . '/assets/build/manifest.json', time() - 259200); clearstatcache();
 $file('assets/build/' . $old, 60);
 $assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 0, 'Fresh generated files survive the grace period.');
@@ -314,6 +325,7 @@ $assert(\TinyCat\Core\Updates\BuildCleanup::run(500)['changed'] === 0, 'Recovery
 unlink($root . '/storage/maintenance.json');
 for ($i = 0; $i < 12; $i++) { $file('assets/build/stale.' . str_pad((string) $i, 24, '0', STR_PAD_LEFT) . '.css'); }
 for ($i = 0; $i < 30; $i++) {
+    touch($root . '/assets/build/manifest.json');
     $build = \TinyCat\Core\Updates\BuildCleanup::run(4);
     $assert($build['changed'] <= 4, 'Resumable build scans obey their shared batch budget.');
     if (!$build['has_more']) { break; }
@@ -326,23 +338,29 @@ $detail = \TinyCat\Core\Tasks\Cleanup\Task::detail(['summary' => ['tasks' => [['
 $assert(count($detail['details']) === 2 && $detail['details'][0]['status']['code'] === 'warning' && $detail['details'][1]['status']['code'] === 'critical', 'Cleanup details retain per-part pending and failure information using shared status tones, including historical owners.');
 $assert(!array_key_exists('details', \TinyCat\Core\Tasks\Cleanup\Task::detail(['summary' => []])), 'Historical runs without maintenance data do not gain unrelated detail sections.');
 
-// Runtime outputs renew publication time and retain dependencies of recent roots.
-$runtimeUrl = \TinyCat\Support\Minifier::cachedAssetUrl('fixture', 'fixture', 'const value = 1;', 'js', false);
-$runtimeName = basename((string) $runtimeUrl);
-$runtimeRoot = \TinyCat\Support\Assets::directory('assets');
-$staleRuntime = 'old.' . str_repeat('a', 20) . '.js';
-$runtimeDependency = 'image.' . str_repeat('b', 20) . '.svg';
-foreach ([$staleRuntime, $runtimeDependency, 'unknown.js'] as $name) { file_put_contents($runtimeRoot . '/' . $name, 'fixture'); touch($runtimeRoot . '/' . $name, time() - 40 * 86400); }
-$referencing = \TinyCat\Support\Minifier::cachedAssetUrl('root', 'root', 'const image="/cache/assets/' . $runtimeDependency . '";', 'js', false);
-touch($runtimeRoot . '/' . $runtimeName, time() - 40 * 86400);
-\TinyCat\Support\Minifier::cachedAssetUrl('fixture', 'fixture', 'const value = 1;', 'js', false);
-clearstatcache();
-$assert(filemtime($runtimeRoot . '/' . $runtimeName) > time() - 60, 'Warm publication renews asset retention without changing its URL.');
+// Legacy cache outputs are never republished; retain a grace period after the installed build.
+$runtimeRoot = getenv('TINYCAT_RUNTIME_ASSET_DIRECTORY') . '/assets';
+if (!is_dir($runtimeRoot)) { mkdir($runtimeRoot, 0700, true); }
+$old = $runtimeRoot . '/old.' . str_repeat('a', 20) . '.js';
+$fresh = $runtimeRoot . '/fresh.' . str_repeat('b', 20) . '.js';
+foreach ([$old, $fresh, $runtimeRoot . '/unknown.js'] as $path) { file_put_contents($path, 'fixture'); }
+touch($old, time() - 40 * 86400);
+touch($root . '/assets/build/manifest.json');
 \TinyCat\Support\Assets::cleanup(500);
-$assert(!is_file($runtimeRoot . '/' . $staleRuntime) && is_file($runtimeRoot . '/' . $runtimeDependency) && is_file($runtimeRoot . '/unknown.js'), 'Runtime retention removes only old recognized outputs and protects recent transitive dependencies.');
-touch($runtimeRoot . '/' . basename((string) $referencing), time() - 40 * 86400);
+$assert(is_file($old), 'A newly installed canonical build keeps old cache URLs for open pages.');
+file_put_contents($runtimeRoot . '/.retired-at', (string) (time() - 40 * 86400));
+touch($root . '/assets/build/manifest.json');
 \TinyCat\Support\Assets::cleanup(500);
-$assert(!is_file($runtimeRoot . '/' . $runtimeDependency), 'Dependencies expire after their publication roots also become obsolete.');
+$assert(!is_file($old) && is_file($fresh) && is_file($runtimeRoot . '/unknown.js'), 'Legacy cleanup removes only aged recognized outputs after the transition grace period.');
+$preparedRoot = dirname($runtimeRoot) . '/prepared-assets';
+mkdir($preparedRoot, 0700, true);
+$prepared = $preparedRoot . '/' . str_repeat('a', 64) . '.json';
+file_put_contents($prepared, '{}'); touch($prepared, time() - 40 * 86400);
+\TinyCat\Support\Assets::cleanupPrepared(500);
+$assert(is_file($prepared), 'Prepared cache receives its own transition grace period.');
+file_put_contents($preparedRoot . '/.retired-at', (string) (time() - 40 * 86400));
+\TinyCat\Support\Assets::cleanupPrepared(500);
+$assert(!is_dir($preparedRoot), 'Retired prepared cache files and the empty directory disappear without another layer.');
 
 // Abandoned package preparation has a different format from generic temporary writes.
 $packageMetadata = ['format' => 1, 'coreApi' => 1, 'id' => 'fixture.retention', 'namespace' => 'Fixture\\Retention\\', 'requires' => [], 'providers' => new stdClass(), 'resources' => new stdClass()];

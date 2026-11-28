@@ -8,7 +8,6 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Support\Cache;
-use TinyCat\Support\Assets;
 use TinyCat\Support\Config;
 use TinyCat\Support\Paths;
 use TinyCat\Social\Posts\LinkImages;
@@ -27,7 +26,7 @@ touch(Cache::file(hash('sha256', 'stale') . '.json'), time() - 301);
 Cache::writeFile(hash('sha256', 'legacy') . '.json', '{"legacy":true}');
 Cache::writeFile(hash('sha256', 'legacy-old') . '.json', '{"legacy":true}');
 touch(Cache::file(hash('sha256', 'legacy-old') . '.json'), time() - 604801);
-Assets::writeFile('app.js', 'generated', 'assets');
+Cache::writeFile('app.js', 'legacy-generated', 'assets');
 Cache::writeFile('active.lock', 'lock', 'locks');
 $removed = 0;
 for ($attempt = 0; $attempt < 20; $attempt++) {
@@ -40,7 +39,7 @@ $assert($removed === 2 && !$result['has_more'], 'Resumable cache cleanup complet
 $assert(!is_file(Cache::file(hash('sha256', 'expired') . '.json')) && !is_file(Cache::file(hash('sha256', 'legacy-old') . '.json')), 'Expired entries and old legacy cache files are removed.');
 $assert(Cache::read('fresh') === ['new' => true] && Cache::read('stale') === ['previous' => true], 'Fresh data and the stale refresh window survive cleanup.');
 $assert(Cache::read('legacy') === ['legacy' => true], 'Legacy raw JSON remains readable during rollout.');
-$assert(is_file(Assets::file('app.js', 'assets')) && is_file(Cache::file('active.lock', 'locks')), 'Cache cleanup preserves generated assets and active lock files.');
+$assert(is_file(Cache::file('app.js', 'assets')) && is_file(Cache::file('active.lock', 'locks')), 'Cache cleanup preserves generated assets and active lock files.');
 $result = \TinyCat\Core\Tasks\Cleanup\Task::runTask('expired_cache_files', 500);
 $assert($result['done'] && $result['changed'] === 0, 'The scheduler dispatches file cache cleanup.');
 
