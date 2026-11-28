@@ -217,7 +217,7 @@ PS, ['path' => $root . '/config.php']);
     // Exercise a signed product shape rather than an unversioned source checkout.
     $prepare = "define('TINYCAT', true); require " . var_export($root . '/App/Core/Runtime/autoload.php', true)
         . "; $" . "plan = \\TinyCat\\Core\\Modules\\Distribution::describe(" . var_export($root, true) . ", 'tinycat.core', []); file_put_contents("
-        . var_export($root . '/App/distribution.json', true) . ", json_encode($" . "plan, JSON_THROW_ON_ERROR));";
+        . var_export($root . '/App/distribution.json', true) . ", json_encode($" . "plan, JSON_THROW_ON_ERROR)); \\TinyCat\\Support\\AssetCompiler::publish();";
     exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($prepare) . ' 2>&1', $prepareOutput, $prepareExit);
     $assert($prepareExit === 0, 'The isolated core distribution is prepared: ' . implode(' ', $prepareOutput));
 
