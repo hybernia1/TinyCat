@@ -87,8 +87,9 @@ final class AssetCompiler
     }
 
     /** @param array<string, array<string, array<string, string>>>|null $catalogs
+     * @param (callable(string, string, string): string)|null $emit Ignored compatibility argument for an already loaded 8.0.14 updater.
      * @return array{files: array<string, string>, manifest: array<mixed>, server: array<mixed>, components: array<string, mixed>, catalogs: array<string, array<mixed>>} */
-    public static function compile(?array $catalogs = null): array
+    public static function compile(?array $catalogs = null, ?callable $emit = null): array
     {
         $compile = static function () use ($catalogs): array {
             $languages = TranslationSources::packages();
