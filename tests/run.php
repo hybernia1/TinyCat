@@ -128,6 +128,10 @@ $explicit = array_any($_SERVER['argv'] ?? [], static fn (string $argument): bool
 $items = $explicit ? \TinyCatTests\Execution::select($allItems) : array_flip($tests);
 \TinyCatTests\Execution::plan($allItems, array_keys($items));
 
+// Prepare once before readers run; no HTTP fixture may compile on demand.
+$buildExit = \TinyCatTests\Execution::run('tests/setup-assets', 'Source test asset build', [PHP_BINARY, $root . '/tools/assets/compile-assets.php', '--publish']);
+if ($buildExit !== 0) { exit($buildExit > 0 ? $buildExit : 1); }
+
 foreach ($allTests as $label => $relative) {
     if (!isset($items[$relative])) { continue; }
     echo "\n=== {$label} ===\n";

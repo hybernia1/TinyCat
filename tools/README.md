@@ -33,6 +33,11 @@ testů a CI zůstávají platné.
 funkce; nejde ve všech případech o samostatné CLI příkazy. Používej jejich
 runner nebo release builder.
 
+`php tools/assets/compile-assets.php --publish` sestaví inventář zdrojového
+testovacího runtime bez připojení k databázi či deployment lifecycle. Kanonický
+testovací runner jej připraví jednou před vybranými skupinami. Pro živou
+instalaci používej `php App/Console.php assets` se zámkem a zálohou.
+
 `component-syntax.php` vlastní autorskou gramatiku komponent používanou build
 validátorem i generátorem JSON schématu. Diagnostika obsahuje zdroj, název
 komponenty a cestu k chybnému poli. [Reference zápisu](../docs/reference/component-catalog.md)
