@@ -203,7 +203,10 @@ PHP;
     chmod($directory . '/database.json', 0600);
     file_put_contents($directory . '/enabled', '1');
     mkdir($directory . '/sessions', 0700);
-    $environment = array_merge(getenv(), ['TINYCAT_PILOT_DIRECTORY' => $directory]);
+    $runtime = $directory . '/runtime';
+    foreach (['App', 'assets'] as $part) { $copy($root . '/' . $part, $runtime . '/' . $part); }
+    $copy($directory . '/Notes', $runtime . '/' . $relative);
+    $environment = array_merge(getenv(), ['TINYCAT_PILOT_DIRECTORY' => $directory, 'TINYCAT_PILOT_RUNTIME' => $runtime, 'TINYCAT_PILOT_MODULE' => $relative . '/module.json']);
     $worker = $root . '/tests/fixtures/modules/pilot-worker.php';
     $run = static function (string $mode) use ($environment, $worker, $root): string {
         $process = proc_open([PHP_BINARY, $worker, $mode], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $root, $environment);
