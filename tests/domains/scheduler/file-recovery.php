@@ -22,7 +22,7 @@ $selection = ['fixture.files' => 'App/Modules/FileFixture/module.json', 'tinycat
 $all = Loader::fromSelection($root, $selection); Resources::configure($all->catalog);
 $plan = Distribution::describe($root, 'fixture.files', $selection, []); file_put_contents($root . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
 $activate = static function (array $active, array $installed) use ($root, $plan, $selection): void {
-    Deployment::write($root, $plan, $active, $installed, '8.0.0');
+    Deployment::write($root, $plan, $active, $installed, TinyCat\Support\Version::CURRENT);
     $loader = Loader::fromSelection($root, array_intersect_key($selection, array_fill_keys($active, true))); Resources::configure($loader->catalog); Registrations::configure($loader->registries());
 };
 $activate([], ['fixture.files', 'tinycat.social']);

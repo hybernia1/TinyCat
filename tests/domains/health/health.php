@@ -32,6 +32,7 @@ use TinyCat\Core\Settings\Store;
 use TinyCat\Database\Connection;
 
 Config::configure(new \TinyCat\Core\Runtime\Configuration(['cache' => ['directory' => $root . '/storage/cache', 'driver' => 'filesystem'], 'health' => ['http' => ['enabled' => false]]]));
+\TinyCat\Support\AssetCompiler::publish();
 $db = \tinycat_test_database_as(TinyCatTestLockPDO::class);
 Connection::set($db);
 foreach ([

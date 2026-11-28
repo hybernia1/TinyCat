@@ -436,7 +436,7 @@ PHP;
     $assert(is_file($assetCache . '/retention.aaaaaaaaaaaaaaaaaaaa.js'), 'Runtime cache cleanup preserves immutable assets used by open pages.');
     $assert(!is_file($runtimeCache . '/expired-rehearsal.json'), 'Runtime cache cleanup still removes obsolete data caches.');
     $assert($inventory($installRoot) === $updatedInventory, 'Repeated signed update leaves the candidate inventory unchanged.');
-    $assert(is_array($repeatMetadata) && ($repeatMetadata['files'] ?? null) === [], 'Repeated signed update does not back up unchanged files.');
+    $assert(is_array($repeatMetadata) && array_keys($repeatMetadata['files'] ?? []) === ['assets/build/manifest.json'], 'Repeated signed update pins only the unchanged manifest needed for asset rollback.');
 
     $interruptRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/Core/Runtime/autoload.php', true)
         . "; \TinyCat\Core\Runtime\Application::start(); (new ReflectionMethod(TinyCat\\Core\\Updates\\Manager::class, 'enableMaintenance'))->invoke(null, "
