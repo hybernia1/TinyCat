@@ -15,13 +15,17 @@ $copy = static function (string $source, string $target) use (&$copy): void {
 };
 foreach (['App', 'assets'] as $directory) { $copy($sourceRoot . '/' . $directory, $fixture . '/' . $directory); }
 $invoke = static function (string $mode) use ($fixture): void {
-    $process = proc_open([PHP_BINARY, __DIR__ . '/generation-worker.php', $fixture, $mode], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    $command = [PHP_BINARY];
+    if ($mode === 'no-ctype') { array_push($command, '-d', 'disable_functions=ctype_alpha,ctype_digit,ctype_space,ctype_alnum'); }
+    array_push($command, __DIR__ . '/generation-worker.php', $fixture, $mode);
+    $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
     if (!is_resource($process)) { throw new RuntimeException('Cannot start generation fixture.'); }
     fclose($pipes[0]); $out = stream_get_contents($pipes[1]); $err = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
     if (proc_close($process) !== 0 || $err !== '') { throw new RuntimeException($mode . ': ' . $out . $err); }
     echo $out;
 };
 $invoke('build');
+$invoke('no-ctype');
 $invoke('missing-module');
 foreach (['release', 'missing-client-scope', 'old-version', 'legacy', 'mismatch', 'missing-script', 'missing-asset-entry', 'missing-style', 'missing-variant', 'missing-deferred-script', 'missing-deferred-style', 'missing-component', 'missing-catalog', 'corrupt-index', 'packages', 'nested-snapshot', 'metadata-components-late-locale', 'client-late-locale', 'components-late-client', 'catalog-late-components', 'error-document', 'missing-dependency', 'missing-font', 'invalid-client-url', 'canonical-paths'] as $mode) { $invoke($mode); }
 $invoke('rebuild');

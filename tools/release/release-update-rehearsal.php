@@ -15,7 +15,7 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
 $baselineVersion = \TinyCat\Support\Version::MINIMUM_UPDATE;
-$options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'baseline-ref::', 'direct-web', 'cached-autoload', 'snapshot::', 'platform-baseline']);
+$options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'baseline-ref::', 'direct-web', 'cached-autoload', 'snapshot::', 'platform-baseline', 'asset-worker-no-ctype']);
 $cachedAutoload = array_key_exists('cached-autoload', $options);
 $directWeb = array_key_exists('direct-web', $options);
 $baselineVersion = (string) ($options['baseline-version'] ?? $baselineVersion);
@@ -443,6 +443,19 @@ PHP;
         [var_export($installRoot, true), var_export($manifestPath, true), var_export($signaturePath, true), var_export($packagePath, true), $cachedAutoload ? 'true' : 'false', var_export($retiredContracts, true)],
         $updateRunner
     );
+    if (array_key_exists('asset-worker-no-ctype', $options)) {
+        $scan = $temporaryRoot . '/worker-ini'; mkdir($scan, 0700);
+        file_put_contents($scan . '/99-no-ctype.ini', "disable_functions=ctype_alpha,ctype_digit,ctype_space,ctype_alnum\n");
+        $originalScan = getenv('PHP_INI_SCAN_DIR');
+        $scan = ($originalScan === false ? PHP_CONFIG_FILE_SCAN_DIR : $originalScan) . PATH_SEPARATOR . $scan;
+        // The parent has already loaded its extensions. Only newly spawned PHP
+        // workers inherit the restricted scan, as with different web/CLI ini files.
+        $probe = <<<'PHP'
+        $probe = proc_open([PHP_BINARY, '-r', 'exit(function_exists("ctype_alpha") ? 1 : 0);'], [0 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'r'], 1 => ['file', 'php://stderr', 'a'], 2 => ['file', 'php://stderr', 'a']], $pipes);
+        if (!is_resource($probe) || proc_close($probe) !== 0) { throw new \RuntimeException('Fresh asset worker must really lack ctype.'); }
+        PHP;
+        $updateRunner = "if (!function_exists('ctype_alpha')) { throw new \\RuntimeException('Parent updater must retain ctype.'); }\nputenv(" . var_export('PHP_INI_SCAN_DIR=' . $scan, true) . ");\n" . $probe . "\n" . $updateRunner;
+    }
     $updateRunner = "try {\n" . $updateRunner . "\n} catch (\\Throwable \$failure) { fwrite(STDERR, get_class(\$failure) . ': ' . \$failure->getMessage() . ' in ' . \$failure->getFile() . ':' . \$failure->getLine() . PHP_EOL); exit(1); }\n";
     [$updateExit, $updateOutput] = $run($updateRunner);
     $update = json_decode(implode("\n", $updateOutput), true);

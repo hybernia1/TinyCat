@@ -7,6 +7,10 @@ update a rollback proti publikovanému tagu `v<baseline-version>`. Pro ověřen�
 Jde o vstup do stejného izolovaného runneru, nikoli o vytvoření nebo publikaci tagu.
 Takový výsledek vždy označ jako ověření kandidáta, ne publikované verze.
 
+`--asset-worker-no-ctype` ponechá ctype v původním updateru, ale ověřeně je
+vypne jeho novým PHP procesům. Reprodukuje rozdílné konfigurace webového a CLI
+PHP při sestavení assetů během podepsané aktualizace.
+
 Příkazy spouštěj z kořene repozitáře. Hlavní vstup pro vývoj a CI je
 `composer preflight`; jeho [runner](preflight.php) skládá jednotlivé kontroly.
 Produkční aplikace tyto nástroje nenačítá a distribuční balíčky je neobsahují.

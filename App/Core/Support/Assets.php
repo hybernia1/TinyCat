@@ -37,7 +37,7 @@ final class Assets
         if (is_link($retired)) { throw new \RuntimeException('Unsafe legacy asset retirement marker.'); }
         if (!is_file($retired) && !Storage::write($retired, (string) time())) { throw new \RuntimeException('Cannot mark legacy asset retirement.'); }
         $started = trim((string) file_get_contents($retired));
-        if (!ctype_digit($started)) { throw new \RuntimeException('Invalid legacy asset retirement marker.'); }
+        if (preg_match('/^[0-9]+$/D', $started) !== 1) { throw new \RuntimeException('Invalid legacy asset retirement marker.'); }
         if ((int) $started > time() - 30 * 86400) { return ['changed' => 0, 'has_more' => false]; }
         $result = FileSweep::run($directory, $batch, static function (array $files) use ($pattern): array {
             $changed = 0;

@@ -55,7 +55,7 @@ final class Minifier
                 continue;
             }
 
-            if (ctype_space($char)) {
+            if (str_contains(" \t\n\r\v\f", $char)) {
                 $pendingWhitespace = true;
                 continue;
             }
@@ -209,7 +209,7 @@ final class Minifier
                 continue;
             }
 
-            if (ctype_digit($char) || ($char === '.' && $next !== '' && ctype_digit($next))) {
+            if (self::javascriptDigit($char) || ($char === '.' && $next !== '' && self::javascriptDigit($next))) {
                 $value = self::readJavaScriptNumber($source, $index);
                 $token = self::javascriptToken('number', $value, $lineBreak);
                 $tokens[] = $token;
@@ -316,12 +316,18 @@ final class Minifier
     private static function javascriptIdentifierStart(string $char): bool
     {
         $ord = ord($char);
-        return $char === '$' || $char === '_' || ctype_alpha($char) || $ord >= 0x80;
+        return $char === '$' || $char === '_' || ($ord >= 65 && $ord <= 90) || ($ord >= 97 && $ord <= 122) || $ord >= 0x80;
     }
 
     private static function javascriptIdentifierPart(string $char): bool
     {
-        return self::javascriptIdentifierStart($char) || ctype_digit($char);
+        return self::javascriptIdentifierStart($char) || self::javascriptDigit($char);
+    }
+
+    private static function javascriptDigit(string $char): bool
+    {
+        $ord = $char === '' ? -1 : ord($char);
+        return $ord >= 48 && $ord <= 57;
     }
 
     private static function readJavaScriptQuoted(string $source, int &$index, string $quote): string
@@ -432,7 +438,7 @@ final class Minifier
                 continue;
             }
 
-            if (ctype_digit($char) || ($char === '.' && $next !== '' && ctype_digit($next))) {
+            if (self::javascriptDigit($char) || ($char === '.' && $next !== '' && self::javascriptDigit($next))) {
                 self::readJavaScriptNumber($source, $index);
                 $canStartRegex = false;
                 continue;
@@ -467,7 +473,7 @@ final class Minifier
 
         if ($source[$index] === '0' && $index + 1 < $length && str_contains('xXbBoO', $source[$index + 1])) {
             $index += 2;
-            while ($index < $length && (ctype_alnum($source[$index]) || $source[$index] === '_')) {
+            while ($index < $length && str_contains('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_', $source[$index])) {
                 $index++;
             }
         } else {
@@ -475,13 +481,13 @@ final class Minifier
                 $index++;
             }
 
-            while ($index < $length && (ctype_digit($source[$index]) || $source[$index] === '_')) {
+            while ($index < $length && (self::javascriptDigit($source[$index]) || $source[$index] === '_')) {
                 $index++;
             }
 
             if (($source[$index] ?? '') === '.') {
                 $index++;
-                while ($index < $length && (ctype_digit($source[$index]) || $source[$index] === '_')) {
+                while ($index < $length && (self::javascriptDigit($source[$index]) || $source[$index] === '_')) {
                     $index++;
                 }
             }
@@ -491,7 +497,7 @@ final class Minifier
                 if (($source[$index] ?? '') === '+' || ($source[$index] ?? '') === '-') {
                     $index++;
                 }
-                while ($index < $length && (ctype_digit($source[$index]) || $source[$index] === '_')) {
+                while ($index < $length && (self::javascriptDigit($source[$index]) || $source[$index] === '_')) {
                     $index++;
                 }
             }
@@ -550,7 +556,7 @@ final class Minifier
             '=>', '==', '!=', '<=', '>=', '++', '--', '&&', '||', '??', '**',
             '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<', '>>', '?.', '...',
         ] as $punctuator) {
-            if ($punctuator === '?.' && ctype_digit($source[$index + 2] ?? '')) {
+            if ($punctuator === '?.' && self::javascriptDigit($source[$index + 2] ?? '')) {
                 continue;
             }
 

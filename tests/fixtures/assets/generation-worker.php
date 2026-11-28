@@ -24,6 +24,17 @@ if ($mode === 'build') {
     echo "PASS coherent release generated\n"; exit;
 }
 $built = json_decode((string) file_get_contents($root . '/fixture.json'), true, 512, JSON_THROW_ON_ERROR);
+if ($mode === 'no-ctype') {
+    foreach (['ctype_alpha', 'ctype_digit', 'ctype_space', 'ctype_alnum'] as $function) { $assert(!function_exists($function), 'The restricted CLI fixture must really lack ctype.'); }
+    AssetCompiler::publish();
+    foreach ($built['files'] as $path => $text) { $assert(file_get_contents($root . '/' . $path) === $text, 'Restricted CLI publishes the identical build: ' . $path); }
+    $legacy = $root . '/private-assets/assets'; mkdir($legacy, 0700, true);
+    file_put_contents($legacy . '/.retired-at', (string) (time() - 40 * 86400));
+    $old = $legacy . '/old.' . str_repeat('a', 20) . '.js'; file_put_contents($old, 'retired'); touch($old, time() - 40 * 86400);
+    Assets::cleanup(100);
+    $assert(!is_dir($legacy), 'Restricted CLI retires old asset cache without ctype.');
+    echo "PASS identical complete build and legacy cleanup without ctype\n"; exit;
+}
 $manifest = $built['manifest']; $server = $built['server'];
 $client = $manifest['clients']['/'];
 $restore = [];

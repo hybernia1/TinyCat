@@ -1,5 +1,23 @@
 # TinyCat updates
 
+## Upgrading to 9.0.3
+
+Asset compilation and legacy asset retirement no longer require the optional
+ctype extension in PHP CLI. Web PHP and its freshly started CLI worker can load
+different extension sets. The generated JavaScript/CSS and public URL policy
+remain unchanged. No new migration is added; the published 9.0.2 asset transition
+migration and its checksum are preserved.
+
+If 9.0.2 stopped with `Asset transition failed` and an undefined `ctype_*`
+function, first restore the backup named in `storage/updates/operation.json`:
+
+```sh
+php storage/updates/console.php rollback BACKUP_ID
+```
+
+Run this from the installation root, then install the signed 9.0.3 update.
+Do not clear maintenance or generated assets manually to bypass a failed update.
+
 ## Upgrading to 9.0.1
 
 This patch keeps the 9.0 HTTP contract and requires completed 8.0.14 or newer.

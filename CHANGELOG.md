@@ -1,5 +1,11 @@
 # Changelog
 
+## 9.0.3 - 2026-11-28
+
+- Remove the asset compiler and legacy asset cleanup dependency on the optional PHP ctype extension. Fresh CLI workers can build the same assets when their extensions differ from web PHP.
+- Exercise a full build without ctype and a signed update whose parent retains ctype while its fresh asset workers lack it. Keep published migration files and checksums unchanged.
+- After a failed 9.0.2 deployment, restore its recorded backup through the standard rollback before applying this patch.
+
 ## 9.0.2 - 2026-11-28
 
 - Replace the redundant runtime asset cache with one installed build and manifest for client assets, PHP components and translations. Updates and module activation prepare assets in a fresh PHP worker; HTTP requests only read the build.

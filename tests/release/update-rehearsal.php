@@ -499,7 +499,7 @@ PHP;
     $assert($freshExit === 0, 'Fresh candidate artifact boots: ' . implode(' ', $freshOutput));
     if (is_file($root . '/config.php') && in_array('mysql', PDO::getAvailableDrivers(), true)) {
         $rehearsal = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/release/release-update-rehearsal.php')
-            . ' --baseline-version=' . escapeshellarg($baselineVersion) . ' --direct-web --cached-autoload --artifact=' . escapeshellarg($artifactRoot) . ' --key=' . escapeshellarg($signingKey);
+            . ' --baseline-version=' . escapeshellarg($baselineVersion) . ' --direct-web --cached-autoload --asset-worker-no-ctype --artifact=' . escapeshellarg($artifactRoot) . ' --key=' . escapeshellarg($signingKey);
         passthru($rehearsal, $rehearsalExit);
         $assert($rehearsalExit === 0, 'Published baseline installs and rolls back the signed successor with representative MySQL data.');
     } else { echo "SKIP supported-baseline MySQL update rehearsal: local MySQL configuration unavailable.\n"; }
