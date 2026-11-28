@@ -317,4 +317,99 @@ try {
     $assert(str_contains($historical, '#clock') && str_contains($historical, 'fixture.import'), 'Unknown historical tasks retain a safe generic icon and literal identifier.');
 } finally { \TinyCat\Core\Modules\Registrations::configure($originalRegistrations); }
 
+// Zero affected rows may mean an idempotent checkpoint, but never silent loss.
+$checkpointId = \TinyCat\Core\Tasks\History::start('fixture.checkpoint', []);
+$progress = ['checkpoint' => ['cursor' => 'next']];
+\TinyCat\Core\Tasks\History::checkpoint($checkpointId, $progress);
+\TinyCat\Core\Tasks\History::checkpoint($checkpointId, $progress);
+$assert(\TinyCat\Core\Tasks\History::lastCheckpoint('fixture.checkpoint') === $progress, 'An identical checkpoint succeeds even when MySQL reports zero changed rows.');
+\TinyCat\Core\Tasks\History::finish($checkpointId, \TinyCat\Core\Tasks\Tasks::result('completed'), 1);
+foreach ([$checkpointId, 2147483647] as $invalidId) {
+    $rejected = false;
+    try { \TinyCat\Core\Tasks\History::checkpoint($invalidId, $progress); } catch (LogicException) { $rejected = true; }
+    $assert($rejected, 'Checkpoint writes reject completed and absent run IDs instead of silently succeeding.');
+}
+
+// Owner snapshots survive independently shorter source-run retention.
+$historicalBefore = \TinyCat\Core\Tasks\Administration::runDetail($parentId);
+$database->exec('DELETE FROM bot_source_runs WHERE scheduler_run_id = ' . $parentId);
+$historicalAfter = \TinyCat\Core\Tasks\Administration::runDetail($parentId);
+$assert($historicalBefore['sources'] === $historicalAfter['sources'] && count($historicalAfter['sources']) === 1, 'Source retention cannot erase the persisted scheduler source detail.');
+$assert(array_keys($historicalAfter['sources'][0]) === ['id', 'source_id', 'started_at', 'items_seen', 'source_name', 'status', 'error', 'scheduler_run_id'], 'Source snapshots contain only bounded canonical diagnostic fields.');
+$contradictory = \TinyCat\Core\Tasks\Runner::run('cleanup', static function (): array {
+    $value = \TinyCat\Core\Tasks\Tasks::result('has_more', 3, 2, true);
+    $value['summary'] = ['count' => 999, 'changed' => 998, 'has_more' => false, 'owner' => 'retained'];
+    return $value;
+}, []);
+$persisted = json_decode(\TinyCat\Core\Tasks\History::latest('cleanup')['summary_json'], true);
+$assert($contradictory['summary'] === $persisted && $persisted === ['count' => 3, 'changed' => 2, 'has_more' => true, 'owner' => 'retained'], 'Conflicting summary counters normalize to the validated top-level result in both API and history.');
+
+// Isolated maintenance owners exercise full traversal without production files or tables.
+$original = \TinyCat\Core\Modules\Registrations::current();
+$fullCalls = 0; $more = false; $throw = false; $seenNext = null;
+$maintenance = new \TinyCat\Core\Modules\MaintenanceTask('fixture_part', static function () use (&$fullCalls, &$more, &$throw, &$seenNext): array {
+    $fullCalls++;
+    $seenNext = \TinyCat\Core\Tasks\History::lastCheckpoint('cleanup')['checkpoint']['next_task'];
+    if ($throw) { throw new RuntimeException('fixture part failure'); }
+    return ['changed' => 0, 'has_more' => $more];
+});
+try {
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture' => new \TinyCat\Core\Modules\Contributions(tasks: [\TinyCat\Core\Tasks\Cleanup\Task::scheduledTask()], maintenance: [$maintenance])]));
+    // Seed old legacy settings: the first full run must retire their authority.
+    (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['cron.cleanup_last_run' => 0, 'cron.cleanup_next_task' => 'fixture_part']);
+    $database->exec("DELETE FROM scheduler_runs WHERE task = 'cleanup'");
+    $database->exec("CREATE TRIGGER reject_cleanup_finish BEFORE UPDATE ON scheduler_runs FOR EACH ROW BEGIN IF NEW.task = 'cleanup' AND NEW.status = 'completed' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'fixture finish failure'; END IF; END");
+    $completionFailure = \TinyCat\Core\Tasks\Execution::run('cleanup');
+    $database->exec('DROP TRIGGER reject_cleanup_finish');
+    $checkpoint = \TinyCat\Core\Tasks\History::lastCheckpoint('cleanup');
+    $assert(!$completionFailure['ok'] && $checkpoint['checkpoint']['last_completed_start'] >= time() - 5 && $seenNext === 'fixture_part', 'Full cleanup persists successor before work and completion before finalization.');
+    $assert(\TinyCat\Core\Tasks\Execution::run('cleanup')['tasks']['cleanup']['status'] === 'not_due' && $fullCalls === 1, 'A crash after durable completion cannot repeat full cleanup during its hourly interval.');
+    $database->exec("UPDATE scheduler_runs SET summary_json = JSON_SET(summary_json, '$.checkpoint.last_completed_start', 0) WHERE task = 'cleanup' AND JSON_EXTRACT(summary_json, '$.checkpoint') IS NOT NULL");
+    // New authoritative state must defeat a future-valued stale setting.
+    (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['cron.cleanup_last_run' => time() + 86400, 'cron.cleanup_next_task' => 'obsolete']);
+    $more = true;
+    $assert(\TinyCat\Core\Tasks\Execution::run('cleanup')['tasks']['cleanup']['status'] === 'has_more', 'Authoritative progress ignores legacy settings; has_more remains immediately runnable.');
+    $assert(\TinyCat\Core\Tasks\Execution::run('cleanup')['tasks']['cleanup']['status'] === 'has_more' && $fullCalls === 3, 'Partial traversal activity does not advance the complete traversal interval.');
+    $throw = true;
+    $assert(!\TinyCat\Core\Tasks\Execution::run('cleanup')['ok'] && \TinyCat\Core\Tasks\History::lastCheckpoint('cleanup')['checkpoint']['last_completed_start'] === 0, 'Failed maintenance retains the successor without a false completion marker.');
+    $database->exec("UPDATE scheduler_runs SET summary_json = JSON_SET(summary_json, '$.checkpoint.last_completed_start', 'invalid') WHERE task = 'cleanup' AND JSON_EXTRACT(summary_json, '$.checkpoint') IS NOT NULL");
+    $assert(!\TinyCat\Core\Tasks\Execution::run('cleanup')['ok'], 'Invalid cleanup checkpoint cannot silently reactivate legacy settings.');
+} finally { \TinyCat\Core\Modules\Registrations::configure($original); }
+
+// Real MySQL locks, including our own connection, exclude recovery regardless of age.
+$database->advisoryLock = null; $database->advisoryRelease = null;
+$ownLock = \TinyCat\Core\Tasks\Runner::lockName('fixture.live');
+\TinyCat\Database\Connection::value('SELECT GET_LOCK(?, 0)', [$ownLock]);
+$liveId = \TinyCat\Core\Tasks\History::start('fixture.live', []);
+$database->exec("UPDATE scheduler_runs SET started_at = '2000-01-01 00:00:00' WHERE id = " . $liveId);
+\TinyCat\Core\Tasks\History::recover(500);
+$assert(\TinyCat\Core\Tasks\History::latest('fixture.live')['status'] === 'running', 'Recovery never interrupts or reentrantly acquires its own live lock.');
+\TinyCat\Database\Connection::value('SELECT RELEASE_LOCK(?)', [$ownLock]);
+$assert(\TinyCat\Database\Connection::value('SELECT IS_USED_LOCK(?)', [$ownLock]) === null, 'Recovery did not increment the reentrant lock reference count.');
+$database->advisoryLock = static fn (): int => 0;
+\TinyCat\Core\Tasks\History::recover(500);
+$assert(\TinyCat\Core\Tasks\History::latest('fixture.live')['status'] === 'running', 'Losing the race to acquire a free task lock prevents recovery writes.');
+$database->advisoryLock = null;
+\TinyCat\Core\Tasks\History::recover(500);
+$orphan = \TinyCat\Core\Tasks\History::latest('fixture.live');
+$assert($orphan['status'] === 'interrupted' && $orphan['finished_at'] === null, 'Orphan recovery without another execution preserves unknown termination time.');
+
+// At most three protected state rows per task, even when its module is absent.
+$database->exec("DELETE FROM scheduler_runs");
+foreach (['completed', 'completed', 'has_more', 'has_more', 'failed', 'not_due', 'failed', 'failed'] as $i => $status) {
+    \TinyCat\Database\Connection::insert('scheduler_runs', ['task' => 'removed.owner', 'mode' => 'cli', 'status' => $status, 'started_at' => '2000-01-01 00:00:00', 'options_json' => '{}', 'summary_json' => json_encode(in_array($i, [4, 6], true) ? ['checkpoint' => ['cursor' => $i]] : [])]);
+}
+$cleanupRetention = \TinyCat\Core\Tasks\History::retention();
+$secondConnection = new PDO($testDatabaseConfig['dsn'], $testDatabaseConfig['user'], $testDatabaseConfig['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$secondLock = \TinyCat\Core\Tasks\Runner::lockName('fixture.other_live');
+$acquire = $secondConnection->prepare('SELECT GET_LOCK(?, 0)'); $acquire->execute([$secondLock]);
+$otherId = \TinyCat\Core\Tasks\History::start('fixture.other_live', []);
+$database->exec("UPDATE scheduler_runs SET started_at = '2000-01-01 00:00:00' WHERE id = " . $otherId);
+$retained = ($cleanupRetention->run)(500);
+$assert(\TinyCat\Core\Tasks\History::latest('fixture.other_live')['status'] === 'running', 'Retention and recovery preserve even very old running work owned by another connection.');
+$release = $secondConnection->prepare('SELECT RELEASE_LOCK(?)'); $release->execute([$secondLock]);
+$database->exec('DELETE FROM scheduler_runs WHERE id = ' . $otherId);
+$assert($retained['changed'] === 5 && (int) $database->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn() === 3, 'Retention protects only newest completed, has_more and checkpoint states for an inactive owner.');
+$assert(\TinyCat\Core\Tasks\History::lastCheckpoint('removed.owner')['checkpoint']['cursor'] === 6, 'Newer failed and not_due records cannot displace the protected checkpoint.');
+
 echo "PASS scheduled cache and preview file cleanup ({$checks} checks)\n";

@@ -128,16 +128,50 @@ foreach (['pl' => ['Kontrola stanu witryny zakończona: wszystko jest w porządk
 unlink($root . '/uploads/.health-probes');
 $db->exec("UPDATE scheduler_runs SET summary_json = replace(summary_json, '" . date('Y-m-d') . "', '2000-01-01') WHERE task = 'site-health'");
 $assert(Inspection::snapshot()['stale'] && Inspection::snapshot()['status'] === 'unknown', 'An old green result cannot conceal a missing scheduled inspection.');
-Store::setSetting('health.last_completed_day', '2000-01-01', 'string', 'health');
+$db->exec("UPDATE scheduler_runs SET summary_json = JSON_SET(summary_json, '$.checkpoint.completed_day', '2000-01-01') WHERE task = 'site-health' AND JSON_EXTRACT(summary_json, '$.checkpoint') IS NOT NULL");
 $beforeFailure = (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn();
 $db->exec("CREATE TRIGGER reject_health_notice BEFORE INSERT ON notifications FOR EACH ROW BEGIN IF NEW.user_id = 2 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected delivery failure'; END IF; END");
 $failed = Execution::run('site-health');
-$assert(!$failed['ok'] && Store::setting('health.last_completed_day') === '2000-01-01', 'Failed notification delivery does not mark the day completed.');
+$assert(!$failed['ok'] && \TinyCat\Core\Tasks\History::lastCheckpoint('site-health')['checkpoint']['completed_day'] === '2000-01-01', 'Failed notification delivery does not mark the day completed.');
 $assert((int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === $beforeFailure, 'Failure on the second administrator rolls back partial notification delivery.');
 $db->exec('DROP TRIGGER reject_health_notice');
 $assert(Inspection::snapshot()['latest_failed'] && Inspection::snapshot()['status'] === 'unknown', 'A failed latest inspection is visible independently of the last report.');
 $retry = Execution::run('site-health');
 $assert($retry['ok'] && $retry['tasks']['site-health']['status'] === 'completed', 'A failed daily inspection can be retried immediately.');
+// Report, daily marker and notices survive a failure in Runner's final status write.
+$db->exec("CREATE TRIGGER reject_health_finish BEFORE UPDATE ON scheduler_runs FOR EACH ROW BEGIN IF NEW.task = 'site-health' AND NEW.status = 'completed' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected finalization failure'; END IF; END");
+$beforeFinishFailure = (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn();
+$finalization = Execution::run('site-health', [], 'admin', 1);
+$db->exec('DROP TRIGGER reject_health_finish');
+$committed = \TinyCat\Core\Tasks\History::lastCheckpoint('site-health');
+$assert(!$finalization['ok'] && isset($committed['health']) && $committed['checkpoint']['completed_day'] === \TinyCat\Support\Dates::dateTime(null, 'Y-m-d'), 'Finalization failure preserves the atomically committed health report and local day.');
+$assert((int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === $beforeFinishFailure + 2, 'Committed inspection retains both DB notifications.');
+$assert(Execution::run('site-health')['tasks']['site-health']['status'] === 'not_due', 'Scheduled retry after a finalization failure does not repeat committed notifications.');
+$committedDetail = \TinyCat\Core\Tasks\Administration::runDetail((int) $db->query("SELECT MAX(id) FROM scheduler_runs WHERE task = 'site-health' AND status = 'failed'")->fetchColumn());
+$assert($committedDetail['status'] === 'failed' && $committedDetail['details'][0]['status']['code'] === 'ok', 'The detail distinguishes completed domain work from failed history finalization.');
+$assert((int) $db->query("SELECT COUNT(*) FROM settings WHERE setting_key = 'health.last_completed_day'")->fetchColumn() === 0, 'Health execution never writes its former operational setting.');
+// Failed checkpoint writes roll back notices and never fall back to old settings.
+$db->exec("CREATE TRIGGER reject_health_checkpoint BEFORE UPDATE ON scheduler_runs FOR EACH ROW BEGIN IF NEW.task = 'site-health' AND NEW.status = 'running' AND JSON_EXTRACT(NEW.summary_json, '$.checkpoint') IS NOT NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected checkpoint failure'; END IF; END");
+$noticesBeforeCheckpointFailure = (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn();
+$assert(!Execution::run('site-health', [], 'admin', 1)['ok'], 'An unsuccessful report checkpoint fails the inspection.');
+$assert((int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === $noticesBeforeCheckpointFailure, 'A report checkpoint failure rolls back all DB notices.');
+$db->exec('DROP TRIGGER reject_health_checkpoint');
+$closedId = \TinyCat\Core\Tasks\History::start('site-health', []);
+\TinyCat\Core\Tasks\History::finish($closedId, \TinyCat\Core\Tasks\Tasks::result('failed'), 1);
+foreach ([$closedId, 2147483647] as $invalidId) {
+    $noticeCountBeforeInvalidRun = (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn();
+    $rejected = false;
+    try { Inspection::run(['mode' => 'admin', 'scheduler_run_id' => $invalidId]); } catch (LogicException) { $rejected = true; }
+    $assert($rejected && (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === $noticeCountBeforeInvalidRun, 'An absent or non-running health run rolls back DB notices when its report cannot be checkpointed.');
+}
+// The day key uses the application timezone, including a day different from UTC.
+\TinyCat\Support\Dates::configure(static fn (string $key, mixed $default): mixed => $key === 'datetime.timezone' ? 'Pacific/Kiritimati' : $default);
+$localDay = \TinyCat\Support\Dates::dateTime(null, 'Y-m-d');
+$db->exec("UPDATE scheduler_runs SET summary_json = JSON_SET(summary_json, '$.checkpoint.completed_day', '" . $localDay . "') WHERE task = 'site-health' AND JSON_EXTRACT(summary_json, '$.checkpoint') IS NOT NULL");
+$assert(Execution::run('site-health')['tasks']['site-health']['status'] === 'not_due', 'Daily checks use the application-local date across the UTC day boundary.');
+\TinyCat\Support\Dates::configure(static fn (string $key, mixed $default): mixed => \TinyCat\Core\Settings\Store::setting($key, $default));
+$db->exec("UPDATE scheduler_runs SET summary_json = JSON_SET(summary_json, '$.checkpoint.completed_day', 'invalid') WHERE task = 'site-health' AND JSON_EXTRACT(summary_json, '$.checkpoint') IS NOT NULL");
+$assert(!Execution::run('site-health')['ok'], 'Corrupt authoritative health state fails explicitly instead of reusing legacy settings.');
 foreach (glob($root . '/storage/health-probes/*') ?: [] as $path) { $assert(false, 'No storage probes may remain after an inspection.'); }
 $withoutSocial = new \TinyCat\Core\Modules\Catalog(array_values(array_filter(\TinyCat\Core\Modules\Resources::catalog()->definitions(), static fn ($definition): bool => !in_array($definition->id, ['tinycat.social'], true))));
 \TinyCat\Core\Modules\Resources::withCatalog($withoutSocial, static function () use ($assert): void {

@@ -39,16 +39,18 @@ try { Localization::pluralCategory(INF, 'en'); throw new LogicException('Infinit
 catch (InvalidArgumentException) { $checks++; }
 
 // Simulate an incomplete localized email catalog without touching real sources.
-$manifest = new ReflectionProperty(\TinyCat\Support\CompiledTranslations::class, 'manifest');
+$manifest = new ReflectionProperty(\TinyCat\Core\Modules\DeploymentIdentity::class, 'inventory');
 $compiled = new ReflectionProperty(\TinyCat\Support\CompiledTranslations::class, 'catalogs');
 $originalManifest = $manifest->getValue();
 $originalCatalogs = $compiled->getValue();
 try {
     $registry = \TinyCat\Support\Paths::basePath('App/module-packages.json');
-    $manifest->setValue(null, ['selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'server_components_packages' => is_file($registry) ? hash_file('sha256', $registry) : null, 'packages' => ['en' => 'English', 'cs' => 'Česky'], 'catalogs' => []]);
+    $manifest->setValue(null, ['translations' => ['generation' => str_repeat('a', 64), 'selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'server_components_packages' => is_file($registry) ? hash_file('sha256', $registry) : null, 'packages' => ['en' => 'English', 'cs' => 'Česky'], 'catalogs' => []]]);
+    (new ReflectionProperty(\TinyCat\Core\Modules\DeploymentIdentity::class, 'inventoryRevision'))->setValue(null, \TinyCat\Core\Modules\Resources::revision());
+    (new ReflectionProperty(\TinyCat\Core\Modules\DeploymentIdentity::class, 'checked'))->setValue(null, array_fill_keys(array_map(static fn (string $locale): string => '/:' . $locale, Localization::fallbacks('cs-x-fallback-test')), true));
     $compiled->setValue(null, [
-        'en' => ['emails' => ['signature' => 'Signed', 'templates' => ['welcome' => ['subject' => 'English', 'body' => 'Hello {username}'], 'reset' => ['subject' => 'Reset']]]],
-        'cs' => ['emails' => ['templates' => ['welcome' => ['subject' => '']]]],
+        str_repeat('a', 64) . ':en' => ['emails' => ['signature' => 'Signed', 'templates' => ['welcome' => ['subject' => 'English', 'body' => 'Hello {username}'], 'reset' => ['subject' => 'Reset']]]],
+        str_repeat('a', 64) . ':cs' => ['emails' => ['templates' => ['welcome' => ['subject' => '']]]],
     ]);
     $email = \TinyCat\Core\Mail\Templates::email_catalog('cs-x-fallback-test');
     $check($email['templates']['welcome']['subject'] === '');

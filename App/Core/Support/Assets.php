@@ -127,7 +127,7 @@ final class Assets
             if ($modified === false || $modified < time() - 30 * 86400) { continue; }
             $data = json_decode((string) file_get_contents($file), true);
             $manifest = $data['parts']['manifest'] ?? null;
-            if (($data['format'] ?? null) === 2 && is_string($manifest) && preg_match('/^[a-f0-9]{64}\.part\.json$/D', $manifest) === 1) {
+            if (in_array($data['format'] ?? null, [2, 3], true) && is_string($manifest) && preg_match('/^[a-f0-9]{64}\.part\.json$/D', $manifest) === 1) {
                 $part = Assets::file($manifest, 'prepared-assets');
                 if (!is_file($part) || is_link($part)) { throw new \RuntimeException('Missing prepared asset references.'); }
                 $inventories[$part] = max($modified, $inventories[$part] ?? 0);

@@ -13,7 +13,7 @@ final class Task
     {
         return new \TinyCat\Core\Modules\ScheduledTask('cleanup', static function (array $context): array {
             $batch = self::batchSize($context['options']['cleanup_batch'] ?? 500);
-            $result = self::run($batch, ($context['mode'] ?? '') === 'admin');
+            $result = self::run($batch, ($context['mode'] ?? '') === 'admin', runId: (int) $context['scheduler_run_id']);
             $results = (array) $result['results'];
             $errors = array_values(array_filter(array_column($results, 'error')));
             return Tasks::result(
@@ -92,7 +92,7 @@ final class Task
      * @param array<mixed> $tasks
      * @return array<mixed>
      */
-    public static function run(int $batchSize = 500, bool $force = false, ?array $tasks = null): array
+    public static function run(int $batchSize = 500, bool $force = false, ?array $tasks = null, int $runId = 0): array
     {
         $batchSize = self::batchSize($batchSize);
         $fullRun = $tasks === null;
@@ -101,7 +101,13 @@ final class Task
             : array_values(array_intersect(self::taskIds(), $tasks));
         $now = time();
         $interval = 3600;
-        $lastRun = max(0, (int) \TinyCat\Core\Settings\Store::setting('cron.cleanup_last_run', 0));
+        $history = \TinyCat\Core\Tasks\History::lastCheckpoint('cleanup');
+        if ($history !== null && (!isset($history['checkpoint']['next_task'], $history['checkpoint']['last_completed_start'])
+            || !is_string($history['checkpoint']['next_task']) || !is_int($history['checkpoint']['last_completed_start']) || $history['checkpoint']['last_completed_start'] < 0)) {
+            throw new \UnexpectedValueException('Invalid cleanup checkpoint.');
+        }
+        $lastRun = $history !== null ? (int) ($history['checkpoint']['last_completed_start'] ?? 0)
+            : max(0, (int) \TinyCat\Core\Settings\Store::setting('cron.cleanup_last_run', 0));
 
         if (!$force && $lastRun > $now - $interval) {
             return [
@@ -115,14 +121,17 @@ final class Task
 
         $results = [];
         if ($fullRun) {
-            $nextTask = (string) \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task', \TinyCat\Core\Modules\Registrations::current()->initialMaintenance());
+            $nextTask = $history !== null ? (string) $history['checkpoint']['next_task'] : (string) \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task', \TinyCat\Core\Modules\Registrations::current()->initialMaintenance());
             $offset = array_search($nextTask, $tasks, true);
             if (is_int($offset)) { $tasks = [...array_slice($tasks, $offset), ...array_slice($tasks, 0, $offset)]; }
         }
 
         foreach ($tasks as $index => $task) {
             // Advance before work so even a killed PHP worker gives the following task its turn.
-            if ($fullRun) { \TinyCat\Core\Settings\Store::setSetting('cron.cleanup_next_task', $tasks[($index + 1) % count($tasks)], 'string', 'cron'); }
+            if ($fullRun && $runId > 0) {
+                $nextTask = $tasks[($index + 1) % count($tasks)];
+                \TinyCat\Core\Tasks\History::checkpoint($runId, ['checkpoint' => ['next_task' => $nextTask, 'last_completed_start' => $lastRun]]);
+            }
             try {
                 $results[$task] = self::runTask($task, $batchSize);
             } catch (Throwable $exception) {
@@ -140,8 +149,10 @@ final class Task
         $hasMore = array_any($results, static fn (array $result): bool => !empty($result['has_more']));
         $hasErrors = array_any($results, static fn (array $result): bool => isset($result['error']));
 
-        if (!$hasMore && !$hasErrors) {
-            \TinyCat\Core\Settings\Store::setSetting('cron.cleanup_last_run', $now, 'int', 'cron');
+        // Full traversal completion is durable before Runner finalization. File effects are
+        // already done; a crash before this marker may repeat idempotent maintenance.
+        if ($fullRun && $runId > 0 && !$hasMore && !$hasErrors) {
+            \TinyCat\Core\Tasks\History::checkpoint($runId, ['checkpoint' => ['next_task' => $nextTask ?? \TinyCat\Core\Modules\Registrations::current()->initialMaintenance(), 'last_completed_start' => $now], 'tasks' => $results]);
         }
 
         return [

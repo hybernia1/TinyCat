@@ -2479,5 +2479,8 @@
   "9.0.0": [
     "App/Core/Ui/assets/dashboard-stats.js",
     "App/Core/Notifications/assets/styles/notification-badge-mobile.css"
+  ],
+  "9.0.1": [
+    "App/Modules/Social/src/Discussion/Resource.php"
   ]
 }

@@ -61,7 +61,7 @@ final class Syndication
                 return;
             }
 
-            $authorName = \TinyCat\Social\Profiles\Profiles::user_display_name($author);
+            $authorName = trim((string) ($author['username'] ?? ''));
             $rssImage = \TinyCat\Social\Profiles\Profiles::avatarUrl($author) ?: $rssImage;
             $rssTitle = $authorName;
             $rssDescription = 'Public posts by ' . $authorName;

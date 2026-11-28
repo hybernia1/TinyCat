@@ -77,7 +77,9 @@ final class Importer
             'SELECT 1 FROM bot_sources bs INNER JOIN users u ON u.id = bs.bot_user_id WHERE bs.enabled = 1 AND u.role = ? AND u.status = ? AND (bs.next_run_at IS NULL OR bs.next_run_at <= ?) LIMIT 1',
             ['bot', 'active', \TinyCat\Support\Dates::dateDb()]
         ) !== null;
-        return self::scheduledResult($results, $hasMore);
+        $result = self::scheduledResult($results, $hasMore);
+        $result['summary']['sources'] = Resource::sourceSnapshot($runId);
+        return $result;
     }
 
     /** @param list<array<string, mixed>> $results

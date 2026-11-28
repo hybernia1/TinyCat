@@ -5,8 +5,6 @@ namespace TinyCat\Social\Posts;
 
 final class Posts
 {
-    public const REPORT_NOTE_MAX_LENGTH = 1000;
-
     public static function status_url(int $id): string
     {
         return \TinyCat\Http\LocalUrls::resolve($id > 0 ? '/status/' . $id : '/');
@@ -100,20 +98,6 @@ final class Posts
             'likes_count' => \TinyCat\Social\Discussion\Reactions::status_like_count($contentId),
             'comments_count' => $commentsCount,
             'liked' => $liked,
-        ];
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function status_report_reasons(): array
-    {
-        return [
-            'spam' => \TinyCat\Support\Localization::t('moderation.report_reasons.spam'),
-            'illegal' => \TinyCat\Support\Localization::t('moderation.report_reasons.illegal'),
-            'malware' => \TinyCat\Support\Localization::t('moderation.report_reasons.malware'),
-            'abuse' => \TinyCat\Support\Localization::t('moderation.report_reasons.abuse'),
-            'other' => \TinyCat\Support\Localization::t('moderation.report_reasons.other'),
         ];
     }
 

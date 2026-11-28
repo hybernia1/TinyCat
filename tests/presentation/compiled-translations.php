@@ -6,7 +6,8 @@ $root = dirname(__DIR__, 2);
 require $root . '/App/Core/Runtime/autoload.php';
 $compile = require $root . '/tools/assets/compile-assets.php';
 $files = $compile();
-$directory = sys_get_temp_dir() . '/tinycat-compiled-translations-' . bin2hex(random_bytes(8));
+require_once $root . '/tools/support/workspace.php';
+$directory = \TinyCat\Tools\Workspace::directory('tests/compiled-translations-' . bin2hex(random_bytes(8)));
 $created = [];
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
@@ -20,13 +21,12 @@ $write = static function (string $relative, string $source) use ($directory, &$c
     $created[] = $path;
 };
 try {
-    foreach (['Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/Storage.php', 'Core/Support/CompiledTranslations.php', 'Core/Modules/DeploymentIdentity.php', 'Core/Support/PreparedAssets.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
+    foreach (['Core/Runtime/autoload.php', 'Core/Support/Version.php', 'Core/Support/Paths.php', 'Core/Support/Storage.php', 'Core/Support/CompiledTranslations.php', 'Core/Modules/DeploymentIdentity.php', 'Core/Support/PreparedAssets.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
         $write('App/' . $relative, (string) file_get_contents($root . '/App/' . $relative));
     }
     foreach ($files as $relative => $source) {
-        if (str_starts_with($relative, 'App/Core/Support/compiled/')) { $write($relative, $source); }
+        $write($relative, $source);
     }
-    $write('assets/build/manifest.json', $files['assets/build/manifest.json']);
     // No source files, source loader, configuration or database in this runtime.
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/fixtures/compiled-translations-worker.php') . ' ' . escapeshellarg($directory);
     exec($command, $output, $exitCode);
@@ -34,14 +34,8 @@ try {
     $actual = json_decode(implode("\n", $output), true, 512, JSON_THROW_ON_ERROR);
     $sourceComponents = \TinyCat\Core\Ui\Components::withFreshTemplates(static fn (): array => \TinyCat\Core\Ui\Components::templates());
     $assert($actual['components'] === json_decode(json_encode($sourceComponents, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), 'Compiled components work without source definitions or a database.');
-    $assert($actual['invalid_components'] === true, 'Compiled component paths reject traversal.');
-    $assert($actual['legacy_components'] === null, 'Older release manifests retain the source fallback.');
-    $assert($actual['changed_packages'] === true, 'An independently changed module package registry invalidates compiled components.');
-    $assert($actual['snapshot_identity'] === true && $actual['snapshot_restored'] === true, 'Read snapshots are nested, bounded and observe package changes after leaving the scope.');
-    $assert($actual['snapshot_exception'] === true, 'A failed read scope restores fresh deployment identity checks.');
-    $assert($actual['deployed_without_resources'] === true, 'Both compiled readers reject deployed inventories when resource selection cannot be resolved.');
-    $assert($actual['deployed_legacy_inventory'] === true, 'Both compiled readers reject unbound legacy inventories in an installed deployment.');
-    $assert($actual['undeployed_legacy_inventory'] === true, 'Both compiled readers retain legacy source-free fallback without deployment state.');
+    // Invalid/missing inventories, package changes and reader order are covered in
+    // the isolated generation cases included by tests/assets/prepared.php.
     $assert($actual['packages'] === \TinyCat\Support\TranslationSources::packages(), 'Compiled language metadata differs.');
     $assert($actual['unknown_locale'] === \TinyCat\Support\Localization::t('common.close', [], 'en'), 'Unknown locales must fall back without loading source catalogs.');
     $assert($actual['regional_plural'] === \TinyCat\Support\Localization::plural('bots.sources_count', 2, [], 'cs'), 'Regional plural fallback works without source catalogs.');
@@ -67,7 +61,7 @@ try {
     }
 } finally {
     foreach (array_reverse($created) as $file) { unlink($file); }
-    foreach (['assets/build', 'assets', 'App/Core/Support/compiled', 'App/Core/Mail', 'App/Core/Support', 'App/Core/Runtime', 'App/Core', 'App/Core/Mail/src', 'App/Modules/Mail', 'App/Modules', 'App', ''] as $relative) {
+    foreach (['assets/build', 'assets', 'App/Core/Support/compiled', 'App/Core/Mail', 'App/Core/Support', 'App/Core/Runtime', 'App/Core/Modules', 'App/Core', 'App/Core/Mail/src', 'App/Modules/Mail', 'App/Modules', 'App', ''] as $relative) {
         $path = $directory . ($relative !== '' ? '/' . $relative : '');
         if (is_dir($path)) { rmdir($path); }
     }

@@ -193,10 +193,10 @@ final class Actions
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.report_own_content'), 403, 'report_own_content');
         }
 
-        $reasons = array_keys(\TinyCat\Social\Posts\Posts::status_report_reasons());
+        $reasons = \TinyCat\Social\Moderation\Reports::REASON_IDS;
         $reason = (string) \TinyCat\Http\Request::current()->input('reason', 'other');
         $reason = in_array($reason, $reasons, true) ? $reason : 'other';
-        $note = \TinyCat\Core\Text\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('note', ''), \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH);
+        $note = \TinyCat\Core\Text\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('note', ''), \TinyCat\Social\Moderation\Reports::REPORT_NOTE_MAX_LENGTH);
         $now = \TinyCat\Support\Dates::dateDb();
         \TinyCat\Database\Transactions::run(static function () use ($contentId, $userId, $user, $reason, $note, $now): void {
             // Use the same parent lock as review/publication so a late report cannot

@@ -1,5 +1,26 @@
 # TinyCat updates
 
+## Upgrading to 9.0.1
+
+This patch keeps the 9.0 HTTP contract and requires completed 8.0.14 or newer.
+Publish matching signed Core and Social packages, including the standalone Social
+module package for installations using independent module deployment. No database
+migration is introduced.
+
+Release and prepared assets, server components and translations now share a
+content-generation identity. Stale or incomplete inventories cannot silently mix
+payload generations. Matching PHP catalogs remain the fast path; a fresh-process
+`php App/Console.php assets` prepares a changed selection after an updater retained
+older PHP providers. See [asset generation recovery](module-deployment.md#asset-component-and-translation-generations).
+
+Scheduler checkpoints move into existing run summaries without deleting old
+settings. Committed health reports and DB notifications survive finalization
+failures; bounded recovery and retention preserve necessary history. Social keeps
+bounded import-detail snapshots and retires its unused discussion serializer.
+Configuration, accounts, uploads, activation state and published migration history
+are preserved. Use update packages for existing installations and retain the
+standard backup and rollback procedure.
+
 ## Upgrading to 9.0.0
 
 Requires completed **8.0.14 or newer**, PHP 8.4 and MySQL/MariaDB. Install

@@ -190,14 +190,14 @@ try {
     $assert(array_diff($foreignTables, ['users']) === [], 'Fresh inbox has no foreign keys to publication or social tables');
     $savedRegistries = \TinyCat\Core\Modules\Registrations::current();
     $orderType = new \TinyCat\Core\Modules\NotificationType('fixture.order', static fn (array $rows): array => $rows, static fn (array $row): string => '/orders/' . (int) json_decode((string) $row['payload_json'], true)['order_id']);
-    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture.platform' => new \TinyCat\Core\Modules\Contributions(notificationTypes: [$orderType, ...\TinyCat\Core\Tasks\Health\Alerts::types()])]));
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture.platform' => new \TinyCat\Core\Modules\Contributions(notificationTypes: [$orderType, ...\TinyCat\Core\Tasks\Health\Alerts::types()], tasks: [\TinyCat\Core\Tasks\Health\Inspection::scheduledTask()])]));
     $notice = \TinyCat\Core\Notifications\Delivery::record(1, 'fixture.order', 'order:42', payload: ['order_id' => 42]);
     $assert($notice['created'] && \TinyCat\Core\Notifications\Inbox::open($notice['id'], 1) === '/orders/42', 'Opaque non-publication subjects work without Social');
     $duplicate = \TinyCat\Core\Notifications\Delivery::record(1, 'fixture.order', 'order:42', payload: ['order_id' => 42], refresh: false);
     $assert(!$duplicate['created'] && \TinyCat\Core\Notifications\Inbox::unreadCount(1) === 0, 'Idempotent system delivery preserves read state');
     $assert(\TinyCat\Core\Notifications\Inbox::open($notice['id'], 2) === '/notifications', 'Another account cannot open the notification');
     \TinyCat\Core\Settings\Store::reset();
-    $inspection = \TinyCat\Core\Tasks\Health\Inspection::run(['mode' => 'admin', 'scheduler_run_id' => 42]);
+    $inspection = \TinyCat\Core\Tasks\Execution::run('site-health', [], 'admin', 1)['tasks']['site-health'];
     $assert($inspection['ok'] && $inspection['changed'] === 1, 'Health delivers to the active administrator without Social or fake actors');
     $assert(\TinyCat\Core\Notifications\Inbox::items(1)[0]['actor_id'] === null, 'Inbox lists actorless system notices without social tables');
     \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries());

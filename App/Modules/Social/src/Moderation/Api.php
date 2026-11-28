@@ -18,10 +18,10 @@ final class Api
             if ($item === null || !\TinyCat\Social\Posts\Repository::visible($item)) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
             }
-            return ['reasons' => array_keys(\TinyCat\Social\Posts\Posts::status_report_reasons()), 'note_max_length' => \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH];
+            return ['reasons' => \TinyCat\Social\Moderation\Reports::REASON_IDS, 'note_max_length' => \TinyCat\Social\Moderation\Reports::REPORT_NOTE_MAX_LENGTH];
         }, 'user');
         $api->post('/social/moderation/reports', static function (Request $r): Result {
-            $r->validated(['id' => 'required|integer', 'reason' => 'string', 'note' => 'string|max:' . \TinyCat\Social\Posts\Posts::REPORT_NOTE_MAX_LENGTH]);
+            $r->validated(['id' => 'required|integer', 'reason' => 'string', 'note' => 'string|max:' . \TinyCat\Social\Moderation\Reports::REPORT_NOTE_MAX_LENGTH]);
             \TinyCat\Social\Posts\Actions::status_json_require_session_interval('report');
             $data = \TinyCat\Social\Posts\Actions::status_json_report((int) $r->input('id'), \TinyCat\Core\Identity\Access::requireAuth());
             [$key, $intervalMs] = \TinyCat\Social\Moderation\ActionPolicy::cooldown('report');

@@ -236,13 +236,18 @@ $assert(!is_file($root . '/storage/updates/downloads/.tinycat-download-single'),
 // The scheduler records the successor before a task starts, not after it completes.
 $database->exec('CREATE TABLE settings (setting_key VARCHAR(190) PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)');
 \TinyCat\Core\Settings\Store::reset();
+$migration = require __DIR__ . '/../../../migrations/20261026_003_scheduler_runs.php'; $migration($database);
+$progressId = \TinyCat\Core\Tasks\History::start('cleanup', []);
 \TinyCat\Core\Settings\Store::setSetting('cron.cleanup_next_task', 'orphan_avatar_files', 'string', 'cron');
 $insert->execute([date('Y-m-d H:i:s', time() - 90000)]);
 $seenCursor = null;
 $database->beforePrepare = static function (string $query) use (&$seenCursor): void {
-    if ($seenCursor === null && str_contains($query, 'FROM users')) { $seenCursor = \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task'); }
+    if ($seenCursor === null && str_contains($query, 'FROM users')) { $seenCursor = \TinyCat\Core\Tasks\History::lastCheckpoint('cleanup')['checkpoint']['next_task']; }
 };
-$full = \TinyCat\Core\Tasks\Cleanup\Task::run(500, true);
+$progressLock = \TinyCat\Core\Tasks\Runner::lockName('cleanup');
+\TinyCat\Database\Connection::value('SELECT GET_LOCK(?, 0)', [$progressLock]);
+$full = \TinyCat\Core\Tasks\Cleanup\Task::run(500, true, runId: $progressId);
+\TinyCat\Database\Connection::value('SELECT RELEASE_LOCK(?)', [$progressLock]);
 $assert(isset($full['results']['temporary_files']['inspected']) && $full['results']['temporary_files']['inspected'] <= 500, 'The task resource retains the actual temporary inspection count rather than only the configured batch.');
 $presented = \TinyCat\Core\Tasks\Cleanup\Task::detail(['summary' => ['tasks' => ['temporary_files' => $full['results']['temporary_files']]]]);
 $assert(str_contains($presented['details'][0]['rows'][0]['value'], \TinyCat\Support\Localization::t('cron.summary_count', ['count' => $full['results']['temporary_files']['inspected']])), 'The shared run detail distinguishes inspected entries from changes for recorded cleanup results.');
@@ -254,9 +259,9 @@ $maintenanceOrder = \TinyCat\Core\Tasks\Cleanup\Task::taskIds();
 $successor = $maintenanceOrder[((int) array_search('orphan_avatar_files', $maintenanceOrder, true) + 1) % count($maintenanceOrder)];
 $assert($seenCursor === $successor, 'The following task is persisted before database cleanup begins, so an interrupted worker cannot starve later tasks.');
 $assert(isset($full['results']['update_files']), 'Other task failures and pending staging cannot prevent the backup task from getting a turn.');
-$cursorBeforePartial = \TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task');
+$cursorBeforePartial = \TinyCat\Core\Tasks\History::lastCheckpoint('cleanup');
 \TinyCat\Core\Tasks\Cleanup\Task::run(500, true, ['old_action_limits']);
-$assert(\TinyCat\Core\Settings\Store::setting('cron.cleanup_next_task') === $cursorBeforePartial, 'A targeted cleanup does not disturb the full scheduler cursor.');
+$assert(\TinyCat\Core\Tasks\History::lastCheckpoint('cleanup') === $cursorBeforePartial, 'A targeted cleanup does not disturb the full scheduler cursor.');
 
 // Release outputs have a separate inventory from disposable runtime cache.
 $asset = 'app.' . str_repeat('a', 24) . '.js';

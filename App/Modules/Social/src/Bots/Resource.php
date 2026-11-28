@@ -57,12 +57,28 @@ final class Resource
             'navigation' => $navigation]);
     }
 
+    /** Bounded historical presentation data, independent of per-source retention.
+     * @return list<array<string, mixed>> */
+    public static function sourceSnapshot(int $runId): array
+    {
+        if ($runId < 1) { return []; }
+        $rows = \TinyCat\Database\Connection::all('SELECT br.id, br.source_id, br.started_at, br.items_seen, br.status, br.error, bs.name AS source_name FROM bot_source_runs br LEFT JOIN bot_sources bs ON bs.id = br.source_id WHERE br.scheduler_run_id = ? ORDER BY br.id ASC LIMIT 100', [$runId]);
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'], 'source_id' => (int) $row['source_id'],
+            'started_at' => Dates::dateIso((string) $row['started_at']), 'items_seen' => (int) $row['items_seen'],
+            'source_name' => \TinyCat\Core\Text\Text::plain_text_limit((string) ($row['source_name'] ?? $row['source_id']), 200),
+            'status' => (string) $row['status'],
+            'error' => \TinyCat\Core\Text\Text::plain_text_limit((string) ($row['error'] ?? ''), 1000),
+        ], array_values($rows));
+    }
+
     /** @param array<string, mixed> $item
      * @return array<string, mixed> */
     public static function runDetails(array $item): array
     {
-        $records = \TinyCat\Database\Connection::all('SELECT br.*, bs.name AS source_name FROM bot_source_runs br INNER JOIN bot_sources bs ON bs.id = br.source_id WHERE br.scheduler_run_id = ? ORDER BY br.id ASC', [(int) $item['id']]);
-        $item['sources'] = Resource::runs($records);
+        $item['sources'] = $item['summary']['sources'] ?? self::sourceSnapshot((int) $item['id']);
+        foreach ($item['sources'] as &$source) { $source['scheduler_run_id'] = (int) $item['id']; }
+        unset($source);
         $sourceNames = array_column($item['sources'], 'source_name', 'source_id');
         foreach ($item['summary']['skipped_items'] ?? [] as $index => $skipped) {
             $item['summary']['skipped_items'][$index]['source_name'] = $sourceNames[$skipped['source_id']] ?? (string) $skipped['source_id'];

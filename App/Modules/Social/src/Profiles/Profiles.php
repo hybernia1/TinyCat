@@ -5,18 +5,6 @@ namespace TinyCat\Social\Profiles;
 
 final class Profiles
 {
-    /**
-     * @param array<mixed> $user
-     */
-    public static function user_display_name(?array $user): string
-    {
-        if ($user === null) {
-            return '';
-        }
-
-        return trim((string) ($user['username'] ?? ''));
-    }
-
     public static function author_url(int $id): string
     {
         return \TinyCat\Http\LocalUrls::resolve($id > 0 ? '/author/' . $id : '/');

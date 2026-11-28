@@ -34,7 +34,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Co
                 new \TinyCat\Core\Modules\MaintenanceTask('expired_cache_files', static fn (int $batch): array => \TinyCat\Support\Cache::cleanupExpired($batch), 80),
                 new \TinyCat\Core\Modules\MaintenanceTask('old_debug_logs', \TinyCat\Core\Runtime\Debug::cleanupLogs(...), 88),
                 new \TinyCat\Core\Modules\MaintenanceTask('temporary_files', static fn (int $batch): array => Files::temporary($batch), 60),
-                \TinyCat\Database\Retention::task('old_scheduler_runs', 'scheduler_runs', 'started_at < ?', static fn (): array => [\TinyCat\Support\Dates::dateDb('-30 days')], 120),
+                History::retention(),
             ],
         );
     }

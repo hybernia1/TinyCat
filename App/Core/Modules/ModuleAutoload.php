@@ -27,6 +27,8 @@ final class ModuleAutoload
         finally { self::$selected = $previous; }
     }
 
+    public static function guardsGeneration(): bool { return true; }
+
     public static function load(string $class): void
     {
         foreach (['TinyCat\\Core\\', 'TinyCat\\Http\\', 'TinyCat\\Database\\', 'TinyCat\\Support\\'] as $prefix) { if (str_starts_with($class, $prefix)) { return; } }
@@ -38,6 +40,7 @@ final class ModuleAutoload
             $root = realpath($definition->root . '/src');
             $file = realpath($definition->root . '/src/' . str_replace('\\', '/', $relative) . '.php');
             if ($root === false || !self::inside($root, $definition->root) || $file === false || !is_file($file) || !self::inside($file, $root)) { return; }
+            if (in_array('captureModules', get_class_methods(DeploymentIdentity::class), true)) { DeploymentIdentity::captureModules(); }
             require_once $file;
             return;
         }

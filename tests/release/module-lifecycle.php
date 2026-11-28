@@ -124,16 +124,25 @@ try {
     $socket = stream_socket_server('tcp://127.0.0.1:0', $socketError, $socketMessage);
     if ($socket === false) { throw new RuntimeException('Cannot allocate fixture HTTP port.'); }
     $address = stream_socket_get_name($socket, false); fclose($socket);
-    $http = proc_open([PHP_BINARY, '-S', $address, '-t', $root, $fixture . '/worker.php'], [0 => ['pipe', 'r'], 1 => ['file', $workspace . '/http.log', 'a'], 2 => ['file', $workspace . '/http.log', 'a']], $httpPipes, $root, array_merge(getenv(), ['TINYCAT_DISTRIBUTION_ROOT' => $root]));
-    if (!is_resource($http)) { throw new RuntimeException('Cannot start product HTTP worker.'); }
-    fclose($httpPipes[0]);
+    $startHttp = static function () use ($address, $root, $fixture, $workspace) {
+        $worker = proc_open([PHP_BINARY, '-S', $address, '-t', $root, $fixture . '/worker.php'], [0 => ['pipe', 'r'], 1 => ['file', $workspace . '/http.log', 'a'], 2 => ['file', $workspace . '/http.log', 'a']], $httpPipes, $root, array_merge(getenv(), ['TINYCAT_DISTRIBUTION_ROOT' => $root]));
+        if (!is_resource($worker)) { throw new RuntimeException('Cannot start product HTTP worker.'); }
+        fclose($httpPipes[0]);
+        for ($attempt = 0; $attempt < 100; $attempt++) {
+            $probe = @stream_socket_client('tcp://' . $address, $socketError, $socketMessage, 0.1);
+            if (is_resource($probe)) { fclose($probe); return $worker; }
+            usleep(50000);
+        }
+        proc_terminate($worker); proc_close($worker);
+        throw new RuntimeException('Product HTTP worker did not start.');
+    };
+    $http = $startHttp();
     $request = static function (string $path) use ($address): array {
         $curl = curl_init('http://' . $address . $path);
         curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 30]);
         $body = curl_exec($curl); $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE); curl_close($curl);
         return [$status, is_string($body) ? $body : ''];
     };
-    for ($attempt = 0; $attempt < 100; $attempt++) { $probe = @stream_socket_client('tcp://' . $address, $socketError, $socketMessage, 0.1); if (is_resource($probe)) { fclose($probe); break; } usleep(50000); }
     [$status] = $request('/api/fixture-notes'); $assert($status === 404, 'Inactive module exposes no HTTP API');
     [$exit, $text, $error] = $console(['activate', 'fixture.reports']); $assert($exit === 0, 'Module activation installs immutable migrations: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
@@ -195,8 +204,18 @@ try {
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/update-worker.php', $root, $workspace . '/v3/update/fixture.lifecycle-update.json', $workspace . '/v3/update/fixture.lifecycle-update.sig', $workspace . '/v3/update/' . $manifest['package']], $root);
     $assert($exit === 0 && (json_decode($text, true)['cached_provider_version'] ?? null) === 2, 'Update uses signed migrations while the old PHP provider is cached: ' . $text . $error);
     $assert((int) $pdo->query('SELECT revision_three FROM lifecycle_notes')->fetchColumn() === 3, 'Cached old provider cannot suppress the next migration');
+    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root, '--source'], $root);
+    $assert($exit === 0, 'Fresh updated runtime uses sources when old loaded classes defer publication: ' . $text . $error);
+    $http = $startHttp();
+    [$status, $html] = $request('/fixture-notes');
+    $assert($status === 200 && str_contains($html, 'Selected notes'), 'A fresh HTTP worker renders the complete source fallback after deferred preparation.');
+    $assert(preg_match_all('~(?:src|href)="(/cache/assets/[^"?]+)~', $html, $assetMatches) > 0, 'Deferred lifecycle delivers current local source bundles.');
+    foreach ($assetMatches[1] as $url) { [$assetStatus] = $request(html_entity_decode($url)); $assert($assetStatus === 200, 'Fresh source fallback asset exists after old-provider update.'); }
+    proc_terminate($http); proc_close($http); $http = null;
+    [$exit, $text, $error] = $console(['assets']);
+    $assert($exit === 0 && (json_decode($text, true)['assets'] ?? null) === 'prepared', 'Explicit fresh CLI completes deferred preparation: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
-    $assert($exit === 0, 'Fresh updated runtime reads the generation published with the target version while old classes were loaded: ' . $text . $error);
+    $assert($exit === 0, 'Fresh reader consumes the generation actually published by the repair command: ' . $text . $error);
     // A valid signature does not authorize a different product or a fresh-install artifact.
     $foreign = $manifest; $foreign['distribution']['product'] = 'fixture.other';
     $foreignPath = $workspace . '/foreign.json'; $signed = json_encode($foreign, JSON_THROW_ON_ERROR); file_put_contents($foreignPath, $signed); file_put_contents($workspace . '/foreign.sig', base64_encode(sodium_crypto_sign_detached($signed, $secret)));

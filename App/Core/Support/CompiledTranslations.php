@@ -8,22 +8,15 @@ use TinyCat\Core\Modules\DeploymentIdentity;
 /** PHP arrays in the signed inventory are cached by OPcache, without JSON parsing. */
 final class CompiledTranslations
 {
-    /** @var array<mixed>|null */
-    private static ?array $manifest = null;
     /** @var array<string, array<mixed>> */
     private static array $catalogs = [];
     /** @return array<mixed> */
-    private static function manifest(): array
+    private static function manifest(?string $locale = null): array
     {
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return []; }
-        if (class_exists(Config::class, false) && (bool) Config::get('assets.source', false)) { return []; }
-        $file = Paths::basePath('App/Core/Support/compiled/translations.php');
-        self::$manifest ??= is_file($file) ? require $file : [];
-        $manifest = self::$manifest ?? [];
-        if ($manifest !== [] && DeploymentIdentity::matchesSelection($manifest)) { return $manifest; }
-        $prepared = PreparedAssets::read('packages');
-        if (isset($prepared['identity'])) { $prepared = $prepared['packages'] ?? []; }
-        return $prepared === [] ? [] : ['_prepared' => true, 'packages' => $prepared];
+        if (!in_array('inventory', get_class_methods(DeploymentIdentity::class), true)) { return []; }
+        $inventory = DeploymentIdentity::inventory($locale);
+        return isset($inventory['prepared']) ? ['_prepared' => true, 'packages' => $inventory['translations']['packages']] : ($inventory['translations'] ?? []);
     }
 
     /** @return array<string, string>|null */
@@ -35,19 +28,27 @@ final class CompiledTranslations
     /** @return array<mixed>|null */
     private static function catalog(string $locale, string $channel): ?array
     {
-        $manifest = self::manifest();
+        $manifest = self::manifest($locale);
         if ($manifest === []) { return null; }
         if ($manifest['_prepared'] ?? false) {
-            $data = PreparedAssets::read($channel, $locale);
-            return isset($data['identity']) ? ($data['catalogs'][$locale][$channel] ?? null) : ($data ?: null);
+            $data = PreparedAssets::read($channel, $locale, DeploymentIdentity::inventory()['prepared']);
+            if ($data === []) { DeploymentIdentity::reject(); return null; }
+            DeploymentIdentity::delivered();
+            return $data;
         }
-        if (isset(self::$catalogs[$locale])) { return self::$catalogs[$locale][$channel] ?? null; }
+        $key = $manifest['generation'] . ':' . $locale;
+        if (isset(self::$catalogs[$key])) { DeploymentIdentity::delivered(); return self::$catalogs[$key][$channel] ?? null; }
         $name = $manifest['catalogs'][$locale] ?? null;
         if (!is_string($name)) { return null; }
         if (!preg_match('/^[a-z0-9-]+\.[a-f0-9]{24}\.php$/D', $name)) {
             throw new \RuntimeException('Invalid compiled translation path.');
         }
-        $catalog = self::$catalogs[$locale] = require Paths::basePath('App/Core/Support/compiled/' . $name);
+        $file = Paths::basePath('App/Core/Support/compiled/' . $name);
+        if (!is_file($file)) { DeploymentIdentity::reject(); return null; }
+        $catalog = require $file;
+        if (!is_array($catalog) || !is_array($catalog['app'] ?? null) || !is_array($catalog['emails'] ?? null)) { DeploymentIdentity::reject(); return null; }
+        self::$catalogs[$key] = $catalog;
+        DeploymentIdentity::delivered();
         return $catalog[$channel] ?? null;
     }
 

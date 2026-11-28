@@ -500,19 +500,7 @@ class Links extends \TinyCat\Core\Links\Urls
     /** @param array<mixed>|string $link */
     public static function status_link_is_internal(array|string $link): bool
     {
-        if (is_array($link)) {
-            foreach (['normalized_url'] as $key) {
-                $url = trim((string) ($link[$key] ?? ''));
-
-                if ($url !== '' && self::isInternal($url)) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        $url = trim($link);
+        $url = trim(is_array($link) ? (string) ($link['normalized_url'] ?? '') : $link);
 
         return $url !== '' && self::isInternal($url);
     }

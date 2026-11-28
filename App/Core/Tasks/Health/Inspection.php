@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace TinyCat\Core\Tasks\Health;
 
 use TinyCat\Core\Tasks\Tasks;
-use TinyCat\Core\Settings\Store;
+use TinyCat\Core\Tasks\History;
 use TinyCat\Support\Dates;
 
 /** Built-in diagnostic task; execution and persistence belong to the shared runner. */
@@ -38,13 +38,18 @@ final class Inspection
     public static function run(array $context): array
     {
         $day = Dates::dateTime(null, 'Y-m-d');
-        if (($context['mode'] ?? '') !== 'admin' && Store::setting('health.last_completed_day', '') === $day) { return Tasks::result('not_due'); }
+        $checkpoint = History::lastCheckpoint('site-health');
+        $completedDay = $checkpoint !== null ? ($checkpoint['checkpoint']['completed_day'] ?? '') : \TinyCat\Core\Settings\Store::setting('health.last_completed_day', '');
+        if ($checkpoint !== null && (!is_string($completedDay) || preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/D', $completedDay, $parts) !== 1
+            || !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]))) { throw new \UnexpectedValueException('Invalid health checkpoint.'); }
+        if (($context['mode'] ?? '') !== 'admin' && $completedDay === $day) { return Tasks::result('not_due'); }
         $report = self::inspect(Checks::definitions());
         $runId = (int) ($context['scheduler_run_id'] ?? 0);
         if ($runId < 1) { throw new \LogicException('Health checks require a scheduler run.'); }
         $notified = \TinyCat\Database\Transactions::run(static function () use ($report, $runId, $day): int {
             $count = Alerts::send($report['status'] === 'ok', $runId);
-            Store::setSetting('health.last_completed_day', $day, 'string', 'health');
+            $result = Tasks::result('completed', count($report['checks']), $count, details: ['health' => $report, 'notified_admins' => $count, 'checkpoint' => ['completed_day' => $day]]);
+            History::checkpoint($runId, $result['summary']);
             return $count;
         });
         // An unhealthy site is a completed diagnostic, not a failed cron transport.
@@ -83,6 +88,11 @@ final class Inspection
     {
         $report = $run['summary']['health'] ?? null;
         $run['details'] = [];
+        if (isset($run['summary']['checkpoint']['completed_day']) && in_array($run['status'] ?? '', ['failed', 'interrupted'], true)) {
+            $run['details'][] = ['title' => \TinyCat\Support\Localization::t('health.title'), 'status' => ['code' => 'ok', 'name' => \TinyCat\Support\Localization::t('cron.statuses.completed')], 'rows' => [
+                ['name' => \TinyCat\Support\Localization::t('cron.started'), 'value' => (string) $run['summary']['checkpoint']['completed_day']],
+            ]];
+        }
         if (!is_array($report)) { return $run; }
         $tasks = \TinyCat\Core\Tasks\Tasks::definitions();
         foreach ($report['checks'] ?? [] as $check) {

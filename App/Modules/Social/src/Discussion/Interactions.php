@@ -31,20 +31,6 @@ final class Interactions
     }
 
     /**
-     * @param array<string, mixed>|null $actor
-     *
-     * @return array<string, mixed> */
-    public static function read(string $kind, int $id, ?array $actor): array
-    {
-        $target = self::target($kind, $id, $actor);
-        return ['target' => ['owner' => $target->owner, 'kind' => $kind, 'id' => $id, 'url' => $target->url],
-            'capabilities' => ['comment' => $target->comments && $target->interact, 'react' => $target->reactions && $target->interact],
-            'likes_count' => $target->reactions ? Reactions::status_like_count($id) : 0,
-            'liked' => $target->reactions && $actor !== null && Reactions::status_user_liked($id, (int) $actor['id']),
-            'items' => $target->comments ? Resource::comments(Comments::status_comments($id), $actor, $target) : []];
-    }
-
-    /**
      * @param array<string, mixed> $actor
      *
      * @return array<string, mixed> */

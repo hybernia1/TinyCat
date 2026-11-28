@@ -45,6 +45,18 @@ final class AssetCompiler
                 $files[$relative] = $source;
                 return '/' . $relative;
             };
+            // Normalize only references emitted earlier; publishers may use different URLs.
+            $publish = $emit; $canonicalUrls = []; $emissions = [];
+            $emit = static function (string $prefix, string $source, string $type = 'js') use ($publish, &$canonicalUrls, &$emissions): string {
+                $content = strtr($source, $canonicalUrls);
+                $identity = hash('sha256', $type . ':' . $content);
+                $emissions[$prefix . ':' . $type . ':' . $identity] = true;
+                $url = $publish($prefix, $source, $type);
+                $canonical = '/asset-generation/' . $identity . '.' . $type;
+                $canonicalUrls[$url] = $canonical;
+                $canonicalUrls[str_replace('/', '\\/', $url)] = str_replace('/', '\\/', $canonical);
+                return $url;
+            };
             $minified = [];
             $variants = static function (string $prefix, string $source, string $type = 'js') use ($emit, &$minified): array {
                 $key = $type . ':' . hash('sha256', $source);
@@ -52,8 +64,9 @@ final class AssetCompiler
                 return ['raw' => $emit($prefix, $source, $type), 'min' => $emit($prefix . '-min', $minified[$key], $type)];
             };
             $runtime = $variants('runtime', AssetGraph::javascript(ClientAssets::runtime()));
-            $asset = static function (string $path) use (&$asset, &$manifest, $emit, $variants): string {
-                if (isset($manifest['assets'][$path])) { return $manifest['assets'][$path]['raw']; }
+            $dependencies = [];
+            $asset = static function (string $path) use (&$asset, &$manifest, $emit, $variants, &$dependencies): string {
+                if (isset($manifest['assets'][$path])) { $dependencies[$manifest['assets'][$path]['raw']] = true; return $manifest['assets'][$path]['raw']; }
                 $type = pathinfo($path, PATHINFO_EXTENSION);
                 $source = match ($type) {
                     'css' => AssetGraph::stylesheet([$path], $asset),
@@ -63,10 +76,12 @@ final class AssetCompiler
                 if (in_array($type, ['css', 'js'], true)) { $output = $variants('standalone-' . pathinfo($path, PATHINFO_FILENAME), $source, $type); }
                 else { $url = $emit('asset-' . pathinfo($path, PATHINFO_FILENAME), $source, $type); $output = ['raw' => $url, 'min' => $url]; }
                 $manifest['assets'][$path] = $output;
+                $dependencies[$output['raw']] = true;
                 return $output['raw'];
             };
             foreach (ClientAssets::standalone() as $path) { $asset($path); }
             foreach (ClientAssets::scopes() as $path) {
+                $dependencies = [];
                 $client = [
                     'runtime' => $runtime,
                     'app' => $variants('app', AssetGraph::javascript(AssetGraph::order(ClientAssets::entries($path), ClientAssets::runtime()))),
@@ -86,14 +101,21 @@ final class AssetCompiler
                     }
                     $client['catalogs'][$locale] = $client['catalog_variants'][$locale]['min-min'];
                 }
+                $client['dependencies'] = array_keys($dependencies);
                 $manifest['clients'][$path] = $client;
             }
+            // Neither index participates in its own identity; transport URLs are normalized.
+            ksort($emissions, SORT_STRING);
+            $generation = hash('sha256', serialize([$emissions, strtr(ClientAssets::encode($manifest), $canonicalUrls), $templates, $runtimeCatalogs, $languages, $server['selection'], $packageRevision]));
+            $manifest['generation'] = $server['generation'] = $generation;
+            $manifest['version'] = $server['version'] = Version::CURRENT;
+            $files['App/Core/Support/compiled/translations.php'] = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export($server, true) . ";\n";
             $files['assets/build/manifest.json'] = ClientAssets::encode($manifest);
             ksort($files);
             return ['files' => $files, 'manifest' => $manifest, 'server' => $server, 'components' => $templates, 'catalogs' => $runtimeCatalogs];
         };
         $clients = static fn (): array => ClientAssets::withBuildCache($compile);
         $assets = static fn (): array => AssetGraph::withSnapshot($clients);
-        return TranslationSources::withSnapshot($assets, reuse: $catalogs !== null);
+        return \TinyCat\Core\Modules\Resources::withCatalog(\TinyCat\Core\Modules\Resources::catalog(), static fn (): array => TranslationSources::withSnapshot($assets, reuse: $catalogs !== null));
     }
 }

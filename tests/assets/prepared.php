@@ -15,10 +15,13 @@ use TinyCat\Support\Localization;
 use TinyCat\Support\PreparedAssets;
 use TinyCat\Support\Assets;
 
-if (($argv[1] ?? '') === '--previous-assets') {
+if (in_array($argv[1] ?? '', ['--previous-assets', '--previous-autoload'], true)) {
     // Reproduce the previous already-loaded public API, before any current asset autoload.
-    eval('namespace TinyCat\\Support; final class Assets { public static function asset(string $path): string { return $path; } }');
-    PreparedAssets::prepare();
+    if ($argv[1] === '--previous-assets') { eval('namespace TinyCat\\Support; final class Assets { public static function asset(string $path): string { return $path; } }'); }
+    else { eval('namespace TinyCat\\Core\\Modules; final class ModuleAutoload { public static function load(string $class): void {} }'); }
+    PreparedAssets::prepare('9.0.0');
+    try { PreparedAssets::prepare(); throw new RuntimeException('Explicit preparation falsely succeeded.'); }
+    catch (RuntimeException $error) { if (!str_contains($error->getMessage(), 'fresh PHP')) { throw $error; } }
     if (class_exists(\TinyCat\Support\AssetCompiler::class, false)) { throw new RuntimeException('Mixed-version updater must defer optional preparation to fresh code.'); }
     echo "PASS previous loaded asset owner leaves release/source delivery available\n";
     exit;
@@ -29,10 +32,13 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     if (!$condition) { throw new RuntimeException($message); }
     $checks++;
 };
-$process = proc_open([PHP_BINARY, __FILE__, '--previous-assets'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-if (!is_resource($process)) { throw new RuntimeException('Cannot start mixed-version updater worker.'); }
-fclose($pipes[0]); $output = stream_get_contents($pipes[1]); $error = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
-$assert(proc_close($process) === 0 && str_contains($output, 'PASS') && $error === '', 'Already loaded previous Assets cannot break optional preparation after a source update.');
+foreach (['--previous-assets', '--previous-autoload'] as $previousOwner) {
+    $process = proc_open([PHP_BINARY, __FILE__, $previousOwner], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    if (!is_resource($process)) { throw new RuntimeException('Cannot start mixed-version updater worker.'); }
+    fclose($pipes[0]); $output = stream_get_contents($pipes[1]); $error = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
+    $assert(proc_close($process) === 0 && str_contains($output, 'PASS') && $error === '', 'Already loaded previous Assets cannot break optional preparation after a source update.');
+}
+
 $assert(!class_exists(\TinyCat\Support\AssetCompiler::class, false), 'Reading paths do not load the build compiler.');
 $catalog = Resources::catalog();
 $configuration = Config::snapshot();
@@ -92,11 +98,11 @@ $worker = proc_open([PHP_BINARY, __DIR__ . '/../fixtures/assets/prepared-worker.
 if (!is_resource($worker)) { throw new RuntimeException('Cannot start previous prepared reader.'); }
 fwrite($channels[0], json_encode($snapshot, JSON_THROW_ON_ERROR)); fclose($channels[0]);
 $output = stream_get_contents($channels[1]); $error = stream_get_contents($channels[2]); fclose($channels[1]); fclose($channels[2]);
-$assert(proc_close($worker) === 0 && str_contains($output, 'PASS') && $error === '', 'Current consumers accept an already-loaded previous PreparedAssets reader.');
+$assert(proc_close($worker) === 0 && str_contains($output, 'PASS') && $error === '', 'An inherited prepared reader safely defers to sources until a fresh process.');
 // Existing format 1 needs no HTTP conversion; new code keeps the previous complete API.
 $legacy = $snapshot; $legacy['format'] = 1; unset($legacy['parts']);
 Assets::writeFile(basename($indexFile), json_encode($legacy, JSON_THROW_ON_ERROR), 'prepared-assets');
-$assert(PreparedAssets::read('packages') === $legacy['packages'] && PreparedAssets::read('app', 'en') === $messages, 'Format 1 supports package and channel reads until explicit preparation.');
+$assert(PreparedAssets::read() === [], 'Unbound legacy inventories require explicit preparation, never HTTP conversion.');
 Assets::writeFile(basename($indexFile), $indexText, 'prepared-assets');
 $source = $configuration->values(); $source['assets']['source'] = true;
 Config::configure(new \TinyCat\Core\Runtime\Configuration($source));
@@ -115,3 +121,5 @@ $assert(PreparedAssets::cleanup(500)['changed'] === 2 && !is_file($file) && !is_
 file_put_contents($file, '{broken'); touch($file);
 $assert(PreparedAssets::read() === [], 'Corrupt derived metadata falls back safely.');
 echo "PASS prepared asset publication, reader parity and retention ({$checks} checks)\n";
+
+require __DIR__ . '/../fixtures/assets/generation-cases.php';

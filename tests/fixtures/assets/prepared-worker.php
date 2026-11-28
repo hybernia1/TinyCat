@@ -15,8 +15,9 @@ if ($mode === 'previous-reader') {
     eval('namespace TinyCat\\Support; final class PreparedAssets { public static function read(): array { return $GLOBALS["snapshot"]; } }');
     $app = \TinyCat\Support\CompiledTranslations::application('en');
     $mail = \TinyCat\Support\CompiledTranslations::emails('en');
-    if ($app !== $snapshot['catalogs']['en']['app'] || $mail !== $snapshot['catalogs']['en']['emails'] || \TinyCat\Support\CompiledTranslations::packages() !== $snapshot['packages']) { throw new RuntimeException('Previous prepared reader changed delivery.'); }
-    echo "PASS previous prepared reader\n";
+    if ($app !== null || $mail !== null || \TinyCat\Support\CompiledTranslations::packages() !== null) { throw new RuntimeException('An inherited unbound reader cannot choose a partial generation.'); }
+    echo "PASS previous prepared reader defers to source
+";
     exit;
 }
 echo "READY\n"; fflush(STDOUT);

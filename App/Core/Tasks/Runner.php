@@ -37,6 +37,13 @@ final class Runner
         }
     }
 
+    public static function lockName(string $name): string
+    {
+        $identity = (string) Connection::value('SELECT DATABASE()');
+        if ($identity === '') { throw new RuntimeException('Scheduled tasks require a selected database.'); }
+        return 'tinycat_scheduled_' . substr(hash('sha256', 'mysql:' . $identity . ':' . $name), 0, 46);
+    }
+
     /** @param callable(array<string, mixed>): array<string, mixed> $runner
      * @param array<string, mixed> $context
      * @return array<string, mixed> */
@@ -47,9 +54,7 @@ final class Runner
         $runId = 0;
         $started = hrtime(true);
         try {
-            $identity = (string) Connection::value('SELECT DATABASE()');
-            if ($identity === '') { throw new RuntimeException('Scheduled tasks require a selected database.'); }
-            $lockName = 'tinycat_scheduled_' . substr(hash('sha256', 'mysql:' . $identity . ':' . $name), 0, 46);
+            $lockName = self::lockName($name);
             $lockResult = Connection::value('SELECT GET_LOCK(?, 0)', [$lockName]);
             if ($lockResult === null || $lockResult === false) { throw new RuntimeException('Unable to acquire scheduled task lock.'); }
             $locked = (int) $lockResult === 1;
@@ -64,6 +69,7 @@ final class Runner
                 || !in_array($result['status'], ['completed', 'failed', 'not_due', 'has_more'], true)) {
                 throw new RuntimeException('Invalid scheduled task result.');
             }
+            foreach (['count', 'changed', 'has_more'] as $key) { $result['summary'][$key] = $result[$key]; }
             History::finish($runId, $result, (int) ((hrtime(true) - $started) / 1_000_000));
             return $result;
         } catch (Throwable $exception) {

@@ -145,6 +145,52 @@ shared trusted-proxy policy. A feed batch reports `has_more` while eligible due
 sources remain, and `not_due` when no source was selected. Skipped invocations do
 not count as fresh successful work in scheduler health checks.
 
+Accepted lock-owning invocations, including `not_due`, are recorded in
+`scheduler_runs`; validation/deployment rejection and `already_running` do not
+create a run. Top-level `count`, `changed`, and `has_more` are authoritative and
+replace conflicting values in callback summaries before returning and storing.
+`completed` and `has_more` indicate successful activity for scheduler health;
+only a full cleanup traversal without errors or remaining work advances its
+hourly interval, measured from the traversal's start (epoch seconds).
+
+Durable owner progress lives in `summary.checkpoint`, interpreted only by its
+owner. Checkpoint writes require an existing `running` record; an identical
+write is idempotent, while a missing or finished run raises an error (and rolls
+back the Health notification transaction). Cleanup saves `next_task` before every part, preserving
+`last_completed_start`; it updates the latter only after all parts complete.
+Targeted maintenance does not advance either full-traversal marker. A crash after
+that marker but before finalization does not repeat the traversal within the hour.
+A crash before the marker may repeat maintenance: filesystem and external effects
+are not an atomic transaction with history. Existing file-sweep cursors remain
+independent.
+
+Health commits `checkpoint.completed_day` (the application-local day captured
+before probes), the sanitized `health` report and DB notifications together.
+A manual run also marks that day. A later runner-finalization failure preserves
+this committed state and a scheduled retry returns `not_due` without new notices.
+The detail shows completed diagnostic work separately from the execution status.
+This does not promise atomic delivery of arbitrary external effects.
+
+The old `cron.cleanup_last_run`, `cron.cleanup_next_task` and
+`health.last_completed_day` settings are read only while their task has no new
+checkpoint. Once present, the checkpoint is authoritative even if later runs
+fail or skip. Old settings are left untouched; `cron.token` stays configuration.
+No schema migration is needed. Thirty-day retention preserves each task's latest
+checkpoint plus its latest `completed` and `has_more` records (at most three
+protected old state rows, possibly overlapping), including inactive owners.
+Running rows are excluded. Bounded maintenance reconciles abandoned rows only
+after acquiring their existing task lock; locks owned by any connection, including
+the current one, exclude recovery. Start under that same lock also reconciles
+older unfinished runs. Interrupted runs retain a null `finished_at`: the actual
+termination instant is unknown. Ordinary history readers perform no recovery.
+
+Social stores at most 100 short source diagnostics in its task summary (source
+identity/name, status, timestamps, counters and sanitized error; name limited to
+200 characters, error to 1000). This snapshot keeps historical detail usable after
+source-run retention or source deletion. Existing runs without a snapshot use
+remaining source records and cannot reconstruct diagnostics already deleted.
+Feed contents and skipped-item lists are not duplicated in the snapshot.
+
 Hosting web-cron accepts a flat optional `batch` query parameter with the same
 HTTP Basic credentials:
 

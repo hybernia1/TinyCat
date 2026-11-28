@@ -76,7 +76,6 @@ $unselected = $directory . '-unselected';
 mkdir($directory, 0700, true);
 mkdir($directory . '/lang', 0700);
 mkdir($unselected, 0700);
-$saved = [];
 try {
     $billing = [];
     foreach (['vendorone.billing' => 'VendorOne\\Billing\\', 'vendortwo.billing' => 'VendorTwo\\Billing\\'] as $id => $namespace) {
@@ -121,20 +120,13 @@ try {
     });
     $assert(!isset(ClientAssets::administration()['fixture.probe']), 'Leaving the owner selection removes its admin declarations');
 
-    // Seed old deployment caches: a different build selection must not reuse them.
-    foreach ([
-        [TinyCat\Support\CompiledAssets::class, 'manifest', ['server_components' => 'components.000000000000000000000000.php', 'clients' => ['/' => [
-            'runtime' => ['raw' => '/stale-runtime'], 'components' => '/stale-components', 'catalogs' => ['en' => '/stale-i18n'],
-            'app' => ['raw' => '/stale-app'], 'styles' => ['raw' => '/stale-style'],
-        ]]]],
-        [TinyCat\Support\CompiledTranslations::class, 'manifest', ['packages' => ['en' => 'Stale']]],
-        [TinyCat\Support\CompiledTranslations::class, 'catalogs', ['en' => ['app' => ['selection_probe.value' => 'STALE'], 'emails' => ['signature' => 'STALE']]]],
-    ] as [$class, $property, $value]) {
-        $reflection = new ReflectionProperty($class, $property);
-        $saved[] = [$reflection, $reflection->getValue()];
-        $reflection->setValue(null, $value);
-    }
-    Resources::withCatalog($selected, static function () use ($assert, $reject, $compile, $default, $baseline, $relative, $unselected, $directory, $baselineEmails): void {
+    // A scoped selection rejects the default inventory through the shared public contract.
+    $registry = $root . '/App/module-packages.json';
+    $defaultIdentity = ['version' => \TinyCat\Support\Version::CURRENT, 'generation' => str_repeat('a', 64),
+        'selection' => Resources::fingerprint(), 'server_components_packages' => is_file($registry) ? hash_file('sha256', $registry) : null];
+    $assert(\TinyCat\Core\Modules\DeploymentIdentity::matchesSelection($defaultIdentity), 'The default inventory identity matches before entering another selection');
+    Resources::withCatalog($selected, static function () use ($assert, $reject, $compile, $default, $baseline, $relative, $unselected, $directory, $baselineEmails, $defaultIdentity): void {
+        $assert(!\TinyCat\Core\Modules\DeploymentIdentity::matchesSelection($defaultIdentity), 'A custom selection rejects the default compiled inventory identity');
         $assert(Localization::catalog('en')['selection_probe.value'] === 'Selected', 'Selection invalidates server translation caches and ignores stale compiled catalogs');
         $assert(TinyCat\Support\CompiledTranslations::packages() === null, 'A custom selection cannot reuse another deployment language manifest');
         $assert(TinyCat\Support\CompiledAssets::client('/', 'en') === null, 'A custom selection cannot reuse another deployment client bundles');
@@ -210,7 +202,6 @@ try {
         $assert($styles !== '', 'Legacy cascade ignores unselected module imports while preserving other styles');
     });
 } finally {
-    foreach ($saved as [$reflection, $value]) { $reflection->setValue(null, $value); }
     foreach (glob($directory . '/lang/*.json') ?: [] as $file) { unlink($file); }
     rmdir($directory . '/lang');
     unlink($directory . '/probe.css');

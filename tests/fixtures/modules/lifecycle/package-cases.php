@@ -54,14 +54,24 @@ if ($packagePhase === 'install') {
 }
 
 if ($packagePhase === 'after-core-update') {
+    [$exit, $text, $error] = $console(['assets']);
+    $assert($exit === 0 && (json_decode($text, true)['assets'] ?? null) === 'prepared', 'Fresh CLI completes optional preparation deferred by the preceding core update: ' . $text . $error);
     $assert(file_get_contents($root . '/App/module-packages.json') === $registryBytes && hash_file('sha256', $root . '/App/Modules/Addon/src/Module.php') === $addonHash && $pdo->query('SELECT body FROM lifecycle_addon')->fetchColumn() === 'Retained addon data', 'Core update preserves independent module code, catalog and data');
     $makeModule('addon', 2, ['tinycat.accounts']);
     $moduleV2 = $workspace . '/module-v2/fixture.addon-2.0.0.zip';
     [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=2.0.0', '--minimum-core=' . $versions[0], '--output=' . $workspace . '/module-v2'], $candidate); $assert($exit === 0, 'Build module upgrade: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/module-update-worker.php', $root, $moduleV2], $root);
     $assert($exit === 0 && (json_decode($text, true)['cached_version'] ?? null) === 1 && (int) $pdo->query('SELECT revision FROM lifecycle_addon')->fetchColumn() === 2, 'Module upgrade uses immutable migration files despite a cached old provider: ' . $text . $error);
+    [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root, '--source'], $root);
+    $assert($exit === 0, 'A fresh process rejects both old inventories after module ZIP replacement with cached providers: ' . $text . $error);
+    $http = $startHttp();
+    [$status, $html] = $request('/fixture-addon');
+    $assert($status === 200 && str_contains($html, 'Selected addon'), 'A fresh HTTP worker renders current sources after cached-provider module replacement.');
+    proc_terminate($http); proc_close($http); $http = null;
+    [$exit, $text, $error] = $console(['assets']);
+    $assert($exit === 0 && (json_decode($text, true)['assets'] ?? null) === 'prepared', 'Fresh CLI actually prepares the changed module identity: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/prepared-worker.php', $root], $root);
-    $assert($exit === 0, 'A fresh process reads the prepared generation after the active module ZIP changes the package digest: ' . $text . $error);
+    $assert($exit === 0, 'A fresh reader consumes the explicitly repaired module generation: ' . $text . $error);
     $operation = json_decode(file_get_contents($root . '/storage/updates/operation.json'), true);
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]);
     $assert($exit === 0 && file_get_contents($root . '/App/module-packages.json') === $registryBytes && hash_file('sha256', $root . '/App/Modules/Addon/src/Module.php') === $addonHash, 'Shared rollback restores exact module files and catalog bytes: ' . $text . $error);

@@ -1,5 +1,13 @@
 # Changelog
 
+## 9.0.1 - 2026-11-28
+
+- Bind release assets, PHP components and translations to one deterministic content generation. Validate used payloads, reject stale or incomplete inventories, and preserve consistent source recovery before delivery.
+- Keep matching compiled PHP fast paths when prepared content is identical; defer preparation when an updater retains old module providers and allow repair from a fresh assets CLI process.
+- Persist scheduler checkpoints in existing run history instead of rewriting operational settings. Preserve completed health reports and notifications across finalization failures, reconcile abandoned runs under task locks, and retain necessary recovery states.
+- Preserve bounded Social import diagnostics after source-history retention; remove unused discussion presentation and redundant PHP wrappers while centralizing moderation report reasons.
+- Require explicit active account status and propagate email lookup database failures. Preserve supported updates, exact rollback, module isolation and existing public URLs without new database migrations.
+
 ## 9.0.0 - 2026-11-27
 
 - Require the signed 8.0.14 metadata-reader bridge before updating from older installations. The bridge retains old module manifests and prepares the loaded updater classes for the new contract.

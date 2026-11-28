@@ -253,8 +253,8 @@ try {
 
     $deferred = \TinyCat\Core\Tasks\Cleanup\Task::run(500, false, $databaseCleanupTasks);
 
-    if (!empty($deferred['due']) || (int) \TinyCat\Core\Settings\Store::setting('cron.cleanup_last_run', 0) < time() - 5) {
-        throw new RuntimeException('The hourly cleanup interval was not recorded.');
+    if (empty($deferred['due'])) {
+        throw new RuntimeException('Targeted cleanup must not advance the full traversal interval.');
     }
 
     $second = new PDO(sprintf('mysql:host=%s%s;dbname=%s;charset=%s', $host, $port, $databaseName, $charset), (string) ($config['user'] ?? ''), (string) ($config['password'] ?? ''), $options);

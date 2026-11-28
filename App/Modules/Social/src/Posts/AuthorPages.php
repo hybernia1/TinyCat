@@ -41,7 +41,7 @@ final class AuthorPages
         }
 
         $authorId = (int) $author['id'];
-        $authorName = Profiles::user_display_name($author);
+        $authorName = trim((string) ($author['username'] ?? ''));
         $bio = trim((string) ($author['bio'] ?? ''));
         $avatarUrl = \TinyCat\Social\Profiles\Profiles::avatarUrl($author);
         $memberSince = (string) ($author['created_at'] ?? '');

@@ -2,46 +2,66 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
-define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
-(new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $path = (string) ($argv[1] ?? '/');
 $locale = (string) ($argv[2] ?? 'en');
+$repo = dirname(__DIR__, 3);
+$compiled = in_array($argv[3] ?? '', ['--compiled', '--compiled-min'], true);
+$root = $repo;
+if ($compiled) {
+    if (($argv[4] ?? '') === '--prepared') { $descriptor = (string) stream_get_contents(STDIN); }
+    else {
+        $process = proc_open([PHP_BINARY, __FILE__, '--build'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if (!is_resource($process)) { throw new RuntimeException('Cannot build client fixture.'); }
+        fclose($pipes[0]); $descriptor = stream_get_contents($pipes[1]); $error = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
+        if (proc_close($process) !== 0 || $error !== '') { throw new RuntimeException($error); }
+    }
+    $data = json_decode($descriptor, true, 512, JSON_THROW_ON_ERROR);
+    $root = is_string($data['root'] ?? null) ? realpath($data['root']) : false;
+    $allowed = str_replace('\\', '/', $repo . '/.work/tests/client-assets-runtime-');
+    if ($root === false || !str_starts_with(str_replace('\\', '/', $root), $allowed)) { throw new RuntimeException('Invalid client fixture root.'); }
+}
+define('TINYCAT', true);
+require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
+(new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale($locale);
 if (($argv[3] ?? '') === '--compiled-min') {
     (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['performance.minify_js' => true, 'performance.minify_css' => true]);
 }
-$compiledFiles = [];
 if ($path === '--build') {
-    $compile = require __DIR__ . '/../../../tools/assets/compile-assets.php';
-    echo json_encode($compile(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-    exit;
-}
-if (($argv[3] ?? '') === '--compiled' || ($argv[3] ?? '') === '--compiled-min') {
-    if (($argv[4] ?? '') === '--prepared') {
-        $compiledFiles = json_decode((string) stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
-        if (!is_array($compiledFiles) || !isset($compiledFiles['assets/build/manifest.json'])) { throw new RuntimeException('Missing prepared test build.'); }
-    } else {
-        $compile = require __DIR__ . '/../../../tools/assets/compile-assets.php';
-        $compiledFiles = $compile();
+    require_once $repo . '/tools/support/workspace.php';
+    $target = \TinyCat\Tools\Workspace::directory('tests/client-assets-runtime-' . bin2hex(random_bytes(8)));
+    $copy = static function (string $source, string $destination) use (&$copy): void {
+        if (is_dir($source)) {
+            if (!is_dir($destination)) { mkdir($destination, 0700, true); }
+            foreach (new DirectoryIterator($source) as $entry) {
+                if ($entry->isDot() || $entry->isLink() || in_array($entry->getFilename(), ['compiled', 'build'], true)) { continue; }
+                $copy($entry->getPathname(), $destination . '/' . $entry->getFilename());
+            }
+        } else { copy($source, $destination); }
+    };
+    foreach (['App', 'assets'] as $directory) { $copy($repo . '/' . $directory, $target . '/' . $directory); }
+    $compile = require $repo . '/tools/assets/compile-assets.php';
+    foreach ($compile() as $relative => $source) {
+        $file = $target . '/' . $relative;
+        if (!is_dir(dirname($file))) { mkdir(dirname($file), 0700, true); }
+        file_put_contents($file, $source);
     }
-    (new ReflectionProperty(\TinyCat\Support\CompiledAssets::class, 'manifest'))->setValue(null, json_decode($compiledFiles['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR));
+    echo json_encode(['root' => $target], JSON_THROW_ON_ERROR); exit;
 }
-// Prepared bundles are virtual files; expected catalogs are derived from sources.
-\TinyCat\Core\Ui\Components::withFreshTemplates(static function () use ($path, $locale, $compiledFiles): void {
+// Real release files exercise the shared inventory admission and readers.
+\TinyCat\Core\Ui\Components::withFreshTemplates(static function () use ($path, $locale): void {
     $assets = [];
     foreach (\TinyCat\Support\ClientAssets::scripts($path) as $url) {
         $file = str_starts_with($url, '/cache/assets/')
             ? \TinyCat\Support\Assets::file(basename($url), 'assets')
             : \TinyCat\Support\Paths::basePath((string) parse_url($url, PHP_URL_PATH));
-        $compiled = $compiledFiles[ltrim((string) parse_url($url, PHP_URL_PATH), '/')] ?? null;
-        $assets[] = ['url' => $url, 'source' => $compiled ?? (string) file_get_contents($file)];
+        $assets[] = ['url' => $url, 'source' => (string) file_get_contents($file)];
     }
     $compiledClient = \TinyCat\Support\CompiledAssets::client($path, $locale, \TinyCat\Support\ClientAssets::option('performance.minify_js'), \TinyCat\Support\ClientAssets::option('performance.minify_css'));
     $deferred = $compiledClient['deferred'] ?? \TinyCat\Support\ClientAssets::deferred($path, $locale);
     $deferredAssets = [];
     foreach (array_filter([$deferred['script'] ?? null, $deferred['style'] ?? null]) as $url) {
-        $deferredAssets[$url] = $compiledFiles[ltrim($url, '/')] ?? (string) file_get_contents(\TinyCat\Support\Assets::file(basename($url), 'assets'));
+        $deferredAssets[$url] = (string) file_get_contents(str_starts_with($url, '/cache/assets/') ? \TinyCat\Support\Assets::file(basename($url), 'assets') : \TinyCat\Support\Paths::basePath($url));
     }
     echo json_encode(['locale' => $locale, 'assets' => $assets, 'deferred_assets' => $deferredAssets,
         'styles' => \TinyCat\Support\ClientAssets::styles($path),

@@ -7,6 +7,9 @@ use DomainException;
 
 final class Reports
 {
+    public const REPORT_NOTE_MAX_LENGTH = 1000;
+    public const REASON_IDS = ['spam', 'illegal', 'malware', 'abuse', 'other'];
+
     public static function publish(int $contentId): void
     {
         \TinyCat\Database\Transactions::run(static function () use ($contentId): void {
@@ -136,7 +139,7 @@ final class Reports
         return [
             'q' => \TinyCat\Core\Ui\Admin\Views::admin_filter_text((string) \TinyCat\Http\Web::get('q', '')),
             'status' => in_array($status, ['open', 'reviewed', 'resolved', 'dismissed'], true) ? $status : '',
-            'reason' => in_array($reason, ['spam', 'illegal', 'malware', 'abuse', 'other'], true) ? $reason : '',
+            'reason' => in_array($reason, self::REASON_IDS, true) ? $reason : '',
         ];
     }
 
