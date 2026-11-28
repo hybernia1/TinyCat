@@ -32,4 +32,6 @@ $api->put('/_avatars/avatar', static fn (): array => Avatars::user_avatar_update
 $api->delete('/_avatars/avatar', static fn (): array => Avatars::user_avatar_update_request(Authentication::auth()));
 Router::route(['GET', 'HEAD'], '/avatar/initials/v3/{initials:.+[.]svg}', static fn (string $initials) => AvatarHttp::initialsText(substr($initials, 0, -4)));
 Router::route(['GET', 'HEAD'], '/avatar/{username}', static fn (string $username) => TinyCat\Core\Identity\AvatarHttp::respond($username));
-if (!Router::dispatch(Request::current()->path())) { TinyCat\Http\Document::notFound('Not found.'); }
+TinyCat\Core\Modules\Resources::withCatalog(TinyCat\Core\Modules\Resources::catalog(), static function (): void {
+    if (!Router::dispatch(Request::current()->path())) { TinyCat\Http\Document::notFound('Not found.'); }
+});

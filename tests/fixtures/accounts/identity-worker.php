@@ -38,4 +38,6 @@ $api->get('/_user', static fn (): array => ['id' => $api->actor()['id']], 'user'
 $api->get('/_admin', static fn (): array => ['id' => $api->actor()['id']], 'admin');
 $api->get('/_access', static fn (): array => ['id' => TinyCat\Core\Identity\Access::require_admin()['id']]);
 Router::route('GET', '/_web', static function (): void { TinyCat\Core\Identity\Access::requireAuth(); echo 'authenticated'; });
-if (!Router::dispatch(Request::current()->path())) { Response::error('Not found.', 404, 'not_found'); }
+TinyCat\Core\Modules\Resources::withCatalog($modules->catalog, static function (): void {
+    if (!Router::dispatch(Request::current()->path())) { Response::error('Not found.', 404, 'not_found'); }
+});
